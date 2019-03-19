@@ -1,0 +1,7 @@
+test_automatic_updates.json_test_controller:
+  path: '/automatic_updates/test-json'
+  defaults:
+    _controller: '\Drupal\test_automatic_updates\Controller\JsonTestController::json'
+    _title: 'JSON'
+  requirements:
+    _access: 'TRUE'
