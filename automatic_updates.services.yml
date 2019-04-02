@@ -1,0 +1,15 @@
+services:
+  logger.channel.automatic_updates:
+    parent: logger.channel_base
+    arguments: ['automatic_updates']
+  automatic_updates.psa:
+    class: Drupal\automatic_updates\Services\AutomaticUpdatesPsa
+    arguments:
+      - '@config.factory'
+      - '@cache.default'
+      - '@datetime.time'
+      - '@http_client'
+      - '@extension.list.module'
+      - '@extension.list.profile'
+      - '@extension.list.theme'
+      - '@logger.channel.automatic_updates'

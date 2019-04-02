@@ -1,0 +1,38 @@
+<?php
+
+/**
+ * @file
+ * Contains automatic_updates.module..
+ */
+
+/**
+ * Implements hook_page_top().
+ */
+function automatic_updates_page_top(array &$page_top) {
+  /** @var \Drupal\Core\Routing\AdminContext $admin_context */
+  $admin_context = \Drupal::service('router.admin_context');
+  $route_match = \Drupal::routeMatch();
+  if ($admin_context->isAdminRoute($route_match->getRouteObject()) && \Drupal::currentUser()->hasPermission('administer site configuration')) {
+    $disabled_routes = [
+      'update.theme_update',
+      'system.theme_install',
+      'update.module_update',
+      'update.module_install',
+      'update.status',
+      'update.report_update',
+      'update.report_install',
+      'update.settings',
+      'system.status',
+      'update.confirmation_page',
+    ];
+    // These routes don't need additional nagging.
+    if (in_array(\Drupal::routeMatch()->getRouteName(), $disabled_routes, TRUE)) {
+        return;
+    }
+    /** @var \Drupal\automatic_updates\Services\AutomaticUpdatesPsaInterface $psa */
+    $psa = \Drupal::service('automatic_updates.psa');
+    foreach ($psa->getPublicServiceMessages() as $psa) {
+      \Drupal::messenger()->addError($psa);
+    }
+  }
+}

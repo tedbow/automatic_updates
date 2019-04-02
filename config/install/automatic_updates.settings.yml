@@ -1,0 +1,4 @@
+# Public service announcement URI endpoint.
+# TODO:  Update to correct end point once it is available. See
+# https://www.drupal.org/project/automatic_updates/issues/3045273
+psa_endpoint: 'http://localhost/automatic_updates/test-json'

@@ -1,5 +1,5 @@
 name: 'Automatic Updates'
 type: module
 description: 'Drupal Automatic Updates'
-core: 8.7
-package: 'Maintenance'
+core: 8.x
+package: 'Security'

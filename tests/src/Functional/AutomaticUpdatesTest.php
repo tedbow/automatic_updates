@@ -2,7 +2,6 @@
 
 namespace Drupal\Tests\automatic_updates\Functional;
 
-use Composer\Semver\VersionParser;
 use Drupal\Core\Url;
 use Drupal\Tests\BrowserTestBase;
 
@@ -35,24 +34,40 @@ class AutomaticUpdatesTest extends BrowserTestBase {
    */
   protected function setUp() {
     parent::setUp();
-    $this->user = $this->drupalCreateUser(['administer site configuration']);
+    $this->user = $this->drupalCreateUser([
+      'administer site configuration',
+      'access administration pages',
+    ]);
     $this->drupalLogin($this->user);
   }
 
   /**
-   * Tests that the JSON is parsable.
+   * Tests that a PSA is displayed.
    */
-  public function testJson() {
-    $this->drupalGet(Url::fromRoute('test_automatic_updates.json_test_controller'));
-    $json = json_decode($this->getSession()->getPage()->getContent(), TRUE);
-    $this->assertEquals($json[0]['title'], 'Critical Release - PSA-2019-02-19');
-    $parser = new VersionParser();
-    $constraint = $parser->parseConstraints($json[0]['version']);
-    $core_constraint = $parser->parseConstraints(\Drupal::VERSION);
-    $this->assertFALSE($constraint->matches($core_constraint));
-    $constraint = $parser->parseConstraints($json[1]['version']);
-    $core_constraint = $parser->parseConstraints(\Drupal::VERSION);
-    $this->assertTRUE($constraint->matches($core_constraint));
+  public function testPsa() {
+    $end_point = $this->buildUrl(Url::fromRoute('test_automatic_updates.json_test_controller'));
+    $this->config('automatic_updates.settings')
+      ->set('psa_endpoint', $end_point)
+      ->save();
+    $this->drupalGet(Url::fromRoute('system.admin'));
+    $this->assertSession()->pageTextContains('Drupal Core PSA: Critical Release - PSA-2019-02-19');
+    $this->assertSession()->pageTextNotContains('Drupal Core PSA: Critical Release - PSA-Really Old');
+    $this->assertSession()->pageTextContains('Drupal Contrib Project PSA: Node - Moderately critical - Access bypass - SA-CONTRIB-2019');
+    $this->assertSession()->pageTextContains('Drupal Contrib Project PSA: Seven - Moderately critical - Access bypass - SA-CONTRIB-2019');
+    $this->assertSession()->pageTextContains('Drupal Contrib Project PSA: Standard - Moderately critical - Access bypass - SA-CONTRIB-2019');
+
+    // Test cache.
+    $end_point = $this->buildUrl(Url::fromRoute('test_automatic_updates.json_test_denied_controller'));
+    $this->config('automatic_updates.settings')
+      ->set('psa_endpoint', $end_point)
+      ->save();
+    $this->drupalGet(Url::fromRoute('system.admin'));
+    $this->assertSession()->pageTextContains('Drupal Core PSA: Critical Release - PSA-2019-02-19');
+
+    // Test transmit errors with JSON endpoint.
+    drupal_flush_all_caches();
+    $this->drupalGet(Url::fromRoute('system.admin'));
+    $this->assertSession()->pageTextContains('Drupal PSA endpoint http://localhost/automatic_updates/test-json-denied is unreachable.');
   }
 
 }

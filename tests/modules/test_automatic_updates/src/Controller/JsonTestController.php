@@ -20,17 +20,66 @@ class JsonTestController extends ControllerBase {
     $feed[] = [
       'title' => 'Critical Release - PSA-2019-02-19',
       'link' => 'https://www.drupal.org/psa-2019-02-19',
-      'project' => 'drupal/core',
-      'modules' => ['forum', 'node'],
-      'version' => '>=8.0.0 <8.6.10 || >=8.0.0 <8.5.11',
+      'project' => 'core',
+      'extensions' => [],
+      'type' => 'module',
+      'secure_versions' => [
+        '7.99',
+        '8.10.99',
+        '8.9.99',
+        '8.8.99',
+        '8.7.99',
+        '8.6.99',
+        '8.5.99',
+      ],
       'pubDate' => 'Tue, 19 Feb 2019 14:11:01 +0000',
     ];
     $feed[] = [
-      'title' => 'Critical Release - PSA-Fictional PSA',
-      'link' => 'https://www.drupal.org/psa-fictional-psa',
-      'project' => 'drupal/core',
-      'modules' => ['system'],
-      'version' => '>=8.6.10 || >=8.5.11',
+      'title' => 'Critical Release - PSA-Really Old',
+      'link' => 'https://www.drupal.org/psa',
+      'project' => 'core',
+      'extensions' => [],
+      'type' => 'module',
+      'secure_versions' => [
+        '7.0',
+        '8.4.0',
+      ],
+      'pubDate' => 'Tue, 19 Feb 2019 14:11:01 +0000',
+    ];
+    $feed[] = [
+      'title' => 'Node - Moderately critical - Access bypass - SA-CONTRIB-2019',
+      'link' => 'https://www.drupal.org/sa-contrib-2019',
+      'project' => 'node',
+      'extensions' => ['node'],
+      'type' => 'module',
+      'secure_versions' => ['8.10.99'],
+      'pubDate' => 'Tue, 19 Mar 2019 12:50:00 +0000',
+    ];
+    $feed[] = [
+      'title' => 'Standard - Moderately critical - Access bypass - SA-CONTRIB-2019',
+      'link' => 'https://www.drupal.org/sa-contrib-2019',
+      'project' => 'Standard Install Profile',
+      'extensions' => ['standard'],
+      'type' => 'profile',
+      'secure_versions' => ['8.10.99'],
+      'pubDate' => 'Tue, 19 Mar 2019 12:50:00 +0000',
+    ];
+    $feed[] = [
+      'title' => 'Seven - Moderately critical - Access bypass - SA-CONTRIB-2019',
+      'link' => 'https://www.drupal.org/sa-contrib-2019',
+      'project' => 'seven',
+      'extensions' => ['seven'],
+      'type' => 'theme',
+      'secure_versions' => ['8.10.99'],
+      'pubDate' => 'Tue, 19 Mar 2019 12:50:00 +0000',
+    ];
+    $feed[] = [
+      'title' => 'Foobar - Moderately critical - Access bypass - SA-CONTRIB-2019',
+      'link' => 'https://www.drupal.org/sa-contrib-2019',
+      'project' => 'foobar',
+      'extensions' => ['foobar'],
+      'type' => 'foobar',
+      'secure_versions' => ['8.10.99'],
       'pubDate' => 'Tue, 19 Mar 2019 12:50:00 +0000',
     ];
     return new JsonResponse($feed);
