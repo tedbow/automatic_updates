@@ -52,12 +52,12 @@ class AutomaticUpdatesTest extends BrowserTestBase {
     $this->drupalGet(Url::fromRoute('system.admin'));
     $this->assertSession()->pageTextContains('Drupal Core PSA: Critical Release - PSA-2019-02-19');
     $this->assertSession()->pageTextNotContains('Drupal Core PSA: Critical Release - PSA-Really Old');
-    $this->assertSession()->pageTextContains('Drupal Contrib Project PSA: Node - Moderately critical - Access bypass - SA-CONTRIB-2019');
+    $this->assertSession()->pageTextNotContains('Drupal Contrib Project PSA: Node - Moderately critical - Access bypass - SA-CONTRIB-2019');
     $this->assertSession()->pageTextContains('Drupal Contrib Project PSA: Seven - Moderately critical - Access bypass - SA-CONTRIB-2019');
     $this->assertSession()->pageTextContains('Drupal Contrib Project PSA: Standard - Moderately critical - Access bypass - SA-CONTRIB-2019');
 
     // Test cache.
-    $end_point = $this->buildUrl(Url::fromRoute('test_automatic_updates.json_test_denied_controller'));
+    $end_point = 'http://localhost/automatic_updates/test-json-denied';
     $this->config('automatic_updates.settings')
       ->set('psa_endpoint', $end_point)
       ->save();

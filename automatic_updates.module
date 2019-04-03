@@ -27,7 +27,7 @@ function automatic_updates_page_top(array &$page_top) {
     ];
     // These routes don't need additional nagging.
     if (in_array(\Drupal::routeMatch()->getRouteName(), $disabled_routes, TRUE)) {
-        return;
+      return;
     }
     /** @var \Drupal\automatic_updates\Services\AutomaticUpdatesPsaInterface $psa */
     $psa = \Drupal::service('automatic_updates.psa');

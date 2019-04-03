@@ -17,6 +17,7 @@ class JsonTestController extends ControllerBase {
    *   Return JSON feed response.
    */
   public function json() {
+    $feed = [];
     $feed[] = [
       'title' => 'Critical Release - PSA-2019-02-19',
       'link' => 'https://www.drupal.org/psa-2019-02-19',
@@ -52,7 +53,7 @@ class JsonTestController extends ControllerBase {
       'project' => 'node',
       'extensions' => ['node'],
       'type' => 'module',
-      'secure_versions' => ['8.10.99'],
+      'secure_versions' => ['8.2.0'],
       'pubDate' => 'Tue, 19 Mar 2019 12:50:00 +0000',
     ];
     $feed[] = [
@@ -80,6 +81,15 @@ class JsonTestController extends ControllerBase {
       'extensions' => ['foobar'],
       'type' => 'foobar',
       'secure_versions' => ['8.10.99'],
+      'pubDate' => 'Tue, 19 Mar 2019 12:50:00 +0000',
+    ];
+    $feed[] = [
+      'title' => 'Token - Moderately critical - Access bypass - SA-CONTRIB-2019',
+      'link' => 'https://www.drupal.org/sa-contrib-2019',
+      'project' => 'token',
+      'extensions' => ['token'],
+      'type' => 'module',
+      'secure_versions' => ['1.5'],
       'pubDate' => 'Tue, 19 Mar 2019 12:50:00 +0000',
     ];
     return new JsonResponse($feed);

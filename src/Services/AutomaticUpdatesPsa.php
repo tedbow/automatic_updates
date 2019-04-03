@@ -211,11 +211,8 @@ class AutomaticUpdatesPsa implements AutomaticUpdatesPsaInterface {
    *   The extension version.
    */
   protected function contribMessage(array &$messages, $json, $extension_version) {
-    array_walk($json->secure_versions, function (&$version) {
-      $version = \Drupal::CORE_COMPATIBILITY . '-' . $version;
-    });
     $version_string = implode('||', $json->secure_versions);
-    $constraint = new Constraint($extension_version, \Drupal::CORE_COMPATIBILITY);
+    $constraint = new Constraint("<=$extension_version", \Drupal::CORE_COMPATIBILITY);
     if (!$constraint->isCompatible($version_string)) {
       $messages[] = $this->t('Drupal Contrib Project PSA: <a href=":url">:message</a>', [
         ':message' => $json->title,
