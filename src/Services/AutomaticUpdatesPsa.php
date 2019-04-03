@@ -189,6 +189,11 @@ class AutomaticUpdatesPsa implements AutomaticUpdatesPsaInterface {
       $this->logger->error('Extension list of type "%extension" does not exist.', ['%extension' => $extension_list]);
       return;
     }
+    array_walk($json->secure_versions, function (&$version) {
+      if (substr($version, 0, 4) === \Drupal::CORE_COMPATIBILITY . '-') {
+        $version = substr($version, 4);
+      }
+    });
     foreach ($json->extensions as $extension_name) {
       if ($this->{$extension_list}->exists($extension_name)) {
         $extension = $this->{$extension_list}->getAllAvailableInfo()[$extension_name];

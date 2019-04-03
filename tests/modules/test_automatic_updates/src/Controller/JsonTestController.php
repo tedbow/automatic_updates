@@ -53,7 +53,7 @@ class JsonTestController extends ControllerBase {
       'project' => 'node',
       'extensions' => ['node'],
       'type' => 'module',
-      'secure_versions' => ['8.2.0'],
+      'secure_versions' => ['7.x-7.22', '8.x-8.2.0'],
       'pubDate' => 'Tue, 19 Mar 2019 12:50:00 +0000',
     ];
     $feed[] = [
@@ -62,7 +62,7 @@ class JsonTestController extends ControllerBase {
       'project' => 'Standard Install Profile',
       'extensions' => ['standard'],
       'type' => 'profile',
-      'secure_versions' => ['8.10.99'],
+      'secure_versions' => ['8.x-8.10.99'],
       'pubDate' => 'Tue, 19 Mar 2019 12:50:00 +0000',
     ];
     $feed[] = [
@@ -71,7 +71,7 @@ class JsonTestController extends ControllerBase {
       'project' => 'seven',
       'extensions' => ['seven'],
       'type' => 'theme',
-      'secure_versions' => ['8.10.99'],
+      'secure_versions' => ['8.x-8.10.99'],
       'pubDate' => 'Tue, 19 Mar 2019 12:50:00 +0000',
     ];
     $feed[] = [
@@ -80,7 +80,7 @@ class JsonTestController extends ControllerBase {
       'project' => 'foobar',
       'extensions' => ['foobar'],
       'type' => 'foobar',
-      'secure_versions' => ['8.10.99'],
+      'secure_versions' => ['8.x-1.2'],
       'pubDate' => 'Tue, 19 Mar 2019 12:50:00 +0000',
     ];
     $feed[] = [
@@ -89,7 +89,7 @@ class JsonTestController extends ControllerBase {
       'project' => 'token',
       'extensions' => ['token'],
       'type' => 'module',
-      'secure_versions' => ['1.5'],
+      'secure_versions' => ['7.x-1.7', '8.x-1.5'],
       'pubDate' => 'Tue, 19 Mar 2019 12:50:00 +0000',
     ];
     return new JsonResponse($feed);
