@@ -5,3 +5,6 @@ automatic_updates.settings:
     psa_endpoint:
       type: string
       label: 'Endpoint URI for PSAs'
+    enable_psa:
+      type: boolean
+      label: 'Enable PSA notices'

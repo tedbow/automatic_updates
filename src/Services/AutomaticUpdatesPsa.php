@@ -114,6 +114,10 @@ class AutomaticUpdatesPsa implements AutomaticUpdatesPsaInterface {
   public function getPublicServiceMessages() {
     $messages = [];
 
+    if (!$this->config->get('enable_psa')) {
+      return $messages;
+    }
+
     if ($cache = $this->cache->get('automatic_updates_psa')) {
       $response = $cache->data;
     }

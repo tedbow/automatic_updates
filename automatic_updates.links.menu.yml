@@ -1,0 +1,5 @@
+automatic_updates.admin_form:
+  title: 'Automatic Updates'
+  route_name: automatic_updates.admin_form
+  description: 'Configure automatic updates'
+  parent: system.admin_config_system

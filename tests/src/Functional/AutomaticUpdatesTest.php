@@ -68,6 +68,16 @@ class AutomaticUpdatesTest extends BrowserTestBase {
     drupal_flush_all_caches();
     $this->drupalGet(Url::fromRoute('system.admin'));
     $this->assertSession()->pageTextContains('Drupal PSA endpoint http://localhost/automatic_updates/test-json-denied is unreachable.');
+
+    // Test disabling PSAs.
+    $end_point = $this->buildUrl(Url::fromRoute('test_automatic_updates.json_test_controller'));
+    $this->config('automatic_updates.settings')
+      ->set('psa_endpoint', $end_point)
+      ->set('enable_psa', FALSE)
+      ->save();
+    drupal_flush_all_caches();
+    $this->drupalGet(Url::fromRoute('system.admin'));
+    $this->assertSession()->pageTextNotContains('Drupal Core PSA: Critical Release - PSA-2019-02-19');
   }
 
 }
