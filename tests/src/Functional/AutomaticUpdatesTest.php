@@ -20,6 +20,7 @@ class AutomaticUpdatesTest extends BrowserTestBase {
   public static $modules = [
     'automatic_updates',
     'test_automatic_updates',
+    'update',
   ];
 
   /**
@@ -56,6 +57,10 @@ class AutomaticUpdatesTest extends BrowserTestBase {
     $this->assertSession()->pageTextContains('Drupal Contrib Project PSA: Seven - Moderately critical - Access bypass - SA-CONTRIB-2019');
     $this->assertSession()->pageTextContains('Drupal Contrib Project PSA: Standard - Moderately critical - Access bypass - SA-CONTRIB-2019');
 
+    // Test site status report.
+    $this->drupalGet(Url::fromRoute('system.status'));
+    $this->assertSession()->pageTextContains('4 announcements requiring your attention:');
+
     // Test cache.
     $end_point = 'http://localhost/automatic_updates/test-json-denied';
     $this->config('automatic_updates.settings')
@@ -78,6 +83,8 @@ class AutomaticUpdatesTest extends BrowserTestBase {
     drupal_flush_all_caches();
     $this->drupalGet(Url::fromRoute('system.admin'));
     $this->assertSession()->pageTextNotContains('Drupal Core PSA: Critical Release - PSA-2019-02-19');
+    $this->drupalGet(Url::fromRoute('system.status'));
+    $this->assertSession()->pageTextNotContains('4 announcements requiring your attention:');
   }
 
 }

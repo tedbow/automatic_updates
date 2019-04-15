@@ -1,0 +1,35 @@
+<?php
+
+/**
+ * @file
+ * Automatic updates install file.
+ */
+
+use Drupal\Core\StringTranslation\PluralTranslatableMarkup;
+
+/**
+ * Requirements checks for automatic updates.
+ */
+function automatic_updates_requirements() {
+  $requirements = [];
+  if (!\Drupal::config('automatic_updates.settings')->get('enable_psa')) {
+    return $requirements;
+  }
+  /** @var \Drupal\automatic_updates\Services\AutomaticUpdatesPsa $psa */
+  $psa = \Drupal::service('automatic_updates.psa');
+  $messages = $psa->getPublicServiceMessages();
+  $requirements['automatic_updates_psa'] = [
+    'title' => t('Drupal public service announcements'),
+    'severity' => REQUIREMENT_OK,
+    'value' => t('No announcements requiring attention.'),
+  ];
+  if (!empty($messages)) {
+    $requirements['automatic_updates_psa']['severity'] = REQUIREMENT_ERROR;
+    $requirements['automatic_updates_psa']['value'] = new PluralTranslatableMarkup(count($messages), '@count urgent announcement requiring your attention:', '@count urgent announcements requiring your attention:');
+    $requirements['automatic_updates_psa']['description'] = [
+      '#theme' => 'item_list',
+      '#items' => $messages,
+    ];
+  }
+  return $requirements;
+}

@@ -4,3 +4,5 @@ description: 'Drupal Automatic Updates'
 core: 8.x
 package: 'Security'
 configure: automatic_updates.admin_form
+dependencies:
+  - drupal:update
