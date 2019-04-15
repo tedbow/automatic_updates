@@ -59,7 +59,7 @@ class AutomaticUpdatesTest extends BrowserTestBase {
 
     // Test site status report.
     $this->drupalGet(Url::fromRoute('system.status'));
-    $this->assertSession()->pageTextContains('4 announcements requiring your attention:');
+    $this->assertSession()->pageTextContains('4 urgent announcements requiring your attention:');
 
     // Test cache.
     $end_point = 'http://localhost/automatic_updates/test-json-denied';
