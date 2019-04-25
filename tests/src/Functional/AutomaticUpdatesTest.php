@@ -13,11 +13,9 @@ use Drupal\Tests\BrowserTestBase;
 class AutomaticUpdatesTest extends BrowserTestBase {
 
   /**
-   * Modules to enable.
-   *
-   * @var array
+   * {@inheritdoc}
    */
-  public static $modules = [
+  protected static $modules = [
     'automatic_updates',
     'test_automatic_updates',
     'update',
@@ -46,20 +44,21 @@ class AutomaticUpdatesTest extends BrowserTestBase {
    * Tests that a PSA is displayed.
    */
   public function testPsa() {
+    // Setup test PSA endpoint.
     $end_point = $this->buildUrl(Url::fromRoute('test_automatic_updates.json_test_controller'));
     $this->config('automatic_updates.settings')
       ->set('psa_endpoint', $end_point)
       ->save();
     $this->drupalGet(Url::fromRoute('system.admin'));
-    $this->assertSession()->pageTextContains('Drupal Core PSA: Critical Release - PSA-2019-02-19');
-    $this->assertSession()->pageTextNotContains('Drupal Core PSA: Critical Release - PSA-Really Old');
-    $this->assertSession()->pageTextNotContains('Drupal Contrib Project PSA: Node - Moderately critical - Access bypass - SA-CONTRIB-2019');
-    $this->assertSession()->pageTextContains('Drupal Contrib Project PSA: Seven - Moderately critical - Access bypass - SA-CONTRIB-2019');
-    $this->assertSession()->pageTextContains('Drupal Contrib Project PSA: Standard - Moderately critical - Access bypass - SA-CONTRIB-2019');
+    $this->assertSession()->pageTextContains('Critical Release - PSA-2019-02-19');
+    $this->assertSession()->pageTextNotContains('Critical Release - PSA-Really Old');
+    $this->assertSession()->pageTextNotContains('Node - Moderately critical - Access bypass - SA-CONTRIB-2019');
+    $this->assertSession()->pageTextContains('Seven - Moderately critical - Access bypass - SA-CONTRIB-2019');
+    $this->assertSession()->pageTextContains('Standard - Moderately critical - Access bypass - SA-CONTRIB-2019');
 
     // Test site status report.
     $this->drupalGet(Url::fromRoute('system.status'));
-    $this->assertSession()->pageTextContains('3 urgent announcements requiring your attention:');
+    $this->assertSession()->pageTextContains('3 urgent announcements require your attention:');
 
     // Test cache.
     $end_point = 'http://localhost/automatic_updates/test-json-denied';
@@ -67,7 +66,7 @@ class AutomaticUpdatesTest extends BrowserTestBase {
       ->set('psa_endpoint', $end_point)
       ->save();
     $this->drupalGet(Url::fromRoute('system.admin'));
-    $this->assertSession()->pageTextContains('Drupal Core PSA: Critical Release - PSA-2019-02-19');
+    $this->assertSession()->pageTextContains('Critical Release - PSA-2019-02-19');
 
     // Test transmit errors with JSON endpoint.
     drupal_flush_all_caches();
@@ -82,9 +81,9 @@ class AutomaticUpdatesTest extends BrowserTestBase {
       ->save();
     drupal_flush_all_caches();
     $this->drupalGet(Url::fromRoute('system.admin'));
-    $this->assertSession()->pageTextNotContains('Drupal Core PSA: Critical Release - PSA-2019-02-19');
+    $this->assertSession()->pageTextNotContains('Critical Release - PSA-2019-02-19');
     $this->drupalGet(Url::fromRoute('system.status'));
-    $this->assertSession()->pageTextNotContains('4 announcements requiring your attention:');
+    $this->assertSession()->pageTextNotContains('urgent announcements require your attention');
   }
 
 }

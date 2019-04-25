@@ -8,3 +8,9 @@ automatic_updates.settings:
     enable_psa:
       type: boolean
       label: 'Enable PSA notices'
+    notify:
+      type: boolean
+      label: 'Notify when PSAs are available'
+    check_frequency:
+      type: integer
+      label: 'Frequency to check for PSAs, defaults to 12 hours'

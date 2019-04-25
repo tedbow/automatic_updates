@@ -4,6 +4,7 @@ namespace Drupal\automatic_updates\Services;
 
 use Composer\Semver\VersionParser;
 use Drupal\Component\Datetime\TimeInterface;
+use Drupal\Component\Render\FormattableMarkup;
 use Drupal\Component\Version\Constraint;
 use Drupal\Core\Cache\CacheBackendInterface;
 use Drupal\Core\Config\ConfigFactoryInterface;
@@ -22,7 +23,7 @@ class AutomaticUpdatesPsa implements AutomaticUpdatesPsaInterface {
   use DependencySerializationTrait;
 
   /**
-   * Module's configuration.
+   * This module's configuration.
    *
    * @var \Drupal\Core\Config\ImmutableConfig
    */
@@ -122,13 +123,12 @@ class AutomaticUpdatesPsa implements AutomaticUpdatesPsaInterface {
       $response = $cache->data;
     }
     else {
+      $psa_endpoint = $this->config->get('psa_endpoint');
       try {
-        $psa_endpoint = $this->config->get('psa_endpoint');
         $response = $this->httpClient->get($psa_endpoint)
           ->getBody()
           ->getContents();
-        // Set response in cache for 12 hours.
-        $this->cache->set('automatic_updates_psa', $response, $this->time->getCurrentTime() + 3600 * 12);
+        $this->cache->set('automatic_updates_psa', $response, $this->time->getCurrentTime() + $this->config->get('check_frequency'));
       }
       catch (TransferException $exception) {
         $this->logger->error($exception->getMessage());
@@ -138,14 +138,21 @@ class AutomaticUpdatesPsa implements AutomaticUpdatesPsaInterface {
 
     try {
       $json_payload = json_decode($response);
-      foreach ($json_payload as $json) {
-        if ($json->project === 'core') {
-          $this->coreParser($messages, $json);
-        }
-        else {
-          $this->contribParser($messages, $json);
+      if ($json_payload) {
+        foreach ($json_payload as $json) {
+          if ($json->project === 'core') {
+            $this->coreParser($messages, $json);
+          }
+          else {
+            $this->contribParser($messages, $json);
+          }
         }
       }
+      else {
+        $this->logger->error('Drupal PSA JSON is malformed: @response', ['@response' => $response]);
+        $messages[] = $this->t('Drupal PSA JSON is malformed.');
+      }
+
     }
     catch (\UnexpectedValueException $exception) {
       $this->logger->error($exception->getMessage());
@@ -172,7 +179,7 @@ class AutomaticUpdatesPsa implements AutomaticUpdatesPsaInterface {
     $psa_constraint = $parser->parseConstraints($version_string);
     $core_constraint = $parser->parseConstraints(\Drupal::VERSION);
     if ($psa_constraint->matches($core_constraint)) {
-      $messages[] = $this->t('Drupal Core PSA: <a href=":url">:message</a>', [
+      $messages[] = new FormattableMarkup('<a href=":url">:message</a>', [
         ':message' => $json->title,
         ':url' => $json->link,
       ]);
@@ -223,7 +230,7 @@ class AutomaticUpdatesPsa implements AutomaticUpdatesPsaInterface {
     $version_string = implode('||', $json->secure_versions);
     $constraint = new Constraint("<=$extension_version", \Drupal::CORE_COMPATIBILITY);
     if (!$constraint->isCompatible($version_string)) {
-      $messages[] = $this->t('Drupal Contrib Project PSA: <a href=":url">:message</a>', [
+      $messages[] = new FormattableMarkup('<a href=":url">:message</a>', [
         ':message' => $json->title,
         ':url' => $json->link,
       ]);

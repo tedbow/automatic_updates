@@ -13,3 +13,14 @@ services:
       - '@extension.list.profile'
       - '@extension.list.theme'
       - '@logger.channel.automatic_updates'
+  automatic_updates.psa_notify:
+    class: Drupal\automatic_updates\Services\Notify
+    arguments:
+      - '@plugin.manager.mail'
+      - '@automatic_updates.psa'
+      - '@config.factory'
+      - '@language_manager'
+      - '@state'
+      - '@datetime.time'
+      - '@entity_type.manager'
+      - '@string_translation'

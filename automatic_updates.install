@@ -19,13 +19,13 @@ function automatic_updates_requirements() {
   $psa = \Drupal::service('automatic_updates.psa');
   $messages = $psa->getPublicServiceMessages();
   $requirements['automatic_updates_psa'] = [
-    'title' => t('Drupal public service announcements'),
+    'title' => t('<a href="@link">Drupal public service announcements</a>', ['@link' => 'https://www.drupal.org/docs/8/update/automatic-updates#psas']),
     'severity' => REQUIREMENT_OK,
     'value' => t('No announcements requiring attention.'),
   ];
   if (!empty($messages)) {
     $requirements['automatic_updates_psa']['severity'] = REQUIREMENT_ERROR;
-    $requirements['automatic_updates_psa']['value'] = new PluralTranslatableMarkup(count($messages), '@count urgent announcement requiring your attention:', '@count urgent announcements requiring your attention:');
+    $requirements['automatic_updates_psa']['value'] = new PluralTranslatableMarkup(count($messages), '@count urgent announcement requires your attention:', '@count urgent announcements require your attention:');
     $requirements['automatic_updates_psa']['description'] = [
       '#theme' => 'item_list',
       '#items' => $messages,

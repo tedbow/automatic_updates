@@ -31,8 +31,45 @@ function automatic_updates_page_top(array &$page_top) {
     }
     /** @var \Drupal\automatic_updates\Services\AutomaticUpdatesPsaInterface $psa */
     $psa = \Drupal::service('automatic_updates.psa');
-    foreach ($psa->getPublicServiceMessages() as $psa) {
-      \Drupal::messenger()->addError($psa);
+    $messages = $psa->getPublicServiceMessages();
+    if ($messages) {
+      \Drupal::messenger()->addError(t('Drupal public service announcements:'));
+      foreach ($messages as $message) {
+        \Drupal::messenger()->addError($message);
+      }
     }
   }
+}
+
+/**
+ * Implements hook_theme().
+ */
+function automatic_updates_theme(array $existing, $type, $theme, $path) {
+  return [
+    'automatic_updates_psa_notify' => [
+      'variables' => [
+        'messages' => [],
+      ],
+    ],
+  ];
+}
+
+/**
+ * Implements hook_cron().
+ */
+function automatic_updates_cron() {
+  /** @var \Drupal\automatic_updates\Services\NotifyInterface $notify */
+  $notify = \Drupal::service('automatic_updates.psa_notify');
+  $notify->send();
+}
+
+/**
+ * Implements hook_mail().
+ */
+function automatic_updates_mail($key, &$message, $params) {
+  /** @var \Drupal\Core\Render\RendererInterface $renderer */
+  $renderer = \Drupal::service('renderer');
+
+  $message['subject'] = $params['subject'];
+  $message['body'][] = $renderer->render($params['body']);
 }

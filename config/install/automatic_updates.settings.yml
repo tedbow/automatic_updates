@@ -3,3 +3,5 @@
 # https://www.drupal.org/project/automatic_updates/issues/3045273
 psa_endpoint: 'http://localhost/automatic_updates/test-json'
 enable_psa: true
+notify: true
+check_frequency: 43200

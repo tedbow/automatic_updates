@@ -1,5 +1,5 @@
-automatic_updates.admin_form:
-  title: 'Automatic Updates'
-  route_name: automatic_updates.admin_form
-  description: 'Configure automatic updates'
+automatic_updates.settings:
+  title: 'Automatic updates'
+  route_name: automatic_updates.settings
+  description: 'Configure public service announcement notifications'
   parent: system.admin_config_system
