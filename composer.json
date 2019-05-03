@@ -12,6 +12,7 @@
   },
   "require": {
     "ext-json": "*",
-    "composer/semver": "^1.0@dev"
+    "composer/semver": "^1.0",
+    "webflo/drupal-finder": "^1.1"
   }
 }

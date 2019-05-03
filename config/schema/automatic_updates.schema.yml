@@ -14,3 +14,6 @@ automatic_updates.settings:
     check_frequency:
       type: integer
       label: 'Frequency to check for PSAs, defaults to 12 hours'
+    enable_readiness_checks:
+      type: boolean
+      label: 'Enable readiness checks'

@@ -5,11 +5,35 @@ namespace Drupal\automatic_updates\Form;
 use Drupal\Core\Form\ConfigFormBase;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Url;
+use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
  * Settings form for automatic updates.
  */
 class SettingsForm extends ConfigFormBase {
+  /**
+   * The readiness checker.
+   *
+   * @var \Drupal\automatic_updates\ReadinessChecker\ReadinessCheckerManagerInterface
+   */
+  protected $checker;
+
+  /**
+   * The data formatter.
+   *
+   * @var \Drupal\Core\Datetime\DateFormatterInterface
+   */
+  protected $dateFormatter;
+
+  /**
+   * {@inheritdoc}
+   */
+  public static function create(ContainerInterface $container) {
+    $instance = parent::create($container);
+    $instance->checker = $container->get('automatic_updates.readiness_checker');
+    $instance->dateFormatter = $container->get('date.formatter');
+    return $instance;
+  }
 
   /**
    * {@inheritdoc}
@@ -24,7 +48,7 @@ class SettingsForm extends ConfigFormBase {
    * {@inheritdoc}
    */
   public function getFormId() {
-    return 'automatic_updates_admin_form';
+    return 'automatic_updates_settings_form';
   }
 
   /**
@@ -46,6 +70,18 @@ class SettingsForm extends ConfigFormBase {
       '#default_value' => $config->get('notify'),
       '#description' => $this->t('The email addresses listed in <a href="@update_manager">update manager settings</a> will be notified.', ['@update_manager' => Url::fromRoute('update.settings')->toString()]),
     ];
+    $last_check_timestamp = $this->checker->timestamp();
+    $form['enable_readiness_checks'] = [
+      '#type' => 'checkbox',
+      '#title' => $this->t('Check the readiness of automatically updating the site.'),
+      '#default_value' => $config->get('enable_readiness_checks'),
+    ];
+    if ($this->checker->isEnabled()) {
+      $form['enable_readiness_checks']['#description'] = $this->t('Readiness checks were last run @time ago. Manually <a href="@link">run the readiness checks</a>.', [
+        '@time' => $this->dateFormatter->formatTimeDiffSince($last_check_timestamp),
+        '@link' => Url::fromRoute('automatic_updates.update_readiness')->toString(),
+      ]);
+    }
     return parent::buildForm($form, $form_state);
   }
 

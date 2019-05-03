@@ -34,8 +34,9 @@ class AutomaticUpdatesTest extends BrowserTestBase {
   protected function setUp() {
     parent::setUp();
     $this->user = $this->drupalCreateUser([
-      'administer site configuration',
       'access administration pages',
+      'administer site configuration',
+      'administer software updates',
     ]);
     $this->drupalLogin($this->user);
   }
@@ -84,6 +85,16 @@ class AutomaticUpdatesTest extends BrowserTestBase {
     $this->assertSession()->pageTextNotContains('Critical Release - PSA-2019-02-19');
     $this->drupalGet(Url::fromRoute('system.status'));
     $this->assertSession()->pageTextNotContains('urgent announcements require your attention');
+  }
+
+  /**
+   * Tests manually running readiness checks.
+   */
+  public function testReadinessChecks() {
+    // Test manually running readiness checks.
+    $this->drupalGet(Url::fromRoute('automatic_updates.settings'));
+    $this->clickLink('run the readiness checks');
+    $this->assertSession()->pageTextContains('No issues found. Your site is ready to for automatic updates.');
   }
 
 }

@@ -5,4 +5,5 @@ core: 8.x
 package: 'Security'
 configure: automatic_updates.settings
 dependencies:
+  - drupal:system
   - drupal:update
