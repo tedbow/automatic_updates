@@ -55,3 +55,9 @@ services:
       - '@automatic_updates.drupal_finder'
     tags:
       - { name: readiness_checker, category: warning}
+  automatic_updates.file_ownership:
+    class: Drupal\automatic_updates\ReadinessChecker\FileOwnership
+    arguments:
+      - '@automatic_updates.drupal_finder'
+    tags:
+      - { name: readiness_checker, category: warning}

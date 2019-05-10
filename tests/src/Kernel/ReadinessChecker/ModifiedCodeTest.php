@@ -3,7 +3,6 @@
 namespace Drupal\Tests\automatic_updates\Kernel\ReadinessChecker;
 
 use Drupal\automatic_updates\ReadinessChecker\ModifiedCode;
-use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\KernelTests\KernelTestBase;
 
 /**
@@ -12,7 +11,6 @@ use Drupal\KernelTests\KernelTestBase;
  * @group automatic_updates
  */
 class ModifiedCodeTest extends KernelTestBase {
-  use StringTranslationTrait;
 
   /**
    * {@inheritdoc}
