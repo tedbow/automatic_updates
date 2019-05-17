@@ -82,7 +82,11 @@ class ReadinessCheckerManager implements ReadinessCheckerManagerInterface {
    * {@inheritdoc}
    */
   public function getResults($category) {
-    return $this->keyValue->get("readiness_check_results.$category", []);
+    $results = [];
+    if ($this->isEnabled()) {
+      $results = $this->keyValue->get("readiness_check_results.$category", []);
+    }
+    return $results;
   }
 
   /**
