@@ -48,11 +48,20 @@ services:
       - '@automatic_updates.drupal_finder'
     tags:
       - { name: readiness_checker, category: error}
-  automatic_updates.modified_code:
-    class: Drupal\automatic_updates\ReadinessChecker\ModifiedCode
+  automatic_updates.modified_files:
+    class: Drupal\automatic_updates\Services\ModifiedFiles
     arguments:
       - '@logger.channel.automatic_updates'
       - '@automatic_updates.drupal_finder'
+      - '@http_client'
+      - '@config.factory'
+  automatic_updates.modified_files_checker:
+    class: Drupal\automatic_updates\ReadinessChecker\ModifiedFiles
+    arguments:
+      - '@automatic_updates.modified_files'
+      - '@extension.list.module'
+      - '@extension.list.profile'
+      - '@extension.list.theme'
     tags:
       - { name: readiness_checker, category: warning}
   automatic_updates.file_ownership:

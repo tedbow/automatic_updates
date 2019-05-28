@@ -92,9 +92,11 @@ class AutomaticUpdatesTest extends BrowserTestBase {
    */
   public function testReadinessChecks() {
     // Test manually running readiness checks.
+    $url = $this->buildUrl('<front>') . '/automatic_updates';
+    $this->config('automatic_updates.settings')->set('download_uri', $url);
     $this->drupalGet(Url::fromRoute('automatic_updates.settings'));
     $this->clickLink('run the readiness checks');
-    $this->assertSession()->pageTextContains('Your site does not pass some readiness checks for automatic updates. It might not be completely eligible for automatic updates.');
+    $this->assertSession()->pageTextContains('Your site does not pass some readiness checks for automatic updates. Depending on the nature of the failures, it might effect the eligibility for automatic updates.');
   }
 
 }

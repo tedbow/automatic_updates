@@ -55,7 +55,7 @@ function automatic_updates_page_top(array &$page_top) {
     }
     $results = $checker->getResults('warning');
     if ($results) {
-      \Drupal::messenger()->addWarning(t('Your site does not pass some readiness checks for automatic updates. It might not be completely eligible for <a href="@readiness_checks">automatic updates</a>.', ['@readiness_checks' => 'https://www.drupal.org/docs/8/update/automatic-updates#readiness-checks']));
+      \Drupal::messenger()->addWarning(t('Your site does not pass some readiness checks for automatic updates. Depending on the nature of the failures, it might effect the eligibility for <a href="@readiness_checks">automatic updates</a>.', ['@readiness_checks' => 'https://www.drupal.org/docs/8/update/automatic-updates#readiness-checks']));
       foreach ($results as $message) {
         \Drupal::messenger()->addWarning($message);
       }

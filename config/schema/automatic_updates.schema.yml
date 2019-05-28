@@ -17,3 +17,6 @@ automatic_updates.settings:
     enable_readiness_checks:
       type: boolean
       label: 'Enable readiness checks'
+    download_uri:
+      type: string
+      label: 'Endpoint URI for file hashes and quasi patch files'

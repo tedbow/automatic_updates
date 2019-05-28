@@ -54,6 +54,9 @@ class ReadOnlyFilesystem extends Filesystem {
 
   /**
    * Check if the filesystem is read only.
+   *
+   * @return array
+   *   An array of translatable strings if any checks fail.
    */
   protected function readOnlyCheck() {
     $messages = [];
