@@ -26,12 +26,22 @@ class SettingsForm extends ConfigFormBase {
   protected $dateFormatter;
 
   /**
+   * Drupal root path.
+   *
+   * @var string
+   */
+  protected $drupalRoot;
+
+  /**
    * {@inheritdoc}
    */
   public static function create(ContainerInterface $container) {
     $instance = parent::create($container);
     $instance->checker = $container->get('automatic_updates.readiness_checker');
     $instance->dateFormatter = $container->get('date.formatter');
+    $drupal_finder = $container->get('automatic_updates.drupal_finder');
+    $drupal_finder->locateRoot(getcwd());
+    $instance->drupalRoot = $drupal_finder->getDrupalRoot();
     return $instance;
   }
 
@@ -82,6 +92,17 @@ class SettingsForm extends ConfigFormBase {
         '@link' => Url::fromRoute('automatic_updates.update_readiness')->toString(),
       ]);
     }
+    $form['ignored_paths'] = [
+      '#type' => 'textarea',
+      '#title' => $this->t('Paths to ignore for readiness checks'),
+      '#description' => $this->t('Paths relative to %drupal_root. One path per line.', ['%drupal_root' => $this->drupalRoot]),
+      '#default_value' => $config->get('ignored_paths'),
+      '#states' => [
+        'visible' => [
+          ':input[name="enable_readiness_checks"]' => ['checked' => TRUE],
+        ],
+      ],
+    ];
     return parent::buildForm($form, $form_state);
   }
 

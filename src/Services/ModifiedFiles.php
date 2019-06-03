@@ -2,6 +2,7 @@
 
 namespace Drupal\automatic_updates\Services;
 
+use Drupal\automatic_updates\IgnoredPathsTrait;
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Url;
 use DrupalFinder\DrupalFinder;
@@ -14,6 +15,7 @@ use Psr\Log\LoggerInterface;
  * Modified files service.
  */
 class ModifiedFiles implements ModifiedFilesInterface {
+  use IgnoredPathsTrait;
 
   /**
    * The logger.
@@ -98,6 +100,9 @@ class ModifiedFiles implements ModifiedFilesInterface {
       // If one of the values is invalid, log and continue.
       if (!$hash || !$file) {
         $this->logger->error('@hash or @file is empty; the hash file is malformed for this line.', ['@hash' => $hash, '@file' => $file]);
+        continue;
+      }
+      if ($this->isIgnoredPath($file)) {
         continue;
       }
       $file_path = $this->drupalFinder->getDrupalRoot() . DIRECTORY_SEPARATOR . $file;

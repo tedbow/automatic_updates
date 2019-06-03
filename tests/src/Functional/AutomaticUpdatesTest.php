@@ -62,7 +62,7 @@ class AutomaticUpdatesTest extends BrowserTestBase {
     $this->assertSession()->pageTextContains('3 urgent announcements require your attention:');
 
     // Test cache.
-    $end_point = 'http://localhost/automatic_updates/test-json-denied';
+    $end_point = $this->buildUrl(Url::fromRoute('test_automatic_updates.json_test_denied_controller'));
     $this->config('automatic_updates.settings')
       ->set('psa_endpoint', $end_point)
       ->save();
@@ -72,7 +72,7 @@ class AutomaticUpdatesTest extends BrowserTestBase {
     // Test transmit errors with JSON endpoint.
     drupal_flush_all_caches();
     $this->drupalGet(Url::fromRoute('system.admin'));
-    $this->assertSession()->pageTextContains('Drupal PSA endpoint http://localhost/automatic_updates/test-json-denied is unreachable.');
+    $this->assertSession()->pageTextContains("Drupal PSA endpoint $end_point is unreachable.");
 
     // Test disabling PSAs.
     $end_point = $this->buildUrl(Url::fromRoute('test_automatic_updates.json_test_controller'));
@@ -91,12 +91,17 @@ class AutomaticUpdatesTest extends BrowserTestBase {
    * Tests manually running readiness checks.
    */
   public function testReadinessChecks() {
-    // Test manually running readiness checks.
-    $url = $this->buildUrl('<front>') . '/automatic_updates';
-    $this->config('automatic_updates.settings')->set('download_uri', $url);
+    // Test manually running readiness checks. A few warnings will occur.
     $this->drupalGet(Url::fromRoute('automatic_updates.settings'));
     $this->clickLink('run the readiness checks');
     $this->assertSession()->pageTextContains('Your site does not pass some readiness checks for automatic updates. Depending on the nature of the failures, it might effect the eligibility for automatic updates.');
+
+    // Ignore specific file paths to see no readiness issues.
+    $this->config('automatic_updates.settings')->set('ignored_paths', "core/*\nmodules/*\nthemes/*\nprofiles/*")
+      ->save();
+    $this->drupalGet(Url::fromRoute('automatic_updates.settings'));
+    $this->clickLink('run the readiness checks');
+    $this->assertSession()->pageTextContains('No issues found. Your site is completely ready for automatic updates.');
   }
 
 }

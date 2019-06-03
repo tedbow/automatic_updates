@@ -22,6 +22,14 @@ class MissingProjectInfoTest extends KernelTestBase {
   ];
 
   /**
+   * {@inheritdoc}
+   */
+  public function setUp() {
+    parent::setUp();
+    $this->installConfig(['automatic_updates']);
+  }
+
+  /**
    * Tests pending db updates readiness checks.
    */
   public function testMissingProjectInfo() {

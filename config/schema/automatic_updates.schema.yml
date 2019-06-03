@@ -20,3 +20,6 @@ automatic_updates.settings:
     download_uri:
       type: string
       label: 'Endpoint URI for file hashes and quasi patch files'
+    ignored_paths:
+      type: string
+      label: 'List of files paths to ignore when running readiness checks'

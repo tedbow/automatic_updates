@@ -2,6 +2,7 @@
 
 namespace Drupal\automatic_updates\ReadinessChecker;
 
+use Drupal\automatic_updates\IgnoredPathsTrait;
 use Drupal\Core\Extension\ExtensionList;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use DrupalFinder\DrupalFinder;
@@ -10,6 +11,7 @@ use DrupalFinder\DrupalFinder;
  * Missing project info checker.
  */
 class MissingProjectInfo extends Filesystem {
+  use IgnoredPathsTrait;
   use StringTranslationTrait;
 
   /**
@@ -69,6 +71,9 @@ class MissingProjectInfo extends Filesystem {
     $messages = [];
     foreach ($this->getExtensionsTypes() as $extension_type) {
       foreach ($this->getInfos($extension_type) as $extension_name => $info) {
+        if ($this->isIgnoredPath(drupal_get_path($info['type'], $extension_name))) {
+          continue;
+        }
         if (empty($info['version'])) {
           $messages[] = $this->t('The project "@extension" will not be updated because it is missing the "version" key in the @extension.info.yml file.', ['@extension' => $extension_name]);
         }

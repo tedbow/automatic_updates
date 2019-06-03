@@ -7,3 +7,4 @@ notify: true
 check_frequency: 43200
 enable_readiness_checks: true
 download_uri: 'https://ftp.drupal.org/files/projects'
+ignored_paths: "modules/custom/*\nthemes/custom/*\nprofiles/custom/*"
