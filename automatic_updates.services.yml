@@ -91,3 +91,9 @@ services:
       - '@extension.list.theme'
     tags:
       - { name: readiness_checker, category: warning}
+  automatic_updates.php_sapi:
+    class: Drupal\automatic_updates\ReadinessChecker\PhpSapi
+    arguments:
+      - '@state'
+    tags:
+      - { name: readiness_checker, category: warning}
