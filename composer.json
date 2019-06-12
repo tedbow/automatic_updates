@@ -3,7 +3,7 @@
   "type": "drupal-module",
   "description": "Drupal Automatic Updates",
   "keywords": ["Drupal"],
-  "license": "GPL-2.0+",
+  "license": "GPL-2.0-or-later",
   "homepage": "https://www.drupal.org/project/automatic_updates",
   "minimum-stability": "dev",
   "support": {
@@ -13,6 +13,10 @@
   "require": {
     "ext-json": "*",
     "composer/semver": "^1.0",
+    "ocramius/package-versions": "^1.4",
     "webflo/drupal-finder": "^1.1"
+  },
+  "require-dev": {
+    "drupal/ctools": "3.2.0"
   }
 }

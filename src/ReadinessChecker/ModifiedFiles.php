@@ -83,7 +83,7 @@ class ModifiedFiles implements ReadinessCheckerInterface {
   protected function modifiedFilesCheck() {
     $messages = [];
     $extensions = [];
-    $extensions['drupal'] = $this->modules->get('system')->info;
+    $extensions['system'] = $this->modules->get('system')->info;
     foreach ($this->getExtensionsTypes() as $extension_type) {
       foreach ($this->getInfos($extension_type) as $extension_name => $info) {
         if (substr($this->getPath($extension_type, $extension_name), 0, 4) !== 'core') {

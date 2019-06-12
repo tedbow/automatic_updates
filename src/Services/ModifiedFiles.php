@@ -3,6 +3,7 @@
 namespace Drupal\automatic_updates\Services;
 
 use Drupal\automatic_updates\IgnoredPathsTrait;
+use Drupal\automatic_updates\ProjectInfoTrait;
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Url;
 use DrupalFinder\DrupalFinder;
@@ -16,6 +17,7 @@ use Psr\Log\LoggerInterface;
  */
 class ModifiedFiles implements ModifiedFilesInterface {
   use IgnoredPathsTrait;
+  use ProjectInfoTrait;
 
   /**
    * The logger.
@@ -171,43 +173,6 @@ class ModifiedFiles implements ModifiedFilesInterface {
     $hash_name = $this->getHashName($info);
     $uri = ltrim($this->configFactory->get('automatic_updates.settings')->get('download_uri'), '/');
     return Url::fromUri($uri . "/$project_name/$version/$hash_name")->toString();
-  }
-
-  /**
-   * Get the extension version.
-   *
-   * @param string $extension_name
-   *   The extension name.
-   * @param array $info
-   *   The extension's info.
-   *
-   * @return string|null
-   *   The version or NULL if undefined.
-   */
-  protected function getExtensionVersion($extension_name, array $info) {
-    $version = isset($info['version']) ? $info['version'] : NULL;
-    // TODO: consider using ocramius/package-versions to discover the installed
-    // version from composer.lock.
-    // See https://www.drupal.org/project/automatic_updates/issues/3054002
-    return $version;
-  }
-
-  /**
-   * Get the extension's project name.
-   *
-   * @param string $extension_name
-   *   The extension name.
-   * @param array $info
-   *   The extension's info.
-   *
-   * @return string
-   *   The project name or fallback to extension name if project is undefined.
-   */
-  protected function getProjectName($extension_name, array $info) {
-    $project_name = isset($info['project']) ? $info['project'] : $extension_name;
-    // TODO: parse the composer.json for the name if it isn't set in info.
-    // See https://www.drupal.org/project/automatic_updates/issues/3054002.
-    return $project_name;
   }
 
   /**
