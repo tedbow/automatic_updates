@@ -76,7 +76,7 @@ function _automatic_updates_checker_requirements(array &$requirements) {
 }
 
 /**
- * Display requirements from public service announcements.
+ * Display requirements from Public service announcements.
  *
  * @param array $requirements
  *   The requirements array.
@@ -89,7 +89,7 @@ function _automatic_updates_psa_requirements(array &$requirements) {
   $psa = \Drupal::service('automatic_updates.psa');
   $messages = $psa->getPublicServiceMessages();
   $requirements['automatic_updates_psa'] = [
-    'title' => t('<a href="@link">Drupal public service announcements</a>', ['@link' => 'https://www.drupal.org/docs/8/update/automatic-updates#psas']),
+    'title' => t('<a href="@link">Public service announcements</a>', ['@link' => 'https://www.drupal.org/docs/8/update/automatic-updates#psas']),
     'severity' => REQUIREMENT_OK,
     'value' => t('No announcements requiring attention.'),
   ];

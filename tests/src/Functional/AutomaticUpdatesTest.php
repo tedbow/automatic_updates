@@ -51,15 +51,16 @@ class AutomaticUpdatesTest extends BrowserTestBase {
       ->set('psa_endpoint', $end_point)
       ->save();
     $this->drupalGet(Url::fromRoute('system.admin'));
-    $this->assertSession()->pageTextContains('Critical Release - PSA-2019-02-19');
-    $this->assertSession()->pageTextNotContains('Critical Release - PSA-Really Old');
-    $this->assertSession()->pageTextNotContains('Node - Moderately critical - Access bypass - SA-CONTRIB-2019');
+    $this->assertSession()->pageTextContains('Critical Release - SA-2019-02-19');
+    $this->assertSession()->pageTextContains('Critical Release - PSA-Really Old');
     $this->assertSession()->pageTextContains('Seven - Moderately critical - Access bypass - SA-CONTRIB-2019');
     $this->assertSession()->pageTextContains('Standard - Moderately critical - Access bypass - SA-CONTRIB-2019');
+    $this->assertSession()->pageTextNotContains('Node - Moderately critical - Access bypass - SA-CONTRIB-2019');
+    $this->assertSession()->pageTextNotContains('Views - Moderately critical - Access bypass - SA-CONTRIB-2019');
 
     // Test site status report.
     $this->drupalGet(Url::fromRoute('system.status'));
-    $this->assertSession()->pageTextContains('3 urgent announcements require your attention:');
+    $this->assertSession()->pageTextContains('4 urgent announcements require your attention:');
 
     // Test cache.
     $end_point = $this->buildUrl(Url::fromRoute('test_automatic_updates.json_test_denied_controller'));
@@ -67,7 +68,7 @@ class AutomaticUpdatesTest extends BrowserTestBase {
       ->set('psa_endpoint', $end_point)
       ->save();
     $this->drupalGet(Url::fromRoute('system.admin'));
-    $this->assertSession()->pageTextContains('Critical Release - PSA-2019-02-19');
+    $this->assertSession()->pageTextContains('Critical Release - SA-2019-02-19');
 
     // Test transmit errors with JSON endpoint.
     drupal_flush_all_caches();

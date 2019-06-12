@@ -35,7 +35,7 @@ function automatic_updates_page_top(array &$page_top) {
     $psa = \Drupal::service('automatic_updates.psa');
     $messages = $psa->getPublicServiceMessages();
     if ($messages) {
-      \Drupal::messenger()->addError(t('Drupal public service announcements:'));
+      \Drupal::messenger()->addError(t('Public service announcements:'));
       foreach ($messages as $message) {
         \Drupal::messenger()->addError($message);
       }

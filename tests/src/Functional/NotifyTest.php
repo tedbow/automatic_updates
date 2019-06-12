@@ -60,14 +60,14 @@ class NotifyTest extends BrowserTestBase {
   public function testSendMail() {
     // Test PSAs on admin pages.
     $this->drupalGet(Url::fromRoute('system.admin'));
-    $this->assertSession()->pageTextContains('Critical Release - PSA-2019-02-19');
+    $this->assertSession()->pageTextContains('Critical Release - SA-2019-02-19');
 
     // Email should be sent.
     $notify = $this->container->get('automatic_updates.psa_notify');
     $notify->send();
     $this->assertCount(1, $this->getMails());
-    $this->assertMailString('subject', '3 urgent Drupal announcements require your attention', 1);
-    $this->assertMailString('body', 'Critical Release - PSA-2019-02-19', 1);
+    $this->assertMailString('subject', '4 urgent Drupal announcements require your attention', 1);
+    $this->assertMailString('body', 'Critical Release - SA-2019-02-19', 1);
 
     // No email should be sent if PSA's are disabled.
     $this->container->get('state')->set('system.test_mail_collector', []);

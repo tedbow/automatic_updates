@@ -21,12 +21,13 @@
     See the <a href="{{ status_report }}">site status report page</a> for more information.
   {% endtrans %}
 </p>
-<p>{{ 'Drupal public service announcements:'|t }}</p>
+<p>{{ 'Public service announcements:'|t }}</p>
 <ul>
   {% for message in messages %}
     <li>{{ message }}</li>
   {% endfor %}
 </ul>
+<p>To see all PSAs, visit <a href="https://www.drupal.org/security/psa" target="_blank">https://www.drupal.org/security/psa</a>.</p>
 <p>
   {% set settings_link = path('automatic_updates.settings') %}
   {% trans %}

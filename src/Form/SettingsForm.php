@@ -71,12 +71,12 @@ class SettingsForm extends ConfigFormBase {
     ];
     $form['enable_psa'] = [
       '#type' => 'checkbox',
-      '#title' => $this->t('Show public service announcements on administrative pages.'),
+      '#title' => $this->t('Show Public service announcements on administrative pages.'),
       '#default_value' => $config->get('enable_psa'),
     ];
     $form['notify'] = [
       '#type' => 'checkbox',
-      '#title' => $this->t('Send email notifications for public service announcements.'),
+      '#title' => $this->t('Send email notifications for Public service announcements.'),
       '#default_value' => $config->get('notify'),
       '#description' => $this->t('The email addresses listed in <a href="@update_manager">update manager settings</a> will be notified.', ['@update_manager' => Url::fromRoute('update.settings')->toString()]),
     ];
