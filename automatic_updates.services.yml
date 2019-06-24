@@ -97,3 +97,14 @@ services:
       - '@state'
     tags:
       - { name: readiness_checker, category: warning}
+  automatic_updates.cron_frequency:
+    class: Drupal\automatic_updates\ReadinessChecker\CronFrequency
+    arguments:
+      - '@config.factory'
+      - '@module_handler'
+    tags:
+      - { name: readiness_checker, category: warning}
+  automatic_updates.cron_override:
+    class: Drupal\automatic_updates\EventSubscriber\CronOverride
+    tags:
+      - { name: config.factory.override }
