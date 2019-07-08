@@ -37,6 +37,7 @@ class PhpSapi implements ReadinessCheckerInterface {
     if ($php_sapi !== PHP_SAPI) {
       $messages[] = $this->t('PHP changed from running as "@previous" to "@current". This can lead to inconsistent and misleading results.', ['@previous' => $php_sapi, '@current' => PHP_SAPI]);
     }
+    $this->state->set('automatic_updates.php_sapi', PHP_SAPI);
     return $messages;
   }
 
