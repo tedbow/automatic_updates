@@ -136,7 +136,7 @@ class AutomaticUpdatesPsa implements AutomaticUpdatesPsaInterface {
 
     try {
       $json_payload = json_decode($response);
-      if ($json_payload) {
+      if (!is_null($json_payload)) {
         foreach ($json_payload as $json) {
           if ($json->is_psa && ($json->type === 'core' || $this->isValidExtension($json->type, $json->project))) {
             $messages[] = $this->message($json->title, $json->link);
