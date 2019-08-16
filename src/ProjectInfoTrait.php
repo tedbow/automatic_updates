@@ -10,19 +10,63 @@ use PackageVersions\Versions;
 trait ProjectInfoTrait {
 
   /**
+   * Get extension list.
+   *
+   * @param string $extension_type
+   *   The extension type.
+   *
+   * @return \Drupal\Core\Extension\ExtensionList
+   *   The extension list service.
+   */
+  protected function getExtensionList($extension_type) {
+    if (isset($this->{$extension_type})) {
+      $list = $this->{$extension_type};
+    }
+    else {
+      $list = \Drupal::service("extension.list.$extension_type");
+    }
+    return $list;
+  }
+
+  /**
+   * Returns an array of info files information of available extensions.
+   *
+   * @param string $extension_type
+   *   The extension type.
+   *
+   * @return array
+   *   An associative array of extension information arrays, keyed by extension
+   *   name.
+   */
+  protected function getInfos($extension_type) {
+    $file_paths = $this->getExtensionList($extension_type)->getPathnames();
+    $infos = $this->getExtensionList($extension_type)->getAllAvailableInfo();
+    return array_map(function ($key, array $info) use ($file_paths) {
+      $info['packaged'] = $info['project'] ?? FALSE;
+      $info['project'] = $this->getProjectName($key, $info);
+      $info['install path'] = $file_paths[$key] ? dirname($file_paths[$key]) : '';
+      $info['version'] = $this->getExtensionVersion($info);
+      return $info;
+    }, array_keys($infos), $infos);
+  }
+
+  /**
    * Get the extension version.
    *
-   * @param string $extension_name
-   *   The extension name.
    * @param array $info
    *   The extension's info.
    *
    * @return string|null
    *   The version or NULL if undefined.
    */
-  protected function getExtensionVersion($extension_name, array $info) {
+  protected function getExtensionVersion(array $info) {
+    $extension_name = $info['project'];
     if (isset($info['version']) && strpos($info['version'], '-dev') === FALSE) {
       return $info['version'];
+    }
+    // Handle experimental modules from core.
+    if (substr($info['install path'], 0, 4) === "core") {
+      return $this->getExtensionList('module')->get('system')->info['version'];
     }
     $composer_json = $this->getComposerJson($extension_name, $info);
     $extension_name = isset($composer_json['name']) ? $composer_json['name'] : $extension_name;
@@ -58,6 +102,9 @@ trait ProjectInfoTrait {
       if (isset($composer_json['name'])) {
         $project_name = $this->getSuffix($composer_json['name'], '/', $extension_name);
       }
+    }
+    if ($project_name === 'system') {
+      $project_name = 'drupal';
     }
     return $project_name;
   }

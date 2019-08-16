@@ -2,6 +2,7 @@
 
 namespace Drupal\automatic_updates\ReadinessChecker;
 
+use Drupal\automatic_updates\ProjectInfoTrait;
 use Drupal\automatic_updates\Services\ModifiedFilesInterface;
 use Drupal\Core\Extension\ExtensionList;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
@@ -11,6 +12,7 @@ use Drupal\Core\StringTranslation\StringTranslationTrait;
  */
 class ModifiedFiles implements ReadinessCheckerInterface {
   use StringTranslationTrait;
+  use ProjectInfoTrait;
 
   /**
    * The modified files service.
@@ -24,21 +26,21 @@ class ModifiedFiles implements ReadinessCheckerInterface {
    *
    * @var \Drupal\Core\Extension\ExtensionList
    */
-  protected $modules;
+  protected $module;
 
   /**
    * The profile extension list.
    *
    * @var \Drupal\Core\Extension\ExtensionList
    */
-  protected $profiles;
+  protected $profile;
 
   /**
    * The theme extension list.
    *
    * @var \Drupal\Core\Extension\ExtensionList
    */
-  protected $themes;
+  protected $theme;
 
   /**
    * An array of array of strings of extension paths.
@@ -83,11 +85,10 @@ class ModifiedFiles implements ReadinessCheckerInterface {
   protected function modifiedFilesCheck() {
     $messages = [];
     $extensions = [];
-    $extensions['system'] = $this->modules->get('system')->info;
     foreach ($this->getExtensionsTypes() as $extension_type) {
-      foreach ($this->getInfos($extension_type) as $extension_name => $info) {
-        if (substr($this->getPath($extension_type, $extension_name), 0, 4) !== 'core') {
-          $extensions[$extension_name] = $info;
+      foreach ($this->getInfos($extension_type) as $info) {
+        if (substr($info['install path'], 0, 4) !== 'core' || $info['project'] === 'drupal') {
+          $extensions[$info['project']] = $info;
         }
       }
     }
@@ -104,39 +105,7 @@ class ModifiedFiles implements ReadinessCheckerInterface {
    *   The extension types.
    */
   protected function getExtensionsTypes() {
-    return ['modules', 'profiles', 'themes'];
-  }
-
-  /**
-   * Returns an array of info files information of available extensions.
-   *
-   * @param string $extension_type
-   *   The extension type.
-   *
-   * @return array
-   *   An associative array of extension information arrays, keyed by extension
-   *   name.
-   */
-  protected function getInfos($extension_type) {
-    return $this->{$extension_type}->getAllAvailableInfo();
-  }
-
-  /**
-   * Returns an extension file path.
-   *
-   * @param string $extension_type
-   *   The extension type.
-   * @param string $extension_name
-   *   The extension name.
-   *
-   * @return string
-   *   An extension file path or NULL if it does not exist.
-   */
-  protected function getPath($extension_type, $extension_name) {
-    if (!isset($this->paths[$extension_type])) {
-      $this->paths[$extension_type] = $this->{$extension_type}->getPathnames();
-    }
-    return isset($this->paths[$extension_type][$extension_name]) ? $this->paths[$extension_type][$extension_name] : NULL;
+    return ['module', 'profile', 'theme'];
   }
 
 }

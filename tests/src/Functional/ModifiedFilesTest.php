@@ -33,14 +33,33 @@ class ModifiedFilesTest extends BrowserTestBase {
       $this->container->get('config.factory')
     );
     $this->initHashesEndpoint($modified_files, 'core', '8.7.0');
-    $files = $modified_files->getModifiedFiles(['system' => []]);
+    $extensions = $modified_files->getInfos('module');
+    $extensions = array_filter($extensions, function (array $extension) {
+      return $extension['project'] === 'drupal';
+    });
+    $files = $modified_files->getModifiedFiles($extensions);
     $this->assertEmpty($files);
 
     // Hash doesn't match i.e. modified code, including contrib logic.
     $this->initHashesEndpoint($modified_files, 'core', '8.0.0');
-    $files = $modified_files->getModifiedFiles(['system' => []]);
+    $files = $modified_files->getModifiedFiles($extensions);
     $this->assertCount(1, $files);
     $this->assertStringEndsWith('core/LICENSE.txt', $files[0]);
+
+    // Test contrib hash matches.
+    $extensions = $modified_files->getInfos('module');
+    $extensions = array_filter($extensions, function (array $extension) {
+      return $extension['name'] === 'Chaos Tools';
+    });
+    $this->initHashesEndpoint($modified_files, 'ctools', '3.2');
+    $files = $modified_files->getModifiedFiles($extensions);
+    $this->assertEmpty($files);
+
+    // Test contrib doesn't match.
+    $this->initHashesEndpoint($modified_files, 'ctools', '3.1');
+    $files = $modified_files->getModifiedFiles($extensions);
+    $this->assertCount(1, $files);
+    $this->assertStringEndsWith('contrib/ctools/LICENSE.txt', $files[0]);
   }
 
   /**
@@ -77,8 +96,17 @@ class TestModifiedFiles extends ModifiedFiles {
   /**
    * {@inheritdoc}
    */
-  protected function buildUrl($extension_name, array $info) {
+  protected function buildUrl(array $info) {
     return $this->endpoint;
   }
+
+  // @codingStandardsIgnoreStart
+  /**
+   * {@inheritdoc}
+   */
+  public function getInfos($extension_type) {
+    return parent::getInfos($extension_type);
+  }
+  // codingStandardsIgnoreEnd
 
 }

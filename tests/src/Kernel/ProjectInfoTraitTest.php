@@ -25,8 +25,9 @@ class ProjectInfoTraitTest extends KernelTestBase {
    */
   public function testTrait($expected, $info, $extension_name) {
     $class = new ProjectInfoTestClass();
-    $this->assertSame($expected['version'], $class->getExtensionVersion($extension_name, $info));
-    $this->assertSame($expected['project'], $class->getProjectName($extension_name, $info));
+    $project_name = $class->getProjectName($extension_name, $info);
+    $this->assertSame($expected['project'], $project_name);
+    $this->assertSame($expected['version'], $class->getExtensionVersion($info + ['project' => $project_name]));
   }
 
   /**
@@ -47,6 +48,7 @@ class ProjectInfoTraitTest extends KernelTestBase {
       'core' => '8.x',
       'configure' => 'entity.node_type.collection',
       'dependencies' => ['drupal:text'],
+      'install path' => '',
     ];
     $infos['node']['extension_name'] = 'node';
 
@@ -62,6 +64,7 @@ class ProjectInfoTraitTest extends KernelTestBase {
       'core' => '8.x',
       'configure' => 'update.settings',
       'dependencies' => ['file'],
+      'install path' => '',
     ];
     $infos['update']['extension_name'] = 'drupal/update';
 
@@ -80,6 +83,7 @@ class ProjectInfoTraitTest extends KernelTestBase {
       'required' => 'true',
       'configure' => 'system.admin_config_system',
       'dependencies' => [],
+      'install path' => '',
     ];
     $infos['system']['extension_name'] = 'system';
 
@@ -95,6 +99,7 @@ class ProjectInfoTraitTest extends KernelTestBase {
       'core' => '8.x',
       'configure' => 'automatic_updates.settings',
       'dependencies' => ['system', 'update'],
+      'install path' => '',
     ];
     $infos['automatic_updates']['extension_name'] = 'automatic_updates';
 
@@ -111,6 +116,7 @@ class ProjectInfoTraitTest extends KernelTestBase {
       'package' => 'Core',
       'core' => '8.x',
       'dependencies' => ['system'],
+      'install path' => '',
     ];
     $infos['ctools']['extension_name'] = 'ctools';
 
@@ -132,8 +138,8 @@ class ProjectInfoTestClass {
   /**
    * {@inheritdoc}
    */
-  public function getExtensionVersion($extension_name, array $info) {
-    return $this->getVersion($extension_name, $info);
+  public function getExtensionVersion(array $info) {
+    return $this->getVersion($info);
   }
 
   /**

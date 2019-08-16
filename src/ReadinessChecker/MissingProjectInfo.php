@@ -72,12 +72,12 @@ class MissingProjectInfo extends Filesystem {
   protected function missingProjectInfoCheck() {
     $messages = [];
     foreach ($this->getExtensionsTypes() as $extension_type) {
-      foreach ($this->getInfos($extension_type) as $extension_name => $info) {
-        if ($this->isIgnoredPath(drupal_get_path($info['type'], $extension_name))) {
+      foreach ($this->getInfos($extension_type) as $info) {
+        if ($this->isIgnoredPath($info['install path'])) {
           continue;
         }
-        if (!$this->getExtensionVersion($extension_name, $info)) {
-          $messages[] = $this->t('The project "@extension" can not be updated because its version is either undefined or a dev release.', ['@extension' => $extension_name]);
+        if (!$info['version']) {
+          $messages[] = $this->t('The project "@extension" can not be updated because its version is either undefined or a dev release.', ['@extension' => $info['name']]);
         }
       }
     }
@@ -92,20 +92,6 @@ class MissingProjectInfo extends Filesystem {
    */
   protected function getExtensionsTypes() {
     return ['modules', 'profiles', 'themes'];
-  }
-
-  /**
-   * Returns an array of info files information of available extensions.
-   *
-   * @param string $extension_type
-   *   The extension type.
-   *
-   * @return array
-   *   An associative array of extension information arrays, keyed by extension
-   *   name.
-   */
-  protected function getInfos($extension_type) {
-    return $this->{$extension_type}->getAllAvailableInfo();
   }
 
 }

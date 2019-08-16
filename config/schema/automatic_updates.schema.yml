@@ -17,9 +17,9 @@ automatic_updates.settings:
     enable_readiness_checks:
       type: boolean
       label: 'Enable readiness checks'
-    download_uri:
+    hashes_uri:
       type: string
-      label: 'Endpoint URI for file hashes and quasi patch files'
+      label: 'Endpoint URI for file hashes'
     ignored_paths:
       type: string
       label: 'List of files paths to ignore when running readiness checks'

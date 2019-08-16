@@ -3,5 +3,5 @@ enable_psa: true
 notify: true
 check_frequency: 43200
 enable_readiness_checks: true
-download_uri: 'https://ftp.drupal.org/files/projects'
+hashes_uri: 'https://updates.drupal.org/release-hashes'
 ignored_paths: "modules/custom/*\nthemes/custom/*\nprofiles/custom/*"

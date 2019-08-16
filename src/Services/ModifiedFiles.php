@@ -72,6 +72,7 @@ class ModifiedFiles implements ModifiedFilesInterface {
    */
   public function getModifiedFiles(array $extensions = []) {
     $modified_files = [];
+    /** @var \GuzzleHttp\Promise\PromiseInterface[] $promises */
     $promises = $this->getHashRequests($extensions);
     // Wait until all the requests are finished.
     (new EachPromise($promises, [
@@ -86,13 +87,16 @@ class ModifiedFiles implements ModifiedFilesInterface {
   /**
    * Process checking hashes of files from external URL.
    *
-   * @param resource $resource
-   *   A resource handle.
+   * @param array $resource
+   *   An array of response resource and project info.
    * @param array $modified_files
    *   The list of modified files.
    */
-  protected function processHashes($resource, array &$modified_files) {
-    while (($line = fgets($resource)) !== FALSE) {
+  protected function processHashes(array $resource, array &$modified_files) {
+    $response = $resource['response'];
+    $info = $resource['info'];
+    $file_root = $info['install path'];
+    while (($line = fgets($response)) !== FALSE) {
       list($hash, $file) = preg_split('/\s+/', $line, 2);
       $file = trim($file);
       // If the line is empty, proceed to the next line.
@@ -107,15 +111,18 @@ class ModifiedFiles implements ModifiedFilesInterface {
       if ($this->isIgnoredPath($file)) {
         continue;
       }
-      $file_path = $this->drupalFinder->getDrupalRoot() . DIRECTORY_SEPARATOR . $file;
+      if ($info['project'] === 'drupal') {
+        $file_root = $this->drupalFinder->getDrupalRoot();
+      }
+      $file_path = $file_root . DIRECTORY_SEPARATOR . $file;
       if (!file_exists($file_path) || hash_file('sha512', $file_path) !== $hash) {
         $modified_files[] = $file_path;
       }
     }
-    if (!feof($resource)) {
+    if (!feof($response)) {
       $this->logger->error('Stream for resource closed prematurely.');
     }
-    fclose($resource);
+    fclose($response);
   }
 
   /**
@@ -131,9 +138,9 @@ class ModifiedFiles implements ModifiedFilesInterface {
    * @@codingStandardsIgnoreEnd
    */
   protected function getHashRequests(array $extensions) {
-    foreach ($extensions as $extension_name => $info) {
-      $url = $this->buildUrl($extension_name, $info);
-      yield $this->getPromise($url);
+    foreach ($extensions as $info) {
+      $url = $this->buildUrl($info);
+      yield $this->getPromise($url, $info);
     }
   }
 
@@ -142,36 +149,39 @@ class ModifiedFiles implements ModifiedFilesInterface {
    *
    * @param string $url
    *   The URL.
+   * @param array $info
+   *   The extension's info.
    *
    * @return \GuzzleHttp\Promise\PromiseInterface
    *   The promise.
    */
-  protected function getPromise($url) {
+  protected function getPromise($url, array $info) {
     return $this->httpClient->requestAsync('GET', $url, [
       'stream' => TRUE,
       'read_timeout' => 30,
     ])
-      ->then(function (ResponseInterface $response) {
-        return $response->getBody()->detach();
+      ->then(function (ResponseInterface $response) use ($info) {
+        return [
+          'response' => $response->getBody()->detach(),
+          'info' => $info,
+        ];
       });
   }
 
   /**
    * Build an extension's hash file URL.
    *
-   * @param string $extension_name
-   *   The extension name.
    * @param array $info
    *   The extension's info.
    *
    * @return string
    *   The URL endpoint with for an extension.
    */
-  protected function buildUrl($extension_name, array $info) {
-    $version = $this->getExtensionVersion($extension_name, $info);
-    $project_name = $this->getProjectName($extension_name, $info);
+  protected function buildUrl(array $info) {
+    $version = $info['version'];
+    $project_name = $info['project'];
     $hash_name = $this->getHashName($info);
-    $uri = ltrim($this->configFactory->get('automatic_updates.settings')->get('download_uri'), '/');
+    $uri = ltrim($this->configFactory->get('automatic_updates.settings')->get('hashes_uri'), '/');
     return Url::fromUri($uri . "/$project_name/$version/$hash_name")->toString();
   }
 
@@ -185,11 +195,11 @@ class ModifiedFiles implements ModifiedFilesInterface {
    *   The hash name.
    */
   protected function getHashName(array $info) {
-    $hash_name = 'SHA512SUMS';
-    if (isset($info['project'])) {
-      $hash_name .= '-package';
+    $hash_name = 'contents-sha512sums';
+    if ($info['packaged']) {
+      $hash_name .= '-packaged';
     }
-    return $hash_name;
+    return $hash_name . '.txt';
   }
 
 }
