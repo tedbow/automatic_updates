@@ -193,13 +193,19 @@ class AutomaticUpdatesPsa implements AutomaticUpdatesPsaInterface {
   protected function contribParser(array &$messages, $json) {
     $extension_version = $this->{$json->type}->getAllAvailableInfo()[$json->project]['version'];
     $json->insecure = array_filter(array_map(function ($version) {
-      if (substr($version, 0, 4) === \Drupal::CORE_COMPATIBILITY . '-') {
-        return substr($version, 4);
+      $version_array = explode('-', $version, 2);
+      if ($version_array && $version_array[0] === \Drupal::CORE_COMPATIBILITY) {
+        return isset($version_array[1]) ? $version_array[1] : NULL;
+      }
+      elseif (count($version_array) === 1) {
+        return $version_array[0];
+      }
+      elseif (count($version_array) === 2 && $version_array[1] === 'dev') {
+        return $version;
       }
     }, $json->insecure));
-    if (substr($extension_version, 0, 4) === \Drupal::CORE_COMPATIBILITY . '-') {
-      $extension_version = substr($extension_version, 4);
-    }
+    $version_array = explode('-', $extension_version, 2);
+    $extension_version = isset($version_array[1]) && $version_array[1] !== 'dev' ? $version_array[1] : $extension_version;
     $this->parseConstraints($messages, $json, $extension_version);
   }
 
