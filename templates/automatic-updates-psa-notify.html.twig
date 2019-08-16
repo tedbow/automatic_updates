@@ -1,7 +1,7 @@
 {#
 /**
  * @file
- * Template for the public service annoucements email notification.
+ * Template for the public service announcements email notification.
  *
  * Available variables:
  * - messages: The messages array
@@ -27,7 +27,9 @@
     <li>{{ message }}</li>
   {% endfor %}
 </ul>
-<p>To see all PSAs, visit <a href="https://www.drupal.org/security/psa" target="_blank">https://www.drupal.org/security/psa</a>.</p>
+<p>
+  {{ 'To see all PSAs, visit <a href="@uri">@uri</a>.'|t({'@uri': 'https://www.drupal.org/security/psa'}) }}
+</p>
 <p>
   {% set settings_link = path('automatic_updates.settings') %}
   {% trans %}

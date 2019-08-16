@@ -109,6 +109,10 @@ class Notify implements NotifyInterface {
    * {@inheritdoc}
    */
   public function send() {
+    // Don't send mail if notifications are disabled.
+    if (!$this->configFactory->get('automatic_updates.settings')->get('notify')) {
+      return;
+    }
     $messages = $this->automaticUpdatesPsa->getPublicServiceMessages();
     if (!$messages) {
       return;
