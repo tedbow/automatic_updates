@@ -1,6 +1,6 @@
 <?php
 
-namespace Drupal\Tests\automatic_updates\Kernel;
+namespace Drupal\Tests\automatic_updates\Kernel\ReadinessChecker;
 
 use Drupal\automatic_updates\ReadinessChecker\ModifiedFiles;
 use Drupal\automatic_updates\Services\ModifiedFilesInterface;
