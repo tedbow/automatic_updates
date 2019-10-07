@@ -23,3 +23,6 @@ automatic_updates.settings:
     ignored_paths:
       type: string
       label: 'List of files paths to ignore when running readiness checks'
+    download_uri:
+      type: string
+      label: 'URI for downloading in-place update assets'

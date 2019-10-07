@@ -4,19 +4,23 @@ build:
   assessment:
     validate_codebase:
       phplint:
-      container_composer:
       phpcs:
         # phpcs will use core's specified version of Coder.
         sniff-all-files: true
         halt-on-fail: true
     testing:
       container_command:
-        commands: "cd ${SOURCE_DIR} && sudo -u www-data composer require drupal/ctools:3.2.0 --prefer-source --optimize-autoloader"
+        commands:
+          - cd ${SOURCE_DIR} && sudo -u www-data composer require drupal/ctools:3.2.0 --prefer-source --optimize-autoloader
+          - cd ${SOURCE_DIR} && sudo -u www-data curl https://www.drupal.org/files/issues/2019-10-07/3085728.patch | git apply -
+          - cd ${SOURCE_DIR} && sudo -u www-data curl https://www.drupal.org/files/issues/2019-10-07/3086373.patch | git apply -
+
       # run_tests task is executed several times in order of performance speeds.
       # halt-on-fail can be set on the run_tests tasks in order to fail fast.
       # suppress-deprecations is false in order to be alerted to usages of
       # deprecated code.
       run_tests.standard:
-        types: 'Simpletest,PHPUnit-Unit,PHPUnit-Kernel,PHPUnit-Functional'
+        types: 'PHPUnit-Unit,PHPUnit-Kernel,PHPUnit-Functional,PHPUnit-Build'
         testgroups: '--all'
         suppress-deprecations: false
+        halt-on-fail: false

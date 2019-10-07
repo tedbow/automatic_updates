@@ -1,0 +1,5 @@
+services:
+  test_automatic_updates.route_subscriber:
+    class: Drupal\test_automatic_updates\EventSubscriber\DisableThemeCsrfRouteSubscriber
+    tags:
+      - { name: event_subscriber }

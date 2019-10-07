@@ -12,9 +12,10 @@
   },
   "require": {
     "ext-json": "*",
+    "ext-zip": "*",
     "composer/semver": "^1.0",
     "ocramius/package-versions": "^1.4",
-    "webflo/drupal-finder": "^1.1"
+    "webflo/drupal-finder": "^1.2"
   },
   "require-dev": {
     "drupal/ctools": "3.2.0"

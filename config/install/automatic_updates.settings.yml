@@ -5,3 +5,4 @@ check_frequency: 43200
 enable_readiness_checks: true
 hashes_uri: 'https://updates.drupal.org/release-hashes'
 ignored_paths: "modules/custom/*\nthemes/custom/*\nprofiles/custom/*"
+download_uri: 'https://www.drupal.org/in-place-updates'

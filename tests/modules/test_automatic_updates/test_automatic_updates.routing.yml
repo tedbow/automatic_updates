@@ -19,3 +19,12 @@ test_automatic_updates.hashes_endpoint:
     _title: 'SHA512SUMS'
   requirements:
     _access: 'TRUE'
+test_automatic_updates.inplace-update:
+  path: '/automatic_updates/in-place-update/{project}/{type}/{from}/{to}'
+  defaults:
+    _title: 'Update'
+    _controller: '\Drupal\test_automatic_updates\Controller\InPlaceUpdateController::update'
+  requirements:
+    _access: 'TRUE'
+  options:
+    no_cache: 'TRUE'

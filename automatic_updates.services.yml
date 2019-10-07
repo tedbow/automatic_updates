@@ -108,3 +108,12 @@ services:
     class: Drupal\automatic_updates\EventSubscriber\CronOverride
     tags:
       - { name: config.factory.override }
+  automatic_updates.update:
+    class: Drupal\automatic_updates\Services\InPlaceUpdate
+    arguments:
+      - '@logger.channel.automatic_updates'
+      - '@plugin.manager.archiver'
+      - '@config.factory'
+      - '@file_system'
+      - '@http_client'
+      - '@automatic_updates.drupal_finder'
