@@ -74,13 +74,13 @@ class ModifiedFiles implements ModifiedFilesInterface {
    * {@inheritdoc}
    */
   public function getModifiedFiles(array $extensions = []) {
-    $modified_files = [];
+    $modified_files = new \ArrayIterator();
     /** @var \GuzzleHttp\Promise\PromiseInterface[] $promises */
     $promises = $this->getHashRequests($extensions);
     // Wait until all the requests are finished.
     (new EachPromise($promises, [
       'concurrency' => 4,
-      'fulfilled' => function ($resource) use (&$modified_files) {
+      'fulfilled' => function ($resource) use ($modified_files) {
         $this->processHashes($resource, $modified_files);
       },
     ]))->promise()->wait();
@@ -92,10 +92,10 @@ class ModifiedFiles implements ModifiedFilesInterface {
    *
    * @param array $resource
    *   An array of http response and project info.
-   * @param array $modified_files
+   * @param \ArrayIterator $modified_files
    *   The list of modified files.
    */
-  protected function processHashes(array $resource, array &$modified_files) {
+  protected function processHashes(array $resource, \ArrayIterator $modified_files) {
     $contents = $resource['contents'];
     $info = $resource['info'];
     $directory_root = $info['install path'];
@@ -112,16 +112,13 @@ class ModifiedFiles implements ModifiedFilesInterface {
         $directory_root,
         $failed_checksum->filename,
       ]));
-      if ($this->isIgnoredPath($file_path)) {
-        continue;
-      }
       if (!file_exists($file_path)) {
-        $modified_files[] = $file_path;
+        $modified_files->append($file_path);
         continue;
       }
       $actual_hash = @hash_file(strtolower($failed_checksum->algorithm), $file_path);
       if ($actual_hash === FALSE || empty($actual_hash) || strlen($actual_hash) < 64 || strcmp($actual_hash, $failed_checksum->hex_hash) !== 0) {
-        $modified_files[] = $file_path;
+        $modified_files->append($file_path);
       }
     }
   }

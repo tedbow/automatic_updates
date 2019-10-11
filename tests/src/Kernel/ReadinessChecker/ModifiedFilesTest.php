@@ -28,7 +28,7 @@ class ModifiedFilesTest extends KernelTestBase {
   public function testModifiedFiles() {
     /** @var \Prophecy\Prophecy\ObjectProphecy|\Drupal\automatic_updates\Services\ModifiedFilesInterface $service */
     $service = $this->prophesize(ModifiedFilesInterface::class);
-    $service->getModifiedFiles(Argument::type('array'))->willReturn([]);
+    $service->getModifiedFiles(Argument::type('array'))->willReturn(new \ArrayIterator());
     $modules = $this->container->get('extension.list.module');
     $profiles = $this->container->get('extension.list.profile');
     $themes = $this->container->get('extension.list.theme');
@@ -44,7 +44,7 @@ class ModifiedFilesTest extends KernelTestBase {
     $this->assertEmpty($messages);
 
     // Hash doesn't match i.e. modified code.
-    $service->getModifiedFiles(Argument::type('array'))->willReturn(['core/LICENSE.txt']);
+    $service->getModifiedFiles(Argument::type('array'))->willReturn(new \ArrayIterator(['core/LICENSE.txt']));
     $messages = $modified_files->run();
     $this->assertCount(1, $messages);
   }

@@ -114,7 +114,6 @@ class ModifiedFilesTest extends QuickStartTestBase {
    *   The modified files to assert.
    */
   protected function assertModifications($project_type, $project, array $modifications) {
-    $this->destroyBuild = FALSE;
     $this->symfonyFileSystem->chmod($this->getWorkspaceDirectory() . '/sites/default', 0700, 0000);
     $this->executeCommand('COMPOSER_DISCARD_CHANGES=true composer install --no-dev --no-interaction');
     $this->assertErrorOutputContains('Generating autoload files');

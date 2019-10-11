@@ -61,7 +61,7 @@ class InPlaceUpdateTest extends QuickStartTestBase {
     $fs->chmod($this->getWorkspaceDirectory() . '/sites/default', 0700, 0000);
     $this->executeCommand('COMPOSER_DISCARD_CHANGES=true composer install --no-dev --no-interaction');
     $this->assertErrorOutputContains('Generating autoload files');
-    $this->executeCommand('COMPOSER_DISCARD_CHANGES=true composer require ocramius/package-versions:^1.4 webflo/drupal-finder:^1.1 composer/semver:^1.0 --no-interaction');
+    $this->executeCommand('COMPOSER_DISCARD_CHANGES=true composer require ocramius/package-versions:^1.4 webflo/drupal-finder:^1.1 composer/semver:^1.0 drupal/php-signify:^1.0@dev --no-interaction');
     $this->assertErrorOutputContains('Generating autoload files');
     $this->installQuickStart('minimal');
 
@@ -120,7 +120,7 @@ class InPlaceUpdateTest extends QuickStartTestBase {
     $fs->chmod($this->getWorkspaceDirectory() . '/sites/default', 0700, 0000);
     $this->executeCommand('COMPOSER_DISCARD_CHANGES=true composer install --no-dev --no-interaction');
     $this->assertErrorOutputContains('Generating autoload files');
-    $this->executeCommand('COMPOSER_DISCARD_CHANGES=true composer require ocramius/package-versions:^1.4 webflo/drupal-finder:^1.1 composer/semver:^1.0 --no-interaction');
+    $this->executeCommand('COMPOSER_DISCARD_CHANGES=true composer require ocramius/package-versions:^1.4 webflo/drupal-finder:^1.1 composer/semver:^1.0 drupal/php-signify:^1.0@dev --no-interaction');
     $this->assertErrorOutputContains('Generating autoload files');
     $this->installQuickStart('standard');
 

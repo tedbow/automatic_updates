@@ -2,6 +2,7 @@
 
 namespace Drupal\test_automatic_updates\Controller;
 
+use Drupal\automatic_updates\IgnoredPathsIteratorFilter;
 use Drupal\automatic_updates\ProjectInfoTrait;
 use Drupal\automatic_updates\Services\ModifiedFilesInterface;
 use Drupal\Core\Controller\ControllerBase;
@@ -68,9 +69,9 @@ class ModifiedFilesController extends ControllerBase {
     }
 
     $response = Response::create('No modified files!');
-    $messages = $this->modifiedFiles->getModifiedFiles($extensions);
-    if (!empty($messages)) {
-      $response->setContent('Modified files include: ' . implode(', ', $messages));
+    $filtered_modified_files = new IgnoredPathsIteratorFilter($this->modifiedFiles->getModifiedFiles($extensions));
+    if (iterator_count($filtered_modified_files)) {
+      $response->setContent('Modified files include: ' . implode(', ', iterator_to_array($filtered_modified_files)));
     }
     return $response;
   }

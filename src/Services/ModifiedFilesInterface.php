@@ -14,7 +14,7 @@ interface ModifiedFilesInterface {
    *   The list of extensions, keyed by extension name with values an info
    *   array.
    *
-   * @return array
+   * @return \Iterator
    *   The modified files.
    */
   public function getModifiedFiles(array $extensions = []);

@@ -2,6 +2,7 @@
 
 namespace Drupal\automatic_updates\ReadinessChecker;
 
+use Drupal\automatic_updates\IgnoredPathsIteratorFilter;
 use Drupal\automatic_updates\ProjectInfoTrait;
 use Drupal\automatic_updates\Services\ModifiedFilesInterface;
 use Drupal\Core\Extension\ExtensionList;
@@ -92,7 +93,8 @@ class ModifiedFiles implements ReadinessCheckerInterface {
         }
       }
     }
-    foreach ($this->modifiedFiles->getModifiedFiles($extensions) as $file) {
+    $filtered_modified_files = new IgnoredPathsIteratorFilter($this->modifiedFiles->getModifiedFiles($extensions));
+    foreach ($filtered_modified_files as $file) {
       $messages[] = $this->t('The hash for @file does not match its original. Updates that include that file will fail and require manual intervention.', ['@file' => $file]);
     }
     return $messages;
