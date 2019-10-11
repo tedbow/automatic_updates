@@ -23,5 +23,6 @@ automatic_updates.inplace-update:
     _controller: '\Drupal\automatic_updates\Controller\InPlaceUpdateController::update'
   requirements:
     _permission: 'administer software updates'
+    _csrf_token: 'TRUE'
   options:
     no_cache: 'TRUE'
