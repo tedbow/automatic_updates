@@ -103,6 +103,24 @@ class SettingsForm extends ConfigFormBase {
         ],
       ],
     ];
+    if (strpos(\Drupal::VERSION, '-dev') === FALSE) {
+      $version_array = explode('.', \Drupal::VERSION);
+      $version_array[2]++;
+      $next_version = implode('.', $version_array);
+      $form['experimental'] = [
+        '#type' => 'details',
+        '#title' => t('Experimental'),
+      ];
+      $form['experimental']['update']['#markup'] = $this->t('Very experimental. Might break the site. No checks. Just update the files of Drupal core. <a href="@link">Update now</a>. Note: database updates are not run.', [
+        '@link' => Url::fromRoute('automatic_updates.inplace-update', [
+          'project' => 'drupal',
+          'type' => 'core',
+          'from' => \Drupal::VERSION,
+          'to' => $next_version,
+        ])->toString(),
+      ]);
+    }
+
     return parent::buildForm($form, $form_state);
   }
 

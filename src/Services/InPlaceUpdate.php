@@ -168,7 +168,7 @@ class InPlaceUpdate implements UpdateInterface {
 
     }
     catch (RequestException $exception) {
-      $this->logger->error('Update for @project to version @version failed for reason @message', [
+      $this->logger->error('Update for "@project" to version "@version" failed for reason: @message', [
         '@project' => $project_name,
         '@version' => $to_version,
         '@message' => $exception->getMessage(),
@@ -197,6 +197,7 @@ class InPlaceUpdate implements UpdateInterface {
         $directory = dirname($project_real_path);
         $this->fileSystem->prepareDirectory($directory, FileSystemInterface::CREATE_DIRECTORY);
         $this->fileSystem->copy($file_real_path, $project_real_path, FileSystemInterface::EXISTS_REPLACE);
+        $this->logger->info('"@file" was updated.', ['@file' => $project_real_path]);
       }
       catch (FileException $exception) {
         return FALSE;
@@ -204,7 +205,9 @@ class InPlaceUpdate implements UpdateInterface {
     }
     foreach ($this->getDeletions() as $deletion) {
       try {
-        $this->fileSystem->delete($this->getProjectRealPath($deletion, $project_root));
+        $file_deletion = $this->getProjectRealPath($deletion, $project_root);
+        $this->fileSystem->delete($file_deletion);
+        $this->logger->info('"@file" was deleted.', ['@file' => $file_deletion]);
       }
       catch (FileException $exception) {
         return FALSE;
@@ -288,6 +291,7 @@ class InPlaceUpdate implements UpdateInterface {
     if (file_exists($project_real_path) && !is_dir($project_real_path)) {
       try {
         $this->fileSystem->copy($project_real_path, $this->backup . $file, FileSystemInterface::EXISTS_REPLACE);
+        $this->logger->info('"@file" was backed up in preparation for an update.', ['@file' => $project_real_path]);
       }
       catch (FileException $exception) {
         return FALSE;
@@ -311,6 +315,7 @@ class InPlaceUpdate implements UpdateInterface {
       $file_path = substr($file_real_path, strlen($this->backup));
       try {
         $this->fileSystem->copy($file_real_path, $this->getProjectRealPath($file_path, $project_root), FileSystemInterface::EXISTS_REPLACE);
+        $this->logger->info('"@file" was restored due to failure(s) in applying update.', ['@file' => $file_path]);
       }
       catch (FileException $exception) {
         $this->logger->error('@file was not rolled back successfully.', ['@file' => $file_real_path]);

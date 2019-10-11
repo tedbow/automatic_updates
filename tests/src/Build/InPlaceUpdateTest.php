@@ -91,7 +91,7 @@ class InPlaceUpdateTest extends QuickStartTestBase {
     $this->assertDrupalVisit();
 
     // Update the site.
-    $this->visit("/automatic_updates/in-place-update/drupal/core/$from_version/$to_version");
+    $this->visit("/test_automatic_updates/in-place-update/drupal/core/$from_version/$to_version");
     $this->assertDrupalVisit();
 
     // Assert that the update worked.

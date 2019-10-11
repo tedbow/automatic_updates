@@ -13,7 +13,6 @@ build:
         commands:
           - cd ${SOURCE_DIR} && sudo -u www-data composer require drupal/ctools:3.2.0 --prefer-source --optimize-autoloader
           - cd ${SOURCE_DIR} && sudo -u www-data curl https://www.drupal.org/files/issues/2019-10-07/3085728.patch | git apply -
-          - cd ${SOURCE_DIR} && sudo -u www-data curl https://www.drupal.org/files/issues/2019-10-07/3086373.patch | git apply -
 
       # run_tests task is executed several times in order of performance speeds.
       # halt-on-fail can be set on the run_tests tasks in order to fail fast.
