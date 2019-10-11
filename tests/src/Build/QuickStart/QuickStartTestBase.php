@@ -7,8 +7,6 @@ use Symfony\Component\Process\PhpExecutableFinder;
 
 /**
  * Helper methods for using the quickstart feature of Drupal.
- *
- * @TODO: remove after https://www.drupal.org/project/drupal/issues/3082230.
  */
 abstract class QuickStartTestBase extends BuildTestBase {
 

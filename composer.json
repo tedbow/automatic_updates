@@ -14,6 +14,7 @@
     "ext-json": "*",
     "ext-zip": "*",
     "composer/semver": "^1.0",
+    "drupal/php-signify": "^1.0@dev",
     "ocramius/package-versions": "^1.4",
     "webflo/drupal-finder": "^1.2"
   },

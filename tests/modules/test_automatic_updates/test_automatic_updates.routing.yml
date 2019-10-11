@@ -12,11 +12,11 @@ test_automatic_updates.json_test_denied_controller:
     _title: 'JSON'
   requirements:
     _access: 'FALSE'
-test_automatic_updates.hashes_endpoint:
-  path: '/automatic_updates/{extension}/{version}/SHA512SUMS'
+test_automatic_updates.modified_files:
+  path: '/automatic_updates/modified-files/{project_type}/{extension}'
   defaults:
-    _controller: '\Drupal\test_automatic_updates\Controller\HashesController::hashes'
-    _title: 'SHA512SUMS'
+    _controller: '\Drupal\test_automatic_updates\Controller\ModifiedFilesController::modified'
+    _title: 'Modified Files'
   requirements:
     _access: 'TRUE'
 test_automatic_updates.inplace-update:

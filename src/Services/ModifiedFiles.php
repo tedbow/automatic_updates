@@ -6,6 +6,9 @@ use Drupal\automatic_updates\IgnoredPathsTrait;
 use Drupal\automatic_updates\ProjectInfoTrait;
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Url;
+use Drupal\Signify\ChecksumList;
+use Drupal\Signify\FailedCheckumFilter;
+use Drupal\Signify\Verifier;
 use DrupalFinder\DrupalFinder;
 use GuzzleHttp\ClientInterface;
 use GuzzleHttp\Promise\EachPromise;
@@ -88,41 +91,39 @@ class ModifiedFiles implements ModifiedFilesInterface {
    * Process checking hashes of files from external URL.
    *
    * @param array $resource
-   *   An array of response resource and project info.
+   *   An array of http response and project info.
    * @param array $modified_files
    *   The list of modified files.
    */
   protected function processHashes(array $resource, array &$modified_files) {
-    $response = $resource['response'];
+    $contents = $resource['contents'];
     $info = $resource['info'];
-    $file_root = $info['install path'];
-    while (($line = fgets($response)) !== FALSE) {
-      list($hash, $file) = preg_split('/\s+/', $line, 2);
-      $file = trim($file);
-      // If the line is empty, proceed to the next line.
-      if (empty($hash) && empty($file)) {
+    $directory_root = $info['install path'];
+    if ($info['project'] === 'drupal') {
+      $directory_root = '';
+    }
+    $module_path = drupal_get_path('module', 'automatic_updates');
+    $key = file_get_contents($module_path . '/artifacts/keys/root.pub');
+    $verifier = new Verifier($key);
+    $files = $verifier->verifyCsigMessage($contents, new \DateTime('2020-01-01', new \DateTimeZone('UTC')));
+    $checksums = new ChecksumList($files, TRUE);
+    foreach (new FailedCheckumFilter($checksums, $directory_root) as $failed_checksum) {
+      $file_path = implode(DIRECTORY_SEPARATOR, array_filter([
+        $directory_root,
+        $failed_checksum->filename,
+      ]));
+      if ($this->isIgnoredPath($file_path)) {
         continue;
       }
-      // If one of the values is invalid, log and continue.
-      if (!$hash || !$file) {
-        $this->logger->error('@hash or @file is empty; the hash file is malformed for this line.', ['@hash' => $hash, '@file' => $file]);
+      if (!file_exists($file_path)) {
+        $modified_files[] = $file_path;
         continue;
       }
-      if ($this->isIgnoredPath($file)) {
-        continue;
-      }
-      if ($info['project'] === 'drupal') {
-        $file_root = $this->drupalFinder->getDrupalRoot();
-      }
-      $file_path = $file_root . DIRECTORY_SEPARATOR . $file;
-      if (!file_exists($file_path) || hash_file('sha512', $file_path) !== $hash) {
+      $actual_hash = @hash_file(strtolower($failed_checksum->algorithm), $file_path);
+      if ($actual_hash === FALSE || empty($actual_hash) || strlen($actual_hash) < 64 || strcmp($actual_hash, $failed_checksum->hex_hash) !== 0) {
         $modified_files[] = $file_path;
       }
     }
-    if (!feof($response)) {
-      $this->logger->error('Stream for resource closed prematurely.');
-    }
-    fclose($response);
   }
 
   /**
@@ -162,7 +163,7 @@ class ModifiedFiles implements ModifiedFilesInterface {
     ])
       ->then(function (ResponseInterface $response) use ($info) {
         return [
-          'response' => $response->getBody()->detach(),
+          'contents' => $response->getBody()->getContents(),
           'info' => $info,
         ];
       });
@@ -195,11 +196,11 @@ class ModifiedFiles implements ModifiedFilesInterface {
    *   The hash name.
    */
   protected function getHashName(array $info) {
-    $hash_name = 'contents-sha512sums';
+    $hash_name = 'contents-sha256sums';
     if ($info['packaged']) {
       $hash_name .= '-packaged';
     }
-    return $hash_name . '.txt';
+    return $hash_name . '.csig';
   }
 
 }
