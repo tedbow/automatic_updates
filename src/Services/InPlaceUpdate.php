@@ -161,18 +161,38 @@ class InPlaceUpdate implements UpdateInterface {
   protected function getArchive($project_name, $from_version, $to_version) {
     $url = $this->buildUrl($project_name, $this->getQuasiPatchFileName($project_name, $from_version, $to_version));
     $destination = $this->fileSystem->realpath($this->fileSystem->getDestinationFilename("temporary://$project_name.zip", FileSystemInterface::EXISTS_RENAME));
-    try {
-      $this->httpClient->get($url, ['sink' => $destination]);
-      /** @var \Drupal\Core\Archiver\ArchiverInterface $archive */
-      return $this->archiveManager->getInstance(['filepath' => $destination]);
+    $this->doGetArchive($url, $destination);
+    /** @var \Drupal\Core\Archiver\ArchiverInterface $archive */
+    return $this->archiveManager->getInstance(['filepath' => $destination]);
+  }
 
+  /**
+   * Perform retrieval of archive, with delay if archive is still being created.
+   *
+   * @param string $url
+   *   The URL to retrieve.
+   * @param string $destination
+   *   The destination to download the archive.
+   * @param null|int $delay
+   *   The delay, defaults to NULL.
+   */
+  protected function doGetArchive($url, $destination, $delay = NULL) {
+    try {
+      $this->httpClient->get($url, [
+        'sink' => $destination,
+        'delay' => $delay,
+      ]);
     }
     catch (RequestException $exception) {
-      $this->logger->error('Update for "@project" to version "@version" failed for reason: @message', [
-        '@project' => $project_name,
-        '@version' => $to_version,
-        '@message' => $exception->getMessage(),
-      ]);
+      if ($exception->getResponse()->getStatusCode() === 429 && ($retry = $exception->getResponse()->getHeader('Retry-After'))) {
+        $this->doGetArchive($url, $destination, $retry[0] * 1000);
+      }
+      else {
+        $this->logger->error('Retrieval of "@url" failed with: @message', [
+          '@url' => $url,
+          '@message' => $exception->getMessage(),
+        ]);
+      }
     }
   }
 
