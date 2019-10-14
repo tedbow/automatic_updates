@@ -8,6 +8,9 @@ use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\File\Exception\FileException;
 use Drupal\Core\File\FileSystemInterface;
 use Drupal\Core\Url;
+use Drupal\Signify\ChecksumList;
+use Drupal\Signify\FailedCheckumFilter;
+use Drupal\Signify\Verifier;
 use DrupalFinder\DrupalFinder;
 use GuzzleHttp\ClientInterface;
 use GuzzleHttp\Exception\RequestException;
@@ -209,6 +212,7 @@ class InPlaceUpdate implements UpdateInterface {
    */
   protected function processUpdate(ArchiverInterface $archive, $project_root) {
     $archive->extract($this->getTempDirectory());
+    $this->validateArchive($this->getTempDirectory());
     foreach ($this->getFilesList($this->getTempDirectory()) as $file) {
       $file_real_path = $this->getFileRealPath($file);
       $file_path = substr($file_real_path, strlen($this->getTempDirectory() . self::ARCHIVE_DIRECTORY));
@@ -234,6 +238,29 @@ class InPlaceUpdate implements UpdateInterface {
       }
     }
     return TRUE;
+  }
+
+  /**
+   * Validate the downloaded archive.
+   *
+   * @param string $directory
+   *   The location of the downloaded archive.
+   */
+  protected function validateArchive($directory) {
+    $csig_file = $directory . DIRECTORY_SEPARATOR . 'checksumlist.csig';
+    if (!file_exists($csig_file)) {
+      throw new \RuntimeException('The CSIG file does not exist in the archive.');
+    }
+    $contents = file_get_contents($csig_file);
+    $module_path = drupal_get_path('module', 'automatic_updates');
+    $key = file_get_contents($module_path . '/artifacts/keys/root.pub');
+    $verifier = new Verifier($key);
+    $files = $verifier->verifyCsigMessage($contents);
+    $checksums = new ChecksumList($files, TRUE);
+    $failed_checksums = new FailedCheckumFilter($checksums, $directory);
+    if (iterator_count($failed_checksums)) {
+      throw new \RuntimeException('The downloaded files did not match what was expected.');
+    }
   }
 
   /**

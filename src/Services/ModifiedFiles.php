@@ -105,7 +105,7 @@ class ModifiedFiles implements ModifiedFilesInterface {
     $module_path = drupal_get_path('module', 'automatic_updates');
     $key = file_get_contents($module_path . '/artifacts/keys/root.pub');
     $verifier = new Verifier($key);
-    $files = $verifier->verifyCsigMessage($contents, new \DateTime('2020-01-01', new \DateTimeZone('UTC')));
+    $files = $verifier->verifyCsigMessage($contents);
     $checksums = new ChecksumList($files, TRUE);
     foreach (new FailedCheckumFilter($checksums, $directory_root) as $failed_checksum) {
       $file_path = implode(DIRECTORY_SEPARATOR, array_filter([
