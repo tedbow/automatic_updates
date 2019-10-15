@@ -2,6 +2,8 @@
 
 namespace Drupal\automatic_updates\Services;
 
+use Drupal\automatic_updates\ProjectInfoTrait;
+use Drupal\automatic_updates\ReadinessChecker\ReadinessCheckerManagerInterface;
 use Drupal\Core\Archiver\ArchiverInterface;
 use Drupal\Core\Archiver\ArchiverManager;
 use Drupal\Core\Config\ConfigFactoryInterface;
@@ -20,6 +22,7 @@ use Psr\Log\LoggerInterface;
  * Class to apply in-place updates.
  */
 class InPlaceUpdate implements UpdateInterface {
+  use ProjectInfoTrait;
 
   /**
    * The manifest file that lists all file deletions.
@@ -130,6 +133,12 @@ class InPlaceUpdate implements UpdateInterface {
    * {@inheritdoc}
    */
   public function update($project_name, $project_type, $from_version, $to_version) {
+    // Bail immediately on updates if error category checks fail.
+    /** @var \Drupal\automatic_updates\ReadinessChecker\ReadinessCheckerManagerInterface $readiness_check_manager */
+    $checker = \Drupal::service('automatic_updates.readiness_checker');
+    if ($checker->run(ReadinessCheckerManagerInterface::ERROR)) {
+      return FALSE;
+    }
     $success = FALSE;
     if ($project_name === 'drupal') {
       $project_root = $this->rootPath;
@@ -138,11 +147,12 @@ class InPlaceUpdate implements UpdateInterface {
       $project_root = drupal_get_path($project_type, $project_name);
     }
     if ($archive = $this->getArchive($project_name, $from_version, $to_version)) {
-      if ($this->backup($archive, $project_root)) {
+      $modified = $this->checkModifiedFiles($project_name, $project_type, $archive);
+      if (!$modified && $this->backup($archive, $project_root)) {
         $success = $this->processUpdate($archive, $project_root);
-      }
-      if (!$success) {
-        $this->rollback($project_root);
+        if (!$success) {
+          $this->rollback($project_root);
+        }
       }
     }
     return $success;
@@ -167,6 +177,53 @@ class InPlaceUpdate implements UpdateInterface {
     $this->doGetArchive($url, $destination);
     /** @var \Drupal\Core\Archiver\ArchiverInterface $archive */
     return $this->archiveManager->getInstance(['filepath' => $destination]);
+  }
+
+  /**
+   * Check if files are modified before applying updates.
+   *
+   * @param string $project_name
+   *   The project name.
+   * @param string $project_type
+   *   The project type.
+   * @param \Drupal\Core\Archiver\ArchiverInterface $archive
+   *   The archive.
+   *
+   * @return bool
+   *   Return TRUE if modified files exist, FALSE otherwise.
+   */
+  protected function checkModifiedFiles($project_name, $project_type, ArchiverInterface $archive) {
+    $extensions = [];
+    foreach (['module', 'profile', 'theme'] as $extension_type) {
+      $extensions[] = $this->getInfos($extension_type);
+    }
+    $extensions = array_merge(...$extensions);
+
+    /** @var \Drupal\automatic_updates\Services\ModifiedFilesInterface $modified_files */
+    $modified_files = \Drupal::service('automatic_updates.modified_files');
+    $files = iterator_to_array($modified_files->getModifiedFiles([$extensions[$project_name]]));
+    $files = array_unique($files);
+    $archive_files = $archive->listContents();
+    foreach ($archive_files as $index => &$archive_file) {
+      $skipped_files = [
+        self::DELETION_MANIFEST,
+        self::CHECKSUM_LIST,
+      ];
+      // Skip certain files and all directories.
+      if (in_array($archive_file, $skipped_files, TRUE) || substr($archive_file, -1) === '/') {
+        unset($archive_files[$index]);
+        continue;
+      }
+      $this->stripFileDirectoryPath($archive_file);
+    }
+    if ($intersection = array_intersect($files, $archive_files)) {
+      $this->logger->error('Can not update because %count files are modified: %path', [
+        '%count' => count($intersection),
+        '%paths' => implode(', ', $intersection),
+      ]);
+      return TRUE;
+    }
+    return FALSE;
   }
 
   /**

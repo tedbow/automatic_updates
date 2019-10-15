@@ -41,13 +41,20 @@ trait ProjectInfoTrait {
   protected function getInfos($extension_type) {
     $file_paths = $this->getExtensionList($extension_type)->getPathnames();
     $infos = $this->getExtensionList($extension_type)->getAllAvailableInfo();
-    return array_map(function ($key, array $info) use ($file_paths) {
+    array_walk($infos, function (array &$info, $key) use ($file_paths) {
       $info['packaged'] = $info['project'] ?? FALSE;
-      $info['project'] = $this->getProjectName($key, $info);
       $info['install path'] = $file_paths[$key] ? dirname($file_paths[$key]) : '';
+      $info['project'] = $this->getProjectName($key, $info);
       $info['version'] = $this->getExtensionVersion($info);
-      return $info;
-    }, array_keys($infos), $infos);
+    });
+    $system = $infos['system'] ?? NULL;
+    $infos = array_filter($infos, function (array $info, $project_name) {
+      return $info && $info['project'] === $project_name;
+    }, ARRAY_FILTER_USE_BOTH);
+    if ($system) {
+      $infos['drupal'] = $system;
+    }
+    return $infos;
   }
 
   /**
@@ -103,7 +110,7 @@ trait ProjectInfoTrait {
         $project_name = $this->getSuffix($composer_json['name'], '/', $extension_name);
       }
     }
-    if ($project_name === 'system') {
+    if (substr($info['install path'], 0, 4) === "core") {
       $project_name = 'drupal';
     }
     return $project_name;

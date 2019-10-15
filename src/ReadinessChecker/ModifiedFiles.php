@@ -87,12 +87,9 @@ class ModifiedFiles implements ReadinessCheckerInterface {
     $messages = [];
     $extensions = [];
     foreach ($this->getExtensionsTypes() as $extension_type) {
-      foreach ($this->getInfos($extension_type) as $info) {
-        if (substr($info['install path'], 0, 4) !== 'core' || $info['project'] === 'drupal') {
-          $extensions[$info['project']] = $info;
-        }
-      }
+      $extensions[] = $this->getInfos($extension_type);
     }
+    $extensions = array_merge(...$extensions);
     $filtered_modified_files = new IgnoredPathsIteratorFilter($this->modifiedFiles->getModifiedFiles($extensions));
     foreach ($filtered_modified_files as $file) {
       $messages[] = $this->t('The hash for @file does not match its original. Updates that include that file will fail and require manual intervention.', ['@file' => $file]);

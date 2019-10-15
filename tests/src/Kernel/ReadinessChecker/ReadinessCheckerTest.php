@@ -26,8 +26,9 @@ class ReadinessCheckerTest extends KernelTestBase {
   public function testReadinessChecker() {
     /** @var \Drupal\automatic_updates\ReadinessChecker\ReadinessCheckerManagerInterface $checker */
     $checker = $this->container->get('automatic_updates.readiness_checker');
-    $this->assertEmpty($checker->run('warning'));
-    $this->assertEmpty($checker->run('error'));
+    foreach ($checker->getCategories() as $category) {
+      $this->assertEmpty($checker->run($category));
+    }
   }
 
 }

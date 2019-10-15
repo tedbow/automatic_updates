@@ -8,6 +8,16 @@ namespace Drupal\automatic_updates\ReadinessChecker;
 interface ReadinessCheckerManagerInterface {
 
   /**
+   * Error category.
+   */
+  const ERROR = 'error';
+
+  /**
+   * Warning category.
+   */
+  const WARNING = 'warning';
+
+  /**
    * Last checked ago warning (in seconds).
    */
   const LAST_CHECKED_WARNING = 3600 * 24;

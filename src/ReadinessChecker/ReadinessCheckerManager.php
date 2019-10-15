@@ -107,7 +107,7 @@ class ReadinessCheckerManager implements ReadinessCheckerManagerInterface {
    * {@inheritdoc}
    */
   public function getCategories() {
-    return ['warning', 'error'];
+    return [self::ERROR, self::WARNING];
   }
 
   /**

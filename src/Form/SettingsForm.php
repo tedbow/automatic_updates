@@ -103,22 +103,45 @@ class SettingsForm extends ConfigFormBase {
         ],
       ],
     ];
+
+    $form['experimental'] = [
+      '#type' => 'details',
+      '#title' => t('Experimental'),
+    ];
+    $form['experimental']['update'] = [
+      '#type' => 'html_tag',
+      '#tag' => 'p',
+      '#value' => $this->t('No update for Drupal is available for version %version.', ['%version' => \Drupal::VERSION]),
+    ];
     if (strpos(\Drupal::VERSION, '-dev') === FALSE) {
-      $version_array = explode('.', \Drupal::VERSION);
-      $version_array[2]++;
-      $next_version = implode('.', $version_array);
-      $form['experimental'] = [
-        '#type' => 'details',
-        '#title' => t('Experimental'),
-      ];
-      $form['experimental']['update']['#markup'] = $this->t('Very experimental. Might break the site. No checks. Just update the files of Drupal core. <a href="@link">Update now</a>. Note: database updates are not run.', [
-        '@link' => Url::fromRoute('automatic_updates.inplace-update', [
-          'project' => 'drupal',
-          'type' => 'core',
-          'from' => \Drupal::VERSION,
-          'to' => $next_version,
-        ])->toString(),
-      ]);
+      \Drupal::service('update.manager')->refreshUpdateData();
+      $available = update_get_available(TRUE);
+      $data = update_calculate_project_data($available);
+      // If we aren't on the recommended version for our version of Drupal, then
+      // enable this experimental feature.
+      if ($data['drupal']['existing_version'] !== $data['drupal']['recommended']) {
+        if (isset($data['drupal']['security updates'])) {
+          $form['experimental']['security'] = [
+            '#type' => 'html_tag',
+            '#tag' => 'p',
+            '#value' => $this->t('A security update is available for your version of Drupal.'),
+            '#weight' => -1,
+          ];
+        }
+        $form['experimental']['update'] = [
+          '#type' => 'html_tag',
+          '#tag' => 'p',
+          '#value' => $this->t('Even with all that caution, if you want to try it out, <a href="@link">update now</a>.', [
+            '@link' => Url::fromRoute('automatic_updates.inplace-update', [
+              'project' => 'drupal',
+              'type' => 'core',
+              'from' => \Drupal::VERSION,
+              'to' => $data['drupal']['latest_version'],
+            ])->toString(),
+          ]),
+          '#prefix' => 'Note: Might break the site. No readiness checks or anything in place. Just update the files of Drupal core. Database updates are not run.',
+        ];
+      }
     }
 
     return parent::buildForm($form, $form_state);

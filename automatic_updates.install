@@ -42,8 +42,8 @@ function _automatic_updates_checker_requirements(array &$requirements) {
     'severity' => REQUIREMENT_OK,
     'value' => t('Your site is ready to for <a href="@readiness_checks">automatic updates</a>.', ['@readiness_checks' => 'https://www.drupal.org/docs/8/update/automatic-updates#readiness-checks']),
   ];
-  $error_results = $checker->getResults('error');
-  $warning_results = $checker->getResults('warning');
+  $error_results = $checker->getResults(ReadinessCheckerManagerInterface::ERROR);
+  $warning_results = $checker->getResults(ReadinessCheckerManagerInterface::WARNING);
   $checker_results = array_merge($error_results, $warning_results);
   if (!empty($checker_results)) {
     $requirements['automatic_updates_readiness']['severity'] = $error_results ? REQUIREMENT_ERROR : REQUIREMENT_WARNING;

@@ -65,7 +65,7 @@ class TestMissingProjectInfo extends MissingProjectInfo {
         'package' => 'Core',
         'version' => 'VERSION',
         'packaged' => FALSE,
-        'project' => $this->getProjectName('system', []),
+        'project' => $this->getProjectName('system', ['install path' => 'core']),
         'install path' => drupal_get_path('module', 'system'),
         'core' => '8.x',
         'required' => 'true',

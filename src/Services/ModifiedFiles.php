@@ -137,6 +137,10 @@ class ModifiedFiles implements ModifiedFilesInterface {
    */
   protected function getHashRequests(array $extensions) {
     foreach ($extensions as $info) {
+      // We can't check for modifications if we don't know the version.
+      if (!($info['version'])) {
+        continue;
+      }
       $url = $this->buildUrl($info);
       yield $this->getPromise($url, $info);
     }
