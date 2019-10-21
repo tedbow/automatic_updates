@@ -3,7 +3,6 @@
 namespace Drupal\automatic_updates\ReadinessChecker;
 
 use Drupal\Core\StringTranslation\StringTranslationTrait;
-use DrupalFinder\DrupalFinder;
 
 /**
  * File ownership checker.
@@ -14,11 +13,11 @@ class FileOwnership extends Filesystem {
   /**
    * FileOwnership constructor.
    *
-   * @param \DrupalFinder\DrupalFinder $drupal_finder
-   *   The Drupal finder.
+   * @param string $app_root
+   *   The app root.
    */
-  public function __construct(DrupalFinder $drupal_finder) {
-    $this->drupalFinder = $drupal_finder;
+  public function __construct($app_root) {
+    $this->rootPath = (string) $app_root;
   }
 
   /**

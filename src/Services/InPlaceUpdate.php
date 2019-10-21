@@ -13,7 +13,6 @@ use Drupal\Core\Url;
 use Drupal\Signify\ChecksumList;
 use Drupal\Signify\FailedCheckumFilter;
 use Drupal\Signify\Verifier;
-use DrupalFinder\DrupalFinder;
 use GuzzleHttp\ClientInterface;
 use GuzzleHttp\Exception\RequestException;
 use Psr\Log\LoggerInterface;
@@ -115,18 +114,19 @@ class InPlaceUpdate implements UpdateInterface {
    *   The filesystem service.
    * @param \GuzzleHttp\ClientInterface $http_client
    *   The HTTP client service.
-   * @param \DrupalFinder\DrupalFinder $drupal_finder
-   *   The Drupal finder service.
+   * @param string $app_root
+   *   The app root.
    */
-  public function __construct(LoggerInterface $logger, ArchiverManager $archive_manager, ConfigFactoryInterface $config_factory, FileSystemInterface $file_system, ClientInterface $http_client, DrupalFinder $drupal_finder) {
+  public function __construct(LoggerInterface $logger, ArchiverManager $archive_manager, ConfigFactoryInterface $config_factory, FileSystemInterface $file_system, ClientInterface $http_client, $app_root) {
     $this->logger = $logger;
     $this->archiveManager = $archive_manager;
     $this->configFactory = $config_factory;
     $this->fileSystem = $file_system;
     $this->httpClient = $http_client;
-    $drupal_finder->locateRoot(getcwd());
-    $this->rootPath = $drupal_finder->getDrupalRoot();
-    $this->vendorPath = rtrim($drupal_finder->getVendorDir(), '/\\') . DIRECTORY_SEPARATOR;
+    $this->rootPath = (string) $app_root;
+    $this->vendorPath = $this->rootPath . DIRECTORY_SEPARATOR . 'vendor';
+    $project_root = drupal_get_path('module', 'automatic_updates');
+    require_once $project_root . DIRECTORY_SEPARATOR . 'vendor' . DIRECTORY_SEPARATOR . 'autoload.php';
   }
 
   /**
@@ -217,7 +217,7 @@ class InPlaceUpdate implements UpdateInterface {
       $this->stripFileDirectoryPath($archive_file);
     }
     if ($intersection = array_intersect($files, $archive_files)) {
-      $this->logger->error('Can not update because %count files are modified: %path', [
+      $this->logger->error('Can not update because %count files are modified: %paths', [
         '%count' => count($intersection),
         '%paths' => implode(', ', $intersection),
       ]);
@@ -304,7 +304,7 @@ class InPlaceUpdate implements UpdateInterface {
    *   The location of the downloaded archive.
    */
   protected function validateArchive($directory) {
-    $csig_file = $directory . DIRECTORY_SEPARATOR . 'checksumlist.csig';
+    $csig_file = $directory . DIRECTORY_SEPARATOR . self::CHECKSUM_LIST;
     if (!file_exists($csig_file)) {
       throw new \RuntimeException('The CSIG file does not exist in the archive.');
     }
@@ -444,7 +444,11 @@ class InPlaceUpdate implements UpdateInterface {
       if ($iterator->hasChildren() && !in_array($file->getFilename(), ['.git'], TRUE)) {
         return TRUE;
       }
-      return $file->isFile() && !in_array($file->getFilename(), [self::DELETION_MANIFEST], TRUE);
+      $skipped_files = [
+        self::DELETION_MANIFEST,
+        self::CHECKSUM_LIST,
+      ];
+      return $file->isFile() && !in_array($file->getFilename(), $skipped_files, TRUE);
     };
 
     $innerIterator = new \RecursiveDirectoryIterator($directory, \RecursiveDirectoryIterator::SKIP_DOTS);

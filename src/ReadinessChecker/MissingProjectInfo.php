@@ -6,12 +6,11 @@ use Drupal\automatic_updates\IgnoredPathsTrait;
 use Drupal\automatic_updates\ProjectInfoTrait;
 use Drupal\Core\Extension\ExtensionList;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
-use DrupalFinder\DrupalFinder;
 
 /**
  * Missing project info checker.
  */
-class MissingProjectInfo extends Filesystem {
+class MissingProjectInfo implements ReadinessCheckerInterface {
   use IgnoredPathsTrait;
   use ProjectInfoTrait;
   use StringTranslationTrait;
@@ -40,8 +39,6 @@ class MissingProjectInfo extends Filesystem {
   /**
    * MissingProjectInfo constructor.
    *
-   * @param \DrupalFinder\DrupalFinder $drupal_finder
-   *   The Drupal finder.
    * @param \Drupal\Core\Extension\ExtensionList $modules
    *   The module extension list.
    * @param \Drupal\Core\Extension\ExtensionList $profiles
@@ -49,8 +46,7 @@ class MissingProjectInfo extends Filesystem {
    * @param \Drupal\Core\Extension\ExtensionList $themes
    *   The theme extension list.
    */
-  public function __construct(DrupalFinder $drupal_finder, ExtensionList $modules, ExtensionList $profiles, ExtensionList $themes) {
-    $this->drupalFinder = $drupal_finder;
+  public function __construct(ExtensionList $modules, ExtensionList $profiles, ExtensionList $themes) {
     $this->modules = $modules;
     $this->profiles = $profiles;
     $this->themes = $themes;
@@ -59,7 +55,7 @@ class MissingProjectInfo extends Filesystem {
   /**
    * {@inheritdoc}
    */
-  protected function doCheck() {
+  public function run() {
     return $this->missingProjectInfoCheck();
   }
 

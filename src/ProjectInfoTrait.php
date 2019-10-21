@@ -2,8 +2,6 @@
 
 namespace Drupal\automatic_updates;
 
-use PackageVersions\Versions;
-
 /**
  * Provide a helper to get project info.
  */
@@ -75,18 +73,8 @@ trait ProjectInfoTrait {
     if (substr($info['install path'], 0, 4) === "core") {
       return $this->getExtensionList('module')->get('system')->info['version'];
     }
-    $composer_json = $this->getComposerJson($extension_name, $info);
-    $extension_name = isset($composer_json['name']) ? $composer_json['name'] : $extension_name;
-    try {
-      $version = Versions::getVersion($extension_name);
-      $version = $this->getSuffix($version, '@', $version);
-      // If we do not have a core compatibility tagged git branch, we're
-      // dealing with a  dev-master branch that cannot be updated in place.
-      return substr($version, 0, 3) === \Drupal::CORE_COMPATIBILITY ? $version : NULL;
-    }
-    catch (\OutOfBoundsException $exception) {
-      \Drupal::logger('automatic_updates')->error('Version cannot be located for @extension', ['@extension' => $extension_name]);
-    }
+    \Drupal::logger('automatic_updates')->error('Version cannot be located for @extension', ['@extension' => $extension_name]);
+    return NULL;
   }
 
   /**

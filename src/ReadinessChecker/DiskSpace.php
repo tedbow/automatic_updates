@@ -3,7 +3,6 @@
 namespace Drupal\automatic_updates\ReadinessChecker;
 
 use Drupal\Core\StringTranslation\StringTranslationTrait;
-use DrupalFinder\DrupalFinder;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -34,12 +33,12 @@ class DiskSpace extends Filesystem {
    *
    * @param \Psr\Log\LoggerInterface $logger
    *   The logger.
-   * @param \DrupalFinder\DrupalFinder $drupal_finder
-   *   The Drupal finder.
+   * @param string $app_root
+   *   The app root.
    */
-  public function __construct(LoggerInterface $logger, DrupalFinder $drupal_finder) {
+  public function __construct(LoggerInterface $logger, $app_root) {
     $this->logger = $logger;
-    $this->drupalFinder = $drupal_finder;
+    $this->rootPath = (string) $app_root;
   }
 
   /**

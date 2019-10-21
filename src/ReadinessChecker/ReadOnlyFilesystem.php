@@ -6,7 +6,6 @@ use Drupal\Component\Render\MarkupInterface;
 use Drupal\Core\File\Exception\FileException;
 use Drupal\Core\File\FileSystemInterface;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
-use DrupalFinder\DrupalFinder;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -34,14 +33,14 @@ class ReadOnlyFilesystem extends Filesystem {
    *
    * @param \Psr\Log\LoggerInterface $logger
    *   The logger.
-   * @param \DrupalFinder\DrupalFinder $drupal_finder
-   *   The Drupal finder.
+   * @param string $app_root
+   *   The app root.
    * @param \Drupal\Core\File\FileSystemInterface $file_system
    *   The file system service.
    */
-  public function __construct(LoggerInterface $logger, DrupalFinder $drupal_finder, FileSystemInterface $file_system) {
+  public function __construct(LoggerInterface $logger, $app_root, FileSystemInterface $file_system) {
     $this->logger = $logger;
-    $this->drupalFinder = $drupal_finder;
+    $this->rootPath = (string) $app_root;
     $this->fileSystem = $file_system;
   }
 

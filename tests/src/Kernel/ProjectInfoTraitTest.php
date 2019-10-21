@@ -103,23 +103,6 @@ class ProjectInfoTraitTest extends KernelTestBase {
     ];
     $infos['automatic_updates']['extension_name'] = 'automatic_updates';
 
-    // TODO: Investigate switching to this project after stable release in
-    // https://www.drupal.org/project/automatic_updates/issues/3061229.
-    $infos['ctools']['expected'] = [
-      'version' => '8.x-3.2',
-      'project' => 'ctools',
-    ];
-    $infos['ctools']['info'] = [
-      'name' => 'Chaos tool suite',
-      'type' => 'module',
-      'description' => 'Provides a number of utility and helper APIs for Drupal developers and site builders.',
-      'package' => 'Core',
-      'core' => '8.x',
-      'dependencies' => ['system'],
-      'install path' => '',
-    ];
-    $infos['ctools']['extension_name'] = 'ctools';
-
     return $infos;
   }
 

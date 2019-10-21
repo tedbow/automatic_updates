@@ -4,8 +4,8 @@ namespace Drupal\Tests\automatic_updates\Build;
 
 use Drupal\automatic_updates\Services\InPlaceUpdate;
 use Drupal\Component\FileSystem\FileSystem as DrupalFilesystem;
-use Drupal\Component\Utility\Html;
 use Drupal\Tests\automatic_updates\Build\QuickStart\QuickStartTestBase;
+use Drupal\Tests\automatic_updates\Traits\InstallTestTrait;
 use GuzzleHttp\Client;
 use Symfony\Component\Filesystem\Filesystem as SymfonyFilesystem;
 use Symfony\Component\Finder\Finder;
@@ -22,6 +22,7 @@ use Symfony\Component\Finder\Finder;
  * @requires externalCommand tar
  */
 class InPlaceUpdateTest extends QuickStartTestBase {
+  use InstallTestTrait;
 
   /**
    * The files which are candidates for deletion during an upgrade.
@@ -55,25 +56,26 @@ class InPlaceUpdateTest extends QuickStartTestBase {
     // We have to fetch the tags for this shallow repo. It might not be a
     // shallow clone, therefore we use executeCommand instead of assertCommand.
     $this->executeCommand('git fetch --unshallow  --tags');
+    $this->executeCommand('git reset HEAD --hard');
+    $this->assertCommandSuccessful();
     $this->executeCommand("git checkout $from_version -f");
     $this->assertCommandSuccessful();
     $fs = new SymfonyFilesystem();
     $fs->chmod($this->getWorkspaceDirectory() . '/sites/default', 0700, 0000);
     $this->executeCommand('COMPOSER_DISCARD_CHANGES=true composer install --no-dev --no-interaction');
     $this->assertErrorOutputContains('Generating autoload files');
-    $this->executeCommand('COMPOSER_DISCARD_CHANGES=true composer require ocramius/package-versions:^1.4 webflo/drupal-finder:^1.1 composer/semver:^1.0 drupal/php-signify:^1.0@dev --no-interaction');
-    $this->assertErrorOutputContains('Generating autoload files');
     $this->installQuickStart('minimal');
 
     // Currently, this test has to use extension_discovery_scan_tests so we can
-    // enable test modules.
+    // install test modules.
     $fs->chmod($this->getWorkspaceDirectory() . '/sites/default/settings.php', 0640, 0000);
     file_put_contents($this->getWorkspaceDirectory() . '/sites/default/settings.php', '$settings[\'extension_discovery_scan_tests\'] = TRUE;' . PHP_EOL, FILE_APPEND);
 
     // Log in so that we can install modules.
     $this->formLogin($this->adminUsername, $this->adminPassword);
-    $this->moduleEnable('automatic_updates');
-    $this->moduleEnable('test_automatic_updates');
+    $this->moduleInstall('update');
+    $this->moduleInstall('automatic_updates');
+    $this->moduleInstall('test_automatic_updates');
 
     // Confirm we are running correct Drupal version.
     $finder = new Finder();
@@ -91,11 +93,12 @@ class InPlaceUpdateTest extends QuickStartTestBase {
     $this->assertDrupalVisit();
 
     // Update the site.
-    $this->visit("/test_automatic_updates/in-place-update/drupal/core/$from_version/$to_version");
+    $assert = $this->visit("/test_automatic_updates/in-place-update/drupal/core/$from_version/$to_version")
+      ->assertSession();
+    $assert->statusCodeEquals(200);
     $this->assertDrupalVisit();
 
     // Assert that the update worked.
-    $assert = $this->getMink()->assertSession();
     $assert->pageTextContains('Update successful');
     $finder = new Finder();
     $finder->files()->in($this->getWorkspaceDirectory())->path('core/lib/Drupal.php');
@@ -120,8 +123,6 @@ class InPlaceUpdateTest extends QuickStartTestBase {
     $fs->chmod($this->getWorkspaceDirectory() . '/sites/default', 0700, 0000);
     $this->executeCommand('COMPOSER_DISCARD_CHANGES=true composer install --no-dev --no-interaction');
     $this->assertErrorOutputContains('Generating autoload files');
-    $this->executeCommand('COMPOSER_DISCARD_CHANGES=true composer require ocramius/package-versions:^1.4 webflo/drupal-finder:^1.1 composer/semver:^1.0 drupal/php-signify:^1.0@dev --no-interaction');
-    $this->assertErrorOutputContains('Generating autoload files');
     $this->installQuickStart('standard');
 
     // Download the project.
@@ -139,28 +140,28 @@ class InPlaceUpdateTest extends QuickStartTestBase {
     }
 
     // Currently, this test has to use extension_discovery_scan_tests so we can
-    // enable test modules.
+    // install test modules.
     $fs->chmod($this->getWorkspaceDirectory() . '/sites/default/settings.php', 0640, 0000);
     file_put_contents($this->getWorkspaceDirectory() . '/sites/default/settings.php', '$settings[\'extension_discovery_scan_tests\'] = TRUE;' . PHP_EOL, FILE_APPEND);
 
     // Log in so that we can install projects.
     $this->formLogin($this->adminUsername, $this->adminPassword);
-    $this->moduleEnable('automatic_updates');
-    $this->moduleEnable('test_automatic_updates');
-    if (is_callable([$this, "{$project_type}Enable"])) {
-      call_user_func([$this, "{$project_type}Enable"], $project);
-    }
+    $this->moduleInstall('update');
+    $this->moduleInstall('automatic_updates');
+    $this->moduleInstall('test_automatic_updates');
+    $this->{"{$project_type}Install"}($project);
 
     // Assert that the site is functional before updating.
     $this->visit();
     $this->assertDrupalVisit();
 
     // Update the contrib project.
-    $this->visit("/test_automatic_updates/in-place-update/$project/$project_type/$from_version/$to_version");
+    $assert = $this->visit("/test_automatic_updates/in-place-update/$project/$project_type/$from_version/$to_version")
+      ->assertSession();
+    $assert->statusCodeEquals(200);
     $this->assertDrupalVisit();
 
     // Assert that the update worked.
-    $assert = $this->getMink()->assertSession();
     $assert->pageTextContains('Update successful');
     $finder = new Finder();
     $finder->files()->in($this->getWorkspaceDirectory())->path("{$project_type}s/contrib/$project/$project.info.yml");
@@ -178,8 +179,14 @@ class InPlaceUpdateTest extends QuickStartTestBase {
    * Core versions data provider.
    */
   public function coreVersionsProvider() {
-    // 8.7.2 has changes to composer.lock, therefore it currently fails update.
-    // TODO: https://www.drupal.org/project/automatic_updates/issues/3088095
+    $datum[] = [
+      'from' => '8.7.0',
+      'to' => '8.7.1',
+    ];
+    $datum[] = [
+      'from' => '8.7.1',
+      'to' => '8.7.2',
+    ];
     $datum[] = [
       'from' => '8.7.2',
       'to' => '8.7.3',
@@ -250,33 +257,6 @@ class InPlaceUpdateTest extends QuickStartTestBase {
       fclose($handle);
     }
     return $this->deletions;
-  }
-
-  /**
-   * Helper method that uses Drupal's module page to enable a module.
-   */
-  protected function moduleEnable($module_name) {
-    $this->visit('/admin/modules');
-    $field = Html::getClass("edit-modules $module_name enable");
-    // No need to enable a module if it is already enabled.
-    if ($this->getMink()->getSession()->getPage()->findField($field)->isChecked()) {
-      return;
-    }
-    $assert = $this->getMink()->assertSession();
-    $assert->fieldExists($field)->check();
-    $session = $this->getMink()->getSession();
-    $session->getPage()->findButton('Install')->submit();
-    $assert->fieldExists($field)->isChecked();
-  }
-
-  /**
-   * Helper method that uses Drupal's theme page to enable a theme.
-   */
-  protected function themeEnable($theme_name) {
-    $this->moduleEnable('test_automatic_updates');
-    $this->visit("/admin/appearance/default?theme=$theme_name");
-    $assert = $this->getMink()->assertSession();
-    $assert->pageTextNotContains('theme was not found');
   }
 
 }

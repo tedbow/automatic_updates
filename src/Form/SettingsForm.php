@@ -39,9 +39,7 @@ class SettingsForm extends ConfigFormBase {
     $instance = parent::create($container);
     $instance->checker = $container->get('automatic_updates.readiness_checker');
     $instance->dateFormatter = $container->get('date.formatter');
-    $drupal_finder = $container->get('automatic_updates.drupal_finder');
-    $drupal_finder->locateRoot(getcwd());
-    $instance->drupalRoot = $drupal_finder->getDrupalRoot();
+    $instance->drupalRoot = (string) $container->get('app.root');
     return $instance;
   }
 

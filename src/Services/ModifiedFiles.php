@@ -9,7 +9,6 @@ use Drupal\Core\Url;
 use Drupal\Signify\ChecksumList;
 use Drupal\Signify\FailedCheckumFilter;
 use Drupal\Signify\Verifier;
-use DrupalFinder\DrupalFinder;
 use GuzzleHttp\ClientInterface;
 use GuzzleHttp\Promise\EachPromise;
 use Psr\Http\Message\ResponseInterface;
@@ -44,30 +43,21 @@ class ModifiedFiles implements ModifiedFilesInterface {
   protected $configFactory;
 
   /**
-   * The drupal finder service.
-   *
-   * @var \DrupalFinder\DrupalFinder
-   */
-  protected $drupalFinder;
-
-  /**
    * ModifiedCode constructor.
    *
    * @param \Psr\Log\LoggerInterface $logger
    *   The logger.
-   * @param \DrupalFinder\DrupalFinder $drupal_finder
-   *   The Drupal finder.
    * @param \GuzzleHttp\ClientInterface $http_client
    *   The HTTP client.
    * @param \Drupal\Core\Config\ConfigFactoryInterface $config_factory
    *   The config factory.
    */
-  public function __construct(LoggerInterface $logger, DrupalFinder $drupal_finder, ClientInterface $http_client, ConfigFactoryInterface $config_factory) {
+  public function __construct(LoggerInterface $logger, ClientInterface $http_client, ConfigFactoryInterface $config_factory) {
     $this->logger = $logger;
-    $this->drupalFinder = $drupal_finder;
     $this->httpClient = $http_client;
     $this->configFactory = $config_factory;
-    $this->drupalFinder->locateRoot(getcwd());
+    $project_root = drupal_get_path('module', 'automatic_updates');
+    require_once $project_root . DIRECTORY_SEPARATOR . 'vendor' . DIRECTORY_SEPARATOR . 'autoload.php';
   }
 
   /**

@@ -25,12 +25,12 @@ class FileOwnershipTest extends KernelTestBase {
    */
   public function testFileOwnership() {
     // No ownership problems.
-    $file_ownership = new FileOwnership($this->container->get('automatic_updates.drupal_finder'));
+    $file_ownership = new FileOwnership($this->container->get('app.root'));
     $messages = $file_ownership->run();
     $this->assertEmpty($messages);
 
     // Ownership problems.
-    $file_ownership = new TestFileOwnership($this->container->get('automatic_updates.drupal_finder'));
+    $file_ownership = new TestFileOwnership($this->container->get('app.root'));
     $messages = $file_ownership->run();
     $this->assertCount(1, $messages);
     $this->assertStringStartsWith('Files are owned by uid "23"', (string) $messages[0]);

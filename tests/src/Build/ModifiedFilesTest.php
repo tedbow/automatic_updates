@@ -2,8 +2,8 @@
 
 namespace Drupal\Tests\automatic_updates\Build;
 
-use Drupal\Component\Utility\Html;
 use Drupal\Tests\automatic_updates\Build\QuickStart\QuickStartTestBase;
+use Drupal\Tests\automatic_updates\Traits\InstallTestTrait;
 use Symfony\Component\Filesystem\Filesystem as SymfonyFilesystem;
 
 /**
@@ -17,6 +17,7 @@ use Symfony\Component\Filesystem\Filesystem as SymfonyFilesystem;
  * @requires externalCommand tar
  */
 class ModifiedFilesTest extends QuickStartTestBase {
+  use InstallTestTrait;
 
   /**
    * Symfony file system.
@@ -44,6 +45,8 @@ class ModifiedFilesTest extends QuickStartTestBase {
     // shallow clone, therefore we use executeCommand instead of assertCommand.
     $this->executeCommand('git fetch --unshallow  --tags');
     $this->symfonyFileSystem->chmod($this->getWorkspaceDirectory() . '/sites/default', 0700, 0000);
+    $this->executeCommand('git reset HEAD --hard');
+    $this->assertCommandSuccessful();
     $this->executeCommand("git checkout $version -f");
     $this->assertCommandSuccessful();
 
@@ -117,12 +120,10 @@ class ModifiedFilesTest extends QuickStartTestBase {
     $this->symfonyFileSystem->chmod($this->getWorkspaceDirectory() . '/sites/default', 0700, 0000);
     $this->executeCommand('COMPOSER_DISCARD_CHANGES=true composer install --no-dev --no-interaction');
     $this->assertErrorOutputContains('Generating autoload files');
-    $this->executeCommand('COMPOSER_DISCARD_CHANGES=true composer require ocramius/package-versions:^1.4 webflo/drupal-finder:^1.1 composer/semver:^1.0 drupal/php-signify:^1.0@dev --no-interaction');
-    $this->assertErrorOutputContains('Generating autoload files');
     $this->installQuickStart('minimal');
 
     // Currently, this test has to use extension_discovery_scan_tests so we can
-    // enable test modules.
+    // install test modules.
     $this->symfonyFileSystem->chmod($this->getWorkspaceDirectory() . '/sites/default', 0750, 0000);
     $this->symfonyFileSystem->chmod($this->getWorkspaceDirectory() . '/sites/default/settings.php', 0640, 0000);
     $settings_php = $this->getWorkspaceDirectory() . '/sites/default/settings.php';
@@ -136,9 +137,9 @@ class ModifiedFilesTest extends QuickStartTestBase {
 
     // Log in so that we can install modules.
     $this->formLogin($this->adminUsername, $this->adminPassword);
-    $this->moduleEnable('update');
-    $this->moduleEnable('automatic_updates');
-    $this->moduleEnable('test_automatic_updates');
+    $this->moduleInstall('update');
+    $this->moduleInstall('automatic_updates');
+    $this->moduleInstall('test_automatic_updates');
 
     // Assert that the site is functional.
     $this->visit();
@@ -162,23 +163,6 @@ class ModifiedFilesTest extends QuickStartTestBase {
     foreach ($modifications as $modification) {
       $assert->pageTextContains($modification);
     }
-  }
-
-  /**
-   * Helper method that uses Drupal's module page to enable a module.
-   */
-  protected function moduleEnable($module_name) {
-    $this->visit('/admin/modules');
-    $field = Html::getClass("edit-modules $module_name enable");
-    // No need to enable a module if it is already enabled.
-    if ($this->getMink()->getSession()->getPage()->findField($field)->isChecked()) {
-      return;
-    }
-    $assert = $this->getMink()->assertSession();
-    $assert->fieldExists($field)->check();
-    $session = $this->getMink()->getSession();
-    $session->getPage()->findButton('Install')->submit();
-    $assert->fieldExists($field)->isChecked();
   }
 
 }

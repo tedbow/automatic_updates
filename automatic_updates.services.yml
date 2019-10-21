@@ -2,8 +2,6 @@ services:
   logger.channel.automatic_updates:
     parent: logger.channel_base
     arguments: ['automatic_updates']
-  automatic_updates.drupal_finder:
-    class: DrupalFinder\DrupalFinder
   automatic_updates.psa:
     class: Drupal\automatic_updates\Services\AutomaticUpdatesPsa
     arguments:
@@ -26,6 +24,26 @@ services:
       - '@datetime.time'
       - '@entity_type.manager'
       - '@string_translation'
+  automatic_updates.cron_override:
+    class: Drupal\automatic_updates\EventSubscriber\CronOverride
+    tags:
+      - { name: config.factory.override }
+  automatic_updates.modified_files:
+    class: Drupal\automatic_updates\Services\ModifiedFiles
+    arguments:
+      - '@logger.channel.automatic_updates'
+      - '@http_client'
+      - '@config.factory'
+  automatic_updates.update:
+    class: Drupal\automatic_updates\Services\InPlaceUpdate
+    arguments:
+      - '@logger.channel.automatic_updates'
+      - '@plugin.manager.archiver'
+      - '@config.factory'
+      - '@file_system'
+      - '@http_client'
+      - '@app.root'
+
   automatic_updates.readiness_checker:
     class: Drupal\automatic_updates\ReadinessChecker\ReadinessCheckerManager
     arguments:
@@ -33,11 +51,13 @@ services:
       - '@config.factory'
     tags:
       - { name: service_collector, tag: readiness_checker, call: addChecker }
+
+  # Readiness checkers.
   automatic_updates.readonly_checker:
     class: Drupal\automatic_updates\ReadinessChecker\ReadOnlyFilesystem
     arguments:
       - '@logger.channel.automatic_updates'
-      - '@automatic_updates.drupal_finder'
+      - '@app.root'
       - '@file_system'
     tags:
       - { name: readiness_checker, priority: 100, category: error }
@@ -45,16 +65,9 @@ services:
     class: Drupal\automatic_updates\ReadinessChecker\DiskSpace
     arguments:
       - '@logger.channel.automatic_updates'
-      - '@automatic_updates.drupal_finder'
+      - '@app.root'
     tags:
       - { name: readiness_checker, category: error}
-  automatic_updates.modified_files:
-    class: Drupal\automatic_updates\Services\ModifiedFiles
-    arguments:
-      - '@logger.channel.automatic_updates'
-      - '@automatic_updates.drupal_finder'
-      - '@http_client'
-      - '@config.factory'
   automatic_updates.modified_files_checker:
     class: Drupal\automatic_updates\ReadinessChecker\ModifiedFiles
     arguments:
@@ -67,7 +80,7 @@ services:
   automatic_updates.file_ownership:
     class: Drupal\automatic_updates\ReadinessChecker\FileOwnership
     arguments:
-      - '@automatic_updates.drupal_finder'
+      - '@app.root'
     tags:
       - { name: readiness_checker, category: warning}
   automatic_updates.minimum_php_version:
@@ -85,7 +98,6 @@ services:
   automatic_updates.missing_project_info:
     class: Drupal\automatic_updates\ReadinessChecker\MissingProjectInfo
     arguments:
-      - '@automatic_updates.drupal_finder'
       - '@extension.list.module'
       - '@extension.list.profile'
       - '@extension.list.theme'
@@ -104,16 +116,3 @@ services:
       - '@module_handler'
     tags:
       - { name: readiness_checker, category: warning}
-  automatic_updates.cron_override:
-    class: Drupal\automatic_updates\EventSubscriber\CronOverride
-    tags:
-      - { name: config.factory.override }
-  automatic_updates.update:
-    class: Drupal\automatic_updates\Services\InPlaceUpdate
-    arguments:
-      - '@logger.channel.automatic_updates'
-      - '@plugin.manager.archiver'
-      - '@config.factory'
-      - '@file_system'
-      - '@http_client'
-      - '@automatic_updates.drupal_finder'

@@ -3,7 +3,6 @@
 namespace Drupal\Tests\automatic_updates\Kernel\ReadinessChecker;
 
 use Drupal\automatic_updates\ReadinessChecker\MissingProjectInfo;
-use DrupalFinder\DrupalFinder;
 use Drupal\Core\Extension\ExtensionList;
 use Drupal\KernelTests\KernelTestBase;
 
@@ -39,9 +38,8 @@ class MissingProjectInfoTest extends KernelTestBase {
     $this->assertNotEmpty($messages);
 
     // Now test with a some dummy info data that won't cause any issues.
-    $drupal_finder = new DrupalFinder();
     $extension_list = $this->createMock(ExtensionList::class);
-    $messages = (new TestMissingProjectInfo($drupal_finder, $extension_list, $extension_list, $extension_list))->run();
+    $messages = (new TestMissingProjectInfo($extension_list, $extension_list, $extension_list))->run();
     $this->assertEmpty($messages);
   }
 

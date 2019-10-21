@@ -8,7 +8,6 @@ use Drupal\Core\File\Exception\FileWriteException;
 use Drupal\Core\File\FileSystemInterface;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\KernelTests\KernelTestBase;
-use DrupalFinder\DrupalFinder;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -55,10 +54,10 @@ class ReadOnlyTest extends KernelTestBase {
       )
     );
 
-    $readonly = $this->getMockBuilder(TestReadOnlyFilesystem::class)
+    $readonly = $this->getMockBuilder(ReadOnlyFilesystem::class)
       ->setConstructorArgs([
         $this->createMock(LoggerInterface::class),
-        new DrupalFinder(),
+        '/var/www/html',
         $filesystem,
       ])
       ->setMethods([
@@ -92,40 +91,23 @@ class ReadOnlyTest extends KernelTestBase {
 
     // Test same logical disk.
     $expected_messages = [];
-    $expected_messages[] = $this->t('Logical disk at "/var/www" is read only. Updates to Drupal cannot be applied against a read only file system.');
+    $expected_messages[] = $this->t('Logical disk at "/var/www/html" is read only. Updates to Drupal cannot be applied against a read only file system.');
     $messages = $readonly->run();
     $this->assertEquals($expected_messages, $messages);
 
     // Test read-only.
     $expected_messages = [];
-    $expected_messages[] = $this->t('Drupal core filesystem at "/var/www/core" is read only. Updates to Drupal core cannot be applied against a read only file system.');
-    $expected_messages[] = $this->t('Vendor filesystem at "/var/www/vendor" is read only. Updates to the site\'s code base cannot be applied against a read only file system.');
+    $expected_messages[] = $this->t('Drupal core filesystem at "/var/www/html/core" is read only. Updates to Drupal core cannot be applied against a read only file system.');
+    $expected_messages[] = $this->t('Vendor filesystem at "/var/www/html/vendor" is read only. Updates to the site\'s code base cannot be applied against a read only file system.');
     $messages = $readonly->run();
     $this->assertEquals($expected_messages, $messages);
 
     // Test delete fails.
     $expected_messages = [];
-    $expected_messages[] = $this->t('Drupal core filesystem at "/var/www/core" is read only. Updates to Drupal core cannot be applied against a read only file system.');
-    $expected_messages[] = $this->t('Vendor filesystem at "/var/www/vendor" is read only. Updates to the site\'s code base cannot be applied against a read only file system.');
+    $expected_messages[] = $this->t('Drupal core filesystem at "/var/www/html/core" is read only. Updates to Drupal core cannot be applied against a read only file system.');
+    $expected_messages[] = $this->t('Vendor filesystem at "/var/www/html/vendor" is read only. Updates to the site\'s code base cannot be applied against a read only file system.');
     $messages = $readonly->run();
     $this->assertEquals($expected_messages, $messages);
   }
-
-}
-
-/**
- * Class TestReadOnlyFilesystem.
- */
-class TestReadOnlyFilesystem extends ReadOnlyFilesystem {
-
-  /**
-   * {@inheritdoc}
-   */
-  protected $rootPath = '/var/www';
-
-  /**
-   * {@inheritdoc}
-   */
-  protected $vendorPath = '/var/www/vendor';
 
 }

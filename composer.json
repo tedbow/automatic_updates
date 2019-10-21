@@ -13,12 +13,11 @@
   "require": {
     "ext-json": "*",
     "ext-zip": "*",
-    "composer/semver": "^1.0",
-    "drupal/php-signify": "^1.0@dev",
-    "ocramius/package-versions": "^1.4",
-    "webflo/drupal-finder": "^1.2"
+    "drupal/php-signify": "^1.0@dev"
   },
-  "require-dev": {
-    "drupal/ctools": "3.2.0"
+  "config": {
+    "platform": {
+      "php": "5.6.0"
+    }
   }
 }

@@ -22,17 +22,10 @@ abstract class Filesystem implements ReadinessCheckerInterface {
   protected $vendorPath;
 
   /**
-   * The drupal finder service.
-   *
-   * @var \DrupalFinder\DrupalFinder
-   */
-  protected $drupalFinder;
-
-  /**
    * {@inheritdoc}
    */
   public function run() {
-    if (!$this->getRootPath() || !$this->exists($this->getRootPath() . '/core/core.api.php')) {
+    if (!$this->exists($this->getRootPath() . '/core/core.api.php')) {
       return [$this->t('The web root could not be located.')];
     }
 
@@ -48,27 +41,14 @@ abstract class Filesystem implements ReadinessCheckerInterface {
   abstract protected function doCheck();
 
   /**
-   * Get the drupal finder service.
-   *
-   * @return \DrupalFinder\DrupalFinder
-   *   Get drupal finder service.
-   */
-  protected function getDrupalFinder() {
-    if (!$this->drupalFinder) {
-      $this->drupalFinder = \Drupal::service('automatic_updates.drupal_finder');
-    }
-    return $this->drupalFinder;
-  }
-
-  /**
    * Get the root file path.
    *
    * @return string
    *   The root file path.
    */
   protected function getRootPath() {
-    if (!$this->rootPath && $this->getDrupalFinder()->locateRoot(getcwd())) {
-      $this->rootPath = $this->getDrupalFinder()->getDrupalRoot();
+    if (!$this->rootPath) {
+      $this->rootPath = (string) \Drupal::root();
     }
     return $this->rootPath;
   }
@@ -80,8 +60,8 @@ abstract class Filesystem implements ReadinessCheckerInterface {
    *   The vendor file path.
    */
   protected function getVendorPath() {
-    if (!$this->vendorPath && $this->getDrupalFinder()->locateRoot(getcwd())) {
-      $this->vendorPath = $this->getDrupalFinder()->getVendorDir();
+    if (!$this->vendorPath) {
+      $this->vendorPath = $this->getRootPath() . DIRECTORY_SEPARATOR . 'vendor';
     }
     return $this->vendorPath;
   }
