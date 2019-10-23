@@ -19,9 +19,9 @@ class PhpSapiTest extends KernelTestBase {
   ];
 
   /**
-   * Tests the functionality of supported PHP version readiness checks.
+   * Tests PHP SAPI changes.
    */
-  public function testSupportedPhpVersion() {
+  public function testPhpSapiChanges() {
     $messages = $this->container->get('automatic_updates.php_sapi')->run();
     $this->assertEmpty($messages);
     $messages = $this->container->get('automatic_updates.php_sapi')->run();

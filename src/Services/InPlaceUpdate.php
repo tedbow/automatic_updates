@@ -153,6 +153,9 @@ class InPlaceUpdate implements UpdateInterface {
         if (!$success) {
           $this->rollback($project_root);
         }
+        else {
+          $this->clearOpcodeCache();
+        }
       }
     }
     return $success;
@@ -559,6 +562,15 @@ class InPlaceUpdate implements UpdateInterface {
       fclose($handle);
     }
     return new \ArrayIterator($deletions);
+  }
+
+  /**
+   * Clear opcode cache on successful update.
+   */
+  protected function clearOpcodeCache() {
+    if (function_exists('opcache_reset')) {
+      opcache_reset();
+    }
   }
 
 }

@@ -103,6 +103,10 @@ services:
       - '@extension.list.theme'
     tags:
       - { name: readiness_checker, category: warning}
+  automatic_updates.opcode_cache:
+    class: Drupal\automatic_updates\ReadinessChecker\OpcodeCache
+    tags:
+      - { name: readiness_checker, category: error}
   automatic_updates.php_sapi:
     class: Drupal\automatic_updates\ReadinessChecker\PhpSapi
     arguments:
