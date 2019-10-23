@@ -26,3 +26,9 @@ automatic_updates.settings:
     download_uri:
       type: string
       label: 'URI for downloading in-place update assets'
+    enable_cron_updates:
+      type: boolean
+      label: 'Enable automatic updates via cron'
+    enable_cron_security_updates:
+      type: boolean
+      label: 'Enable automatic updates for security releases via cron'

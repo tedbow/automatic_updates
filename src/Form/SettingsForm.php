@@ -33,6 +33,13 @@ class SettingsForm extends ConfigFormBase {
   protected $drupalRoot;
 
   /**
+   * The update manager service.
+   *
+   * @var \Drupal\update\UpdateManagerInterface
+   */
+  protected $updateManager;
+
+  /**
    * {@inheritdoc}
    */
   public static function create(ContainerInterface $container) {
@@ -40,6 +47,7 @@ class SettingsForm extends ConfigFormBase {
     $instance->checker = $container->get('automatic_updates.readiness_checker');
     $instance->dateFormatter = $container->get('date.formatter');
     $instance->drupalRoot = (string) $container->get('app.root');
+    $instance->updateManager = $container->get('update.manager');
     return $instance;
   }
 
@@ -102,45 +110,65 @@ class SettingsForm extends ConfigFormBase {
       ],
     ];
 
+    $this->updateManager->refreshUpdateData();
+    $available = update_get_available(TRUE);
+    $data = update_calculate_project_data($available);
+    $not_recommended = $data['drupal']['existing_version'] !== $data['drupal']['recommended'];
+    $security_update = isset($data['drupal']['security updates']);
+    $no_dev_core = strpos(\Drupal::VERSION, '-dev') === FALSE;
     $form['experimental'] = [
       '#type' => 'details',
-      '#title' => t('Experimental'),
+      '#title' => $this->t('Experimental'),
+      '#states' => [
+        'visible' => [
+          ':input[name="enable_readiness_checks"]' => ['checked' => TRUE],
+        ],
+      ],
     ];
+    if ($not_recommended && $security_update && $no_dev_core) {
+      $form['experimental']['security'] = [
+        '#type' => 'html_tag',
+        '#tag' => 'p',
+        '#value' => $this->t('A security update is available for your version of Drupal.'),
+      ];
+    }
+
+    $update_text = $this->t('Even with all that caution, if you want to try it out... <i>no update is available at this time. Check back later once a newer release is provided for a link to update your site.</i>');
+    if ($not_recommended && $no_dev_core) {
+      $update_text = $this->t('Even with all that caution, if you want to try it out, <a href="@link">update now</a>.', [
+        '@link' => Url::fromRoute('automatic_updates.inplace-update', [
+          'project' => 'drupal',
+          'type' => 'core',
+          'from' => \Drupal::VERSION,
+          'to' => $data['drupal']['latest_version'],
+        ])->toString(),
+      ]);
+    }
+
     $form['experimental']['update'] = [
+      '#prefix' => 'Database updates are not run after an update. This module does not have a stable release and it is recommended to not use these features on a live website. Use at your own risk.',
       '#type' => 'html_tag',
       '#tag' => 'p',
-      '#value' => $this->t('No update for Drupal is available for version %version.', ['%version' => \Drupal::VERSION]),
+      '#value' => $update_text,
     ];
-    if (strpos(\Drupal::VERSION, '-dev') === FALSE) {
-      \Drupal::service('update.manager')->refreshUpdateData();
-      $available = update_get_available(TRUE);
-      $data = update_calculate_project_data($available);
-      // If we aren't on the recommended version for our version of Drupal, then
-      // enable this experimental feature.
-      if ($data['drupal']['existing_version'] !== $data['drupal']['recommended']) {
-        if (isset($data['drupal']['security updates'])) {
-          $form['experimental']['security'] = [
-            '#type' => 'html_tag',
-            '#tag' => 'p',
-            '#value' => $this->t('A security update is available for your version of Drupal.'),
-            '#weight' => -1,
-          ];
-        }
-        $form['experimental']['update'] = [
-          '#type' => 'html_tag',
-          '#tag' => 'p',
-          '#value' => $this->t('Even with all that caution, if you want to try it out, <a href="@link">update now</a>.', [
-            '@link' => Url::fromRoute('automatic_updates.inplace-update', [
-              'project' => 'drupal',
-              'type' => 'core',
-              'from' => \Drupal::VERSION,
-              'to' => $data['drupal']['latest_version'],
-            ])->toString(),
-          ]),
-          '#prefix' => 'Note: Might break the site. No readiness checks or anything in place. Just update the files of Drupal core. Database updates are not run.',
-        ];
-      }
-    }
+
+    $form['experimental']['enable_cron_updates'] = [
+      '#type' => 'checkbox',
+      '#title' => $this->t('Enable automatic updates of Drupal core via cron.'),
+      '#default_value' => $config->get('enable_cron_updates'),
+      '#description' => $this->t('As an alternative to the full control of manually executing an update, enable automated updates via cron.'),
+    ];
+    $form['experimental']['enable_cron_security_updates'] = [
+      '#type' => 'checkbox',
+      '#title' => $this->t('Enable security only updates'),
+      '#default_value' => $config->get('enable_cron_security_updates'),
+      '#description' => $this->t('Enable automated updates via cron for security-only releases of Drupal core.'),
+      '#states' => [
+        'visible' => [
+          ':input[name="enable_cron_updates"]' => ['checked' => TRUE],
+        ],
+      ],
+    ];
 
     return parent::buildForm($form, $form_state);
   }
@@ -154,6 +182,10 @@ class SettingsForm extends ConfigFormBase {
     $config = $this->config('automatic_updates.settings');
     foreach ($form_state->getValues() as $key => $value) {
       $config->set($key, $value);
+      // Disable cron automatic updates if readiness checks are disabled.
+      if (in_array($key, ['enable_cron_updates', 'enable_cron_security_updates'], TRUE) && !$form_state->getValue('enable_readiness_checks')) {
+        $config->set($key, FALSE);
+      }
     }
     $config->save();
   }

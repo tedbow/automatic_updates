@@ -6,3 +6,5 @@ enable_readiness_checks: true
 hashes_uri: 'https://updates.drupal.org/release-hashes'
 ignored_paths: "modules/*\nthemes/*\nprofiles/*"
 download_uri: 'https://www.drupal.org/in-place-updates'
+enable_cron_updates: false
+enable_cron_security_updates: false

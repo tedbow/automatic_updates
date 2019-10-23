@@ -75,6 +75,30 @@ function automatic_updates_cron() {
   foreach ($checker->getCategories() as $category) {
     $checker->run($category);
   }
+  // In-place updates won't function for dev releases of Drupal core.
+  if (strpos(\Drupal::VERSION, '-dev') !== FALSE) {
+    return;
+  }
+  /** @var \Drupal\Core\Config\ImmutableConfig $config */
+  $config = \Drupal::config('automatic_updates.settings');
+  if ($config->get('enable_cron_updates')) {
+    \Drupal::service('update.manager')->refreshUpdateData();
+    $available = update_get_available(TRUE);
+    $data = update_calculate_project_data($available);
+    $not_recommended = $data['drupal']['existing_version'] !== $data['drupal']['recommended'];
+    if ($config->get('enable_cron_security_updates')) {
+      if ($not_recommended && isset($data['drupal']['security updates'])) {
+        /** @var \Drupal\automatic_updates\Services\UpdateInterface $updater */
+        $updater = \Drupal::service('automatic_updates.update');
+        $updater->update('drupal', 'core', \Drupal::VERSION, $data['drupal']['latest_version']);
+      }
+    }
+    elseif ($not_recommended) {
+      /** @var \Drupal\automatic_updates\Services\UpdateInterface $updater */
+      $updater = \Drupal::service('automatic_updates.update');
+      $updater->update('drupal', 'core', \Drupal::VERSION, $data['drupal']['latest_version']);
+    }
+  }
 }
 
 /**
