@@ -34,6 +34,9 @@ class MissingProjectInfoTest extends KernelTestBase {
   public function testMissingProjectInfo() {
     // The checker should always have messages on the testbot, since project
     // info is added by the packager.
+    $ignore_paths = "modules/custom/*\nthemes/custom/*\nprofiles/custom/*";
+    $this->config('automatic_updates.settings')->set('ignored_paths', $ignore_paths)
+      ->save();
     $messages = $this->container->get('automatic_updates.missing_project_info')->run();
     $this->assertNotEmpty($messages);
 

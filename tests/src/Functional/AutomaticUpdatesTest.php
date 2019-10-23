@@ -92,13 +92,17 @@ class AutomaticUpdatesTest extends BrowserTestBase {
    * Tests manually running readiness checks.
    */
   public function testReadinessChecks() {
+    $ignore_paths = "modules/custom/*\nthemes/custom/*\nprofiles/custom/*";
+    $this->config('automatic_updates.settings')->set('ignored_paths', $ignore_paths)
+      ->save();
     // Test manually running readiness checks. A few warnings will occur.
     $this->drupalGet(Url::fromRoute('automatic_updates.settings'));
     $this->clickLink('run the readiness checks');
     $this->assertSession()->pageTextContains('Your site does not pass some readiness checks for automatic updates. Depending on the nature of the failures, it might effect the eligibility for automatic updates.');
 
     // Ignore specific file paths to see no readiness issues.
-    $this->config('automatic_updates.settings')->set('ignored_paths', "core/*\nmodules/*\nthemes/*\nprofiles/*")
+    $ignore_paths = "core/*\nmodules/*\nthemes/*\nprofiles/*";
+    $this->config('automatic_updates.settings')->set('ignored_paths', $ignore_paths)
       ->save();
     $this->drupalGet(Url::fromRoute('automatic_updates.settings'));
     $this->clickLink('run the readiness checks');
