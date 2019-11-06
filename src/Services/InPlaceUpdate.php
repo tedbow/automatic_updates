@@ -196,15 +196,20 @@ class InPlaceUpdate implements UpdateInterface {
    *   Return TRUE if modified files exist, FALSE otherwise.
    */
   protected function checkModifiedFiles($project_name, $project_type, ArchiverInterface $archive) {
-    $extensions = [];
-    foreach (['module', 'profile', 'theme'] as $extension_type) {
-      $extensions[] = $this->getInfos($extension_type);
+    if ($project_type === 'core') {
+      $project_type = 'module';
     }
-    $extensions = array_merge(...$extensions);
-
+    $extensions = $this->getInfos($project_type);
     /** @var \Drupal\automatic_updates\Services\ModifiedFilesInterface $modified_files */
     $modified_files = \Drupal::service('automatic_updates.modified_files');
-    $files = iterator_to_array($modified_files->getModifiedFiles([$extensions[$project_name]]));
+    try {
+      $files = iterator_to_array($modified_files->getModifiedFiles([$extensions[$project_name]], TRUE));
+    }
+    catch (RequestException $exception) {
+      // While not strictly true that there are modified files, we can't be sure
+      // there aren't any. So assume the worst.
+      return TRUE;
+    }
     $files = array_unique($files);
     $archive_files = $archive->listContents();
     foreach ($archive_files as $index => &$archive_file) {
@@ -247,8 +252,9 @@ class InPlaceUpdate implements UpdateInterface {
       ]);
     }
     catch (RequestException $exception) {
-      if ($exception->getResponse()->getStatusCode() === 429 && ($retry = $exception->getResponse()->getHeader('Retry-After'))) {
-        $this->doGetArchive($url, $destination, $retry[0] * 1000);
+      $response = $exception->getResponse();
+      if (!$response || ($response->getStatusCode() === 429 && ($retry = $response->getHeader('Retry-After')))) {
+        $this->doGetArchive($url, $destination, $retry[0] ?? 10 * 1000);
       }
       else {
         $this->logger->error('Retrieval of "@url" failed with: @message', [
@@ -371,7 +377,7 @@ class InPlaceUpdate implements UpdateInterface {
    *   TRUE if path was removed, else FALSE.
    */
   protected function stripFileDirectoryPath(&$file) {
-    if (substr($file, 0, 6) === self::ARCHIVE_DIRECTORY) {
+    if (strpos($file, self::ARCHIVE_DIRECTORY) === 0) {
       $file = substr($file, 6);
       return TRUE;
     }
@@ -440,11 +446,11 @@ class InPlaceUpdate implements UpdateInterface {
    *   The iterator of SplFileInfos.
    */
   protected function getFilesList($directory) {
-    $filter = function ($file, $file_name, $iterator) {
+    $filter = static function ($file, $file_name, $iterator) {
       /** @var \SplFileInfo $file */
       /** @var string $file_name */
       /** @var \RecursiveDirectoryIterator $iterator */
-      if ($iterator->hasChildren() && !in_array($file->getFilename(), ['.git'], TRUE)) {
+      if ($iterator->hasChildren() && $file->getFilename() !== '.git') {
         return TRUE;
       }
       $skipped_files = [
@@ -471,7 +477,7 @@ class InPlaceUpdate implements UpdateInterface {
    */
   protected function buildUrl($project_name, $file_name) {
     $uri = $this->configFactory->get('automatic_updates.settings')->get('download_uri');
-    return Url::fromUri($uri . "/$project_name/" . $file_name)->toString();
+    return Url::fromUri("$uri/$project_name/$file_name")->toString();
   }
 
   /**

@@ -10,6 +10,7 @@ use Drupal\Signify\ChecksumList;
 use Drupal\Signify\FailedCheckumFilter;
 use Drupal\Signify\Verifier;
 use GuzzleHttp\ClientInterface;
+use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\Promise\EachPromise;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Log\LoggerInterface;
@@ -43,7 +44,7 @@ class ModifiedFiles implements ModifiedFilesInterface {
   protected $configFactory;
 
   /**
-   * ModifiedCode constructor.
+   * ModifiedFiles constructor.
    *
    * @param \Psr\Log\LoggerInterface $logger
    *   The logger.
@@ -63,15 +64,18 @@ class ModifiedFiles implements ModifiedFilesInterface {
   /**
    * {@inheritdoc}
    */
-  public function getModifiedFiles(array $extensions = []) {
+  public function getModifiedFiles(array $extensions = [], $exception_on_failure = FALSE) {
     $modified_files = new \ArrayIterator();
     /** @var \GuzzleHttp\Promise\PromiseInterface[] $promises */
     $promises = $this->getHashRequests($extensions);
     // Wait until all the requests are finished.
     (new EachPromise($promises, [
       'concurrency' => 4,
-      'fulfilled' => function ($resource) use ($modified_files) {
+      'fulfilled' => function (array $resource) use ($modified_files) {
         $this->processHashes($resource, $modified_files);
+      },
+      'rejected' => function (RequestException $exception) use ($exception_on_failure) {
+        $this->processFailures($exception, $exception_on_failure);
       },
     ]))->promise()->wait();
     return $modified_files;
@@ -80,14 +84,16 @@ class ModifiedFiles implements ModifiedFilesInterface {
   /**
    * Process checking hashes of files from external URL.
    *
-   * @param array $resource
+   * @param array $hash
    *   An array of http response and project info.
    * @param \ArrayIterator $modified_files
    *   The list of modified files.
+   *
+   * @throws \SodiumException
    */
-  protected function processHashes(array $resource, \ArrayIterator $modified_files) {
-    $contents = $resource['contents'];
-    $info = $resource['info'];
+  protected function processHashes(array $hash, \ArrayIterator $modified_files) {
+    $contents = $hash['contents'];
+    $info = $hash['info'];
     $directory_root = $info['install path'];
     if ($info['project'] === 'drupal') {
       $directory_root = '';
@@ -110,6 +116,21 @@ class ModifiedFiles implements ModifiedFilesInterface {
       if ($actual_hash === FALSE || empty($actual_hash) || strlen($actual_hash) < 64 || strcmp($actual_hash, $failed_checksum->hex_hash) !== 0) {
         $modified_files->append($file_path);
       }
+    }
+  }
+
+  /**
+   * Handle HTTP failures.
+   *
+   * @param \GuzzleHttp\Exception\RequestException $exception
+   *   The request exception.
+   * @param bool $exception_on_failure
+   *   Throw exception on HTTP failures, defaults to FALSE.
+   */
+  protected function processFailures(RequestException $exception, $exception_on_failure) {
+    if ($exception_on_failure) {
+      watchdog_exception('automatic_updates', $exception);
+      throw $exception;
     }
   }
 
@@ -151,13 +172,14 @@ class ModifiedFiles implements ModifiedFilesInterface {
     return $this->httpClient->requestAsync('GET', $url, [
       'stream' => TRUE,
       'read_timeout' => 30,
-    ])
-      ->then(function (ResponseInterface $response) use ($info) {
+    ])->then(
+      static function (ResponseInterface $response) use ($info) {
         return [
           'contents' => $response->getBody()->getContents(),
           'info' => $info,
         ];
-      });
+      }
+    );
   }
 
   /**
@@ -174,7 +196,7 @@ class ModifiedFiles implements ModifiedFilesInterface {
     $project_name = $info['project'];
     $hash_name = $this->getHashName($info);
     $uri = ltrim($this->configFactory->get('automatic_updates.settings')->get('hashes_uri'), '/');
-    return Url::fromUri($uri . "/$project_name/$version/$hash_name")->toString();
+    return Url::fromUri("$uri/$project_name/$version/$hash_name")->toString();
   }
 
   /**

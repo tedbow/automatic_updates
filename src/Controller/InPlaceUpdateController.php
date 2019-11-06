@@ -8,7 +8,7 @@ use Drupal\Core\Messenger\MessengerInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
- * Returns responses for Test Automatic Updates routes.
+ * Returns responses for Automatic Updates routes.
  */
 class InPlaceUpdateController extends ControllerBase {
 
@@ -47,7 +47,7 @@ class InPlaceUpdateController extends ControllerBase {
     $message = $this->t('Update successful');
     if (!$updated) {
       $message_type = MessengerInterface::TYPE_ERROR;
-      $message = $this->t('Update Failed');
+      $message = $this->t('Update failed. Please review logs to determine the cause.');
     }
     $this->messenger()->addMessage($message, $message_type);
     return $this->redirect('automatic_updates.settings');

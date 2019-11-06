@@ -46,7 +46,7 @@ trait ProjectInfoTrait {
       $info['version'] = $this->getExtensionVersion($info);
     });
     $system = isset($infos['system']) ? $infos['system'] : NULL;
-    $infos = array_filter($infos, function (array $info, $project_name) {
+    $infos = array_filter($infos, static function (array $info, $project_name) {
       return $info && $info['project'] === $project_name;
     }, ARRAY_FILTER_USE_BOTH);
     if ($system) {
@@ -70,7 +70,7 @@ trait ProjectInfoTrait {
       return $info['version'];
     }
     // Handle experimental modules from core.
-    if (substr($info['install path'], 0, 4) === "core") {
+    if (strpos($info['install path'], "core") === 0) {
       return $this->getExtensionList('module')->get('system')->info['version'];
     }
     \Drupal::logger('automatic_updates')->error('Version cannot be located for @extension', ['@extension' => $extension_name]);
@@ -98,7 +98,7 @@ trait ProjectInfoTrait {
         $project_name = $this->getSuffix($composer_json['name'], '/', $extension_name);
       }
     }
-    if (substr($info['install path'], 0, 4) === "core") {
+    if (strpos($info['install path'], 'core') === 0) {
       $project_name = 'drupal';
     }
     return $project_name;
