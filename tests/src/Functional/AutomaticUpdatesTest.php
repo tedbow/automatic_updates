@@ -15,6 +15,11 @@ class AutomaticUpdatesTest extends BrowserTestBase {
   /**
    * {@inheritdoc}
    */
+  protected $defaultTheme = 'stark';
+
+  /**
+   * {@inheritdoc}
+   */
   protected static $modules = [
     'automatic_updates',
     'test_automatic_updates',

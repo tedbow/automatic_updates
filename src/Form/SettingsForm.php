@@ -101,7 +101,7 @@ class SettingsForm extends ConfigFormBase {
     $form['ignored_paths'] = [
       '#type' => 'textarea',
       '#title' => $this->t('Paths to ignore for readiness checks'),
-      '#description' => $this->t('Paths relative to %drupal_root. One path per line.', ['%drupal_root' => $this->drupalRoot]),
+      '#description' => $this->t('Paths relative to %drupal_root. One path per line. Automatic Updates is intentionally limited to Drupal core. It is recommended to ignore paths to contrib extensions.', ['%drupal_root' => $this->drupalRoot]),
       '#default_value' => $config->get('ignored_paths'),
       '#states' => [
         'visible' => [
@@ -133,9 +133,9 @@ class SettingsForm extends ConfigFormBase {
       ];
     }
 
-    $update_text = $this->t('Even with all that caution, if you want to try it out... <i>no update is available at this time. Check back later once a newer release is provided for a link to update your site.</i>');
+    $update_text = $this->t('Your site is running %version of Drupal core. No recommended update is available at this time.</i>', ['%version' => \Drupal::VERSION]);
     if ($not_recommended && $no_dev_core) {
-      $update_text = $this->t('Even with all that caution, if you want to try it out, <a href="@link">update now</a>.', [
+      $update_text = $this->t('Even with all that caution, if you want to try it out, <a href="@link">manually update now</a>.', [
         '@link' => Url::fromRoute('automatic_updates.inplace-update', [
           'project' => 'drupal',
           'type' => 'core',
@@ -146,7 +146,7 @@ class SettingsForm extends ConfigFormBase {
     }
 
     $form['experimental']['update'] = [
-      '#prefix' => 'Database updates are not run after an update. This module does not have a stable release and it is recommended to not use these features on a live website. Use at your own risk.',
+      '#prefix' => 'Database updates are <strong>not</strong> run after an update. This module does not have a stable release and it is recommended to not use these features on a live website. Use at your own risk.',
       '#type' => 'html_tag',
       '#tag' => 'p',
       '#value' => $update_text,
@@ -156,7 +156,7 @@ class SettingsForm extends ConfigFormBase {
       '#type' => 'checkbox',
       '#title' => $this->t('Enable automatic updates of Drupal core via cron.'),
       '#default_value' => $config->get('enable_cron_updates'),
-      '#description' => $this->t('As an alternative to the full control of manually executing an update, enable automated updates via cron.'),
+      '#description' => $this->t('When a recommended update for Drupal core is available, a manual method to update is available. As an alternative to the full control of manually executing an update, enable automated updates via cron.'),
     ];
     $form['experimental']['enable_cron_security_updates'] = [
       '#type' => 'checkbox',
