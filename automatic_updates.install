@@ -6,6 +6,7 @@
  */
 
 use Drupal\automatic_updates\ReadinessChecker\ReadinessCheckerManagerInterface;
+use Drupal\automatic_updates\ReadinessChecker\Vendor;
 use Drupal\Core\StringTranslation\PluralTranslatableMarkup;
 use Drupal\Core\Url;
 
@@ -13,6 +14,17 @@ use Drupal\Core\Url;
  * Implements hook_requirements().
  */
 function automatic_updates_requirements($phase) {
+  $vendor_checker = new Vendor(\Drupal::getContainer()->get('app.root'));
+  if (!empty($vendor_checker->run())) {
+    return [
+      'not installable' => [
+        'title' => t('Automatic Updates'),
+        'severity' => REQUIREMENT_ERROR,
+        'value' => '1.x',
+        'description' => t('This module does not currently support relocated vendor folder and composer-based workflows.'),
+      ],
+    ];
+  }
   if ($phase !== 'runtime') {
     return;
   }

@@ -34,7 +34,7 @@ class ReadOnlyTest extends KernelTestBase {
     $this->assertEmpty($messages);
 
     $filesystem = $this->createMock(FileSystemInterface::class);
-    $filesystem->expects($this->any())
+    $filesystem
       ->method('copy')
       ->withAnyParameters()
       ->will($this->onConsecutiveCalls(
@@ -45,7 +45,7 @@ class ReadOnlyTest extends KernelTestBase {
         'full/file/path'
       )
     );
-    $filesystem->expects($this->any())
+    $filesystem
       ->method('delete')
       ->withAnyParameters()
       ->will($this->onConsecutiveCalls(
@@ -54,10 +54,11 @@ class ReadOnlyTest extends KernelTestBase {
       )
     );
 
+    $app_root = $this->container->get('app.root');
     $readonly = $this->getMockBuilder(ReadOnlyFilesystem::class)
       ->setConstructorArgs([
         $this->createMock(LoggerInterface::class),
-        '/var/www/html',
+        $app_root,
         $filesystem,
       ])
       ->setMethods([
@@ -65,7 +66,7 @@ class ReadOnlyTest extends KernelTestBase {
         'exists',
       ])
       ->getMock();
-    $readonly->expects($this->any())
+    $readonly
       ->method('areSameLogicalDisk')
       ->withAnyParameters()
       ->will($this->onConsecutiveCalls(
@@ -74,7 +75,7 @@ class ReadOnlyTest extends KernelTestBase {
         FALSE
       )
     );
-    $readonly->expects($this->any())
+    $readonly
       ->method('exists')
       ->withAnyParameters()
       ->will($this->onConsecutiveCalls(
@@ -91,21 +92,22 @@ class ReadOnlyTest extends KernelTestBase {
 
     // Test same logical disk.
     $expected_messages = [];
-    $expected_messages[] = $this->t('Logical disk at "/var/www/html" is read only. Updates to Drupal cannot be applied against a read only file system.');
+    $expected_messages[] = $this->t('Logical disk at "@app_root" is read only. Updates to Drupal cannot be applied against a read only file system.', ['@app_root' => $app_root]);
     $messages = $readonly->run();
     $this->assertEquals($expected_messages, $messages);
 
     // Test read-only.
     $expected_messages = [];
-    $expected_messages[] = $this->t('Drupal core filesystem at "/var/www/html/core" is read only. Updates to Drupal core cannot be applied against a read only file system.');
-    $expected_messages[] = $this->t('Vendor filesystem at "/var/www/html/vendor" is read only. Updates to the site\'s code base cannot be applied against a read only file system.');
+    $expected_messages[] = $this->t('Drupal core filesystem at "@core" is read only. Updates to Drupal core cannot be applied against a read only file system.', [
+      '@core' => $app_root . DIRECTORY_SEPARATOR . 'core',
+    ]);
+    $expected_messages[] = $this->t('Vendor filesystem at "@vendor" is read only. Updates to the site\'s code base cannot be applied against a read only file system.', [
+      '@vendor' => $app_root . DIRECTORY_SEPARATOR . 'vendor',
+    ]);
     $messages = $readonly->run();
     $this->assertEquals($expected_messages, $messages);
 
     // Test delete fails.
-    $expected_messages = [];
-    $expected_messages[] = $this->t('Drupal core filesystem at "/var/www/html/core" is read only. Updates to Drupal core cannot be applied against a read only file system.');
-    $expected_messages[] = $this->t('Vendor filesystem at "/var/www/html/vendor" is read only. Updates to the site\'s code base cannot be applied against a read only file system.');
     $messages = $readonly->run();
     $this->assertEquals($expected_messages, $messages);
   }

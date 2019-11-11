@@ -5,14 +5,12 @@ namespace Drupal\automatic_updates\ReadinessChecker;
 use Drupal\Component\Render\MarkupInterface;
 use Drupal\Core\File\Exception\FileException;
 use Drupal\Core\File\FileSystemInterface;
-use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Psr\Log\LoggerInterface;
 
 /**
  * Read only filesystem checker.
  */
 class ReadOnlyFilesystem extends Filesystem {
-  use StringTranslationTrait;
 
   /**
    * The logger.
@@ -65,7 +63,7 @@ class ReadOnlyFilesystem extends Filesystem {
     }
     else {
       $error = $this->t('Drupal core filesystem at "@path" is read only. Updates to Drupal core cannot be applied against a read only file system.', ['@path' => $this->rootPath . '/core']);
-      $this->doReadOnlyCheck($this->getRootPath(), 'core.api.php', $messages, $error);
+      $this->doReadOnlyCheck($this->getRootPath(), implode(DIRECTORY_SEPARATOR, ['core', 'core.api.php']), $messages, $error);
       $error = $this->t('Vendor filesystem at "@path" is read only. Updates to the site\'s code base cannot be applied against a read only file system.', ['@path' => $this->vendorPath]);
       $this->doReadOnlyCheck($this->getVendorPath(), 'composer/LICENSE', $messages, $error);
     }
@@ -85,12 +83,16 @@ class ReadOnlyFilesystem extends Filesystem {
    *   The error message to add if the file is read only.
    */
   protected function doReadOnlyCheck($file_path, $file, array &$messages, MarkupInterface $message) {
+    // Ignore check if the path doesn't exit.
+    if (!is_file($file_path . DIRECTORY_SEPARATOR . $file)) {
+      return;
+    }
     try {
       // If we can copy and delete a file, then we don't have a read only
       // file system.
-      if ($this->fileSystem->copy("$file_path/$file", "$file_path/$file.automatic_updates", FileSystemInterface::EXISTS_REPLACE)) {
+      if ($this->fileSystem->copy($file_path . DIRECTORY_SEPARATOR . $file, $file_path . DIRECTORY_SEPARATOR . "$file.automatic_updates", FileSystemInterface::EXISTS_REPLACE)) {
         // Delete it after copying.
-        $this->fileSystem->delete("$file_path/$file.automatic_updates");
+        $this->fileSystem->delete($file_path . DIRECTORY_SEPARATOR . "$file.automatic_updates");
       }
       else {
         $this->logger->error($message);

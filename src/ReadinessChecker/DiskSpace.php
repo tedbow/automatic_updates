@@ -2,14 +2,10 @@
 
 namespace Drupal\automatic_updates\ReadinessChecker;
 
-use Drupal\Core\StringTranslation\StringTranslationTrait;
-use Psr\Log\LoggerInterface;
-
 /**
  * Disk space checker.
  */
 class DiskSpace extends Filesystem {
-  use StringTranslationTrait;
 
   /**
    * Minimum disk space (in bytes) is 10mb.
@@ -20,26 +16,6 @@ class DiskSpace extends Filesystem {
    * Megabyte divisor.
    */
   const MEGABYTE_DIVISOR = 1000000;
-
-  /**
-   * The logger.
-   *
-   * @var \Psr\Log\LoggerInterface
-   */
-  protected $logger;
-
-  /**
-   * ReadOnlyFilesystem constructor.
-   *
-   * @param \Psr\Log\LoggerInterface $logger
-   *   The logger.
-   * @param string $app_root
-   *   The app root.
-   */
-  public function __construct(LoggerInterface $logger, $app_root) {
-    $this->logger = $logger;
-    $this->rootPath = (string) $app_root;
-  }
 
   /**
    * {@inheritdoc}
@@ -63,7 +39,7 @@ class DiskSpace extends Filesystem {
           '@space' => static::MINIMUM_DISK_SPACE / static::MEGABYTE_DIVISOR,
         ]);
       }
-      if (disk_free_space($this->getVendorPath()) < static::MINIMUM_DISK_SPACE) {
+      if (is_dir($this->getVendorPath()) && disk_free_space($this->getVendorPath()) < static::MINIMUM_DISK_SPACE) {
         $messages[] = $this->t('Vendor filesystem "@vendor" has insufficient space. There must be at least @space megabytes free.', [
           '@vendor' => $this->getVendorPath(),
           '@space' => static::MINIMUM_DISK_SPACE / static::MEGABYTE_DIVISOR,

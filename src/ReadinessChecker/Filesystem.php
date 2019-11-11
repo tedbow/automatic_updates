@@ -2,10 +2,13 @@
 
 namespace Drupal\automatic_updates\ReadinessChecker;
 
+use Drupal\Core\StringTranslation\StringTranslationTrait;
+
 /**
  * Base class for filesystem checkers.
  */
 abstract class Filesystem implements ReadinessCheckerInterface {
+  use StringTranslationTrait;
 
   /**
    * The root file path.
@@ -22,10 +25,20 @@ abstract class Filesystem implements ReadinessCheckerInterface {
   protected $vendorPath;
 
   /**
+   * Filesystem constructor.
+   *
+   * @param string $app_root
+   *   The app root.
+   */
+  public function __construct($app_root) {
+    $this->rootPath = (string) $app_root;
+  }
+
+  /**
    * {@inheritdoc}
    */
   public function run() {
-    if (!$this->exists($this->getRootPath() . '/core/core.api.php')) {
+    if (!$this->exists($this->getRootPath() . DIRECTORY_SEPARATOR . implode(DIRECTORY_SEPARATOR, ['core', 'core.api.php']))) {
       return [$this->t('The web root could not be located.')];
     }
 

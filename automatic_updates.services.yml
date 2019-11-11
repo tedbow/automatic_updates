@@ -64,7 +64,6 @@ services:
   automatic_updates.disk_space_checker:
     class: Drupal\automatic_updates\ReadinessChecker\DiskSpace
     arguments:
-      - '@logger.channel.automatic_updates'
       - '@app.root'
     tags:
       - { name: readiness_checker, category: error}
@@ -120,3 +119,9 @@ services:
       - '@module_handler'
     tags:
       - { name: readiness_checker, category: warning}
+  automatic_updates.vendor:
+    class: Drupal\automatic_updates\ReadinessChecker\Vendor
+    arguments:
+      - '@app.root'
+    tags:
+      - { name: readiness_checker, category: error}

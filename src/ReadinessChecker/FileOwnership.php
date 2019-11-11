@@ -2,29 +2,16 @@
 
 namespace Drupal\automatic_updates\ReadinessChecker;
 
-use Drupal\Core\StringTranslation\StringTranslationTrait;
-
 /**
  * File ownership checker.
  */
 class FileOwnership extends Filesystem {
-  use StringTranslationTrait;
-
-  /**
-   * FileOwnership constructor.
-   *
-   * @param string $app_root
-   *   The app root.
-   */
-  public function __construct($app_root) {
-    $this->rootPath = (string) $app_root;
-  }
 
   /**
    * {@inheritdoc}
    */
   protected function doCheck() {
-    $file_path = $this->getRootPath() . '/core/core.api.php';
+    $file_path = $this->getRootPath() . DIRECTORY_SEPARATOR . implode(DIRECTORY_SEPARATOR, ['core', 'core.api.php']);
     return $this->ownerIsScriptUser($file_path);
   }
 
