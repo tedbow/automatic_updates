@@ -14,8 +14,9 @@ use Drupal\Core\Url;
  * Implements hook_requirements().
  */
 function automatic_updates_requirements($phase) {
-  $vendor_checker = new Vendor(\Drupal::getContainer()->get('app.root'));
-  if (!empty($vendor_checker->run())) {
+  // Mimic the functionality of the vendor checker procedurally since class
+  // loading isn't available pre module install.
+  if (!file_exists(implode(DIRECTORY_SEPARATOR, [DRUPAL_ROOT, 'vendor', 'autoload.php']))) {
     return [
       'not installable' => [
         'title' => t('Automatic Updates'),
