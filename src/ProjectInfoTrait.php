@@ -40,7 +40,7 @@ trait ProjectInfoTrait {
     $file_paths = $this->getExtensionList($extension_type)->getPathnames();
     $infos = $this->getExtensionList($extension_type)->getAllAvailableInfo();
     array_walk($infos, function (array &$info, $key) use ($file_paths) {
-      $info['packaged'] = isset($info['project']) ? $info['project'] : FALSE;
+      $info['packaged'] = isset($info['datestamp']) ? $info['datestamp'] : FALSE;
       $info['install path'] = $file_paths[$key] ? dirname($file_paths[$key]) : '';
       $info['project'] = $this->getProjectName($key, $info);
       $info['version'] = $this->getExtensionVersion($info);

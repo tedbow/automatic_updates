@@ -59,6 +59,7 @@ class ModifiedFilesTest extends QuickStartTestBase {
    * @dataProvider contribProjectsProvider
    */
   public function testContribModified($project, $project_type, $version, array $modifications = []) {
+    $this->markTestSkipped('Contrib updates are not currently supported');
     $this->copyCodebase();
 
     // Download the project.
@@ -125,11 +126,9 @@ class ModifiedFilesTest extends QuickStartTestBase {
     // Currently, this test has to use extension_discovery_scan_tests so we can
     // install test modules.
     $this->symfonyFileSystem->chmod($this->getWorkspaceDirectory() . '/sites/default', 0750, 0000);
-    $this->symfonyFileSystem->chmod($this->getWorkspaceDirectory() . '/sites/default/settings.php', 0640, 0000);
     $settings_php = $this->getWorkspaceDirectory() . '/sites/default/settings.php';
+    $this->symfonyFileSystem->chmod($settings_php, 0640);
     $this->symfonyFileSystem->appendToFile($settings_php, PHP_EOL . '$settings[\'extension_discovery_scan_tests\'] = TRUE;' . PHP_EOL);
-    // Intentionally mark composer.json and composer.lock as ignored.
-    $this->symfonyFileSystem->appendToFile($settings_php, PHP_EOL . '$config[\'automatic_updates.settings\'][\'ignored_paths\'] = "composer.json\ncomposer.lock\nmodules/custom/*\nthemes/custom/*\nprofiles/custom/*";' . PHP_EOL);
 
     // Restart server for config override to apply.
     $this->stopServer();

@@ -5,6 +5,7 @@ namespace Drupal\automatic_updates\Form;
 use Drupal\Core\Form\ConfigFormBase;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Url;
+use Drupal\update\UpdateManagerInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
@@ -112,10 +113,12 @@ class SettingsForm extends ConfigFormBase {
 
     $this->updateManager->refreshUpdateData();
     $available = update_get_available(TRUE);
-    $data = update_calculate_project_data($available);
-    $not_recommended = $data['drupal']['existing_version'] !== $data['drupal']['recommended'];
-    $security_update = isset($data['drupal']['security updates']);
-    $no_dev_core = strpos(\Drupal::VERSION, '-dev') === FALSE;
+    $projects = update_calculate_project_data($available);
+    $not_recommended_version = $projects['drupal']['status'] !== UpdateManagerInterface::CURRENT;
+    $not_dev_core = strpos(\Drupal::VERSION, '-dev') === FALSE;
+    $security_update = in_array($projects['drupal']['status'], [UpdateManagerInterface::NOT_SECURE, UpdateManagerInterface::REVOKED], TRUE);
+    $recommended_release = $projects['drupal']['releases'][$projects['drupal']['recommended']];
+    $major_upgrade = $recommended_release['version_major'] !== $projects['drupal']['existing_major'];
     $form['experimental'] = [
       '#type' => 'details',
       '#title' => $this->t('Experimental'),
@@ -125,22 +128,31 @@ class SettingsForm extends ConfigFormBase {
         ],
       ],
     ];
-    if ($not_recommended && $security_update && $no_dev_core) {
-      $form['experimental']['security'] = [
-        '#type' => 'html_tag',
-        '#tag' => 'p',
-        '#value' => $this->t('A security update is available for your version of Drupal.'),
-      ];
+    if ($not_recommended_version && $not_dev_core) {
+      if ($security_update) {
+        $form['experimental']['security'] = [
+          '#type' => 'html_tag',
+          '#tag' => 'p',
+          '#value' => $this->t('A security update is available for your version of Drupal.'),
+        ];
+      }
+      if ($major_upgrade) {
+        $form['experimental']['major_version'] = [
+          '#type' => 'html_tag',
+          '#tag' => 'p',
+          '#value' => $this->t('This update is a major version update which means that it may not be backwards compatible with your currently running version. It is recommended that you read the release notes and proceed at your own risk.'),
+        ];
+      }
     }
 
     $update_text = $this->t('Your site is running %version of Drupal core. No recommended update is available at this time.</i>', ['%version' => \Drupal::VERSION]);
-    if ($not_recommended && $no_dev_core) {
+    if ($not_recommended_version && $not_dev_core) {
       $update_text = $this->t('Even with all that caution, if you want to try it out, <a href="@link">manually update now</a>.', [
         '@link' => Url::fromRoute('automatic_updates.inplace-update', [
           'project' => 'drupal',
           'type' => 'core',
           'from' => \Drupal::VERSION,
-          'to' => $data['drupal']['latest_version'],
+          'to' => $recommended_release['version'],
         ])->toString(),
       ]);
     }

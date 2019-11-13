@@ -52,45 +52,12 @@ class InPlaceUpdateTest extends QuickStartTestBase {
    * @dataProvider coreVersionsProvider
    */
   public function testCoreUpdate($from_version, $to_version) {
-    $this->copyCodebase();
-    // We have to fetch the tags for this shallow repo. It might not be a
-    // shallow clone, therefore we use executeCommand instead of assertCommand.
-    $this->executeCommand('git fetch --unshallow  --tags');
-    $this->executeCommand('git reset HEAD --hard');
-    $this->assertCommandSuccessful();
-    $this->executeCommand("git checkout $from_version -f");
-    $this->assertCommandSuccessful();
-    $fs = new SymfonyFilesystem();
-    $fs->chmod($this->getWorkspaceDirectory() . '/sites/default', 0700, 0000);
-    $this->executeCommand('COMPOSER_DISCARD_CHANGES=true composer install --no-dev --no-interaction');
-    $this->assertErrorOutputContains('Generating autoload files');
-    $this->installQuickStart('minimal');
-
-    // Currently, this test has to use extension_discovery_scan_tests so we can
-    // install test modules.
-    $fs->chmod($this->getWorkspaceDirectory() . '/sites/default/settings.php', 0640, 0000);
-    file_put_contents($this->getWorkspaceDirectory() . '/sites/default/settings.php', '$settings[\'extension_discovery_scan_tests\'] = TRUE;' . PHP_EOL, FILE_APPEND);
-
-    // Log in so that we can install modules.
-    $this->formLogin($this->adminUsername, $this->adminPassword);
-    $this->moduleInstall('update');
-    $this->moduleInstall('automatic_updates');
-    $this->moduleInstall('test_automatic_updates');
-
-    // Confirm we are running correct Drupal version.
-    $finder = new Finder();
-    $finder->files()->in($this->getWorkspaceDirectory())->path('core/lib/Drupal.php');
-    $finder->contains("/const VERSION = '$from_version'/");
-    $this->assertTrue($finder->hasResults());
+    $this->installCore($from_version);
 
     // Assert files slated for deletion still exist.
     foreach ($this->getDeletions('drupal', $from_version, $to_version) as $deletion) {
       $this->assertFileExists($this->getWorkspaceDirectory() . DIRECTORY_SEPARATOR . $deletion);
     }
-
-    // Assert that the site is functional before updating.
-    $this->visit();
-    $this->assertDrupalVisit();
 
     // Update the site.
     $assert = $this->visit("/test_automatic_updates/in-place-update/drupal/core/$from_version/$to_version")
@@ -118,6 +85,7 @@ class InPlaceUpdateTest extends QuickStartTestBase {
    * @dataProvider contribProjectsProvider
    */
   public function testContribUpdate($project, $project_type, $from_version, $to_version) {
+    $this->markTestSkipped('Contrib updates are not currently supported');
     $this->copyCodebase();
     $fs = new SymfonyFilesystem();
     $fs->chmod($this->getWorkspaceDirectory() . '/sites/default', 0700, 0000);
@@ -176,32 +144,83 @@ class InPlaceUpdateTest extends QuickStartTestBase {
   }
 
   /**
+   * Test in-place update via cron run.
+   *
+   * @covers ::update
+   * @see automatic_updates_cron()
+   */
+  public function testCronCoreUpdate() {
+    $this->installCore('8.7.6');
+    $filesystem = new SymfonyFilesystem();
+    $filesystem->chmod($this->getWorkspaceDirectory() . '/sites/default', 0750, 0000);
+    $settings_php = $this->getWorkspaceDirectory() . '/sites/default/settings.php';
+    $filesystem->chmod($settings_php, 0640);
+    $filesystem->appendToFile($settings_php, PHP_EOL . '$config[\'automatic_updates.settings\'][\'enable_cron_updates\'] = TRUE;' . PHP_EOL);
+    $mink = $this->visit('/admin/config/system/cron');
+    $mink->getSession()->getPage()->findButton('Run cron')->submit();
+    $mink->assertSession()->pageTextContains('Cron ran successfully.');
+
+    // Assert that the update worked.
+    $this->assertDrupalVisit();
+    $finder = new Finder();
+    $finder->files()->in($this->getWorkspaceDirectory())->path('core/lib/Drupal.php');
+    $finder->notContains("/const VERSION = '8.7.6'/");
+    $finder->contains("/const VERSION = '8.7./");
+    $this->assertTrue($finder->hasResults());
+  }
+
+  /**
+   * Prepare core for testing.
+   *
+   * @param string $starting_version
+   *   The starting version.
+   */
+  protected function installCore($starting_version) {
+    $this->copyCodebase();
+    // We have to fetch the tags for this shallow repo. It might not be a
+    // shallow clone, therefore we use executeCommand instead of assertCommand.
+    $this->executeCommand('git fetch --unshallow  --tags');
+    $this->executeCommand('git reset HEAD --hard');
+    $this->assertCommandSuccessful();
+    $this->executeCommand("git checkout $starting_version -f");
+    $this->assertCommandSuccessful();
+    $this->executeCommand('git reset HEAD --hard');
+    $this->assertCommandSuccessful();
+    $fs = new SymfonyFilesystem();
+    $fs->chmod($this->getWorkspaceDirectory() . '/sites/default', 0700, 0000);
+    $this->executeCommand('COMPOSER_DISCARD_CHANGES=true composer install --no-dev --no-interaction');
+    $this->assertErrorOutputContains('Generating autoload files');
+    $this->installQuickStart('minimal');
+
+    // Currently, this test has to use extension_discovery_scan_tests so we can
+    // install test modules.
+    $fs->chmod($this->getWorkspaceDirectory() . '/sites/default/settings.php', 0640, 0000);
+    file_put_contents($this->getWorkspaceDirectory() . '/sites/default/settings.php', '$settings[\'extension_discovery_scan_tests\'] = TRUE;' . PHP_EOL, FILE_APPEND);
+
+    // Log in so that we can install modules.
+    $this->formLogin($this->adminUsername, $this->adminPassword);
+    $this->moduleInstall('update');
+    $this->moduleInstall('automatic_updates');
+    $this->moduleInstall('test_automatic_updates');
+
+    // Confirm we are running correct Drupal version.
+    $finder = new Finder();
+    $finder->files()->in($this->getWorkspaceDirectory())->path('core/lib/Drupal.php');
+    $finder->contains("/const VERSION = '$starting_version'/");
+    $this->assertTrue($finder->hasResults());
+
+    // Assert that the site is functional after install.
+    $this->visit();
+    $this->assertDrupalVisit();
+  }
+
+  /**
    * Core versions data provider.
    */
   public function coreVersionsProvider() {
     $datum[] = [
       'from' => '8.7.0',
       'to' => '8.7.1',
-    ];
-    $datum[] = [
-      'from' => '8.7.1',
-      'to' => '8.7.2',
-    ];
-    $datum[] = [
-      'from' => '8.7.2',
-      'to' => '8.7.3',
-    ];
-    $datum[] = [
-      'from' => '8.7.3',
-      'to' => '8.7.4',
-    ];
-    $datum[] = [
-      'from' => '8.7.4',
-      'to' => '8.7.5',
-    ];
-    $datum[] = [
-      'from' => '8.7.5',
-      'to' => '8.7.6',
     ];
     $datum[] = [
       'from' => '8.7.6',
