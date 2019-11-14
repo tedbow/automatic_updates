@@ -71,8 +71,9 @@ class ReadinessCheckerManager implements ReadinessCheckerManagerInterface {
     }
 
     foreach ($this->getSortedCheckers()[$category] as $checker) {
-      $messages = array_merge($messages, $checker->run());
+      $messages[] = $checker->run();
     }
+    $messages = array_merge(...$messages);
     $this->keyValue->set("readiness_check_results.$category", $messages);
     $this->keyValue->set('readiness_check_timestamp', \Drupal::time()->getRequestTime());
     return $messages;

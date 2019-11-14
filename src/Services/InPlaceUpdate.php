@@ -4,6 +4,7 @@ namespace Drupal\automatic_updates\Services;
 
 use Drupal\automatic_updates\ProjectInfoTrait;
 use Drupal\automatic_updates\ReadinessChecker\ReadinessCheckerManagerInterface;
+use Drupal\Component\FileSystem\FileSystem;
 use Drupal\Core\Archiver\ArchiverInterface;
 use Drupal\Core\Archiver\ArchiverManager;
 use Drupal\Core\Config\ConfigFactoryInterface;
@@ -27,11 +28,6 @@ class InPlaceUpdate implements UpdateInterface {
    * The manifest file that lists all file deletions.
    */
   const DELETION_MANIFEST = 'DELETION_MANIFEST.txt';
-
-  /**
-   * The checksum file with hashes of archive file contents.
-   */
-  const CHECKSUM_LIST = 'checksumlist.csig';
 
   /**
    * The directory inside the archive for file additions and modifications.
@@ -175,10 +171,17 @@ class InPlaceUpdate implements UpdateInterface {
    *   The archive or NULL if download fails.
    */
   protected function getArchive($project_name, $from_version, $to_version) {
-    $url = $this->buildUrl($project_name, $this->getQuasiPatchFileName($project_name, $from_version, $to_version));
-    $destination = $this->fileSystem->realpath($this->fileSystem->getDestinationFilename("temporary://$project_name.zip", FileSystemInterface::EXISTS_RENAME));
-    $this->doGetArchive($url, $destination);
-    /** @var \Drupal\Core\Archiver\ArchiverInterface $archive */
+    $quasi_patch = $this->getQuasiPatchFileName($project_name, $from_version, $to_version);
+    $url = $this->buildUrl($project_name, $quasi_patch);
+    $temp_directory = $this->getTempDirectory();
+    $destination = $this->fileSystem->getDestinationFilename($temp_directory . $quasi_patch, FileSystemInterface::EXISTS_REPLACE);
+    $this->doGetResource($url, $destination);
+    $csig_file = $quasi_patch . '.csig';
+    $csig_url = $this->buildUrl($project_name, $csig_file);
+    $csig_destination = $this->fileSystem->getDestinationFilename(FileSystem::getOsTemporaryDirectory() . DIRECTORY_SEPARATOR . $csig_file, FileSystemInterface::EXISTS_REPLACE);
+    $this->doGetResource($csig_url, $csig_destination);
+    $csig = file_get_contents($csig_destination);
+    $this->validateArchive($temp_directory, $csig);
     return $this->archiveManager->getInstance(['filepath' => $destination]);
   }
 
@@ -215,7 +218,6 @@ class InPlaceUpdate implements UpdateInterface {
     foreach ($archive_files as $index => &$archive_file) {
       $skipped_files = [
         self::DELETION_MANIFEST,
-        self::CHECKSUM_LIST,
       ];
       // Skip certain files and all directories.
       if (in_array($archive_file, $skipped_files, TRUE) || substr($archive_file, -1) === '/') {
@@ -244,7 +246,7 @@ class InPlaceUpdate implements UpdateInterface {
    * @param null|int $delay
    *   The delay, defaults to NULL.
    */
-  protected function doGetArchive($url, $destination, $delay = NULL) {
+  protected function doGetResource($url, $destination, $delay = NULL) {
     try {
       $this->httpClient->get($url, [
         'sink' => $destination,
@@ -253,14 +255,15 @@ class InPlaceUpdate implements UpdateInterface {
     }
     catch (RequestException $exception) {
       $response = $exception->getResponse();
-      if (!$response || ($response->getStatusCode() === 429 && ($retry = $response->getHeader('Retry-After')))) {
-        $this->doGetArchive($url, $destination, $retry[0] ?? 10 * 1000);
+      if (!$response || ($retry = $response->getHeader('Retry-After'))) {
+        $this->doGetResource($url, $destination, !empty($retry[0]) ? $retry[0] : 10 * 1000);
       }
       else {
         $this->logger->error('Retrieval of "@url" failed with: @message', [
-          '@url' => $url,
+          '@url' => $exception->getRequest()->getUri(),
           '@message' => $exception->getMessage(),
         ]);
+        throw $exception;
       }
     }
   }
@@ -278,7 +281,6 @@ class InPlaceUpdate implements UpdateInterface {
    */
   protected function processUpdate(ArchiverInterface $archive, $project_root) {
     $archive->extract($this->getTempDirectory());
-    $this->validateArchive($this->getTempDirectory());
     foreach ($this->getFilesList($this->getTempDirectory()) as $file) {
       $file_real_path = $this->getFileRealPath($file);
       $file_path = substr($file_real_path, strlen($this->getTempDirectory() . self::ARCHIVE_DIRECTORY));
@@ -311,17 +313,14 @@ class InPlaceUpdate implements UpdateInterface {
    *
    * @param string $directory
    *   The location of the downloaded archive.
+   * @param string $csig
+   *   The CSIG contents.
    */
-  protected function validateArchive($directory) {
-    $csig_file = $directory . DIRECTORY_SEPARATOR . self::CHECKSUM_LIST;
-    if (!file_exists($csig_file)) {
-      throw new \RuntimeException('The CSIG file does not exist in the archive.');
-    }
-    $contents = file_get_contents($csig_file);
+  protected function validateArchive($directory, $csig) {
     $module_path = drupal_get_path('module', 'automatic_updates');
     $key = file_get_contents($module_path . '/artifacts/keys/root.pub');
     $verifier = new Verifier($key);
-    $files = $verifier->verifyCsigMessage($contents);
+    $files = $verifier->verifyCsigMessage($csig);
     $checksums = new ChecksumList($files, TRUE);
     $failed_checksums = new FailedCheckumFilter($checksums, $directory);
     if (iterator_count($failed_checksums)) {
@@ -455,7 +454,6 @@ class InPlaceUpdate implements UpdateInterface {
       }
       $skipped_files = [
         self::DELETION_MANIFEST,
-        self::CHECKSUM_LIST,
       ];
       return $file->isFile() && !in_array($file->getFilename(), $skipped_files, TRUE);
     };
@@ -540,9 +538,9 @@ class InPlaceUpdate implements UpdateInterface {
    */
   protected function getTempDirectory() {
     if (!$this->tempDirectory) {
-      $this->tempDirectory = $this->fileSystem->createFilename('automatic_updates-update', 'temporary://');
-      $this->fileSystem->prepareDirectory($this->tempDirectory);
-      $this->tempDirectory = $this->fileSystem->realpath($this->tempDirectory) . DIRECTORY_SEPARATOR;
+      $this->tempDirectory = $this->fileSystem->createFilename('automatic_updates-update', FileSystem::getOsTemporaryDirectory());
+      $this->fileSystem->prepareDirectory($this->tempDirectory, FileSystemInterface::CREATE_DIRECTORY);
+      $this->tempDirectory .= DIRECTORY_SEPARATOR;
     }
     return $this->tempDirectory;
   }

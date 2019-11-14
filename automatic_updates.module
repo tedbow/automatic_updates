@@ -68,6 +68,34 @@ function automatic_updates_page_top(array &$page_top) {
  * Implements hook_cron().
  */
 function automatic_updates_cron() {
+  // In-place updates won't function for dev releases of Drupal core.
+  $dev_core = strpos(\Drupal::VERSION, '-dev') !== FALSE;
+  /** @var \Drupal\Core\Config\ImmutableConfig $config */
+  $config = \Drupal::config('automatic_updates.settings');
+  if (!$dev_core && $config->get('enable_cron_updates')) {
+    \Drupal::service('update.manager')->refreshUpdateData();
+    \Drupal::service('update.processor')->fetchData();
+    $available = update_get_available(TRUE);
+    $projects = update_calculate_project_data($available);
+    $not_recommended_version = $projects['drupal']['status'] !== UpdateManagerInterface::CURRENT;
+    $security_update = in_array($projects['drupal']['status'], [UpdateManagerInterface::NOT_SECURE, UpdateManagerInterface::REVOKED], TRUE);
+    $recommended_release = isset($projects['drupal']['releases'][$projects['drupal']['recommended']]) ? $projects['drupal']['releases'][$projects['drupal']['recommended']] : NULL;
+    $major_upgrade = isset($recommended_release['version_major']) ? $recommended_release['version_major'] !== $projects['drupal']['existing_major'] : TRUE;
+    // Don't automatically update major version bumps or a dev version of core.
+    if (!$major_upgrade && $config->get('enable_cron_security_updates')) {
+      if ($not_recommended_version && $security_update) {
+        /** @var \Drupal\automatic_updates\Services\UpdateInterface $updater */
+        $updater = \Drupal::service('automatic_updates.update');
+        $updater->update('drupal', 'core', \Drupal::VERSION, $recommended_release['version']);
+      }
+    }
+    elseif (!$major_upgrade && $not_recommended_version) {
+      /** @var \Drupal\automatic_updates\Services\UpdateInterface $updater */
+      $updater = \Drupal::service('automatic_updates.update');
+      $updater->update('drupal', 'core', \Drupal::VERSION, $recommended_release['version']);
+    }
+  }
+
   /** @var \Drupal\automatic_updates\Services\NotifyInterface $notify */
   $notify = \Drupal::service('automatic_updates.psa_notify');
   $notify->send();
@@ -75,38 +103,6 @@ function automatic_updates_cron() {
   $checker = \Drupal::service('automatic_updates.readiness_checker');
   foreach ($checker->getCategories() as $category) {
     $checker->run($category);
-  }
-  // In-place updates won't function for dev releases of Drupal core.
-  if (strpos(\Drupal::VERSION, '-dev') !== FALSE) {
-    return;
-  }
-  /** @var \Drupal\Core\Config\ImmutableConfig $config */
-  $config = \Drupal::config('automatic_updates.settings');
-  if ($config->get('enable_cron_updates')) {
-    \Drupal::service('update.manager')->refreshUpdateData();
-    $available = update_get_available(TRUE);
-    $projects = update_calculate_project_data($available);
-    $not_recommended_version = $projects['drupal']['status'] !== UpdateManagerInterface::CURRENT;
-    $dev_core = strpos(\Drupal::VERSION, '-dev') !== FALSE;
-    $security_update = in_array($projects['drupal']['status'], [UpdateManagerInterface::NOT_SECURE, UpdateManagerInterface::REVOKED], TRUE);
-    $recommended_release = $projects['drupal']['releases'][$projects['drupal']['recommended']];
-    $major_upgrade = $recommended_release['version_major'] !== $projects['drupal']['existing_major'];
-    // Don't automatically update major version bumps or a dev version of core.
-    if ($major_upgrade || $dev_core) {
-      return;
-    }
-    if ($config->get('enable_cron_security_updates')) {
-      if ($not_recommended_version && $security_update) {
-        /** @var \Drupal\automatic_updates\Services\UpdateInterface $updater */
-        $updater = \Drupal::service('automatic_updates.update');
-        $updater->update('drupal', 'core', \Drupal::VERSION, $recommended_release['version']);
-      }
-    }
-    elseif ($not_recommended_version) {
-      /** @var \Drupal\automatic_updates\Services\UpdateInterface $updater */
-      $updater = \Drupal::service('automatic_updates.update');
-      $updater->update('drupal', 'core', \Drupal::VERSION, $recommended_release['version']);
-    }
   }
 }
 
