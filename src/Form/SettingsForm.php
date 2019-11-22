@@ -73,33 +73,47 @@ class SettingsForm extends ConfigFormBase {
    */
   public function buildForm(array $form, FormStateInterface $form_state) {
     $config = $this->config('automatic_updates.settings');
-    $form['description'] = [
+
+    $form['psa'] = [
+      '#type' => 'details',
+      '#title' => $this->t('Public serivice announcements'),
+      '#open' => TRUE,
+    ];
+    $form['psa']['description'] = [
       '#markup' => '<p>' . $this->t('Public service announcements are compared against the entire code for the site, not just installed extensions.') . '</p>',
     ];
-    $form['enable_psa'] = [
+
+    $form['psa']['enable_psa'] = [
       '#type' => 'checkbox',
       '#title' => $this->t('Show Public service announcements on administrative pages.'),
       '#default_value' => $config->get('enable_psa'),
     ];
-    $form['notify'] = [
+    $form['psa']['notify'] = [
       '#type' => 'checkbox',
       '#title' => $this->t('Send email notifications for Public service announcements.'),
       '#default_value' => $config->get('notify'),
       '#description' => $this->t('The email addresses listed in <a href="@update_manager">update manager settings</a> will be notified.', ['@update_manager' => Url::fromRoute('update.settings')->toString()]),
     ];
+
+    $form['readiness'] = [
+      '#type' => 'details',
+      '#title' => $this->t('Readiness checks'),
+      '#open' => TRUE,
+    ];
+
     $last_check_timestamp = $this->checker->timestamp();
-    $form['enable_readiness_checks'] = [
+    $form['readiness']['enable_readiness_checks'] = [
       '#type' => 'checkbox',
       '#title' => $this->t('Check the readiness of automatically updating the site.'),
       '#default_value' => $config->get('enable_readiness_checks'),
     ];
     if ($this->checker->isEnabled()) {
-      $form['enable_readiness_checks']['#description'] = $this->t('Readiness checks were last run @time ago. Manually <a href="@link">run the readiness checks</a>.', [
+      $form['readiness']['enable_readiness_checks']['#description'] = $this->t('Readiness checks were last run @time ago. Manually <a href="@link">run the readiness checks</a>.', [
         '@time' => $this->dateFormatter->formatTimeDiffSince($last_check_timestamp),
         '@link' => Url::fromRoute('automatic_updates.update_readiness')->toString(),
       ]);
     }
-    $form['ignored_paths'] = [
+    $form['readiness']['ignored_paths'] = [
       '#type' => 'textarea',
       '#title' => $this->t('Paths to ignore for readiness checks'),
       '#description' => $this->t('Paths relative to %drupal_root. One path per line. Automatic Updates is intentionally limited to Drupal core. It is recommended to ignore paths to contrib extensions.', ['%drupal_root' => $this->drupalRoot]),
