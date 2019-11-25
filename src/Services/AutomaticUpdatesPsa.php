@@ -135,8 +135,8 @@ class AutomaticUpdatesPsa implements AutomaticUpdatesPsaInterface {
     }
 
     try {
-      $json_payload = json_decode($response);
-      if (!is_null($json_payload)) {
+      $json_payload = json_decode($response, FALSE);
+      if ($json_payload !== NULL) {
         foreach ($json_payload as $json) {
           if ($json->is_psa && ($json->type === 'core' || $this->isValidExtension($json->type, $json->project))) {
             $messages[] = $this->message($json->title, $json->link);
@@ -192,15 +192,15 @@ class AutomaticUpdatesPsa implements AutomaticUpdatesPsaInterface {
    */
   protected function contribParser(array &$messages, $json) {
     $extension_version = $this->{$json->type}->getAllAvailableInfo()[$json->project]['version'];
-    $json->insecure = array_filter(array_map(function ($version) {
+    $json->insecure = array_filter(array_map(static function ($version) {
       $version_array = explode('-', $version, 2);
       if ($version_array && $version_array[0] === \Drupal::CORE_COMPATIBILITY) {
         return isset($version_array[1]) ? $version_array[1] : NULL;
       }
-      elseif (count($version_array) === 1) {
+      if (count($version_array) === 1) {
         return $version_array[0];
       }
-      elseif (count($version_array) === 2 && $version_array[1] === 'dev') {
+      if (count($version_array) === 2 && $version_array[1] === 'dev') {
         return $version;
       }
     }, $json->insecure));

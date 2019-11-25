@@ -51,8 +51,9 @@ class ReadinessCheckerController extends ControllerBase {
   public function run() {
     $messages = [];
     foreach ($this->checker->getCategories() as $category) {
-      $messages = array_merge($this->checker->run($category), $messages);
+      $messages[] = $this->checker->run($category);
     }
+    $messages = array_merge(...$messages);
     if (empty($messages)) {
       $this->messenger()->addStatus($this->t('No issues found. Your site is completely ready for <a href="@readiness_checks">automatic updates</a>.', ['@readiness_checks' => 'https://www.drupal.org/docs/8/update/automatic-updates#readiness-checks']));
     }

@@ -120,7 +120,7 @@ class InPlaceUpdate implements UpdateInterface {
     $this->fileSystem = $file_system;
     $this->httpClient = $http_client;
     $this->rootPath = (string) $app_root;
-    $this->vendorPath = $this->rootPath . DIRECTORY_SEPARATOR . 'vendor';
+    $this->vendorPath = $this->rootPath . DIRECTORY_SEPARATOR . 'vendor' . DIRECTORY_SEPARATOR;
     $project_root = drupal_get_path('module', 'automatic_updates');
     require_once $project_root . DIRECTORY_SEPARATOR . 'vendor' . DIRECTORY_SEPARATOR . 'autoload.php';
   }
@@ -173,7 +173,7 @@ class InPlaceUpdate implements UpdateInterface {
   protected function getArchive($project_name, $from_version, $to_version) {
     $quasi_patch = $this->getQuasiPatchFileName($project_name, $from_version, $to_version);
     $url = $this->buildUrl($project_name, $quasi_patch);
-    $temp_directory = $this->getTempDirectory();
+    $temp_directory = FileSystem::getOsTemporaryDirectory() . DIRECTORY_SEPARATOR;
     $destination = $this->fileSystem->getDestinationFilename($temp_directory . $quasi_patch, FileSystemInterface::EXISTS_REPLACE);
     $this->doGetResource($url, $destination);
     $csig_file = $quasi_patch . '.csig';
@@ -226,6 +226,7 @@ class InPlaceUpdate implements UpdateInterface {
       }
       $this->stripFileDirectoryPath($archive_file);
     }
+    unset($archive_file);
     if ($intersection = array_intersect($files, $archive_files)) {
       $this->logger->error('Can not update because %count files are modified: %paths', [
         '%count' => count($intersection),
@@ -524,7 +525,7 @@ class InPlaceUpdate implements UpdateInterface {
    *   The real path of a file.
    */
   protected function getProjectRealPath($file_path, $project_root) {
-    if (substr($file_path, 0, 6) === 'vendor/') {
+    if (strpos($file_path, 'vendor' . DIRECTORY_SEPARATOR) === 0) {
       return $this->vendorPath . substr($file_path, 7);
     }
     return rtrim($project_root, '/\\') . DIRECTORY_SEPARATOR . $file_path;
@@ -569,7 +570,7 @@ class InPlaceUpdate implements UpdateInterface {
   }
 
   /**
-   * Clear opcode cache on successful update.
+   * Clear Opcode cache on successful update.
    */
   protected function clearOpcodeCache() {
     if (function_exists('opcache_reset')) {

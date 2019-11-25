@@ -33,12 +33,12 @@ class DiskSpaceTest extends KernelTestBase {
     // Out of space.
     $disk_space = new TestDiskSpace($this->container->get('app.root'));
     $messages = $disk_space->run();
-    $this->assertCount(1, $messages);
+    $this->assertCount(2, $messages);
 
     // Out of space not the same logical disk.
     $disk_space = new TestDiskSpaceNonSameDisk($this->container->get('app.root'));
     $messages = $disk_space->run();
-    $this->assertCount(2, $messages);
+    $this->assertCount(3, $messages);
   }
 
 }

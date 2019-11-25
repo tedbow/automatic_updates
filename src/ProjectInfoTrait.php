@@ -70,7 +70,7 @@ trait ProjectInfoTrait {
       return $info['version'];
     }
     // Handle experimental modules from core.
-    if (strpos($info['install path'], "core") === 0) {
+    if (strpos($info['install path'], 'core') === 0) {
       return $this->getExtensionList('module')->get('system')->info['version'];
     }
     \Drupal::logger('automatic_updates')->error('Version cannot be located for @extension', ['@extension' => $extension_name]);
@@ -145,6 +145,7 @@ trait ProjectInfoTrait {
     catch (\Throwable $exception) {
       \Drupal::logger('automatic_updates')->error('Composer.json could not be located for @extension', ['@extension' => $extension_name]);
     }
+    return NULL;
   }
 
 }

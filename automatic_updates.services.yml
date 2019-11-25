@@ -56,8 +56,8 @@ services:
   automatic_updates.readonly_checker:
     class: Drupal\automatic_updates\ReadinessChecker\ReadOnlyFilesystem
     arguments:
-      - '@logger.channel.automatic_updates'
       - '@app.root'
+      - '@logger.channel.automatic_updates'
       - '@file_system'
     tags:
       - { name: readiness_checker, priority: 100, category: error }

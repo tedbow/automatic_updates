@@ -76,7 +76,7 @@ class SettingsForm extends ConfigFormBase {
 
     $form['psa'] = [
       '#type' => 'details',
-      '#title' => $this->t('Public serivice announcements'),
+      '#title' => $this->t('Public service announcements'),
       '#open' => TRUE,
     ];
     $form['psa']['description'] = [

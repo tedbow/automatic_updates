@@ -29,16 +29,16 @@ class ReadOnlyFilesystem extends Filesystem {
   /**
    * ReadOnlyFilesystem constructor.
    *
-   * @param \Psr\Log\LoggerInterface $logger
-   *   The logger.
    * @param string $app_root
    *   The app root.
+   * @param \Psr\Log\LoggerInterface $logger
+   *   The logger.
    * @param \Drupal\Core\File\FileSystemInterface $file_system
    *   The file system service.
    */
-  public function __construct(LoggerInterface $logger, $app_root, FileSystemInterface $file_system) {
+  public function __construct($app_root, LoggerInterface $logger, FileSystemInterface $file_system) {
+    parent::__construct($app_root);
     $this->logger = $logger;
-    $this->rootPath = (string) $app_root;
     $this->fileSystem = $file_system;
   }
 

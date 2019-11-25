@@ -28,7 +28,7 @@ class OpcodeCacheTest extends KernelTestBase {
     $messages = $this->container->get('automatic_updates.opcode_cache')->run();
     if ($failure) {
       $this->assertNotEmpty($messages);
-      $this->assertEquals((string) $messages[0], 'Automatic updates cannot run via CLI  when opcode file cache is enabled.');
+      self::assertEquals((string) $messages[0], 'Automatic updates cannot run via CLI  when opcode file cache is enabled.');
     }
     else {
       $this->assertEmpty($messages);

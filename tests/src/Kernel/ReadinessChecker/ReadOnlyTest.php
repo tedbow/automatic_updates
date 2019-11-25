@@ -57,8 +57,8 @@ class ReadOnlyTest extends KernelTestBase {
     $app_root = $this->container->get('app.root');
     $readonly = $this->getMockBuilder(ReadOnlyFilesystem::class)
       ->setConstructorArgs([
-        $this->createMock(LoggerInterface::class),
         $app_root,
+        $this->createMock(LoggerInterface::class),
         $filesystem,
       ])
       ->setMethods([
@@ -88,13 +88,13 @@ class ReadOnlyTest extends KernelTestBase {
 
     // Test can't locate drupal.
     $messages = $readonly->run();
-    $this->assertEquals([$this->t('The web root could not be located.')], $messages);
+    self::assertEquals([$this->t('The web root could not be located.')], $messages);
 
     // Test same logical disk.
     $expected_messages = [];
     $expected_messages[] = $this->t('Logical disk at "@app_root" is read only. Updates to Drupal cannot be applied against a read only file system.', ['@app_root' => $app_root]);
     $messages = $readonly->run();
-    $this->assertEquals($expected_messages, $messages);
+    self::assertEquals($expected_messages, $messages);
 
     // Test read-only.
     $expected_messages = [];
@@ -105,11 +105,11 @@ class ReadOnlyTest extends KernelTestBase {
       '@vendor' => $app_root . DIRECTORY_SEPARATOR . 'vendor',
     ]);
     $messages = $readonly->run();
-    $this->assertEquals($expected_messages, $messages);
+    self::assertEquals($expected_messages, $messages);
 
     // Test delete fails.
     $messages = $readonly->run();
-    $this->assertEquals($expected_messages, $messages);
+    self::assertEquals($expected_messages, $messages);
   }
 
 }

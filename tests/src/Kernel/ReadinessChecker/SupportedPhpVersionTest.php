@@ -37,9 +37,9 @@ class SupportedPhpVersionTest extends KernelTestBase {
 
     // Unsupported versions.
     $messages = (new TestBlacklistPhp72Versions())->run();
-    $this->assertEquals('PHP 7.2.0, 7.2.1 and 7.2.2 have issues with opcache that breaks signature validation. Please upgrade to a newer version of PHP to ensure assurance and security for package signing.', $messages[0]);
+    self::assertEquals('PHP 7.2.0, 7.2.1 and 7.2.2 have issues with opcache that breaks signature validation. Please upgrade to a newer version of PHP to ensure assurance and security for package signing.', $messages[0]);
     $messages = (new TestMinimumPhpVersion())->run();
-    $this->assertEquals('This site is running on an unsupported version of PHP. It cannot be updated. Please update to at least PHP 7.0.8.', $messages[0]);
+    self::assertEquals('This site is running on an unsupported version of PHP. It cannot be updated. Please update to at least PHP 7.0.8.', $messages[0]);
   }
 
 }

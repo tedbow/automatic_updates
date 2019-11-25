@@ -65,9 +65,9 @@ class ModifiedFiles implements ReadinessCheckerInterface {
    */
   public function __construct(ModifiedFilesInterface $modified_files, ExtensionList $modules, ExtensionList $profiles, ExtensionList $themes) {
     $this->modifiedFiles = $modified_files;
-    $this->modules = $modules;
-    $this->profiles = $profiles;
-    $this->themes = $themes;
+    $this->module = $modules;
+    $this->profile = $profiles;
+    $this->theme = $themes;
   }
 
   /**

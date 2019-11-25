@@ -56,14 +56,14 @@ class ModifiedFilesController extends ControllerBase {
     // Special edge case for core.
     if ($project_type === 'core') {
       $infos = $this->getInfos('module');
-      $extensions = array_filter($infos, function (array $info) {
+      $extensions = array_filter($infos, static function (array $info) {
         return $info['project'] === 'drupal';
       });
     }
     // Filter for the main project.
     else {
       $infos = $this->getInfos($project_type);
-      $extensions = array_filter($infos, function (array $info) use ($extension, $project_type) {
+      $extensions = array_filter($infos, static function (array $info) use ($extension, $project_type) {
         return $info['install path'] === "{$project_type}s/contrib/$extension";
       });
     }

@@ -46,7 +46,7 @@ class VendorTest extends KernelTestBase {
     );
     $expected_messages = [];
     $expected_messages[] = $this->t('The vendor folder could not be located.');
-    $this->assertEquals($expected_messages, $missing_vendor->run());
+    self::assertEquals($expected_messages, $missing_vendor->run());
   }
 
 }

@@ -29,7 +29,7 @@ class PhpSapiTest extends KernelTestBase {
 
     $this->container->get('state')->set('automatic_updates.php_sapi', 'foo');
     $messages = $this->container->get('automatic_updates.php_sapi')->run();
-    $this->assertEquals('PHP changed from running as "foo" to "cli". This can lead to inconsistent and misleading results.', $messages[0]);
+    self::assertEquals('PHP changed from running as "foo" to "cli". This can lead to inconsistent and misleading results.', $messages[0]);
   }
 
 }

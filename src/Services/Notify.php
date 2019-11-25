@@ -150,6 +150,9 @@ class Notify implements NotifyInterface {
    *   The email address where the message will be sent.
    * @param array $params
    *   Parameters to build the email.
+   *
+   * @throws \Drupal\Component\Plugin\Exception\InvalidPluginDefinitionException
+   * @throws \Drupal\Component\Plugin\Exception\PluginNotFoundException
    */
   protected function doSend($to, array $params) {
     $users = $this->entityTypeManager->getStorage('user')

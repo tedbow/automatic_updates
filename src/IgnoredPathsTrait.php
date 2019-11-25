@@ -21,6 +21,7 @@ trait IgnoredPathsTrait {
     if ($this->getPathMatcher()->matchPath($file_path, $paths)) {
       return TRUE;
     }
+    return FALSE;
   }
 
   /**

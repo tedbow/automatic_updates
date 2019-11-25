@@ -39,7 +39,7 @@ class CronFrequencyTest extends KernelTestBase {
       ->set('interval', 21600)
       ->save();
     $messages = $this->container->get('automatic_updates.cron_frequency')->run();
-    $this->assertEquals('Cron is not set to run frequently enough. <a href="/admin/config/system/cron">Configure it</a> to run at least every 3 hours or disable automated cron and run it via an external scheduling system.', $messages[0]);
+    self::assertEquals('Cron is not set to run frequently enough. <a href="/admin/config/system/cron">Configure it</a> to run at least every 3 hours or disable automated cron and run it via an external scheduling system.', $messages[0]);
   }
 
 }

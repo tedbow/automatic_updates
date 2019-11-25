@@ -258,7 +258,7 @@ class InPlaceUpdateTest extends QuickStartTestBase {
     $this->deletions = [];
     $http_client = new Client();
     $filesystem = new SymfonyFilesystem();
-    $this->deletionsDestination = DrupalFileSystem::getOsTemporaryDirectory() . DIRECTORY_SEPARATOR . "$project-" . rand(10000, 99999) . microtime(TRUE);
+    $this->deletionsDestination = DrupalFileSystem::getOsTemporaryDirectory() . DIRECTORY_SEPARATOR . "$project-" . mt_rand(10000, 99999) . microtime(TRUE);
     $filesystem->mkdir($this->deletionsDestination);
     $file_name = "$project-$from_version-to-$to_version.zip";
     $zip_file = $this->deletionsDestination . DIRECTORY_SEPARATOR . $file_name;

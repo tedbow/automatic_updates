@@ -2,6 +2,8 @@
 
 namespace Drupal\automatic_updates\ReadinessChecker;
 
+use Drupal\Component\FileSystem\FileSystem as FileSystemComponent;
+
 /**
  * Disk space checker.
  */
@@ -49,6 +51,13 @@ class DiskSpace extends Filesystem {
     elseif (disk_free_space($this->getRootPath()) < static::MINIMUM_DISK_SPACE) {
       $messages[] = $this->t('Logical disk "@root" has insufficient space. There must be at least @space megabytes free.', [
         '@root' => $this->getRootPath(),
+        '@space' => static::MINIMUM_DISK_SPACE / static::MEGABYTE_DIVISOR,
+      ]);
+    }
+    $temp = FileSystemComponent::getOsTemporaryDirectory();
+    if (disk_free_space($temp) < static::MINIMUM_DISK_SPACE) {
+      $messages[] = $this->t('Directory "@temp" has insufficient space. There must be at least @space megabytes free.', [
+        '@temp' => $temp,
         '@space' => static::MINIMUM_DISK_SPACE / static::MEGABYTE_DIVISOR,
       ]);
     }

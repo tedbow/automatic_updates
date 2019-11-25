@@ -27,7 +27,7 @@ class PendingDbUpdatesTest extends KernelTestBase {
     $this->assertEmpty($messages);
 
     $messages = (new TestPendingDbUpdates())->run();
-    $this->assertEquals('There are pending database updates, therefore updates cannot be applied. Please run update.php.', $messages[0]);
+    self::assertEquals('There are pending database updates, therefore updates cannot be applied. Please run update.php.', $messages[0]);
   }
 
 }
