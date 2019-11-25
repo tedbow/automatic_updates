@@ -120,9 +120,9 @@ class Notify implements NotifyInterface {
     $notify_list = $this->configFactory->get('update.settings')->get('notification.emails');
     if (!empty($notify_list)) {
       $frequency = $this->configFactory->get('automatic_updates.settings')->get('check_frequency');
-      $last_check = $this->state->get('automatic_updates.last_check') ?: 0;
+      $last_check = $this->state->get('automatic_updates.notify_last_check') ?: 0;
       if (($this->time->getRequestTime() - $last_check) > $frequency) {
-        $this->state->set('automatic_updates.last_check', $this->time->getRequestTime());
+        $this->state->set('automatic_updates.notify_last_check', $this->time->getRequestTime());
 
         $params['subject'] = new PluralTranslatableMarkup(
           count($messages),

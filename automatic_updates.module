@@ -74,7 +74,7 @@ function automatic_updates_page_top(array &$page_top) {
 function automatic_updates_cron() {
   $state = \Drupal::state();
   $request_time = \Drupal::time()->getRequestTime();
-  $last_check = $state->get('automatic_updates.last_check', 0);
+  $last_check = $state->get('automatic_updates.cron_last_check', 0);
   // Only allow cron to run once every hour.
   if (($request_time - $last_check) < 3600) {
     return;
@@ -115,7 +115,7 @@ function automatic_updates_cron() {
   foreach ($checker->getCategories() as $category) {
     $checker->run($category);
   }
-  $state->set('automatic_updates.last_check', \Drupal::time()->getCurrentTime());
+  $state->set('automatic_updates.cron_last_check', \Drupal::time()->getCurrentTime());
 }
 
 /**

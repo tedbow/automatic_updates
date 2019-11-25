@@ -252,12 +252,15 @@ class InPlaceUpdate implements UpdateInterface {
       $this->httpClient->get($url, [
         'sink' => $destination,
         'delay' => $delay,
+        // Some of the core quasi-patch zip files are large, increase timeout.
+        'timeout' => 120,
       ]);
     }
     catch (RequestException $exception) {
       $response = $exception->getResponse();
-      if (!$response || ($retry = $response->getHeader('Retry-After'))) {
-        $this->doGetResource($url, $destination, !empty($retry[0]) ? $retry[0] : 10 * 1000);
+      if ($response && $response->getStatusCode() === 429) {
+        $delay = 1000 * (isset($response->getHeader('Retry-After')[0]) ? $response->getHeader('Retry-After')[0] : 10);
+        $this->doGetResource($url, $destination, $delay);
       }
       else {
         $this->logger->error('Retrieval of "@url" failed with: @message', [
