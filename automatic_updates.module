@@ -7,6 +7,7 @@
 
 use Drupal\automatic_updates\ReadinessChecker\ReadinessCheckerManagerInterface;
 use Drupal\update\UpdateManagerInterface;
+use Drupal\Core\Url;
 
 /**
  * Implements hook_page_top().
@@ -27,6 +28,7 @@ function automatic_updates_page_top(array &$page_top) {
       'update.settings',
       'system.status',
       'update.confirmation_page',
+      'automatic_updates.settings',
     ];
     // These routes don't need additional nagging.
     if (in_array(\Drupal::routeMatch()->getRouteName(), $disabled_routes, TRUE)) {
@@ -43,7 +45,10 @@ function automatic_updates_page_top(array &$page_top) {
     }
     $last_check_timestamp = \Drupal::service('automatic_updates.readiness_checker')->timestamp();
     if (\Drupal::time()->getRequestTime() > $last_check_timestamp + ReadinessCheckerManagerInterface::LAST_CHECKED_WARNING) {
-      \Drupal::messenger()->addError(t('Your site has not recently run an update readiness check.'));
+      $readiness_settings = Url::fromRoute('automatic_updates.settings');
+      \Drupal::messenger()->addError(t('Your site has not recently run an update readiness check. <a href="@link">Administer automatic updates</a> and run readiness checks manually.', [
+        '@link' => $readiness_settings->toString(),
+      ]));
     }
     /** @var \Drupal\automatic_updates\ReadinessChecker\ReadinessCheckerManagerInterface $checker */
     $checker = \Drupal::service('automatic_updates.readiness_checker');
