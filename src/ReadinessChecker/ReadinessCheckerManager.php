@@ -122,8 +122,9 @@ class ReadinessCheckerManager implements ReadinessCheckerManagerInterface {
     foreach ($this->checkers as $category => $priorities) {
       foreach ($priorities as $checkers) {
         krsort($checkers);
-        $sorted[$category] = isset($sorted[$category]) ? array_merge($sorted[$category], $checkers) : array_merge([], $checkers);
+        $sorted[$category][] = $checkers;
       }
+      $sorted[$category] = array_merge(...$sorted[$category]);
     }
     return $sorted;
   }
