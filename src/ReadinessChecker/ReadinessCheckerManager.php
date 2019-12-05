@@ -25,12 +25,12 @@ class ReadinessCheckerManager implements ReadinessCheckerManagerInterface {
   protected $configFactory;
 
   /**
-   * An unsorted array of arrays of active checkers.
+   * An unsorted array of active checkers.
    *
-   * An associative array. The keys are integers that indicate priority. Values
-   * are arrays of ReadinessCheckerInterface objects.
+   * The keys are category, next level is integers that indicate priority.
+   * Values are arrays of ReadinessCheckerInterface objects.
    *
-   * @var \Drupal\automatic_updates\ReadinessChecker\ReadinessCheckerInterface[][]
+   * @var \Drupal\automatic_updates\ReadinessChecker\ReadinessCheckerInterface[][][]
    */
   protected $checkers = [];
 

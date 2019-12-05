@@ -6,8 +6,10 @@
  */
 
 use Drupal\automatic_updates\ReadinessChecker\ReadinessCheckerManagerInterface;
-use Drupal\update\UpdateManagerInterface;
 use Drupal\Core\Url;
+use Drupal\update\UpdateManagerInterface;
+use Symfony\Component\Process\PhpExecutableFinder;
+use Symfony\Component\Process\Process;
 
 /**
  * Implements hook_page_top().
@@ -91,19 +93,34 @@ function automatic_updates_cron() {
     $not_recommended_version = $projects['drupal']['status'] !== UpdateManagerInterface::CURRENT;
     $security_update = in_array($projects['drupal']['status'], [UpdateManagerInterface::NOT_SECURE, UpdateManagerInterface::REVOKED], TRUE);
     $recommended_release = isset($projects['drupal']['releases'][$projects['drupal']['recommended']]) ? $projects['drupal']['releases'][$projects['drupal']['recommended']] : NULL;
-    $major_upgrade = isset($recommended_release['version_major']) ? $recommended_release['version_major'] !== $projects['drupal']['existing_major'] : TRUE;
-    // Don't automatically update major version bumps or a dev version of core.
-    if (!$major_upgrade && $config->get('enable_cron_security_updates')) {
-      if ($not_recommended_version && $security_update) {
+    $existing_minor_version = explode('.', \Drupal::VERSION, -1);
+    $recommended_minor_version = explode('.', $recommended_release['version'], -1);
+    $major_upgrade = $existing_minor_version !== $recommended_minor_version;
+    if ($major_upgrade) {
+      foreach (range(1, 30) as $point_version) {
+        $potential_version = implode('.', array_merge($existing_minor_version, (array) $point_version));
+        if (isset($available['drupal']['releases'][$potential_version])) {
+          $recommended_release = $available['drupal']['releases'][$potential_version];
+        }
+        else {
+          break;
+        }
+      }
+    }
+    // Don't automatically update major version bumps or from/to same version.
+    if ($not_recommended_version && $projects['drupal']['existing_version'] !== $recommended_release['version']) {
+      if ($config->get('enable_cron_security_updates')) {
+        if ($security_update) {
+          /** @var \Drupal\automatic_updates\Services\UpdateInterface $updater */
+          $updater = \Drupal::service('automatic_updates.update');
+          $updater->update('drupal', 'core', \Drupal::VERSION, $recommended_release['version']);
+        }
+      }
+      else {
         /** @var \Drupal\automatic_updates\Services\UpdateInterface $updater */
         $updater = \Drupal::service('automatic_updates.update');
         $updater->update('drupal', 'core', \Drupal::VERSION, $recommended_release['version']);
       }
-    }
-    elseif (!$major_upgrade && $not_recommended_version) {
-      /** @var \Drupal\automatic_updates\Services\UpdateInterface $updater */
-      $updater = \Drupal::service('automatic_updates.update');
-      $updater->update('drupal', 'core', \Drupal::VERSION, $recommended_release['version']);
     }
   }
 
@@ -140,4 +157,31 @@ function automatic_updates_mail($key, &$message, $params) {
 
   $message['subject'] = $params['subject'];
   $message['body'][] = $renderer->render($params['body']);
+}
+
+/**
+ * Helper method to execute console command.
+ *
+ * @param string $command_argument
+ *   The command argument.
+ *
+ * @return \Symfony\Component\Process\Process
+ *   The console command process.
+ */
+function automatic_updates_console_command($command_argument) {
+  $module_path = drupal_get_path('module', 'automatic_updates');
+  $command = [
+    (new PhpExecutableFinder())->find(),
+    $module_path . '/scripts/automatic_update_tools',
+    $command_argument,
+    '--script-filename',
+    \Drupal::request()->server->get('SCRIPT_FILENAME'),
+    '--base-url',
+    \Drupal::request()->getBaseUrl(),
+    '--base-path',
+    \Drupal::request()->getBasePath(),
+  ];
+  $process = new Process($command, (string) \Drupal::root(), NULL, NULL, NULL);
+  $process->run();
+  return $process;
 }

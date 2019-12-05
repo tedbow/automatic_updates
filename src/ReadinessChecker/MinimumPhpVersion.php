@@ -16,6 +16,8 @@ class MinimumPhpVersion extends SupportedPhpVersion {
    */
   protected function getUnsupportedVersionConstraint() {
     $parser = new VersionParser();
+    // Constant was introduced in 8.7.0-beta1, back fill for full 8.7 support.
+    defined('DRUPAL_MINIMUM_SUPPORTED_PHP') or define('DRUPAL_MINIMUM_SUPPORTED_PHP', '7.0.8');
     return $parser->parseConstraints('<' . DRUPAL_MINIMUM_SUPPORTED_PHP);
   }
 

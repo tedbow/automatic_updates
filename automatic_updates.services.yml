@@ -43,6 +43,9 @@ services:
       - '@file_system'
       - '@http_client'
       - '@app.root'
+  plugin.manager.database_update_handler:
+    class: Drupal\automatic_updates\DatabaseUpdateHandlerPluginManager
+    parent: default_plugin_manager
 
   automatic_updates.readiness_checker:
     class: Drupal\automatic_updates\ReadinessChecker\ReadinessCheckerManager
@@ -92,6 +95,8 @@ services:
       - { name: readiness_checker, category: warning}
   automatic_updates.pending_db_updates:
     class: Drupal\automatic_updates\ReadinessChecker\PendingDbUpdates
+    arguments:
+      - '@update.post_update_registry'
     tags:
       - { name: readiness_checker, category: error}
   automatic_updates.missing_project_info:

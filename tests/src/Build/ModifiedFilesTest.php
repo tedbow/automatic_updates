@@ -44,7 +44,7 @@ class ModifiedFilesTest extends QuickStartTestBase {
     // We have to fetch the tags for this shallow repo. It might not be a
     // shallow clone, therefore we use executeCommand instead of assertCommand.
     $this->executeCommand('git fetch --unshallow  --tags');
-    $this->symfonyFileSystem->chmod($this->getWorkspaceDirectory() . '/sites/default', 0700, 0000);
+    $this->symfonyFileSystem->chmod($this->getWorkspaceDirectory() . '/sites/default', 0700);
     $this->executeCommand('git reset HEAD --hard');
     $this->assertCommandSuccessful();
     $this->executeCommand("git checkout $version -f");
@@ -118,14 +118,14 @@ class ModifiedFilesTest extends QuickStartTestBase {
    *   The modified files to assert.
    */
   protected function assertModifications($project_type, $project, array $modifications) {
-    $this->symfonyFileSystem->chmod($this->getWorkspaceDirectory() . '/sites/default', 0700, 0000);
+    $this->symfonyFileSystem->chmod($this->getWorkspaceDirectory() . '/sites/default', 0700);
     $this->executeCommand('COMPOSER_DISCARD_CHANGES=true composer install --no-dev --no-interaction');
     $this->assertErrorOutputContains('Generating autoload files');
     $this->installQuickStart('minimal');
 
     // Currently, this test has to use extension_discovery_scan_tests so we can
     // install test modules.
-    $this->symfonyFileSystem->chmod($this->getWorkspaceDirectory() . '/sites/default', 0750, 0000);
+    $this->symfonyFileSystem->chmod($this->getWorkspaceDirectory() . '/sites/default', 0750);
     $settings_php = $this->getWorkspaceDirectory() . '/sites/default/settings.php';
     $this->symfonyFileSystem->chmod($settings_php, 0640);
     $this->symfonyFileSystem->appendToFile($settings_php, PHP_EOL . '$settings[\'extension_discovery_scan_tests\'] = TRUE;' . PHP_EOL);

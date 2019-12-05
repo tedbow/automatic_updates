@@ -41,6 +41,13 @@ class SettingsForm extends ConfigFormBase {
   protected $updateManager;
 
   /**
+   * The update processor.
+   *
+   * @var \Drupal\update\UpdateProcessorInterface
+   */
+  protected $updateProcessor;
+
+  /**
    * {@inheritdoc}
    */
   public static function create(ContainerInterface $container) {
@@ -49,6 +56,7 @@ class SettingsForm extends ConfigFormBase {
     $instance->dateFormatter = $container->get('date.formatter');
     $instance->drupalRoot = (string) $container->get('app.root');
     $instance->updateManager = $container->get('update.manager');
+    $instance->updateProcessor = $container->get('update.processor');
     return $instance;
   }
 
@@ -126,6 +134,7 @@ class SettingsForm extends ConfigFormBase {
     ];
 
     $this->updateManager->refreshUpdateData();
+    $this->updateProcessor->fetchData();
     $available = update_get_available(TRUE);
     $projects = update_calculate_project_data($available);
     $not_recommended_version = $projects['drupal']['status'] !== UpdateManagerInterface::CURRENT;

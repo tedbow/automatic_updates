@@ -32,3 +32,9 @@ automatic_updates.settings:
     enable_cron_security_updates:
       type: boolean
       label: 'Enable automatic updates for security releases via cron'
+    database_update_handling:
+      type: sequence
+      label: 'Database update handling'
+      sequence:
+        type: string
+        label: 'Tagged service to handle database updates'

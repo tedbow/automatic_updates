@@ -145,12 +145,26 @@ class InPlaceUpdate implements UpdateInterface {
     if ($archive = $this->getArchive($project_name, $from_version, $to_version)) {
       $modified = $this->checkModifiedFiles($project_name, $project_type, $archive);
       if (!$modified && $this->backup($archive, $project_root)) {
+        $this->logger->info('In place update has started.');
         $success = $this->processUpdate($archive, $project_root);
-        if (!$success) {
-          $this->rollback($project_root);
+        $this->logger->info('In place update has finished.');
+        if ($success) {
+          $process = automatic_updates_console_command('updatedb:status');
+          if ($success && $process->getOutput()) {
+            $this->logger->info('Database update handling has started.');
+            $success = $this->handleDatabaseUpdates();
+            $this->logger->info('Database update handling has finished.');
+          }
         }
-        else {
-          $this->clearOpcodeCache();
+        if (!$success) {
+          $this->logger->info('Rollback has started.');
+          $this->rollback($project_root);
+          $this->logger->info('Rollback has finished.');
+        }
+        if ($success) {
+          $this->logger->info('Cache clear has started.');
+          $this->cacheRebuild();
+          $this->logger->info('Cache clear has finished.');
         }
       }
     }
@@ -319,6 +333,8 @@ class InPlaceUpdate implements UpdateInterface {
    *   The location of the downloaded archive.
    * @param string $csig
    *   The CSIG contents.
+   *
+   * @throws \SodiumException
    */
   protected function validateArchive($directory, $csig) {
     $module_path = drupal_get_path('module', 'automatic_updates');
@@ -345,7 +361,7 @@ class InPlaceUpdate implements UpdateInterface {
    */
   protected function backup(ArchiverInterface $archive, $project_root) {
     $backup = $this->fileSystem->createFilename('automatic_updates-backup', 'temporary://');
-    $this->fileSystem->prepareDirectory($backup);
+    $this->fileSystem->prepareDirectory($backup, FileSystemInterface::CREATE_DIRECTORY);
     $this->backup = $this->fileSystem->realpath($backup) . DIRECTORY_SEPARATOR;
     if (!$this->backup) {
       return FALSE;
@@ -426,16 +442,40 @@ class InPlaceUpdate implements UpdateInterface {
     if (!$this->backup) {
       return;
     }
-    foreach ($this->getFilesList($this->backup) as $file) {
+    foreach ($this->getFilesList($this->getTempDirectory()) as $file) {
       $file_real_path = $this->getFileRealPath($file);
-      $file_path = substr($file_real_path, strlen($this->backup));
+      $file_path = substr($file_real_path, strlen($this->getTempDirectory() . self::ARCHIVE_DIRECTORY));
+      $project_real_path = $this->getProjectRealPath($file_path, $project_root);
       try {
-        $this->fileSystem->copy($file_real_path, $this->getProjectRealPath($file_path, $project_root), FileSystemInterface::EXISTS_REPLACE);
-        $this->logger->info('"@file" was restored due to failure(s) in applying update.', ['@file' => $file_path]);
+        $this->fileSystem->delete($project_real_path);
+        $this->logger->info('"@file" was successfully removed during rollback.', ['@file' => $project_real_path]);
       }
       catch (FileException $exception) {
-        $this->logger->error('@file was not rolled back successfully.', ['@file' => $file_real_path]);
+        $this->logger->error('"@file" failed removal on rollback.', ['@file' => $project_real_path]);
       }
+    }
+    foreach ($this->getFilesList($this->backup) as $file) {
+      $this->doRestore($file, $project_root);
+    }
+  }
+
+  /**
+   * Do restore.
+   *
+   * @param \SplFileInfo $file
+   *   File to restore.
+   * @param string $project_root
+   *   The project root directory.
+   */
+  protected function doRestore(\SplFileInfo $file, $project_root) {
+    $file_real_path = $this->getFileRealPath($file);
+    $file_path = substr($file_real_path, strlen($this->backup));
+    try {
+      $this->fileSystem->copy($file_real_path, $this->getProjectRealPath($file_path, $project_root), FileSystemInterface::EXISTS_REPLACE);
+      $this->logger->info('"@file" was successfully restored.', ['@file' => $file_path]);
+    }
+    catch (FileException $exception) {
+      $this->logger->error('"@file" failed restoration during rollback.', ['@file' => $file_real_path]);
     }
   }
 
@@ -573,12 +613,31 @@ class InPlaceUpdate implements UpdateInterface {
   }
 
   /**
-   * Clear Opcode cache on successful update.
+   * Clear cache on successful update.
    */
-  protected function clearOpcodeCache() {
+  protected function cacheRebuild() {
     if (function_exists('opcache_reset')) {
       opcache_reset();
     }
+    automatic_updates_console_command('cache:rebuild');
+  }
+
+  /**
+   * Handle database updates.
+   *
+   * @return bool
+   *   TRUE if database updates were handled successfully. FALSE otherwise.
+   *
+   * @throws \Drupal\Component\Plugin\Exception\PluginException
+   */
+  protected function handleDatabaseUpdates() {
+    $result = TRUE;
+    /** @var \Drupal\Component\Plugin\PluginManagerInterface $database_update_handler */
+    $database_update_handler = \Drupal::service('plugin.manager.database_update_handler');
+    foreach ($this->configFactory->get('automatic_updates.settings')->get('database_update_handling') as $plugin_id) {
+      $result = $result && $database_update_handler->createInstance($plugin_id)->execute();
+    }
+    return $result;
   }
 
 }
