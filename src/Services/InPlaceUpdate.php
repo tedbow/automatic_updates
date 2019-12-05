@@ -220,7 +220,7 @@ class InPlaceUpdate implements UpdateInterface {
     /** @var \Drupal\automatic_updates\Services\ModifiedFilesInterface $modified_files */
     $modified_files = \Drupal::service('automatic_updates.modified_files');
     try {
-      $files = iterator_to_array($modified_files->getModifiedFiles([$extensions[$project_name]], TRUE));
+      $files = iterator_to_array($modified_files->getModifiedFiles([$extensions[$project_name]]));
     }
     catch (RequestException $exception) {
       // While not strictly true that there are modified files, we can't be sure

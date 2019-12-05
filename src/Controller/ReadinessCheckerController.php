@@ -55,7 +55,7 @@ class ReadinessCheckerController extends ControllerBase {
     }
     $messages = array_merge(...$messages);
     if (empty($messages)) {
-      $this->messenger()->addStatus($this->t('No issues found. Your site is completely ready for <a href="@readiness_checks">automatic updates</a>.', ['@readiness_checks' => 'https://www.drupal.org/docs/8/update/automatic-updates#readiness-checks']));
+      $this->messenger()->addStatus($this->t('No issues found. Your site is ready for <a href="@readiness_checks">automatic updates</a>.', ['@readiness_checks' => 'https://www.drupal.org/docs/8/update/automatic-updates#readiness-checks']));
     }
     return $this->redirect('automatic_updates.settings');
   }

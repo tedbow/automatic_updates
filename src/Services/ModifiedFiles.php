@@ -5,6 +5,7 @@ namespace Drupal\automatic_updates\Services;
 use Drupal\automatic_updates\IgnoredPathsTrait;
 use Drupal\automatic_updates\ProjectInfoTrait;
 use Drupal\Core\Config\ConfigFactoryInterface;
+use Drupal\Core\Logger\RfcLogLevel;
 use Drupal\Core\Url;
 use Drupal\Signify\ChecksumList;
 use Drupal\Signify\FailedCheckumFilter;
@@ -64,7 +65,7 @@ class ModifiedFiles implements ModifiedFilesInterface {
   /**
    * {@inheritdoc}
    */
-  public function getModifiedFiles(array $extensions = [], $exception_on_failure = FALSE) {
+  public function getModifiedFiles(array $extensions = []) {
     $modified_files = new \ArrayIterator();
     /** @var \GuzzleHttp\Promise\PromiseInterface[] $promises */
     $promises = $this->getHashRequests($extensions);
@@ -74,8 +75,8 @@ class ModifiedFiles implements ModifiedFilesInterface {
       'fulfilled' => function (array $resource) use ($modified_files) {
         $this->processHashes($resource, $modified_files);
       },
-      'rejected' => function (RequestException $exception) use ($exception_on_failure) {
-        $this->processFailures($exception, $exception_on_failure);
+      'rejected' => function (RequestException $exception) {
+        $this->processFailures($exception);
       },
     ]))->promise()->wait();
     return $modified_files;
@@ -124,12 +125,13 @@ class ModifiedFiles implements ModifiedFilesInterface {
    *
    * @param \GuzzleHttp\Exception\RequestException $exception
    *   The request exception.
-   * @param bool $exception_on_failure
-   *   Throw exception on HTTP failures, defaults to FALSE.
    */
-  protected function processFailures(RequestException $exception, $exception_on_failure) {
-    if ($exception_on_failure) {
-      watchdog_exception('automatic_updates', $exception);
+  protected function processFailures(RequestException $exception) {
+    // Log all the exceptions, even modules that aren't the main project.
+    watchdog_exception('automatic_updates', $exception, NULL, [], RfcLogLevel::INFO);
+    // HTTP 404 is expected for modules that aren't the main project. But
+    // other error codes should complain loudly.
+    if ($exception->getCode() !== 404) {
       throw $exception;
     }
   }
