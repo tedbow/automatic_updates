@@ -181,7 +181,7 @@ class SettingsForm extends ConfigFormBase {
     }
 
     $form['experimental']['update'] = [
-      '#prefix' => 'Database updates are <strong>not</strong> run after an update. This module does not have a stable release and it is recommended to not use these features on a live website. Use at your own risk.',
+      '#prefix' => 'This module does not have a stable release and it is recommended to not use these features on a live website. Use at your own risk.',
       '#type' => 'html_tag',
       '#tag' => 'p',
       '#value' => $update_text,
