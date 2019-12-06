@@ -35,6 +35,7 @@ class DatabaseUpdate extends BaseCommand {
     else {
       $output->writeln('No database updates required.');
     }
+    return 0;
   }
 
   /**

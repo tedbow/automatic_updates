@@ -27,6 +27,7 @@ class CacheRebuild extends BaseCommand {
     parent::execute($input, $output);
     drupal_flush_all_caches();
     $output->writeln('Cache rebuild complete.');
+    return 0;
   }
 
 }

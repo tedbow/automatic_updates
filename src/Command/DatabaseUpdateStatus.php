@@ -16,7 +16,7 @@ class DatabaseUpdateStatus extends BaseCommand {
   protected function configure() {
     parent::configure();
     $this->setName('updatedb-status')
-      ->setDescription('Apply any database updates required (as with running update.php).')
+      ->setDescription('List any pending database updates.')
       ->setAliases(['updbst', 'updatedb:status']);
   }
 
@@ -28,6 +28,7 @@ class DatabaseUpdateStatus extends BaseCommand {
     $pending_updates = \Drupal::service('automatic_updates.pending_db_updates')
       ->run();
     $output->writeln($pending_updates);
+    return 0;
   }
 
 }
