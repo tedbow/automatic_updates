@@ -94,7 +94,11 @@ class ReadinessCheckerManager implements ReadinessCheckerManagerInterface {
    * {@inheritdoc}
    */
   public function timestamp() {
-    return $this->keyValue->get('readiness_check_timestamp', 0);
+    $last_check_timestamp = $this->keyValue->get('readiness_check_timestamp');
+    if (!is_numeric($last_check_timestamp)) {
+      $last_check_timestamp = \Drupal::state()->get('install_time', 0);
+    }
+    return $last_check_timestamp;
   }
 
   /**
