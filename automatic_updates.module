@@ -81,6 +81,17 @@ function automatic_updates_cron() {
   if (($request_time - $last_check) < 3600) {
     return;
   }
+
+  // Checkers should run before updates because of class caching.
+  /** @var \Drupal\automatic_updates\Services\NotifyInterface $notify */
+  $notify = \Drupal::service('automatic_updates.psa_notify');
+  $notify->send();
+  /** @var \Drupal\automatic_updates\ReadinessChecker\ReadinessCheckerManagerInterface $checker */
+  $checker = \Drupal::service('automatic_updates.readiness_checker');
+  foreach ($checker->getCategories() as $category) {
+    $checker->run($category);
+  }
+
   // In-place updates won't function for dev releases of Drupal core.
   $dev_core = strpos(\Drupal::VERSION, '-dev') !== FALSE;
   /** @var \Drupal\Core\Config\ImmutableConfig $config */
@@ -124,14 +135,6 @@ function automatic_updates_cron() {
     }
   }
 
-  /** @var \Drupal\automatic_updates\Services\NotifyInterface $notify */
-  $notify = \Drupal::service('automatic_updates.psa_notify');
-  $notify->send();
-  /** @var \Drupal\automatic_updates\ReadinessChecker\ReadinessCheckerManagerInterface $checker */
-  $checker = \Drupal::service('automatic_updates.readiness_checker');
-  foreach ($checker->getCategories() as $category) {
-    $checker->run($category);
-  }
   $state->set('automatic_updates.cron_last_check', \Drupal::time()->getCurrentTime());
 }
 
