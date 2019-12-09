@@ -149,8 +149,18 @@ class InPlaceUpdate implements UpdateInterface {
       $modified = $this->checkModifiedFiles($metadata, $archive);
       if (!$modified && $this->backup($archive, $project_root)) {
         $this->logger->info('In place update has started.');
-        $success = $this->processUpdate($archive, $project_root);
-        $this->logger->info('In place update has finished.');
+        try {
+          $success = $this->processUpdate($archive, $project_root);
+          $this->logger->info('In place update has finished.');
+        }
+        catch (\Throwable $throwable) {
+          $this->logger->info('In place update failed.');
+          watchdog_exception($throwable);
+        }
+        catch (\Exception $exception) {
+          $this->logger->info('In place update failed.');
+          watchdog_exception($exception);
+        }
         if ($success) {
           $process = automatic_updates_console_command('updatedb:status');
           if ($success && $process->getOutput()) {
