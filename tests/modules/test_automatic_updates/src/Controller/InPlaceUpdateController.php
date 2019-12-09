@@ -3,6 +3,7 @@
 namespace Drupal\test_automatic_updates\Controller;
 
 use Drupal\automatic_updates\Services\UpdateInterface;
+use Drupal\automatic_updates\UpdateMetadata;
 use Drupal\Core\Controller\ControllerBase;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
@@ -41,7 +42,8 @@ class InPlaceUpdateController extends ControllerBase {
    * Builds the response.
    */
   public function update($project, $type, $from, $to) {
-    $updated = $this->updater->update($project, $type, $from, $to);
+    $metadata = new UpdateMetadata($project, $type, $from, $to);
+    $updated = $this->updater->update($metadata);
     return [
       '#markup' => $updated ? $this->t('Update successful') : $this->t('Update Failed'),
     ];

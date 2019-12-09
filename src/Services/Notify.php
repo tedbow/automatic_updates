@@ -157,11 +157,11 @@ class Notify implements NotifyInterface {
   protected function doSend($to, array $params) {
     $users = $this->entityTypeManager->getStorage('user')
       ->loadByProperties(['mail' => $to]);
-    if ($users) {
+    foreach ($users as $user) {
       $to_user = reset($users);
       $params['langcode'] = $to_user->getPreferredLangcode();
+      $this->mailManager->mail('automatic_updates', 'notify', $to, $params['langcode'], $params);
     }
-    $this->mailManager->mail('automatic_updates', 'notify', $to, $params['langcode'], $params);
   }
 
 }

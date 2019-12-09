@@ -2,8 +2,11 @@
 
 namespace Drupal\automatic_updates\Services;
 
+use Drupal\automatic_updates\Event\PostUpdateEvent;
+use Drupal\automatic_updates\Event\UpdateEvents;
 use Drupal\automatic_updates\ProjectInfoTrait;
 use Drupal\automatic_updates\ReadinessChecker\ReadinessCheckerManagerInterface;
+use Drupal\automatic_updates\UpdateMetadata;
 use Drupal\Component\FileSystem\FileSystem;
 use Drupal\Core\Archiver\ArchiverInterface;
 use Drupal\Core\Archiver\ArchiverManager;
@@ -128,7 +131,7 @@ class InPlaceUpdate implements UpdateInterface {
   /**
    * {@inheritdoc}
    */
-  public function update($project_name, $project_type, $from_version, $to_version) {
+  public function update(UpdateMetadata $metadata) {
     // Bail immediately on updates if error category checks fail.
     /** @var \Drupal\automatic_updates\ReadinessChecker\ReadinessCheckerManagerInterface $readiness_check_manager */
     $checker = \Drupal::service('automatic_updates.readiness_checker');
@@ -136,14 +139,14 @@ class InPlaceUpdate implements UpdateInterface {
       return FALSE;
     }
     $success = FALSE;
-    if ($project_name === 'drupal') {
+    if ($metadata->getProjectName() === 'drupal') {
       $project_root = $this->rootPath;
     }
     else {
-      $project_root = drupal_get_path($project_type, $project_name);
+      $project_root = drupal_get_path($metadata->getProjectType(), $metadata->getProjectName());
     }
-    if ($archive = $this->getArchive($project_name, $from_version, $to_version)) {
-      $modified = $this->checkModifiedFiles($project_name, $project_type, $archive);
+    if ($archive = $this->getArchive($metadata)) {
+      $modified = $this->checkModifiedFiles($metadata, $archive);
       if (!$modified && $this->backup($archive, $project_root)) {
         $this->logger->info('In place update has started.');
         $success = $this->processUpdate($archive, $project_root);
@@ -168,30 +171,33 @@ class InPlaceUpdate implements UpdateInterface {
         }
       }
     }
+    /** @var \Symfony\Component\EventDispatcher\EventDispatcherInterface $event_dispatcher */
+    $event_dispatcher = \Drupal::service('event_dispatcher');
+    $event = new PostUpdateEvent($metadata, $success);
+    $event_dispatcher->dispatch(UpdateEvents::POST_UPDATE, $event);
+
     return $success;
   }
 
   /**
    * Get an archive with the quasi-patch contents.
    *
-   * @param string $project_name
-   *   The project name.
-   * @param string $from_version
-   *   The current project version.
-   * @param string $to_version
-   *   The desired next project version.
+   * @param \Drupal\automatic_updates\UpdateMetadata $metadata
+   *   The update metadata.
    *
    * @return \Drupal\Core\Archiver\ArchiverInterface|null
    *   The archive or NULL if download fails.
+   *
+   * @throws \SodiumException
    */
-  protected function getArchive($project_name, $from_version, $to_version) {
-    $quasi_patch = $this->getQuasiPatchFileName($project_name, $from_version, $to_version);
-    $url = $this->buildUrl($project_name, $quasi_patch);
+  protected function getArchive(UpdateMetadata $metadata) {
+    $quasi_patch = $this->getQuasiPatchFileName($metadata);
+    $url = $this->buildUrl($metadata->getProjectName(), $quasi_patch);
     $temp_directory = FileSystem::getOsTemporaryDirectory() . DIRECTORY_SEPARATOR;
     $destination = $this->fileSystem->getDestinationFilename($temp_directory . $quasi_patch, FileSystemInterface::EXISTS_REPLACE);
     $this->doGetResource($url, $destination);
     $csig_file = $quasi_patch . '.csig';
-    $csig_url = $this->buildUrl($project_name, $csig_file);
+    $csig_url = $this->buildUrl($metadata->getProjectName(), $csig_file);
     $csig_destination = $this->fileSystem->getDestinationFilename(FileSystem::getOsTemporaryDirectory() . DIRECTORY_SEPARATOR . $csig_file, FileSystemInterface::EXISTS_REPLACE);
     $this->doGetResource($csig_url, $csig_destination);
     $csig = file_get_contents($csig_destination);
@@ -202,25 +208,23 @@ class InPlaceUpdate implements UpdateInterface {
   /**
    * Check if files are modified before applying updates.
    *
-   * @param string $project_name
-   *   The project name.
-   * @param string $project_type
-   *   The project type.
+   * @param \Drupal\automatic_updates\UpdateMetadata $metadata
+   *   The update metadata.
    * @param \Drupal\Core\Archiver\ArchiverInterface $archive
    *   The archive.
    *
    * @return bool
    *   Return TRUE if modified files exist, FALSE otherwise.
    */
-  protected function checkModifiedFiles($project_name, $project_type, ArchiverInterface $archive) {
-    if ($project_type === 'core') {
-      $project_type = 'module';
+  protected function checkModifiedFiles(UpdateMetadata $metadata, ArchiverInterface $archive) {
+    if ($metadata->getProjectType() === 'core') {
+      $metadata->setProjectType('module');
     }
-    $extensions = $this->getInfos($project_type);
+    $extensions = $this->getInfos($metadata->getProjectType());
     /** @var \Drupal\automatic_updates\Services\ModifiedFilesInterface $modified_files */
     $modified_files = \Drupal::service('automatic_updates.modified_files');
     try {
-      $files = iterator_to_array($modified_files->getModifiedFiles([$extensions[$project_name]]));
+      $files = iterator_to_array($modified_files->getModifiedFiles([$extensions[$metadata->getProjectName()]]));
     }
     catch (RequestException $exception) {
       // While not strictly true that there are modified files, we can't be sure
@@ -525,18 +529,14 @@ class InPlaceUpdate implements UpdateInterface {
   /**
    * Get the quasi-patch file name.
    *
-   * @param string $project_name
-   *   The project name.
-   * @param string $from_version
-   *   The current project version.
-   * @param string $to_version
-   *   The desired next project version.
+   * @param \Drupal\automatic_updates\UpdateMetadata $metadata
+   *   The update metadata.
    *
    * @return string
    *   The quasi-patch file name.
    */
-  protected function getQuasiPatchFileName($project_name, $from_version, $to_version) {
-    return "$project_name-$from_version-to-$to_version.zip";
+  protected function getQuasiPatchFileName(UpdateMetadata $metadata) {
+    return "{$metadata->getProjectName()}-{$metadata->getFromVersion()}-to-{$metadata->getToVersion()}.zip";
   }
 
   /**

@@ -46,6 +46,15 @@ services:
   plugin.manager.database_update_handler:
     class: Drupal\automatic_updates\DatabaseUpdateHandlerPluginManager
     parent: default_plugin_manager
+  automatic_updates.post_update_subscriber:
+    class: Drupal\automatic_updates\EventSubscriber\PostUpdateSubscriber
+    arguments:
+      - '@config.factory'
+      - '@plugin.manager.mail'
+      - '@language_manager'
+      - '@entity_type.manager'
+    tags:
+      - { name: event_subscriber }
 
   automatic_updates.readiness_checker:
     class: Drupal\automatic_updates\ReadinessChecker\ReadinessCheckerManager

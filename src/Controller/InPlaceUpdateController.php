@@ -3,6 +3,7 @@
 namespace Drupal\automatic_updates\Controller;
 
 use Drupal\automatic_updates\Services\UpdateInterface;
+use Drupal\automatic_updates\UpdateMetadata;
 use Drupal\Core\Controller\ControllerBase;
 use Drupal\Core\Messenger\MessengerInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
@@ -42,7 +43,8 @@ class InPlaceUpdateController extends ControllerBase {
    * Builds the response.
    */
   public function update($project, $type, $from, $to) {
-    $updated = $this->updater->update($project, $type, $from, $to);
+    $metadata = new UpdateMetadata($project, $type, $from, $to);
+    $updated = $this->updater->update($metadata);
     $message_type = MessengerInterface::TYPE_STATUS;
     $message = $this->t('Update successful');
     if (!$updated) {

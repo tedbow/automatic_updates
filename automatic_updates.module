@@ -6,6 +6,7 @@
  */
 
 use Drupal\automatic_updates\ReadinessChecker\ReadinessCheckerManagerInterface;
+use Drupal\automatic_updates\UpdateMetadata;
 use Drupal\Core\Url;
 use Drupal\update\UpdateManagerInterface;
 use Symfony\Component\Process\PhpExecutableFinder;
@@ -122,15 +123,17 @@ function automatic_updates_cron() {
     if ($not_recommended_version && $projects['drupal']['existing_version'] !== $recommended_release['version']) {
       if ($config->get('enable_cron_security_updates')) {
         if ($security_update) {
+          $metadata = new UpdateMetadata('drupal', 'core', \Drupal::VERSION, $recommended_release['version']);
           /** @var \Drupal\automatic_updates\Services\UpdateInterface $updater */
           $updater = \Drupal::service('automatic_updates.update');
-          $updater->update('drupal', 'core', \Drupal::VERSION, $recommended_release['version']);
+          $updater->update($metadata);
         }
       }
       else {
+        $metadata = new UpdateMetadata('drupal', 'core', \Drupal::VERSION, $recommended_release['version']);
         /** @var \Drupal\automatic_updates\Services\UpdateInterface $updater */
         $updater = \Drupal::service('automatic_updates.update');
-        $updater->update('drupal', 'core', \Drupal::VERSION, $recommended_release['version']);
+        $updater->update($metadata);
       }
     }
   }
@@ -146,6 +149,12 @@ function automatic_updates_theme(array $existing, $type, $theme, $path) {
     'automatic_updates_psa_notify' => [
       'variables' => [
         'messages' => [],
+      ],
+    ],
+    'automatic_updates_post_update' => [
+      'variables' => [
+        'success' => NULL,
+        'metadata' => NULL,
       ],
     ],
   ];

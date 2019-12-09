@@ -1,0 +1,33 @@
+{#
+/**
+ * @file
+ * Template for the post update email notification.
+ *
+ * Available variables:
+ * - success: The update success status
+ * - metadata: The update metadata
+ *
+ * @ingroup themeable
+ */
+#}
+<p>
+  {% if success %}
+  {{ 'The project "@project" was updated from "@from_version" to "@to_version" with success.'|t({
+    '@project': metadata.getProjectName,
+    '@from_version': metadata.getFromVersion,
+    '@to_version': metadata.getToVersion,
+  }) }}
+  {% else %}
+  {{ 'The project "@project" was updated from "@from_version" to "@to_version" with failures.'|t({
+    '@project': metadata.getProjectName,
+    '@from_version': metadata.getFromVersion,
+    '@to_version': metadata.getToVersion,
+  }) }}
+  {% endif %}
+</p>
+<p>
+  {% set status_report = path('system.status') %}
+  {% trans %}
+    See the <a href="{{ status_report }}">site status report page</a> and any logs for more information.
+  {% endtrans %}
+</p>
