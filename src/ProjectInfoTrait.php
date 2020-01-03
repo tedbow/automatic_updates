@@ -51,6 +51,12 @@ trait ProjectInfoTrait {
     }, ARRAY_FILTER_USE_BOTH);
     if ($system) {
       $infos['drupal'] = $system;
+      // From 8.8.0 onward, always use packaged for core because non-packaged
+      // will no longer make any sense.
+      if (version_compare(\Drupal::VERSION, '8.8.0', '>=')) {
+        $infos['drupal']['packaged'] = TRUE;
+      }
+
     }
     return $infos;
   }

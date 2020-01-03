@@ -4,6 +4,7 @@ namespace Drupal\Tests\automatic_updates\Build;
 
 use Drupal\automatic_updates\Services\InPlaceUpdate;
 use Drupal\Component\FileSystem\FileSystem as DrupalFilesystem;
+use Drupal\Core\Archiver\Zip;
 use Drupal\Tests\automatic_updates\Build\QuickStart\QuickStartTestBase;
 use Drupal\Tests\automatic_updates\Traits\InstallTestTrait;
 use GuzzleHttp\Client;
@@ -147,7 +148,7 @@ class InPlaceUpdateTest extends QuickStartTestBase {
    * @see automatic_updates_cron()
    */
   public function testCronCoreUpdate() {
-    $this->installCore('8.7.6');
+    $this->installCore('8.8.0');
     $filesystem = new SymfonyFilesystem();
     $filesystem->chmod($this->getWorkspaceDirectory() . '/sites/default', 0750);
     $settings_php = $this->getWorkspaceDirectory() . '/sites/default/settings.php';
@@ -161,9 +162,9 @@ class InPlaceUpdateTest extends QuickStartTestBase {
     $this->assertDrupalVisit();
     $finder = new Finder();
     $finder->files()->in($this->getWorkspaceDirectory())->path('core/lib/Drupal.php');
-    $finder->notContains("/const VERSION = '8.7.6'/");
-    $finder->contains("/const VERSION = '8.7./");
-    $this->assertTrue($finder->hasResults(), "Expected version 8.7.{x} does not exist in {$this->getWorkspaceDirectory()}/core/lib/Drupal.php");
+    $finder->notContains("/const VERSION = '8.8.0'/");
+    $finder->contains("/const VERSION = '8.8./");
+    $this->assertTrue($finder->hasResults(), "Expected version 8.8.{x} does not exist in {$this->getWorkspaceDirectory()}/core/lib/Drupal.php");
   }
 
   /**
@@ -173,20 +174,33 @@ class InPlaceUpdateTest extends QuickStartTestBase {
    *   The starting version.
    */
   protected function installCore($starting_version) {
-    $this->copyCodebase();
-    // We have to fetch the tags for this shallow repo. It might not be a
-    // shallow clone, therefore we use executeCommand instead of assertCommand.
-    $this->executeCommand('git fetch --unshallow  --tags');
-    $this->executeCommand('git reset HEAD --hard');
-    $this->assertCommandSuccessful();
-    $this->executeCommand("git checkout $starting_version -f");
-    $this->assertCommandSuccessful();
-    $this->executeCommand('git reset HEAD --hard');
-    $this->assertCommandSuccessful();
+    // Get tarball of drupal core.
+    $drupal_tarball = "drupal-$starting_version.zip";
+    $destination = DrupalFileSystem::getOsTemporaryDirectory() . DIRECTORY_SEPARATOR . 'drupal-' . random_int(10000, 99999) . microtime(TRUE);
     $fs = new SymfonyFilesystem();
+    $fs->mkdir($destination);
+    $http_client = new Client();
+    $http_client->get("https://ftp.drupal.org/files/projects/$drupal_tarball", ['sink' => $destination . DIRECTORY_SEPARATOR . $drupal_tarball]);
+    $zip = new Zip($destination . DIRECTORY_SEPARATOR . $drupal_tarball);
+    $zip->extract($destination);
+    // Move the tarball codebase over to the test workspace.
+    $finder = new Finder();
+    $finder->files()
+      ->ignoreUnreadableDirs()
+      ->ignoreDotFiles(FALSE)
+      ->in("$destination/drupal-$starting_version");
+    $options = ['override' => TRUE, 'delete' => FALSE];
+    $fs->mirror("$destination/drupal-$starting_version", $this->getWorkingPath(), $finder->getIterator(), $options);
+    $fs->remove("$destination/drupal-$starting_version");
+    // Copy in this module from the original code base.
+    $finder = new Finder();
+    $finder->files()
+      ->ignoreUnreadableDirs()
+      ->in($this->getDrupalRoot())
+      ->path('automatic_updates');
+    $this->copyCodebase($finder->getIterator());
+
     $fs->chmod($this->getWorkspaceDirectory() . '/sites/default', 0700);
-    $this->executeCommand('COMPOSER_DISCARD_CHANGES=true composer install --no-dev --no-interaction');
-    $this->assertErrorOutputContains('Generating autoload files');
     $this->installQuickStart('minimal');
 
     // Currently, this test has to use extension_discovery_scan_tests so we can
