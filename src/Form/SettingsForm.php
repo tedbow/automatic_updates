@@ -141,9 +141,6 @@ class SettingsForm extends ConfigFormBase {
     $not_dev_core = strpos(\Drupal::VERSION, '-dev') === FALSE;
     $security_update = in_array($projects['drupal']['status'], [UpdateManagerInterface::NOT_SECURE, UpdateManagerInterface::REVOKED], TRUE);
     $recommended_release = $projects['drupal']['releases'][$projects['drupal']['recommended']];
-    $existing_minor_version = explode('.', \Drupal::VERSION, -1);
-    $recommended_minor_version = explode('.', $recommended_release['version'], -1);
-    $major_upgrade = $existing_minor_version !== $recommended_minor_version;
     $form['experimental'] = [
       '#type' => 'details',
       '#title' => $this->t('Experimental'),
@@ -154,6 +151,9 @@ class SettingsForm extends ConfigFormBase {
       ],
     ];
     if ($not_recommended_version && $not_dev_core) {
+      $existing_major_version = explode('.', \Drupal::VERSION, -2);
+      $recommended_major_version = explode('.', $recommended_release['version'], -2);
+      $major_upgrade = $existing_major_version !== $recommended_major_version;
       if ($security_update) {
         $form['experimental']['security'] = [
           '#type' => 'html_tag',
