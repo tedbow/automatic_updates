@@ -141,7 +141,9 @@ class SettingsForm extends ConfigFormBase {
     $not_dev_core = strpos(\Drupal::VERSION, '-dev') === FALSE;
     $security_update = in_array($projects['drupal']['status'], [UpdateManagerInterface::NOT_SECURE, UpdateManagerInterface::REVOKED], TRUE);
     $recommended_release = $projects['drupal']['releases'][$projects['drupal']['recommended']];
-    $major_upgrade = $recommended_release['version_major'] !== $projects['drupal']['existing_major'];
+    $existing_minor_version = explode('.', \Drupal::VERSION, -1);
+    $recommended_minor_version = explode('.', $recommended_release['version'], -1);
+    $major_upgrade = $existing_minor_version !== $recommended_minor_version;
     $form['experimental'] = [
       '#type' => 'details',
       '#title' => $this->t('Experimental'),
