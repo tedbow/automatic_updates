@@ -2,6 +2,7 @@ name: 'Automatic Updates'
 type: module
 description: 'Display Public service announcements and verify readiness for applying automatic updates to the site.'
 core: 8.x
+core_version_requirement: ^8 || ^9
 package: 'Security'
 configure: automatic_updates.settings
 dependencies:
