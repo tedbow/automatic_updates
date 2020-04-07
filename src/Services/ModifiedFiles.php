@@ -59,7 +59,6 @@ class ModifiedFiles implements ModifiedFilesInterface {
     $this->httpClient = $http_client;
     $this->configFactory = $config_factory;
     $project_root = drupal_get_path('module', 'automatic_updates');
-    require_once $project_root . DIRECTORY_SEPARATOR . 'vendor' . DIRECTORY_SEPARATOR . 'autoload.php';
   }
 
   /**

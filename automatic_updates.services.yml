@@ -94,14 +94,6 @@ services:
       - '@app.root'
     tags:
       - { name: readiness_checker, category: warning}
-  automatic_updates.minimum_php_version:
-    class: Drupal\automatic_updates\ReadinessChecker\MinimumPhpVersion
-    tags:
-      - { name: readiness_checker, category: error}
-  automatic_updates.blacklist_php_72:
-    class: Drupal\automatic_updates\ReadinessChecker\BlacklistPhp72Versions
-    tags:
-      - { name: readiness_checker, category: warning}
   automatic_updates.pending_db_updates:
     class: Drupal\automatic_updates\ReadinessChecker\PendingDbUpdates
     arguments:

@@ -200,6 +200,11 @@ class InPlaceUpdateTest extends QuickStartTestBase {
       ->path('automatic_updates');
     $this->copyCodebase($finder->getIterator());
 
+    $this->executeCommand('COMPOSER_DISCARD_CHANGES=true composer require drupal/php-signify:^1.0 --no-interaction');
+    $this->assertErrorOutputContains('Generating autoload files');
+    $this->executeCommand('COMPOSER_DISCARD_CHANGES=true composer require ocramius/package-versions:^1.5.0 --no-interaction');
+    $this->assertErrorOutputContains('Generating autoload files');
+
     $fs->chmod($this->getWorkspaceDirectory() . '/sites/default', 0700);
     $this->installQuickStart('minimal');
 
@@ -209,6 +214,7 @@ class InPlaceUpdateTest extends QuickStartTestBase {
     $fs->chmod($this->getWorkspaceDirectory() . '/sites/default', 0755);
     $fs->chmod($settings_php, 0640);
     $fs->appendToFile($settings_php, '$settings[\'extension_discovery_scan_tests\'] = TRUE;' . PHP_EOL);
+    $fs->appendToFile($settings_php, PHP_EOL . '$config[\'automatic_updates.settings\'][\'ignored_paths\'] = "composer.json\ncomposer.lock\nvendor/composer/installed.json\nvendor/composer/autoload_static.php\nvendor/composer/autoload_real.php";' . PHP_EOL);
 
     // Log in so that we can install modules.
     $this->formLogin($this->adminUsername, $this->adminPassword);

@@ -125,7 +125,6 @@ class InPlaceUpdate implements UpdateInterface {
     $this->rootPath = (string) $app_root;
     $this->vendorPath = $this->rootPath . DIRECTORY_SEPARATOR . 'vendor' . DIRECTORY_SEPARATOR;
     $project_root = drupal_get_path('module', 'automatic_updates');
-    require_once $project_root . DIRECTORY_SEPARATOR . 'vendor' . DIRECTORY_SEPARATOR . 'autoload.php';
   }
 
   /**
@@ -242,6 +241,19 @@ class InPlaceUpdate implements UpdateInterface {
       return TRUE;
     }
     $files = array_unique($files);
+    // TODO: remove this logic once composer support is more fully finished.
+    // These files are always modified when composer update/require is run.
+    $files = array_diff($files, [
+      'composer.lock',
+      'vendor/composer/autoload_classmap.php',
+      'vendor/composer/autoload_files.php',
+      'vendor/composer/autoload_namespaces.php',
+      'vendor/composer/autoload_psr4.php',
+      'vendor/composer/autoload_real.php',
+      'vendor/composer/autoload_static.php',
+      'vendor/composer/include_paths.php',
+      'vendor/composer/installed.json',
+    ]);
     $archive_files = $archive->listContents();
     foreach ($archive_files as $index => &$archive_file) {
       $skipped_files = [

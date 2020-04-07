@@ -43,8 +43,7 @@ the Automatic Update service can then apply the update.
 ### Goals
 
 The Automatic Update service for Drupal aims to simplify the update process and
-provide confidence that an update will apply cleanly. Updates are currently
-limited to Drupal Core for tarball (non-Composer managed) websites.
+provide confidence that an update will apply cleanly.
 
 
 ### Demo
@@ -54,9 +53,6 @@ limited to Drupal Core for tarball (non-Composer managed) websites.
 
 
 ### Installing the Automatic Updates Module
-
-Note: Use (not just installation) of the module on a Composer managed site is
-not supported.
 
 1. Copy/upload the automatic_updates module to the modules directory of your
    Drupal installation.

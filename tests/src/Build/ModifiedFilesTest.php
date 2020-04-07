@@ -121,6 +121,10 @@ class ModifiedFilesTest extends QuickStartTestBase {
     $this->symfonyFileSystem->chmod($this->getWorkspaceDirectory() . '/sites/default', 0700);
     $this->executeCommand('COMPOSER_DISCARD_CHANGES=true composer install --no-dev --no-interaction');
     $this->assertErrorOutputContains('Generating autoload files');
+    $this->executeCommand('COMPOSER_DISCARD_CHANGES=true composer require drupal/php-signify:^1.0 --no-interaction');
+    $this->assertErrorOutputContains('Generating autoload files');
+    $this->executeCommand('COMPOSER_DISCARD_CHANGES=true composer require ocramius/package-versions:^1.5.0 --no-interaction');
+    $this->assertErrorOutputContains('Generating autoload files');
     $this->installQuickStart('minimal');
 
     // Currently, this test has to use extension_discovery_scan_tests so we can
@@ -129,6 +133,7 @@ class ModifiedFilesTest extends QuickStartTestBase {
     $settings_php = $this->getWorkspaceDirectory() . '/sites/default/settings.php';
     $this->symfonyFileSystem->chmod($settings_php, 0640);
     $this->symfonyFileSystem->appendToFile($settings_php, PHP_EOL . '$settings[\'extension_discovery_scan_tests\'] = TRUE;' . PHP_EOL);
+    $this->symfonyFileSystem->appendToFile($settings_php, PHP_EOL . '$config[\'automatic_updates.settings\'][\'ignored_paths\'] = "composer.json\ncomposer.lock";' . PHP_EOL);
 
     // Restart server for config override to apply.
     $this->stopServer();
