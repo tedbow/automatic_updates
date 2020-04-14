@@ -4,7 +4,6 @@ namespace Drupal\Tests\automatic_updates\Build;
 
 use Drupal\automatic_updates\Services\InPlaceUpdate;
 use Drupal\Component\FileSystem\FileSystem as DrupalFilesystem;
-use Drupal\Core\Archiver\Zip;
 use Drupal\Tests\automatic_updates\Build\QuickStart\QuickStartTestBase;
 use Drupal\Tests\automatic_updates\Traits\InstallTestTrait;
 use GuzzleHttp\Client;
@@ -63,7 +62,7 @@ class InPlaceUpdateTest extends QuickStartTestBase {
    */
   public function testCoreRollbackUpdate() {
     $from_version = '8.7.0';
-    $to_version = '8.8.0';
+    $to_version = '8.8.5';
     $this->installCore($from_version);
 
     // Configure module to have db updates cause a rollback.
@@ -168,72 +167,6 @@ class InPlaceUpdateTest extends QuickStartTestBase {
   }
 
   /**
-   * Prepare core for testing.
-   *
-   * @param string $starting_version
-   *   The starting version.
-   */
-  protected function installCore($starting_version) {
-    // Get tarball of drupal core.
-    $drupal_tarball = "drupal-$starting_version.zip";
-    $destination = DrupalFileSystem::getOsTemporaryDirectory() . DIRECTORY_SEPARATOR . 'drupal-' . random_int(10000, 99999) . microtime(TRUE);
-    $fs = new SymfonyFilesystem();
-    $fs->mkdir($destination);
-    $http_client = new Client();
-    $http_client->get("https://ftp.drupal.org/files/projects/$drupal_tarball", ['sink' => $destination . DIRECTORY_SEPARATOR . $drupal_tarball]);
-    $zip = new Zip($destination . DIRECTORY_SEPARATOR . $drupal_tarball);
-    $zip->extract($destination);
-    // Move the tarball codebase over to the test workspace.
-    $finder = new Finder();
-    $finder->files()
-      ->ignoreUnreadableDirs()
-      ->ignoreDotFiles(FALSE)
-      ->in("$destination/drupal-$starting_version");
-    $options = ['override' => TRUE, 'delete' => FALSE];
-    $fs->mirror("$destination/drupal-$starting_version", $this->getWorkingPath(), $finder->getIterator(), $options);
-    $fs->remove("$destination/drupal-$starting_version");
-    // Copy in this module from the original code base.
-    $finder = new Finder();
-    $finder->files()
-      ->ignoreUnreadableDirs()
-      ->in($this->getDrupalRoot())
-      ->path('automatic_updates');
-    $this->copyCodebase($finder->getIterator());
-
-    $this->executeCommand('COMPOSER_DISCARD_CHANGES=true composer require drupal/php-signify:^1.0 --no-interaction');
-    $this->assertErrorOutputContains('Generating autoload files');
-    $this->executeCommand('COMPOSER_DISCARD_CHANGES=true composer require ocramius/package-versions:^1.5.0 --no-interaction');
-    $this->assertErrorOutputContains('Generating autoload files');
-
-    $fs->chmod($this->getWorkspaceDirectory() . '/sites/default', 0700);
-    $this->installQuickStart('minimal');
-
-    // Currently, this test has to use extension_discovery_scan_tests so we can
-    // install test modules.
-    $settings_php = $this->getWorkspaceDirectory() . '/sites/default/settings.php';
-    $fs->chmod($this->getWorkspaceDirectory() . '/sites/default', 0755);
-    $fs->chmod($settings_php, 0640);
-    $fs->appendToFile($settings_php, '$settings[\'extension_discovery_scan_tests\'] = TRUE;' . PHP_EOL);
-    $fs->appendToFile($settings_php, PHP_EOL . '$config[\'automatic_updates.settings\'][\'ignored_paths\'] = "composer.json\ncomposer.lock\nvendor/composer/installed.json\nvendor/composer/autoload_static.php\nvendor/composer/autoload_real.php";' . PHP_EOL);
-
-    // Log in so that we can install modules.
-    $this->formLogin($this->adminUsername, $this->adminPassword);
-    $this->moduleInstall('update');
-    $this->moduleInstall('automatic_updates');
-    $this->moduleInstall('test_automatic_updates');
-
-    // Confirm we are running correct Drupal version.
-    $finder = new Finder();
-    $finder->files()->in($this->getWorkspaceDirectory())->path('core/lib/Drupal.php');
-    $finder->contains("/const VERSION = '$starting_version'/");
-    $this->assertTrue($finder->hasResults(), "Expected version $starting_version does not exist in {$this->getWorkspaceDirectory()}/core/lib/Drupal.php");
-
-    // Assert that the site is functional after install.
-    $this->visit();
-    $this->assertDrupalVisit();
-  }
-
-  /**
    * Core versions data provider resulting in a successful upgrade.
    */
   public function coreVersionsSuccessProvider() {
@@ -252,6 +185,10 @@ class InPlaceUpdateTest extends QuickStartTestBase {
     $datum[] = [
       'from' => '8.7.6',
       'to' => '8.7.7',
+    ];
+    $datum[] = [
+      'from' => '8.9.0-beta1',
+      'to' => '8.9.0-beta2',
     ];
     return $datum;
   }

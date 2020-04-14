@@ -39,16 +39,7 @@ class ModifiedFilesTest extends QuickStartTestBase {
    * @dataProvider coreProjectProvider
    */
   public function testCoreModified($version, array $modifications = []) {
-    $this->copyCodebase();
-
-    // We have to fetch the tags for this shallow repo. It might not be a
-    // shallow clone, therefore we use executeCommand instead of assertCommand.
-    $this->executeCommand('git fetch --unshallow  --tags');
-    $this->symfonyFileSystem->chmod($this->getWorkspaceDirectory() . '/sites/default', 0700);
-    $this->executeCommand('git reset HEAD --hard');
-    $this->assertCommandSuccessful();
-    $this->executeCommand("git checkout $version -f");
-    $this->assertCommandSuccessful();
+    $this->installCore($version);
 
     // Assert modifications.
     $this->assertModifications('core', 'drupal', $modifications);
@@ -118,37 +109,6 @@ class ModifiedFilesTest extends QuickStartTestBase {
    *   The modified files to assert.
    */
   protected function assertModifications($project_type, $project, array $modifications) {
-    $this->symfonyFileSystem->chmod($this->getWorkspaceDirectory() . '/sites/default', 0700);
-    $this->executeCommand('COMPOSER_DISCARD_CHANGES=true composer install --no-dev --no-interaction');
-    $this->assertErrorOutputContains('Generating autoload files');
-    $this->executeCommand('COMPOSER_DISCARD_CHANGES=true composer require drupal/php-signify:^1.0 --no-interaction');
-    $this->assertErrorOutputContains('Generating autoload files');
-    $this->executeCommand('COMPOSER_DISCARD_CHANGES=true composer require ocramius/package-versions:^1.5.0 --no-interaction');
-    $this->assertErrorOutputContains('Generating autoload files');
-    $this->installQuickStart('minimal');
-
-    // Currently, this test has to use extension_discovery_scan_tests so we can
-    // install test modules.
-    $this->symfonyFileSystem->chmod($this->getWorkspaceDirectory() . '/sites/default', 0750);
-    $settings_php = $this->getWorkspaceDirectory() . '/sites/default/settings.php';
-    $this->symfonyFileSystem->chmod($settings_php, 0640);
-    $this->symfonyFileSystem->appendToFile($settings_php, PHP_EOL . '$settings[\'extension_discovery_scan_tests\'] = TRUE;' . PHP_EOL);
-    $this->symfonyFileSystem->appendToFile($settings_php, PHP_EOL . '$config[\'automatic_updates.settings\'][\'ignored_paths\'] = "composer.json\ncomposer.lock";' . PHP_EOL);
-
-    // Restart server for config override to apply.
-    $this->stopServer();
-    $this->standUpServer();
-
-    // Log in so that we can install modules.
-    $this->formLogin($this->adminUsername, $this->adminPassword);
-    $this->moduleInstall('update');
-    $this->moduleInstall('automatic_updates');
-    $this->moduleInstall('test_automatic_updates');
-
-    // Assert that the site is functional.
-    $this->visit();
-    $this->assertDrupalVisit();
-
     // Validate project is not modified.
     $this->visit("/automatic_updates/modified-files/$project_type/$project");
     $assert = $this->getMink()->assertSession();

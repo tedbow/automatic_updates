@@ -58,14 +58,12 @@ class AutomaticUpdatesTest extends BrowserTestBase {
     $this->drupalGet(Url::fromRoute('system.admin'));
     $this->assertSession()->pageTextContains('Critical Release - SA-2019-02-19');
     $this->assertSession()->pageTextContains('Critical Release - PSA-Really Old');
-    $this->assertSession()->pageTextContains('Seven - Moderately critical - Access bypass - SA-CONTRIB-2019');
-    $this->assertSession()->pageTextContains('Standard - Moderately critical - Access bypass - SA-CONTRIB-2019');
     $this->assertSession()->pageTextNotContains('Node - Moderately critical - Access bypass - SA-CONTRIB-2019');
     $this->assertSession()->pageTextNotContains('Views - Moderately critical - Access bypass - SA-CONTRIB-2019');
 
     // Test site status report.
     $this->drupalGet(Url::fromRoute('system.status'));
-    $this->assertSession()->pageTextContains('4 urgent announcements require your attention:');
+    $this->assertSession()->pageTextContains('3 urgent announcements require your attention:');
 
     // Test cache.
     $end_point = $this->buildUrl(Url::fromRoute('test_automatic_updates.json_test_denied_controller'));
@@ -106,7 +104,7 @@ class AutomaticUpdatesTest extends BrowserTestBase {
     $this->assertSession()->pageTextContains('Your site does not pass some readiness checks for automatic updates. Depending on the nature of the failures, it might effect the eligibility for automatic updates.');
 
     // Ignore specific file paths to see no readiness issues.
-    $ignore_paths = "core/*\nmodules/*\nthemes/*\nprofiles/*";
+    $ignore_paths = "vendor/*\ncore/*\nmodules/*\nthemes/*\nprofiles/*\ncomposer.*\nautoload.php\nLICENSE.txt";
     $this->config('automatic_updates.settings')->set('ignored_paths', $ignore_paths)
       ->save();
     $this->drupalGet(Url::fromRoute('automatic_updates.settings'));
