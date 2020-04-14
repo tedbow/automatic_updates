@@ -53,24 +53,6 @@ class JsonTestController extends ControllerBase {
       'pubDate' => 'Tue, 19 Feb 2019 14:11:01 +0000',
     ];
     $feed[] = [
-      'title' => 'Node - Moderately critical - Access bypass - SA-CONTRIB-2019',
-      'link' => 'https://www.drupal.org/sa-contrib-2019',
-      'project' => 'node',
-      'type' => 'module',
-      'is_psa' => '0',
-      'insecure' => ['7.x-7.22', '8.x-8.2.0'],
-      'pubDate' => 'Tue, 19 Mar 2019 12:50:00 +0000',
-    ];
-    $feed[] = [
-      'title' => 'Standard - Moderately critical - Access bypass - SA-CONTRIB-2019',
-      'link' => 'https://www.drupal.org/sa-contrib-2019',
-      'project' => 'standard',
-      'type' => 'profile',
-      'insecure' => ['8.x-8.6.13', '8.x-' . \Drupal::VERSION],
-      'is_psa' => '0',
-      'pubDate' => 'Tue, 19 Mar 2019 12:50:00 +0000',
-    ];
-    $feed[] = [
       'title' => 'Seven - Moderately critical - Access bypass - SA-CONTRIB-2019',
       'link' => 'https://www.drupal.org/sa-contrib-2019',
       'project' => 'seven',

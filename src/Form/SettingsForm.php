@@ -172,7 +172,7 @@ class SettingsForm extends ConfigFormBase {
 
     $update_text = $this->t('Your site is running %version of Drupal core. No recommended update is available at this time.</i>', ['%version' => \Drupal::VERSION]);
     if ($not_recommended_version && $not_dev_core) {
-      $update_text = $this->t('Even with all that caution, if you want to try it out, <a href="@link">manually update now</a>.', [
+      $update_text = $this->t('A newer version of Drupal is available and you may <a href="@link">manually update now</a>.', [
         '@link' => Url::fromRoute('automatic_updates.inplace-update', [
           'project' => 'drupal',
           'type' => 'core',
@@ -183,7 +183,6 @@ class SettingsForm extends ConfigFormBase {
     }
 
     $form['experimental']['update'] = [
-      '#prefix' => 'This module does not have a stable release and it is recommended to not use these features on a live website. Use at your own risk.',
       '#type' => 'html_tag',
       '#tag' => 'p',
       '#value' => $update_text,
