@@ -163,7 +163,7 @@ class AutomaticUpdatesPsa implements AutomaticUpdatesPsaInterface {
    *   TRUE if extension exists, else FALSE.
    */
   protected function isValidExtension($extension_type, $project_name) {
-    if (!property_exists($this, $extension_type)) {
+    if (!isset($this->extensionLists[$extension_type])) {
       $this->logger->error('Extension list of type "%extension" does not exist.', ['%extension' => $extension_type]);
       return FALSE;
     }
