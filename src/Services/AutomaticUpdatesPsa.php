@@ -50,25 +50,11 @@ class AutomaticUpdatesPsa implements AutomaticUpdatesPsaInterface {
   protected $time;
 
   /**
-   * The module extension list.
+   * The extension lists.
    *
-   * @var \Drupal\Core\Extension\ExtensionList
+   * @var \Drupal\Core\Extension\ExtensionList[]
    */
-  protected $module;
-
-  /**
-   * The profile extension list.
-   *
-   * @var \Drupal\Core\Extension\ExtensionList
-   */
-  protected $profile;
-
-  /**
-   * The theme extension list.
-   *
-   * @var \Drupal\Core\Extension\ExtensionList
-   */
-  protected $theme;
+  protected $extensionLists;
 
   /**
    * The logger.
@@ -88,23 +74,25 @@ class AutomaticUpdatesPsa implements AutomaticUpdatesPsaInterface {
    *   The time service.
    * @param \GuzzleHttp\Client $client
    *   The HTTP client.
-   * @param \Drupal\Core\Extension\ExtensionList $module
+   * @param \Drupal\Core\Extension\ExtensionList $moduleList
    *   The module extension list.
-   * @param \Drupal\Core\Extension\ExtensionList $profile
+   * @param \Drupal\Core\Extension\ExtensionList $profileList
    *   The profile extension list.
-   * @param \Drupal\Core\Extension\ExtensionList $theme
+   * @param \Drupal\Core\Extension\ExtensionList $themeList
    *   The theme extension list.
    * @param \Psr\Log\LoggerInterface $logger
    *   The logger.
    */
-  public function __construct(ConfigFactoryInterface $config_factory, CacheBackendInterface $cache, TimeInterface $time, Client $client, ExtensionList $module, ExtensionList $profile, ExtensionList $theme, LoggerInterface $logger) {
+  public function __construct(ConfigFactoryInterface $config_factory, CacheBackendInterface $cache, TimeInterface $time, Client $client, ExtensionList $moduleList, ExtensionList $profileList, ExtensionList $themeList, LoggerInterface $logger) {
     $this->config = $config_factory->get('automatic_updates.settings');
     $this->cache = $cache;
     $this->time = $time;
     $this->httpClient = $client;
-    $this->module = $module;
-    $this->profile = $profile;
-    $this->theme = $theme;
+    $this->extensionLists = [
+      'module' => $moduleList,
+      'theme' => $themeList,
+      'profile' => $profileList,
+    ];
     $this->logger = $logger;
   }
 
@@ -179,7 +167,7 @@ class AutomaticUpdatesPsa implements AutomaticUpdatesPsaInterface {
       $this->logger->error('Extension list of type "%extension" does not exist.', ['%extension' => $extension_type]);
       return FALSE;
     }
-    return $this->{$extension_type}->exists($project_name) && !empty($this->{$extension_type}->getAllAvailableInfo()[$project_name]['version']);
+    return $this->extensionLists[$extension_type]->exists($project_name) && !empty($this->extensionLists[$extension_type]->getAllAvailableInfo()[$project_name]['version']);
   }
 
   /**
@@ -191,7 +179,7 @@ class AutomaticUpdatesPsa implements AutomaticUpdatesPsaInterface {
    *   The JSON object.
    */
   protected function contribParser(array &$messages, $json) {
-    $extension_version = $this->{$json->type}->getAllAvailableInfo()[$json->project]['version'];
+    $extension_version = $this->extensionLists[$json->type]->getAllAvailableInfo()[$json->project]['version'];
     $json->insecure = array_filter(array_map(static function ($version) {
       $version_array = explode('-', $version, 2);
       if ($version_array && $version_array[0] === \Drupal::CORE_COMPATIBILITY) {
