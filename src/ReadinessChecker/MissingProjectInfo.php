@@ -16,27 +16,6 @@ class MissingProjectInfo implements ReadinessCheckerInterface {
   use StringTranslationTrait;
 
   /**
-   * The module extension list.
-   *
-   * @var \Drupal\Core\Extension\ExtensionList
-   */
-  protected $modules;
-
-  /**
-   * The profile extension list.
-   *
-   * @var \Drupal\Core\Extension\ExtensionList
-   */
-  protected $profiles;
-
-  /**
-   * The theme extension list.
-   *
-   * @var \Drupal\Core\Extension\ExtensionList
-   */
-  protected $themes;
-
-  /**
    * MissingProjectInfo constructor.
    *
    * @param \Drupal\Core\Extension\ExtensionList $modules
@@ -47,9 +26,7 @@ class MissingProjectInfo implements ReadinessCheckerInterface {
    *   The theme extension list.
    */
   public function __construct(ExtensionList $modules, ExtensionList $profiles, ExtensionList $themes) {
-    $this->modules = $modules;
-    $this->profiles = $profiles;
-    $this->themes = $themes;
+    $this->setExtensionLists($modules, $themes, $profiles);
   }
 
   /**
@@ -78,16 +55,6 @@ class MissingProjectInfo implements ReadinessCheckerInterface {
       }
     }
     return $messages;
-  }
-
-  /**
-   * Get the extension types.
-   *
-   * @return array
-   *   The extension types.
-   */
-  protected function getExtensionsTypes() {
-    return ['modules', 'profiles', 'themes'];
   }
 
 }

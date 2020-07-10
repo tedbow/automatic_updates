@@ -3,6 +3,7 @@
 namespace Drupal\automatic_updates\Services;
 
 use Composer\Semver\VersionParser;
+use Drupal\automatic_updates\ProjectInfoTrait;
 use Drupal\Component\Datetime\TimeInterface;
 use Drupal\Component\Render\FormattableMarkup;
 use Drupal\Core\Cache\CacheBackendInterface;
@@ -20,6 +21,7 @@ use Psr\Log\LoggerInterface;
 class AutomaticUpdatesPsa implements AutomaticUpdatesPsaInterface {
   use StringTranslationTrait;
   use DependencySerializationTrait;
+  use ProjectInfoTrait;
 
   /**
    * This module's configuration.
@@ -50,27 +52,6 @@ class AutomaticUpdatesPsa implements AutomaticUpdatesPsaInterface {
   protected $time;
 
   /**
-   * The module extension list.
-   *
-   * @var \Drupal\Core\Extension\ExtensionList
-   */
-  protected $module;
-
-  /**
-   * The profile extension list.
-   *
-   * @var \Drupal\Core\Extension\ExtensionList
-   */
-  protected $profile;
-
-  /**
-   * The theme extension list.
-   *
-   * @var \Drupal\Core\Extension\ExtensionList
-   */
-  protected $theme;
-
-  /**
    * The logger.
    *
    * @var \Psr\Log\LoggerInterface
@@ -88,24 +69,22 @@ class AutomaticUpdatesPsa implements AutomaticUpdatesPsaInterface {
    *   The time service.
    * @param \GuzzleHttp\Client $client
    *   The HTTP client.
-   * @param \Drupal\Core\Extension\ExtensionList $module
+   * @param \Drupal\Core\Extension\ExtensionList $moduleList
    *   The module extension list.
-   * @param \Drupal\Core\Extension\ExtensionList $profile
+   * @param \Drupal\Core\Extension\ExtensionList $profileList
    *   The profile extension list.
-   * @param \Drupal\Core\Extension\ExtensionList $theme
+   * @param \Drupal\Core\Extension\ExtensionList $themeList
    *   The theme extension list.
    * @param \Psr\Log\LoggerInterface $logger
    *   The logger.
    */
-  public function __construct(ConfigFactoryInterface $config_factory, CacheBackendInterface $cache, TimeInterface $time, Client $client, ExtensionList $module, ExtensionList $profile, ExtensionList $theme, LoggerInterface $logger) {
+  public function __construct(ConfigFactoryInterface $config_factory, CacheBackendInterface $cache, TimeInterface $time, Client $client, ExtensionList $moduleList, ExtensionList $profileList, ExtensionList $themeList, LoggerInterface $logger) {
     $this->config = $config_factory->get('automatic_updates.settings');
     $this->cache = $cache;
     $this->time = $time;
     $this->httpClient = $client;
-    $this->module = $module;
-    $this->profile = $profile;
-    $this->theme = $theme;
     $this->logger = $logger;
+    $this->setExtensionLists($moduleList, $themeList, $profileList);
   }
 
   /**
@@ -175,11 +154,14 @@ class AutomaticUpdatesPsa implements AutomaticUpdatesPsaInterface {
    *   TRUE if extension exists, else FALSE.
    */
   protected function isValidExtension($extension_type, $project_name) {
-    if (!property_exists($this, $extension_type)) {
-      $this->logger->error('Extension list of type "%extension" does not exist.', ['%extension' => $extension_type]);
+    try {
+      $extension_list = $this->getExtensionList($extension_type);
+      return $extension_list->exists($project_name) && !empty($extension_list->getAllAvailableInfo()[$project_name]['version']);
+    }
+    catch (\UnexpectedValueException $exception) {
+      $this->logger->error($exception->getMessage());
       return FALSE;
     }
-    return $this->{$extension_type}->exists($project_name) && !empty($this->{$extension_type}->getAllAvailableInfo()[$project_name]['version']);
   }
 
   /**
@@ -191,7 +173,7 @@ class AutomaticUpdatesPsa implements AutomaticUpdatesPsaInterface {
    *   The JSON object.
    */
   protected function contribParser(array &$messages, $json) {
-    $extension_version = $this->{$json->type}->getAllAvailableInfo()[$json->project]['version'];
+    $extension_version = $this->getExtensionList($json->type)->getAllAvailableInfo()[$json->project]['version'];
     $json->insecure = array_filter(array_map(static function ($version) {
       $version_array = explode('-', $version, 2);
       if ($version_array && $version_array[0] === \Drupal::CORE_COMPATIBILITY) {

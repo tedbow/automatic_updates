@@ -23,27 +23,6 @@ class ModifiedFiles implements ReadinessCheckerInterface {
   protected $modifiedFiles;
 
   /**
-   * The module extension list.
-   *
-   * @var \Drupal\Core\Extension\ExtensionList
-   */
-  protected $module;
-
-  /**
-   * The profile extension list.
-   *
-   * @var \Drupal\Core\Extension\ExtensionList
-   */
-  protected $profile;
-
-  /**
-   * The theme extension list.
-   *
-   * @var \Drupal\Core\Extension\ExtensionList
-   */
-  protected $theme;
-
-  /**
    * An array of array of strings of extension paths.
    *
    * @var string[]string[]
@@ -65,9 +44,7 @@ class ModifiedFiles implements ReadinessCheckerInterface {
    */
   public function __construct(ModifiedFilesInterface $modified_files, ExtensionList $modules, ExtensionList $profiles, ExtensionList $themes) {
     $this->modifiedFiles = $modified_files;
-    $this->module = $modules;
-    $this->profile = $profiles;
-    $this->theme = $themes;
+    $this->setExtensionLists($modules, $themes, $profiles);
   }
 
   /**
@@ -95,16 +72,6 @@ class ModifiedFiles implements ReadinessCheckerInterface {
       $messages[] = $this->t('The hash for @file does not match its original. Updates that include that file will fail and require manual intervention.', ['@file' => $file]);
     }
     return $messages;
-  }
-
-  /**
-   * Get the extension types.
-   *
-   * @return array
-   *   The extension types.
-   */
-  protected function getExtensionsTypes() {
-    return ['module', 'profile', 'theme'];
   }
 
 }
