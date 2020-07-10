@@ -2,10 +2,19 @@
 
 namespace Drupal\automatic_updates;
 
+use Drupal\Core\Extension\ExtensionList;
+
 /**
  * Provide a helper to get project info.
  */
 trait ProjectInfoTrait {
+
+  /**
+   * The extension lists.
+   *
+   * @var \Drupal\Core\Extension\ExtensionList[]
+   */
+  protected $extensionLists;
 
   /**
    * Get extension list.
@@ -17,13 +26,44 @@ trait ProjectInfoTrait {
    *   The extension list service.
    */
   protected function getExtensionList($extension_type) {
-    if (isset($this->{$extension_type})) {
-      $list = $this->{$extension_type};
+    if (isset($this->extensionLists[$extension_type])) {
+      $list = $this->extensionLists[$extension_type];
     }
     else {
+      if (!in_array($extension_type, $this->getExtensionsTypes())) {
+        throw new \UnexpectedValueException("Invalid extension type: $extension_type");
+      }
       $list = \Drupal::service("extension.list.$extension_type");
     }
     return $list;
+  }
+
+  /**
+   * Sets the extension lists.
+   *
+   * @param \Drupal\Core\Extension\ExtensionList $module_list
+   *   The module extension list.
+   * @param \Drupal\Core\Extension\ExtensionList $theme_list
+   *   The theme extension list.
+   * @param \Drupal\Core\Extension\ExtensionList $profile_list
+   *   The profile extension list.
+   */
+  protected function setExtensionLists(ExtensionList $module_list, ExtensionList $theme_list, ExtensionList $profile_list) {
+    $this->extensionLists = [
+      'module' => $module_list,
+      'theme' => $theme_list,
+      'profile' => $profile_list,
+    ];
+  }
+
+  /**
+   * Get the extension types.
+   *
+   * @return string[]
+   *   The extension types.
+   */
+  protected function getExtensionsTypes() {
+    return ['module', 'profile', 'theme'];
   }
 
   /**

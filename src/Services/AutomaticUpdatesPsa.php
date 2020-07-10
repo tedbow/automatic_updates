@@ -3,6 +3,7 @@
 namespace Drupal\automatic_updates\Services;
 
 use Composer\Semver\VersionParser;
+use Drupal\automatic_updates\ProjectInfoTrait;
 use Drupal\Component\Datetime\TimeInterface;
 use Drupal\Component\Render\FormattableMarkup;
 use Drupal\Core\Cache\CacheBackendInterface;
@@ -20,6 +21,7 @@ use Psr\Log\LoggerInterface;
 class AutomaticUpdatesPsa implements AutomaticUpdatesPsaInterface {
   use StringTranslationTrait;
   use DependencySerializationTrait;
+  use ProjectInfoTrait;
 
   /**
    * This module's configuration.
@@ -48,13 +50,6 @@ class AutomaticUpdatesPsa implements AutomaticUpdatesPsaInterface {
    * @var \Drupal\Component\Datetime\TimeInterface
    */
   protected $time;
-
-  /**
-   * The extension lists.
-   *
-   * @var \Drupal\Core\Extension\ExtensionList[]
-   */
-  protected $extensionLists;
 
   /**
    * The logger.
@@ -88,12 +83,8 @@ class AutomaticUpdatesPsa implements AutomaticUpdatesPsaInterface {
     $this->cache = $cache;
     $this->time = $time;
     $this->httpClient = $client;
-    $this->extensionLists = [
-      'module' => $moduleList,
-      'theme' => $themeList,
-      'profile' => $profileList,
-    ];
     $this->logger = $logger;
+    $this->setExtensionLists($moduleList, $themeList, $profileList);
   }
 
   /**
@@ -163,11 +154,14 @@ class AutomaticUpdatesPsa implements AutomaticUpdatesPsaInterface {
    *   TRUE if extension exists, else FALSE.
    */
   protected function isValidExtension($extension_type, $project_name) {
-    if (!isset($this->extensionLists[$extension_type])) {
-      $this->logger->error('Extension list of type "%extension" does not exist.', ['%extension' => $extension_type]);
+    try {
+      $extension_list = $this->getExtensionList($extension_type);
+      return $extension_list->exists($project_name) && !empty($extension_list->getAllAvailableInfo()[$project_name]['version']);
+    }
+    catch (\UnexpectedValueException $exception) {
+      $this->logger->error($exception->getMessage());
       return FALSE;
     }
-    return $this->extensionLists[$extension_type]->exists($project_name) && !empty($this->extensionLists[$extension_type]->getAllAvailableInfo()[$project_name]['version']);
   }
 
   /**
@@ -179,7 +173,7 @@ class AutomaticUpdatesPsa implements AutomaticUpdatesPsaInterface {
    *   The JSON object.
    */
   protected function contribParser(array &$messages, $json) {
-    $extension_version = $this->extensionLists[$json->type]->getAllAvailableInfo()[$json->project]['version'];
+    $extension_version = $this->getExtensionList($json->type)->getAllAvailableInfo()[$json->project]['version'];
     $json->insecure = array_filter(array_map(static function ($version) {
       $version_array = explode('-', $version, 2);
       if ($version_array && $version_array[0] === \Drupal::CORE_COMPATIBILITY) {
