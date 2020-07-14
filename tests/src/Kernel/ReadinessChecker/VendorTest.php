@@ -5,6 +5,7 @@ namespace Drupal\Tests\automatic_updates\Kernel\ReadinessChecker;
 use Drupal\automatic_updates\ReadinessChecker\Vendor;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\KernelTests\KernelTestBase;
+use org\bovigo\vfs\vfsStream;
 
 /**
  * Tests locating vendor folder.
@@ -28,24 +29,15 @@ class VendorTest extends KernelTestBase {
     $vendor = $this->container->get('automatic_updates.vendor');
     $this->assertEmpty($vendor->run());
 
-    $missing_vendor = $this->getMockBuilder(Vendor::class)
-      ->setConstructorArgs([
-        $this->container->get('app.root'),
-      ])
-      ->setMethods([
-        'exists',
-      ])
-      ->getMock();
-    $missing_vendor
-      ->method('exists')
-      ->withAnyParameters()
-      ->will($this->onConsecutiveCalls(
-        TRUE,
-        FALSE
-      )
-    );
-    $expected_messages = [];
-    $expected_messages[] = $this->t('The vendor folder could not be located.');
+    vfsStream::setup('root');
+    vfsStream::create([
+      'core' => [
+        'core.api.php' => 'test',
+      ],
+    ]);
+    $missing_vendor = new Vendor(vfsStream::url('root'));
+    $this->assertEquals([], $vendor->run());
+    $expected_messages = [$this->t('The vendor folder could not be located.')];
     self::assertEquals($expected_messages, $missing_vendor->run());
   }
 

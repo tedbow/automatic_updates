@@ -11,7 +11,7 @@ class Vendor extends Filesystem {
    * {@inheritdoc}
    */
   protected function doCheck() {
-    if (!$this->exists($this->getVendorPath() . DIRECTORY_SEPARATOR . 'autoload.php')) {
+    if (!file_exists($this->getVendorPath() . DIRECTORY_SEPARATOR . 'autoload.php')) {
       return [$this->t('The vendor folder could not be located.')];
     }
     return [];

@@ -38,7 +38,7 @@ abstract class Filesystem implements ReadinessCheckerInterface {
    * {@inheritdoc}
    */
   public function run() {
-    if (!$this->exists($this->getRootPath() . DIRECTORY_SEPARATOR . implode(DIRECTORY_SEPARATOR, ['core', 'core.api.php']))) {
+    if (!file_exists($this->getRootPath() . DIRECTORY_SEPARATOR . implode(DIRECTORY_SEPARATOR, ['core', 'core.api.php']))) {
       return [$this->t('The web root could not be located.')];
     }
 
@@ -94,19 +94,6 @@ abstract class Filesystem implements ReadinessCheckerInterface {
     $root_statistics = stat($root);
     $vendor_statistics = stat($vendor);
     return $root_statistics && $vendor_statistics && $root_statistics['dev'] === $vendor_statistics['dev'];
-  }
-
-  /**
-   * Checks whether a file or directory exists.
-   *
-   * @param string $file
-   *   The file path to test.
-   *
-   * @return bool
-   *   TRUE if the file exists, otherwise FALSE.
-   */
-  protected function exists($file) {
-    return file_exists($file);
   }
 
 }
