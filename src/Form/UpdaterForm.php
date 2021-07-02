@@ -8,6 +8,7 @@ use Drupal\automatic_updates\UpdateRecommender;
 use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Messenger\MessengerInterface;
+use Drupal\Core\TempStore\PrivateTempStoreFactory;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 class UpdaterForm extends FormBase {
@@ -22,10 +23,16 @@ class UpdaterForm extends FormBase {
    */
   protected $updateRecommender;
 
-  public function __construct(Updater $updater, UpdateRecommender $update_recommender, MessengerInterface $messenger) {
+  /**
+   * @var \Drupal\Core\TempStore\PrivateTempStore
+   */
+  protected $tempStore;
+
+  public function __construct(Updater $updater, UpdateRecommender $update_recommender, MessengerInterface $messenger, PrivateTempStoreFactory $temp_store_factory) {
     $this->updater = $updater;
     $this->updateRecommender = $update_recommender;
     $this->setMessenger($messenger);
+    $this->tempStore = $temp_store_factory->get('automatic_updates');
   }
 
 
@@ -33,7 +40,8 @@ class UpdaterForm extends FormBase {
     return new static(
       $container->get('automatic_updates.updater'),
       $container->get('automatic_updates.recommender'),
-      $container->get('messenger')
+      $container->get('messenger'),
+      $container->get('tempstore.private')
     );
   }
 
@@ -49,20 +57,43 @@ class UpdaterForm extends FormBase {
    * @inheritDoc
    */
   public function buildForm(array $form, FormStateInterface $form_state) {
-    $update_stage = $form_state->getTemporaryValue('update_stage');
+    $username = posix_getpwuid(posix_geteuid())['name'];
+    $path = apache_getenv('PATH');
+    $path .= ":/usr/local/bin";
+    apache_setenv('PATH', $path);
+    //putenv("PATH=$path");
+    $this->messenger->addMessage("user $username");
+    $update_stage = $this->tempStore->get('update_stage');
+    $update_version = $this->updateRecommender->getRecommendedUpdateVersion('drupal');
+    $form['update_version'] = [
+      '#type' => 'value',
+      '#value' => $update_version,
+    ];
     if (!$update_stage) {
       if ($this->updater->hasActiveUpdate()) {
         $this->messenger->addError("Unknown active update");
         return $form;
       }
-      if ($update_version = $this->updateRecommender->getRecommendedUpdateVersion('drupal')) {
+      if ($update_version) {
         $this->messenger->addMessage($this->t('No active update. Recommend update @version', ['@version' => $update_version]));
         $form['begin'] = [
           '#type' => 'submit',
           '#value' => $this->t('Begin Update'),
           '#name' => 'begin'
         ];
-        $form['update_version'] = ['#value' => $update_version];
+
+      }
+    }
+    else {
+      switch ($update_stage) {
+        case 'begin':
+          $this->messenger->addMessage($this->t('Update process begun. Stage update to @version', ['@version' => $update_version]));
+          $form['stage'] = [
+            '#type' => 'submit',
+            '#value' => $this->t('Stage Update'),
+            '#name' => 'stage'
+          ];
+          break;
       }
     }
     return $form;
@@ -73,11 +104,19 @@ class UpdaterForm extends FormBase {
    */
   public function submitForm(array &$form, FormStateInterface $form_state) {
     $submitted_button = $form_state->getTriggeringElement()['#name'];
-    if ($submitted_button === 'begin') {
-      $this->updater->begin();
-      $this->messenger->addMessage('Copied active directory');
-      $form_state->setTemporaryValue('update_stage', 'begin');
+    switch ($submitted_button) {
+      case 'begin':
+        $this->updater->begin();
+        $this->messenger->addMessage('Copied active directory');
+        $this->tempStore->set('update_stage', 'begin');
+        break;
+      case 'stage':
+        $this->updater->stage($form_state->getValue('update_version'));
+        $this->tempStore->set('update_stage', 'stage');
+        break;
+
     }
+
   }
 
 }

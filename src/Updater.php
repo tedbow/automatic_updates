@@ -5,11 +5,8 @@ namespace Drupal\automatic_updates;
 
 
 use Composer\Autoload\ClassLoader;
-use PhpTuf\ComposerStager\Domain\Beginner;
 use PhpTuf\ComposerStager\Domain\BeginnerInterface;
-use PhpTuf\ComposerStager\Infrastructure\Process\ExecutableFinder;
-use PhpTuf\ComposerStager\Infrastructure\Process\FileCopier;
-use PhpTuf\ComposerStager\Infrastructure\Process\Runner\RsyncRunner;
+use PhpTuf\ComposerStager\Domain\StagerInterface;
 
 class Updater {
 
@@ -18,12 +15,18 @@ class Updater {
    */
   protected $beginner;
 
+  /**
+   * @var \PhpTuf\ComposerStager\Domain\StagerInterface
+   */
+  protected $stager;
+
 
   /**
    * Updater constructor.
    */
-  public function __construct(BeginnerInterface $beginner) {
+  public function __construct(BeginnerInterface $beginner, StagerInterface $stager) {
     $this->beginner = $beginner;
+    $this->stager = $stager;
   }
 
   private static function getVendorDirectory(): string {
@@ -56,8 +59,14 @@ class Updater {
     $this->beginner->begin(static::getActiveDirectory(), static::getStageDirectory());
   }
 
-  public function stage(): void {
-
+  public function stage(string $version): void {
+    $command = [
+      'require',
+      "drupal/core-recommended:\"$version\"",
+      '--update-with-all-dependencies',
+      ];
+    putenv('COMPOSER_HOME=/Users/ted.bowman/.composer');
+    $this->stager->stage($command, static::getStageDirectory());
   }
 
   public function commit(): void {
