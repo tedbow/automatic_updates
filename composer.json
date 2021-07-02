@@ -12,11 +12,18 @@
   },
   "require": {
     "ext-json": "*",
-    "ext-zip": "*"
+    "ext-zip": "*",
+    "php-tuf/composer-stager": "dev-develop"
   },
   "config": {
     "platform": {
       "php": "7.3.0"
     }
-  }
+  },
+  "repositories": [
+    {
+      "type": "vcs",
+      "url": "https://github.com/php-tuf/composer-stager"
+    }
+  ]
 }
