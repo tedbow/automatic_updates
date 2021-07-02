@@ -6,5 +6,5 @@ core_version_requirement: ^8 || ^9
 package: 'Security'
 configure: automatic_updates.settings
 dependencies:
-  - drupal:system (>= 8.7)
-  - drupal:update (>= 8.7)
+  - drupal:system (>= 9.2)
+  - drupal:update (>= 9.2)

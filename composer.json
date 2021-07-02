@@ -12,12 +12,11 @@
   },
   "require": {
     "ext-json": "*",
-    "ext-zip": "*",
-    "drupal/php-signify": "^1.0@dev"
+    "ext-zip": "*"
   },
   "config": {
     "platform": {
-      "php": "5.6.0"
+      "php": "7.3.0"
     }
   }
 }
