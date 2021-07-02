@@ -1,1 +1,34 @@
+
 services:
+  automatic_updates.recommender:
+    class: Drupal\automatic_updates\UpdateRecommender
+    arguments: ['@update.manager', '@update.processor']
+  automatic_updates.updater:
+    class: Drupal\automatic_updates\Updater
+    arguments: ['@automatic_updates.beginner']
+  automatic_updates.beginner:
+    class: PhpTuf\ComposerStager\Domain\Beginner
+    arguments:
+      [ '@automatic_updates.file_copier', '@automatic_updates.file_system' ]
+  automatic_updates.file_copier:
+    class: PhpTuf\ComposerStager\Infrastructure\Process\FileCopier
+    arguments:
+      [ '@automatic_updates.rsync' ]
+  automatic_updates.file_system:
+    class: PhpTuf\ComposerStager\Infrastructure\Filesystem\Filesystem
+    arguments:
+      [ '@automatic_updates.symfony_file_system' ]
+  automatic_updates.symfony_file_system:
+    class: Symfony\Component\Filesystem\Filesystem
+  automatic_updates.symfony_exec_finder:
+    class: Symfony\Component\Process\ExecutableFinder
+  automatic_updates.rsync:
+    class: PhpTuf\ComposerStager\Infrastructure\Process\Runner\RsyncRunner
+    arguments:
+      [ '@automatic_updates.exec_finder', '@automatic_updates.process_factory' ]
+  automatic_updates.exec_finder:
+    class: PhpTuf\ComposerStager\Infrastructure\Process\ExecutableFinder
+    arguments:
+      [ '@automatic_updates.symfony_exec_finder' ]
+  automatic_updates.process_factory:
+    class: PhpTuf\ComposerStager\Infrastructure\Process\ProcessFactory

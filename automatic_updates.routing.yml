@@ -1,7 +1,7 @@
 automatic_updates.settings:
-  path: '/admin/config/automatic_updates'
+  path: '/admin/automatic-update'
   defaults:
-    _form: '\Drupal\automatic_updates\Form\SettingsForm'
+    _form: '\Drupal\automatic_updates\Form\UpdaterForm'
     _title: 'Automatic Updates'
   requirements:
     _permission: 'administer software updates'
