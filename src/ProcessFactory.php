@@ -28,7 +28,7 @@ final class ProcessFactory implements ProcessFactoryInterface
     /** @var \Drupal\Core\File\FileSystemInterface $file_system */
     $file_system = \Drupal::service('file_system');
     $home_path = $file_system->getTempDirectory() . '/automatic_updates_composer_home';
-    if (is_dir($home_path)) {
+    if (!is_dir($home_path)) {
       mkdir($home_path);
     }
     return $home_path;
