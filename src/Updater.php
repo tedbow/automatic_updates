@@ -8,6 +8,7 @@ use Composer\Autoload\ClassLoader;
 use PhpTuf\ComposerStager\Domain\BeginnerInterface;
 use PhpTuf\ComposerStager\Domain\Cleaner;
 use PhpTuf\ComposerStager\Domain\CleanerInterface;
+use PhpTuf\ComposerStager\Domain\CommitterInterface;
 use PhpTuf\ComposerStager\Domain\StagerInterface;
 
 class Updater {
@@ -27,14 +28,20 @@ class Updater {
    */
   protected $cleaner;
 
+  /**
+   * @var \PhpTuf\ComposerStager\Domain\CommitterInterface
+   */
+  protected $committer;
+
 
   /**
    * Updater constructor.
    */
-  public function __construct(BeginnerInterface $beginner, StagerInterface $stager, CleanerInterface $cleaner) {
+  public function __construct(BeginnerInterface $beginner, StagerInterface $stager, CleanerInterface $cleaner, CommitterInterface $committer) {
     $this->beginner = $beginner;
     $this->stager = $stager;
     $this->cleaner = $cleaner;
+    $this->committer = $committer;
   }
 
   private static function getVendorDirectory(): string {
@@ -80,7 +87,7 @@ class Updater {
   }
 
   public function commit(): void {
-
+    $this->committer->commit(static::getStageDirectory(), static::getActiveDirectory());
   }
 
   public function clean(): void {

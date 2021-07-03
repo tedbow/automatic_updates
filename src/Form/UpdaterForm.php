@@ -92,6 +92,16 @@ class UpdaterForm extends FormBase {
             '#name' => 'stage'
           ];
           break;
+        case 'stage':
+          $this->messenger->addMessage($this->t('Update staged. Commit update to @version', ['@version' => $update_version]));
+          $form['commit'] = [
+            '#type' => 'submit',
+            '#value' => $this->t('Commit Update'),
+            '#name' => 'commit'
+          ];
+          break;
+        case 'commit':
+          $this->messenger->addMessage($this->t("Update Committed!"));
       }
     }
     return $form;
@@ -115,6 +125,10 @@ class UpdaterForm extends FormBase {
       case 'stage':
         $this->updater->stage($form_state->getValue('update_version'));
         $this->tempStore->set('update_stage', 'stage');
+        break;
+      case 'commit':
+        $this->updater->commit();
+        $this->tempStore->set('update_stage', 'commit');
         break;
 
     }

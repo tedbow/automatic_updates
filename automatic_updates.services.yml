@@ -5,7 +5,7 @@ services:
     arguments: ['@update.manager', '@update.processor']
   automatic_updates.updater:
     class: Drupal\automatic_updates\Updater
-    arguments: ['@automatic_updates.beginner', '@automatic_updates.stager', '@automatic_updates.cleaner']
+    arguments: ['@automatic_updates.beginner', '@automatic_updates.stager', '@automatic_updates.cleaner', '@automatic_updates.committer']
   automatic_updates.beginner:
     class: PhpTuf\ComposerStager\Domain\Beginner
     arguments:
@@ -18,6 +18,10 @@ services:
     class: PhpTuf\ComposerStager\Domain\Cleaner
     arguments:
       [ '@automatic_updates.file_system' ]
+  automatic_updates.committer:
+    class: PhpTuf\ComposerStager\Domain\Committer
+    arguments:
+      [ '@automatic_updates.file_copier', '@automatic_updates.file_system' ]
   automatic_updates.composer_runner:
     class: PhpTuf\ComposerStager\Infrastructure\Process\Runner\ComposerRunner
     arguments:
