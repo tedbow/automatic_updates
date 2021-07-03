@@ -62,10 +62,19 @@ class Updater {
   public function stage(string $version): void {
     $command = [
       'require',
-      "drupal/core-recommended:\"$version\"",
+      "drupal/core-recommended:$version",
       '--update-with-all-dependencies',
       ];
-    putenv('COMPOSER_HOME=/Users/ted.bowman/.composer');
+    //$username = posix_getpwuid(posix_geteuid())['name'];
+    $path = apache_getenv('PATH');
+    $path .= ":/usr/local/bin";
+    apache_setenv('PATH', $path);
+    //putenv("PATH=$path");
+    /*$home = static::getStageDirectory() . "/vendor/bin/composer";
+    $home_dir = '/Users/ted.bowman/sites/wdev/d8_stager/composer_home';
+    apache_setenv('COMPOSER_HOME', $home_dir);*/
+
+    putenv("COMPOSER_HOME=$home_dir");
     $this->stager->stage($command, static::getStageDirectory());
   }
 

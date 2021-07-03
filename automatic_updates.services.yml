@@ -39,4 +39,4 @@ services:
     arguments:
       [ '@automatic_updates.symfony_exec_finder' ]
   automatic_updates.process_factory:
-    class: PhpTuf\ComposerStager\Infrastructure\Process\ProcessFactory
+    class: Drupal\automatic_updates\ProcessFactory

@@ -57,12 +57,6 @@ class UpdaterForm extends FormBase {
    * @inheritDoc
    */
   public function buildForm(array $form, FormStateInterface $form_state) {
-    $username = posix_getpwuid(posix_geteuid())['name'];
-    $path = apache_getenv('PATH');
-    $path .= ":/usr/local/bin";
-    apache_setenv('PATH', $path);
-    //putenv("PATH=$path");
-    $this->messenger->addMessage("user $username");
     $update_stage = $this->tempStore->get('update_stage');
     $update_version = $this->updateRecommender->getRecommendedUpdateVersion('drupal');
     $form['update_version'] = [
