@@ -45,16 +45,15 @@ class UpdaterForm extends FormBase {
     );
   }
 
-
   /**
-   * @inheritDoc
+   * {@inheritdoc}
    */
   public function getFormId() {
     return 'automatic_updates_updater';
   }
 
   /**
-   * @inheritDoc
+   * {@inheritdoc}
    */
   public function buildForm(array $form, FormStateInterface $form_state) {
     $form['clean'] = [
@@ -99,7 +98,7 @@ class UpdaterForm extends FormBase {
   }
 
   /**
-   * @inheritDoc
+   * {@inheritdoc}
    */
   public function submitForm(array &$form, FormStateInterface $form_state) {
     $submitted_button = $form_state->getTriggeringElement()['#name'];

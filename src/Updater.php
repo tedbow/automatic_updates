@@ -73,16 +73,9 @@ class Updater {
       "drupal/core-recommended:$version",
       '--update-with-all-dependencies',
       ];
-    //$username = posix_getpwuid(posix_geteuid())['name'];
     $path = apache_getenv('PATH');
     $path .= ":/usr/local/bin";
     apache_setenv('PATH', $path);
-    //putenv("PATH=$path");
-    /*$home = static::getStageDirectory() . "/vendor/bin/composer";
-    $home_dir = '/Users/ted.bowman/sites/wdev/d8_stager/composer_home';
-    apache_setenv('COMPOSER_HOME', $home_dir);*/
-
-    putenv("COMPOSER_HOME=$home_dir");
     $this->stager->stage($command, static::getStageDirectory());
   }
 
