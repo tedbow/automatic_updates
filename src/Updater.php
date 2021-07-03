@@ -6,6 +6,8 @@ namespace Drupal\automatic_updates;
 
 use Composer\Autoload\ClassLoader;
 use PhpTuf\ComposerStager\Domain\BeginnerInterface;
+use PhpTuf\ComposerStager\Domain\Cleaner;
+use PhpTuf\ComposerStager\Domain\CleanerInterface;
 use PhpTuf\ComposerStager\Domain\StagerInterface;
 
 class Updater {
@@ -20,13 +22,19 @@ class Updater {
    */
   protected $stager;
 
+  /**
+   * @var \PhpTuf\ComposerStager\Domain\CleanerInterface
+   */
+  protected $cleaner;
+
 
   /**
    * Updater constructor.
    */
-  public function __construct(BeginnerInterface $beginner, StagerInterface $stager) {
+  public function __construct(BeginnerInterface $beginner, StagerInterface $stager, CleanerInterface $cleaner) {
     $this->beginner = $beginner;
     $this->stager = $stager;
+    $this->cleaner = $cleaner;
   }
 
   private static function getVendorDirectory(): string {
@@ -83,7 +91,9 @@ class Updater {
   }
 
   public function clean(): void {
-
+    if (is_dir(static::getStageDirectory())) {
+      $this->cleaner->clean(static::getStageDirectory());
+    }
   }
 
 }

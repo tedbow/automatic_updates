@@ -57,6 +57,11 @@ class UpdaterForm extends FormBase {
    * @inheritDoc
    */
   public function buildForm(array $form, FormStateInterface $form_state) {
+    $form['clean'] = [
+      '#type' => 'submit',
+      '#value' => $this->t('Clean Update - start over'),
+      '#name' => 'clean'
+    ];
     $update_stage = $this->tempStore->get('update_stage');
     $update_version = $this->updateRecommender->getRecommendedUpdateVersion('drupal');
     $form['update_version'] = [
@@ -99,6 +104,10 @@ class UpdaterForm extends FormBase {
   public function submitForm(array &$form, FormStateInterface $form_state) {
     $submitted_button = $form_state->getTriggeringElement()['#name'];
     switch ($submitted_button) {
+      case 'clean':
+        $this->updater->clean();
+        $this->tempStore->delete('update_stage');
+        break;
       case 'begin':
         $this->updater->begin();
         $this->messenger->addMessage('Copied active directory');

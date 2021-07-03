@@ -12,7 +12,6 @@
   },
   "require": {
     "ext-json": "*",
-    "ext-zip": "*",
     "php-tuf/composer-stager": "dev-develop"
   },
   "config": {
