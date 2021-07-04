@@ -1,7 +1,7 @@
 <?php
 
+namespace Drupal\automatic_updates;
 
-use Drupal\automatic_updates\Updater;
 use Drupal\Core\Url;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 

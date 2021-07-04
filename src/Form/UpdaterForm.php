@@ -2,6 +2,7 @@
 
 namespace Drupal\automatic_updates\Form;
 
+use Drupal\automatic_updates\BatchProcessor;
 use Drupal\automatic_updates_9_3_shim\ProjectRelease;
 use Drupal\Core\Batch\BatchBuilder;
 use Drupal\Core\Extension\ModuleHandlerInterface;
@@ -54,7 +55,7 @@ class UpdaterForm extends FormBase {
    * {@inheritdoc}
    */
   public function getFormId() {
-    return 'update_manager_update_form';
+    return 'automatic_updates_updater_form';
   }
 
   /**
@@ -104,7 +105,7 @@ class UpdaterForm extends FormBase {
 
     // This stores the actual download link we're going to update from for each
     // project in the form, regardless of if it's enabled or disabled.
-    $form['project_downloads'] = ['#tree' => TRUE];
+    $form['project_versions'] = ['#tree' => TRUE];
     $this->moduleHandler->loadInclude('update', 'inc', 'update.compare');
     $project_data = update_calculate_project_data($available);
 
@@ -225,9 +226,9 @@ class UpdaterForm extends FormBase {
         $projects['not-compatible'][$name] = $entry;
       }
       else {
-        $form['project_downloads'][$name] = [
+        $form['project_versions'][$name] = [
           '#type' => 'value',
-          '#value' => $recommended_release->getDownloadUrl(),
+          '#value' => $recommended_release->getVersion(),
         ];
 
         // Based on what kind of project this is, save the entry into the
@@ -366,12 +367,13 @@ class UpdaterForm extends FormBase {
     $batch_builder = (new BatchBuilder())
       ->setTitle($this->t('Downloading updates'))
       ->setInitMessage($this->t('Preparing to download selected updates'))
-      ->setFinishCallback([\BatchProcessor::class, 'finish']);
+      ->setFinishCallback([BatchProcessor::class, 'finish']);
     $project_versions = [];
+    $batch_builder->addOperation([BatchProcessor::class, 'begin']);
     foreach ($projects as $project) {
-      $project_versions[$project] = $form_state->getValue(['project_downloads', $project]);
+      $project_versions[$project] = $form_state->getValue(['project_versions', $project]);
     }
-    $batch_builder->addOperation([\BatchProcessor::class, 'stageProjectVersions'], [$project_versions]);
+    $batch_builder->addOperation([BatchProcessor::class, 'stageProjectVersions'], [$project_versions]);
     batch_set($batch_builder->toArray());
   }
 

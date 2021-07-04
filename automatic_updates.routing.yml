@@ -16,3 +16,11 @@ automatic_updates.simple_form:
     _permission: 'administer software updates'
   options:
     _admin_route: TRUE
+automatic_updates.confirmation_page:
+  path: '/admin/automatic-update-ready'
+  defaults:
+    _form: '\Drupal\automatic_updates\Form\UpdateReady'
+    _title: 'Ready to update'
+  requirements:
+    _permission: 'administer software updates'
+    _access_update_manager: 'TRUE'
