@@ -74,17 +74,32 @@ class Updater {
     $this->beginner->begin(static::getActiveDirectory(), static::getStageDirectory());
   }
 
-  public function stage(string $version): void {
-    $command = [
-      'require',
-      "drupal/core-recommended:$version",
-      '--update-with-all-dependencies',
-      ];
-    $path = apache_getenv('PATH');
-    $path .= ":/usr/local/bin";
-    apache_setenv('PATH', $path);
-    $this->stager->stage($command, static::getStageDirectory());
+  /**
+   * @param array $project_versions
+   *   The keys are project names and the values are the project versions.
+   */
+  public function stageVersions(array $project_versions): void {
+    $packages = [];
+    foreach ($project_versions as $project => $project_version) {
+      if ($project === 'drupal') {
+        // @todo Determine when to use drupal/core-recommended and when to use
+        //   drupal/core
+        $packages[] = "drupal/core-recommended:$project_version";
+      }
+      else {
+        $packages[] = "drupal/$project:$project_version";
+      }
+    }
+    $this->stagePackages($packages);
+
   }
+
+  public function stagePackages(array $packages): void {
+    $command = array_merge(['require'], $packages);
+    $command[] = '--update-with-all-dependencies';
+    $this->stageCommand($command);
+  }
+
 
   public function commit(): void {
     $this->committer->commit(static::getStageDirectory(), static::getActiveDirectory());
@@ -94,6 +109,16 @@ class Updater {
     if (is_dir(static::getStageDirectory())) {
       $this->cleaner->clean(static::getStageDirectory());
     }
+  }
+
+  /**
+   * @param array $command
+   */
+  protected function stageCommand(array $command): void {
+    $path = apache_getenv('PATH');
+    $path .= ":/usr/local/bin";
+    apache_setenv('PATH', $path);
+    $this->stager->stage($command, static::getStageDirectory());
   }
 
 }
