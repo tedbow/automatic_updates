@@ -30,7 +30,7 @@ class BatchProcessor {
    */
   public static function finish(bool $success, array $results, array $operations) {
     if ($success) {
-      return new RedirectResponse(Url::fromRoute('update.confirmation_page', [], ['absolute' => TRUE])->toString());
+      return new RedirectResponse(Url::fromRoute('automatic_updates.confirmation_page', [], ['absolute' => TRUE])->toString());
     }
     \Drupal::messenger()->addError("Update error");
   }

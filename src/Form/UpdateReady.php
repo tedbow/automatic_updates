@@ -6,6 +6,7 @@ use Drupal\automatic_updates\Updater;
 use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Messenger\MessengerInterface;
+use Drupal\workflows\StateInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
@@ -22,16 +23,17 @@ class UpdateReady extends FormBase {
    */
   protected $updater;
 
-  
+
   /**
    * Constructs a new UpdateReady object.
    *
    * @param \Drupal\automatic_updates\Updater $updater
    *   The updater service.
    */
-  public function __construct(Updater $updater, MessengerInterface $messenger) {
+  public function __construct(Updater $updater, MessengerInterface $messenger, StateInterface $state) {
     $this->updater = $updater;
     $this->setMessenger($messenger);
+    $this->state = $state;
   }
 
   /**
@@ -47,7 +49,8 @@ class UpdateReady extends FormBase {
   public static function create(ContainerInterface $container) {
     return new static(
       $container->get('automatic_updates.updater'),
-      $container->get('messenger')
+      $container->get('messenger'),
+      $container->get('state')
     );
   }
 
