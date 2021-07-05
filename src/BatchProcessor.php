@@ -18,8 +18,17 @@ class BatchProcessor {
   public static function stageProjectVersions($project_versions, &$context) {
     static::getUpdater()->stageVersions($project_versions);
   }
+
+  public static function commit() {
+    static::getUpdater()->commit();
+  }
+
+  public static function clean() {
+    static::getUpdater()->clean();
+  }
+
   /**
-   * Finish batch.
+   * Finish committing the update.
    *
    * @param bool $success
    *   Indicate that the batch API tasks were all completed successfully.
@@ -28,7 +37,23 @@ class BatchProcessor {
    * @param array $operations
    *   A list of the operations that had not been completed by the batch API.
    */
-  public static function finish(bool $success, array $results, array $operations) {
+  public static function finishCommitClean(bool $success, array $results, array $operations) {
+    if ($success) {
+      return new RedirectResponse(Url::fromRoute('automatic_updates.update_form', [], ['absolute' => TRUE])->toString());
+    }
+    \Drupal::messenger()->addError("Update error");
+  }
+  /**
+   * Finish staging the updates.
+   *
+   * @param bool $success
+   *   Indicate that the batch API tasks were all completed successfully.
+   * @param array $results
+   *   An array of all the results.
+   * @param array $operations
+   *   A list of the operations that had not been completed by the batch API.
+   */
+  public static function finishStage(bool $success, array $results, array $operations) {
     if ($success) {
       return new RedirectResponse(Url::fromRoute('automatic_updates.confirmation_page', [], ['absolute' => TRUE])->toString());
     }
