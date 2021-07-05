@@ -23,6 +23,11 @@ class UpdateReady extends FormBase {
    */
   protected $updater;
 
+  /**
+   * @var \Drupal\Core\State\StateInterface
+   */
+  protected $state;
+
 
   /**
    * Constructs a new UpdateReady object.
@@ -93,6 +98,7 @@ class UpdateReady extends FormBase {
 
     // @todo Should these operations be done in batch.
     $this->updater->commit();
+    // Clean could be done in another page load or on cron to reduce page time.
     $this->updater->clean();
     $this->messenger->addMessage("Update complete!");
 
