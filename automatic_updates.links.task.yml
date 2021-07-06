@@ -1,0 +1,15 @@
+automatic_updates.update:
+  route_name: automatic_updates.update_form
+  base_route: system.admin_reports
+  title: Composer Updater
+  weight: 10
+automatic_updates.simple:
+  route_name: automatic_updates.simple_form
+  base_route: system.admin_reports
+  title: Composer Simple
+  weight: 10
+automatic_updates.installer:
+  route_name: automatic_updates.installer_form
+  base_route: system.admin_reports
+  title: Composer Installer
+  weight: 5

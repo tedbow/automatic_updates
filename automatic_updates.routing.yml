@@ -24,3 +24,12 @@ automatic_updates.confirmation_page:
   requirements:
     _permission: 'administer software updates'
     _access_update_manager: 'TRUE'
+automatic_updates.installer_form:
+  path: '/admin/automatic-updates-install'
+  defaults:
+    _form: '\Drupal\automatic_updates\Form\InstallerForm'
+    _title: 'Composer install'
+  requirements:
+    _permission: 'administer software updates'
+  options:
+    _admin_route: TRUE

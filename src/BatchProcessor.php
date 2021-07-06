@@ -15,7 +15,7 @@ class BatchProcessor {
     static::getUpdater()->begin();
   }
 
-  public static function stageProjectVersions($project_versions, &$context) {
+  public static function stageProjectVersions(array $project_versions, &$context) {
     static::getUpdater()->stageVersions($project_versions);
   }
   /**

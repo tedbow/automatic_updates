@@ -72,6 +72,7 @@ class UpdaterForm extends FormBase {
    * {@inheritdoc}
    */
   public function buildForm(array $form, FormStateInterface $form_state) {
+    $this->messenger()->addWarning($this->t('This is an experimental updater using Composer. Use at your own risk 💀'));
     $this->moduleHandler->loadInclude('update', 'inc', 'update.manager');
 
     $last_markup = [
