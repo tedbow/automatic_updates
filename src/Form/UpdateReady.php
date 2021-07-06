@@ -63,6 +63,13 @@ class UpdateReady extends FormBase {
    * {@inheritdoc}
    */
   public function buildForm(array $form, FormStateInterface $form_state) {
+    $error_messages = $this->updater->validateStaged();
+    if ($error_messages) {
+      foreach ($error_messages as $error_message) {
+        $this->messenger->addError($error_message);
+      }
+      return $form;
+    }
     $form['backup'] = [
       '#prefix' => '<strong>',
       '#markup' => $this->t('Back up your database and site before you continue. <a href=":backup_url">Learn how</a>.', [':backup_url' => 'https://www.drupal.org/node/22281']),

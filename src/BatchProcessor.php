@@ -18,6 +18,10 @@ class BatchProcessor {
   public static function stageProjectVersions(array $project_versions, &$context) {
     static::getUpdater()->stageVersions($project_versions);
   }
+
+  public static function validateStaged() {
+    static::getUpdater()->validateStaged();
+  }
   /**
    * Finish batch.
    *

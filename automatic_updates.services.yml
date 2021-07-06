@@ -5,7 +5,7 @@ services:
     arguments: ['@update.manager', '@update.processor']
   automatic_updates.updater:
     class: Drupal\automatic_updates\Updater
-    arguments: ['@state','@automatic_updates.beginner', '@automatic_updates.stager', '@automatic_updates.cleaner', '@automatic_updates.committer']
+    arguments: ['@state', '@string_translation','@automatic_updates.beginner', '@automatic_updates.stager', '@automatic_updates.cleaner', '@automatic_updates.committer']
   automatic_updates.beginner:
     class: PhpTuf\ComposerStager\Domain\Beginner
     arguments:

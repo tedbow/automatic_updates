@@ -6,6 +6,8 @@ namespace Drupal\automatic_updates;
 
 use Composer\Autoload\ClassLoader;
 use Drupal\Core\State\StateInterface;
+use Drupal\Core\StringTranslation\StringTranslationTrait;
+use Drupal\Core\StringTranslation\TranslationInterface;
 use PhpTuf\ComposerStager\Domain\BeginnerInterface;
 use PhpTuf\ComposerStager\Domain\CleanerInterface;
 use PhpTuf\ComposerStager\Domain\CommitterInterface;
@@ -13,6 +15,7 @@ use PhpTuf\ComposerStager\Domain\StagerInterface;
 
 class Updater {
 
+  use StringTranslationTrait;
   private const STATE_KEY = 'AUTOMATIC_UPDATES_CURRENT';
 
   /**
@@ -44,12 +47,31 @@ class Updater {
   /**
    * Updater constructor.
    */
-  public function __construct(StateInterface $state, BeginnerInterface $beginner, StagerInterface $stager, CleanerInterface $cleaner, CommitterInterface $committer) {
+  public function __construct(StateInterface $state, TranslationInterface $translation, BeginnerInterface $beginner, StagerInterface $stager, CleanerInterface $cleaner, CommitterInterface $committer) {
     $this->state = $state;
     $this->beginner = $beginner;
     $this->stager = $stager;
     $this->cleaner = $cleaner;
     $this->committer = $committer;
+    $this->setStringTranslation($translation);
+  }
+
+  private static function getDrupalPackagesForComposerLock(string $composer_json_file): array {
+    $composer_json = file_get_contents($composer_json_file);
+    $drupal_packages = [];
+    if ($composer_json) {
+      $data = json_decode($composer_json, TRUE);
+      $packages = $data['packages'];
+      foreach ($packages as $package) {
+        if (in_array($package['type'], ['drupal-module', 'drupal-theme', 'drupal-core']) || $package['name'] === 'drupal/core-recommended') {
+          $drupal_packages[$package['name']] = $package;
+        }
+      }
+    }
+    else {
+      throw new \RuntimeException("Composer.json files not found.");
+    }
+    return $drupal_packages;
   }
 
   private static function getVendorDirectory(): string {
@@ -152,6 +174,76 @@ class Updater {
       return $current['id'];
     }
     return NULL;
+  }
+
+  /**
+   * Validates that an update was performed as expected.
+   *
+   * @return \Drupal\Core\StringTranslation\TranslatableMarkup[]
+   *   Error messages.
+   */
+  public function validateStaged(): array {
+    $error_messages = [];
+    $current = $this->state->get(static::STATE_KEY);
+    $expected_package_changes = $current['packages'];
+    $expected_changes = [];
+    foreach ($expected_package_changes as $expected_package_change) {
+      $parts = explode(':', $expected_package_change);
+      $expected_changes[$parts[0]] = $parts[1];
+    }
+    $active_drupal_packages = static::getDrupalPackagesForComposerLock(static::getActiveDirectory() . "/composer.lock");
+    $staged_drupal_packages = static::getDrupalPackagesForComposerLock(static::getStageDirectory() . "/composer.lock");
+    foreach ($staged_drupal_packages as $package_name => $staged_drupal_package) {
+      if (!isset($active_drupal_packages[$package_name])) {
+        $error_messages[] = $this->t("Unexpect new @type package added @name.", ['@type' => $staged_drupal_package['type'], '@name' => $staged_drupal_package['name']]);
+        continue;
+      }
+      $active_drupal_package = $active_drupal_packages[$package_name];
+      if ($staged_drupal_package['version'] !== $active_drupal_package['version']) {
+        if (array_key_exists($package_name, $expected_changes)) {
+          if ($expected_changes[$package_name] !== $staged_drupal_package['version']) {
+            $error_messages[] = $this->t(
+              '@type package @name updated to version @staged_version instead of the expected version @expected_version.',
+              [
+                '@type' => $staged_drupal_package['type'],
+                '@name' => $staged_drupal_package['name'],
+                '@staged_version' => $staged_drupal_package['version'],
+                '@expected_version' => $expected_changes[$package_name],
+              ]
+            );
+            continue;
+          }
+          continue;
+        }
+        else {
+          $error_messages[] = $this->t(
+            "Unexpected update @type package @name from @active_version to  @staged_version.",
+            [
+              '@type' => $staged_drupal_package['type'],
+              '@name' => $staged_drupal_package['name'],
+              '@staged_version' => $staged_drupal_package['version'],
+              '@active_version' => $active_drupal_package['version'],
+            ]
+          );
+          continue;
+        }
+      }
+      else {
+        // version did not change.
+        if (array_key_exists($package_name, $expected_changes)) {
+          $error_messages[] = $this->t(
+            "Expected update @type package @name to @expected_version.",
+            [
+              '@type' => $staged_drupal_package['type'],
+              '@name' => $staged_drupal_package['name'],
+              '@expected_version' => $expected_changes[$package_name],
+            ]
+          );
+          continue;
+        }
+      }
+    }
+    return $error_messages;
   }
 
 }
