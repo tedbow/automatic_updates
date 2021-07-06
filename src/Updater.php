@@ -5,13 +5,15 @@ namespace Drupal\automatic_updates;
 
 
 use Composer\Autoload\ClassLoader;
+use Drupal\Core\State\StateInterface;
 use PhpTuf\ComposerStager\Domain\BeginnerInterface;
-use PhpTuf\ComposerStager\Domain\Cleaner;
 use PhpTuf\ComposerStager\Domain\CleanerInterface;
 use PhpTuf\ComposerStager\Domain\CommitterInterface;
 use PhpTuf\ComposerStager\Domain\StagerInterface;
 
 class Updater {
+
+  private const STATE_KEY = 'AUTOMATIC_UPDATES_CURRENT';
 
   /**
    * @var \PhpTuf\ComposerStager\Domain\BeginnerInterface
@@ -33,11 +35,17 @@ class Updater {
    */
   protected $committer;
 
+  /**
+   * @var \Drupal\Core\State\StateInterface
+   */
+  protected $state;
+
 
   /**
    * Updater constructor.
    */
-  public function __construct(BeginnerInterface $beginner, StagerInterface $stager, CleanerInterface $cleaner, CommitterInterface $committer) {
+  public function __construct(StateInterface $state, BeginnerInterface $beginner, StagerInterface $stager, CleanerInterface $cleaner, CommitterInterface $committer) {
+    $this->state = $state;
     $this->beginner = $beginner;
     $this->stager = $stager;
     $this->cleaner = $cleaner;
@@ -70,8 +78,14 @@ class Updater {
     return static::getVendorDirectory() . '/..';
   }
 
-  public function begin(): void {
+  /**
+   * @return string
+   *   A key for this stage update process.
+   */
+  public function begin(): string {
+    $stage_key = $this->createActiveStage();
     $this->beginner->begin(static::getActiveDirectory(), static::getStageDirectory());
+    return $stage_key;
   }
 
   /**
@@ -95,9 +109,14 @@ class Updater {
   }
 
   public function stagePackages(array $packages): void {
+
     $command = array_merge(['require'], $packages);
     $command[] = '--update-with-all-dependencies';
     $this->stageCommand($command);
+    // Store the expected packages to confirm no other drupal packages were updated.
+    $current = $this->state->get(static::STATE_KEY);
+    $current['packages'] = $packages;
+    $this->state->set(self::STATE_KEY, $current);
   }
 
 
@@ -109,6 +128,7 @@ class Updater {
     if (is_dir(static::getStageDirectory())) {
       $this->cleaner->clean(static::getStageDirectory());
     }
+    $this->state->delete(static::STATE_KEY);
   }
 
   /**
@@ -119,6 +139,19 @@ class Updater {
     $path .= ":/usr/local/bin";
     apache_setenv('PATH', $path);
     $this->stager->stage($command, static::getStageDirectory());
+  }
+
+  private function createActiveStage(): string {
+    $value = static::STATE_KEY . microtime();
+    $this->state->set(static::STATE_KEY, ['id' => $value]);
+    return $value;
+  }
+
+  public function getActiveStagerKey(): ?string {
+    if ($current = $this->state->get(static::STATE_KEY)) {
+      return $current['id'];
+    }
+    return NULL;
   }
 
 }

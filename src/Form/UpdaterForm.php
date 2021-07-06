@@ -3,6 +3,7 @@
 namespace Drupal\automatic_updates\Form;
 
 use Drupal\automatic_updates\BatchProcessor;
+use Drupal\automatic_updates\Updater;
 use Drupal\automatic_updates_9_3_shim\ProjectRelease;
 use Drupal\Core\Batch\BatchBuilder;
 use Drupal\Core\Extension\ModuleHandlerInterface;
@@ -39,6 +40,11 @@ class UpdaterForm extends FormBase {
   protected $state;
 
   /**
+   * @var \Drupal\automatic_updates\Updater
+   */
+  protected $updater;
+
+  /**
    * Constructs a new UpdateManagerUpdate object.
    *
    * @param \Drupal\Core\Extension\ModuleHandlerInterface $module_handler
@@ -46,9 +52,10 @@ class UpdaterForm extends FormBase {
    * @param \Drupal\Core\State\StateInterface $state
    *   The state service.
    */
-  public function __construct(ModuleHandlerInterface $module_handler, StateInterface $state) {
+  public function __construct(ModuleHandlerInterface $module_handler, StateInterface $state, Updater $updater) {
     $this->moduleHandler = $module_handler;
     $this->state = $state;
+    $this->updater = $updater;
   }
 
   /**
@@ -64,7 +71,8 @@ class UpdaterForm extends FormBase {
   public static function create(ContainerInterface $container) {
     return new static(
       $container->get('module_handler'),
-      $container->get('state')
+      $container->get('state'),
+      $container->get('automatic_updates.updater')
     );
   }
 
@@ -293,7 +301,10 @@ class UpdaterForm extends FormBase {
 
     // If either table has been printed yet, we need a submit button and to
     // validate the checkboxes.
-    if (!empty($projects['enabled']) || !empty($projects['disabled'])) {
+    if ($this->updater->getActiveStagerKey()) {
+      $this->messenger->addError($this->t('Another Composer update process is currently active'));
+    }
+    elseif (!empty($projects['enabled']) || !empty($projects['disabled'])) {
       $form['actions'] = ['#type' => 'actions'];
       $form['actions']['submit'] = [
         '#type' => 'submit',
