@@ -193,6 +193,9 @@ class Updater {
    *      Therefore after the install they may have duplicate .info.yml files.
    *      Duplicates be allow if 1 is under /modules and the other in
    *      /site/-/modules.
+   *   2. If exact version are specified in an install or update confirm with
+   *      Drupal update XML that staged versions of all drupal projects are
+   *      supported and secure.
    */
   public function validateStaged(): array {
     $error_messages = [];
