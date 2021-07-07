@@ -181,6 +181,18 @@ class Updater {
    *
    * @return \Drupal\Core\StringTranslation\TranslatableMarkup[]
    *   Error messages.
+   *
+   * @todo We will probably need a more complex system for validating updates.
+   *   We may want to expand the Readiness Check system that is being worked on
+   *   in core to handle different stages. For instance this might be the
+   *   "staged" stage. https://www.drupal.org/i/3162655
+   *   Other ideas for what might need to be validated
+   *   1. Duplicate modules: For installing new modules, if there is module that
+   *      was not installed via Composer and it was not in /modules/contrib/
+   *      then it would not be overwritten by the newly installed module.
+   *      Therefore after the install they may have duplicate .info.yml files.
+   *      Duplicates be allow if 1 is under /modules and the other in
+   *      /site/-/modules.
    */
   public function validateStaged(): array {
     $error_messages = [];
