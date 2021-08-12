@@ -1,28 +1,24 @@
-automatic_updates.settings:
-  path: '/admin/config/automatic_updates'
+automatic_updates.update_readiness:
+  path: '/admin/automatic_updates/readiness'
   defaults:
-    _form: '\Drupal\automatic_updates\Form\SettingsForm'
+    _controller: '\Drupal\automatic_updates\Controller\ReadinessCheckerController::run'
+    _title: 'Update readiness checking'
+  requirements:
+    _permission: 'administer software updates'
+automatic_updates.update_form:
+  path: '/admin/automatic-update'
+  defaults:
+    _form: '\Drupal\automatic_updates\Form\UpdaterForm'
     _title: 'Automatic Updates'
   requirements:
     _permission: 'administer software updates'
   options:
     _admin_route: TRUE
-automatic_updates.update_readiness:
-  path: '/admin/config/automatic_updates/readiness'
+automatic_updates.confirmation_page:
+  path: '/admin/automatic-update-ready'
   defaults:
-    _controller: '\Drupal\automatic_updates\Controller\ReadinessCheckerController::run'
-    _title: 'Update readiness checking...'
+    _form: '\Drupal\automatic_updates\Form\UpdateReady'
+    _title: 'Ready to update'
   requirements:
     _permission: 'administer software updates'
-  options:
-    _admin_route: TRUE
-automatic_updates.inplace-update:
-  path: '/automatic_updates/in-place-update/{project}/{type}/{from}/{to}'
-  defaults:
-    _title: 'Update'
-    _controller: '\Drupal\automatic_updates\Controller\InPlaceUpdateController::update'
-  requirements:
-    _permission: 'administer software updates'
-    _csrf_token: 'TRUE'
-  options:
-    no_cache: 'TRUE'
+    _access_update_manager: 'TRUE'

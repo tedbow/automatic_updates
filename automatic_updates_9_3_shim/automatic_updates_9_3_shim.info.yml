@@ -1,0 +1,5 @@
+name: 'Automatic Updates 9.3.x shim'
+type: module
+description: 'Shim module to allow using improvements to the Update module in 9.3.x'
+core_version_requirement: ~9.2
+package: 'Security'

@@ -1,0 +1,40 @@
+{
+  "packages": [
+    {
+      "name": "drupal/testmodule",
+      "version": "1.3.0",
+      "type": "drupal-module"
+    },
+    {
+      "name": "other/removed",
+      "description": "This project is removed but there should be no error because it is not a Drupal project.",
+      "version": "1.3.1",
+      "type": "library"
+    },
+    {
+      "name": "other/changed",
+      "description": "This project version is changed but there should be no error because it is not a Drupal project.",
+      "version": "1.3.1",
+      "type": "library"
+    }
+  ],
+  "packages-dev": [
+    {
+      "name": "drupal/dev-testmodule",
+      "version": "1.3.0",
+      "type": "drupal-module"
+    },
+    {
+      "name": "other/dev-removed",
+      "description": "This project is removed but there should be no error because it is not a Drupal project.",
+      "version": "1.3.1",
+      "type": "library"
+    },
+    {
+      "name": "other/dev-changed",
+      "description": "This project version is changed but there should be no error because it is not a Drupal project.",
+      "version": "1.3.1",
+      "type": "library"
+    }
+  ]
+}

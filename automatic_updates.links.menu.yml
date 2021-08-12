@@ -1,5 +1,0 @@
-automatic_updates.settings:
-  title: 'Automatic updates'
-  route_name: automatic_updates.settings
-  description: 'Configure automatic update settings.'
-  parent: system.admin_config_system

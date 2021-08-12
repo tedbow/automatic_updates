@@ -1,0 +1,9 @@
+services:
+  automatic_updates_test.checker:
+    class: Drupal\automatic_updates_test\ReadinessChecker\TestChecker1
+    tags:
+      - { name: event_subscriber }
+    arguments: ['@state']
+  datetime.time:
+    class: Drupal\automatic_updates_test\Datetime\TestTime
+    arguments: ['@request_stack']
