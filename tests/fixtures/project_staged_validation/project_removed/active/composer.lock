@@ -6,7 +6,7 @@
       "type": "drupal-theme"
     },
     {
-      "name": "drupal/testmodule2",
+      "name": "drupal/test_module2",
       "version": "1.3.1",
       "type": "drupal-module"
     },
@@ -24,7 +24,7 @@
       "type": "drupal-custom-theme"
     },
     {
-      "name": "drupal/dev-testmodule2",
+      "name": "drupal/dev-test_module2",
       "version": "1.3.1",
       "type": "drupal-module"
     },

@@ -1,6 +1,6 @@
 <?php
 
-namespace Drupal\Tests\automatic_updates\Kernel\Validation;
+namespace Drupal\Tests\automatic_updates\Kernel\ReadinessValidation;
 
 use Drupal\automatic_updates_test\ReadinessChecker\TestChecker1;
 use Drupal\automatic_updates_test2\ReadinessChecker\TestChecker2;

@@ -2,6 +2,5 @@ name: 'Automatic Updates Test module 2'
 type: module
 description: 'Test module to provide an additional readiness checker.'
 package: Testing
-version: VERSION
 dependencies:
   - drupal:automatic_updates_test

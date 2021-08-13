@@ -48,7 +48,7 @@ class UpdaterFormTest extends BrowserTestBase {
   /**
    * {@inheritdoc}
    */
-  protected function setUp() {
+  protected function setUp(): void {
     parent::setUp();
 
     $this->config('update_test.settings')
