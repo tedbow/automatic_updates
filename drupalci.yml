@@ -1,0 +1,19 @@
+build:
+  assessment:
+    validate_codebase:
+      phplint:
+      container_composer:
+      csslint:
+      eslint:
+      phpcs:
+    testing:
+      container_command:
+        # Currently composer-stager is not on packagist so can't do this in composer.json.
+        # @todo Remove this add dependency directly to composer.json
+        commands: "cd ${SOURCE_DIR} && sudo -u www-data /usr/local/bin/composer config repositories.composer-stager vcs git@github.com:php-tuf/composer-stager.git && /usr/local/bin/composer require php-tuf/composer-stager:0.1.1"
+      run_tests.standard:
+        types: 'Simpletest,PHPUnit-Unit,PHPUnit-Kernel,PHPUnit-Functional'
+      run_tests.js:
+        concurrency: 1
+        types: 'PHPUnit-FunctionalJavascript'
+      nightwatchjs:

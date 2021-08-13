@@ -13,6 +13,8 @@ use Drupal\Tests\UnitTestCase;
 
 /**
  * @coversDefaultClass \Drupal\automatic_updates\Validation\StagedProjectsValidation
+ *
+ * @group automatic_updates
  */
 class StagedProjectsValidationTest extends UnitTestCase {
 
