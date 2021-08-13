@@ -2,9 +2,6 @@ services:
   automatic_updates.readiness_validation_manager:
     class: Drupal\automatic_updates\Validation\ReadinessValidationManager
     arguments: ['@keyvalue.expirable', '@datetime.time', 24]
-  automatic_updates.recommender:
-    class: Drupal\automatic_updates\UpdateRecommender
-    arguments: [ '@update.manager', '@update.processor' ]
   automatic_updates.updater:
     class: Drupal\automatic_updates\Updater
     arguments: [ '@state', '@string_translation','@automatic_updates.beginner', '@automatic_updates.stager', '@automatic_updates.cleaner', '@automatic_updates.committer' , '@file_system', '@event_dispatcher']
