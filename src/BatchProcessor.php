@@ -91,7 +91,41 @@ class BatchProcessor {
   }
 
   /**
-   * Finishes the batch job.
+   * Calls the updater's commit() method.
+   *
+   * @param array $context
+   *   The current context of the batch job.
+   *
+   * @see \Drupal\automatic_updates\Updater::commit()
+   */
+  public static function commit(array &$context): void {
+    try {
+      static::getUpdater()->commit();
+    }
+    catch (\Throwable $e) {
+      static::handleException($e, $context);
+    }
+  }
+
+  /**
+   * Calls the updater's clean() method.
+   *
+   * @param array $context
+   *   The current context of the batch job.
+   *
+   * @see \Drupal\automatic_updates\Updater::clean()
+   */
+  public static function clean(array &$context): void {
+    try {
+      static::getUpdater()->clean();
+    }
+    catch (\Throwable $e) {
+      static::handleException($e, $context);
+    }
+  }
+
+  /**
+   * Finishes the stage batch job.
    *
    * @param bool $success
    *   Indicate that the batch API tasks were all completed successfully.
@@ -100,10 +134,44 @@ class BatchProcessor {
    * @param array $operations
    *   A list of the operations that had not been completed by the batch API.
    */
-  public static function finish(bool $success, array $results, array $operations): ?RedirectResponse {
+  public static function finishStage(bool $success, array $results, array $operations): ?RedirectResponse {
     if ($success) {
-      return new RedirectResponse(Url::fromRoute('automatic_updates.confirmation_page', [], ['absolute' => TRUE])->toString());
+      return new RedirectResponse(Url::fromRoute('automatic_updates.confirmation_page', [],
+        ['absolute' => TRUE])->toString());
     }
+    static::handleBatchError($results);
+    return NULL;
+  }
+
+  /**
+   * Finishes the commit batch job.
+   *
+   * @param bool $success
+   *   Indicate that the batch API tasks were all completed successfully.
+   * @param array $results
+   *   An array of all the results.
+   * @param array $operations
+   *   A list of the operations that had not been completed by the batch API.
+   */
+  public static function finishCommit(bool $success, array $results, array $operations): ?RedirectResponse {
+
+    if ($success) {
+      \Drupal::messenger()->addMessage('Update complete!');
+      // @todo redirect to update.php?
+      return new RedirectResponse(Url::fromRoute('automatic_updates.update_form', [],
+        ['absolute' => TRUE])->toString());
+    }
+    static::handleBatchError($results);
+    return NULL;
+  }
+
+  /**
+   * Handles a batch job that finished with errors.
+   *
+   * @param array $results
+   *   The batch results.
+   */
+  protected static function handleBatchError(array $results): void {
     if (isset($results['errors'])) {
       foreach ($results['errors'] as $error) {
         \Drupal::messenger()->addError($error);
@@ -112,7 +180,6 @@ class BatchProcessor {
     else {
       \Drupal::messenger()->addError("Update error");
     }
-    return NULL;
   }
 
 }

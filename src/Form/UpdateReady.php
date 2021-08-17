@@ -3,7 +3,9 @@
 namespace Drupal\automatic_updates\Form;
 
 use Drupal\automatic_updates\AutomaticUpdatesEvents;
+use Drupal\automatic_updates\BatchProcessor;
 use Drupal\automatic_updates\Updater;
+use Drupal\Core\Batch\BatchBuilder;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Messenger\MessengerInterface;
 use Drupal\Core\State\StateInterface;
@@ -106,15 +108,15 @@ class UpdateReady extends UpdateFormBase {
       $this->state->set('system.maintenance_mode', TRUE);
       // @todo unset after updater. After db update?
     }
+    $batch = (new BatchBuilder())
+      ->setTitle($this->t('Apply updates'))
+      ->setInitMessage($this->t('Preparing to apply updates'))
+      ->addOperation([BatchProcessor::class, 'commit'])
+      ->addOperation([BatchProcessor::class, 'clean'])
+      ->setFinishCallback([BatchProcessor::class, 'finishCommit'])
+      ->toArray();
 
-    // @todo Should these operations be done in batch.
-    $this->updater->commit();
-    // Clean could be done in another page load or on cron to reduce page time.
-    $this->updater->clean();
-    $this->messenger->addMessage("Update complete!");
-
-    // @todo redirect to update.php?
-    $form_state->setRedirect('automatic_updates.update_form');
+    batch_set($batch);
   }
 
 }

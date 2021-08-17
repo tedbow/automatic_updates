@@ -240,7 +240,7 @@ class UpdaterForm extends UpdateFormBase {
       ->addOperation([BatchProcessor::class, 'stageProjectVersions'], [
         $form_state->getValue('update_version'),
       ])
-      ->setFinishCallback([BatchProcessor::class, 'finish'])
+      ->setFinishCallback([BatchProcessor::class, 'finishStage'])
       ->toArray();
 
     batch_set($batch);

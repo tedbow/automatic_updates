@@ -122,6 +122,7 @@ class AttendedCoreUpdateTest extends AttendedUpdateTestBase {
     $this->waitForBatchJob();
     $assert_session->pageTextContains('Ready to update');
     $page->pressButton('Continue');
+    $this->waitForBatchJob();
     // @todo This message isn't showing up, for some reason. Figure out what the
     // eff is going on.
     // $assert_session->pageTextContains('Update complete!');
