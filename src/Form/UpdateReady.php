@@ -102,7 +102,7 @@ class UpdateReady extends UpdateFormBase {
     $session = $this->getRequest()->getSession();
     // Store maintenance_mode setting so we can restore it when done.
     $session->set('maintenance_mode', $this->state->get('system.maintenance_mode'));
-    if ($form_state->getValue('maintenance_mode') == TRUE) {
+    if ($form_state->getValue('maintenance_mode') === TRUE) {
       $this->state->set('system.maintenance_mode', TRUE);
       // @todo unset after updater. After db update?
     }

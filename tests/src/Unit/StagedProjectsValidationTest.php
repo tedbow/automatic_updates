@@ -119,7 +119,7 @@ class StagedProjectsValidationTest extends UnitTestCase {
    *
    * @covers ::validateStagedProjects
    */
-  public function testNoErrors() {
+  public function testNoErrors(): void {
     $fixtures_dir = realpath(__DIR__ . '/../../fixtures/project_staged_validation/no_errors');
     $updater = $this->prophesize(Updater::class);
     $updater->getActiveDirectory()->willReturn("$fixtures_dir/active");

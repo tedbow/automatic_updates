@@ -16,7 +16,7 @@ trait JsonTrait {
    * @param string $path
    *   The path of the file to read.
    *
-   * @return array
+   * @return mixed[]
    *   The parsed data in the file.
    */
   protected function readJson(string $path): array {

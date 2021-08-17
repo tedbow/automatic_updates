@@ -30,7 +30,7 @@ trait LocalPackagesTrait {
    * @param string $dir
    *   The directory which contains composer.lock.
    *
-   * @return array[]
+   * @return mixed[][]
    *   The local path repositories' configuration, for inclusion in a
    *   composer.json file.
    */
@@ -67,7 +67,7 @@ trait LocalPackagesTrait {
    * @param string $dir
    *   The directory which contains the lock file.
    *
-   * @return array[]
+   * @return mixed[][]
    *   All package information (including dev packages) from the lock file.
    */
   private function getPackagesFromLockFile(string $dir): array {

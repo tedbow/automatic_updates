@@ -12,7 +12,7 @@ use Symfony\Component\HttpFoundation\RedirectResponse;
 class BatchProcessor {
 
   /**
-   * Get the updater service.
+   * Gets the updater service.
    *
    * @return \Drupal\automatic_updates\Updater
    *   The updater service.

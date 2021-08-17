@@ -118,7 +118,7 @@ END;
   /**
    * Returns the data to write to the test site's composer.json.
    *
-   * @return array
+   * @return mixed[]
    *   The data that should be written to the test site's composer.json.
    */
   protected function getComposerConfiguration(): array {

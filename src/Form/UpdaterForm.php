@@ -99,7 +99,7 @@ class UpdaterForm extends UpdateFormBase {
     $project = $project_data['drupal'];
 
     // If we're already up-to-date, there's nothing else we need to do.
-    if ($project['status'] == UpdateManagerInterface::CURRENT) {
+    if ($project['status'] === UpdateManagerInterface::CURRENT) {
       $this->messenger()->addMessage('No update available');
       return $form;
     }
@@ -190,7 +190,7 @@ class UpdaterForm extends UpdateFormBase {
   /**
    * Builds the form actions.
    *
-   * @return array
+   * @return mixed[][]
    *   The form's actions elements.
    */
   protected function actions(): array {

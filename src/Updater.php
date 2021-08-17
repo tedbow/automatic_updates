@@ -80,7 +80,7 @@ class Updater {
   protected $eventDispatcher;
 
   /**
-   * Updater constructor.
+   * Constructs an Updater object.
    *
    * @param \Drupal\Core\State\StateInterface $state
    *   The state service.

@@ -4,32 +4,32 @@ services:
     arguments: ['@keyvalue.expirable', '@datetime.time', 24]
   automatic_updates.updater:
     class: Drupal\automatic_updates\Updater
-    arguments: [ '@state', '@string_translation','@automatic_updates.beginner', '@automatic_updates.stager', '@automatic_updates.cleaner', '@automatic_updates.committer' , '@file_system', '@event_dispatcher']
+    arguments: ['@state', '@string_translation','@automatic_updates.beginner', '@automatic_updates.stager', '@automatic_updates.cleaner', '@automatic_updates.committer' , '@file_system', '@event_dispatcher']
   automatic_updates.staged_package_validator:
     class: Drupal\automatic_updates\Validation\StagedProjectsValidation
-    arguments: [ '@string_translation', '@automatic_updates.updater' ]
+    arguments: ['@string_translation', '@automatic_updates.updater' ]
     tags:
       - { name: event_subscriber }
   automatic_updates.beginner:
     class: Drupal\automatic_updates\ComposerStager\Beginner
     arguments:
-      [ '@automatic_updates.file_copier', '@automatic_updates.file_system' ]
+      ['@automatic_updates.file_copier', '@automatic_updates.file_system' ]
   automatic_updates.stager:
     class: PhpTuf\ComposerStager\Domain\Stager
     arguments:
-      [ '@automatic_updates.composer_runner', '@automatic_updates.file_system' ]
+      ['@automatic_updates.composer_runner', '@automatic_updates.file_system' ]
   automatic_updates.cleaner:
     class: PhpTuf\ComposerStager\Domain\Cleaner
     arguments:
-      [ '@automatic_updates.file_system' ]
+      ['@automatic_updates.file_system' ]
   automatic_updates.committer:
     class: PhpTuf\ComposerStager\Domain\Committer
     arguments:
-      [ '@automatic_updates.file_copier', '@automatic_updates.file_system' ]
+      ['@automatic_updates.file_copier', '@automatic_updates.file_system' ]
   automatic_updates.composer_runner:
     class: PhpTuf\ComposerStager\Infrastructure\Process\Runner\ComposerRunner
     arguments:
-      [ '@automatic_updates.exec_finder', '@automatic_updates.process_factory' ]
+      ['@automatic_updates.exec_finder', '@automatic_updates.process_factory' ]
   automatic_updates.file_copier.factory:
     class: PhpTuf\ComposerStager\Infrastructure\Process\FileCopier\FileCopierFactory
     arguments:
@@ -55,7 +55,7 @@ services:
   automatic_updates.file_system:
     class: PhpTuf\ComposerStager\Infrastructure\Filesystem\Filesystem
     arguments:
-      [ '@automatic_updates.symfony_file_system' ]
+      ['@automatic_updates.symfony_file_system' ]
   automatic_updates.symfony_file_system:
     class: Symfony\Component\Filesystem\Filesystem
   automatic_updates.symfony_exec_finder:
@@ -63,10 +63,10 @@ services:
   automatic_updates.rsync:
     class: PhpTuf\ComposerStager\Infrastructure\Process\Runner\RsyncRunner
     arguments:
-      [ '@automatic_updates.exec_finder', '@automatic_updates.process_factory' ]
+      ['@automatic_updates.exec_finder', '@automatic_updates.process_factory' ]
   automatic_updates.exec_finder:
     class: PhpTuf\ComposerStager\Infrastructure\Process\ExecutableFinder
     arguments:
-      [ '@automatic_updates.symfony_exec_finder' ]
+      ['@automatic_updates.symfony_exec_finder' ]
   automatic_updates.process_factory:
     class: Drupal\automatic_updates\ComposerStager\ProcessFactory

@@ -16,7 +16,7 @@ class MetadataController extends ControllerBase {
    * testing automatic updates. This was done in order to use a different
    * directory of mock XML files.
    */
-  public function updateTest($project_name = 'drupal', $version = NULL) {
+  public function updateTest($project_name = 'drupal', $version = NULL): Response {
     if ($project_name !== 'drupal') {
       return new Response();
     }
