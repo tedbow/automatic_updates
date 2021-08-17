@@ -265,7 +265,6 @@ class Updater {
    * @see \PhpTuf\ComposerStager\Domain\StagerInterface::stage()
    */
   protected function stageCommand(array $command): void {
-    $this->setEnv('PATH', $this->getEnv('PATH') . ":/usr/local/bin");
     $this->stager->stage($command, $this->getStageDirectory());
   }
 

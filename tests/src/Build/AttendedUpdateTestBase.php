@@ -38,9 +38,18 @@ abstract class AttendedUpdateTestBase extends QuickStartTestBase {
    * {@inheritdoc}
    */
   protected function getPackagePath(array $package): string {
-    return $package['name'] === 'drupal/core'
-      ? 'core'
-      : $this->traitGetPackagePath($package);
+    if ($package['name'] === 'drupal/core') {
+      return 'core';
+    }
+
+    [$vendor, $name] = explode('/', $package['name']);
+
+    // Assume any contributed module is in modules/contrib/$name.
+    if ($vendor === 'drupal' && $package['type'] === 'drupal-module') {
+      return implode(DIRECTORY_SEPARATOR, ['modules', 'contrib', $name]);
+    }
+
+    return $this->traitGetPackagePath($package);
   }
 
   /**

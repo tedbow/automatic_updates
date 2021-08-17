@@ -20,7 +20,13 @@ final class ProcessFactory implements ProcessFactoryInterface {
   public function create(array $command): Process {
     try {
       if ($this->isComposerCommand($command)) {
-        return new Process($command, NULL, ['COMPOSER_HOME' => $this->getComposerHomePath()]);
+        $process = new Process($command, NULL, ['COMPOSER_HOME' => $this->getComposerHomePath()]);
+        $path = function_exists('apache_getenv') ? apache_getenv('PATH') : getenv('PATH');
+        $path .= ':' . dirname(PHP_BINARY);
+        $env = $process->getEnv();
+        $env['PATH'] = $path;
+        $process->setEnv($env);
+        return $process;
       }
       return new Process($command);
       // @codeCoverageIgnore
