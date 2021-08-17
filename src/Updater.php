@@ -160,13 +160,8 @@ class Updater {
    *
    * @return string
    *   A key for this stage update process.
-   *
-   * @throws \Drupal\automatic_updates\Exception\UpdateException
-   *   Thrown if any readiness checkers return results with an error. Warnings
-   *   from readiness checker will not stop an update.
    */
   public function begin(): string {
-    $this->dispatchUpdateEvent(AutomaticUpdatesEvents::PRE_START);
     $stage_key = $this->createActiveStage();
     $this->beginner->begin(static::getActiveDirectory(), static::getStageDirectory(), NULL, 120, $this->getExclusions());
     return $stage_key;
@@ -241,7 +236,6 @@ class Updater {
    * Commits the current update.
    */
   public function commit(): void {
-    $this->dispatchUpdateEvent(AutomaticUpdatesEvents::PRE_COMMIT);
     $this->committer->commit($this->getStageDirectory(), static::getActiveDirectory());
   }
 
@@ -311,13 +305,6 @@ class Updater {
     $value = static::STATE_KEY . microtime();
     $this->state->set(static::STATE_KEY, ['id' => $value]);
     return $value;
-  }
-
-  /**
-   * Validates that an update was performed as expected.
-   */
-  public function validateStaged():void {
-    $this->dispatchUpdateEvent(AutomaticUpdatesEvents::PRE_COMMIT);
   }
 
   /**

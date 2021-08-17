@@ -91,15 +91,6 @@ class BatchProcessor {
   }
 
   /**
-   * Calls the updater's validateStaged() method.
-   *
-   * @see \Drupal\automatic_updates\Updater::validateStaged()
-   */
-  public static function validateStaged() {
-    static::getUpdater()->validateStaged();
-  }
-
-  /**
    * Finishes the batch job.
    *
    * @param bool $success
