@@ -2,9 +2,8 @@
 
 namespace Drupal\automatic_updates\ComposerStager;
 
-use PhpTuf\ComposerStager\Exception\LogicException;
+use PhpTuf\ComposerStager\Infrastructure\Process\ProcessFactory as StagerProcessFactory;
 use PhpTuf\ComposerStager\Infrastructure\Process\ProcessFactoryInterface;
-use Symfony\Component\Process\Exception\ExceptionInterface;
 use Symfony\Component\Process\Process;
 
 /**
@@ -15,26 +14,48 @@ use Symfony\Component\Process\Process;
 final class ProcessFactory implements ProcessFactoryInterface {
 
   /**
+   * The decorated process factory.
+   *
+   * @var \PhpTuf\ComposerStager\Infrastructure\Process\ProcessFactoryInterface
+   */
+  private $decorated;
+
+  /**
+   * Constructs a ProcessFactory object.
+   */
+  public function __construct() {
+    $this->decorated = new StagerProcessFactory();
+  }
+
+  /**
+   * Returns the value of an environment variable.
+   *
+   * @param string $variable
+   *   The name of the variable.
+   *
+   * @return mixed
+   *   The value of the variable.
+   */
+  private function getEnv(string $variable) {
+    if (function_exists('apache_getenv')) {
+      return apache_getenv($variable);
+    }
+    return getenv($variable);
+  }
+
+  /**
    * {@inheritdoc}
    */
   public function create(array $command): Process {
-    try {
-      if ($this->isComposerCommand($command)) {
-        $process = new Process($command, NULL, ['COMPOSER_HOME' => $this->getComposerHomePath()]);
-        $path = function_exists('apache_getenv') ? apache_getenv('PATH') : getenv('PATH');
-        $path .= ':' . dirname(PHP_BINARY);
-        $env = $process->getEnv();
-        $env['PATH'] = $path;
-        $process->setEnv($env);
-        return $process;
-      }
-      return new Process($command);
-      // @codeCoverageIgnore
+    $process = $this->decorated->create($command);
+
+    $env = $process->getEnv();
+    if ($this->isComposerCommand($command)) {
+      $env['COMPOSER_HOME'] = $this->getComposerHomePath();
     }
-    catch (ExceptionInterface $e) {
-      // @codeCoverageIgnore
-      throw new LogicException($e->getMessage(), (int) $e->getCode(), $e);
-    }
+    // Ensure that the running PHP binary is in the PATH.
+    $env['PATH'] = $this->getEnv('PATH') . ':' . dirname(PHP_BINARY);
+    return $process->setEnv($env);
   }
 
   /**

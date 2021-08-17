@@ -263,39 +263,6 @@ class Updater {
   }
 
   /**
-   * Returns the value of an environment variable.
-   *
-   * @param string $variable
-   *   The name of the variable.
-   *
-   * @return mixed
-   *   The value of the variable.
-   */
-  private function getEnv(string $variable) {
-    if (function_exists('apache_getenv')) {
-      return apache_getenv($variable);
-    }
-    return getenv($variable);
-  }
-
-  /**
-   * Sets the value of an environment variable.
-   *
-   * @param string $variable
-   *   The name of the variable.
-   * @param mixed $value
-   *   The value to set.
-   */
-  private function setEnv(string $variable, $value): void {
-    if (function_exists('apache_setenv')) {
-      apache_setenv($variable, $value);
-    }
-    else {
-      putenv("$variable=$value");
-    }
-  }
-
-  /**
    * Initializes an active update and returns its ID.
    *
    * @return string
