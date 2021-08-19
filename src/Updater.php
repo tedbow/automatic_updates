@@ -168,30 +168,37 @@ class Updater {
   }
 
   /**
-   * Gets directories that should be excluded from the staging area.
+   * Gets the paths that should be excluded from the staging area.
    *
    * @return string[]
-   *   The absolute paths of directories to exclude from the staging area.
+   *   The paths relative to the active directory to exclude.
    */
   private function getExclusions(): array {
-    $directories = [];
+    $exclusions = [];
     $make_relative = function ($path) {
       return str_replace(static::getActiveDirectory() . '/', '', $path);
     };
     if ($public = $this->fileSystem->realpath('public://')) {
-      $directories[] = $make_relative($public);
+      $exclusions[] = $make_relative($public);
     }
     if ($private = $this->fileSystem->realpath('private://')) {
-      $directories[] = $make_relative($private);
+      $exclusions[] = $make_relative($private);
     }
     /** @var \Drupal\Core\Extension\ModuleHandlerInterface $module_handler */
     $module_handler = \Drupal::service('module_handler');
     $module_path = $this->fileSystem->realpath($module_handler->getModule('automatic_updates')->getPath());
     if (is_dir("$module_path/.git")) {
       // If the current module is git clone. Don't copy it.
-      $directories[] = $make_relative($module_path);
+      $exclusions[] = $make_relative($module_path);
     }
-    return $directories;
+    $settings_files = ['settings.php', 'settings.local.php', 'services.yml'];
+    foreach ($settings_files as $settings_file) {
+      $file_path = "sites/default/$settings_file";
+      if (file_exists($file_path)) {
+        $exclusions[] = $make_relative($this->fileSystem->realpath("sites/default/$settings_file"));
+      }
+    }
+    return $exclusions;
   }
 
   /**

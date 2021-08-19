@@ -123,9 +123,7 @@ class AttendedCoreUpdateTest extends AttendedUpdateTestBase {
     $assert_session->pageTextContains('Ready to update');
     $page->pressButton('Continue');
     $this->waitForBatchJob();
-    // @todo This message isn't showing up, for some reason. Figure out what the
-    // eff is going on.
-    // $assert_session->pageTextContains('Update complete!');
+    $assert_session->pageTextContains('Update complete!');
     $this->assertCoreVersion('9.8.1');
 
     $placeholder = file_get_contents($this->getWorkspaceDirectory() . '/core/README.txt');
