@@ -80,6 +80,20 @@ class Updater {
   protected $eventDispatcher;
 
   /**
+   * The Drupal root.
+   *
+   * @var string
+   */
+  protected $appRoot;
+
+  /**
+   * The current site directory, relative to the Drupal root.
+   *
+   * @var string
+   */
+  protected $sitePath;
+
+  /**
    * Constructs an Updater object.
    *
    * @param \Drupal\Core\State\StateInterface $state
@@ -98,8 +112,12 @@ class Updater {
    *   The file system service.
    * @param \Symfony\Component\EventDispatcher\EventDispatcherInterface $event_dispatcher
    *   The event dispatcher service.
+   * @param string $app_root
+   *   The Drupal root.
+   * @param string $site_path
+   *   The current site directory, relative to the Drupal root.
    */
-  public function __construct(StateInterface $state, TranslationInterface $translation, BeginnerInterface $beginner, StagerInterface $stager, CleanerInterface $cleaner, CommitterInterface $committer, FileSystemInterface $file_system, EventDispatcherInterface $event_dispatcher) {
+  public function __construct(StateInterface $state, TranslationInterface $translation, BeginnerInterface $beginner, StagerInterface $stager, CleanerInterface $cleaner, CommitterInterface $committer, FileSystemInterface $file_system, EventDispatcherInterface $event_dispatcher, string $app_root, string $site_path) {
     $this->state = $state;
     $this->beginner = $beginner;
     $this->stager = $stager;
@@ -108,6 +126,8 @@ class Updater {
     $this->setStringTranslation($translation);
     $this->fileSystem = $file_system;
     $this->eventDispatcher = $event_dispatcher;
+    $this->appRoot = $app_root;
+    $this->sitePath = $site_path;
   }
 
   /**
@@ -171,34 +191,43 @@ class Updater {
    * Gets the paths that should be excluded from the staging area.
    *
    * @return string[]
-   *   The paths relative to the active directory to exclude.
+   *   The paths to exclude, relative to the active directory.
    */
-  private function getExclusions(): array {
+  protected function getExclusions(): array {
     $exclusions = [];
-    $make_relative = function ($path) {
-      return str_replace(static::getActiveDirectory() . '/', '', $path);
-    };
     if ($public = $this->fileSystem->realpath('public://')) {
-      $exclusions[] = $make_relative($public);
+      $exclusions[] = $public;
     }
     if ($private = $this->fileSystem->realpath('private://')) {
-      $exclusions[] = $make_relative($private);
+      $exclusions[] = $private;
     }
-    /** @var \Drupal\Core\Extension\ModuleHandlerInterface $module_handler */
-    $module_handler = \Drupal::service('module_handler');
-    $module_path = $this->fileSystem->realpath($module_handler->getModule('automatic_updates')->getPath());
-    if (is_dir("$module_path/.git")) {
-      // If the current module is git clone. Don't copy it.
-      $exclusions[] = $make_relative($module_path);
+    // If this module is a git clone, exclude it.
+    if (is_dir(__DIR__ . '/../.git')) {
+      $exclusions[] = $this->fileSystem->realpath(__DIR__ . '/..');
     }
-    $settings_files = ['settings.php', 'settings.local.php', 'services.yml'];
+
+    // Exclude site-specific settings files.
+    $settings_files = [
+      'settings.php',
+      'settings.local.php',
+      'services.yml',
+    ];
     foreach ($settings_files as $settings_file) {
-      $file_path = "sites/default/$settings_file";
+      $file_path = implode(DIRECTORY_SEPARATOR, [
+        $this->appRoot,
+        $this->sitePath,
+        $settings_file,
+      ]);
+      $file_path = $this->fileSystem->realpath($file_path);
       if (file_exists($file_path)) {
-        $exclusions[] = $make_relative($this->fileSystem->realpath("sites/default/$settings_file"));
+        $exclusions[] = $file_path;
       }
     }
-    return $exclusions;
+
+    $make_relative = function (string $path): string {
+      return str_replace($this->getActiveDirectory() . '/', '', $path);
+    };
+    return array_map($make_relative, $exclusions);
   }
 
   /**
