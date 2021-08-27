@@ -2,10 +2,10 @@
 
 namespace Drupal\automatic_updates\Form;
 
-use Drupal\automatic_updates\AutomaticUpdatesEvents;
 use Drupal\automatic_updates\BatchProcessor;
 use Drupal\automatic_updates\Updater;
 use Drupal\Core\Batch\BatchBuilder;
+use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Messenger\MessengerInterface;
 use Drupal\Core\State\StateInterface;
@@ -17,7 +17,14 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
  * @internal
  *   Form classes are internal.
  */
-class UpdateReady extends UpdateFormBase {
+class UpdateReady extends FormBase {
+
+  /**
+   * The updater service.
+   *
+   * @var \Drupal\automatic_updates\Updater
+   */
+  protected $updater;
 
   /**
    * The state service.
@@ -37,7 +44,7 @@ class UpdateReady extends UpdateFormBase {
    *   The state service.
    */
   public function __construct(Updater $updater, MessengerInterface $messenger, StateInterface $state) {
-    parent::__construct($updater);
+    $this->updater = $updater;
     $this->setMessenger($messenger);
     $this->state = $state;
   }
@@ -64,10 +71,6 @@ class UpdateReady extends UpdateFormBase {
    * {@inheritdoc}
    */
   public function buildForm(array $form, FormStateInterface $form_state) {
-    if (!$this->validateUpdate(AutomaticUpdatesEvents::PRE_COMMIT)) {
-      return $form;
-    }
-
     $form['backup'] = [
       '#prefix' => '<strong>',
       '#markup' => $this->t('Back up your database and site before you continue. <a href=":backup_url">Learn how</a>.', [':backup_url' => 'https://www.drupal.org/node/22281']),
@@ -87,14 +90,6 @@ class UpdateReady extends UpdateFormBase {
     ];
 
     return $form;
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public function validateForm(array &$form, FormStateInterface $form_state) {
-    parent::validateForm($form, $form_state);
-    $this->validateUpdate(AutomaticUpdatesEvents::PRE_COMMIT, $form, $form_state);
   }
 
   /**

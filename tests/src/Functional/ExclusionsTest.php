@@ -2,6 +2,7 @@
 
 namespace Drupal\Tests\automatic_updates\Functional;
 
+use Drupal\automatic_updates\Event\PreStartEvent;
 use Drupal\Tests\BrowserTestBase;
 
 /**
@@ -51,13 +52,16 @@ class ExclusionsTest extends BrowserTestBase {
    * @covers \Drupal\automatic_updates\Updater::getExclusions
    */
   public function testExclusions(): void {
+    $event = new PreStartEvent();
+    $this->container->get('automatic_updates.excluded_paths_subscriber')
+      ->preStart($event);
+
     /** @var \Drupal\automatic_updates\Updater $updater */
     $updater = $this->container->get('automatic_updates.updater');
-
     $reflector = new \ReflectionObject($updater);
     $method = $reflector->getMethod('getExclusions');
     $method->setAccessible(TRUE);
-    $exclusions = $method->invoke($updater);
+    $exclusions = $method->invoke($updater, $event);
 
     $this->assertContains("$this->siteDirectory/files", $exclusions);
     $this->assertContains("$this->siteDirectory/private", $exclusions);

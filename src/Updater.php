@@ -3,9 +3,10 @@
 namespace Drupal\automatic_updates;
 
 use Composer\Autoload\ClassLoader;
+use Drupal\automatic_updates\Event\PreCommitEvent;
+use Drupal\automatic_updates\Event\PreStartEvent;
 use Drupal\automatic_updates\Event\UpdateEvent;
 use Drupal\automatic_updates\Exception\UpdateException;
-use Drupal\Core\File\FileSystemInterface;
 use Drupal\Core\State\StateInterface;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\Core\StringTranslation\TranslationInterface;
@@ -22,6 +23,16 @@ use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 class Updater {
 
   use StringTranslationTrait;
+
+  /**
+   * The event classes to dispatch for various update events.
+   *
+   * @var string[]
+   */
+  protected const EVENT_CLASSES = [
+    AutomaticUpdatesEvents::PRE_START => PreStartEvent::class,
+    AutomaticUpdatesEvents::PRE_COMMIT => PreCommitEvent::class,
+  ];
 
   /**
    * The state key in which to store the status of the update.
@@ -66,32 +77,11 @@ class Updater {
   protected $state;
 
   /**
-   * The file system service.
-   *
-   * @var \Drupal\Core\File\FileSystemInterface
-   */
-  protected $fileSystem;
-
-  /**
    * The event dispatcher service.
    *
    * @var \Symfony\Component\EventDispatcher\EventDispatcherInterface
    */
   protected $eventDispatcher;
-
-  /**
-   * The Drupal root.
-   *
-   * @var string
-   */
-  protected $appRoot;
-
-  /**
-   * The current site directory, relative to the Drupal root.
-   *
-   * @var string
-   */
-  protected $sitePath;
 
   /**
    * Constructs an Updater object.
@@ -108,26 +98,17 @@ class Updater {
    *   The Composer Stager's cleaner service.
    * @param \PhpTuf\ComposerStager\Domain\CommitterInterface $committer
    *   The Composer Stager's committer service.
-   * @param \Drupal\Core\File\FileSystemInterface $file_system
-   *   The file system service.
    * @param \Symfony\Component\EventDispatcher\EventDispatcherInterface $event_dispatcher
    *   The event dispatcher service.
-   * @param string $app_root
-   *   The Drupal root.
-   * @param string $site_path
-   *   The current site directory, relative to the Drupal root.
    */
-  public function __construct(StateInterface $state, TranslationInterface $translation, BeginnerInterface $beginner, StagerInterface $stager, CleanerInterface $cleaner, CommitterInterface $committer, FileSystemInterface $file_system, EventDispatcherInterface $event_dispatcher, string $app_root, string $site_path) {
+  public function __construct(StateInterface $state, TranslationInterface $translation, BeginnerInterface $beginner, StagerInterface $stager, CleanerInterface $cleaner, CommitterInterface $committer, EventDispatcherInterface $event_dispatcher) {
     $this->state = $state;
     $this->beginner = $beginner;
     $this->stager = $stager;
     $this->cleaner = $cleaner;
     $this->committer = $committer;
     $this->setStringTranslation($translation);
-    $this->fileSystem = $file_system;
     $this->eventDispatcher = $event_dispatcher;
-    $this->appRoot = $app_root;
-    $this->sitePath = $site_path;
   }
 
   /**
@@ -183,51 +164,25 @@ class Updater {
    */
   public function begin(): string {
     $stage_key = $this->createActiveStage();
-    $this->beginner->begin(static::getActiveDirectory(), static::getStageDirectory(), NULL, 120, $this->getExclusions());
+    $event = $this->dispatchUpdateEvent(AutomaticUpdatesEvents::PRE_START);
+    $this->beginner->begin(static::getActiveDirectory(), static::getStageDirectory(), NULL, 120, $this->getExclusions($event));
     return $stage_key;
   }
 
   /**
-   * Gets the paths that should be excluded from the staging area.
+   * Gets the excluded paths collected by an event object.
+   *
+   * @param \Drupal\automatic_updates\Event\PreStartEvent|\Drupal\automatic_updates\Event\PreCommitEvent $event
+   *   The event object.
    *
    * @return string[]
    *   The paths to exclude, relative to the active directory.
    */
-  protected function getExclusions(): array {
-    $exclusions = [];
-    if ($public = $this->fileSystem->realpath('public://')) {
-      $exclusions[] = $public;
-    }
-    if ($private = $this->fileSystem->realpath('private://')) {
-      $exclusions[] = $private;
-    }
-    // If this module is a git clone, exclude it.
-    if (is_dir(__DIR__ . '/../.git')) {
-      $exclusions[] = $this->fileSystem->realpath(__DIR__ . '/..');
-    }
-
-    // Exclude site-specific settings files.
-    $settings_files = [
-      'settings.php',
-      'settings.local.php',
-      'services.yml',
-    ];
-    foreach ($settings_files as $settings_file) {
-      $file_path = implode(DIRECTORY_SEPARATOR, [
-        $this->appRoot,
-        $this->sitePath,
-        $settings_file,
-      ]);
-      $file_path = $this->fileSystem->realpath($file_path);
-      if (file_exists($file_path)) {
-        $exclusions[] = $file_path;
-      }
-    }
-
+  private function getExclusions($event): array {
     $make_relative = function (string $path): string {
       return str_replace($this->getActiveDirectory() . '/', '', $path);
     };
-    return array_map($make_relative, $exclusions);
+    return array_map($make_relative, $event->getExcludedPaths());
   }
 
   /**
@@ -272,6 +227,10 @@ class Updater {
    * Commits the current update.
    */
   public function commit(): void {
+    $this->dispatchUpdateEvent(AutomaticUpdatesEvents::PRE_COMMIT);
+    // @todo Pass excluded paths into the committer once
+    // https://github.com/php-tuf/composer-stager/pull/14 is in a tagged release
+    // of Composer Stager.
     $this->committer->commit($this->getStageDirectory(), static::getActiveDirectory());
   }
 
@@ -316,16 +275,21 @@ class Updater {
    * @param string $event_name
    *   The name of the event to dispatch.
    *
+   * @return \Drupal\automatic_updates\Event\UpdateEvent
+   *   The event object.
+   *
    * @throws \Drupal\automatic_updates\Exception\UpdateException
    *   If any of the event subscribers adds a validation error.
    */
-  public function dispatchUpdateEvent(string $event_name): void {
-    $event = new UpdateEvent();
+  public function dispatchUpdateEvent(string $event_name): UpdateEvent {
+    $class = static::EVENT_CLASSES[$event_name] ?? UpdateEvent::class;
+    $event = new $class();
     $this->eventDispatcher->dispatch($event, $event_name);
     if ($checker_results = $event->getResults(SystemManager::REQUIREMENT_ERROR)) {
       throw new UpdateException($checker_results,
         "Unable to complete the update because of errors.");
     }
+    return $event;
   }
 
 }

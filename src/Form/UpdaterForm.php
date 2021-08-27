@@ -2,12 +2,12 @@
 
 namespace Drupal\automatic_updates\Form;
 
-use Drupal\automatic_updates\AutomaticUpdatesEvents;
 use Drupal\automatic_updates\BatchProcessor;
 use Drupal\automatic_updates\Updater;
 use Drupal\automatic_updates_9_3_shim\ProjectRelease;
 use Drupal\Core\Batch\BatchBuilder;
 use Drupal\Core\Extension\ModuleHandlerInterface;
+use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Link;
 use Drupal\Core\State\StateInterface;
@@ -21,7 +21,14 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
  * @internal
  *   Form classes are internal.
  */
-class UpdaterForm extends UpdateFormBase {
+class UpdaterForm extends FormBase {
+
+  /**
+   * The updater service.
+   *
+   * @var \Drupal\automatic_updates\Updater
+   */
+  protected $updater;
 
   /**
    * The module handler.
@@ -38,7 +45,7 @@ class UpdaterForm extends UpdateFormBase {
   protected $state;
 
   /**
-   * Constructs a new UpdateManagerUpdate object.
+   * Constructs a new UpdaterForm object.
    *
    * @param \Drupal\Core\Extension\ModuleHandlerInterface $module_handler
    *   The module handler.
@@ -48,7 +55,7 @@ class UpdaterForm extends UpdateFormBase {
    *   The updater service.
    */
   public function __construct(ModuleHandlerInterface $module_handler, StateInterface $state, Updater $updater) {
-    parent::__construct($updater);
+    $this->updater = $updater;
     $this->moduleHandler = $module_handler;
     $this->state = $state;
   }
@@ -211,14 +218,6 @@ class UpdaterForm extends UpdateFormBase {
       ];
     }
     return $actions;
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public function validateForm(array &$form, FormStateInterface $form_state) {
-    parent::validateForm($form, $form_state);
-    $this->validateUpdate(AutomaticUpdatesEvents::PRE_START, $form, $form_state);
   }
 
   /**

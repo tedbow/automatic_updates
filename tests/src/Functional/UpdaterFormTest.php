@@ -3,9 +3,8 @@
 namespace Drupal\Tests\automatic_updates\Functional;
 
 use Drupal\automatic_updates\AutomaticUpdatesEvents;
-use Drupal\automatic_updates\Validation\ValidationResult;
+use Drupal\automatic_updates\Exception\UpdateException;
 use Drupal\automatic_updates_test\ReadinessChecker\TestChecker1;
-use Drupal\automatic_updates_test\TestUpdater;
 use Drupal\Tests\automatic_updates\Traits\ValidationTestTrait;
 use Drupal\Tests\BrowserTestBase;
 
@@ -29,6 +28,7 @@ class UpdaterFormTest extends BrowserTestBase {
   protected static $modules = [
     'automatic_updates',
     'automatic_updates_test',
+    'composer_stager_bypass',
     'update_test',
   ];
 
@@ -102,65 +102,66 @@ class UpdaterFormTest extends BrowserTestBase {
   }
 
   /**
-   * Tests that the form runs update validators before starting the batch job.
+   * Tests handling of errors and warnings during the update process.
    */
-  public function testValidation(): void {
-    $this->setCoreVersion('9.8.0');
+  public function testUpdateErrors(): void {
+    $session = $this->getSession();
+    $assert_session = $this->assertSession();
+    $page = $session->getPage();
 
-    // Ensure that one of the update validators will produce an error when we
-    // try to run updates.
+    $this->setCoreVersion('9.8.0');
     $this->createTestValidationResults();
+
     $expected_results = $this->testResults['checker_1']['1 error'];
-    TestChecker1::setTestResult($expected_results, AutomaticUpdatesEvents::PRE_START);
+    // Repackage the validation error as an exception, so we can test what
+    // happens if a validator throws.
+    $error = new UpdateException($expected_results, 'The update exploded.');
+    TestChecker1::setTestResult($error, AutomaticUpdatesEvents::PRE_START);
 
     $this->drupalLogin($this->rootUser);
     $this->checkForUpdates();
     $this->drupalGet('/admin/automatic-update');
-    $this->getSession()->getPage()->pressButton('Download these updates');
-
-    $assert_session = $this->assertSession();
-    // We should still be on the same page, having not passed validation.
-    $assert_session->addressEquals('/admin/automatic-update');
-    foreach ($expected_results[0]->getMessages() as $message) {
-      $assert_session->pageTextContains($message);
-    }
-    // Since there is only one error message, we shouldn't see the summary.
+    $page->pressButton('Download these updates');
+    $this->checkForMetaRefresh();
+    $assert_session->pageTextContains('An error has occurred.');
+    $page->clickLink('the error page');
+    $assert_session->pageTextContains((string) $expected_results[0]->getMessages()[0]);
+    // Since there's only one error message, we shouldn't see the summary...
     $assert_session->pageTextNotContains($expected_results[0]->getSummary());
+    // ...but we should see the exception message.
+    $assert_session->pageTextContains('The update exploded.');
 
-    // Ensure the update-ready form runs pre-commit checks immediately, even
-    // before it's submitted.
-    $expected_results = $this->testResults['checker_1']['1 error 1 warning'];
-    TestChecker1::setTestResult($expected_results, AutomaticUpdatesEvents::PRE_COMMIT);
-    $this->drupalGet('/admin/automatic-update-ready');
-    $assert_session->pageTextContains($expected_results['1:error']->getMessages()[0]);
-    // Only show errors, not warnings.
-    $assert_session->pageTextNotContains($expected_results['1:warning']->getMessages()[0]);
-    // Since there is only one error message, we shouldn't see the summary. And
-    // we shouldn't see the warning's summary in any case.
-    $assert_session->pageTextNotContains($expected_results['1:error']->getSummary());
-    $assert_session->pageTextNotContains($expected_results['1:warning']->getSummary());
+    // If a validator flags an error, but doesn't throw, the update should still
+    // be halted.
+    TestChecker1::setTestResult($expected_results, AutomaticUpdatesEvents::PRE_START);
+    $this->deleteStagedUpdate();
+    $page->pressButton('Download these updates');
+    $this->checkForMetaRefresh();
+    $assert_session->pageTextContains('An error has occurred.');
+    $page->clickLink('the error page');
+    // Since there's only one message, we shouldn't see the summary.
+    $assert_session->pageTextNotContains($expected_results[0]->getSummary());
+    $assert_session->pageTextContains((string) $expected_results[0]->getMessages()[0]);
+
+    // If a validator flags a warning, but doesn't throw, the update should
+    // continue.
+    $expected_results = $this->testResults['checker_1']['1 warning'];
+    TestChecker1::setTestResult($expected_results, AutomaticUpdatesEvents::PRE_START);
+    $session->reload();
+    $this->deleteStagedUpdate();
+    $page->pressButton('Download these updates');
+    $this->checkForMetaRefresh();
+    $assert_session->pageTextContains('Ready to update');
   }
 
   /**
-   * Tests that errors during the update process are displayed as messages.
+   * Deletes a staged, failed update.
    */
-  public function testBatchErrorsAreForwardedToMessenger(): void {
-    $this->setCoreVersion('9.8.0');
-
-    $error = ValidationResult::createError([
-      t('💥'),
-    ], t('The update exploded.'));
-    TestUpdater::setBeginErrors([$error]);
-
-    $this->drupalLogin($this->rootUser);
-    $this->checkForUpdates();
-    $this->drupalGet('/admin/automatic-update');
-    $this->submitForm([], 'Download these updates');
-    $assert_session = $this->assertSession();
-    $assert_session->pageTextContains('An error has occurred.');
-    $this->getSession()->getPage()->clickLink('the error page');
-    $assert_session->pageTextContains('💥');
-    $assert_session->pageTextContains('The update exploded.');
+  private function deleteStagedUpdate(): void {
+    $session = $this->getSession();
+    $session->getPage()->pressButton('Delete existing update');
+    $this->assertSession()->pageTextContains('Staged update deleted');
+    $session->reload();
   }
 
   /**

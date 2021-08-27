@@ -4,7 +4,7 @@ services:
     arguments: ['@keyvalue.expirable', '@datetime.time', 24]
   automatic_updates.updater:
     class: Drupal\automatic_updates\Updater
-    arguments: ['@state', '@string_translation','@automatic_updates.beginner', '@automatic_updates.stager', '@automatic_updates.cleaner', '@automatic_updates.committer' , '@file_system', '@event_dispatcher', '%app.root%', '%site.path%']
+    arguments: ['@state', '@string_translation','@automatic_updates.beginner', '@automatic_updates.stager', '@automatic_updates.cleaner', '@automatic_updates.committer', '@event_dispatcher']
   automatic_updates.staged_package_validator:
     class: Drupal\automatic_updates\Validation\StagedProjectsValidation
     arguments: ['@string_translation', '@automatic_updates.updater' ]
@@ -70,3 +70,8 @@ services:
       ['@automatic_updates.symfony_exec_finder' ]
   automatic_updates.process_factory:
     class: Drupal\automatic_updates\ComposerStager\ProcessFactory
+  automatic_updates.excluded_paths_subscriber:
+    class: Drupal\automatic_updates\Event\ExcludedPathsSubscriber
+    arguments: ['%app.root%', '%site.path%', '@file_system']
+    tags:
+      - { name: event_subscriber }

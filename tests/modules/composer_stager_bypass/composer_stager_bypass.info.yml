@@ -1,0 +1,6 @@
+name: 'Composer Stager bypass'
+description: 'Mocks Composer Stager services for functional testing'
+type: module
+package: Testing
+dependencies:
+  - automatic_updates:automatic_updates
