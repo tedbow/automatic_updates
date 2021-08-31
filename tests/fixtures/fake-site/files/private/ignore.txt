@@ -1,0 +1,1 @@
+This private file should never be staged.

@@ -4,6 +4,8 @@ namespace Drupal\automatic_updates\Event;
 
 use Drupal\automatic_updates\AutomaticUpdatesEvents;
 use Drupal\Core\File\FileSystemInterface;
+use Drupal\Core\StreamWrapper\LocalStream;
+use Drupal\Core\StreamWrapper\StreamWrapperManagerInterface;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 /**
@@ -33,6 +35,13 @@ class ExcludedPathsSubscriber implements EventSubscriberInterface {
   protected $fileSystem;
 
   /**
+   * The stream wrapper manager service.
+   *
+   * @var \Drupal\Core\StreamWrapper\StreamWrapperManagerInterface
+   */
+  protected $streamWrapperManager;
+
+  /**
    * Constructs an UpdateSubscriber.
    *
    * @param string $app_root
@@ -41,11 +50,14 @@ class ExcludedPathsSubscriber implements EventSubscriberInterface {
    *   The current site path, relative to the Drupal root.
    * @param \Drupal\Core\File\FileSystemInterface $file_system
    *   The file system service.
+   * @param \Drupal\Core\StreamWrapper\StreamWrapperManagerInterface $stream_wrapper_manager
+   *   The stream wrapper manager service.
    */
-  public function __construct(string $app_root, string $site_path, FileSystemInterface $file_system) {
+  public function __construct(string $app_root, string $site_path, FileSystemInterface $file_system, StreamWrapperManagerInterface $stream_wrapper_manager) {
     $this->appRoot = $app_root;
     $this->sitePath = $site_path;
     $this->fileSystem = $file_system;
+    $this->streamWrapperManager = $stream_wrapper_manager;
   }
 
   /**
@@ -55,10 +67,13 @@ class ExcludedPathsSubscriber implements EventSubscriberInterface {
    *   The event object.
    */
   public function preStart(PreStartEvent $event): void {
-    if ($public = $this->fileSystem->realpath('public://')) {
+    // Automated test site directories should never be staged.
+    $event->excludePath('sites/simpletest');
+
+    if ($public = $this->getFilesPath('public')) {
       $event->excludePath($public);
     }
-    if ($private = $this->fileSystem->realpath('private://')) {
+    if ($private = $this->getFilesPath('private')) {
       $event->excludePath($private);
     }
     // If this module is a git clone, exclude it.
@@ -90,6 +105,29 @@ class ExcludedPathsSubscriber implements EventSubscriberInterface {
       ]);
       $event->excludePath($default_file_path);
     }
+  }
+
+  /**
+   * Returns the storage path for a stream wrapper.
+   *
+   * This will only work for stream wrappers that extend
+   * \Drupal\Core\StreamWrapper\LocalStream, which includes the stream wrappers
+   * for public and private files.
+   *
+   * @param string $scheme
+   *   The stream wrapper scheme.
+   *
+   * @return string|null
+   *   The storage path for files using the given scheme, relative to the Drupal
+   *   root, or NULL if the stream wrapper does not extend
+   *   \Drupal\Core\StreamWrapper\LocalStream.
+   */
+  private function getFilesPath(string $scheme): ?string {
+    $wrapper = $this->streamWrapperManager->getViaScheme($scheme);
+    if ($wrapper instanceof LocalStream) {
+      return $wrapper->getDirectoryPath();
+    }
+    return NULL;
   }
 
   /**

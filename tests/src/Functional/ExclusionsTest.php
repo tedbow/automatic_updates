@@ -2,7 +2,7 @@
 
 namespace Drupal\Tests\automatic_updates\Functional;
 
-use Drupal\automatic_updates\Event\PreStartEvent;
+use Drupal\Core\Site\Settings;
 use Drupal\Tests\BrowserTestBase;
 
 /**
@@ -15,7 +15,7 @@ class ExclusionsTest extends BrowserTestBase {
   /**
    * {@inheritdoc}
    */
-  protected static $modules = ['automatic_updates'];
+  protected static $modules = ['automatic_updates_test'];
 
   /**
    * {@inheritdoc}
@@ -23,56 +23,36 @@ class ExclusionsTest extends BrowserTestBase {
   protected $defaultTheme = 'stark';
 
   /**
-   * The names of site-specific settings files to mock.
-   *
-   * @var string[]
-   */
-  private const SETTINGS_FILES = [
-    'settings.php',
-    'settings.local.php',
-    'services.yml',
-  ];
-
-  /**
-   * {@inheritdoc}
-   */
-  protected function setUp(): void {
-    parent::setUp();
-
-    foreach (static::SETTINGS_FILES as $settings_file) {
-      $settings_file = "$this->siteDirectory/$settings_file";
-      touch($settings_file);
-      $this->assertFileExists($settings_file);
-    }
-  }
-
-  /**
    * Tests that certain files and directories are not staged.
    *
    * @covers \Drupal\automatic_updates\Updater::getExclusions
    */
   public function testExclusions(): void {
-    $event = new PreStartEvent();
-    $this->container->get('automatic_updates.excluded_paths_subscriber')
-      ->preStart($event);
+    $stage_dir = "$this->siteDirectory/stage";
 
-    /** @var \Drupal\automatic_updates\Updater $updater */
+    /** @var \Drupal\automatic_updates_test\TestUpdater $updater */
     $updater = $this->container->get('automatic_updates.updater');
-    $reflector = new \ReflectionObject($updater);
-    $method = $reflector->getMethod('getExclusions');
-    $method->setAccessible(TRUE);
-    $exclusions = $method->invoke($updater, $event);
+    $updater->activeDirectory = __DIR__ . '/../../fixtures/fake-site';
+    $updater->stageDirectory = $stage_dir;
 
-    $this->assertContains("$this->siteDirectory/files", $exclusions);
-    $this->assertContains("$this->siteDirectory/private", $exclusions);
-    foreach (static::SETTINGS_FILES as $settings_file) {
-      $this->assertContains("$this->siteDirectory/$settings_file", $exclusions);
-    }
-    if (is_dir(__DIR__ . '/../../../.git')) {
-      $module_path = $this->container->get('extension.list.module')
-        ->getPath('automatic_updates');
-      $this->assertContains($module_path, $exclusions);
-    }
+    $settings = Settings::getAll();
+    $settings['file_public_path'] = 'files/public';
+    $settings['file_private_path'] = 'files/private';
+    new Settings($settings);
+
+    $updater->begin();
+    $this->assertFileDoesNotExist("$stage_dir/sites/default/settings.php");
+    $this->assertFileDoesNotExist("$stage_dir/sites/default/settings.local.php");
+    $this->assertFileDoesNotExist("$stage_dir/sites/default/services.yml");
+    // A file in sites/default, that isn't one of the site-specific settings
+    // files, should be staged.
+    $this->assertFileExists("$stage_dir/sites/default/staged.txt");
+    $this->assertDirectoryDoesNotExist("$stage_dir/sites/simpletest");
+    $this->assertDirectoryDoesNotExist("$stage_dir/files/public");
+    $this->assertDirectoryDoesNotExist("$stage_dir/files/private");
+    // A file that's in the general files directory, but not in the public or
+    // private directories, should be staged.
+    $this->assertFileExists("$stage_dir/files/staged.txt");
   }
 
 }

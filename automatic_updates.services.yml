@@ -72,6 +72,6 @@ services:
     class: Drupal\automatic_updates\ComposerStager\ProcessFactory
   automatic_updates.excluded_paths_subscriber:
     class: Drupal\automatic_updates\Event\ExcludedPathsSubscriber
-    arguments: ['%app.root%', '%site.path%', '@file_system']
+    arguments: ['%app.root%', '%site.path%', '@file_system', '@stream_wrapper_manager']
     tags:
       - { name: event_subscriber }
