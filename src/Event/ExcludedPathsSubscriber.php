@@ -61,6 +61,18 @@ class ExcludedPathsSubscriber implements EventSubscriberInterface {
   }
 
   /**
+   * Reacts before staged updates are committed the active directory.
+   *
+   * @param \Drupal\automatic_updates\Event\PreCommitEvent $event
+   *   The event object.
+   */
+  public function preCommit(PreCommitEvent $event): void {
+    // Don't copy anything from the staging area's sites/default.
+    // @todo Make this a lot smarter in https://www.drupal.org/i/3228955.
+    $event->excludePath('sites/default');
+  }
+
+  /**
    * Reacts to the beginning of an update process.
    *
    * @param \Drupal\automatic_updates\Event\PreStartEvent $event
@@ -136,6 +148,7 @@ class ExcludedPathsSubscriber implements EventSubscriberInterface {
   public static function getSubscribedEvents() {
     return [
       AutomaticUpdatesEvents::PRE_START => 'preStart',
+      AutomaticUpdatesEvents::PRE_COMMIT => 'preCommit',
     ];
   }
 

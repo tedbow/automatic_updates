@@ -7,6 +7,7 @@ use Drupal\automatic_updates\Event\PreCommitEvent;
 use Drupal\automatic_updates\Event\PreStartEvent;
 use Drupal\automatic_updates\Event\UpdateEvent;
 use Drupal\automatic_updates\Exception\UpdateException;
+use Drupal\Component\FileSystem\FileSystem;
 use Drupal\Core\State\StateInterface;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\Core\StringTranslation\TranslationInterface;
@@ -129,7 +130,10 @@ class Updater {
    *   The absolute path for stage directory.
    */
   public function getStageDirectory(): string {
-    return realpath(static::getVendorDirectory() . '/..') . '/.automatic_updates_stage';
+    // @todo This should be unique, in order to support parallel runs, or
+    // multiple sites on the same server. Find a way to make it unique, and
+    // persistent for the entire lifetime of the update process.
+    return FileSystem::getOsTemporaryDirectory() . '/.automatic_updates_stage';
   }
 
   /**
@@ -165,7 +169,7 @@ class Updater {
   public function begin(): string {
     $stage_key = $this->createActiveStage();
     $event = $this->dispatchUpdateEvent(AutomaticUpdatesEvents::PRE_START);
-    $this->beginner->begin(static::getActiveDirectory(), static::getStageDirectory(), NULL, 120, $this->getExclusions($event));
+    $this->beginner->begin(static::getActiveDirectory(), static::getStageDirectory(), $this->getExclusions($event));
     return $stage_key;
   }
 
@@ -227,11 +231,12 @@ class Updater {
    * Commits the current update.
    */
   public function commit(): void {
-    $this->dispatchUpdateEvent(AutomaticUpdatesEvents::PRE_COMMIT);
+    /** @var \Drupal\automatic_updates\Event\PreCommitEvent $event */
+    $event = $this->dispatchUpdateEvent(AutomaticUpdatesEvents::PRE_COMMIT);
     // @todo Pass excluded paths into the committer once
     // https://github.com/php-tuf/composer-stager/pull/14 is in a tagged release
     // of Composer Stager.
-    $this->committer->commit($this->getStageDirectory(), static::getActiveDirectory());
+    $this->committer->commit($this->getStageDirectory(), static::getActiveDirectory(), $this->getExclusions($event));
   }
 
   /**

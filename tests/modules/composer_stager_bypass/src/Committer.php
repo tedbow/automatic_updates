@@ -30,7 +30,7 @@ class Committer implements CommitterInterface {
   /**
    * {@inheritdoc}
    */
-  public function commit(string $stagingDir, string $activeDir, ?ProcessOutputCallbackInterface $callback = NULL, ?int $timeout = 120): void {
+  public function commit(string $stagingDir, string $activeDir, ?array $exclusions = [], ?ProcessOutputCallbackInterface $callback = NULL, ?int $timeout = 120): void {
   }
 
   /**

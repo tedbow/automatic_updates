@@ -13,7 +13,7 @@ class Beginner implements BeginnerInterface {
   /**
    * {@inheritdoc}
    */
-  public function begin(string $activeDir, string $stagingDir, ?ProcessOutputCallbackInterface $callback = NULL, ?int $timeout = 120): void {
+  public function begin(string $activeDir, string $stagingDir, ?array $exclusions = [], ?ProcessOutputCallbackInterface $callback = NULL, ?int $timeout = 120): void {
   }
 
 }

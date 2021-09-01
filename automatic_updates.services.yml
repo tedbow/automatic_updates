@@ -11,7 +11,7 @@ services:
     tags:
       - { name: event_subscriber }
   automatic_updates.beginner:
-    class: Drupal\automatic_updates\ComposerStager\Beginner
+    class: PhpTuf\ComposerStager\Domain\Beginner
     arguments:
       ['@automatic_updates.file_copier', '@automatic_updates.file_system' ]
   automatic_updates.stager:
@@ -34,17 +34,18 @@ services:
     class: PhpTuf\ComposerStager\Infrastructure\Process\FileCopier\FileCopierFactory
     arguments:
       - '@automatic_updates.symfony_exec_finder'
+      - '@automatic_updates.file_copier.php'
       - '@automatic_updates.file_copier.rsync'
-      - '@automatic_updates.file_copier.symfony'
   automatic_updates.file_copier.rsync:
     class: PhpTuf\ComposerStager\Infrastructure\Process\FileCopier\RsyncFileCopier
     arguments:
       - '@automatic_updates.file_system'
       - '@automatic_updates.rsync'
-  automatic_updates.file_copier.symfony:
-    class: PhpTuf\ComposerStager\Infrastructure\Process\FileCopier\SymfonyFileCopier
+  automatic_updates.file_copier.php:
+    class: PhpTuf\ComposerStager\Infrastructure\Process\FileCopier\PhpFileCopier
     arguments:
-      - '@automatic_updates.symfony_file_system'
+      - '@automatic_updates.file_system'
+      - '@automatic_updates.finder'
       - '@automatic_updates.finder'
   automatic_updates.finder:
     class: Symfony\Component\Finder\Finder
