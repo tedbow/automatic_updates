@@ -40,7 +40,7 @@ class ExclusionsTest extends BrowserTestBase {
     $settings['file_private_path'] = 'files/private';
     new Settings($settings);
 
-    $updater->begin();
+    $updater->begin(['drupal' => '9.8.1']);
     $this->assertFileDoesNotExist("$stage_dir/sites/default/settings.php");
     $this->assertFileDoesNotExist("$stage_dir/sites/default/settings.local.php");
     $this->assertFileDoesNotExist("$stage_dir/sites/default/services.yml");

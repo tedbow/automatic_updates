@@ -163,11 +163,21 @@ class Updater {
   /**
    * Begins the update.
    *
+   * @param string[] $project_versions
+   *   The versions of the packages to update to, keyed by package name.
+   *
    * @return string
    *   A key for this stage update process.
+   *
+   * @throws \InvalidArgumentException
+   *   Thrown if no project version for Drupal core is provided.
    */
-  public function begin(): string {
-    $stage_key = $this->createActiveStage();
+  public function begin(array $project_versions): string {
+    if (count($project_versions) !== 1 || !array_key_exists('drupal', $project_versions)) {
+      throw new \InvalidArgumentException("Currently only updates to Drupal core are supported.");
+    }
+    $packages[] = 'drupal/core:' . $project_versions['drupal'];
+    $stage_key = $this->createActiveStage($packages);
     $event = $this->dispatchUpdateEvent(AutomaticUpdatesEvents::PRE_START);
     $this->beginner->begin(static::getActiveDirectory(), static::getStageDirectory(), $this->getExclusions($event));
     return $stage_key;
@@ -190,24 +200,11 @@ class Updater {
   }
 
   /**
-   * Adds specific project versions to the staging area.
-   *
-   * @param string[] $project_versions
-   *   The project versions to add to the staging area, keyed by package name.
+   * Stages the update.
    */
-  public function stageVersions(array $project_versions): void {
-    $packages = [];
-    foreach ($project_versions as $project => $project_version) {
-      if ($project === 'drupal') {
-        // @todo Determine when to use drupal/core-recommended and when to use
-        //   drupal/core
-        $packages[] = "drupal/core:$project_version";
-      }
-      else {
-        $packages[] = "drupal/$project:$project_version";
-      }
-    }
-    $this->stagePackages($packages);
+  public function stage(): void {
+    $current = $this->state->get(static::STATE_KEY);
+    $this->stagePackages($current['package_versions']);
   }
 
   /**
@@ -220,11 +217,6 @@ class Updater {
     $command = array_merge(['require'], $packages);
     $command[] = '--update-with-all-dependencies';
     $this->stageCommand($command);
-    // Store the expected packages to confirm no other Drupal packages were
-    // updated.
-    $current = $this->state->get(static::STATE_KEY);
-    $current['packages'] = $packages;
-    $this->state->set(self::STATE_KEY, $current);
   }
 
   /**
@@ -265,12 +257,21 @@ class Updater {
   /**
    * Initializes an active update and returns its ID.
    *
+   * @param string[] $package_versions
+   *   The versions of the packages to stage, keyed by package name.
+   *
    * @return string
    *   The active update ID.
    */
-  private function createActiveStage(): string {
+  private function createActiveStage(array $package_versions): string {
     $value = static::STATE_KEY . microtime();
-    $this->state->set(static::STATE_KEY, ['id' => $value]);
+    $this->state->set(
+      static::STATE_KEY,
+      [
+        'id' => $value,
+        'package_versions' => $package_versions,
+      ]
+    );
     return $value;
   }
 

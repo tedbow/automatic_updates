@@ -57,14 +57,16 @@ class BatchProcessor {
   /**
    * Calls the updater's begin() method.
    *
+   * @param string[] $project_versions
+   *   The project versions to be staged in the update, keyed by package name.
    * @param array $context
    *   The current context of the batch job.
    *
    * @see \Drupal\automatic_updates\Updater::begin()
    */
-  public static function begin(array &$context): void {
+  public static function begin(array $project_versions, array &$context): void {
     try {
-      static::getUpdater()->begin();
+      static::getUpdater()->begin($project_versions);
     }
     catch (\Throwable $e) {
       static::handleException($e, $context);
@@ -74,16 +76,14 @@ class BatchProcessor {
   /**
    * Calls the updater's stageVersions() method.
    *
-   * @param string[] $project_versions
-   *   The project versions to be staged in the update, keyed by package name.
    * @param array $context
    *   The current context of the batch job.
    *
-   * @see \Drupal\automatic_updates\Updater::stageVersions()
+   * @see \Drupal\automatic_updates\Updater::stage()
    */
-  public static function stageProjectVersions(array $project_versions, array &$context): void {
+  public static function stage(array &$context): void {
     try {
-      static::getUpdater()->stageVersions($project_versions);
+      static::getUpdater()->stage();
     }
     catch (\Throwable $e) {
       static::handleException($e, $context);

@@ -235,10 +235,11 @@ class UpdaterForm extends FormBase {
     $batch = (new BatchBuilder())
       ->setTitle($this->t('Downloading updates'))
       ->setInitMessage($this->t('Preparing to download updates'))
-      ->addOperation([BatchProcessor::class, 'begin'])
-      ->addOperation([BatchProcessor::class, 'stageProjectVersions'], [
-        $form_state->getValue('update_version'),
-      ])
+      ->addOperation(
+        [BatchProcessor::class, 'begin'],
+        [$form_state->getValue('update_version')]
+      )
+      ->addOperation([BatchProcessor::class, 'stage'])
       ->setFinishCallback([BatchProcessor::class, 'finishStage'])
       ->toArray();
 
