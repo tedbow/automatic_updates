@@ -10,6 +10,20 @@ use Drupal\automatic_updates\Validation\ValidationResult;
 trait ValidationTestTrait {
 
   /**
+   * Expected explanation text when readiness checkers return error messages.
+   *
+   * @var string
+   */
+  protected static $errorsExplanation = 'Your site does not pass some readiness checks for automatic updates. It cannot be automatically updated until further action is performed.';
+
+  /**
+   * Expected explanation text when readiness checkers return warning messages.
+   *
+   * @var string
+   */
+  protected static $warningsExplanation = 'Your site does not pass some readiness checks for automatic updates. Depending on the nature of the failures, it might affect the eligibility for automatic updates.';
+
+  /**
    * Test validation results.
    *
    * @var \Drupal\automatic_updates\Validation\ValidationResult[][][]

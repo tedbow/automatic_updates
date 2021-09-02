@@ -40,14 +40,22 @@ class TestChecker1 implements EventSubscriberInterface {
    * This method is static to enable setting the expected messages before the
    * test module is enabled.
    *
-   * @param \Drupal\automatic_updates\Validation\ValidationResult[]|\Throwable $checker_results
-   *   The test validation results, or an exception to throw.
+   * @param \Drupal\automatic_updates\Validation\ValidationResult[]|\Throwable|null $checker_results
+   *   The test validation results, or an exception to throw, or NULL to delete
+   *   stored results.
    * @param string $event_name
    *   (optional )The event name. Defaults to
    *   AutomaticUpdatesEvents::READINESS_CHECK.
    */
   public static function setTestResult($checker_results, string $event_name = AutomaticUpdatesEvents::READINESS_CHECK): void {
-    \Drupal::state()->set(static::STATE_KEY . ".$event_name", $checker_results);
+    $key = static::STATE_KEY . ".$event_name";
+
+    if (isset($checker_results)) {
+      \Drupal::state()->set($key, $checker_results);
+    }
+    else {
+      \Drupal::state()->delete($key);
+    }
   }
 
   /**

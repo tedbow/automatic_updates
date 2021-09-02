@@ -4,6 +4,7 @@ namespace Drupal\automatic_updates\Form;
 
 use Drupal\automatic_updates\BatchProcessor;
 use Drupal\automatic_updates\Updater;
+use Drupal\automatic_updates\Validation\ReadinessValidationManager;
 use Drupal\automatic_updates_9_3_shim\ProjectRelease;
 use Drupal\Core\Batch\BatchBuilder;
 use Drupal\Core\Extension\ModuleHandlerInterface;
@@ -12,6 +13,7 @@ use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Link;
 use Drupal\Core\State\StateInterface;
 use Drupal\Core\Url;
+use Drupal\system\SystemManager;
 use Drupal\update\UpdateManagerInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
@@ -45,6 +47,13 @@ class UpdaterForm extends FormBase {
   protected $state;
 
   /**
+   * The readiness validation manager service.
+   *
+   * @var \Drupal\automatic_updates\Validation\ReadinessValidationManager
+   */
+  protected $readinessValidationManager;
+
+  /**
    * Constructs a new UpdaterForm object.
    *
    * @param \Drupal\Core\Extension\ModuleHandlerInterface $module_handler
@@ -53,11 +62,14 @@ class UpdaterForm extends FormBase {
    *   The state service.
    * @param \Drupal\automatic_updates\Updater $updater
    *   The updater service.
+   * @param \Drupal\automatic_updates\Validation\ReadinessValidationManager $readiness_validation_manager
+   *   The readiness validation manager service.
    */
-  public function __construct(ModuleHandlerInterface $module_handler, StateInterface $state, Updater $updater) {
+  public function __construct(ModuleHandlerInterface $module_handler, StateInterface $state, Updater $updater, ReadinessValidationManager $readiness_validation_manager) {
     $this->updater = $updater;
     $this->moduleHandler = $module_handler;
     $this->state = $state;
+    $this->readinessValidationManager = $readiness_validation_manager;
   }
 
   /**
@@ -74,7 +86,8 @@ class UpdaterForm extends FormBase {
     return new static(
       $container->get('module_handler'),
       $container->get('state'),
-      $container->get('automatic_updates.updater')
+      $container->get('automatic_updates.updater'),
+      $container->get('automatic_updates.readiness_validation_manager')
     );
   }
 
@@ -190,7 +203,17 @@ class UpdaterForm extends FormBase {
       ],
     ];
 
-    $form['actions'] = $this->actions();
+    // @todo Add a hasErrors() or getErrors() method to
+    // ReadinessValidationManager to make validation more introspectable.
+    // Re-running the readiness checks now should mean that when we display
+    // cached errors in automatic_updates_page_top(), we'll see errors that
+    // were raised during this run, instead of any previously cached results.
+    $errors = $this->readinessValidationManager->run()
+      ->getResults(SystemManager::REQUIREMENT_ERROR);
+
+    if (empty($errors)) {
+      $form['actions'] = $this->actions();
+    }
     return $form;
   }
 

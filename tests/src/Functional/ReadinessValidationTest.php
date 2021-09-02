@@ -23,16 +23,6 @@ class ReadinessValidationTest extends BrowserTestBase {
   use ValidationTestTrait;
 
   /**
-   * Expected explanation text when readiness checkers return error messages.
-   */
-  const ERRORS_EXPLANATION = 'Your site does not pass some readiness checks for automatic updates. It cannot be automatically updated until further action is performed.';
-
-  /**
-   * Expected explanation text when readiness checkers return warning messages.
-   */
-  const WARNINGS_EXPLANATION = 'Your site does not pass some readiness checks for automatic updates. Depending on the nature of the failures, it might affect the eligibility for automatic updates.';
-
-  /**
    * {@inheritdoc}
    */
   protected $defaultTheme = 'stark';
@@ -131,15 +121,15 @@ class ReadinessValidationTest extends BrowserTestBase {
     // Assert that when the runners are run manually the message that updates
     // will not be performed because of errors is displayed on the top of the
     // page in message.
-    $assert->pageTextMatchesCount(2, '/' . preg_quote(static::ERRORS_EXPLANATION) . '/');
-    $this->assertReadinessReportMatches($expected_results[0]->getMessages()[0] . 'Run readiness checks now.', 'error', static::ERRORS_EXPLANATION);
+    $assert->pageTextMatchesCount(2, '/' . preg_quote(static::$errorsExplanation) . '/');
+    $this->assertReadinessReportMatches($expected_results[0]->getMessages()[0] . 'Run readiness checks now.', 'error', static::$errorsExplanation);
 
     // @todo Should we always show when the checks were last run and a link to
     //   run when there is an error?
     // Confirm a user without permission to run the checks sees the same error.
     $this->drupalLogin($this->reportViewerUser);
     $this->drupalGet('admin/reports/status');
-    $this->assertReadinessReportMatches($expected_results[0]->getMessages()[0], 'error', static::ERRORS_EXPLANATION);
+    $this->assertReadinessReportMatches($expected_results[0]->getMessages()[0], 'error', static::$errorsExplanation);
 
     $expected_results = $this->testResults['checker_1']['1 error 1 warning'];
     TestChecker1::setTestResult($expected_results);
@@ -148,8 +138,8 @@ class ReadinessValidationTest extends BrowserTestBase {
     $this->drupalGet('admin/reports/status');
     // Confirm that on the status page if there is only 1 warning or error the
     // the summaries will not be displayed.
-    $this->assertReadinessReportMatches($expected_results['1:error']->getMessages()[0], 'error', static::ERRORS_EXPLANATION);
-    $this->assertReadinessReportMatches($expected_results['1:warning']->getMessages()[0], 'warning', static::WARNINGS_EXPLANATION);
+    $this->assertReadinessReportMatches($expected_results['1:error']->getMessages()[0], 'error', static::$errorsExplanation);
+    $this->assertReadinessReportMatches($expected_results['1:warning']->getMessages()[0], 'warning', static::$warningsExplanation);
     $assert->pageTextNotContains($expected_results['1:error']->getSummary());
     $assert->pageTextNotContains($expected_results['1:warning']->getSummary());
 
@@ -159,8 +149,8 @@ class ReadinessValidationTest extends BrowserTestBase {
     $this->drupalGet('admin/reports/status');
     // Confirm that both messages and summaries will be displayed on status
     // report when there multiple messages.
-    $this->assertReadinessReportMatches($expected_results['1:errors']->getSummary() . ' ' . implode('', $expected_results['1:errors']->getMessages()), 'error', static::ERRORS_EXPLANATION);
-    $this->assertReadinessReportMatches($expected_results['1:warnings']->getSummary() . ' ' . implode('', $expected_results['1:warnings']->getMessages()), 'warning', static::WARNINGS_EXPLANATION);
+    $this->assertReadinessReportMatches($expected_results['1:errors']->getSummary() . ' ' . implode('', $expected_results['1:errors']->getMessages()), 'error', static::$errorsExplanation);
+    $this->assertReadinessReportMatches($expected_results['1:warnings']->getSummary() . ' ' . implode('', $expected_results['1:warnings']->getMessages()), 'warning', static::$warningsExplanation);
 
     $key_value->delete('readiness_validation_last_run');
     $expected_results = $this->testResults['checker_1']['2 warnings'];
@@ -169,14 +159,14 @@ class ReadinessValidationTest extends BrowserTestBase {
     $assert->pageTextContainsOnce('Update readiness checks');
     // Confirm that warnings will display on the status report if there are no
     // errors.
-    $this->assertReadinessReportMatches($expected_results[0]->getSummary() . ' ' . implode('', $expected_results[0]->getMessages()), 'warning', static::WARNINGS_EXPLANATION);
+    $this->assertReadinessReportMatches($expected_results[0]->getSummary() . ' ' . implode('', $expected_results[0]->getMessages()), 'warning', static::$warningsExplanation);
 
     $key_value->delete('readiness_validation_last_run');
     $expected_results = $this->testResults['checker_1']['1 warning'];
     TestChecker1::setTestResult($expected_results);
     $this->drupalGet('admin/reports/status');
     $assert->pageTextContainsOnce('Update readiness checks');
-    $this->assertReadinessReportMatches($expected_results[0]->getMessages()[0], 'warning', static::WARNINGS_EXPLANATION);
+    $this->assertReadinessReportMatches($expected_results[0]->getMessages()[0], 'warning', static::$warningsExplanation);
   }
 
   /**
@@ -230,7 +220,7 @@ class ReadinessValidationTest extends BrowserTestBase {
     $this->delayRequestTime();
     $this->cronRun();
     $this->drupalGet('admin/structure');
-    $assert->pageTextContainsOnce(static::ERRORS_EXPLANATION);
+    $assert->pageTextContainsOnce(static::$errorsExplanation);
     // Confirm on admin pages that a single error will be displayed instead of a
     // summary.
     $this->assertSame(SystemManager::REQUIREMENT_ERROR, $expected_results['1:error']->getSeverity());
@@ -265,7 +255,7 @@ class ReadinessValidationTest extends BrowserTestBase {
     $assert->pageTextNotContains($expected_results['1:errors']->getMessages()[0]);
     $assert->pageTextNotContains($expected_results['1:errors']->getMessages()[1]);
     $assert->pageTextContainsOnce($expected_results['1:errors']->getSummary());
-    $assert->pageTextContainsOnce(static::ERRORS_EXPLANATION);
+    $assert->pageTextContainsOnce(static::$errorsExplanation);
     // Warnings are not displayed on admin pages if there are any errors.
     $this->assertSame(SystemManager::REQUIREMENT_WARNING, $expected_results['1:warnings']->getSeverity());
     $assert->pageTextNotContains($expected_results['1:warnings']->getMessages()[0]);
@@ -279,11 +269,11 @@ class ReadinessValidationTest extends BrowserTestBase {
     $this->drupalGet('admin/structure');
     // Confirm that the warnings summary is displayed on admin pages if there
     // are no errors.
-    $assert->pageTextNotContains(static::ERRORS_EXPLANATION);
+    $assert->pageTextNotContains(static::$errorsExplanation);
     $this->assertSame(SystemManager::REQUIREMENT_WARNING, $expected_results[0]->getSeverity());
     $assert->pageTextNotContains($expected_results[0]->getMessages()[0]);
     $assert->pageTextNotContains($expected_results[0]->getMessages()[1]);
-    $assert->pageTextContainsOnce(static::WARNINGS_EXPLANATION);
+    $assert->pageTextContainsOnce(static::$warningsExplanation);
     $assert->pageTextContainsOnce($expected_results[0]->getSummary());
 
     $expected_results = $this->testResults['checker_1']['1 warning'];
@@ -291,11 +281,11 @@ class ReadinessValidationTest extends BrowserTestBase {
     $this->delayRequestTime();
     $this->cronRun();
     $this->drupalGet('admin/structure');
-    $assert->pageTextNotContains(static::ERRORS_EXPLANATION);
+    $assert->pageTextNotContains(static::$errorsExplanation);
     // Confirm that a single warning is displayed and not the summary on admin
     // pages if there is only 1 warning and there are no errors.
     $this->assertSame(SystemManager::REQUIREMENT_WARNING, $expected_results[0]->getSeverity());
-    $assert->pageTextContainsOnce(static::WARNINGS_EXPLANATION);
+    $assert->pageTextContainsOnce(static::$warningsExplanation);
     $assert->pageTextContainsOnce($expected_results[0]->getMessages()[0]);
     $assert->pageTextNotContains($expected_results[0]->getSummary());
   }

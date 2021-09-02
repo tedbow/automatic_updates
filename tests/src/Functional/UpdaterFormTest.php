@@ -4,6 +4,7 @@ namespace Drupal\Tests\automatic_updates\Functional;
 
 use Drupal\automatic_updates\AutomaticUpdatesEvents;
 use Drupal\automatic_updates\Exception\UpdateException;
+use Drupal\automatic_updates\Validation\ValidationResult;
 use Drupal\automatic_updates_test\ReadinessChecker\TestChecker1;
 use Drupal\Tests\automatic_updates\Traits\ValidationTestTrait;
 use Drupal\Tests\BrowserTestBase;
@@ -109,27 +110,57 @@ class UpdaterFormTest extends BrowserTestBase {
     $assert_session = $this->assertSession();
     $page = $session->getPage();
 
-    $this->setCoreVersion('9.8.0');
-    $this->createTestValidationResults();
-
-    $expected_results = $this->testResults['checker_1']['1 error'];
-    // Repackage the validation error as an exception, so we can test what
-    // happens if a validator throws.
-    $error = new UpdateException($expected_results, 'The update exploded.');
-    TestChecker1::setTestResult($error, AutomaticUpdatesEvents::PRE_START);
+    // Store a fake readiness error, which will be cached.
+    $message = t("You've not experienced Shakespeare until you have read him in the original Klingon.");
+    $error = ValidationResult::createError([$message]);
+    TestChecker1::setTestResult([$error]);
 
     $this->drupalLogin($this->rootUser);
+    $this->drupalGet('/admin/reports/status');
+    $page->clickLink('Run readiness checks');
+    $assert_session->pageTextContainsOnce((string) $message);
+    // Ensure that the fake error is cached.
+    $session->reload();
+    $assert_session->pageTextContainsOnce((string) $message);
+
+    $this->setCoreVersion('9.8.0');
     $this->checkForUpdates();
+
+    // Set up a new fake error.
+    $this->createTestValidationResults();
+    $expected_results = $this->testResults['checker_1']['1 error'];
+    TestChecker1::setTestResult($expected_results);
+
+    // If a validator raises an error during readiness checking, the form should
+    // not have a submit button.
     $this->drupalGet('/admin/automatic-update');
+    $assert_session->buttonNotExists('Download these updates');
+    // Since this is an administrative page, the error message should be visible
+    // thanks to automatic_updates_page_top(). The readiness checks were re-run
+    // during the form build, which means the new error should be cached and
+    // displayed instead of the previously cached error.
+    $assert_session->pageTextContainsOnce((string) $expected_results[0]->getMessages()[0]);
+    $assert_session->pageTextContainsOnce(static::$errorsExplanation);
+    $assert_session->pageTextNotContains(static::$warningsExplanation);
+    $assert_session->pageTextNotContains((string) $message);
+    TestChecker1::setTestResult(NULL);
+
+    // Repackage the validation error as an exception, so we can test what
+    // happens if a validator throws once the update has started.
+    $error = new UpdateException($expected_results, 'The update exploded.');
+    TestChecker1::setTestResult($error, AutomaticUpdatesEvents::PRE_START);
+    $session->reload();
+    $assert_session->pageTextNotContains(static::$errorsExplanation);
+    $assert_session->pageTextNotContains(static::$warningsExplanation);
     $page->pressButton('Download these updates');
     $this->checkForMetaRefresh();
-    $assert_session->pageTextContains('An error has occurred.');
+    $assert_session->pageTextContainsOnce('An error has occurred.');
     $page->clickLink('the error page');
-    $assert_session->pageTextContains((string) $expected_results[0]->getMessages()[0]);
+    $assert_session->pageTextContainsOnce((string) $expected_results[0]->getMessages()[0]);
     // Since there's only one error message, we shouldn't see the summary...
     $assert_session->pageTextNotContains($expected_results[0]->getSummary());
     // ...but we should see the exception message.
-    $assert_session->pageTextContains('The update exploded.');
+    $assert_session->pageTextContainsOnce('The update exploded.');
 
     // If a validator flags an error, but doesn't throw, the update should still
     // be halted.
@@ -137,11 +168,11 @@ class UpdaterFormTest extends BrowserTestBase {
     $this->deleteStagedUpdate();
     $page->pressButton('Download these updates');
     $this->checkForMetaRefresh();
-    $assert_session->pageTextContains('An error has occurred.');
+    $assert_session->pageTextContainsOnce('An error has occurred.');
     $page->clickLink('the error page');
     // Since there's only one message, we shouldn't see the summary.
     $assert_session->pageTextNotContains($expected_results[0]->getSummary());
-    $assert_session->pageTextContains((string) $expected_results[0]->getMessages()[0]);
+    $assert_session->pageTextContainsOnce((string) $expected_results[0]->getMessages()[0]);
 
     // If a validator flags a warning, but doesn't throw, the update should
     // continue.
