@@ -15,7 +15,7 @@ class ExclusionsTest extends BrowserTestBase {
   /**
    * {@inheritdoc}
    */
-  protected static $modules = ['automatic_updates_test'];
+  protected static $modules = ['automatic_updates_test', 'update_test'];
 
   /**
    * {@inheritdoc}
@@ -39,6 +39,22 @@ class ExclusionsTest extends BrowserTestBase {
     $settings['file_public_path'] = 'files/public';
     $settings['file_private_path'] = 'files/private';
     new Settings($settings);
+
+    // Updater::begin() will trigger update validators, such as
+    // \Drupal\automatic_updates\Event\UpdateVersionSubscriber, that need to
+    // fetch release metadata. We need to ensure that those HTTP request(s)
+    // succeed, so set them up to point to our fake release metadata.
+    $this->config('update_test.settings')
+      ->set('xml_map', [
+        'drupal' => '0.0',
+      ])
+      ->save();
+    $this->config('update.settings')
+      ->set('fetch.url', $this->baseUrl . '/automatic-update-test')
+      ->save();
+    $this->config('update_test.settings')
+      ->set('system_info.#all.version', '9.8.0')
+      ->save();
 
     $updater->begin(['drupal' => '9.8.1']);
     $this->assertFileDoesNotExist("$stage_dir/sites/default/settings.php");

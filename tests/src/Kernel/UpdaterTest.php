@@ -3,6 +3,10 @@
 namespace Drupal\Tests\automatic_updates\Kernel;
 
 use Drupal\KernelTests\KernelTestBase;
+use GuzzleHttp\Client;
+use GuzzleHttp\Handler\MockHandler;
+use GuzzleHttp\Psr7\Response;
+use GuzzleHttp\Psr7\Utils;
 use Prophecy\Argument;
 
 /**
@@ -17,14 +21,28 @@ class UpdaterTest extends KernelTestBase {
    */
   protected static $modules = [
     'automatic_updates',
-    'update',
+    'automatic_updates_test',
     'composer_stager_bypass',
+    'update',
+    'update_test',
   ];
 
   /**
    * Tests that correct versions are staged after calling ::begin().
    */
   public function testCorrectVersionsStaged() {
+    // Ensure that the HTTP client will fetch our fake release metadata.
+    $release_data = Utils::tryFopen(__DIR__ . '/../../fixtures/release-history/drupal.0.0.xml', 'r');
+    $response = new Response(200, [], Utils::streamFor($release_data));
+    $handler = new MockHandler([$response]);
+    $client = new Client(['handler' => $handler]);
+    $this->container->set('http_client', $client);
+
+    // Set the running core version to 9.8.0.
+    $this->config('update_test.settings')
+      ->set('system_info.#all.version', '9.8.0')
+      ->save();
+
     $this->container->get('automatic_updates.updater')->begin([
       'drupal' => '9.8.1',
     ]);

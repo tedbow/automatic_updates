@@ -166,10 +166,12 @@ class Updater {
     if (count($project_versions) !== 1 || !array_key_exists('drupal', $project_versions)) {
       throw new \InvalidArgumentException("Currently only updates to Drupal core are supported.");
     }
-    $packages[] = 'drupal/core:' . $project_versions['drupal'];
+    $packages = [
+      'drupal/core' => $project_versions['drupal'],
+    ];
     $stage_key = $this->createActiveStage($packages);
     /** @var \Drupal\automatic_updates\Event\PreStartEvent $event */
-    $event = $this->dispatchUpdateEvent(new PreStartEvent(), AutomaticUpdatesEvents::PRE_START);
+    $event = $this->dispatchUpdateEvent(new PreStartEvent($packages), AutomaticUpdatesEvents::PRE_START);
     $this->beginner->begin(static::getActiveDirectory(), static::getStageDirectory(), $this->getExclusions($event));
     return $stage_key;
   }
@@ -216,9 +218,6 @@ class Updater {
   public function commit(): void {
     /** @var \Drupal\automatic_updates\Event\PreCommitEvent $event */
     $event = $this->dispatchUpdateEvent(new PreCommitEvent(), AutomaticUpdatesEvents::PRE_COMMIT);
-    // @todo Pass excluded paths into the committer once
-    // https://github.com/php-tuf/composer-stager/pull/14 is in a tagged release
-    // of Composer Stager.
     $this->committer->commit($this->getStageDirectory(), static::getActiveDirectory(), $this->getExclusions($event));
   }
 
@@ -255,12 +254,17 @@ class Updater {
    *   The active update ID.
    */
   private function createActiveStage(array $package_versions): string {
+    $requirements = [];
+    foreach ($package_versions as $package_name => $version) {
+      $requirements[] = "$package_name:$version";
+    }
+
     $value = static::STATE_KEY . microtime();
     $this->state->set(
       static::STATE_KEY,
       [
         'id' => $value,
-        'package_versions' => $package_versions,
+        'package_versions' => $requirements,
       ]
     );
     return $value;
