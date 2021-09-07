@@ -26,16 +26,6 @@ class Updater {
   use StringTranslationTrait;
 
   /**
-   * The event classes to dispatch for various update events.
-   *
-   * @var string[]
-   */
-  protected const EVENT_CLASSES = [
-    AutomaticUpdatesEvents::PRE_START => PreStartEvent::class,
-    AutomaticUpdatesEvents::PRE_COMMIT => PreCommitEvent::class,
-  ];
-
-  /**
    * The state key in which to store the status of the update.
    *
    * @var string
@@ -178,7 +168,8 @@ class Updater {
     }
     $packages[] = 'drupal/core:' . $project_versions['drupal'];
     $stage_key = $this->createActiveStage($packages);
-    $event = $this->dispatchUpdateEvent(AutomaticUpdatesEvents::PRE_START);
+    /** @var \Drupal\automatic_updates\Event\PreStartEvent $event */
+    $event = $this->dispatchUpdateEvent(new PreStartEvent(), AutomaticUpdatesEvents::PRE_START);
     $this->beginner->begin(static::getActiveDirectory(), static::getStageDirectory(), $this->getExclusions($event));
     return $stage_key;
   }
@@ -224,7 +215,7 @@ class Updater {
    */
   public function commit(): void {
     /** @var \Drupal\automatic_updates\Event\PreCommitEvent $event */
-    $event = $this->dispatchUpdateEvent(AutomaticUpdatesEvents::PRE_COMMIT);
+    $event = $this->dispatchUpdateEvent(new PreCommitEvent(), AutomaticUpdatesEvents::PRE_COMMIT);
     // @todo Pass excluded paths into the committer once
     // https://github.com/php-tuf/composer-stager/pull/14 is in a tagged release
     // of Composer Stager.
@@ -278,6 +269,8 @@ class Updater {
   /**
    * Dispatches an update event.
    *
+   * @param \Drupal\automatic_updates\Event\UpdateEvent $event
+   *   The update event.
    * @param string $event_name
    *   The name of the event to dispatch.
    *
@@ -287,9 +280,7 @@ class Updater {
    * @throws \Drupal\automatic_updates\Exception\UpdateException
    *   If any of the event subscribers adds a validation error.
    */
-  public function dispatchUpdateEvent(string $event_name): UpdateEvent {
-    $class = static::EVENT_CLASSES[$event_name] ?? UpdateEvent::class;
-    $event = new $class();
+  public function dispatchUpdateEvent(UpdateEvent $event, string $event_name): UpdateEvent {
     $this->eventDispatcher->dispatch($event, $event_name);
     if ($checker_results = $event->getResults(SystemManager::REQUIREMENT_ERROR)) {
       throw new UpdateException($checker_results,
