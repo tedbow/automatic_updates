@@ -3,9 +3,9 @@
 namespace Drupal\automatic_updates\Event;
 
 use Drupal\automatic_updates\AutomaticUpdatesEvents;
+use Drupal\automatic_updates\Updater;
 use Drupal\automatic_updates\Validation\ValidationResult;
 use Drupal\Core\Extension\ExtensionVersion;
-use Drupal\Core\Extension\ModuleHandlerInterface;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
@@ -17,14 +17,20 @@ class UpdateVersionSubscriber implements EventSubscriberInterface {
   use StringTranslationTrait;
 
   /**
+   * The updater service.
+   *
+   * @var \Drupal\automatic_updates\Updater
+   */
+  protected $updater;
+
+  /**
    * Constructs an UpdateVersionSubscriber.
    *
-   * @param \Drupal\Core\Extension\ModuleHandlerInterface $module_handler
-   *   The module handler service.
+   * @param \Drupal\automatic_updates\Updater $updater
+   *   The updater service.
    */
-  public function __construct(ModuleHandlerInterface $module_handler) {
-    // Load procedural functions needed for ::getCoreVersion().
-    $module_handler->loadInclude('update', 'inc', 'update.compare');
+  public function __construct(Updater $updater) {
+    $this->updater = $updater;
   }
 
   /**
@@ -34,7 +40,11 @@ class UpdateVersionSubscriber implements EventSubscriberInterface {
    *   The running core version as known to the Update module.
    */
   protected function getCoreVersion(): string {
-    $available_updates = update_calculate_project_data(update_get_available());
+    // We need to call these functions separately, because
+    // update_get_available() will include the file that contains
+    // update_calculate_project_data().
+    $available_updates = update_get_available();
+    $available_updates = update_calculate_project_data($available_updates);
     return $available_updates['drupal']['existing_version'];
   }
 
@@ -46,7 +56,8 @@ class UpdateVersionSubscriber implements EventSubscriberInterface {
    */
   public function checkUpdateVersion(PreStartEvent $event): void {
     $from_version = ExtensionVersion::createFromVersionString($this->getCoreVersion());
-    $to_version = ExtensionVersion::createFromVersionString($event->getPackageVersions()['drupal/core']);
+    $core_package_name = $this->updater->getCorePackageName();
+    $to_version = ExtensionVersion::createFromVersionString($event->getPackageVersions()[$core_package_name]);
 
     if ($from_version->getMajorVersion() !== $to_version->getMajorVersion()) {
       $error = ValidationResult::createError([

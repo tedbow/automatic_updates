@@ -8,6 +8,8 @@ use Drupal\automatic_updates\Event\PreStartEvent;
 use Drupal\automatic_updates\Event\UpdateEvent;
 use Drupal\automatic_updates\Exception\UpdateException;
 use Drupal\Component\FileSystem\FileSystem;
+use Drupal\Component\Serialization\Json;
+use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\State\StateInterface;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\Core\StringTranslation\TranslationInterface;
@@ -75,6 +77,13 @@ class Updater {
   protected $eventDispatcher;
 
   /**
+   * The config factory service.
+   *
+   * @var \Drupal\Core\Config\ConfigFactoryInterface
+   */
+  protected $configFactory;
+
+  /**
    * Constructs an Updater object.
    *
    * @param \Drupal\Core\State\StateInterface $state
@@ -91,8 +100,10 @@ class Updater {
    *   The Composer Stager's committer service.
    * @param \Symfony\Component\EventDispatcher\EventDispatcherInterface $event_dispatcher
    *   The event dispatcher service.
+   * @param \Drupal\Core\Config\ConfigFactoryInterface $config_factory
+   *   The config factory service.
    */
-  public function __construct(StateInterface $state, TranslationInterface $translation, BeginnerInterface $beginner, StagerInterface $stager, CleanerInterface $cleaner, CommitterInterface $committer, EventDispatcherInterface $event_dispatcher) {
+  public function __construct(StateInterface $state, TranslationInterface $translation, BeginnerInterface $beginner, StagerInterface $stager, CleanerInterface $cleaner, CommitterInterface $committer, EventDispatcherInterface $event_dispatcher, ConfigFactoryInterface $config_factory) {
     $this->state = $state;
     $this->beginner = $beginner;
     $this->stager = $stager;
@@ -100,6 +111,7 @@ class Updater {
     $this->committer = $committer;
     $this->setStringTranslation($translation);
     $this->eventDispatcher = $event_dispatcher;
+    $this->configFactory = $config_factory;
   }
 
   /**
@@ -120,10 +132,10 @@ class Updater {
    *   The absolute path for stage directory.
    */
   public function getStageDirectory(): string {
-    // @todo This should be unique, in order to support parallel runs, or
-    // multiple sites on the same server. Find a way to make it unique, and
-    // persistent for the entire lifetime of the update process.
-    return FileSystem::getOsTemporaryDirectory() . '/.automatic_updates_stage';
+    // Append the site ID to the directory in order to support parallel test
+    // runs, or multiple sites hosted on the same server.
+    $site_id = $this->configFactory->get('system.site')->get('uuid');
+    return FileSystem::getOsTemporaryDirectory() . '/.automatic_updates_stage_' . $site_id;
   }
 
   /**
@@ -167,13 +179,53 @@ class Updater {
       throw new \InvalidArgumentException("Currently only updates to Drupal core are supported.");
     }
     $packages = [
-      'drupal/core' => $project_versions['drupal'],
+      $this->getCorePackageName() => $project_versions['drupal'],
     ];
     $stage_key = $this->createActiveStage($packages);
     /** @var \Drupal\automatic_updates\Event\PreStartEvent $event */
     $event = $this->dispatchUpdateEvent(new PreStartEvent($packages), AutomaticUpdatesEvents::PRE_START);
     $this->beginner->begin(static::getActiveDirectory(), static::getStageDirectory(), $this->getExclusions($event));
     return $stage_key;
+  }
+
+  /**
+   * Determines the name of the core package in the project composer.json.
+   *
+   * This makes the following assumptions:
+   * - The vendor directory is next to the project composer.json.
+   * - The project composer.json contains a requirement for a core package.
+   * - That requirement is either for drupal/core or drupal/core-recommended.
+   *
+   * @return string
+   *   The name of the core package (either drupal/core or
+   *   drupal/core-recommended).
+   *
+   * @throws \RuntimeException
+   *   If the project composer.json is not found.
+   * @throws \LogicException
+   *   If the project composer.json does not contain one of the supported core
+   *   packages.
+   *
+   * @todo Move this to an update validator, or use a more robust method of
+   *   detecting the core package.
+   */
+  public function getCorePackageName(): string {
+    $composer = realpath(static::getVendorDirectory() . '/../composer.json');
+
+    if (empty($composer) || !file_exists($composer)) {
+      throw new \RuntimeException("Could not find project-level composer.json");
+    }
+
+    $composer = file_get_contents($composer);
+    $composer = Json::decode($composer);
+
+    if (isset($composer['require']['drupal/core'])) {
+      return 'drupal/core';
+    }
+    elseif (isset($composer['require']['drupal/core-recommended'])) {
+      return 'drupal/core-recommended';
+    }
+    throw new \LogicException("Could not determine the Drupal core package in the project-level composer.json.");
   }
 
   /**

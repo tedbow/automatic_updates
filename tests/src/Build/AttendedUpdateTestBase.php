@@ -14,6 +14,7 @@ abstract class AttendedUpdateTestBase extends QuickStartTestBase {
 
   use LocalPackagesTrait {
     getPackagePath as traitGetPackagePath;
+    copyPackage as traitCopyPackage;
   }
   use SettingsTrait;
 
@@ -25,6 +26,13 @@ abstract class AttendedUpdateTestBase extends QuickStartTestBase {
   private $metadataServer;
 
   /**
+   * The test site's document root, relative to the workspace directory.
+   *
+   * @var string
+   */
+  protected $webRoot = './';
+
+  /**
    * {@inheritdoc}
    */
   protected function tearDown(): void {
@@ -32,6 +40,13 @@ abstract class AttendedUpdateTestBase extends QuickStartTestBase {
       $this->metadataServer->stop();
     }
     parent::tearDown();
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  protected function copyPackage(string $source_dir, string $destination_dir = NULL): string {
+    return $this->traitCopyPackage($source_dir, $destination_dir ?: $this->getWorkspaceDirectory());
   }
 
   /**
@@ -50,6 +65,16 @@ abstract class AttendedUpdateTestBase extends QuickStartTestBase {
     }
 
     return $this->traitGetPackagePath($package);
+  }
+
+  /**
+   * Returns the full path to the test site's document root.
+   *
+   * @return string
+   *   The full path of the test site's document root.
+   */
+  protected function getWebRoot(): string {
+    return $this->getWorkspaceDirectory() . DIRECTORY_SEPARATOR . $this->webRoot;
   }
 
   /**
@@ -72,12 +97,12 @@ END;
     // about available updates.
     if (empty($this->metadataServer)) {
       $port = $this->findAvailablePort();
-      $this->metadataServer = $this->instantiateServer($port);
+      $this->metadataServer = $this->instantiateServer($port, $this->webRoot);
       $code .= <<<END
 \$config['update.settings']['fetch']['url'] = 'http://localhost:$port/automatic-update-test';
 END;
     }
-    $this->addSettings($code, $this->getWorkspaceDirectory());
+    $this->addSettings($code, $this->getWebRoot());
   }
 
   /**
@@ -94,8 +119,22 @@ END;
   /**
    * {@inheritdoc}
    */
+  public function visit($request_uri = '/', $working_dir = NULL) {
+    return parent::visit($request_uri, $working_dir ?: $this->webRoot);
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function formLogin($username, $password, $working_dir = NULL) {
+    parent::formLogin($username, $password, $working_dir ?: $this->webRoot);
+  }
+
+  /**
+   * {@inheritdoc}
+   */
   public function installQuickStart($profile, $working_dir = NULL) {
-    parent::installQuickStart($profile, $working_dir);
+    parent::installQuickStart($profile, $working_dir ?: $this->webRoot);
 
     // Always allow test modules to be installed in the UI and, for easier
     // debugging, always display errors in their dubious glory.
@@ -103,25 +142,30 @@ END;
 \$settings['extension_discovery_scan_tests'] = TRUE;
 \$config['system.logging']['error_level'] = 'verbose';
 END;
-    $this->addSettings($php, $this->getWorkspaceDirectory());
+    $this->addSettings($php, $this->getWebRoot());
   }
 
   /**
    * Uses our already-installed dependencies to build a test site to update.
    */
   protected function createTestSite(): void {
+    // The project-level composer.json lives in the workspace root directory,
+    // which may or may not be the same directory as the web root (where Drupal
+    // itself lives).
     $composer = $this->getWorkspaceDirectory() . DIRECTORY_SEPARATOR . 'composer.json';
-    $this->writeJson($composer, $this->getComposerConfiguration());
+    $this->writeJson($composer, $this->getInitialConfiguration());
     $this->runComposer('update');
   }
 
   /**
-   * Returns the data to write to the test site's composer.json.
+   * Returns the initial data to write to the test site's composer.json.
    *
-   * @return mixed[]
+   * This configuration will be used to build the pre-update test site.
+   *
+   * @return array
    *   The data that should be written to the test site's composer.json.
    */
-  protected function getComposerConfiguration(): array {
+  protected function getInitialConfiguration(): array {
     $core_constraint = preg_replace('/\.[0-9]+-dev$/', '.x-dev', \Drupal::VERSION);
 
     $drupal_root = $this->getDrupalRoot();
@@ -166,11 +210,16 @@ END;
       ],
       'repositories' => $repositories,
       'extra' => [
+        'drupal-scaffold' => [
+          'locations' => [
+            'web-root' => $this->webRoot,
+          ],
+        ],
         'installer-paths' => [
-          'core' => [
+          $this->webRoot . 'core' => [
             'type:drupal-core',
           ],
-          'modules/{$name}' => [
+          $this->webRoot . 'modules/{$name}' => [
             'type:drupal-module',
           ],
         ],

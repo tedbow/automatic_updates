@@ -4,7 +4,7 @@ services:
     arguments: ['@keyvalue.expirable', '@datetime.time', 24]
   automatic_updates.updater:
     class: Drupal\automatic_updates\Updater
-    arguments: ['@state', '@string_translation','@automatic_updates.beginner', '@automatic_updates.stager', '@automatic_updates.cleaner', '@automatic_updates.committer', '@event_dispatcher']
+    arguments: ['@state', '@string_translation','@automatic_updates.beginner', '@automatic_updates.stager', '@automatic_updates.cleaner', '@automatic_updates.committer', '@event_dispatcher', '@config.factory']
   automatic_updates.staged_package_validator:
     class: Drupal\automatic_updates\Validation\StagedProjectsValidation
     arguments: ['@string_translation', '@automatic_updates.updater' ]
@@ -78,7 +78,7 @@ services:
       - { name: event_subscriber }
   automatic_updates.update_version_subscriber:
     class: Drupal\automatic_updates\Event\UpdateVersionSubscriber
-    arguments: ['@module_handler']
+    arguments: ['@automatic_updates.updater']
     tags:
       - { name: event_subscriber }
   automatic_updates.composer_executable_validator:

@@ -2,8 +2,6 @@
 
 namespace Drupal\Tests\automatic_updates\Build;
 
-use Symfony\Component\Filesystem\Filesystem;
-
 /**
  * Tests an end-to-end update of Drupal core within the UI.
  *
@@ -12,46 +10,13 @@ use Symfony\Component\Filesystem\Filesystem;
 class AttendedCoreUpdateTest extends AttendedUpdateTestBase {
 
   /**
-   * A directory containing a fake version of core that we will update to.
-   *
-   * @var string
-   */
-  private $coreDir;
-
-  /**
    * {@inheritdoc}
    */
   protected function tearDown(): void {
-    if ($this->destroyBuild && $this->coreDir) {
-      (new Filesystem())->remove($this->coreDir);
+    if ($this->destroyBuild) {
+      $this->deleteCopiedPackages();
     }
     parent::tearDown();
-  }
-
-  /**
-   * Creates a Drupal core code base and assigns it an arbitrary version number.
-   *
-   * @param string $version
-   *   The version number that the Drupal core code base should have.
-   *
-   * @return string
-   *   The path of the code base.
-   */
-  protected function createTargetCorePackage(string $version): string {
-    $dir = $this->getWorkspaceDirectory();
-    $source = "$dir/core";
-    $this->assertDirectoryExists($source);
-    $destination = $dir . uniqid('_core_');
-    $this->assertDirectoryDoesNotExist($destination);
-
-    $fs = new Filesystem();
-    $fs->mirror($source, $destination);
-
-    $this->setCoreVersion($destination, $version);
-    // This is for us to be certain that we actually update to our local, fake
-    // version of Drupal core.
-    file_put_contents($destination . '/README.txt', "Placeholder for Drupal core $version.");
-    return $destination;
   }
 
   /**
@@ -63,10 +28,7 @@ class AttendedCoreUpdateTest extends AttendedUpdateTestBase {
    *   The version number to set.
    */
   private function setCoreVersion(string $dir, string $version): void {
-    $composer = "$dir/composer.json";
-    $data = $this->readJson($composer);
-    $data['version'] = $version;
-    $this->writeJson($composer, $data);
+    $this->alterPackage($dir, ['version' => $version]);
 
     $drupal_php = "$dir/lib/Drupal.php";
     $this->assertIsWritable($drupal_php);
@@ -80,7 +42,37 @@ class AttendedCoreUpdateTest extends AttendedUpdateTestBase {
    */
   protected function createTestSite(): void {
     parent::createTestSite();
-    $this->setCoreVersion($this->getWorkspaceDirectory() . '/core', '9.8.0');
+    $this->setCoreVersion($this->getWebRoot() . '/core', '9.8.0');
+  }
+
+  /**
+   * Returns composer.json changes that are needed to update core.
+   *
+   * @param string $version
+   *   The version of core we will be updating to.
+   *
+   * @return array
+   *   The changes to merge into the test site's composer.json.
+   */
+  protected function getConfigurationForUpdate(string $version): array {
+    // Create a fake version of core with the given version number, and change
+    // its README so that we can actually be certain that we update to this
+    // fake version.
+    $dir = $this->copyPackage($this->getWebRoot() . '/core');
+    $this->setCoreVersion($dir, $version);
+    file_put_contents("$dir/README.txt", "Placeholder for Drupal core $version.");
+
+    return [
+      'repositories' => [
+        'drupal/core' => [
+          'type' => 'path',
+          'url' => $dir,
+          'options' => [
+            'symlink' => FALSE,
+          ],
+        ],
+      ],
+    ];
   }
 
   /**
@@ -88,18 +80,7 @@ class AttendedCoreUpdateTest extends AttendedUpdateTestBase {
    */
   public function test(): void {
     $this->createTestSite();
-    $this->coreDir = $this->createTargetCorePackage('9.8.1');
-
-    $composer = $this->getWorkspaceDirectory() . "/composer.json";
-    $data = $this->readJson($composer);
-    $data['repositories']['drupal/core'] = [
-      'type' => 'path',
-      'url' => $this->coreDir,
-      'options' => [
-        'symlink' => FALSE,
-      ],
-    ];
-    $this->writeJson($composer, $data);
+    $this->alterPackage($this->getWorkspaceDirectory(), $this->getConfigurationForUpdate('9.8.1'));
 
     $this->installQuickStart('minimal');
     $this->setReleaseMetadata(['drupal' => '0.0']);
@@ -126,7 +107,7 @@ class AttendedCoreUpdateTest extends AttendedUpdateTestBase {
     $assert_session->pageTextContains('Update complete!');
     $this->assertCoreVersion('9.8.1');
 
-    $placeholder = file_get_contents($this->getWorkspaceDirectory() . '/core/README.txt');
+    $placeholder = file_get_contents($this->getWebRoot() . '/core/README.txt');
     $this->assertSame('Placeholder for Drupal core 9.8.1.', $placeholder);
   }
 
