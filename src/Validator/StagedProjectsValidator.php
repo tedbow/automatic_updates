@@ -1,20 +1,21 @@
 <?php
 
-namespace Drupal\automatic_updates\Validation;
+namespace Drupal\automatic_updates\Validator;
 
 use Drupal\automatic_updates\AutomaticUpdatesEvents;
 use Drupal\automatic_updates\Event\UpdateEvent;
 use Drupal\automatic_updates\Exception\UpdateException;
 use Drupal\automatic_updates\Updater;
+use Drupal\automatic_updates\Validation\ValidationResult;
 use Drupal\Component\Serialization\Json;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\Core\StringTranslation\TranslationInterface;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 /**
- * An event subscriber that validates staged Drupal projects.
+ * Validates the staged Drupal projects.
  */
-final class StagedProjectsValidation implements EventSubscriberInterface {
+final class StagedProjectsValidator implements EventSubscriberInterface {
 
   use StringTranslationTrait;
 

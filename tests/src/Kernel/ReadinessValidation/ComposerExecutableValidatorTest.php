@@ -9,7 +9,7 @@ use PhpTuf\ComposerStager\Exception\IOException;
 use PhpTuf\ComposerStager\Infrastructure\Process\ExecutableFinderInterface;
 
 /**
- * @covers \Drupal\automatic_updates\Validation\ComposerExecutableValidator
+ * @covers \Drupal\automatic_updates\Validator\ComposerExecutableValidator
  *
  * @group automatic_updates
  */

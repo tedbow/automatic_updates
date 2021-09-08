@@ -1,9 +1,10 @@
 <?php
 
-namespace Drupal\automatic_updates\Validation;
+namespace Drupal\automatic_updates\Validator;
 
 use Drupal\automatic_updates\AutomaticUpdatesEvents;
 use Drupal\automatic_updates\Event\UpdateEvent;
+use Drupal\automatic_updates\Validation\ValidationResult;
 use PhpTuf\ComposerStager\Exception\IOException;
 use PhpTuf\ComposerStager\Infrastructure\Process\ExecutableFinderInterface;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;

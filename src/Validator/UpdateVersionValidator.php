@@ -1,8 +1,9 @@
 <?php
 
-namespace Drupal\automatic_updates\Event;
+namespace Drupal\automatic_updates\Validator;
 
 use Drupal\automatic_updates\AutomaticUpdatesEvents;
+use Drupal\automatic_updates\Event\PreStartEvent;
 use Drupal\automatic_updates\Updater;
 use Drupal\automatic_updates\Validation\ValidationResult;
 use Drupal\Core\Extension\ExtensionVersion;
@@ -12,7 +13,7 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 /**
  * Validates that core updates are within a supported version range.
  */
-class UpdateVersionSubscriber implements EventSubscriberInterface {
+class UpdateVersionValidator implements EventSubscriberInterface {
 
   use StringTranslationTrait;
 

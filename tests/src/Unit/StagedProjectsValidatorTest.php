@@ -4,7 +4,7 @@ namespace Drupal\Tests\automatic_updates\Unit;
 
 use Drupal\automatic_updates\Event\UpdateEvent;
 use Drupal\automatic_updates\Updater;
-use Drupal\automatic_updates\Validation\StagedProjectsValidation;
+use Drupal\automatic_updates\Validator\StagedProjectsValidator;
 use Drupal\Component\FileSystem\FileSystem;
 use Drupal\Core\StringTranslation\PluralTranslatableMarkup;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
@@ -12,11 +12,11 @@ use Drupal\Core\StringTranslation\TranslationInterface;
 use Drupal\Tests\UnitTestCase;
 
 /**
- * @coversDefaultClass \Drupal\automatic_updates\Validation\StagedProjectsValidation
+ * @coversDefaultClass \Drupal\automatic_updates\Validator\StagedProjectsValidator
  *
  * @group automatic_updates
  */
-class StagedProjectsValidationTest extends UnitTestCase {
+class StagedProjectsValidatorTest extends UnitTestCase {
 
   /**
    * Tests that if an exception is thrown, the update event will absorb it.
@@ -29,7 +29,7 @@ class StagedProjectsValidationTest extends UnitTestCase {
     $updater = $this->prophesize(Updater::class);
     $updater->getActiveDirectory()->willReturn($active_dir);
     $updater->getStageDirectory()->willReturn($stage_dir);
-    $validator = new StagedProjectsValidation(new TestTranslationManager(), $updater->reveal());
+    $validator = new StagedProjectsValidator(new TestTranslationManager(), $updater->reveal());
 
     $event = new UpdateEvent();
     $validator->validateStagedProjects($event);
@@ -62,7 +62,7 @@ class StagedProjectsValidationTest extends UnitTestCase {
 
     $updater->getActiveDirectory()->willReturn("$fixtures_dir/active");
     $updater->getStageDirectory()->willReturn("$fixtures_dir/staged");
-    $validator = new StagedProjectsValidation(new TestTranslationManager(), $updater->reveal());
+    $validator = new StagedProjectsValidator(new TestTranslationManager(), $updater->reveal());
     $event = new UpdateEvent();
     $validator->validateStagedProjects($event);
     $results = $event->getResults();
@@ -124,7 +124,7 @@ class StagedProjectsValidationTest extends UnitTestCase {
     $updater = $this->prophesize(Updater::class);
     $updater->getActiveDirectory()->willReturn("$fixtures_dir/active");
     $updater->getStageDirectory()->willReturn("$fixtures_dir/staged");
-    $validator = new StagedProjectsValidation(new TestTranslationManager(), $updater->reveal());
+    $validator = new StagedProjectsValidator(new TestTranslationManager(), $updater->reveal());
     $event = new UpdateEvent();
     $validator->validateStagedProjects($event);
     $results = $event->getResults();
@@ -140,7 +140,7 @@ class StagedProjectsValidationTest extends UnitTestCase {
     $updater = $this->prophesize(Updater::class);
     $updater->getActiveDirectory()->willReturn("$fixtures_dir/active");
     $updater->getStageDirectory()->willReturn("$fixtures_dir");
-    $validator = new StagedProjectsValidation(new TestTranslationManager(), $updater->reveal());
+    $validator = new StagedProjectsValidator(new TestTranslationManager(), $updater->reveal());
     $event = new UpdateEvent();
     $validator->validateStagedProjects($event);
     $results = $event->getResults();

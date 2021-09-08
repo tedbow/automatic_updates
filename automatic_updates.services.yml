@@ -5,11 +5,6 @@ services:
   automatic_updates.updater:
     class: Drupal\automatic_updates\Updater
     arguments: ['@state', '@string_translation','@automatic_updates.beginner', '@automatic_updates.stager', '@automatic_updates.cleaner', '@automatic_updates.committer', '@event_dispatcher', '@config.factory']
-  automatic_updates.staged_package_validator:
-    class: Drupal\automatic_updates\Validation\StagedProjectsValidation
-    arguments: ['@string_translation', '@automatic_updates.updater' ]
-    tags:
-      - { name: event_subscriber }
   automatic_updates.beginner:
     class: PhpTuf\ComposerStager\Domain\Beginner
     arguments:
@@ -76,13 +71,18 @@ services:
     arguments: ['%app.root%', '%site.path%', '@file_system', '@stream_wrapper_manager']
     tags:
       - { name: event_subscriber }
-  automatic_updates.update_version_subscriber:
-    class: Drupal\automatic_updates\Event\UpdateVersionSubscriber
+  automatic_updates.staged_projects_validator:
+    class: Drupal\automatic_updates\Validator\StagedProjectsValidator
+    arguments: [ '@string_translation', '@automatic_updates.updater' ]
+    tags:
+      - { name: event_subscriber }
+  automatic_updates.update_version_validator:
+    class: Drupal\automatic_updates\Validator\UpdateVersionValidator
     arguments: ['@automatic_updates.updater']
     tags:
       - { name: event_subscriber }
   automatic_updates.composer_executable_validator:
-    class: Drupal\automatic_updates\Validation\ComposerExecutableValidator
+    class: Drupal\automatic_updates\Validator\ComposerExecutableValidator
     arguments: ['@automatic_updates.exec_finder']
     tags:
       - { name: event_subscriber }
