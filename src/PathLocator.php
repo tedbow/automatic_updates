@@ -19,13 +19,23 @@ class PathLocator {
   protected $configFactory;
 
   /**
+   * The absolute path of the running Drupal code base.
+   *
+   * @var string
+   */
+  protected $appRoot;
+
+  /**
    * Constructs a PathLocator object.
    *
    * @param \Drupal\Core\Config\ConfigFactoryInterface $config_factory
    *   The config factory service.
+   * @param string $app_root
+   *   The absolute path of the running Drupal code base.
    */
-  public function __construct(ConfigFactoryInterface $config_factory) {
+  public function __construct(ConfigFactoryInterface $config_factory, string $app_root) {
     $this->configFactory = $config_factory;
+    $this->appRoot = $app_root;
   }
 
   /**
@@ -41,8 +51,13 @@ class PathLocator {
   /**
    * Returns the path of the directory where updates should be staged.
    *
+   * This directory may be made world-writeable for clean-up, so it should be
+   * somewhere that doesn't put the Drupal installation at risk.
+   *
    * @return string
    *   The absolute path of the directory where updates should be staged.
+   *
+   * @see \Drupal\automatic_updates\ComposerStager\Cleaner::clean()
    */
   public function getStageDirectory(): string {
     // Append the site ID to the directory in order to support parallel test
@@ -74,6 +89,19 @@ class PathLocator {
   public function getVendorDirectory(): string {
     $reflector = new \ReflectionClass(ClassLoader::class);
     return dirname($reflector->getFileName(), 2);
+  }
+
+  /**
+   * Returns the path of the Drupal installation, relative to the project root.
+   *
+   * @return string
+   *   The path of the Drupal installation, relative to the project root and
+   *   without leading or trailing slashes. Will return an empty string if the
+   *   project root and Drupal root are the same.
+   */
+  public function getWebRoot(): string {
+    $web_root = str_replace($this->getProjectRoot(), NULL, $this->appRoot);
+    return trim($web_root, DIRECTORY_SEPARATOR);
   }
 
 }

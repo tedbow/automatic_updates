@@ -14,9 +14,11 @@ services:
     arguments:
       ['@automatic_updates.composer_runner', '@automatic_updates.file_system' ]
   automatic_updates.cleaner:
-    class: PhpTuf\ComposerStager\Domain\Cleaner
+    class: Drupal\automatic_updates\ComposerStager\Cleaner
     arguments:
-      ['@automatic_updates.file_system' ]
+      - '@automatic_updates.file_system'
+      - '%site.path%'
+      - '@automatic_updates.path_locator'
   automatic_updates.committer:
     class: PhpTuf\ComposerStager\Domain\Committer
     arguments:
@@ -90,3 +92,4 @@ services:
     class: Drupal\automatic_updates\PathLocator
     arguments:
       - '@config.factory'
+      - '%app.root%'
