@@ -2,6 +2,8 @@
 
 namespace Drupal\Tests\automatic_updates\Functional;
 
+use Drupal\automatic_updates\PathLocator;
+use Drupal\automatic_updates\Updater;
 use Drupal\Core\Site\Settings;
 use Drupal\Tests\BrowserTestBase;
 
@@ -30,10 +32,22 @@ class ExclusionsTest extends BrowserTestBase {
   public function testExclusions(): void {
     $stage_dir = "$this->siteDirectory/stage";
 
-    /** @var \Drupal\automatic_updates_test\TestUpdater $updater */
-    $updater = $this->container->get('automatic_updates.updater');
-    $updater->activeDirectory = __DIR__ . '/../../fixtures/fake-site';
-    $updater->stageDirectory = $stage_dir;
+    /** @var \Drupal\automatic_updates\PathLocator|\Prophecy\Prophecy\ObjectProphecy $locator */
+    $locator = $this->prophesize(PathLocator::class);
+    $locator->getActiveDirectory()->willReturn(__DIR__ . '/../../fixtures/fake-site');
+    $locator->getStageDirectory()->willReturn($stage_dir);
+    $locator->getProjectRoot()->willReturn($this->getDrupalRoot());
+
+    $updater = new Updater(
+      $this->container->get('state'),
+      $this->container->get('string_translation'),
+      $this->container->get('automatic_updates.beginner'),
+      $this->container->get('automatic_updates.stager'),
+      $this->container->get('automatic_updates.cleaner'),
+      $this->container->get('automatic_updates.committer'),
+      $this->container->get('event_dispatcher'),
+      $locator->reveal()
+    );
 
     $settings = Settings::getAll();
     $settings['file_public_path'] = 'files/public';

@@ -2,14 +2,11 @@
 
 namespace Drupal\automatic_updates;
 
-use Composer\Autoload\ClassLoader;
 use Drupal\automatic_updates\Event\PreCommitEvent;
 use Drupal\automatic_updates\Event\PreStartEvent;
 use Drupal\automatic_updates\Event\UpdateEvent;
 use Drupal\automatic_updates\Exception\UpdateException;
-use Drupal\Component\FileSystem\FileSystem;
 use Drupal\Component\Serialization\Json;
-use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\State\StateInterface;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\Core\StringTranslation\TranslationInterface;
@@ -77,11 +74,11 @@ class Updater {
   protected $eventDispatcher;
 
   /**
-   * The config factory service.
+   * The path locator service.
    *
-   * @var \Drupal\Core\Config\ConfigFactoryInterface
+   * @var \Drupal\automatic_updates\PathLocator
    */
-  protected $configFactory;
+  protected $pathLocator;
 
   /**
    * Constructs an Updater object.
@@ -100,10 +97,10 @@ class Updater {
    *   The Composer Stager's committer service.
    * @param \Symfony\Component\EventDispatcher\EventDispatcherInterface $event_dispatcher
    *   The event dispatcher service.
-   * @param \Drupal\Core\Config\ConfigFactoryInterface $config_factory
-   *   The config factory service.
+   * @param \Drupal\automatic_updates\PathLocator $path_locator
+   *   The path locator service.
    */
-  public function __construct(StateInterface $state, TranslationInterface $translation, BeginnerInterface $beginner, StagerInterface $stager, CleanerInterface $cleaner, CommitterInterface $committer, EventDispatcherInterface $event_dispatcher, ConfigFactoryInterface $config_factory) {
+  public function __construct(StateInterface $state, TranslationInterface $translation, BeginnerInterface $beginner, StagerInterface $stager, CleanerInterface $cleaner, CommitterInterface $committer, EventDispatcherInterface $event_dispatcher, PathLocator $path_locator) {
     $this->state = $state;
     $this->beginner = $beginner;
     $this->stager = $stager;
@@ -111,31 +108,7 @@ class Updater {
     $this->committer = $committer;
     $this->setStringTranslation($translation);
     $this->eventDispatcher = $event_dispatcher;
-    $this->configFactory = $config_factory;
-  }
-
-  /**
-   * Gets the vendor directory.
-   *
-   * @return string
-   *   The absolute path for vendor directory.
-   */
-  private static function getVendorDirectory(): string {
-    $class_loader_reflection = new \ReflectionClass(ClassLoader::class);
-    return dirname($class_loader_reflection->getFileName(), 2);
-  }
-
-  /**
-   * Gets the stage directory.
-   *
-   * @return string
-   *   The absolute path for stage directory.
-   */
-  public function getStageDirectory(): string {
-    // Append the site ID to the directory in order to support parallel test
-    // runs, or multiple sites hosted on the same server.
-    $site_id = $this->configFactory->get('system.site')->get('uuid');
-    return FileSystem::getOsTemporaryDirectory() . '/.automatic_updates_stage_' . $site_id;
+    $this->pathLocator = $path_locator;
   }
 
   /**
@@ -145,21 +118,11 @@ class Updater {
    *   TRUE if there is active update, otherwise FALSE.
    */
   public function hasActiveUpdate(): bool {
-    $staged_dir = $this->getStageDirectory();
+    $staged_dir = $this->pathLocator->getStageDirectory();
     if (is_dir($staged_dir) || $this->state->get(static::STATE_KEY)) {
       return TRUE;
     }
     return FALSE;
-  }
-
-  /**
-   * Gets the active directory.
-   *
-   * @return string
-   *   The absolute path for active directory.
-   */
-  public function getActiveDirectory(): string {
-    return realpath(static::getVendorDirectory() . '/..');
   }
 
   /**
@@ -184,7 +147,7 @@ class Updater {
     $stage_key = $this->createActiveStage($packages);
     /** @var \Drupal\automatic_updates\Event\PreStartEvent $event */
     $event = $this->dispatchUpdateEvent(new PreStartEvent($packages), AutomaticUpdatesEvents::PRE_START);
-    $this->beginner->begin(static::getActiveDirectory(), static::getStageDirectory(), $this->getExclusions($event));
+    $this->beginner->begin($this->pathLocator->getActiveDirectory(), $this->pathLocator->getStageDirectory(), $this->getExclusions($event));
     return $stage_key;
   }
 
@@ -210,7 +173,7 @@ class Updater {
    *   detecting the core package.
    */
   public function getCorePackageName(): string {
-    $composer = realpath(static::getVendorDirectory() . '/../composer.json');
+    $composer = realpath($this->pathLocator->getProjectRoot() . '/composer.json');
 
     if (empty($composer) || !file_exists($composer)) {
       throw new \RuntimeException("Could not find project-level composer.json");
@@ -239,7 +202,7 @@ class Updater {
    */
   private function getExclusions($event): array {
     $make_relative = function (string $path): string {
-      return str_replace($this->getActiveDirectory() . '/', '', $path);
+      return str_replace($this->pathLocator->getActiveDirectory() . '/', '', $path);
     };
     return array_map($make_relative, $event->getExcludedPaths());
   }
@@ -270,15 +233,16 @@ class Updater {
   public function commit(): void {
     /** @var \Drupal\automatic_updates\Event\PreCommitEvent $event */
     $event = $this->dispatchUpdateEvent(new PreCommitEvent(), AutomaticUpdatesEvents::PRE_COMMIT);
-    $this->committer->commit($this->getStageDirectory(), static::getActiveDirectory(), $this->getExclusions($event));
+    $this->committer->commit($this->pathLocator->getStageDirectory(), $this->pathLocator->getActiveDirectory(), $this->getExclusions($event));
   }
 
   /**
    * Cleans the current update.
    */
   public function clean(): void {
-    if (is_dir($this->getStageDirectory())) {
-      $this->cleaner->clean($this->getStageDirectory());
+    $stage_dir = $this->pathLocator->getStageDirectory();
+    if (is_dir($stage_dir)) {
+      $this->cleaner->clean($stage_dir);
     }
     $this->state->delete(static::STATE_KEY);
   }
@@ -293,7 +257,7 @@ class Updater {
    * @see \PhpTuf\ComposerStager\Domain\StagerInterface::stage()
    */
   protected function stageCommand(array $command): void {
-    $this->stager->stage($command, $this->getStageDirectory());
+    $this->stager->stage($command, $this->pathLocator->getStageDirectory());
   }
 
   /**

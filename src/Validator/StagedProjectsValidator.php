@@ -5,7 +5,7 @@ namespace Drupal\automatic_updates\Validator;
 use Drupal\automatic_updates\AutomaticUpdatesEvents;
 use Drupal\automatic_updates\Event\UpdateEvent;
 use Drupal\automatic_updates\Exception\UpdateException;
-use Drupal\automatic_updates\Updater;
+use Drupal\automatic_updates\PathLocator;
 use Drupal\automatic_updates\Validation\ValidationResult;
 use Drupal\Component\Serialization\Json;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
@@ -20,23 +20,23 @@ final class StagedProjectsValidator implements EventSubscriberInterface {
   use StringTranslationTrait;
 
   /**
-   * The updater service.
+   * The path locator service.
    *
-   * @var \Drupal\automatic_updates\Updater
+   * @var \Drupal\automatic_updates\PathLocator
    */
-  protected $updater;
+  protected $pathLocator;
 
   /**
    * Constructs a StagedProjectsValidation object.
    *
    * @param \Drupal\Core\StringTranslation\TranslationInterface $translation
    *   The translation service.
-   * @param \Drupal\automatic_updates\Updater $updater
-   *   The updater service.
+   * @param \Drupal\automatic_updates\PathLocator $path_locator
+   *   The path locator service.
    */
-  public function __construct(TranslationInterface $translation, Updater $updater) {
+  public function __construct(TranslationInterface $translation, PathLocator $path_locator) {
     $this->setStringTranslation($translation);
-    $this->updater = $updater;
+    $this->pathLocator = $path_locator;
   }
 
   /**
@@ -87,8 +87,8 @@ final class StagedProjectsValidator implements EventSubscriberInterface {
    */
   public function validateStagedProjects(UpdateEvent $event): void {
     try {
-      $active_packages = $this->getDrupalPackagesFromLockFile($this->updater->getActiveDirectory() . "/composer.lock");
-      $staged_packages = $this->getDrupalPackagesFromLockFile($this->updater->getStageDirectory() . "/composer.lock");
+      $active_packages = $this->getDrupalPackagesFromLockFile($this->pathLocator->getActiveDirectory() . "/composer.lock");
+      $staged_packages = $this->getDrupalPackagesFromLockFile($this->pathLocator->getStageDirectory() . "/composer.lock");
     }
     catch (UpdateException $e) {
       foreach ($e->getValidationResults() as $result) {

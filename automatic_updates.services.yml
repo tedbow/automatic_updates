@@ -4,7 +4,7 @@ services:
     arguments: ['@keyvalue.expirable', '@datetime.time', 24]
   automatic_updates.updater:
     class: Drupal\automatic_updates\Updater
-    arguments: ['@state', '@string_translation','@automatic_updates.beginner', '@automatic_updates.stager', '@automatic_updates.cleaner', '@automatic_updates.committer', '@event_dispatcher', '@config.factory']
+    arguments: ['@state', '@string_translation','@automatic_updates.beginner', '@automatic_updates.stager', '@automatic_updates.cleaner', '@automatic_updates.committer', '@event_dispatcher', '@automatic_updates.path_locator']
   automatic_updates.beginner:
     class: PhpTuf\ComposerStager\Domain\Beginner
     arguments:
@@ -73,7 +73,7 @@ services:
       - { name: event_subscriber }
   automatic_updates.staged_projects_validator:
     class: Drupal\automatic_updates\Validator\StagedProjectsValidator
-    arguments: [ '@string_translation', '@automatic_updates.updater' ]
+    arguments: ['@string_translation', '@automatic_updates.path_locator']
     tags:
       - { name: event_subscriber }
   automatic_updates.update_version_validator:
@@ -86,3 +86,7 @@ services:
     arguments: ['@automatic_updates.exec_finder']
     tags:
       - { name: event_subscriber }
+  automatic_updates.path_locator:
+    class: Drupal\automatic_updates\PathLocator
+    arguments:
+      - '@config.factory'

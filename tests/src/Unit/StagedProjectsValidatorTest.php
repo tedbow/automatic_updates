@@ -3,7 +3,7 @@
 namespace Drupal\Tests\automatic_updates\Unit;
 
 use Drupal\automatic_updates\Event\UpdateEvent;
-use Drupal\automatic_updates\Updater;
+use Drupal\automatic_updates\PathLocator;
 use Drupal\automatic_updates\Validator\StagedProjectsValidator;
 use Drupal\Component\FileSystem\FileSystem;
 use Drupal\Core\StringTranslation\PluralTranslatableMarkup;
@@ -26,10 +26,10 @@ class StagedProjectsValidatorTest extends UnitTestCase {
     $active_dir = uniqid($prefix);
     $stage_dir = uniqid($prefix);
 
-    $updater = $this->prophesize(Updater::class);
-    $updater->getActiveDirectory()->willReturn($active_dir);
-    $updater->getStageDirectory()->willReturn($stage_dir);
-    $validator = new StagedProjectsValidator(new TestTranslationManager(), $updater->reveal());
+    $locator = $this->prophesize(PathLocator::class);
+    $locator->getActiveDirectory()->willReturn($active_dir);
+    $locator->getStageDirectory()->willReturn($stage_dir);
+    $validator = new StagedProjectsValidator(new TestTranslationManager(), $locator->reveal());
 
     $event = new UpdateEvent();
     $validator->validateStagedProjects($event);
@@ -56,13 +56,13 @@ class StagedProjectsValidatorTest extends UnitTestCase {
    * @covers ::validateStagedProjects
    */
   public function testErrors(string $fixtures_dir, string $expected_summary, array $expected_messages): void {
-    $updater = $this->prophesize(Updater::class);
+    $locator = $this->prophesize(PathLocator::class);
     $this->assertNotEmpty($fixtures_dir);
     $this->assertDirectoryExists($fixtures_dir);
 
-    $updater->getActiveDirectory()->willReturn("$fixtures_dir/active");
-    $updater->getStageDirectory()->willReturn("$fixtures_dir/staged");
-    $validator = new StagedProjectsValidator(new TestTranslationManager(), $updater->reveal());
+    $locator->getActiveDirectory()->willReturn("$fixtures_dir/active");
+    $locator->getStageDirectory()->willReturn("$fixtures_dir/staged");
+    $validator = new StagedProjectsValidator(new TestTranslationManager(), $locator->reveal());
     $event = new UpdateEvent();
     $validator->validateStagedProjects($event);
     $results = $event->getResults();
@@ -121,10 +121,10 @@ class StagedProjectsValidatorTest extends UnitTestCase {
    */
   public function testNoErrors(): void {
     $fixtures_dir = realpath(__DIR__ . '/../../fixtures/project_staged_validation/no_errors');
-    $updater = $this->prophesize(Updater::class);
-    $updater->getActiveDirectory()->willReturn("$fixtures_dir/active");
-    $updater->getStageDirectory()->willReturn("$fixtures_dir/staged");
-    $validator = new StagedProjectsValidator(new TestTranslationManager(), $updater->reveal());
+    $locator = $this->prophesize(PathLocator::class);
+    $locator->getActiveDirectory()->willReturn("$fixtures_dir/active");
+    $locator->getStageDirectory()->willReturn("$fixtures_dir/staged");
+    $validator = new StagedProjectsValidator(new TestTranslationManager(), $locator->reveal());
     $event = new UpdateEvent();
     $validator->validateStagedProjects($event);
     $results = $event->getResults();
@@ -137,10 +137,10 @@ class StagedProjectsValidatorTest extends UnitTestCase {
    */
   public function testNoLockFile(): void {
     $fixtures_dir = realpath(__DIR__ . '/../../fixtures/project_staged_validation/no_errors');
-    $updater = $this->prophesize(Updater::class);
-    $updater->getActiveDirectory()->willReturn("$fixtures_dir/active");
-    $updater->getStageDirectory()->willReturn("$fixtures_dir");
-    $validator = new StagedProjectsValidator(new TestTranslationManager(), $updater->reveal());
+    $locator = $this->prophesize(PathLocator::class);
+    $locator->getActiveDirectory()->willReturn("$fixtures_dir/active");
+    $locator->getStageDirectory()->willReturn("$fixtures_dir");
+    $validator = new StagedProjectsValidator(new TestTranslationManager(), $locator->reveal());
     $event = new UpdateEvent();
     $validator->validateStagedProjects($event);
     $results = $event->getResults();
