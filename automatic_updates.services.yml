@@ -85,7 +85,7 @@ services:
       - { name: event_subscriber }
   automatic_updates.composer_executable_validator:
     class: Drupal\automatic_updates\Validator\ComposerExecutableValidator
-    arguments: ['@automatic_updates.exec_finder']
+    arguments: ['@automatic_updates.composer_runner']
     tags:
       - { name: event_subscriber }
   automatic_updates.path_locator:
