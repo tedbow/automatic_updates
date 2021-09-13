@@ -29,7 +29,7 @@ class UpdaterFormTest extends BrowserTestBase {
   protected static $modules = [
     'automatic_updates',
     'automatic_updates_test',
-    'composer_stager_bypass',
+    'package_manager_bypass',
     'update_test',
   ];
 

@@ -4,70 +4,16 @@ services:
     arguments: ['@keyvalue.expirable', '@datetime.time', 24]
   automatic_updates.updater:
     class: Drupal\automatic_updates\Updater
-    arguments: ['@state', '@string_translation','@automatic_updates.beginner', '@automatic_updates.stager', '@automatic_updates.cleaner', '@automatic_updates.committer', '@event_dispatcher', '@automatic_updates.path_locator']
-  automatic_updates.beginner:
-    class: PhpTuf\ComposerStager\Domain\Beginner
-    arguments:
-      ['@automatic_updates.file_copier', '@automatic_updates.file_system' ]
-  automatic_updates.stager:
-    class: PhpTuf\ComposerStager\Domain\Stager
-    arguments:
-      ['@automatic_updates.composer_runner', '@automatic_updates.file_system' ]
+    arguments: ['@state', '@string_translation','@package_manager.beginner', '@package_manager.stager', '@automatic_updates.cleaner', '@package_manager.committer', '@event_dispatcher', '@automatic_updates.path_locator']
   automatic_updates.cleaner:
     class: Drupal\automatic_updates\ComposerStager\Cleaner
+    decorates: package_manager.cleaner
+    public: false
     arguments:
-      - '@automatic_updates.file_system'
+      - '@automatic_updates.cleaner.inner'
       - '%site.path%'
       - '@automatic_updates.path_locator'
-  automatic_updates.committer:
-    class: PhpTuf\ComposerStager\Domain\Committer
-    arguments:
-      ['@automatic_updates.file_copier', '@automatic_updates.file_system' ]
-  automatic_updates.composer_runner:
-    class: PhpTuf\ComposerStager\Infrastructure\Process\Runner\ComposerRunner
-    arguments:
-      ['@automatic_updates.exec_finder', '@automatic_updates.process_factory' ]
-  automatic_updates.file_copier.factory:
-    class: PhpTuf\ComposerStager\Infrastructure\Process\FileCopier\FileCopierFactory
-    arguments:
-      - '@automatic_updates.symfony_exec_finder'
-      - '@automatic_updates.file_copier.php'
-      - '@automatic_updates.file_copier.rsync'
-  automatic_updates.file_copier.rsync:
-    class: PhpTuf\ComposerStager\Infrastructure\Process\FileCopier\RsyncFileCopier
-    arguments:
-      - '@automatic_updates.file_system'
-      - '@automatic_updates.rsync'
-  automatic_updates.file_copier.php:
-    class: PhpTuf\ComposerStager\Infrastructure\Process\FileCopier\PhpFileCopier
-    arguments:
-      - '@automatic_updates.file_system'
-      - '@automatic_updates.finder'
-      - '@automatic_updates.finder'
-  automatic_updates.finder:
-    class: Symfony\Component\Finder\Finder
-    public: false
-  automatic_updates.file_copier:
-    class: PhpTuf\ComposerStager\Infrastructure\Process\FileCopier\FileCopierInterface
-    factory: ['@automatic_updates.file_copier.factory', 'create']
-  automatic_updates.file_system:
-    class: PhpTuf\ComposerStager\Infrastructure\Filesystem\Filesystem
-    arguments:
-      ['@automatic_updates.symfony_file_system' ]
-  automatic_updates.symfony_file_system:
-    class: Symfony\Component\Filesystem\Filesystem
-  automatic_updates.symfony_exec_finder:
-    class: Symfony\Component\Process\ExecutableFinder
-  automatic_updates.rsync:
-    class: PhpTuf\ComposerStager\Infrastructure\Process\Runner\RsyncRunner
-    arguments:
-      ['@automatic_updates.exec_finder', '@automatic_updates.process_factory' ]
-  automatic_updates.exec_finder:
-    class: PhpTuf\ComposerStager\Infrastructure\Process\ExecutableFinder
-    arguments:
-      ['@automatic_updates.symfony_exec_finder' ]
-  automatic_updates.process_factory:
-    class: Drupal\automatic_updates\ComposerStager\ProcessFactory
+    properties: { _serviceId: package_manager.cleaner }
   automatic_updates.excluded_paths_subscriber:
     class: Drupal\automatic_updates\Event\ExcludedPathsSubscriber
     arguments: ['%app.root%', '%site.path%', '@file_system', '@stream_wrapper_manager']
@@ -85,7 +31,7 @@ services:
       - { name: event_subscriber }
   automatic_updates.composer_executable_validator:
     class: Drupal\automatic_updates\Validator\ComposerExecutableValidator
-    arguments: ['@automatic_updates.composer_runner']
+    arguments: ['@package_manager.composer_runner']
     tags:
       - { name: event_subscriber }
   automatic_updates.path_locator:

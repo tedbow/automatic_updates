@@ -65,7 +65,7 @@ class FileSystemOperationsTest extends BrowserTestBase {
     // will otherwise default to the site path being used for the test site,
     // which doesn't exist in the fake site fixture.
     $cleaner = new Cleaner(
-      $this->container->get('automatic_updates.file_system'),
+      $this->container->get('package_manager.cleaner'),
       'sites/default',
       $locator->reveal()
     );
@@ -73,10 +73,10 @@ class FileSystemOperationsTest extends BrowserTestBase {
     $this->updater = new Updater(
       $this->container->get('state'),
       $this->container->get('string_translation'),
-      $this->container->get('automatic_updates.beginner'),
-      $this->container->get('automatic_updates.stager'),
+      $this->container->get('package_manager.beginner'),
+      $this->container->get('package_manager.stager'),
       $cleaner,
-      $this->container->get('automatic_updates.committer'),
+      $this->container->get('package_manager.committer'),
       $this->container->get('event_dispatcher'),
       $locator->reveal()
     );

@@ -1,6 +1,6 @@
 <?php
 
-namespace Drupal\automatic_updates\ComposerStager;
+namespace Drupal\package_manager;
 
 use PhpTuf\ComposerStager\Infrastructure\Process\ProcessFactory as StagerProcessFactory;
 use PhpTuf\ComposerStager\Infrastructure\Process\ProcessFactoryInterface;

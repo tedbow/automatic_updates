@@ -1,14 +1,14 @@
 <?php
 
-namespace Drupal\composer_stager_bypass;
+namespace Drupal\package_manager_bypass;
 
 use Drupal\Core\DependencyInjection\ContainerBuilder;
 use Drupal\Core\DependencyInjection\ServiceProviderBase;
 
 /**
- * Defines services to bypass Composer Stager's core functionality.
+ * Defines services to bypass Package Manager's core functionality.
  */
-class ComposerStagerBypassServiceProvider extends ServiceProviderBase {
+class PackageManagerBypassServiceProvider extends ServiceProviderBase {
 
   /**
    * {@inheritdoc}
@@ -16,9 +16,9 @@ class ComposerStagerBypassServiceProvider extends ServiceProviderBase {
   public function alter(ContainerBuilder $container) {
     parent::alter($container);
 
-    $container->getDefinition('automatic_updates.beginner')
+    $container->getDefinition('package_manager.beginner')
       ->setClass(Beginner::class);
-    $container->getDefinition('automatic_updates.stager')
+    $container->getDefinition('package_manager.stager')
       ->setClass(Stager::class);
   }
 

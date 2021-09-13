@@ -22,7 +22,10 @@ class ComposerExecutableValidatorTest extends KernelTestBase {
   /**
    * {@inheritdoc}
    */
-  protected static $modules = ['automatic_updates'];
+  protected static $modules = [
+    'automatic_updates',
+    'package_manager',
+  ];
 
   /**
    * Tests that an error is raised if the Composer executable isn't found.
@@ -36,7 +39,7 @@ class ComposerExecutableValidatorTest extends KernelTestBase {
     $exec_finder->find('composer')
       ->willThrow($exception)
       ->shouldBeCalled();
-    $this->container->set('automatic_updates.exec_finder', $exec_finder->reveal());
+    $this->container->set('package_manager.executable_finder', $exec_finder->reveal());
 
     // The validator should translate that exception into an error.
     $error = ValidationResult::createError([
@@ -138,7 +141,7 @@ class ComposerExecutableValidatorTest extends KernelTestBase {
         // recognized, supported version number out of this output.
         $validator($validator::OUT, "Composer version $reported_version");
       });
-    $this->container->set('automatic_updates.composer_runner', $runner->reveal());
+    $this->container->set('package_manager.composer_runner', $runner->reveal());
 
     // If the validator can't find a recognized, supported version of Composer,
     // it should produce errors.

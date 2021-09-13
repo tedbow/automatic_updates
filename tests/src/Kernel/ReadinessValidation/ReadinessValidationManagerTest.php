@@ -20,7 +20,11 @@ class ReadinessValidationManagerTest extends KernelTestBase {
   /**
    * {@inheritdoc}
    */
-  protected static $modules = ['automatic_updates_test', 'user'];
+  protected static $modules = [
+    'automatic_updates_test',
+    'package_manager',
+    'user',
+  ];
 
   /**
    * {@inheritdoc}

@@ -1,0 +1,9 @@
+services:
+  package_manager_bypass.committer:
+    public: false
+    class: Drupal\package_manager_bypass\Committer
+    decorates: package_manager.committer
+    arguments:
+      - '@package_manager_bypass.committer.inner'
+    properties:
+      - { _serviceId: package_manager.committer }

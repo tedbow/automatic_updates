@@ -3,10 +3,8 @@
 namespace Drupal\automatic_updates\ComposerStager;
 
 use Drupal\automatic_updates\PathLocator;
-use PhpTuf\ComposerStager\Domain\Cleaner as ComposerStagerCleaner;
 use PhpTuf\ComposerStager\Domain\CleanerInterface;
 use PhpTuf\ComposerStager\Domain\Output\ProcessOutputCallbackInterface;
-use PhpTuf\ComposerStager\Infrastructure\Filesystem\FilesystemInterface;
 use Symfony\Component\Filesystem\Filesystem;
 
 /**
@@ -38,18 +36,16 @@ class Cleaner implements CleanerInterface {
   /**
    * Constructs a Cleaner object.
    *
-   * @param \PhpTuf\ComposerStager\Infrastructure\Filesystem\FilesystemInterface $file_system
-   *   The Composer Stager file system service.
+   * @param \PhpTuf\ComposerStager\Domain\CleanerInterface $decorated
+   *   The decorated cleaner service.
    * @param string $site_path
    *   The current site path (e.g., 'sites/default'), without leading or
    *   trailing slashes.
    * @param \Drupal\automatic_updates\PathLocator $locator
    *   The path locator service.
    */
-  public function __construct(FilesystemInterface $file_system, string $site_path, PathLocator $locator) {
-    // @todo Inject the decorated cleaner once the Composer Stager wiring has
-    // been moved into a separate module.
-    $this->decorated = new ComposerStagerCleaner($file_system);
+  public function __construct(CleanerInterface $decorated, string $site_path, PathLocator $locator) {
+    $this->decorated = $decorated;
     $this->sitePath = $site_path;
     $this->pathLocator = $locator;
   }

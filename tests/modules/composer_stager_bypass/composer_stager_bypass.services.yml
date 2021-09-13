@@ -1,9 +1,0 @@
-services:
-  composer_stager_bypass.committer:
-    public: false
-    class: Drupal\composer_stager_bypass\Committer
-    decorates: automatic_updates.committer
-    arguments:
-      - '@composer_stager_bypass.committer.inner'
-    properties:
-      - { _serviceId: automatic_updates.committer }

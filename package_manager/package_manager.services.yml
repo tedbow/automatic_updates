@@ -1,0 +1,75 @@
+services:
+  # Underlying Symfony utilities.
+  package_manager.symfony_file_system:
+    class: Symfony\Component\Filesystem\Filesystem
+  package_manager.symfony_executable_finder:
+    class: Symfony\Component\Process\ExecutableFinder
+  package_manager.symfony_finder:
+    class: Symfony\Component\Finder\Finder
+
+  # Basic infrastructure services.
+  package_manager.process_factory:
+    class: Drupal\package_manager\ProcessFactory
+  package_manager.file_system:
+    class: PhpTuf\ComposerStager\Infrastructure\Filesystem\Filesystem
+    arguments:
+      - '@package_manager.symfony_file_system'
+  package_manager.executable_finder:
+    class: PhpTuf\ComposerStager\Infrastructure\Process\ExecutableFinder
+    arguments:
+      - '@package_manager.symfony_executable_finder'
+
+  # Executable runners.
+  package_manager.rsync_runner:
+    class: PhpTuf\ComposerStager\Infrastructure\Process\Runner\RsyncRunner
+    arguments:
+      - '@package_manager.executable_finder'
+      - '@package_manager.process_factory'
+  package_manager.composer_runner:
+    class: PhpTuf\ComposerStager\Infrastructure\Process\Runner\ComposerRunner
+    arguments:
+      - '@package_manager.executable_finder'
+      - '@package_manager.process_factory'
+
+  # File copiers.
+  package_manager.file_copier.rsync:
+    class: PhpTuf\ComposerStager\Infrastructure\Process\FileCopier\RsyncFileCopier
+    arguments:
+      - '@package_manager.file_system'
+      - '@package_manager.rsync_runner'
+  package_manager.file_copier.php:
+    class: PhpTuf\ComposerStager\Infrastructure\Process\FileCopier\PhpFileCopier
+    arguments:
+      - '@package_manager.file_system'
+      - '@package_manager.symfony_finder'
+      - '@package_manager.symfony_finder'
+  package_manager.file_copier.factory:
+    class: PhpTuf\ComposerStager\Infrastructure\Process\FileCopier\FileCopierFactory
+    arguments:
+      - '@package_manager.symfony_executable_finder'
+      - '@package_manager.file_copier.php'
+      - '@package_manager.file_copier.rsync'
+  package_manager.file_copier:
+    class: PhpTuf\ComposerStager\Infrastructure\Process\FileCopier\FileCopierInterface
+    factory: ['@package_manager.file_copier.factory', 'create']
+
+  # Domain services.
+  package_manager.beginner:
+    class: PhpTuf\ComposerStager\Domain\Beginner
+    arguments:
+      - '@package_manager.file_copier'
+      - '@package_manager.file_system'
+  package_manager.stager:
+    class: PhpTuf\ComposerStager\Domain\Stager
+    arguments:
+      - '@package_manager.composer_runner'
+      - '@package_manager.file_system'
+  package_manager.committer:
+    class: PhpTuf\ComposerStager\Domain\Committer
+    arguments:
+      - '@package_manager.file_copier'
+      - '@package_manager.file_system'
+  package_manager.cleaner:
+    class: PhpTuf\ComposerStager\Domain\Cleaner
+    arguments:
+      - '@package_manager.file_system'

@@ -1,6 +1,6 @@
 <?php
 
-namespace Drupal\composer_stager_bypass;
+namespace Drupal\package_manager_bypass;
 
 use PhpTuf\ComposerStager\Domain\CommitterInterface;
 use PhpTuf\ComposerStager\Domain\Output\ProcessOutputCallbackInterface;

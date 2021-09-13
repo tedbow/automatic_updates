@@ -22,7 +22,7 @@ class UpdaterTest extends KernelTestBase {
   protected static $modules = [
     'automatic_updates',
     'automatic_updates_test',
-    'composer_stager_bypass',
+    'package_manager',
     'update',
     'update_test',
   ];
@@ -58,7 +58,7 @@ class UpdaterTest extends KernelTestBase {
       '--update-with-all-dependencies',
     ];
     $stager->stage($command, Argument::cetera())->shouldBeCalled();
-    $this->container->set('automatic_updates.stager', $stager->reveal());
+    $this->container->set('package_manager.stager', $stager->reveal());
     $this->container->get('automatic_updates.updater')->stage();
   }
 
