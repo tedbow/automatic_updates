@@ -4,10 +4,9 @@ namespace Drupal\automatic_updates\Form;
 
 use Drupal\automatic_updates\BatchProcessor;
 use Drupal\automatic_updates\Updater;
+use Drupal\automatic_updates\UpdateRecommender;
 use Drupal\automatic_updates\Validation\ReadinessValidationManager;
-use Drupal\automatic_updates_9_3_shim\ProjectRelease;
 use Drupal\Core\Batch\BatchBuilder;
-use Drupal\Core\Extension\ModuleHandlerInterface;
 use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Link;
@@ -33,13 +32,6 @@ class UpdaterForm extends FormBase {
   protected $updater;
 
   /**
-   * The module handler.
-   *
-   * @var \Drupal\Core\Extension\ModuleHandlerInterface
-   */
-  protected $moduleHandler;
-
-  /**
    * The state service.
    *
    * @var \Drupal\Core\State\StateInterface
@@ -56,8 +48,6 @@ class UpdaterForm extends FormBase {
   /**
    * Constructs a new UpdaterForm object.
    *
-   * @param \Drupal\Core\Extension\ModuleHandlerInterface $module_handler
-   *   The module handler.
    * @param \Drupal\Core\State\StateInterface $state
    *   The state service.
    * @param \Drupal\automatic_updates\Updater $updater
@@ -65,9 +55,8 @@ class UpdaterForm extends FormBase {
    * @param \Drupal\automatic_updates\Validation\ReadinessValidationManager $readiness_validation_manager
    *   The readiness validation manager service.
    */
-  public function __construct(ModuleHandlerInterface $module_handler, StateInterface $state, Updater $updater, ReadinessValidationManager $readiness_validation_manager) {
+  public function __construct(StateInterface $state, Updater $updater, ReadinessValidationManager $readiness_validation_manager) {
     $this->updater = $updater;
-    $this->moduleHandler = $module_handler;
     $this->state = $state;
     $this->readinessValidationManager = $readiness_validation_manager;
   }
@@ -84,7 +73,6 @@ class UpdaterForm extends FormBase {
    */
   public static function create(ContainerInterface $container) {
     return new static(
-      $container->get('module_handler'),
       $container->get('state'),
       $container->get('automatic_updates.updater'),
       $container->get('automatic_updates.readiness_validation_manager')
@@ -96,17 +84,19 @@ class UpdaterForm extends FormBase {
    */
   public function buildForm(array $form, FormStateInterface $form_state) {
     $this->messenger()->addWarning($this->t('This is an experimental updater using Composer. Use at your own risk 💀'));
-    $this->moduleHandler->loadInclude('update', 'inc', 'update.manager');
 
     $form['last_check'] = [
       '#theme' => 'update_last_check',
       '#last' => $this->state->get('update.last_check', 0),
     ];
 
-    $available = update_get_available(TRUE);
-    if (empty($available)) {
+    $recommender = new UpdateRecommender();
+    try {
+      $recommended_release = $recommender->getRecommendedRelease(TRUE);
+    }
+    catch (\RuntimeException $e) {
       $form['message'] = [
-        '#markup' => $this->t('There was a problem getting update information. Try again later.'),
+        '#markup' => $e->getMessage(),
       ];
       return $form;
     }
@@ -114,23 +104,11 @@ class UpdaterForm extends FormBase {
     // @todo Should we be using the Update module's library here, or our own?
     $form['#attached']['library'][] = 'update/drupal.update.admin';
 
-    $this->moduleHandler->loadInclude('update', 'inc', 'update.compare');
-    $project_data = update_calculate_project_data($available);
-    $project = $project_data['drupal'];
-
     // If we're already up-to-date, there's nothing else we need to do.
-    if ($project['status'] === UpdateManagerInterface::CURRENT) {
+    if ($recommended_release === NULL) {
       $this->messenger()->addMessage('No update available');
       return $form;
     }
-    // If we don't know what to recommend they upgrade to, time to freak out.
-    elseif (empty($project['recommended'])) {
-      // @todo Can we fail more gracefully here? Maybe link to the status report
-      // page, or do anything other than throw a nasty exception?
-      throw new \LogicException("Should always have an update at this point");
-    }
-
-    $recommended_release = ProjectRelease::createFromArray($project['releases'][$project['recommended']]);
 
     $form['update_version'] = [
       '#type' => 'value',
@@ -139,6 +117,7 @@ class UpdaterForm extends FormBase {
       ],
     ];
 
+    $project = $recommender->getProjectInfo();
     if (empty($project['title']) || empty($project['link'])) {
       throw new \UnexpectedValueException('Expected project data to have a title and link.');
     }
