@@ -3,6 +3,6 @@ type: module
 description: 'Experimental module to develop automatic updates. Currently the module provides checks for update readiness but does not yet provide update functionality.'
 core_version_requirement: ^9
 dependencies:
-  - automatic_updates:package_manager
-  - automatic_updates:automatic_updates_9_3_shim
+  - drupal:package_manager
+  - drupal:automatic_updates_9_3_shim
   - drupal:update
