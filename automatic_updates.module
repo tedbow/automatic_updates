@@ -5,6 +5,7 @@
  * Contains hook implementations for Automatic Updates.
  */
 
+use Drupal\automatic_updates\CronUpdater;
 use Drupal\automatic_updates\Validation\AdminReadinessMessages;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Url;
@@ -22,6 +23,10 @@ function automatic_updates_page_top() {
  * Implements hook_cron().
  */
 function automatic_updates_cron() {
+  /** @var \Drupal\automatic_updates\CronUpdater $cron_updater */
+  $cron_updater = \Drupal::classResolver(CronUpdater::class);
+  $cron_updater->handleCron();
+
   /** @var \Drupal\automatic_updates\Validation\ReadinessValidationManager $checker_manager */
   $checker_manager = \Drupal::service('automatic_updates.readiness_validation_manager');
   $last_results = $checker_manager->getResults();

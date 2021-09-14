@@ -8,9 +8,9 @@ use Drupal\Tests\automatic_updates\Traits\LocalPackagesTrait;
 use Drupal\Tests\automatic_updates\Traits\SettingsTrait;
 
 /**
- * Base class for tests that perform in-place attended updates via the UI.
+ * Base class for tests that perform in-place updates.
  */
-abstract class AttendedUpdateTestBase extends QuickStartTestBase {
+abstract class UpdateTestBase extends QuickStartTestBase {
 
   use LocalPackagesTrait {
     getPackagePath as traitGetPackagePath;

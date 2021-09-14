@@ -7,7 +7,7 @@ namespace Drupal\Tests\automatic_updates\Build;
  *
  * @group automatic_updates
  */
-class AttendedCoreRecommendedUpdateTest extends AttendedCoreUpdateTest {
+class CoreRecommendedUpdateTest extends CoreUpdateTest {
 
   /**
    * {@inheritdoc}

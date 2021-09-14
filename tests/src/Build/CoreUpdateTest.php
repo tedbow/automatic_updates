@@ -3,11 +3,47 @@
 namespace Drupal\Tests\automatic_updates\Build;
 
 /**
- * Tests an end-to-end update of Drupal core within the UI.
+ * Tests an end-to-end update of Drupal core.
  *
  * @group automatic_updates
  */
-class AttendedCoreUpdateTest extends AttendedUpdateTestBase {
+class CoreUpdateTest extends UpdateTestBase {
+
+  /**
+   * {@inheritdoc}
+   */
+  protected function setUp(): void {
+    parent::setUp();
+
+    // Build the test site and alter its copy of core so that it thinks it's
+    // running Drupal 9.8.0, which will never actually exist in the real world.
+    // Then, prepare a secondary copy of the core code base, masquerading as
+    // Drupal 9.8.1, which will be the version of core we update to. These two
+    // versions are referenced in the fake release metadata in our fake release
+    // metadata (see fixtures/release-history/drupal.0.0.xml).
+    $this->createTestSite();
+    $this->setCoreVersion($this->getWebRoot() . '/core', '9.8.0');
+    $this->alterPackage($this->getWorkspaceDirectory(), $this->getConfigurationForUpdate('9.8.1'));
+
+    // Install Drupal and ensure it's using the fake release metadata to fetch
+    // information about available updates.
+    $this->installQuickStart('minimal');
+    $this->setReleaseMetadata(['drupal' => '0.0']);
+    $this->formLogin($this->adminUsername, $this->adminPassword);
+    $this->installModules([
+      'automatic_updates',
+      'automatic_updates_test',
+      'update_test',
+    ]);
+
+    // Ensure that Drupal thinks we are running 9.8.0, then refresh information
+    // about available updates.
+    $this->assertCoreVersion('9.8.0');
+    $this->checkForUpdates();
+    // Ensure that an update to 9.8.1 is available.
+    $this->visit('/admin/automatic-update');
+    $this->getMink()->assertSession()->pageTextContains('9.8.1');
+  }
 
   /**
    * {@inheritdoc}
@@ -35,14 +71,6 @@ class AttendedCoreUpdateTest extends AttendedUpdateTestBase {
     $code = file_get_contents($drupal_php);
     $code = preg_replace("/const VERSION = '([0-9]+\.?){3}(-dev)?';/", "const VERSION = '$version';", $code);
     file_put_contents($drupal_php, $code);
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  protected function createTestSite(): void {
-    parent::createTestSite();
-    $this->setCoreVersion($this->getWebRoot() . '/core', '9.8.0');
   }
 
   /**
@@ -76,37 +104,40 @@ class AttendedCoreUpdateTest extends AttendedUpdateTestBase {
   }
 
   /**
-   * Tests an end-to-end core update.
+   * Tests an end-to-end core update via the UI.
    */
-  public function test(): void {
-    $this->createTestSite();
-    $this->alterPackage($this->getWorkspaceDirectory(), $this->getConfigurationForUpdate('9.8.1'));
-
-    $this->installQuickStart('minimal');
-    $this->setReleaseMetadata(['drupal' => '0.0']);
-    $this->formLogin($this->adminUsername, $this->adminPassword);
-    $this->installModules([
-      'automatic_updates',
-      'automatic_updates_test',
-      'update_test',
-    ]);
-
+  public function testUi(): void {
     $mink = $this->getMink();
     $page = $mink->getSession()->getPage();
     $assert_session = $mink->assertSession();
 
-    $this->assertCoreVersion('9.8.0');
-    $this->checkForUpdates();
     $this->visit('/admin/automatic-update');
-    $assert_session->pageTextContains('9.8.1');
     $page->pressButton('Download these updates');
     $this->waitForBatchJob();
     $assert_session->pageTextContains('Ready to update');
     $page->pressButton('Continue');
     $this->waitForBatchJob();
     $assert_session->pageTextContains('Update complete!');
-    $this->assertCoreVersion('9.8.1');
+    $this->assertUpdateSuccessful();
+  }
 
+  /**
+   * Tests an end-to-end core update via cron.
+   */
+  public function testCron(): void {
+    $this->visit('/admin/reports/status');
+    $this->getMink()->getSession()->getPage()->clickLink('Run cron');
+    $this->assertUpdateSuccessful();
+  }
+
+  /**
+   * Asserts that Drupal core was successfully updated.
+   */
+  private function assertUpdateSuccessful(): void {
+    // The status page should report that we're running Drupal 9.8.1.
+    $this->assertCoreVersion('9.8.1');
+    // The fake placeholder text from ::getConfigurationForUpdate() should be
+    // present in the README.
     $placeholder = file_get_contents($this->getWebRoot() . '/core/README.txt');
     $this->assertSame('Placeholder for Drupal core 9.8.1.', $placeholder);
   }

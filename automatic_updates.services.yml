@@ -4,7 +4,7 @@ services:
     arguments: ['@keyvalue.expirable', '@datetime.time', 24]
   automatic_updates.updater:
     class: Drupal\automatic_updates\Updater
-    arguments: ['@state', '@string_translation','@package_manager.beginner', '@package_manager.stager', '@automatic_updates.cleaner', '@package_manager.committer', '@event_dispatcher', '@automatic_updates.path_locator']
+    arguments: ['@state', '@string_translation','@package_manager.beginner', '@package_manager.stager', '@package_manager.cleaner', '@package_manager.committer', '@event_dispatcher', '@automatic_updates.path_locator']
   automatic_updates.cleaner:
     class: Drupal\automatic_updates\ComposerStager\Cleaner
     decorates: package_manager.cleaner
