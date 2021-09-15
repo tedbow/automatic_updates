@@ -34,6 +34,12 @@ services:
     arguments: ['@package_manager.composer_runner']
     tags:
       - { name: event_subscriber }
+  automatic_updates.disk_space_validator:
+    class: Drupal\automatic_updates\Validator\DiskSpaceValidator
+    arguments:
+      - '@automatic_updates.path_locator'
+    tags:
+      - { name: event_subscriber }
   automatic_updates.path_locator:
     class: Drupal\automatic_updates\PathLocator
     arguments:
