@@ -104,6 +104,14 @@ class CoreUpdateTest extends UpdateTestBase {
   }
 
   /**
+   * Tests an end-to-end core update via the API.
+   */
+  public function testApi(): void {
+    $this->visit('/automatic-update-test/update/9.8.1');
+    $this->getMink()->assertSession()->pageTextContains('9.8.1');
+  }
+
+  /**
    * Tests an end-to-end core update via the UI.
    */
   public function testUi(): void {

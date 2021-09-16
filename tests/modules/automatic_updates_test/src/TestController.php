@@ -2,11 +2,42 @@
 
 namespace Drupal\automatic_updates_test;
 
+use Drupal\automatic_updates\UpdateRecommender;
+use Drupal\Component\Utility\Environment;
 use Drupal\Core\Controller\ControllerBase;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Symfony\Component\HttpFoundation\Response;
 
-class MetadataController extends ControllerBase {
+class TestController extends ControllerBase {
+
+  /**
+   * Performs an in-place update to a given version of Drupal core.
+   *
+   * This executes the update immediately, in one request, without using the
+   * batch system or cron as wrappers.
+   *
+   * @param string $to_version
+   *   The version of core to update to.
+   *
+   * @return array
+   *   The renderable array of the page.
+   */
+  public function update(string $to_version): array {
+    // Let it take as long as it needs.
+    Environment::setTimeLimit(0);
+
+    /** @var \Drupal\automatic_updates\Updater $updater */
+    $updater = \Drupal::service('automatic_updates.updater');
+    $updater->begin(['drupal' => $to_version]);
+    $updater->stage();
+    $updater->commit();
+    $updater->clean();
+
+    $project = (new UpdateRecommender())->getProjectInfo();
+    return [
+      '#markup' => $project['existing_version'],
+    ];
+  }
 
   /**
    * Page callback: Prints mock XML for the Update Manager module.
@@ -16,7 +47,7 @@ class MetadataController extends ControllerBase {
    * testing automatic updates. This was done in order to use a different
    * directory of mock XML files.
    */
-  public function updateTest($project_name = 'drupal', $version = NULL): Response {
+  public function metadata($project_name = 'drupal', $version = NULL): Response {
     if ($project_name !== 'drupal') {
       return new Response();
     }

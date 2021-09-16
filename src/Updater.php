@@ -234,6 +234,7 @@ class Updater {
     /** @var \Drupal\automatic_updates\Event\PreCommitEvent $event */
     $event = $this->dispatchUpdateEvent(new PreCommitEvent(), AutomaticUpdatesEvents::PRE_COMMIT);
     $this->committer->commit($this->pathLocator->getStageDirectory(), $this->pathLocator->getActiveDirectory(), $this->getExclusions($event));
+    $this->dispatchUpdateEvent(new UpdateEvent(), AutomaticUpdatesEvents::POST_COMMIT);
   }
 
   /**

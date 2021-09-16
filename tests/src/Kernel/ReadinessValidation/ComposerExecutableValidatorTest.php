@@ -25,6 +25,7 @@ class ComposerExecutableValidatorTest extends KernelTestBase {
   protected static $modules = [
     'automatic_updates',
     'package_manager',
+    'update',
   ];
 
   /**

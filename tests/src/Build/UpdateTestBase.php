@@ -83,7 +83,7 @@ abstract class UpdateTestBase extends QuickStartTestBase {
    * @param array $xml_map
    *   The update XML map, as used by update_test.settings.
    *
-   * @see \Drupal\automatic_updates_test\MetadataController::updateTest()
+   * @see \Drupal\automatic_updates_test\TestController::metadata()
    */
   protected function setReleaseMetadata(array $xml_map): void {
     $xml_map = var_export($xml_map, TRUE);

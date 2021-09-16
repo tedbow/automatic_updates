@@ -14,6 +14,12 @@ services:
       - '%site.path%'
       - '@automatic_updates.path_locator'
     properties: { _serviceId: package_manager.cleaner }
+  automatic_updates.update_refresh_subscriber:
+    class: Drupal\automatic_updates\Event\UpdateRefreshSubscriber
+    arguments:
+      - '@update.manager'
+    tags:
+      - { name: event_subscriber }
   automatic_updates.excluded_paths_subscriber:
     class: Drupal\automatic_updates\Event\ExcludedPathsSubscriber
     arguments: ['%app.root%', '%site.path%', '@file_system', '@stream_wrapper_manager']

@@ -57,4 +57,13 @@ final class AutomaticUpdatesEvents {
    */
   const PRE_COMMIT = 'automatic_updates.pre_commit';
 
+  /**
+   * Name of the event fired when a staged update has been committed.
+   *
+   * @Event
+   *
+   * @var string
+   */
+  const POST_COMMIT = 'automatic_updates.post_commit';
+
 }
