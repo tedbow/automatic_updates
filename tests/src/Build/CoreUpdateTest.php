@@ -134,6 +134,12 @@ class CoreUpdateTest extends UpdateTestBase {
    * Asserts that Drupal core was successfully updated.
    */
   private function assertUpdateSuccessful(): void {
+    // The update form should not have any available updates.
+    // @todo Figure out why this assertion fails when the batch processor
+    //   redirects directly to the update form, instead of update.status, when
+    //   updating via the UI.
+    $this->visit('/admin/modules/automatic-update');
+    $this->getMink()->assertSession()->pageTextContains('No update available');
     // The status page should report that we're running Drupal 9.8.1.
     $this->assertCoreVersion('9.8.1');
     // The fake placeholder text from ::getConfigurationForUpdate() should be
