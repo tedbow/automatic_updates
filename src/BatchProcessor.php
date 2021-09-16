@@ -158,7 +158,7 @@ class BatchProcessor {
     if ($success) {
       \Drupal::messenger()->addMessage('Update complete!');
       // @todo redirect to update.php?
-      return new RedirectResponse(Url::fromRoute('automatic_updates.update_form', [],
+      return new RedirectResponse(Url::fromRoute('update.status', [],
         ['absolute' => TRUE])->toString());
     }
     static::handleBatchError($results);

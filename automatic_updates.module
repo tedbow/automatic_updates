@@ -68,10 +68,19 @@ function automatic_updates_form_update_manager_update_form_alter(&$form, FormSta
   // Remove current message that core updates are not supported with a link to
   // use this modules form.
   if (isset($form['manual_updates']['#rows']['drupal']['data']['title'])) {
-    $core_updates_message = t(
-      '<h2>Core updates required</h2>Drupal core updates are supported by the enabled <a href="@url">Automatic Updates module</a>',
-      ['@url' => Url::fromRoute('automatic_updates.update_form')->toString()]
-    );
-    $form['manual_updates']['#prefix'] = $core_updates_message;
+    $current_route = \Drupal::routeMatch()->getRouteName();
+    if ($current_route === 'update.module_update') {
+      $redirect_route = 'automatic_updates.module_update';
+    }
+    elseif ($current_route === 'update.report_update') {
+      $redirect_route = 'automatic_updates.report_update';
+    }
+    if (!empty($redirect_route)) {
+      $core_updates_message = t(
+        '<h2>Core updates required</h2>Drupal core updates are supported by the enabled <a href="@url">Automatic Updates module</a>',
+        ['@url' => Url::fromRoute($redirect_route)->toString()]
+      );
+      $form['manual_updates']['#prefix'] = $core_updates_message;
+    }
   }
 }

@@ -27,6 +27,7 @@ class UpdaterFormTest extends BrowserTestBase {
    * {@inheritdoc}
    */
   protected static $modules = [
+    'block',
     'automatic_updates',
     'automatic_updates_test',
     'package_manager_bypass',
@@ -73,7 +74,7 @@ class UpdaterFormTest extends BrowserTestBase {
 
     $this->drupalLogin($this->rootUser);
     $this->checkForUpdates();
-    $this->drupalGet('/admin/automatic-update');
+    $this->drupalGet('/admin/modules/automatic-update');
 
     $assert_session = $this->assertSession();
     $assert_session->statusCodeEquals(200);
@@ -85,13 +86,20 @@ class UpdaterFormTest extends BrowserTestBase {
    * Tests that available updates are rendered correctly in a table.
    */
   public function testTableLooksCorrect(): void {
+    $this->drupalPlaceBlock('local_tasks_block', ['primary' => TRUE]);
+    $assert_session = $this->assertSession();
     $this->setCoreVersion('9.8.0');
 
     $this->drupalLogin($this->rootUser);
     $this->checkForUpdates();
-    $this->drupalGet('/admin/automatic-update');
-
-    $assert_session = $this->assertSession();
+    // Navigate to the automatic updates form.
+    $this->drupalGet('/admin');
+    // @todo Add test coverage of accessing the form via the other path in
+    //   https://www.drupal.org/i/3233564
+    $this->clickLink('Extend');
+    $this->clickLink('Update');
+    $assert_session->pageTextContainsOnce('Drupal core updates are supported by the enabled Automatic Updates module');
+    $this->clickLink('Automatic Updates module');
     $cells = $assert_session->elementExists('css', '#edit-projects .update-recommended')
       ->findAll('css', 'td');
     $this->assertCount(3, $cells);
@@ -133,7 +141,7 @@ class UpdaterFormTest extends BrowserTestBase {
 
     // If a validator raises an error during readiness checking, the form should
     // not have a submit button.
-    $this->drupalGet('/admin/automatic-update');
+    $this->drupalGet('/admin/modules/automatic-update');
     $assert_session->buttonNotExists('Download these updates');
     // Since this is an administrative page, the error message should be visible
     // thanks to automatic_updates_page_top(). The readiness checks were re-run

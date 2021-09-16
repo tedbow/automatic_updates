@@ -41,7 +41,7 @@ class CoreUpdateTest extends UpdateTestBase {
     $this->assertCoreVersion('9.8.0');
     $this->checkForUpdates();
     // Ensure that an update to 9.8.1 is available.
-    $this->visit('/admin/automatic-update');
+    $this->visit('/admin/modules/automatic-update');
     $this->getMink()->assertSession()->pageTextContains('9.8.1');
   }
 
@@ -111,7 +111,7 @@ class CoreUpdateTest extends UpdateTestBase {
     $page = $mink->getSession()->getPage();
     $assert_session = $mink->assertSession();
 
-    $this->visit('/admin/automatic-update');
+    $this->visit('/admin/modules/automatic-update');
     $page->pressButton('Download these updates');
     $this->waitForBatchJob();
     $assert_session->pageTextContains('Ready to update');
