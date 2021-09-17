@@ -73,7 +73,7 @@ class UpdaterFormTest extends BrowserTestBase {
     $this->setCoreVersion('9.8.1');
 
     $this->drupalLogin($this->rootUser);
-    $this->checkForUpdates();
+
     $this->drupalGet('/admin/modules/automatic-update');
 
     $assert_session = $this->assertSession();
@@ -91,7 +91,7 @@ class UpdaterFormTest extends BrowserTestBase {
     $this->setCoreVersion('9.8.0');
 
     $this->drupalLogin($this->rootUser);
-    $this->checkForUpdates();
+
     // Navigate to the automatic updates form.
     $this->drupalGet('/admin');
     // @todo Add test coverage of accessing the form via the other path in
