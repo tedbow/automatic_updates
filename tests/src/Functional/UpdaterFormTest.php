@@ -89,18 +89,20 @@ class UpdaterFormTest extends BrowserTestBase {
     $this->drupalPlaceBlock('local_tasks_block', ['primary' => TRUE]);
     $assert_session = $this->assertSession();
     $this->setCoreVersion('9.8.0');
-
     $this->drupalLogin($this->rootUser);
+    $this->checkForUpdates();
 
     // Navigate to the automatic updates form.
     $this->drupalGet('/admin');
     // @todo Add test coverage of accessing the form via the other path in
     //   https://www.drupal.org/i/3233564
     $this->clickLink('Extend');
+    $assert_session->pageTextContainsOnce('There is a security update available for your version of Drupal.');
     $this->clickLink('Update');
     $assert_session->pageTextContainsOnce('Drupal core updates are supported by the enabled Automatic Updates module');
     $this->clickLink('Automatic Updates module');
-    $cells = $assert_session->elementExists('css', '#edit-projects .update-recommended')
+    $assert_session->pageTextNotContains('There is a security update available for your version of Drupal.');
+    $cells = $assert_session->elementExists('css', '#edit-projects .update-update-security')
       ->findAll('css', 'td');
     $this->assertCount(3, $cells);
     $assert_session->elementExists('named', ['link', 'Drupal'], $cells[0]);

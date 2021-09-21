@@ -118,14 +118,17 @@ class CoreUpdateTest extends UpdateTestBase {
     $mink = $this->getMink();
     $page = $mink->getSession()->getPage();
     $assert_session = $mink->assertSession();
-
-    $this->visit('/admin/modules/automatic-update');
+    $this->visit('/admin/modules');
+    $assert_session->pageTextContains('There is a security update available for your version of Drupal.');
+    $page->clickLink('Automatic Updates');
+    $assert_session->pageTextNotContains('There is a security update available for your version of Drupal.');
     $page->pressButton('Download these updates');
     $this->waitForBatchJob();
     $assert_session->pageTextContains('Ready to update');
     $page->pressButton('Continue');
     $this->waitForBatchJob();
     $assert_session->pageTextContains('Update complete!');
+    $assert_session->pageTextNotContains('There is a security update available for your version of Drupal.');
     $this->assertUpdateSuccessful();
   }
 
