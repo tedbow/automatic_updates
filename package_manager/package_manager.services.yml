@@ -44,11 +44,12 @@ services:
       - '@package_manager.symfony_finder'
       - '@package_manager.symfony_finder'
   package_manager.file_copier.factory:
-    class: PhpTuf\ComposerStager\Infrastructure\Process\FileCopier\FileCopierFactory
+    class: Drupal\package_manager\FileCopierFactory
     arguments:
       - '@package_manager.symfony_executable_finder'
       - '@package_manager.file_copier.php'
       - '@package_manager.file_copier.rsync'
+      - '@config.factory'
   package_manager.file_copier:
     class: PhpTuf\ComposerStager\Infrastructure\Process\FileCopier\FileCopierInterface
     factory: ['@package_manager.file_copier.factory', 'create']
