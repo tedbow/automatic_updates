@@ -83,7 +83,7 @@ class UpdaterForm extends FormBase {
    * {@inheritdoc}
    */
   public function buildForm(array $form, FormStateInterface $form_state) {
-    $this->messenger()->addWarning($this->t('This is an experimental updater using Composer. Use at your own risk 💀'));
+    $this->messenger()->addWarning($this->t('This is an experimental Automatic Updater using Composer. Use at your own risk.'));
 
     $form['last_check'] = [
       '#theme' => 'update_last_check',
