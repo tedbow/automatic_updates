@@ -120,7 +120,7 @@ class CoreUpdateTest extends UpdateTestBase {
     $assert_session = $mink->assertSession();
     $this->visit('/admin/modules');
     $assert_session->pageTextContains('There is a security update available for your version of Drupal.');
-    $page->clickLink('Automatic Updates');
+    $page->clickLink('Update');
     $assert_session->pageTextNotContains('There is a security update available for your version of Drupal.');
     $page->pressButton('Update');
     $this->waitForBatchJob();

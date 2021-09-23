@@ -84,3 +84,22 @@ function automatic_updates_form_update_manager_update_form_alter(&$form, FormSta
     }
   }
 }
+
+/**
+ * Implements hook_local_tasks_alter().
+ */
+function automatic_updates_local_tasks_alter(array &$local_tasks) {
+  // The Update module's update form only allows updating modules and themes
+  // via archive files, which could produce unexpected results on a site using
+  // our Composer-based updater.
+  $new_routes = [
+    'update.report_update' => 'automatic_updates.report_update',
+    'update.module_update' => 'automatic_updates.module_update',
+    'update.theme_update' => 'automatic_updates.theme_update',
+  ];
+  foreach ($new_routes as $local_task_id => $new_route) {
+    if (!empty($local_tasks[$local_task_id])) {
+      $local_tasks[$local_task_id]['route_name'] = $new_route;
+    }
+  }
+}

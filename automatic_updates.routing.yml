@@ -33,3 +33,12 @@ automatic_updates.module_update:
     _permission: 'administer software updates'
   options:
     _admin_route: TRUE
+automatic_updates.theme_update:
+  path: '/admin/theme/automatic-update'
+  defaults:
+    _form: '\Drupal\automatic_updates\Form\UpdaterForm'
+    _title: 'Update'
+  requirements:
+    _permission: 'administer software updates'
+  options:
+    _admin_route: TRUE
