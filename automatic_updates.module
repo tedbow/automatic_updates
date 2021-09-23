@@ -84,15 +84,3 @@ function automatic_updates_form_update_manager_update_form_alter(&$form, FormSta
     }
   }
 }
-
-/**
- * Implements hook_local_tasks_alter().
- */
-function automatic_updates_local_tasks_alter(&$local_tasks) {
-  // The Update modules current update form only allows updating modules and
-  // themes via downloading archive files which could produce unexpected results
-  // on a site using our Composer based updater.
-  unset($local_tasks['update.report_update']);
-  unset($local_tasks['update.module_update']);
-  unset($local_tasks['update.theme_update']);
-}

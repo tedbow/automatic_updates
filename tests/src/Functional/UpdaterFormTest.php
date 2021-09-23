@@ -98,7 +98,9 @@ class UpdaterFormTest extends BrowserTestBase {
     //   https://www.drupal.org/i/3233564
     $this->clickLink('Extend');
     $assert_session->pageTextContainsOnce('There is a security update available for your version of Drupal.');
-    $this->clickLink('Automatic Updates');
+    $this->clickLink('Update');
+    $assert_session->pageTextContainsOnce('Drupal core updates are supported by the enabled Automatic Updates module');
+    $this->clickLink('Automatic Updates module');
     $assert_session->pageTextNotContains('There is a security update available for your version of Drupal.');
     $cells = $assert_session->elementExists('css', '#edit-projects .update-update-security')
       ->findAll('css', 'td');
