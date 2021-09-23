@@ -79,7 +79,7 @@ class UpdaterFormTest extends BrowserTestBase {
     $assert_session = $this->assertSession();
     $assert_session->statusCodeEquals(200);
     $assert_session->pageTextContains('No update available');
-    $assert_session->buttonNotExists('Download these updates');
+    $assert_session->buttonNotExists('Update');
   }
 
   /**
@@ -144,7 +144,7 @@ class UpdaterFormTest extends BrowserTestBase {
     // If a validator raises an error during readiness checking, the form should
     // not have a submit button.
     $this->drupalGet('/admin/modules/automatic-update');
-    $assert_session->buttonNotExists('Download these updates');
+    $assert_session->buttonNotExists('Update');
     // Since this is an administrative page, the error message should be visible
     // thanks to automatic_updates_page_top(). The readiness checks were re-run
     // during the form build, which means the new error should be cached and
@@ -162,7 +162,7 @@ class UpdaterFormTest extends BrowserTestBase {
     $session->reload();
     $assert_session->pageTextNotContains(static::$errorsExplanation);
     $assert_session->pageTextNotContains(static::$warningsExplanation);
-    $page->pressButton('Download these updates');
+    $page->pressButton('Update');
     $this->checkForMetaRefresh();
     $assert_session->pageTextContainsOnce('An error has occurred.');
     $page->clickLink('the error page');
@@ -176,7 +176,7 @@ class UpdaterFormTest extends BrowserTestBase {
     // be halted.
     TestChecker1::setTestResult($expected_results, AutomaticUpdatesEvents::PRE_START);
     $this->deleteStagedUpdate();
-    $page->pressButton('Download these updates');
+    $page->pressButton('Update');
     $this->checkForMetaRefresh();
     $assert_session->pageTextContainsOnce('An error has occurred.');
     $page->clickLink('the error page');
@@ -190,7 +190,7 @@ class UpdaterFormTest extends BrowserTestBase {
     TestChecker1::setTestResult($expected_results, AutomaticUpdatesEvents::PRE_START);
     $session->reload();
     $this->deleteStagedUpdate();
-    $page->pressButton('Download these updates');
+    $page->pressButton('Update');
     $this->checkForMetaRefresh();
     $assert_session->pageTextContains('Ready to update');
   }

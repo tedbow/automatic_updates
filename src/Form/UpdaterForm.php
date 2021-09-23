@@ -216,7 +216,7 @@ class UpdaterForm extends FormBase {
     else {
       $actions['submit'] = [
         '#type' => 'submit',
-        '#value' => $this->t('Download these updates'),
+        '#value' => $this->t('Update'),
       ];
     }
     return $actions;
