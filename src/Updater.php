@@ -200,7 +200,7 @@ class Updater {
    * @return string[]
    *   The paths to exclude, relative to the active directory.
    */
-  private function getExclusions($event): array {
+  private function getExclusions(UpdateEvent $event): array {
     $make_relative = function (string $path): string {
       return str_replace($this->pathLocator->getActiveDirectory() . '/', '', $path);
     };
