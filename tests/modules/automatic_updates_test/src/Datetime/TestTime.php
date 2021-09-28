@@ -3,11 +3,32 @@
 namespace Drupal\automatic_updates_test\Datetime;
 
 use Drupal\Component\Datetime\Time;
+use Symfony\Component\HttpFoundation\RequestStack;
 
 /**
  * Test service for altering the request time.
  */
 class TestTime extends Time {
+
+  /**
+   * The time service.
+   *
+   * @var \Drupal\Component\Datetime\Time
+   */
+  protected $decoratorTime;
+
+  /**
+   * Constructs an Updater object.
+   *
+   * @param \Drupal\Component\Datetime\Time $time
+   *   The time service.
+   * @param \Symfony\Component\HttpFoundation\RequestStack $request_stack
+   *   The RequestStack object.
+   */
+  public function __construct(Time $time, RequestStack $request_stack) {
+    $this->decoratorTime = $time;
+    parent::__construct($request_stack);
+  }
 
   /**
    * {@inheritdoc}
@@ -16,7 +37,7 @@ class TestTime extends Time {
     if ($faked_date = \Drupal::state()->get('automatic_updates_test.fake_date_time')) {
       return \DateTime::createFromFormat('U', $faked_date)->getTimestamp();
     }
-    return parent::getRequestTime();
+    return $this->decoratorTime->getRequestTime();
   }
 
   /**
