@@ -107,15 +107,28 @@ trait LocalPackagesTrait {
       $this->writeJson($composer, $package);
 
       $name = $package['name'];
-      $repositories[$name] = [
-        'type' => 'path',
-        'url' => $path,
-        'options' => [
-          'symlink' => FALSE,
-        ],
-      ];
+      $repositories[$name] = $this->createPathRepository($path);
     }
     return $repositories;
+  }
+
+  /**
+   * Defines a local path repository for a given path.
+   *
+   * @param string $path
+   *   The path of the repository.
+   *
+   * @return array
+   *   The local path repository definition.
+   */
+  protected function createPathRepository(string $path): array {
+    return [
+      'type' => 'path',
+      'url' => $path,
+      'options' => [
+        'symlink' => FALSE,
+      ],
+    ];
   }
 
   /**

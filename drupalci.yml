@@ -31,10 +31,17 @@ build:
           # Add our words to the dictionary
           - sed -i "s/abiword/updater's/" core/misc/cspell/dictionary.txt
           - sed -i "s/absolutezero/stager's/" core/misc/cspell/dictionary.txt
+          - sed -i "s/adamson/STACKLIMIT/" core/misc/cspell/dictionary.txt
           # After all of the shenanigans above, we're finally ready to run core's `commit-code-check.sh`! :)
           - "modules/contrib/automatic_updates/commit-code-check.sh --drupalci"
           # Restore the original permissions.
           - chmod 777 modules/contrib/automatic_updates/
+          # Disable the PCRE engine's JIT, since it causes Composer to die during the
+          # update process, but only on Drupal CI, and for reasons that are essentially
+          # impossible to trace into. The PCRE JIT is not necessary for Automatic Updates
+          # to work correctly, and disabling it is a known workaround.
+          # @see pcre.ini
+          - sudo cp modules/contrib/automatic_updates/pcre.ini /usr/local/etc/php/conf.d
         halt-on-fail: true
       # run_tests task is executed several times in order of performance speeds.
       # halt-on-fail can be set on the run_tests tasks in order to fail fast.

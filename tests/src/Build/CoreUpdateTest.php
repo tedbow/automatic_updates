@@ -12,16 +12,14 @@ class CoreUpdateTest extends UpdateTestBase {
   /**
    * {@inheritdoc}
    */
-  protected function setUp(): void {
-    parent::setUp();
-
+  protected function createTestSite(string $template): void {
     // Build the test site and alter its copy of core so that it thinks it's
     // running Drupal 9.8.0, which will never actually exist in the real world.
     // Then, prepare a secondary copy of the core code base, masquerading as
     // Drupal 9.8.1, which will be the version of core we update to. These two
     // versions are referenced in the fake release metadata in our fake release
     // metadata (see fixtures/release-history/drupal.0.0.xml).
-    $this->createTestSite();
+    parent::createTestSite($template);
     $this->setCoreVersion($this->getWebRoot() . '/core', '9.8.0');
     $this->alterPackage($this->getWorkspaceDirectory(), $this->getConfigurationForUpdate('9.8.1'));
 
@@ -83,38 +81,69 @@ class CoreUpdateTest extends UpdateTestBase {
    *   The changes to merge into the test site's composer.json.
    */
   protected function getConfigurationForUpdate(string $version): array {
+    $changes = [];
+
     // Create a fake version of core with the given version number, and change
     // its README so that we can actually be certain that we update to this
     // fake version.
-    $dir = $this->copyPackage($this->getWebRoot() . '/core');
-    $this->setCoreVersion($dir, $version);
-    file_put_contents("$dir/README.txt", "Placeholder for Drupal core $version.");
+    $core_dir = $this->copyPackage($this->getWebRoot() . '/core');
+    $this->setCoreVersion($core_dir, $version);
+    file_put_contents("$core_dir/README.txt", "Placeholder for Drupal core $version.");
+    $changes['repositories']['drupal/core'] = $this->createPathRepository($core_dir);
 
-    return [
-      'repositories' => [
-        'drupal/core' => [
-          'type' => 'path',
-          'url' => $dir,
-          'options' => [
-            'symlink' => FALSE,
-          ],
-        ],
+    // Create a fake version of drupal/core-recommended which itself requires
+    // the fake version of core we just created.
+    $recommended_dir = $this->copyPackage($this->getDrupalRoot() . '/composer/Metapackage/CoreRecommended');
+    $this->alterPackage($recommended_dir, [
+      'require' => [
+        'drupal/core' => $version,
       ],
+      'version' => $version,
+    ]);
+    $changes['repositories']['drupal/core-recommended'] = $this->createPathRepository($recommended_dir);
+
+    return $changes;
+  }
+
+  /**
+   * Data provider for end-to-end update tests.
+   *
+   * @return array[]
+   *   Sets of arguments to pass to the test method.
+   */
+  public function providerTemplate(): array {
+    return [
+      ['drupal/recommended-project'],
+      ['drupal/legacy-project'],
     ];
   }
 
   /**
    * Tests an end-to-end core update via the API.
+   *
+   * @param string $template
+   *   The template project from which to build the test site.
+   *
+   * @dataProvider providerTemplate
    */
-  public function testApi(): void {
+  public function testApi(string $template): void {
+    $this->createTestSite($template);
+
     $this->visit('/automatic-update-test/update/9.8.1');
     $this->getMink()->assertSession()->pageTextContains('9.8.1');
   }
 
   /**
    * Tests an end-to-end core update via the UI.
+   *
+   * @param string $template
+   *   The template project from which to build the test site.
+   *
+   * @dataProvider providerTemplate
    */
-  public function testUi(): void {
+  public function testUi(string $template): void {
+    $this->createTestSite($template);
+
     $mink = $this->getMink();
     $page = $mink->getSession()->getPage();
     $assert_session = $mink->assertSession();
@@ -134,8 +163,15 @@ class CoreUpdateTest extends UpdateTestBase {
 
   /**
    * Tests an end-to-end core update via cron.
+   *
+   * @param string $template
+   *   The template project from which to build the test site.
+   *
+   * @dataProvider providerTemplate
    */
-  public function testCron(): void {
+  public function testCron(string $template): void {
+    $this->createTestSite($template);
+
     $this->visit('/admin/reports/status');
     $this->getMink()->getSession()->getPage()->clickLink('Run cron');
     $this->assertUpdateSuccessful();

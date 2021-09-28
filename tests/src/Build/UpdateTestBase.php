@@ -3,6 +3,7 @@
 namespace Drupal\Tests\automatic_updates\Build;
 
 use Drupal\BuildTests\QuickStart\QuickStartTestBase;
+use Drupal\Component\Serialization\Json;
 use Drupal\Component\Utility\Html;
 use Drupal\Tests\automatic_updates\Traits\LocalPackagesTrait;
 use Drupal\Tests\automatic_updates\Traits\SettingsTrait;
@@ -29,8 +30,10 @@ abstract class UpdateTestBase extends QuickStartTestBase {
    * The test site's document root, relative to the workspace directory.
    *
    * @var string
+   *
+   * @see ::createTestSite()
    */
-  protected $webRoot = './';
+  private $webRoot;
 
   /**
    * {@inheritdoc}
@@ -106,17 +109,6 @@ END;
   }
 
   /**
-   * Runs a Composer command and asserts that it succeeded.
-   *
-   * @param string $command
-   *   The command to run, excluding the 'composer' prefix.
-   */
-  protected function runComposer(string $command): void {
-    $this->executeCommand("composer $command");
-    $this->assertCommandSuccessful();
-  }
-
-  /**
    * {@inheritdoc}
    */
   public function visit($request_uri = '/', $working_dir = NULL) {
@@ -147,14 +139,52 @@ END;
 
   /**
    * Uses our already-installed dependencies to build a test site to update.
+   *
+   * @param string $template
+   *   The template project from which to build the test site. Can be
+   *   'drupal/recommended-project' or 'drupal/legacy-project'.
    */
-  protected function createTestSite(): void {
-    // The project-level composer.json lives in the workspace root directory,
-    // which may or may not be the same directory as the web root (where Drupal
-    // itself lives).
-    $composer = $this->getWorkspaceDirectory() . DIRECTORY_SEPARATOR . 'composer.json';
-    $this->writeJson($composer, $this->getInitialConfiguration());
-    $this->runComposer('update');
+  protected function createTestSite(string $template): void {
+    // Create the test site using one of the core project templates, but don't
+    // install dependencies just yet.
+    $template_dir = implode(DIRECTORY_SEPARATOR, [
+      $this->getDrupalRoot(),
+      'composer',
+      'Template',
+    ]);
+    $recommended_template = $this->createPathRepository($template_dir . DIRECTORY_SEPARATOR . 'RecommendedProject');
+    $legacy_template = $this->createPathRepository($template_dir . DIRECTORY_SEPARATOR . 'LegacyProject');
+
+    $dir = $this->getWorkspaceDirectory();
+    $command = sprintf(
+      "composer create-project %s %s --no-install --stability dev --repository '%s' --repository '%s'",
+      $template,
+      $dir,
+      Json::encode($recommended_template),
+      Json::encode($legacy_template)
+    );
+    $this->executeCommand($command);
+    $this->assertCommandSuccessful();
+
+    $composer = $dir . DIRECTORY_SEPARATOR . 'composer.json';
+    $data = $this->readJson($composer);
+
+    // Allow the test to configure the test site as necessary.
+    $data = $this->getInitialConfiguration($data);
+
+    // We need to know the path of the web root, relative to the project root,
+    // in order to install Drupal or visit the test site at all. Luckily, both
+    // template projects define this because the scaffold plugin needs to know
+    // it as well.
+    // @see ::visit()
+    // @see ::formLogin()
+    // @see ::installQuickStart()
+    $this->webRoot = $data['extra']['drupal-scaffold']['locations']['web-root'];
+
+    // Update the test site's composer.json and install dependencies.
+    $this->writeJson($composer, $data);
+    $this->executeCommand('composer install --no-dev');
+    $this->assertCommandSuccessful();
   }
 
   /**
@@ -162,71 +192,50 @@ END;
    *
    * This configuration will be used to build the pre-update test site.
    *
+   * @param array $data
+   *   The current contents of the test site's composer.json.
+   *
    * @return array
    *   The data that should be written to the test site's composer.json.
    */
-  protected function getInitialConfiguration(): array {
-    $core_constraint = preg_replace('/\.[0-9]+-dev$/', '.x-dev', \Drupal::VERSION);
-
+  protected function getInitialConfiguration(array $data): array {
     $drupal_root = $this->getDrupalRoot();
-    $repositories = [
-      'drupal/core-composer-scaffold' => [
-        'type' => 'path',
-        'url' => implode(DIRECTORY_SEPARATOR, [
-          $drupal_root,
-          'composer',
-          'Plugin',
-          'Scaffold',
-        ]),
-      ],
-      'drupal/automatic_updates' => [
-        'type' => 'path',
-        'url' => __DIR__ . '/../../..',
-      ],
-    ];
+    $core_composer_dir = $drupal_root . DIRECTORY_SEPARATOR . 'composer';
+    $repositories = [];
+
+    // Add all the metapackages that are provided by Drupal core.
+    $metapackage_dir = $core_composer_dir . DIRECTORY_SEPARATOR . 'Metapackage';
+    $repositories['drupal/core-recommended'] = $this->createPathRepository($metapackage_dir . DIRECTORY_SEPARATOR . 'CoreRecommended');
+    $repositories['drupal/core-dev'] = $this->createPathRepository($metapackage_dir . DIRECTORY_SEPARATOR . 'DevDependencies');
+
+    // Add all the Composer plugins that are provided by Drupal core.
+    $plugin_dir = $core_composer_dir . DIRECTORY_SEPARATOR . 'Plugin';
+    $repositories['drupal/core-project-message'] = $this->createPathRepository($plugin_dir . DIRECTORY_SEPARATOR . 'ProjectMessage');
+    $repositories['drupal/core-composer-scaffold'] = $this->createPathRepository($plugin_dir . DIRECTORY_SEPARATOR . 'Scaffold');
+    $repositories['drupal/core-vendor-hardening'] = $this->createPathRepository($plugin_dir . DIRECTORY_SEPARATOR . 'VendorHardening');
+
     $repositories = array_merge($repositories, $this->getLocalPackageRepositories($drupal_root));
     // To ensure the test runs entirely offline, don't allow Composer to contact
     // Packagist.
     $repositories['packagist.org'] = FALSE;
 
-    return [
-      'require' => [
-        // Allow packages to be placed in their right Drupal-findable places.
-        'composer/installers' => '^1.9',
-        // Use whatever the current branch of automatic_updates is.
-        'drupal/automatic_updates' => '*',
-        // Ensure we have all files that the test site needs.
-        'drupal/core-composer-scaffold' => '*',
-        // Require the current version of core, to install its dependencies.
-        'drupal/core' => $core_constraint,
-      ],
-      // Since Drupal 9 requires PHP 7.3 or later, these packages are probably
-      // not installed, which can cause trouble during dependency resolution.
-      // The drupal/drupal package (defined with a composer.json that is part
-      // of core's repository) replaces these, so we need to emulate that here.
-      'replace' => [
-        'symfony/polyfill-php72' => '*',
-        'symfony/polyfill-php73' => '*',
-      ],
-      'repositories' => $repositories,
-      'extra' => [
-        'drupal-scaffold' => [
-          'locations' => [
-            'web-root' => $this->webRoot,
-          ],
-        ],
-        'installer-paths' => [
-          $this->webRoot . 'core' => [
-            'type:drupal-core',
-          ],
-          $this->webRoot . 'modules/{$name}' => [
-            'type:drupal-module',
-          ],
-        ],
-      ],
-      'minimum-stability' => 'dev',
-      'prefer-stable' => TRUE,
+    $repositories['drupal/automatic_updates'] = [
+      'type' => 'path',
+      'url' => __DIR__ . '/../../..',
     ];
+    // Use whatever the current branch of automatic_updates is.
+    $data['require']['drupal/automatic_updates'] = '*';
+
+    $data['repositories'] = $repositories;
+
+    // Since Drupal 9 requires PHP 7.3 or later, these packages are probably
+    // not installed, which can cause trouble during dependency resolution.
+    // The drupal/drupal package (defined with a composer.json that is part
+    // of core's repository) replaces these, so we need to emulate that here.
+    $data['replace']['symfony/polyfill-php72'] = '*';
+    $data['replace']['symfony/polyfill-php73'] = '*';
+
+    return $data;
   }
 
   /**

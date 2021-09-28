@@ -70,6 +70,11 @@ class ExcludedPathsSubscriber implements EventSubscriberInterface {
     // Don't copy anything from the staging area's sites/default.
     // @todo Make this a lot smarter in https://www.drupal.org/i/3228955.
     $event->excludePath('sites/default');
+
+    // If the core-vendor-hardening plugin (used in the legacy-project template)
+    // is present, it may have written a web.config file into the vendor
+    // directory. We don't want to copy that.
+    $event->excludePath('web.config');
   }
 
   /**
@@ -81,6 +86,12 @@ class ExcludedPathsSubscriber implements EventSubscriberInterface {
   public function preStart(PreStartEvent $event): void {
     // Automated test site directories should never be staged.
     $event->excludePath('sites/simpletest');
+
+    // Windows server configuration files, like web.config, should never be
+    // staged either. (These can be written in the vendor directory by the
+    // core-vendor-hardening plugin, which is used in the drupal/legacy-project
+    // template.)
+    $event->excludePath('web.config');
 
     if ($public = $this->getFilesPath('public')) {
       $event->excludePath($public);
