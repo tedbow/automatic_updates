@@ -7,14 +7,13 @@ use Drupal\automatic_updates\Exception\UpdateException;
 use Drupal\automatic_updates\Validation\ValidationResult;
 use Drupal\automatic_updates_test\ReadinessChecker\TestChecker1;
 use Drupal\Tests\automatic_updates\Traits\ValidationTestTrait;
-use Drupal\Tests\BrowserTestBase;
 
 /**
  * @covers \Drupal\automatic_updates\Form\UpdaterForm
  *
  * @group automatic_updates
  */
-class UpdaterFormTest extends BrowserTestBase {
+class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
 
   use ValidationTestTrait;
 
@@ -31,36 +30,14 @@ class UpdaterFormTest extends BrowserTestBase {
     'automatic_updates',
     'automatic_updates_test',
     'package_manager_bypass',
-    'update_test',
   ];
-
-  /**
-   * Sets the running version of core, as known to the Update module.
-   *
-   * @param string $version
-   *   The version of core to set. When checking for updates, this is what the
-   *   Update module will think the running version of core is.
-   */
-  private function setCoreVersion(string $version): void {
-    $this->config('update_test.settings')
-      ->set('system_info.#all.version', $version)
-      ->save();
-  }
 
   /**
    * {@inheritdoc}
    */
   protected function setUp(): void {
     parent::setUp();
-
-    $this->config('update_test.settings')
-      ->set('xml_map', [
-        'drupal' => '0.0',
-      ])
-      ->save();
-    $this->config('update.settings')
-      ->set('fetch.url', $this->baseUrl . '/automatic-update-test')
-      ->save();
+    $this->setReleaseMetadata(__DIR__ . '/../../fixtures/release-history/drupal.0.0.xml');
   }
 
   /**

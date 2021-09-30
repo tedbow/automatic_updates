@@ -6,19 +6,18 @@ use Drupal\automatic_updates\ComposerStager\Cleaner;
 use Drupal\automatic_updates\PathLocator;
 use Drupal\automatic_updates\Updater;
 use Drupal\Core\Site\Settings;
-use Drupal\Tests\BrowserTestBase;
 
 /**
  * Tests handling of files and directories during an update.
  *
  * @group automatic_updates
  */
-class FileSystemOperationsTest extends BrowserTestBase {
+class FileSystemOperationsTest extends AutomaticUpdatesFunctionalTestBase {
 
   /**
    * {@inheritdoc}
    */
-  protected static $modules = ['automatic_updates_test', 'update_test'];
+  protected static $modules = ['automatic_updates_test'];
 
   /**
    * {@inheritdoc}
@@ -91,17 +90,8 @@ class FileSystemOperationsTest extends BrowserTestBase {
     // \Drupal\automatic_updates\Validator\UpdateVersionValidator, that need to
     // fetch release metadata. We need to ensure that those HTTP request(s)
     // succeed, so set them up to point to our fake release metadata.
-    $this->config('update_test.settings')
-      ->set('xml_map', [
-        'drupal' => '0.0',
-      ])
-      ->save();
-    $this->config('update.settings')
-      ->set('fetch.url', $this->baseUrl . '/automatic-update-test')
-      ->save();
-    $this->config('update_test.settings')
-      ->set('system_info.#all.version', '9.8.0')
-      ->save();
+    $this->setReleaseMetadata(__DIR__ . '/../../fixtures/release-history/drupal.0.0.xml');
+    $this->setCoreVersion('9.8.0');
   }
 
   /**

@@ -2,11 +2,6 @@
 
 namespace Drupal\Tests\automatic_updates\Kernel;
 
-use Drupal\KernelTests\KernelTestBase;
-use GuzzleHttp\Client;
-use GuzzleHttp\Handler\MockHandler;
-use GuzzleHttp\Psr7\Response;
-use GuzzleHttp\Psr7\Utils;
 use Prophecy\Argument;
 
 /**
@@ -14,7 +9,7 @@ use Prophecy\Argument;
  *
  * @group automatic_updates
  */
-class UpdaterTest extends KernelTestBase {
+class UpdaterTest extends AutomaticUpdatesKernelTestBase {
 
   /**
    * {@inheritdoc}
@@ -23,25 +18,16 @@ class UpdaterTest extends KernelTestBase {
     'automatic_updates',
     'automatic_updates_test',
     'package_manager',
-    'update',
-    'update_test',
   ];
 
   /**
    * Tests that correct versions are staged after calling ::begin().
    */
   public function testCorrectVersionsStaged() {
-    // Ensure that the HTTP client will fetch our fake release metadata.
-    $release_data = Utils::tryFopen(__DIR__ . '/../../fixtures/release-history/drupal.0.0.xml', 'r');
-    $response = new Response(200, [], Utils::streamFor($release_data));
-    $handler = new MockHandler([$response]);
-    $client = new Client(['handler' => $handler]);
-    $this->container->set('http_client', $client);
+    $this->setReleaseMetadata(__DIR__ . '/../../fixtures/release-history/drupal.0.0.xml');
 
     // Set the running core version to 9.8.0.
-    $this->config('update_test.settings')
-      ->set('system_info.#all.version', '9.8.0')
-      ->save();
+    $this->setCoreVersion('9.8.0');
 
     $this->container->get('automatic_updates.updater')->begin([
       'drupal' => '9.8.1',
