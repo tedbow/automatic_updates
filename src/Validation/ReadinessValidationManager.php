@@ -6,6 +6,7 @@ use Drupal\automatic_updates\AutomaticUpdatesEvents;
 use Drupal\automatic_updates\Event\UpdateEvent;
 use Drupal\Component\Datetime\TimeInterface;
 use Drupal\Core\KeyValueStore\KeyValueExpirableFactoryInterface;
+use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 
 /**
  * Defines a manager to run readiness validation.
@@ -27,6 +28,13 @@ class ReadinessValidationManager {
   protected $time;
 
   /**
+   * The event dispatcher service.
+   *
+   * @var \Symfony\Component\EventDispatcher\EventDispatcherInterface
+   */
+  protected $eventDispatcher;
+
+  /**
    * The number of hours to store results.
    *
    * @var int
@@ -40,12 +48,15 @@ class ReadinessValidationManager {
    *   The key/value expirable factory.
    * @param \Drupal\Component\Datetime\TimeInterface $time
    *   The time service.
+   * @param \Symfony\Component\EventDispatcher\EventDispatcherInterface $dispatcher
+   *   The event dispatcher service.
    * @param int $results_time_to_live
    *   The number of hours to store results.
    */
-  public function __construct(KeyValueExpirableFactoryInterface $key_value_expirable_factory, TimeInterface $time, int $results_time_to_live) {
+  public function __construct(KeyValueExpirableFactoryInterface $key_value_expirable_factory, TimeInterface $time, EventDispatcherInterface $dispatcher, int $results_time_to_live) {
     $this->keyValueExpirable = $key_value_expirable_factory->get('automatic_updates');
     $this->time = $time;
+    $this->eventDispatcher = $dispatcher;
     $this->resultsTimeToLive = $results_time_to_live;
   }
 
@@ -55,10 +66,8 @@ class ReadinessValidationManager {
    * @return $this
    */
   public function run(): self {
-    /** @var \Symfony\Component\EventDispatcher\EventDispatcherInterface $dispatcher */
-    $dispatcher = \Drupal::service('event_dispatcher');
     $event = new UpdateEvent();
-    $dispatcher->dispatch($event, AutomaticUpdatesEvents::READINESS_CHECK);
+    $this->eventDispatcher->dispatch($event, AutomaticUpdatesEvents::READINESS_CHECK);
     $results = $event->getResults();
     $this->keyValueExpirable->setWithExpire(
       'readiness_validation_last_run',
@@ -79,9 +88,7 @@ class ReadinessValidationManager {
    *   The listeners as a string.
    */
   protected function getListenersAsString(string $event_name): string {
-    /** @var \Symfony\Component\EventDispatcher\EventDispatcherInterface $dispatcher */
-    $dispatcher = \Drupal::service('event_dispatcher');
-    $listeners = $dispatcher->getListeners($event_name);
+    $listeners = $this->eventDispatcher->getListeners($event_name);
     $string = '';
     foreach ($listeners as $listener) {
       /** @var object $object */
