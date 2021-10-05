@@ -8,7 +8,6 @@ use Drupal\automatic_updates_test2\ReadinessChecker\TestChecker2;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\system\SystemManager;
 use Drupal\Tests\automatic_updates\Traits\ValidationTestTrait;
-use Drupal\Tests\BrowserTestBase;
 use Drupal\Tests\Traits\Core\CronRunTrait;
 
 /**
@@ -16,7 +15,7 @@ use Drupal\Tests\Traits\Core\CronRunTrait;
  *
  * @group automatic_updates
  */
-class ReadinessValidationTest extends BrowserTestBase {
+class ReadinessValidationTest extends AutomaticUpdatesFunctionalTestBase {
 
   use StringTranslationTrait;
   use CronRunTrait;
@@ -53,6 +52,9 @@ class ReadinessValidationTest extends BrowserTestBase {
    */
   protected function setUp(): void {
     parent::setUp();
+    $this->setReleaseMetadata(__DIR__ . '/../../fixtures/release-history/drupal.9.8.1.xml');
+    $this->setCoreVersion('9.8.1');
+
     $this->reportViewerUser = $this->createUser([
       'administer site configuration',
       'access administration pages',
@@ -81,6 +83,7 @@ class ReadinessValidationTest extends BrowserTestBase {
     // If the site is ready for updates, the users will see the same output
     // regardless of whether the user has permission to run updates.
     $this->drupalLogin($this->reportViewerUser);
+    $this->checkForUpdates();
     $this->drupalGet('admin/reports/status');
     $this->assertReadinessReportMatches('Your site is ready for automatic updates.', 'checked', FALSE);
     $this->drupalLogin($this->checkerRunnerUser);
@@ -300,20 +303,22 @@ class ReadinessValidationTest extends BrowserTestBase {
     $this->drupalGet('admin/reports/status');
     $assert->pageTextNotContains('Update readiness checks');
 
-    $this->container->get('module_installer')->install(['automatic_updates']);
+    // We have to install the automatic_updates_test module because it provides
+    // the functionality to retrieve our fake release history metadata.
+    $this->container->get('module_installer')->install(['automatic_updates', 'automatic_updates_test']);
     $this->drupalGet('admin/reports/status');
     $this->assertReadinessReportMatches('Your site is ready for automatic updates. Run readiness checks now.', 'checked');
 
     $expected_results = $this->testResults['checker_1']['1 error'];
-    TestChecker1::setTestResult($expected_results);
-    $this->container->get('module_installer')->install(['automatic_updates_test']);
+    TestChecker2::setTestResult($expected_results);
+    $this->container->get('module_installer')->install(['automatic_updates_test2']);
     $this->drupalGet('admin/structure');
     $assert->pageTextContainsOnce($expected_results[0]->getMessages()[0]);
 
     // Confirm that installing a module that does not provide a new checker does
     // not run the checkers on install.
     $unexpected_results = $this->testResults['checker_1']['2 errors 2 warnings'];
-    TestChecker1::setTestResult($unexpected_results);
+    TestChecker2::setTestResult($unexpected_results);
     $this->container->get('module_installer')->install(['help']);
     // Check for message on 'admin/structure' instead of the status report
     // because checkers will be run if needed on the status report.

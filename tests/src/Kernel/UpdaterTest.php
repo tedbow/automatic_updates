@@ -18,13 +18,14 @@ class UpdaterTest extends AutomaticUpdatesKernelTestBase {
     'automatic_updates',
     'automatic_updates_test',
     'package_manager',
+    'package_manager_bypass',
   ];
 
   /**
    * Tests that correct versions are staged after calling ::begin().
    */
   public function testCorrectVersionsStaged() {
-    $this->setReleaseMetadata(__DIR__ . '/../../fixtures/release-history/drupal.0.0.xml');
+    $this->setReleaseMetadata(__DIR__ . '/../../fixtures/release-history/drupal.9.8.1-security.xml');
 
     // Set the running core version to 9.8.0.
     $this->setCoreVersion('9.8.0');

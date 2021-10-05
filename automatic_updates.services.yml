@@ -1,7 +1,7 @@
 services:
   automatic_updates.readiness_validation_manager:
     class: Drupal\automatic_updates\Validation\ReadinessValidationManager
-    arguments: ['@keyvalue.expirable', '@datetime.time','@event_dispatcher', 24]
+    arguments: ['@keyvalue.expirable', '@datetime.time', '@automatic_updates.updater', '@event_dispatcher', 24]
   automatic_updates.updater:
     class: Drupal\automatic_updates\Updater
     arguments: ['@state', '@string_translation','@package_manager.beginner', '@package_manager.stager', '@package_manager.cleaner', '@package_manager.committer', '@event_dispatcher', '@automatic_updates.path_locator']

@@ -37,7 +37,10 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
    */
   protected function setUp(): void {
     parent::setUp();
-    $this->setReleaseMetadata(__DIR__ . '/../../fixtures/release-history/drupal.0.0.xml');
+
+    $this->setReleaseMetadata(__DIR__ . '/../../fixtures/release-history/drupal.9.8.1-security.xml');
+    $this->drupalLogin($this->rootUser);
+    $this->checkForUpdates();
   }
 
   /**
@@ -48,8 +51,7 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
    */
   public function testFormNotDisplayedIfAlreadyCurrent(): void {
     $this->setCoreVersion('9.8.1');
-
-    $this->drupalLogin($this->rootUser);
+    $this->checkForUpdates();
 
     $this->drupalGet('/admin/modules/automatic-update');
 
@@ -66,7 +68,6 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
     $this->drupalPlaceBlock('local_tasks_block', ['primary' => TRUE]);
     $assert_session = $this->assertSession();
     $this->setCoreVersion('9.8.0');
-    $this->drupalLogin($this->rootUser);
     $this->checkForUpdates();
 
     // Navigate to the automatic updates form.
@@ -85,6 +86,7 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
     $this->assertSame('9.8.1 (Release notes)', $cells[2]->getText());
     $release_notes = $assert_session->elementExists('named', ['link', 'Release notes'], $cells[2]);
     $this->assertSame('Release notes for Drupal', $release_notes->getAttribute('title'));
+    $assert_session->buttonExists('Update');
   }
 
   /**
@@ -100,7 +102,6 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
     $error = ValidationResult::createError([$message]);
     TestChecker1::setTestResult([$error]);
 
-    $this->drupalLogin($this->rootUser);
     $this->drupalGet('/admin/reports/status');
     $page->clickLink('Run readiness checks');
     $assert_session->pageTextContainsOnce((string) $message);
@@ -171,6 +172,19 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
   }
 
   /**
+   * Tests that updating to a different minor version isn't supported.
+   */
+  public function testMinorVersionUpdateNotSupported(): void {
+    $this->setCoreVersion('9.7.1');
+
+    $this->drupalGet('/admin/modules/automatic-update');
+
+    $assert_session = $this->assertSession();
+    $assert_session->pageTextContainsOnce('Updating from one minor version to another is not supported.');
+    $assert_session->buttonNotExists('Update');
+  }
+
+  /**
    * Deletes a staged, failed update.
    */
   private function deleteStagedUpdate(): void {
@@ -178,17 +192,6 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
     $session->getPage()->pressButton('Delete existing update');
     $this->assertSession()->pageTextContains('Staged update deleted');
     $session->reload();
-  }
-
-  /**
-   * Checks for available updates.
-   *
-   * Assumes that a user with appropriate permissions is logged in.
-   */
-  private function checkForUpdates(): void {
-    $this->drupalGet('/admin/reports/updates');
-    $this->getSession()->getPage()->clickLink('Check manually');
-    $this->checkForMetaRefresh();
   }
 
 }

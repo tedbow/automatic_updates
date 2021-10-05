@@ -90,8 +90,12 @@ class FileSystemOperationsTest extends AutomaticUpdatesFunctionalTestBase {
     // \Drupal\automatic_updates\Validator\UpdateVersionValidator, that need to
     // fetch release metadata. We need to ensure that those HTTP request(s)
     // succeed, so set them up to point to our fake release metadata.
-    $this->setReleaseMetadata(__DIR__ . '/../../fixtures/release-history/drupal.0.0.xml');
+    $this->setReleaseMetadata(__DIR__ . '/../../fixtures/release-history/drupal.9.8.1-security.xml');
     $this->setCoreVersion('9.8.0');
+
+    $this->drupalLogin($this->rootUser);
+    $this->checkForUpdates();
+    $this->drupalLogout();
   }
 
   /**

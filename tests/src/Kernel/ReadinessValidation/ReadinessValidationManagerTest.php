@@ -4,8 +4,8 @@ namespace Drupal\Tests\automatic_updates\Kernel\ReadinessValidation;
 
 use Drupal\automatic_updates_test\ReadinessChecker\TestChecker1;
 use Drupal\automatic_updates_test2\ReadinessChecker\TestChecker2;
-use Drupal\KernelTests\KernelTestBase;
 use Drupal\system\SystemManager;
+use Drupal\Tests\automatic_updates\Kernel\AutomaticUpdatesKernelTestBase;
 use Drupal\Tests\automatic_updates\Traits\ValidationTestTrait;
 
 /**
@@ -13,7 +13,7 @@ use Drupal\Tests\automatic_updates\Traits\ValidationTestTrait;
  *
  * @group automatic_updates
  */
-class ReadinessValidationManagerTest extends KernelTestBase {
+class ReadinessValidationManagerTest extends AutomaticUpdatesKernelTestBase {
 
   use ValidationTestTrait;
 
@@ -34,15 +34,19 @@ class ReadinessValidationManagerTest extends KernelTestBase {
     $this->installEntitySchema('user');
     $this->installSchema('user', ['users_data']);
     $this->createTestValidationResults();
+
+    $this->installConfig('update');
+    $this->setCoreVersion('9.8.0');
+    $this->setReleaseMetadata(__DIR__ . '/../../../fixtures/release-history/drupal.9.8.1.xml');
   }
 
   /**
    * @covers ::getResults
    */
   public function testGetResults(): void {
-    $this->enableModules(['update', 'automatic_updates', 'automatic_updates_test2']);
-    $this->installConfig(['update', 'automatic_updates']);
-    $this->assertSame([], $this->getResultsFromManager(TRUE));
+    $this->enableModules(['automatic_updates', 'automatic_updates_test2']);
+    $this->assertCheckerResultsFromManager([], TRUE);
+
     $expected_results = [
       array_pop($this->testResults['checker_1']),
       array_pop($this->testResults['checker_2']),

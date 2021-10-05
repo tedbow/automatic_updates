@@ -26,7 +26,7 @@ class CoreUpdateTest extends UpdateTestBase {
     // Install Drupal and ensure it's using the fake release metadata to fetch
     // information about available updates.
     $this->installQuickStart('minimal');
-    $this->setReleaseMetadata(['drupal' => '0.0']);
+    $this->setReleaseMetadata(['drupal' => '9.8.1-security']);
     $this->formLogin($this->adminUsername, $this->adminPassword);
     $this->installModules([
       'automatic_updates',

@@ -4,7 +4,7 @@ namespace Drupal\Tests\automatic_updates\Kernel\ReadinessValidation;
 
 use Drupal\automatic_updates\Validation\ValidationResult;
 use Drupal\automatic_updates\Validator\ComposerExecutableValidator;
-use Drupal\KernelTests\KernelTestBase;
+use Drupal\Tests\automatic_updates\Kernel\AutomaticUpdatesKernelTestBase;
 use Drupal\Tests\automatic_updates\Traits\ValidationTestTrait;
 use PhpTuf\ComposerStager\Exception\IOException;
 use PhpTuf\ComposerStager\Infrastructure\Process\ExecutableFinderInterface;
@@ -15,7 +15,7 @@ use Prophecy\Argument;
  *
  * @group automatic_updates
  */
-class ComposerExecutableValidatorTest extends KernelTestBase {
+class ComposerExecutableValidatorTest extends AutomaticUpdatesKernelTestBase {
 
   use ValidationTestTrait;
 
@@ -25,8 +25,17 @@ class ComposerExecutableValidatorTest extends KernelTestBase {
   protected static $modules = [
     'automatic_updates',
     'package_manager',
-    'update',
   ];
+
+  /**
+   * {@inheritdoc}
+   */
+  protected function setUp(): void {
+    parent::setUp();
+    $this->installConfig('update');
+    $this->setCoreVersion('9.8.0');
+    $this->setReleaseMetadata(__DIR__ . '/../../../fixtures/release-history/drupal.9.8.1.xml');
+  }
 
   /**
    * Tests that an error is raised if the Composer executable isn't found.

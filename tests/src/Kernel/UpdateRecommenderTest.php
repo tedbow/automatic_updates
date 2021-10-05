@@ -25,6 +25,7 @@ class UpdateRecommenderTest extends AutomaticUpdatesKernelTestBase {
   protected function setUp(): void {
     parent::setUp();
     $this->installConfig('update');
+    $this->setReleaseMetadata(__DIR__ . '/../../fixtures/release-history/drupal.9.8.1.xml');
   }
 
   /**
@@ -32,7 +33,6 @@ class UpdateRecommenderTest extends AutomaticUpdatesKernelTestBase {
    */
   public function testUpdateAvailable(): void {
     $this->setCoreVersion('9.8.0');
-    $this->setReleaseMetadata(__DIR__ . '/../../fixtures/release-history/drupal.0.0.xml');
 
     $recommender = new UpdateRecommender();
     $recommended_release = $recommender->getRecommendedRelease(TRUE);
@@ -47,7 +47,6 @@ class UpdateRecommenderTest extends AutomaticUpdatesKernelTestBase {
    */
   public function testNoUpdateAvailable(): void {
     $this->setCoreVersion('9.8.1');
-    $this->setReleaseMetadata(__DIR__ . '/../../fixtures/release-history/drupal.0.0.xml');
 
     $recommender = new UpdateRecommender();
     $recommended_release = $recommender->getRecommendedRelease(TRUE);

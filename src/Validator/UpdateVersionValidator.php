@@ -3,7 +3,8 @@
 namespace Drupal\automatic_updates\Validator;
 
 use Drupal\automatic_updates\AutomaticUpdatesEvents;
-use Drupal\automatic_updates\Event\PreStartEvent;
+use Drupal\automatic_updates\Event\ReadinessCheckEvent;
+use Drupal\automatic_updates\Event\UpdateEvent;
 use Drupal\automatic_updates\Updater;
 use Drupal\automatic_updates\Validation\ValidationResult;
 use Drupal\Core\Extension\ExtensionVersion;
@@ -52,10 +53,10 @@ class UpdateVersionValidator implements EventSubscriberInterface {
   /**
    * Validates that core is not being updated to another minor or major version.
    *
-   * @param \Drupal\automatic_updates\Event\PreStartEvent $event
+   * @param \Drupal\automatic_updates\Event\PreStartEvent|\Drupal\automatic_updates\Event\ReadinessCheckEvent $event
    *   The event object.
    */
-  public function checkUpdateVersion(PreStartEvent $event): void {
+  public function checkUpdateVersion(UpdateEvent $event): void {
     $from_version = ExtensionVersion::createFromVersionString($this->getCoreVersion());
     $core_package_name = $this->updater->getCorePackageName();
     $to_version = ExtensionVersion::createFromVersionString($event->getPackageVersions()[$core_package_name]);
@@ -75,11 +76,26 @@ class UpdateVersionValidator implements EventSubscriberInterface {
   }
 
   /**
+   * Validates readiness check event.
+   *
+   * @param \Drupal\automatic_updates\Event\ReadinessCheckEvent $event
+   *   The readiness check event object.
+   */
+  public function checkReadinessUpdateVersion(ReadinessCheckEvent $event): void {
+    // During readiness checks, we might not know the desired package versions,
+    // which means there's nothing to validate.
+    if ($event->getPackageVersions()) {
+      $this->checkUpdateVersion($event);
+    }
+  }
+
+  /**
    * {@inheritdoc}
    */
   public static function getSubscribedEvents() {
     return [
       AutomaticUpdatesEvents::PRE_START => 'checkUpdateVersion',
+      AutomaticUpdatesEvents::READINESS_CHECK => 'checkReadinessUpdateVersion',
     ];
   }
 

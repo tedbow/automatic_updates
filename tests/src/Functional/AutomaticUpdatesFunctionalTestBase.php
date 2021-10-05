@@ -45,4 +45,15 @@ abstract class AutomaticUpdatesFunctionalTestBase extends BrowserTestBase {
       ->save();
   }
 
+  /**
+   * Checks for available updates.
+   *
+   * Assumes that a user with appropriate permissions is logged in.
+   */
+  protected function checkForUpdates(): void {
+    $this->drupalGet('/admin/reports/updates');
+    $this->getSession()->getPage()->clickLink('Check manually');
+    $this->checkForMetaRefresh();
+  }
+
 }

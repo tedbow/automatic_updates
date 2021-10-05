@@ -3,7 +3,9 @@
 namespace Drupal\automatic_updates\Validation;
 
 use Drupal\automatic_updates\AutomaticUpdatesEvents;
-use Drupal\automatic_updates\Event\UpdateEvent;
+use Drupal\automatic_updates\Event\ReadinessCheckEvent;
+use Drupal\automatic_updates\Updater;
+use Drupal\automatic_updates\UpdateRecommender;
 use Drupal\Component\Datetime\TimeInterface;
 use Drupal\Core\KeyValueStore\KeyValueExpirableFactoryInterface;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
@@ -42,20 +44,30 @@ class ReadinessValidationManager {
   protected $resultsTimeToLive;
 
   /**
+   * The updater service.
+   *
+   * @var \Drupal\automatic_updates\Updater
+   */
+  protected $updater;
+
+  /**
    * Constructs a ReadinessValidationManager.
    *
    * @param \Drupal\Core\KeyValueStore\KeyValueExpirableFactoryInterface $key_value_expirable_factory
    *   The key/value expirable factory.
    * @param \Drupal\Component\Datetime\TimeInterface $time
    *   The time service.
+   * @param \Drupal\automatic_updates\Updater $updater
+   *   The updater service.
    * @param \Symfony\Component\EventDispatcher\EventDispatcherInterface $dispatcher
    *   The event dispatcher service.
    * @param int $results_time_to_live
    *   The number of hours to store results.
    */
-  public function __construct(KeyValueExpirableFactoryInterface $key_value_expirable_factory, TimeInterface $time, EventDispatcherInterface $dispatcher, int $results_time_to_live) {
+  public function __construct(KeyValueExpirableFactoryInterface $key_value_expirable_factory, TimeInterface $time, Updater $updater, EventDispatcherInterface $dispatcher, int $results_time_to_live) {
     $this->keyValueExpirable = $key_value_expirable_factory->get('automatic_updates');
     $this->time = $time;
+    $this->updater = $updater;
     $this->eventDispatcher = $dispatcher;
     $this->resultsTimeToLive = $results_time_to_live;
   }
@@ -66,7 +78,15 @@ class ReadinessValidationManager {
    * @return $this
    */
   public function run(): self {
-    $event = new UpdateEvent();
+    $recommender = new UpdateRecommender();
+    $release = $recommender->getRecommendedRelease(TRUE);
+    if ($release) {
+      $package_versions = [$this->updater->getCorePackageName() => $release->getVersion()];
+    }
+    else {
+      $package_versions = [];
+    }
+    $event = new ReadinessCheckEvent($package_versions);
     $this->eventDispatcher->dispatch($event, AutomaticUpdatesEvents::READINESS_CHECK);
     $results = $event->getResults();
     $this->keyValueExpirable->setWithExpire(
