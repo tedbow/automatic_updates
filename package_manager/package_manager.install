@@ -1,0 +1,20 @@
+<?php
+
+/**
+ * @file
+ * Contains install and update functions for Package Manager.
+ */
+
+/**
+ * Implements hook_requirements().
+ */
+function package_manager_requirements($phase) {
+  if ($phase === 'install' && !class_exists('PhpTuf\ComposerStager\Domain\Beginner')) {
+    return [
+      'package_manager' => [
+        'description' => t('External dependencies for Package Manager are not available. Composer must be used to download the module with dependencies.'),
+        'severity' => REQUIREMENT_ERROR,
+      ],
+    ];
+  }
+}
