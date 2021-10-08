@@ -46,6 +46,14 @@ services:
       - '@automatic_updates.path_locator'
     tags:
       - { name: event_subscriber }
+  automatic_updates.pending_updates_validator:
+    class: Drupal\automatic_updates\Validator\PendingUpdatesValidator
+    arguments:
+      - '%app.root%'
+      - '@update.post_update_registry'
+      - '@string_translation'
+    tags:
+      - { name: event_subscriber }
   automatic_updates.validator.file_system_permissions:
     class: Drupal\automatic_updates\Validator\WritableFileSystemValidator
     arguments:
