@@ -42,6 +42,12 @@ class UpdaterTest extends AutomaticUpdatesKernelTestBase {
     $command = [
       'require',
       'drupal/core:9.8.1',
+      // These two plugins are in the root composer.json that ships with a
+      // git clone of Drupal core, so they will be included when determining
+      // which core packages to update.
+      // @see \Drupal\automatic_updates\Updater::getCorePackageNames()
+      'drupal/core-vendor-hardening:9.8.1',
+      'drupal/core-project-message:9.8.1',
       '--update-with-all-dependencies',
     ];
     $stager->stage($command, Argument::cetera())->shouldBeCalled();

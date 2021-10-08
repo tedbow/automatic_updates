@@ -141,9 +141,10 @@ class Updater {
     if (count($project_versions) !== 1 || !array_key_exists('drupal', $project_versions)) {
       throw new \InvalidArgumentException("Currently only updates to Drupal core are supported.");
     }
-    $packages = [
-      $this->getCorePackageName() => $project_versions['drupal'],
-    ];
+    $packages = [];
+    foreach ($this->getCorePackageNames() as $package) {
+      $packages[$package] = $project_versions['drupal'];
+    }
     $stage_key = $this->createActiveStage($packages);
     /** @var \Drupal\automatic_updates\Event\PreStartEvent $event */
     $event = $this->dispatchUpdateEvent(new PreStartEvent($packages), AutomaticUpdatesEvents::PRE_START);
@@ -152,43 +153,60 @@ class Updater {
   }
 
   /**
-   * Determines the name of the core package in the project composer.json.
+   * Returns the names of the core packages in the project composer.json.
    *
-   * This makes the following assumptions:
-   * - The vendor directory is next to the project composer.json.
-   * - The project composer.json contains a requirement for a core package.
-   * - That requirement is either for drupal/core or drupal/core-recommended.
+   * The following packages are considered core packages:
+   * - drupal/core;
+   * - drupal/core-recommended;
+   * - drupal/core-vendor-hardening;
+   * - drupal/core-composer-scaffold; and
+   * - drupal/core-project-message.
    *
-   * @return string
-   *   The name of the core package (either drupal/core or
-   *   drupal/core-recommended).
+   * @return string[]
+   *   The names of the core packages.
    *
    * @throws \RuntimeException
    *   If the project composer.json is not found.
    * @throws \LogicException
-   *   If the project composer.json does not contain one of the supported core
-   *   packages.
+   *   If the project composer.json does not contain drupal/core or
+   *   drupal/core-recommended.
    *
    * @todo Move this to an update validator, or use a more robust method of
-   *   detecting the core package.
+   *   detecting the core packages.
    */
-  public function getCorePackageName(): string {
+  public function getCorePackageNames(): array {
     $composer = realpath($this->pathLocator->getProjectRoot() . '/composer.json');
 
     if (empty($composer) || !file_exists($composer)) {
       throw new \RuntimeException("Could not find project-level composer.json");
     }
 
-    $composer = file_get_contents($composer);
-    $composer = Json::decode($composer);
+    $data = file_get_contents($composer);
+    $data = Json::decode($data);
 
-    if (isset($composer['require']['drupal/core'])) {
-      return 'drupal/core';
+    // @todo Find some way to either use a canonical list of packages that are
+    //   part of core, or use heuristics to detect them in the lock file (e.g.,
+    //   any package which starts with 'drupal/core-' and is a Composer plugin
+    //   or metapackage).
+    $core_packages = ['drupal/core', 'drupal/core-recommended'];
+    $requirements = array_keys($data['require']);
+
+    // Ensure that either drupal/core or drupal/core-recommended are required
+    // by the project. If neither is, then core will not be updated, and we
+    // consider that an error condition.
+    $core_requirements = array_intersect($core_packages, $requirements);
+    if (empty($core_requirements)) {
+      throw new \LogicException("Drupal core does not appear to be required in $composer.");
     }
-    elseif (isset($composer['require']['drupal/core-recommended'])) {
-      return 'drupal/core-recommended';
-    }
-    throw new \LogicException("Could not determine the Drupal core package in the project-level composer.json.");
+
+    // Also detect core's Composer plugins, so they can be updated if needed.
+    $core_packages = array_merge($core_packages, [
+      'drupal/core-composer-scaffold',
+      'drupal/core-vendor-hardening',
+      'drupal/core-project-message',
+    ]);
+
+    return array_intersect($core_packages, $requirements);
   }
 
   /**

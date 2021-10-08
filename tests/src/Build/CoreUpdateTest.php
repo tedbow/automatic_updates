@@ -74,6 +74,14 @@ class CoreUpdateTest extends UpdateTestBase {
   /**
    * Returns composer.json changes that are needed to update core.
    *
+   * This will clone the following packages into temporary directories:
+   * - drupal/core
+   * - drupal/core-recommended
+   * - drupal/core-project-message
+   * - drupal/core-composer-scaffold
+   * The cloned packages will be assigned the given version number, and the test
+   * site's composer.json will use the clones as path repositories.
+   *
    * @param string $version
    *   The version of core we will be updating to.
    *
@@ -81,28 +89,47 @@ class CoreUpdateTest extends UpdateTestBase {
    *   The changes to merge into the test site's composer.json.
    */
   protected function getConfigurationForUpdate(string $version): array {
-    $changes = [];
+    $repositories = [];
 
     // Create a fake version of core with the given version number, and change
     // its README so that we can actually be certain that we update to this
     // fake version.
-    $core_dir = $this->copyPackage($this->getWebRoot() . '/core');
-    $this->setCoreVersion($core_dir, $version);
-    file_put_contents("$core_dir/README.txt", "Placeholder for Drupal core $version.");
-    $changes['repositories']['drupal/core'] = $this->createPathRepository($core_dir);
+    $dir = $this->copyPackage($this->getWebRoot() . '/core');
+    $this->setCoreVersion($dir, $version);
+    file_put_contents("$dir/README.txt", "Placeholder for Drupal core $version.");
+    $repositories['drupal/core'] = $this->createPathRepository($dir);
+
+    $drupal_root = $this->getDrupalRoot();
 
     // Create a fake version of drupal/core-recommended which itself requires
     // the fake version of core we just created.
-    $recommended_dir = $this->copyPackage($this->getDrupalRoot() . '/composer/Metapackage/CoreRecommended');
-    $this->alterPackage($recommended_dir, [
+    $dir = $this->copyPackage("$drupal_root/composer/Metapackage/CoreRecommended");
+    $this->alterPackage($dir, [
       'require' => [
         'drupal/core' => $version,
       ],
       'version' => $version,
     ]);
-    $changes['repositories']['drupal/core-recommended'] = $this->createPathRepository($recommended_dir);
+    $repositories['drupal/core-recommended'] = $this->createPathRepository($dir);
 
-    return $changes;
+    // Create a fake version of drupal/core-project-message.
+    $dir = $this->copyPackage("$drupal_root/composer/Plugin/ProjectMessage");
+    $this->alterPackage($dir, ['version' => $version]);
+    $repositories['drupal/core-project-message'] = $this->createPathRepository($dir);
+
+    // Create a fake version of drupal/core-composer-scaffold.
+    $dir = $this->copyPackage("$drupal_root/composer/Plugin/Scaffold");
+    $this->alterPackage($dir, ['version' => $version]);
+    $repositories['drupal/core-composer-scaffold'] = $this->createPathRepository($dir);
+
+    // Create a fake version of drupal/core-vendor-hardening.
+    $dir = $this->copyPackage("$drupal_root/composer/Plugin/VendorHardening");
+    $this->alterPackage($dir, ['version' => $version]);
+    $repositories['drupal/core-vendor-hardening'] = $this->createPathRepository($dir);
+
+    return [
+      'repositories' => $repositories,
+    ];
   }
 
   /**

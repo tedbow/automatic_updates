@@ -58,7 +58,10 @@ class UpdateVersionValidator implements EventSubscriberInterface {
    */
   public function checkUpdateVersion(UpdateEvent $event): void {
     $from_version = ExtensionVersion::createFromVersionString($this->getCoreVersion());
-    $core_package_name = $this->updater->getCorePackageName();
+    $core_package_names = $this->updater->getCorePackageNames();
+    // All the core packages will be updated to the same version, so it doesn't
+    // matter which specific package we're looking at.
+    $core_package_name = reset($core_package_names);
     $to_version = ExtensionVersion::createFromVersionString($event->getPackageVersions()[$core_package_name]);
 
     if ($from_version->getMajorVersion() !== $to_version->getMajorVersion()) {

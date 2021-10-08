@@ -81,7 +81,10 @@ class ReadinessValidationManager {
     $recommender = new UpdateRecommender();
     $release = $recommender->getRecommendedRelease(TRUE);
     if ($release) {
-      $package_versions = [$this->updater->getCorePackageName() => $release->getVersion()];
+      $core_packages = $this->updater->getCorePackageNames();
+      // Update all core packages to the same version.
+      $package_versions = array_fill(0, count($core_packages), $release->getVersion());
+      $package_versions = array_combine($core_packages, $package_versions);
     }
     else {
       $package_versions = [];
