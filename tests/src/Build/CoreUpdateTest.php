@@ -129,8 +129,15 @@ class CoreUpdateTest extends UpdateTestBase {
   public function testApi(string $template): void {
     $this->createTestSite($template);
 
-    $this->visit('/automatic-update-test/update/9.8.1');
-    $this->getMink()->assertSession()->pageTextContains('9.8.1');
+    $mink = $this->getMink();
+    $assert_session = $mink->assertSession();
+
+    // Ensure that the update is prevented if the web root and/or vendor
+    // directories are not writable.
+    $this->assertReadOnlyFileSystemError($template, '/automatic-update-test/update/9.8.1');
+
+    $mink->getSession()->reload();
+    $assert_session->pageTextContains('9.8.1');
   }
 
   /**
@@ -145,11 +152,19 @@ class CoreUpdateTest extends UpdateTestBase {
     $this->createTestSite($template);
 
     $mink = $this->getMink();
-    $page = $mink->getSession()->getPage();
+    $session = $mink->getSession();
+    $page = $session->getPage();
     $assert_session = $mink->assertSession();
+
     $this->visit('/admin/modules');
     $assert_session->pageTextContains('There is a security update available for your version of Drupal.');
     $page->clickLink('Update');
+
+    // Ensure that the update is prevented if the web root and/or vendor
+    // directories are not writable.
+    $this->assertReadOnlyFileSystemError($template, parse_url($session->getCurrentUrl(), PHP_URL_PATH));
+    $session->reload();
+
     $assert_session->pageTextNotContains('There is a security update available for your version of Drupal.');
     $page->pressButton('Update');
     $this->waitForBatchJob();
@@ -175,6 +190,42 @@ class CoreUpdateTest extends UpdateTestBase {
     $this->visit('/admin/reports/status');
     $this->getMink()->getSession()->getPage()->clickLink('Run cron');
     $this->assertUpdateSuccessful();
+  }
+
+  /**
+   * Asserts that the update is prevented if the filesystem isn't writable.
+   *
+   * @param string $template
+   *   The project template used to build the test site. See ::createTestSite()
+   *   for the possible values.
+   * @param string $url
+   *   A URL where we can see the error message which is raised when parts of
+   *   the file system are not writable. This URL will be visited twice: once
+   *   for the web root, and once for the vendor directory.
+   */
+  private function assertReadOnlyFileSystemError(string $template, string $url): void {
+    $directories = [
+      'Drupal' => rtrim($this->getWebRoot(), './'),
+    ];
+
+    // The location of the vendor directory depends on which project template
+    // was used to build the test site.
+    if ($template === 'drupal/recommended-project') {
+      $directories['vendor'] = $this->getWorkspaceDirectory() . '/vendor';
+    }
+    elseif ($template === 'drupal/legacy-project') {
+      $directories['vendor'] = $directories['Drupal'] . '/vendor';
+    }
+
+    $assert_session = $this->getMink()->assertSession();
+    foreach ($directories as $type => $path) {
+      chmod($path, 0555);
+      $this->assertDirectoryIsNotWritable($path);
+      $this->visit($url);
+      $assert_session->pageTextContains("The $type directory \"$path\" is not writable.");
+      chmod($path, 0755);
+      $this->assertDirectoryIsWritable($path);
+    }
   }
 
   /**

@@ -46,6 +46,13 @@ services:
       - '@automatic_updates.path_locator'
     tags:
       - { name: event_subscriber }
+  automatic_updates.validator.file_system_permissions:
+    class: Drupal\automatic_updates\Validator\WritableFileSystemValidator
+    arguments:
+      - '@automatic_updates.path_locator'
+      - '%app.root%'
+    tags:
+      - { name: event_subscriber }
   automatic_updates.path_locator:
     class: Drupal\automatic_updates\PathLocator
     arguments:

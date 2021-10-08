@@ -2,9 +2,11 @@
 
 namespace Drupal\automatic_updates_test;
 
+use Drupal\automatic_updates\Exception\UpdateException;
 use Drupal\automatic_updates\UpdateRecommender;
 use Drupal\Component\Utility\Environment;
 use Drupal\Core\Controller\ControllerBase;
+use Drupal\Core\Render\HtmlResponse;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Symfony\Component\HttpFoundation\Response;
 
@@ -19,24 +21,37 @@ class TestController extends ControllerBase {
    * @param string $to_version
    *   The version of core to update to.
    *
-   * @return array
-   *   The renderable array of the page.
+   * @return \Symfony\Component\HttpFoundation\Response
+   *   The response object.
    */
-  public function update(string $to_version): array {
+  public function update(string $to_version): Response {
     // Let it take as long as it needs.
     Environment::setTimeLimit(0);
 
     /** @var \Drupal\automatic_updates\Updater $updater */
     $updater = \Drupal::service('automatic_updates.updater');
-    $updater->begin(['drupal' => $to_version]);
-    $updater->stage();
-    $updater->commit();
-    $updater->clean();
+    try {
+      $updater->begin(['drupal' => $to_version]);
+      $updater->stage();
+      $updater->commit();
+      $updater->clean();
 
-    $project = (new UpdateRecommender())->getProjectInfo();
-    return [
-      '#markup' => $project['existing_version'],
-    ];
+      $project = (new UpdateRecommender())->getProjectInfo();
+      $content = $project['existing_version'];
+      $status = 200;
+    }
+    catch (UpdateException $e) {
+      $messages = [];
+      foreach ($e->getValidationResults() as $result) {
+        if ($summary = $result->getSummary()) {
+          $messages[] = $summary;
+        }
+        $messages = array_merge($messages, $result->getMessages());
+      }
+      $content = implode('<br />', $messages);
+      $status = 500;
+    }
+    return new HtmlResponse($content, $status);
   }
 
   /**

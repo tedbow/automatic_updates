@@ -12,7 +12,29 @@ abstract class AutomaticUpdatesFunctionalTestBase extends BrowserTestBase {
   /**
    * {@inheritdoc}
    */
-  protected static $modules = ['update', 'update_test'];
+  protected static $modules = [
+    'automatic_updates_test_disable_validators',
+    'update',
+    'update_test',
+  ];
+
+  /**
+   * {@inheritdoc}
+   */
+  protected function prepareSettings() {
+    parent::prepareSettings();
+
+    // Disable the filesystem permissions validator, since we cannot guarantee
+    // that the current code base will be writable in all testing situations. We
+    // test this validator in our build tests, since those do give us control
+    // over the filesystem permissions.
+    // @see \Drupal\Tests\automatic_updates\Build\CoreUpdateTest::assertReadOnlyFileSystemError()
+    $settings['settings']['automatic_updates_disable_validators'] = (object) [
+      'value' => ['automatic_updates.validator.file_system_permissions'],
+      'required' => TRUE,
+    ];
+    $this->writeSettings($settings);
+  }
 
   /**
    * Sets the current (running) version of core, as known to the Update module.

@@ -1,0 +1,4 @@
+name: 'Automatic Updates Test: Disable validators'
+description: Allows certain update validators to be disabled during testing.
+type: module
+package: Testing
