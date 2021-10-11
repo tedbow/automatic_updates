@@ -184,29 +184,17 @@ class Updater {
     $data = file_get_contents($composer);
     $data = Json::decode($data);
 
-    // @todo Find some way to either use a canonical list of packages that are
-    //   part of core, or use heuristics to detect them in the lock file (e.g.,
-    //   any package which starts with 'drupal/core-' and is a Composer plugin
-    //   or metapackage).
-    $core_packages = ['drupal/core', 'drupal/core-recommended'];
-    $requirements = array_keys($data['require']);
-
     // Ensure that either drupal/core or drupal/core-recommended are required
     // by the project. If neither is, then core will not be updated, and we
     // consider that an error condition.
-    $core_requirements = array_intersect($core_packages, $requirements);
+    $requirements = array_keys($data['require']);
+    $core_requirements = array_intersect(['drupal/core', 'drupal/core-recommended'], $requirements);
     if (empty($core_requirements)) {
       throw new \LogicException("Drupal core does not appear to be required in $composer.");
     }
 
-    // Also detect core's Composer plugins, so they can be updated if needed.
-    $core_packages = array_merge($core_packages, [
-      'drupal/core-composer-scaffold',
-      'drupal/core-vendor-hardening',
-      'drupal/core-project-message',
-    ]);
-
-    return array_intersect($core_packages, $requirements);
+    $list = file_get_contents(__DIR__ . '/../core_packages.json');
+    return array_intersect(Json::decode($list), $requirements);
   }
 
   /**
