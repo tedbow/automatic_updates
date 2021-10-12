@@ -44,16 +44,47 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
   }
 
   /**
+   * Data provider for links to the update form.
+   *
+   * @return string[][]
+   *   Test case parameters.
+   */
+  public function updateFormLinkProvider() :array {
+    return [
+      'Modules page' => ['/admin/modules/automatic-update'],
+      'Reports page' => ['/admin/reports/updates/automatic-update'],
+    ];
+  }
+
+  /**
+   * Data provider for testTableLooksCorrect().
+   *
+   * @return string[][]
+   *   Test case parameters.
+   */
+  public function updateFormLinksProvider() :array {
+    return [
+      'Modules page' => ['modules'],
+      'Reports page' => ['reports'],
+    ];
+  }
+
+  /**
    * Tests that the form doesn't display any buttons if Drupal is up-to-date.
    *
    * @todo Mark this test as skipped if the web server is PHP's built-in, single
    *   threaded server.
+   *
+   * @param string $update_form_link
+   *   Update Form link.
+   *
+   * @dataProvider updateFormLinkProvider
    */
-  public function testFormNotDisplayedIfAlreadyCurrent(): void {
+  public function testFormNotDisplayedIfAlreadyCurrent(string $update_form_link): void {
     $this->setCoreVersion('9.8.1');
     $this->checkForUpdates();
 
-    $this->drupalGet('/admin/modules/automatic-update');
+    $this->drupalGet($update_form_link);
 
     $assert_session = $this->assertSession();
     $assert_session->statusCodeEquals(200);
@@ -63,8 +94,13 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
 
   /**
    * Tests that available updates are rendered correctly in a table.
+   *
+   * @param string $access_page
+   *   The page at which the form is accessed.
+   *
+   * @dataProvider updateFormLinksProvider
    */
-  public function testTableLooksCorrect(): void {
+  public function testTableLooksCorrect(string $access_page): void {
     $this->drupalPlaceBlock('local_tasks_block', ['primary' => TRUE]);
     $assert_session = $this->assertSession();
     $this->setCoreVersion('9.8.0');
@@ -72,10 +108,15 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
 
     // Navigate to the automatic updates form.
     $this->drupalGet('/admin');
-    // @todo Add test coverage of accessing the form via the other path in
-    //   https://www.drupal.org/i/3233564
-    $this->clickLink('Extend');
-    $assert_session->pageTextContainsOnce('There is a security update available for your version of Drupal.');
+    if ($access_page === 'modules') {
+      $this->clickLink('Extend');
+      $assert_session->pageTextContainsOnce('There is a security update available for your version of Drupal.');
+    }
+    else {
+      $this->clickLink('Reports');
+      $assert_session->pageTextContainsOnce('There is a security update available for your version of Drupal.');
+      $this->clickLink('Available updates');
+    }
     $this->clickLink('Update');
     $assert_session->pageTextNotContains('There is a security update available for your version of Drupal.');
     $cells = $assert_session->elementExists('css', '#edit-projects .update-update-security')
@@ -173,11 +214,16 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
 
   /**
    * Tests that updating to a different minor version isn't supported.
+   *
+   * @param string $update_form_link
+   *   Update Form link.
+   *
+   * @dataProvider updateFormLinkProvider
    */
-  public function testMinorVersionUpdateNotSupported(): void {
+  public function testMinorVersionUpdateNotSupported(string $update_form_link): void {
     $this->setCoreVersion('9.7.1');
 
-    $this->drupalGet('/admin/modules/automatic-update');
+    $this->drupalGet($update_form_link);
 
     $assert_session = $this->assertSession();
     $assert_session->pageTextContainsOnce('Updating from one minor version to another is not supported.');
