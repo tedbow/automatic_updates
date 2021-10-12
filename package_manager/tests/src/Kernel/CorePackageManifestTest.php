@@ -1,6 +1,6 @@
 <?php
 
-namespace Drupal\Tests\automatic_updates\Kernel;
+namespace Drupal\Tests\package_manager\Kernel;
 
 use Drupal\Component\Serialization\Json;
 use Drupal\KernelTests\KernelTestBase;
@@ -18,7 +18,7 @@ use Symfony\Component\Finder\Finder;
  *   For example, the list could live in core/assets, and this test could live
  *   in the Drupal\Tests\Composer namespace.
  *
- * @group automatic_updates
+ * @group package_manager
  */
 class CorePackageManifestTest extends KernelTestBase {
 

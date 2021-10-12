@@ -5,7 +5,6 @@ namespace Drupal\automatic_updates\Validator;
 use Drupal\automatic_updates\AutomaticUpdatesEvents;
 use Drupal\automatic_updates\Event\ReadinessCheckEvent;
 use Drupal\automatic_updates\Event\UpdateEvent;
-use Drupal\automatic_updates\Updater;
 use Drupal\automatic_updates\Validation\ValidationResult;
 use Drupal\Core\Extension\ExtensionVersion;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
@@ -17,23 +16,6 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 class UpdateVersionValidator implements EventSubscriberInterface {
 
   use StringTranslationTrait;
-
-  /**
-   * The updater service.
-   *
-   * @var \Drupal\automatic_updates\Updater
-   */
-  protected $updater;
-
-  /**
-   * Constructs an UpdateVersionSubscriber.
-   *
-   * @param \Drupal\automatic_updates\Updater $updater
-   *   The updater service.
-   */
-  public function __construct(Updater $updater) {
-    $this->updater = $updater;
-  }
 
   /**
    * Returns the running core version, according to the Update module.
@@ -58,7 +40,7 @@ class UpdateVersionValidator implements EventSubscriberInterface {
    */
   public function checkUpdateVersion(UpdateEvent $event): void {
     $from_version = ExtensionVersion::createFromVersionString($this->getCoreVersion());
-    $core_package_names = $this->updater->getCorePackageNames();
+    $core_package_names = $event->getActiveComposer()->getCorePackageNames();
     // All the core packages will be updated to the same version, so it doesn't
     // matter which specific package we're looking at.
     $core_package_name = reset($core_package_names);

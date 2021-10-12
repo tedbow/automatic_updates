@@ -46,7 +46,7 @@ trait ValidationTestTrait {
       $this->testResults["checker_$listener_number"]['1 error 1 warning'] = [
         "$listener_number:error" => ValidationResult::createError(
           [t("$listener_number:OMG 🔌. Some one unplugged the server! How is this site even running?")],
-          t("$listener_number:Summary: 🔥"),
+          t("$listener_number:Summary: 🔥")
         ),
         "$listener_number:warning" => ValidationResult::createWarning(
           [t("$listener_number:It looks like it going to rain and your server is outside.")],
@@ -82,7 +82,7 @@ trait ValidationTestTrait {
       $this->testResults["checker_$listener_number"]['1 warning'] = [
         ValidationResult::createWarning(
           [t("$listener_number:This is your one and only warning. You have been warned.")],
-          t("$listener_number:No need for this summary with only 1 warning."),
+          t("$listener_number:No need for this summary with only 1 warning.")
         ),
       ];
     }

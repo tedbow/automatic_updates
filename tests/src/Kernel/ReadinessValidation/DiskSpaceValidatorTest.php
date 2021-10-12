@@ -208,7 +208,8 @@ class DiskSpaceValidatorTest extends KernelTestBase {
     $this->validator->sharedDisk = $shared_disk;
     $this->validator->freeSpace = array_map([Bytes::class, 'toNumber'], $free_space);
 
-    $event = new UpdateEvent();
+    $composer = $this->createMock('\Drupal\package_manager\ComposerUtility');
+    $event = new UpdateEvent($composer);
     $this->validator->checkDiskSpace($event);
     $this->assertValidationResultsEqual($expected_results, $event->getResults());
   }

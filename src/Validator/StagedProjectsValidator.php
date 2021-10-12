@@ -3,11 +3,8 @@
 namespace Drupal\automatic_updates\Validator;
 
 use Drupal\automatic_updates\AutomaticUpdatesEvents;
-use Drupal\automatic_updates\Event\UpdateEvent;
-use Drupal\automatic_updates\Exception\UpdateException;
-use Drupal\automatic_updates\PathLocator;
+use Drupal\automatic_updates\Event\PreCommitEvent;
 use Drupal\automatic_updates\Validation\ValidationResult;
-use Drupal\Component\Serialization\Json;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\Core\StringTranslation\TranslationInterface;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
@@ -20,80 +17,31 @@ final class StagedProjectsValidator implements EventSubscriberInterface {
   use StringTranslationTrait;
 
   /**
-   * The path locator service.
-   *
-   * @var \Drupal\automatic_updates\PathLocator
-   */
-  protected $pathLocator;
-
-  /**
    * Constructs a StagedProjectsValidation object.
    *
    * @param \Drupal\Core\StringTranslation\TranslationInterface $translation
    *   The translation service.
-   * @param \Drupal\automatic_updates\PathLocator $path_locator
-   *   The path locator service.
    */
-  public function __construct(TranslationInterface $translation, PathLocator $path_locator) {
+  public function __construct(TranslationInterface $translation) {
     $this->setStringTranslation($translation);
-    $this->pathLocator = $path_locator;
-  }
-
-  /**
-   * Gets the Drupal packages in a composer.lock file.
-   *
-   * @param string $composer_lock_file
-   *   The composer.lock file location.
-   *
-   * @return array[]
-   *   The Drupal packages' information, as stored in the lock file, keyed by
-   *   package name.
-   */
-  private function getDrupalPackagesFromLockFile(string $composer_lock_file): array {
-    if (!file_exists($composer_lock_file)) {
-      $result = ValidationResult::createError([
-        $this->t("composer.lock file '@lock_file' not found.", ['@lock_file' => $composer_lock_file]),
-      ]);
-      throw new UpdateException(
-        [$result],
-        'The staged packages could not be evaluated because composer.lock file not found.'
-      );
-    }
-    $composer_lock = file_get_contents($composer_lock_file);
-    $drupal_packages = [];
-    $data = Json::decode($composer_lock);
-    $drupal_package_types = [
-      'drupal-module',
-      'drupal-theme',
-      'drupal-custom-module',
-      'drupal-custom-theme',
-    ];
-    $packages = $data['packages'] ?? [];
-    $packages = array_merge($packages, $data['packages-dev'] ?? []);
-    foreach ($packages as $package) {
-      if (in_array($package['type'], $drupal_package_types, TRUE)) {
-        $drupal_packages[$package['name']] = $package;
-      }
-    }
-
-    return $drupal_packages;
   }
 
   /**
    * Validates the staged packages.
    *
-   * @param \Drupal\automatic_updates\Event\UpdateEvent $event
-   *   The update event.
+   * @param \Drupal\automatic_updates\Event\PreCommitEvent $event
+   *   The event object.
    */
-  public function validateStagedProjects(UpdateEvent $event): void {
+  public function validateStagedProjects(PreCommitEvent $event): void {
     try {
-      $active_packages = $this->getDrupalPackagesFromLockFile($this->pathLocator->getActiveDirectory() . "/composer.lock");
-      $staged_packages = $this->getDrupalPackagesFromLockFile($this->pathLocator->getStageDirectory() . "/composer.lock");
+      $active_packages = $event->getActiveComposer()->getDrupalExtensionPackages();
+      $staged_packages = $event->getStageComposer()->getDrupalExtensionPackages();
     }
-    catch (UpdateException $e) {
-      foreach ($e->getValidationResults() as $result) {
-        $event->addValidationResult($result);
-      }
+    catch (\Throwable $e) {
+      $result = ValidationResult::createError([
+        $e->getMessage(),
+      ]);
+      $event->addValidationResult($result);
       return;
     }
 
@@ -111,8 +59,8 @@ final class StagedProjectsValidator implements EventSubscriberInterface {
         $new_packages_messages[] = $this->t(
           "@type '@name' installed.",
           [
-            '@type' => $type_map[$new_package['type']],
-            '@name' => $new_package['name'],
+            '@type' => $type_map[$new_package->getType()],
+            '@name' => $new_package->getName(),
           ]
         );
       }
@@ -131,8 +79,8 @@ final class StagedProjectsValidator implements EventSubscriberInterface {
         $removed_packages_messages[] = $this->t(
           "@type '@name' removed.",
           [
-            '@type' => $type_map[$removed_package['type']],
-            '@name' => $removed_package['name'],
+            '@type' => $type_map[$removed_package->getType()],
+            '@name' => $removed_package->getName(),
           ]
         );
       }
@@ -149,14 +97,14 @@ final class StagedProjectsValidator implements EventSubscriberInterface {
     if ($pre_existing_packages = array_diff_key($staged_packages, $removed_packages, $new_packages)) {
       foreach ($pre_existing_packages as $package_name => $staged_existing_package) {
         $active_package = $active_packages[$package_name];
-        if ($staged_existing_package['version'] !== $active_package['version']) {
+        if ($staged_existing_package->getVersion() !== $active_package->getVersion()) {
           $version_change_messages[] = $this->t(
             "@type '@name' from @active_version to  @staged_version.",
             [
-              '@type' => $type_map[$active_package['type']],
-              '@name' => $active_package['name'],
-              '@staged_version' => $staged_existing_package['version'],
-              '@active_version' => $active_package['version'],
+              '@type' => $type_map[$active_package->getType()],
+              '@name' => $active_package->getName(),
+              '@staged_version' => $staged_existing_package->getPrettyVersion(),
+              '@active_version' => $active_package->getPrettyVersion(),
             ]
           );
         }

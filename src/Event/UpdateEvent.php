@@ -4,6 +4,7 @@ namespace Drupal\automatic_updates\Event;
 
 use Drupal\automatic_updates\Validation\ValidationResult;
 use Drupal\Component\EventDispatcher\Event;
+use Drupal\package_manager\ComposerUtility;
 
 /**
  * Event fired when a site is updating.
@@ -20,6 +21,33 @@ class UpdateEvent extends Event {
    * @var \Drupal\automatic_updates\Validation\ValidationResult[]
    */
   protected $results = [];
+
+  /**
+   * The Composer utility object for the active directory.
+   *
+   * @var \Drupal\package_manager\ComposerUtility
+   */
+  protected $activeComposer;
+
+  /**
+   * Constructs a new UpdateEvent object.
+   *
+   * @param \Drupal\package_manager\ComposerUtility $active_composer
+   *   A Composer utility object for the active directory.
+   */
+  public function __construct(ComposerUtility $active_composer) {
+    $this->activeComposer = $active_composer;
+  }
+
+  /**
+   * Returns a Composer utility object for the active directory.
+   *
+   * @return \Drupal\package_manager\ComposerUtility
+   *   The Composer utility object for the active directory.
+   */
+  public function getActiveComposer(): ComposerUtility {
+    return $this->activeComposer;
+  }
 
   /**
    * Adds a validation result.

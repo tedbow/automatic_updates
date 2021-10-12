@@ -1,10 +1,23 @@
 services:
   automatic_updates.readiness_validation_manager:
     class: Drupal\automatic_updates\Validation\ReadinessValidationManager
-    arguments: ['@keyvalue.expirable', '@datetime.time', '@automatic_updates.updater', '@event_dispatcher', 24]
+    arguments:
+      - '@keyvalue.expirable'
+      - '@datetime.time'
+      - '@automatic_updates.path_locator'
+      - '@event_dispatcher'
+      - 24
   automatic_updates.updater:
     class: Drupal\automatic_updates\Updater
-    arguments: ['@state', '@string_translation','@package_manager.beginner', '@package_manager.stager', '@package_manager.cleaner', '@package_manager.committer', '@event_dispatcher', '@automatic_updates.path_locator']
+    arguments:
+      - '@state'
+      - '@string_translation'
+      - '@package_manager.beginner'
+      - '@package_manager.stager'
+      - '@package_manager.cleaner'
+      - '@package_manager.committer'
+      - '@event_dispatcher'
+      - '@automatic_updates.path_locator'
   automatic_updates.cleaner:
     class: Drupal\automatic_updates\ComposerStager\Cleaner
     decorates: package_manager.cleaner
@@ -27,12 +40,12 @@ services:
       - { name: event_subscriber }
   automatic_updates.staged_projects_validator:
     class: Drupal\automatic_updates\Validator\StagedProjectsValidator
-    arguments: ['@string_translation', '@automatic_updates.path_locator']
+    arguments:
+      - '@string_translation'
     tags:
       - { name: event_subscriber }
   automatic_updates.update_version_validator:
     class: Drupal\automatic_updates\Validator\UpdateVersionValidator
-    arguments: ['@automatic_updates.updater']
     tags:
       - { name: event_subscriber }
   automatic_updates.composer_executable_validator:

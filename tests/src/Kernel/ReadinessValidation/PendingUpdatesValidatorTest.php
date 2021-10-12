@@ -27,6 +27,13 @@ class PendingUpdatesValidatorTest extends KernelTestBase {
   ];
 
   /**
+   * The update event object that will be dispatched.
+   *
+   * @var \Drupal\automatic_updates\Event\UpdateEvent
+   */
+  private $event;
+
+  /**
    * {@inheritdoc}
    */
   protected function setUp(): void {
@@ -42,16 +49,18 @@ class PendingUpdatesValidatorTest extends KernelTestBase {
     $this->container->get('keyvalue')
       ->get('post_update')
       ->set('existing_updates', $updates);
+
+    $composer = $this->createMock('\Drupal\package_manager\ComposerUtility');
+    $this->event = new UpdateEvent($composer);
   }
 
   /**
    * Tests that no error is raised if there are no pending updates.
    */
   public function testNoPendingUpdates(): void {
-    $event = new UpdateEvent();
     $this->container->get('automatic_updates.pending_updates_validator')
-      ->checkPendingUpdates($event);
-    $this->assertEmpty($event->getResults());
+      ->checkPendingUpdates($this->event);
+    $this->assertEmpty($this->event->getResults());
   }
 
   /**
@@ -66,10 +75,9 @@ class PendingUpdatesValidatorTest extends KernelTestBase {
 
     $result = ValidationResult::createError(['Some modules have database schema updates to install. You should run the <a href="/update.php">database update script</a> immediately.']);
 
-    $event = new UpdateEvent();
     $this->container->get('automatic_updates.pending_updates_validator')
-      ->checkPendingUpdates($event);
-    $this->assertValidationResultsEqual([$result], $event->getResults());
+      ->checkPendingUpdates($this->event);
+    $this->assertValidationResultsEqual([$result], $this->event->getResults());
   }
 
   /**
@@ -80,10 +88,9 @@ class PendingUpdatesValidatorTest extends KernelTestBase {
 
     $result = ValidationResult::createError(['Some modules have database schema updates to install. You should run the <a href="/update.php">database update script</a> immediately.']);
 
-    $event = new UpdateEvent();
     $this->container->get('automatic_updates.pending_updates_validator')
-      ->checkPendingUpdates($event);
-    $this->assertValidationResultsEqual([$result], $event->getResults());
+      ->checkPendingUpdates($this->event);
+    $this->assertValidationResultsEqual([$result], $this->event->getResults());
   }
 
 }

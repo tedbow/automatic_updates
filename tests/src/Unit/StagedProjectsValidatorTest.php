@@ -2,13 +2,12 @@
 
 namespace Drupal\Tests\automatic_updates\Unit;
 
-use Drupal\automatic_updates\Event\UpdateEvent;
-use Drupal\automatic_updates\PathLocator;
+use Drupal\automatic_updates\Event\PreCommitEvent;
 use Drupal\automatic_updates\Validator\StagedProjectsValidator;
-use Drupal\Component\FileSystem\FileSystem;
 use Drupal\Core\StringTranslation\PluralTranslatableMarkup;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\Core\StringTranslation\TranslationInterface;
+use Drupal\package_manager\ComposerUtility;
 use Drupal\Tests\UnitTestCase;
 
 /**
@@ -19,25 +18,41 @@ use Drupal\Tests\UnitTestCase;
 class StagedProjectsValidatorTest extends UnitTestCase {
 
   /**
+   * Creates a pre-commit event object for testing.
+   *
+   * @param string $active_dir
+   *   The active directory.
+   * @param string $stage_dir
+   *   The stage directory.
+   *
+   * @return \Drupal\automatic_updates\Event\PreCommitEvent
+   *   The event object.
+   */
+  private function createEvent(string $active_dir, string $stage_dir): PreCommitEvent {
+    return new PreCommitEvent(
+      ComposerUtility::createForDirectory($active_dir),
+      ComposerUtility::createForDirectory($stage_dir)
+    );
+  }
+
+  /**
    * Tests that if an exception is thrown, the update event will absorb it.
    */
   public function testUpdateEventConsumesExceptionResults(): void {
-    $prefix = FileSystem::getOsTemporaryDirectory() . DIRECTORY_SEPARATOR;
-    $active_dir = uniqid($prefix);
-    $stage_dir = uniqid($prefix);
+    $message = 'An exception thrown by Composer at runtime.';
 
-    $locator = $this->prophesize(PathLocator::class);
-    $locator->getActiveDirectory()->willReturn($active_dir);
-    $locator->getStageDirectory()->willReturn($stage_dir);
-    $validator = new StagedProjectsValidator(new TestTranslationManager(), $locator->reveal());
+    $composer = $this->prophesize(ComposerUtility::class);
+    $composer->getDrupalExtensionPackages()
+      ->willThrow(new \RuntimeException($message));
+    $event = new PreCommitEvent($composer->reveal(), $composer->reveal());
 
-    $event = new UpdateEvent();
+    $validator = new StagedProjectsValidator(new TestTranslationManager());
     $validator->validateStagedProjects($event);
     $results = $event->getResults();
     $this->assertCount(1, $results);
     $messages = reset($results)->getMessages();
     $this->assertCount(1, $messages);
-    $this->assertSame("composer.lock file '$active_dir/composer.lock' not found.", (string) reset($messages));
+    $this->assertSame($message, (string) reset($messages));
   }
 
   /**
@@ -56,14 +71,11 @@ class StagedProjectsValidatorTest extends UnitTestCase {
    * @covers ::validateStagedProjects
    */
   public function testErrors(string $fixtures_dir, string $expected_summary, array $expected_messages): void {
-    $locator = $this->prophesize(PathLocator::class);
     $this->assertNotEmpty($fixtures_dir);
     $this->assertDirectoryExists($fixtures_dir);
 
-    $locator->getActiveDirectory()->willReturn("$fixtures_dir/active");
-    $locator->getStageDirectory()->willReturn("$fixtures_dir/staged");
-    $validator = new StagedProjectsValidator(new TestTranslationManager(), $locator->reveal());
-    $event = new UpdateEvent();
+    $event = $this->createEvent("$fixtures_dir/active", "$fixtures_dir/staged");
+    $validator = new StagedProjectsValidator(new TestTranslationManager());
     $validator->validateStagedProjects($event);
     $results = $event->getResults();
     $this->assertCount(1, $results);
@@ -121,11 +133,8 @@ class StagedProjectsValidatorTest extends UnitTestCase {
    */
   public function testNoErrors(): void {
     $fixtures_dir = realpath(__DIR__ . '/../../fixtures/project_staged_validation/no_errors');
-    $locator = $this->prophesize(PathLocator::class);
-    $locator->getActiveDirectory()->willReturn("$fixtures_dir/active");
-    $locator->getStageDirectory()->willReturn("$fixtures_dir/staged");
-    $validator = new StagedProjectsValidator(new TestTranslationManager(), $locator->reveal());
-    $event = new UpdateEvent();
+    $event = $this->createEvent("$fixtures_dir/active", "$fixtures_dir/staged");
+    $validator = new StagedProjectsValidator(new TestTranslationManager());
     $validator->validateStagedProjects($event);
     $results = $event->getResults();
     $this->assertIsArray($results);
@@ -137,19 +146,14 @@ class StagedProjectsValidatorTest extends UnitTestCase {
    */
   public function testNoLockFile(): void {
     $fixtures_dir = realpath(__DIR__ . '/../../fixtures/project_staged_validation/no_errors');
-    $locator = $this->prophesize(PathLocator::class);
-    $locator->getActiveDirectory()->willReturn("$fixtures_dir/active");
-    $locator->getStageDirectory()->willReturn("$fixtures_dir");
-    $validator = new StagedProjectsValidator(new TestTranslationManager(), $locator->reveal());
-    $event = new UpdateEvent();
+
+    $event = $this->createEvent("$fixtures_dir/active", $fixtures_dir);
+    $validator = new StagedProjectsValidator(new TestTranslationManager());
     $validator->validateStagedProjects($event);
     $results = $event->getResults();
     $this->assertCount(1, $results);
     $result = array_pop($results);
-    $this->assertMatchesRegularExpression(
-      "/.*automatic_updates\/tests\/fixtures\/project_staged_validation\/no_errors\/composer.lock' not found/",
-        (string) $result->getMessages()[0]
-      );
+    $this->assertSame("No lockfile found. Unable to read locked packages", (string) $result->getMessages()[0]);
     $this->assertSame('', (string) $result->getSummary());
   }
 

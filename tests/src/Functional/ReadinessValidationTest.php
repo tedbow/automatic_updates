@@ -382,7 +382,7 @@ class ReadinessValidationTest extends AutomaticUpdatesFunctionalTestBase {
 
     $text = $this->getSession()->getPage()->find(
       'css',
-      "h3#$section ~ details.system-status-report__entry:contains('Update readiness checks')",
+      "h3#$section ~ details.system-status-report__entry:contains('Update readiness checks')"
     )->getText();
     $this->assertStringMatchesFormat($format, $text);
   }

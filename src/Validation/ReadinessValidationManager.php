@@ -4,10 +4,11 @@ namespace Drupal\automatic_updates\Validation;
 
 use Drupal\automatic_updates\AutomaticUpdatesEvents;
 use Drupal\automatic_updates\Event\ReadinessCheckEvent;
-use Drupal\automatic_updates\Updater;
+use Drupal\automatic_updates\PathLocator;
 use Drupal\automatic_updates\UpdateRecommender;
 use Drupal\Component\Datetime\TimeInterface;
 use Drupal\Core\KeyValueStore\KeyValueExpirableFactoryInterface;
+use Drupal\package_manager\ComposerUtility;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 
 /**
@@ -44,11 +45,11 @@ class ReadinessValidationManager {
   protected $resultsTimeToLive;
 
   /**
-   * The updater service.
+   * The path locator service.
    *
-   * @var \Drupal\automatic_updates\Updater
+   * @var \Drupal\automatic_updates\PathLocator
    */
-  protected $updater;
+  protected $pathLocator;
 
   /**
    * Constructs a ReadinessValidationManager.
@@ -57,17 +58,17 @@ class ReadinessValidationManager {
    *   The key/value expirable factory.
    * @param \Drupal\Component\Datetime\TimeInterface $time
    *   The time service.
-   * @param \Drupal\automatic_updates\Updater $updater
-   *   The updater service.
+   * @param \Drupal\automatic_updates\PathLocator $path_locator
+   *   The path locator service.
    * @param \Symfony\Component\EventDispatcher\EventDispatcherInterface $dispatcher
    *   The event dispatcher service.
    * @param int $results_time_to_live
    *   The number of hours to store results.
    */
-  public function __construct(KeyValueExpirableFactoryInterface $key_value_expirable_factory, TimeInterface $time, Updater $updater, EventDispatcherInterface $dispatcher, int $results_time_to_live) {
+  public function __construct(KeyValueExpirableFactoryInterface $key_value_expirable_factory, TimeInterface $time, PathLocator $path_locator, EventDispatcherInterface $dispatcher, int $results_time_to_live) {
     $this->keyValueExpirable = $key_value_expirable_factory->get('automatic_updates');
     $this->time = $time;
-    $this->updater = $updater;
+    $this->pathLocator = $path_locator;
     $this->eventDispatcher = $dispatcher;
     $this->resultsTimeToLive = $results_time_to_live;
   }
@@ -78,10 +79,12 @@ class ReadinessValidationManager {
    * @return $this
    */
   public function run(): self {
+    $composer = ComposerUtility::createForDirectory($this->pathLocator->getActiveDirectory());
+
     $recommender = new UpdateRecommender();
     $release = $recommender->getRecommendedRelease(TRUE);
     if ($release) {
-      $core_packages = $this->updater->getCorePackageNames();
+      $core_packages = $composer->getCorePackageNames();
       // Update all core packages to the same version.
       $package_versions = array_fill(0, count($core_packages), $release->getVersion());
       $package_versions = array_combine($core_packages, $package_versions);
@@ -89,7 +92,7 @@ class ReadinessValidationManager {
     else {
       $package_versions = [];
     }
-    $event = new ReadinessCheckEvent($package_versions);
+    $event = new ReadinessCheckEvent($composer, $package_versions);
     $this->eventDispatcher->dispatch($event, AutomaticUpdatesEvents::READINESS_CHECK);
     $results = $event->getResults();
     $this->keyValueExpirable->setWithExpire(

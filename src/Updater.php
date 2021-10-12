@@ -6,10 +6,10 @@ use Drupal\automatic_updates\Event\PreCommitEvent;
 use Drupal\automatic_updates\Event\PreStartEvent;
 use Drupal\automatic_updates\Event\UpdateEvent;
 use Drupal\automatic_updates\Exception\UpdateException;
-use Drupal\Component\Serialization\Json;
 use Drupal\Core\State\StateInterface;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\Core\StringTranslation\TranslationInterface;
+use Drupal\package_manager\ComposerUtility;
 use Drupal\system\SystemManager;
 use PhpTuf\ComposerStager\Domain\BeginnerInterface;
 use PhpTuf\ComposerStager\Domain\CleanerInterface;
@@ -141,60 +141,17 @@ class Updater {
     if (count($project_versions) !== 1 || !array_key_exists('drupal', $project_versions)) {
       throw new \InvalidArgumentException("Currently only updates to Drupal core are supported.");
     }
+
+    $composer = ComposerUtility::createForDirectory($this->pathLocator->getActiveDirectory());
     $packages = [];
-    foreach ($this->getCorePackageNames() as $package) {
+    foreach ($composer->getCorePackageNames() as $package) {
       $packages[$package] = $project_versions['drupal'];
     }
     $stage_key = $this->createActiveStage($packages);
     /** @var \Drupal\automatic_updates\Event\PreStartEvent $event */
-    $event = $this->dispatchUpdateEvent(new PreStartEvent($packages), AutomaticUpdatesEvents::PRE_START);
+    $event = $this->dispatchUpdateEvent(new PreStartEvent($composer, $packages), AutomaticUpdatesEvents::PRE_START);
     $this->beginner->begin($this->pathLocator->getActiveDirectory(), $this->pathLocator->getStageDirectory(), $this->getExclusions($event));
     return $stage_key;
-  }
-
-  /**
-   * Returns the names of the core packages in the project composer.json.
-   *
-   * The following packages are considered core packages:
-   * - drupal/core;
-   * - drupal/core-recommended;
-   * - drupal/core-vendor-hardening;
-   * - drupal/core-composer-scaffold; and
-   * - drupal/core-project-message.
-   *
-   * @return string[]
-   *   The names of the core packages.
-   *
-   * @throws \RuntimeException
-   *   If the project composer.json is not found.
-   * @throws \LogicException
-   *   If the project composer.json does not contain drupal/core or
-   *   drupal/core-recommended.
-   *
-   * @todo Move this to an update validator, or use a more robust method of
-   *   detecting the core packages.
-   */
-  public function getCorePackageNames(): array {
-    $composer = realpath($this->pathLocator->getProjectRoot() . '/composer.json');
-
-    if (empty($composer) || !file_exists($composer)) {
-      throw new \RuntimeException("Could not find project-level composer.json");
-    }
-
-    $data = file_get_contents($composer);
-    $data = Json::decode($data);
-
-    // Ensure that either drupal/core or drupal/core-recommended are required
-    // by the project. If neither is, then core will not be updated, and we
-    // consider that an error condition.
-    $requirements = array_keys($data['require']);
-    $core_requirements = array_intersect(['drupal/core', 'drupal/core-recommended'], $requirements);
-    if (empty($core_requirements)) {
-      throw new \LogicException("Drupal core does not appear to be required in $composer.");
-    }
-
-    $list = file_get_contents(__DIR__ . '/../core_packages.json');
-    return array_intersect(Json::decode($list), $requirements);
   }
 
   /**
@@ -237,10 +194,16 @@ class Updater {
    * Commits the current update.
    */
   public function commit(): void {
+    $active_dir = $this->pathLocator->getActiveDirectory();
+    $active_composer = ComposerUtility::createForDirectory($active_dir);
+
+    $stage_dir = $this->pathLocator->getStageDirectory();
+    $stage_composer = ComposerUtility::createForDirectory($stage_dir);
+
     /** @var \Drupal\automatic_updates\Event\PreCommitEvent $event */
-    $event = $this->dispatchUpdateEvent(new PreCommitEvent(), AutomaticUpdatesEvents::PRE_COMMIT);
-    $this->committer->commit($this->pathLocator->getStageDirectory(), $this->pathLocator->getActiveDirectory(), $this->getExclusions($event));
-    $this->dispatchUpdateEvent(new UpdateEvent(), AutomaticUpdatesEvents::POST_COMMIT);
+    $event = $this->dispatchUpdateEvent(new PreCommitEvent($active_composer, $stage_composer), AutomaticUpdatesEvents::PRE_COMMIT);
+    $this->committer->commit($stage_dir, $active_dir, $this->getExclusions($event));
+    $this->dispatchUpdateEvent(new UpdateEvent($active_composer), AutomaticUpdatesEvents::POST_COMMIT);
   }
 
   /**
