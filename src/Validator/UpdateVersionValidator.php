@@ -8,6 +8,7 @@ use Drupal\automatic_updates\Event\UpdateEvent;
 use Drupal\automatic_updates\Validation\ValidationResult;
 use Drupal\Core\Extension\ExtensionVersion;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
+use Drupal\Core\StringTranslation\TranslationInterface;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 /**
@@ -16,6 +17,16 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 class UpdateVersionValidator implements EventSubscriberInterface {
 
   use StringTranslationTrait;
+
+  /**
+   * Constructs a UpdateVersionValidation object.
+   *
+   * @param \Drupal\Core\StringTranslation\TranslationInterface $translation
+   *   The translation service.
+   */
+  public function __construct(TranslationInterface $translation) {
+    $this->setStringTranslation($translation);
+  }
 
   /**
    * Returns the running core version, according to the Update module.

@@ -6,6 +6,9 @@ use Drupal\automatic_updates\Event\UpdateEvent;
 use Drupal\automatic_updates\Validation\ValidationResult;
 use Drupal\automatic_updates\Validator\DiskSpaceValidator;
 use Drupal\Component\Utility\Bytes;
+use Drupal\Core\StringTranslation\PluralTranslatableMarkup;
+use Drupal\Core\StringTranslation\TranslatableMarkup;
+use Drupal\Core\StringTranslation\TranslationInterface;
 use Drupal\KernelTests\KernelTestBase;
 use Drupal\Tests\automatic_updates\Traits\ValidationTestTrait;
 
@@ -37,7 +40,7 @@ class DiskSpaceValidatorTest extends KernelTestBase {
 
     // Create a mocked version of the validator which can be rigged up to return
     // specific values for various filesystem checks.
-    $this->validator = new class ($path_locator->reveal()) extends DiskSpaceValidator {
+    $this->validator = new class ($path_locator->reveal(), new TestTranslationManager()) extends DiskSpaceValidator {
 
       /**
        * Whether the root and vendor directories are on the same logical disk.
@@ -212,6 +215,36 @@ class DiskSpaceValidatorTest extends KernelTestBase {
     $event = new UpdateEvent($composer);
     $this->validator->checkDiskSpace($event);
     $this->assertValidationResultsEqual($expected_results, $event->getResults());
+  }
+
+}
+/**
+ * Implements a translation manager in tests.
+ *
+ * @todo Copied from core/modules/user/tests/src/Unit/PermissionHandlerTest.php
+ *   when moving to core open an issue consolidate this test class.
+ */
+class TestTranslationManager implements TranslationInterface {
+
+  /**
+   * {@inheritdoc}
+   */
+  public function translate($string, array $args = [], array $options = []) {
+    return new TranslatableMarkup($string, $args, $options, $this);
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function translateString(TranslatableMarkup $translated_string) {
+    return $translated_string->getUntranslatedString();
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function formatPlural($count, $singular, $plural, array $args = [], array $options = []) {
+    return new PluralTranslatableMarkup($count, $singular, $plural, $args, $options, $this);
   }
 
 }

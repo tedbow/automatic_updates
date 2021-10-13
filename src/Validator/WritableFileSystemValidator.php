@@ -7,6 +7,7 @@ use Drupal\automatic_updates\Event\UpdateEvent;
 use Drupal\automatic_updates\PathLocator;
 use Drupal\automatic_updates\Validation\ValidationResult;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
+use Drupal\Core\StringTranslation\TranslationInterface;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 /**
@@ -37,10 +38,13 @@ class WritableFileSystemValidator implements EventSubscriberInterface {
    *   The path locator service.
    * @param string $app_root
    *   The Drupal root.
+   * @param \Drupal\Core\StringTranslation\TranslationInterface $translation
+   *   The translation service.
    */
-  public function __construct(PathLocator $path_locator, string $app_root) {
+  public function __construct(PathLocator $path_locator, string $app_root, TranslationInterface $translation) {
     $this->pathLocator = $path_locator;
     $this->appRoot = $app_root;
+    $this->setStringTranslation($translation);
   }
 
   /**

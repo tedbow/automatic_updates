@@ -7,6 +7,7 @@ use Drupal\automatic_updates\Event\UpdateEvent;
 use Drupal\automatic_updates\Validation\ValidationResult;
 use Drupal\Core\Extension\ExtensionVersion;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
+use Drupal\Core\StringTranslation\TranslationInterface;
 use PhpTuf\ComposerStager\Domain\Output\ProcessOutputCallbackInterface;
 use PhpTuf\ComposerStager\Exception\ExceptionInterface;
 use PhpTuf\ComposerStager\Infrastructure\Process\Runner\ComposerRunnerInterface;
@@ -38,9 +39,12 @@ class ComposerExecutableValidator implements EventSubscriberInterface, ProcessOu
    *
    * @param \PhpTuf\ComposerStager\Infrastructure\Process\Runner\ComposerRunnerInterface $composer
    *   The Composer runner.
+   * @param \Drupal\Core\StringTranslation\TranslationInterface $translation
+   *   The translation service.
    */
-  public function __construct(ComposerRunnerInterface $composer) {
+  public function __construct(ComposerRunnerInterface $composer, TranslationInterface $translation) {
     $this->composer = $composer;
+    $this->setStringTranslation($translation);
   }
 
   /**

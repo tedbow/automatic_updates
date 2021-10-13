@@ -9,6 +9,7 @@ use Drupal\automatic_updates\Validation\ValidationResult;
 use Drupal\Component\FileSystem\FileSystem;
 use Drupal\Component\Utility\Bytes;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
+use Drupal\Core\StringTranslation\TranslationInterface;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 /**
@@ -30,9 +31,12 @@ class DiskSpaceValidator implements EventSubscriberInterface {
    *
    * @param \Drupal\automatic_updates\PathLocator $path_locator
    *   The path locator service.
+   * @param \Drupal\Core\StringTranslation\TranslationInterface $translation
+   *   The translation service.
    */
-  public function __construct(PathLocator $path_locator) {
+  public function __construct(PathLocator $path_locator, TranslationInterface $translation) {
     $this->pathLocator = $path_locator;
+    $this->setStringTranslation($translation);
   }
 
   /**
