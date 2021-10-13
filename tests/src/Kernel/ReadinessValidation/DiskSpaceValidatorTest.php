@@ -2,85 +2,28 @@
 
 namespace Drupal\Tests\automatic_updates\Kernel\ReadinessValidation;
 
-use Drupal\automatic_updates\Event\UpdateEvent;
 use Drupal\automatic_updates\Validation\ValidationResult;
 use Drupal\automatic_updates\Validator\DiskSpaceValidator;
 use Drupal\Component\Utility\Bytes;
+use Drupal\Tests\automatic_updates\Kernel\AutomaticUpdatesKernelTestBase;
 use Drupal\Core\StringTranslation\PluralTranslatableMarkup;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\Core\StringTranslation\TranslationInterface;
-use Drupal\KernelTests\KernelTestBase;
-use Drupal\Tests\automatic_updates\Traits\ValidationTestTrait;
 
 /**
  * @covers \Drupal\automatic_updates\Validator\DiskSpaceValidator
  *
  * @group automatic_updates
  */
-class DiskSpaceValidatorTest extends KernelTestBase {
-
-  use ValidationTestTrait;
-
-  /**
-   * The validator under test.
-   *
-   * @var \Drupal\automatic_updates\Validator\DiskSpaceValidator
-   */
-  private $validator;
+class DiskSpaceValidatorTest extends AutomaticUpdatesKernelTestBase {
 
   /**
    * {@inheritdoc}
    */
-  protected function setUp(): void {
-    parent::setUp();
-
-    $path_locator = $this->prophesize('\Drupal\automatic_updates\PathLocator');
-    $path_locator->getProjectRoot()->willReturn('root');
-    $path_locator->getVendorDirectory()->willReturn('vendor');
-
-    // Create a mocked version of the validator which can be rigged up to return
-    // specific values for various filesystem checks.
-    $this->validator = new class ($path_locator->reveal(), new TestTranslationManager()) extends DiskSpaceValidator {
-
-      /**
-       * Whether the root and vendor directories are on the same logical disk.
-       *
-       * @var bool
-       */
-      public $sharedDisk;
-
-      /**
-       * The amount of free space, keyed by location.
-       *
-       * @var float[]
-       */
-      public $freeSpace = [];
-
-      /**
-       * {@inheritdoc}
-       */
-      protected function stat(string $path): array {
-        return [
-          'dev' => $this->sharedDisk ? 'disk' : uniqid(),
-        ];
-      }
-
-      /**
-       * {@inheritdoc}
-       */
-      protected function freeSpace(string $path): float {
-        return $this->freeSpace[$path];
-      }
-
-      /**
-       * {@inheritdoc}
-       */
-      protected function temporaryDirectory(): string {
-        return 'temp';
-      }
-
-    };
-  }
+  protected static $modules = [
+    'automatic_updates',
+    'package_manager',
+  ];
 
   /**
    * Data provider for ::testDiskSpaceValidation().
@@ -208,13 +151,59 @@ class DiskSpaceValidatorTest extends KernelTestBase {
    * @dataProvider providerDiskSpaceValidation
    */
   public function testDiskSpaceValidation(bool $shared_disk, array $free_space, array $expected_results): void {
-    $this->validator->sharedDisk = $shared_disk;
-    $this->validator->freeSpace = array_map([Bytes::class, 'toNumber'], $free_space);
+    $path_locator = $this->prophesize('\Drupal\automatic_updates\PathLocator');
+    $path_locator->getProjectRoot()->willReturn('root');
+    $path_locator->getVendorDirectory()->willReturn('vendor');
 
-    $composer = $this->createMock('\Drupal\package_manager\ComposerUtility');
-    $event = new UpdateEvent($composer);
-    $this->validator->checkDiskSpace($event);
-    $this->assertValidationResultsEqual($expected_results, $event->getResults());
+    // Create a mocked version of the validator which can be rigged up to return
+    // specific values for various filesystem checks.
+    $validator = new class (
+      $path_locator->reveal(),
+      $this->container->get('string_translation')
+    ) extends DiskSpaceValidator {
+
+      /**
+       * Whether the root and vendor directories are on the same logical disk.
+       *
+       * @var bool
+       */
+      public $sharedDisk;
+
+      /**
+       * The amount of free space, keyed by location.
+       *
+       * @var float[]
+       */
+      public $freeSpace = [];
+
+      /**
+       * {@inheritdoc}
+       */
+      protected function stat(string $path): array {
+        return [
+          'dev' => $this->sharedDisk ? 'disk' : uniqid(),
+        ];
+      }
+
+      /**
+       * {@inheritdoc}
+       */
+      protected function freeSpace(string $path): float {
+        return $this->freeSpace[$path];
+      }
+
+      /**
+       * {@inheritdoc}
+       */
+      protected function temporaryDirectory(): string {
+        return 'temp';
+      }
+
+    };
+    $validator->sharedDisk = $shared_disk;
+    $validator->freeSpace = array_map([Bytes::class, 'toNumber'], $free_space);
+    $this->container->set('automatic_updates.disk_space_validator', $validator);
+    $this->assertCheckerResultsFromManager($expected_results, TRUE);
   }
 
 }

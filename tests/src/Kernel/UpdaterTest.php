@@ -27,9 +27,6 @@ class UpdaterTest extends AutomaticUpdatesKernelTestBase {
   public function testCorrectVersionsStaged() {
     $this->setReleaseMetadata(__DIR__ . '/../../fixtures/release-history/drupal.9.8.1-security.xml');
 
-    // Set the running core version to 9.8.0.
-    $this->setCoreVersion('9.8.0');
-
     $this->container->get('automatic_updates.updater')->begin([
       'drupal' => '9.8.1',
     ]);

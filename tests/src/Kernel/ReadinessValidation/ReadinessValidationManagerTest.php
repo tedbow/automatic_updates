@@ -6,7 +6,6 @@ use Drupal\automatic_updates_test\ReadinessChecker\TestChecker1;
 use Drupal\automatic_updates_test2\ReadinessChecker\TestChecker2;
 use Drupal\system\SystemManager;
 use Drupal\Tests\automatic_updates\Kernel\AutomaticUpdatesKernelTestBase;
-use Drupal\Tests\automatic_updates\Traits\ValidationTestTrait;
 
 /**
  * @coversDefaultClass \Drupal\automatic_updates\Validation\ReadinessValidationManager
@@ -14,8 +13,6 @@ use Drupal\Tests\automatic_updates\Traits\ValidationTestTrait;
  * @group automatic_updates
  */
 class ReadinessValidationManagerTest extends AutomaticUpdatesKernelTestBase {
-
-  use ValidationTestTrait;
 
   /**
    * {@inheritdoc}
@@ -34,10 +31,6 @@ class ReadinessValidationManagerTest extends AutomaticUpdatesKernelTestBase {
     $this->installEntitySchema('user');
     $this->installSchema('user', ['users_data']);
     $this->createTestValidationResults();
-
-    $this->installConfig('update');
-    $this->setCoreVersion('9.8.0');
-    $this->setReleaseMetadata(__DIR__ . '/../../../fixtures/release-history/drupal.9.8.1.xml');
   }
 
   /**
@@ -216,42 +209,6 @@ class ReadinessValidationManagerTest extends AutomaticUpdatesKernelTestBase {
     $manager = $this->container->get('automatic_updates.readiness_validation_manager');
     $manager->runIfNoStoredResults();
     $this->assertCheckerResultsFromManager($expected_results);
-  }
-
-  /**
-   * Asserts expected validation results from the manager.
-   *
-   * @param \Drupal\automatic_updates\Validation\ValidationResult[] $expected_results
-   *   The expected results.
-   * @param bool $call_run
-   *   (Optional) Whether to call ::run() on the manager. Defaults to FALSE.
-   * @param int|null $severity
-   *   (optional) The severity for the results to return. Should be one of the
-   *   SystemManager::REQUIREMENT_* constants.
-   */
-  private function assertCheckerResultsFromManager(array $expected_results, bool $call_run = FALSE, ?int $severity = NULL): void {
-    $actual_results = $this->getResultsFromManager($call_run, $severity);
-    $this->assertValidationResultsEqual($expected_results, $actual_results);
-  }
-
-  /**
-   * Gets the messages of a particular type from the manager.
-   *
-   * @param bool $call_run
-   *   Whether to run the checkers.
-   * @param int|null $severity
-   *   (optional) The severity for the results to return. Should be one of the
-   *   SystemManager::REQUIREMENT_* constants.
-   *
-   * @return \Drupal\automatic_updates\Validation\ValidationResult[]|null
-   *   The messages of the type.
-   */
-  protected function getResultsFromManager(bool $call_run = FALSE, ?int $severity = NULL): ?array {
-    $manager = $this->container->get('automatic_updates.readiness_validation_manager');
-    if ($call_run) {
-      $manager->run();
-    }
-    return $manager->getResults($severity);
   }
 
 }

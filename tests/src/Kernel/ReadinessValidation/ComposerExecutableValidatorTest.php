@@ -5,7 +5,6 @@ namespace Drupal\Tests\automatic_updates\Kernel\ReadinessValidation;
 use Drupal\automatic_updates\Validation\ValidationResult;
 use Drupal\automatic_updates\Validator\ComposerExecutableValidator;
 use Drupal\Tests\automatic_updates\Kernel\AutomaticUpdatesKernelTestBase;
-use Drupal\Tests\automatic_updates\Traits\ValidationTestTrait;
 use PhpTuf\ComposerStager\Exception\IOException;
 use PhpTuf\ComposerStager\Infrastructure\Process\ExecutableFinderInterface;
 use Prophecy\Argument;
@@ -17,8 +16,6 @@ use Prophecy\Argument;
  */
 class ComposerExecutableValidatorTest extends AutomaticUpdatesKernelTestBase {
 
-  use ValidationTestTrait;
-
   /**
    * {@inheritdoc}
    */
@@ -26,16 +23,6 @@ class ComposerExecutableValidatorTest extends AutomaticUpdatesKernelTestBase {
     'automatic_updates',
     'package_manager',
   ];
-
-  /**
-   * {@inheritdoc}
-   */
-  protected function setUp(): void {
-    parent::setUp();
-    $this->installConfig('update');
-    $this->setCoreVersion('9.8.0');
-    $this->setReleaseMetadata(__DIR__ . '/../../../fixtures/release-history/drupal.9.8.1.xml');
-  }
 
   /**
    * Tests that an error is raised if the Composer executable isn't found.
@@ -55,10 +42,7 @@ class ComposerExecutableValidatorTest extends AutomaticUpdatesKernelTestBase {
     $error = ValidationResult::createError([
       $exception->getMessage(),
     ]);
-    $results = $this->container->get('automatic_updates.readiness_validation_manager')
-      ->run()
-      ->getResults();
-    $this->assertValidationResultsEqual([$error], $results);
+    $this->assertCheckerResultsFromManager([$error], TRUE);
   }
 
   /**
@@ -155,10 +139,7 @@ class ComposerExecutableValidatorTest extends AutomaticUpdatesKernelTestBase {
 
     // If the validator can't find a recognized, supported version of Composer,
     // it should produce errors.
-    $actual_results = $this->container->get('automatic_updates.readiness_validation_manager')
-      ->run()
-      ->getResults();
-    $this->assertValidationResultsEqual($expected_results, $actual_results);
+    $this->assertCheckerResultsFromManager($expected_results, TRUE);
   }
 
 }

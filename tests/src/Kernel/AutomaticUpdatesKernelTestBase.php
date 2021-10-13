@@ -4,6 +4,7 @@ namespace Drupal\Tests\automatic_updates\Kernel;
 
 use Drupal\Core\DependencyInjection\ContainerBuilder;
 use Drupal\KernelTests\KernelTestBase;
+use Drupal\Tests\automatic_updates\Traits\ValidationTestTrait;
 use GuzzleHttp\Client;
 use GuzzleHttp\Handler\MockHandler;
 use GuzzleHttp\HandlerStack;
@@ -15,10 +16,12 @@ use GuzzleHttp\Psr7\Utils;
  */
 abstract class AutomaticUpdatesKernelTestBase extends KernelTestBase {
 
+  use ValidationTestTrait;
+
   /**
    * {@inheritdoc}
    */
-  protected static $modules = ['update', 'update_test'];
+  protected static $modules = ['system', 'update', 'update_test'];
 
   /**
    * The mocked HTTP client that returns metadata about available updates.
@@ -31,6 +34,33 @@ abstract class AutomaticUpdatesKernelTestBase extends KernelTestBase {
    * @see ::register()
    */
   private $client;
+
+  /**
+   * {@inheritdoc}
+   */
+  protected function setUp(): void {
+    parent::setUp();
+
+    // The Update module's default configuration must be installed for our
+    // fake release metadata to be fetched.
+    $this->installConfig('update');
+
+    // Make the update system think that all of System's post-update functions
+    // have run. Since kernel tests don't normally install modules and register
+    // their updates, we need to do this so that all validators are tested from
+    // a clean, fully up-to-date state.
+    $updates = $this->container->get('update.post_update_registry')
+      ->getPendingUpdateFunctions();
+
+    $this->container->get('keyvalue')
+      ->get('post_update')
+      ->set('existing_updates', $updates);
+
+    // By default, pretend we're running Drupal core 9.8.0 and a non-security
+    // update to 9.8.1 is available.
+    $this->setCoreVersion('9.8.0');
+    $this->setReleaseMetadata(__DIR__ . '/../../fixtures/release-history/drupal.9.8.1.xml');
+  }
 
   /**
    * Sets the current (running) version of core, as known to the Update module.

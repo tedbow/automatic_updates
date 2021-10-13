@@ -20,20 +20,9 @@ class UpdateRecommenderTest extends AutomaticUpdatesKernelTestBase {
   ];
 
   /**
-   * {@inheritdoc}
-   */
-  protected function setUp(): void {
-    parent::setUp();
-    $this->installConfig('update');
-    $this->setReleaseMetadata(__DIR__ . '/../../fixtures/release-history/drupal.9.8.1.xml');
-  }
-
-  /**
    * Tests fetching the recommended release when an update is available.
    */
   public function testUpdateAvailable(): void {
-    $this->setCoreVersion('9.8.0');
-
     $recommender = new UpdateRecommender();
     $recommended_release = $recommender->getRecommendedRelease(TRUE);
     $this->assertNotEmpty($recommended_release);
