@@ -74,6 +74,10 @@ services:
       - '%app.root%'
     tags:
       - { name: event_subscriber }
+  automatic_updates.validator.core_composer:
+    class: Drupal\automatic_updates\Validator\CoreComposerValidator
+    tags:
+      - { name: event_subscriber }
   automatic_updates.path_locator:
     class: Drupal\automatic_updates\PathLocator
     arguments:

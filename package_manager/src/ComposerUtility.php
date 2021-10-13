@@ -99,18 +99,6 @@ class ComposerUtility {
    */
   public function getCorePackageNames(): array {
     $requirements = array_keys($this->composer->getPackage()->getRequires());
-
-    // Ensure that either drupal/core or drupal/core-recommended are required.
-    // If neither is, then core cannot be updated, which we consider an error
-    // condition.
-    // @todo Move this check to an update validator as part of
-    //   https://www.drupal.org/project/automatic_updates/issues/3241105
-    $core_requirements = array_intersect(['drupal/core', 'drupal/core-recommended'], $requirements);
-    if (empty($core_requirements)) {
-      $file = $this->composer->getConfig()->getConfigSource()->getName();
-      throw new \LogicException("Drupal core does not appear to be required in $file.");
-    }
-
     return array_intersect(static::getCorePackageList(), $requirements);
   }
 
