@@ -44,12 +44,12 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
   }
 
   /**
-   * Data provider for links to the update form.
+   * Data provider for URLs to the update form.
    *
    * @return string[][]
    *   Test case parameters.
    */
-  public function updateFormLinkProvider() :array {
+  public function providerUpdateFormReferringUrl(): array {
     return [
       'Modules page' => ['/admin/modules/automatic-update'],
       'Reports page' => ['/admin/reports/updates/automatic-update'],
@@ -62,7 +62,7 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
    * @return string[][]
    *   Test case parameters.
    */
-  public function updateFormLinksProvider() :array {
+  public function providerTableLooksCorrect(): array {
     return [
       'Modules page' => ['modules'],
       'Reports page' => ['reports'],
@@ -75,16 +75,16 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
    * @todo Mark this test as skipped if the web server is PHP's built-in, single
    *   threaded server.
    *
-   * @param string $update_form_link
-   *   Update Form link.
+   * @param string $update_form_url
+   *   The URL of the update form to visit.
    *
-   * @dataProvider updateFormLinkProvider
+   * @dataProvider providerUpdateFormReferringUrl
    */
-  public function testFormNotDisplayedIfAlreadyCurrent(string $update_form_link): void {
+  public function testFormNotDisplayedIfAlreadyCurrent(string $update_form_url): void {
     $this->setCoreVersion('9.8.1');
     $this->checkForUpdates();
 
-    $this->drupalGet($update_form_link);
+    $this->drupalGet($update_form_url);
 
     $assert_session = $this->assertSession();
     $assert_session->statusCodeEquals(200);
@@ -96,9 +96,11 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
    * Tests that available updates are rendered correctly in a table.
    *
    * @param string $access_page
-   *   The page at which the form is accessed.
+   *   The page from which the update form should be visited.
+   *   Can be one of 'modules' to visit via the module list, or 'reports' to
+   *   visit via the administrative reports page.
    *
-   * @dataProvider updateFormLinksProvider
+   * @dataProvider providerTableLooksCorrect
    */
   public function testTableLooksCorrect(string $access_page): void {
     $this->drupalPlaceBlock('local_tasks_block', ['primary' => TRUE]);
@@ -215,15 +217,15 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
   /**
    * Tests that updating to a different minor version isn't supported.
    *
-   * @param string $update_form_link
-   *   Update Form link.
+   * @param string $update_form_url
+   *   The URL of the update form to visit.
    *
-   * @dataProvider updateFormLinkProvider
+   * @dataProvider providerUpdateFormReferringUrl
    */
-  public function testMinorVersionUpdateNotSupported(string $update_form_link): void {
+  public function testMinorVersionUpdateNotSupported(string $update_form_url): void {
     $this->setCoreVersion('9.7.1');
 
-    $this->drupalGet($update_form_link);
+    $this->drupalGet($update_form_url);
 
     $assert_session = $this->assertSession();
     $assert_session->pageTextContainsOnce('Updating from one minor version to another is not supported.');
