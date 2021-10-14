@@ -2,6 +2,7 @@
 
 namespace Drupal\automatic_updates;
 
+use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\DependencyInjection\ContainerInjectionInterface;
 use Drupal\Core\Logger\LoggerChannelFactoryInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
@@ -16,11 +17,39 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
 class CronUpdater implements ContainerInjectionInterface {
 
   /**
+   * All automatic updates are disabled.
+   *
+   * @var string
+   */
+  public const DISABLED = 'disable';
+
+  /**
+   * Only perform automatic security updates.
+   *
+   * @var string
+   */
+  public const SECURITY = 'security';
+
+  /**
+   * All automatic updates are enabled.
+   *
+   * @var string
+   */
+  public const ALL = 'patch';
+
+  /**
    * The updater service.
    *
    * @var \Drupal\automatic_updates\Updater
    */
   protected $updater;
+
+  /**
+   * The config factory service.
+   *
+   * @var \Drupal\Core\Config\ConfigFactoryInterface
+   */
+  protected $configFactory;
 
   /**
    * The logger.
@@ -34,11 +63,14 @@ class CronUpdater implements ContainerInjectionInterface {
    *
    * @param \Drupal\automatic_updates\Updater $updater
    *   The updater service.
+   * @param \Drupal\Core\Config\ConfigFactoryInterface $config_factory
+   *   The config factory service.
    * @param \Drupal\Core\Logger\LoggerChannelFactoryInterface $logger_factory
    *   The logger channel factory.
    */
-  public function __construct(Updater $updater, LoggerChannelFactoryInterface $logger_factory) {
+  public function __construct(Updater $updater, ConfigFactoryInterface $config_factory, LoggerChannelFactoryInterface $logger_factory) {
     $this->updater = $updater;
+    $this->configFactory = $config_factory;
     $this->logger = $logger_factory->get('automatic_updates');
   }
 
@@ -48,6 +80,7 @@ class CronUpdater implements ContainerInjectionInterface {
   public static function create(ContainerInterface $container) {
     return new static(
       $container->get('automatic_updates.updater'),
+      $container->get('config.factory'),
       $container->get('logger.factory')
     );
   }
@@ -56,6 +89,14 @@ class CronUpdater implements ContainerInjectionInterface {
    * Handles updates during cron.
    */
   public function handleCron(): void {
+    $level = $this->configFactory->get('automatic_updates.settings')
+      ->get('cron');
+
+    // If automatic updates are disabled, bail out.
+    if ($level === static::DISABLED) {
+      return;
+    }
+
     $recommender = new UpdateRecommender();
     try {
       $recommended_release = $recommender->getRecommendedRelease(TRUE);
@@ -73,6 +114,12 @@ class CronUpdater implements ContainerInjectionInterface {
     $project = $recommender->getProjectInfo();
     if (empty($project['existing_version'])) {
       $this->logger->error('Unable to determine the current version of Drupal core.');
+      return;
+    }
+
+    // If automatic updates are only enabled for security releases, bail out if
+    // the recommended release is not a security release.
+    if ($level === static::SECURITY && !$recommended_release->isSecurityRelease()) {
       return;
     }
 

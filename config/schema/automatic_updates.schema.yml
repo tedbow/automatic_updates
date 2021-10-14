@@ -1,0 +1,7 @@
+automatic_updates.settings:
+  type: config_object
+  label: 'Automatic Updates settings'
+  mapping:
+    cron:
+      type: string
+      label: 'Enable automatic updates during cron'
