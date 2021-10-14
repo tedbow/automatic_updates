@@ -2,6 +2,8 @@
 
 namespace Drupal\package_manager;
 
+use Drupal\Core\Config\ConfigFactoryInterface;
+use Drupal\Core\File\FileSystemInterface;
 use PhpTuf\ComposerStager\Infrastructure\Process\ProcessFactory as StagerProcessFactory;
 use PhpTuf\ComposerStager\Infrastructure\Process\ProcessFactoryInterface;
 use Symfony\Component\Process\Process;
@@ -21,10 +23,31 @@ final class ProcessFactory implements ProcessFactoryInterface {
   private $decorated;
 
   /**
-   * Constructs a ProcessFactory object.
+   * The file system service.
+   *
+   * @var \Drupal\Core\File\FileSystemInterface
    */
-  public function __construct() {
+  private $fileSystem;
+
+  /**
+   * The config factory service.
+   *
+   * @var \Drupal\Core\Config\ConfigFactoryInterface
+   */
+  private $configFactory;
+
+  /**
+   * Constructs a ProcessFactory object.
+   *
+   * @param \Drupal\Core\File\FileSystemInterface $file_system
+   *   The file system service.
+   * @param \Drupal\Core\Config\ConfigFactoryInterface $config_factory
+   *   The config factory service.
+   */
+  public function __construct(FileSystemInterface $file_system, ConfigFactoryInterface $config_factory) {
     $this->decorated = new StagerProcessFactory();
+    $this->fileSystem = $file_system;
+    $this->configFactory = $config_factory;
   }
 
   /**
@@ -65,12 +88,11 @@ final class ProcessFactory implements ProcessFactoryInterface {
    *   The path which should be used as COMPOSER_HOME.
    */
   private function getComposerHomePath(): string {
-    /** @var \Drupal\Core\File\FileSystemInterface $file_system */
-    $file_system = \Drupal::service('file_system');
-    $home_path = $file_system->getTempDirectory() . '/automatic_updates_composer_home';
-    if (!is_dir($home_path)) {
-      mkdir($home_path);
-    }
+    $home_path = $this->fileSystem->getTempDirectory();
+    $home_path .= '/automatic_updates_composer_home-';
+    $home_path .= $this->configFactory->get('system.site')->get('uuid');
+    $this->fileSystem->prepareDirectory($home_path, FileSystemInterface::CREATE_DIRECTORY | FileSystemInterface::MODIFY_PERMISSIONS);
+
     return $home_path;
   }
 

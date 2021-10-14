@@ -10,6 +10,9 @@ services:
   # Basic infrastructure services.
   package_manager.process_factory:
     class: Drupal\package_manager\ProcessFactory
+    arguments:
+      - '@file_system'
+      - '@config.factory'
   package_manager.file_system:
     class: PhpTuf\ComposerStager\Infrastructure\Filesystem\Filesystem
     arguments:
