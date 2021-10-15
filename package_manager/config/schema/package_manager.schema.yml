@@ -2,6 +2,6 @@ package_manager.settings:
   type: config_object
   label: 'Package Manager settings'
   mapping:
-    file_copier:
+    file_syncer:
       type: string
-      label: 'Which file copier to use, or NULL to auto-detect'
+      label: 'Which file syncer to use, or NULL to auto-detect'

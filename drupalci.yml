@@ -31,7 +31,8 @@ build:
           # Add our words to the dictionary
           - sed -i "s/abiword/updater's/" core/misc/cspell/dictionary.txt
           - sed -i "s/absolutezero/stager's/" core/misc/cspell/dictionary.txt
-          - sed -i "s/adamson/STACKLIMIT/" core/misc/cspell/dictionary.txt
+          - sed -i "s/bangpow/syncer/" core/misc/cspell/dictionary.txt
+          - sed -i "s/bakeware/syncers/" core/misc/cspell/dictionary.txt
           # After all of the shenanigans above, we're finally ready to run core's `commit-code-check.sh`! :)
           - "modules/contrib/automatic_updates/commit-code-check.sh --drupalci"
           # Restore the original permissions.
