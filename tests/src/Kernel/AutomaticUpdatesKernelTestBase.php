@@ -86,10 +86,17 @@ abstract class AutomaticUpdatesKernelTestBase extends KernelTestBase {
       $container->set('http_client', $this->client);
     }
 
+    $this->disableValidators($container);
+  }
+
+  /**
+   * Disables any validators that will interfere with this test.
+   */
+  protected function disableValidators(ContainerBuilder $container): void {
     // Disable the filesystem permissions validator, since we cannot guarantee
-    // that the current code base will be writable in all testing situations. We
-    // test this validator in our build tests, since those do give us control
-    // over the filesystem permissions.
+    // that the current code base will be writable in all testing situations.
+    // We test this validator functionally in our build tests, since those do
+    // give us control over the filesystem permissions.
     // @see \Drupal\Tests\automatic_updates\Build\CoreUpdateTest::assertReadOnlyFileSystemError()
     $container->removeDefinition('automatic_updates.validator.file_system_permissions');
   }
