@@ -73,44 +73,29 @@ final class ReadinessRequirements implements ContainerInjectionInterface {
    *   Requirements arrays as specified by hook_requirements().
    */
   public function getRequirements(): array {
-    $run_link = $this->createRunLink();
-
-    $last_check_timestamp = $this->readinessCheckerManager->getLastRunTime();
-    if ($last_check_timestamp === NULL) {
-      $requirement['title'] = $this->t('Update readiness checks');
-      $requirement['severity'] = SystemManager::REQUIREMENT_WARNING;
-      // @todo Link "automatic updates" to documentation in
-      //   https://www.drupal.org/node/3168405.
-      $requirement['value'] = $this->t('Your site has never checked if it is ready to apply automatic updates.');
+    $results = $this->readinessCheckerManager->runIfNoStoredResults()->getResults();
+    $requirements = [];
+    if (empty($results)) {
+      $requirements['automatic_updates_readiness'] = [
+        'title' => $this->t('Update readiness checks'),
+        'severity' => SystemManager::REQUIREMENT_OK,
+        // @todo Link "automatic updates" to documentation in
+        //   https://www.drupal.org/node/3168405.
+        'value' => $this->t('Your site is ready for automatic updates.'),
+      ];
+      $run_link = $this->createRunLink();
       if ($run_link) {
-        $requirement['description'] = $run_link;
+        $requirements['automatic_updates_readiness']['description'] = $run_link;
       }
-      return ['automatic_updates_readiness' => $requirement];
     }
     else {
-      $results = $this->readinessCheckerManager->runIfNoStoredResults()->getResults();
-      $requirements = [];
-      if (empty($results)) {
-        $requirements['automatic_updates_readiness'] = [
-          'title' => $this->t('Update readiness checks'),
-          'severity' => SystemManager::REQUIREMENT_OK,
-          // @todo Link "automatic updates" to documentation in
-          //   https://www.drupal.org/node/3168405.
-          'value' => $this->t('Your site is ready for automatic updates.'),
-        ];
-        if ($run_link) {
-          $requirements['automatic_updates_readiness']['description'] = $run_link;
+      foreach ([SystemManager::REQUIREMENT_WARNING, SystemManager::REQUIREMENT_ERROR] as $severity) {
+        if ($requirement = $this->createRequirementForSeverity($severity)) {
+          $requirements["automatic_updates_readiness_$severity"] = $requirement;
         }
       }
-      else {
-        foreach ([SystemManager::REQUIREMENT_WARNING, SystemManager::REQUIREMENT_ERROR] as $severity) {
-          if ($requirement = $this->createRequirementForSeverity($severity)) {
-            $requirements["automatic_updates_readiness_$severity"] = $requirement;
-          }
-        }
-      }
-      return $requirements;
     }
+    return $requirements;
   }
 
   /**
