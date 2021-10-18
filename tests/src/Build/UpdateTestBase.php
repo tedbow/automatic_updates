@@ -181,8 +181,16 @@ END;
     // @see ::installQuickStart()
     $this->webRoot = $data['extra']['drupal-scaffold']['locations']['web-root'];
 
-    // Update the test site's composer.json and install dependencies.
+    // Update the test site's composer.json.
     $this->writeJson($composer, $data);
+    // Don't install drupal/core-dev, which is defined as a dev dependency in
+    // both project templates.
+    // @todo Handle dev dependencies properly once
+    //   https://www.drupal.org/project/automatic_updates/issues/3244412 is
+    //   is resolved.
+    $this->executeCommand('composer remove --dev --no-update drupal/core-dev');
+    $this->assertCommandSuccessful();
+    // Install production dependencies.
     $this->executeCommand('composer install --no-dev');
     $this->assertCommandSuccessful();
   }

@@ -5,7 +5,8 @@
     "extra": {
         "_comment": [
             "This is a fake composer.json simulating a site which requires a distribution.",
-            "The required core packages are determined by scanning the lock file."
+            "The required core packages are determined by scanning the lock file.",
+            "The fake distribution uses drupal/core-recommended to require Drupal core."
         ]
     }
 }

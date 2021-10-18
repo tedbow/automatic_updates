@@ -2,6 +2,7 @@
 
 namespace Drupal\Tests\automatic_updates\Kernel;
 
+use Drupal\automatic_updates\PathLocator;
 use Prophecy\Argument;
 
 /**
@@ -27,6 +28,14 @@ class UpdaterTest extends AutomaticUpdatesKernelTestBase {
   public function testCorrectVersionsStaged() {
     $this->setReleaseMetadata(__DIR__ . '/../../fixtures/release-history/drupal.9.8.1-security.xml');
 
+    // Point to a fake site which requires Drupal core via a distribution. The
+    // lock file should be scanned to determine the core packages, which should
+    // result in drupal/core-recommended being updated.
+    $locator = $this->prophesize(PathLocator::class);
+    $locator->getActiveDirectory()->willReturn(__DIR__ . '/../../fixtures/fake-site');
+    $locator->getStageDirectory()->willReturn('/tmp');
+    $this->container->set('automatic_updates.path_locator', $locator->reveal());
+
     $this->container->get('automatic_updates.updater')->begin([
       'drupal' => '9.8.1',
     ]);
@@ -38,13 +47,7 @@ class UpdaterTest extends AutomaticUpdatesKernelTestBase {
     $stager = $this->prophesize('\PhpTuf\ComposerStager\Domain\StagerInterface');
     $command = [
       'require',
-      'drupal/core:9.8.1',
-      // These two plugins are in the root composer.json that ships with a
-      // git clone of Drupal core, so they will be included when determining
-      // which core packages to update.
-      // @see \Drupal\automatic_updates\Updater::getCorePackageNames()
-      'drupal/core-project-message:9.8.1',
-      'drupal/core-vendor-hardening:9.8.1',
+      'drupal/core-recommended:9.8.1',
       '--update-with-all-dependencies',
     ];
     $stager->stage($command, Argument::cetera())->shouldBeCalled();

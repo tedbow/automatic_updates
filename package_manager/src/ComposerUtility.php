@@ -5,6 +5,7 @@ namespace Drupal\package_manager;
 use Composer\Composer;
 use Composer\Factory;
 use Composer\IO\NullIO;
+use Composer\Package\PackageInterface;
 use Drupal\Component\Serialization\Json;
 
 /**
@@ -85,21 +86,27 @@ class ComposerUtility {
   }
 
   /**
-   * Returns the names of the core packages required in composer.json.
+   * Returns the names of the core packages in the lock file.
    *
    * All packages listed in ../core_packages.json are considered core packages.
    *
    * @return string[]
    *   The names of the required core packages.
    *
-   * @throws \LogicException
-   *   If neither drupal/core or drupal/core-recommended are required.
-   *
    * @todo Make this return a keyed array of packages, not just names.
    */
   public function getCorePackageNames(): array {
-    $requirements = array_keys($this->composer->getPackage()->getRequires());
-    return array_intersect(static::getCorePackageList(), $requirements);
+    $core_packages = array_intersect(
+      array_keys($this->getLockedPackages()),
+      static::getCorePackageList()
+    );
+
+    // If drupal/core-recommended is present, it supersedes drupal/core, since
+    // drupal/core will always be one of its direct dependencies.
+    if (in_array('drupal/core-recommended', $core_packages, TRUE)) {
+      $core_packages = array_diff($core_packages, ['drupal/core']);
+    }
+    return array_values($core_packages);
   }
 
   /**
@@ -112,24 +119,35 @@ class ComposerUtility {
    *   All Drupal extension packages in the lock file, keyed by name.
    */
   public function getDrupalExtensionPackages(): array {
+    $filter = function (PackageInterface $package): bool {
+      $drupal_package_types = [
+        'drupal-module',
+        'drupal-theme',
+        'drupal-custom-module',
+        'drupal-custom-theme',
+      ];
+      return in_array($package->getType(), $drupal_package_types, TRUE);
+    };
+    return array_filter($this->getLockedPackages(), $filter);
+  }
+
+  /**
+   * Returns all packages in the lock file.
+   *
+   * @return \Composer\Package\PackageInterface[]
+   *   All packages in the lock file, keyed by name.
+   */
+  protected function getLockedPackages(): array {
     $locked_packages = $this->composer->getLocker()
       ->getLockedRepository(TRUE)
       ->getPackages();
 
-    $drupal_package_types = [
-      'drupal-module',
-      'drupal-theme',
-      'drupal-custom-module',
-      'drupal-custom-theme',
-    ];
-    $drupal_packages = [];
+    $packages = [];
     foreach ($locked_packages as $package) {
-      if (in_array($package->getType(), $drupal_package_types, TRUE)) {
-        $key = $package->getName();
-        $drupal_packages[$key] = $package;
-      }
+      $key = $package->getName();
+      $packages[$key] = $package;
     }
-    return $drupal_packages;
+    return $packages;
   }
 
 }

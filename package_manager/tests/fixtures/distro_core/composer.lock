@@ -4,14 +4,7 @@
             "name": "drupal/test-distribution",
             "version": "1.0.0",
             "require": {
-                "drupal/core-recommended": "*"
-            }
-        },
-        {
-            "name": "drupal/core-recommended",
-            "version": "9.8.0",
-            "require": {
-                "drupal/core": "9.8.0"
+                "drupal/core": "*"
             }
         },
         {
