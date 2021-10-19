@@ -2,6 +2,7 @@
 
 namespace Drupal\Tests\automatic_updates\Functional;
 
+use Behat\Mink\Element\NodeElement;
 use Drupal\automatic_updates_test\Datetime\TestTime;
 use Drupal\automatic_updates_test\ReadinessChecker\TestChecker1;
 use Drupal\automatic_updates_test2\ReadinessChecker\TestChecker2;
@@ -85,10 +86,10 @@ class ReadinessValidationTest extends AutomaticUpdatesFunctionalTestBase {
     $this->drupalLogin($this->reportViewerUser);
     $this->checkForUpdates();
     $this->drupalGet('admin/reports/status');
-    $this->assertReadinessReportMatches('Your site is ready for automatic updates.', 'checked', FALSE);
+    $this->assertNoErrors();
     $this->drupalLogin($this->checkerRunnerUser);
     $this->drupalGet('admin/reports/status');
-    $this->assertReadinessReportMatches('Your site is ready for automatic updates. Run readiness checks now.', 'checked', FALSE);
+    $this->assertNoErrors(TRUE);
 
     // Confirm a user without the permission to run readiness checks does not
     // have a link to run the checks when the checks need to be run again.
@@ -99,19 +100,19 @@ class ReadinessValidationTest extends AutomaticUpdatesFunctionalTestBase {
     $key_value->delete('readiness_validation_last_run');
     $this->drupalLogin($this->reportViewerUser);
     $this->drupalGet('admin/reports/status');
-    $this->assertReadinessReportMatches('Your site is ready for automatic updates.', 'checked', FALSE);
+    $this->assertNoErrors();
     $this->drupalLogin($this->checkerRunnerUser);
     $this->drupalGet('admin/reports/status');
-    $this->assertReadinessReportMatches('Your site is ready for automatic updates. Run readiness checks now.', 'checked', FALSE);
+    $this->assertNoErrors(TRUE);
 
     // Confirm a user with the permission to run readiness checks does have a
     // link to run the checks when the checks need to be run again.
     $this->drupalLogin($this->reportViewerUser);
     $this->drupalGet('admin/reports/status');
-    $this->assertReadinessReportMatches('Your site is ready for automatic updates.', 'checked', FALSE);
+    $this->assertNoErrors();
     $this->drupalLogin($this->checkerRunnerUser);
     $this->drupalGet('admin/reports/status');
-    $this->assertReadinessReportMatches('Your site is ready for automatic updates. Run readiness checks now.', 'checked', FALSE);
+    $this->assertNoErrors(TRUE);
     /** @var \Drupal\automatic_updates\Validation\ValidationResult[] $expected_results */
     $expected_results = $this->testResults['checker_1']['1 error'];
     TestChecker1::setTestResult($expected_results);
@@ -125,14 +126,14 @@ class ReadinessValidationTest extends AutomaticUpdatesFunctionalTestBase {
     // will not be performed because of errors is displayed on the top of the
     // page in message.
     $assert->pageTextMatchesCount(2, '/' . preg_quote(static::$errorsExplanation) . '/');
-    $this->assertReadinessReportMatches($expected_results[0]->getMessages()[0] . 'Run readiness checks now.', 'error', static::$errorsExplanation);
+    $this->assertErrors($expected_results, TRUE);
 
     // @todo Should we always show when the checks were last run and a link to
     //   run when there is an error?
     // Confirm a user without permission to run the checks sees the same error.
     $this->drupalLogin($this->reportViewerUser);
     $this->drupalGet('admin/reports/status');
-    $this->assertReadinessReportMatches($expected_results[0]->getMessages()[0], 'error', static::$errorsExplanation);
+    $this->assertErrors($expected_results);
 
     $expected_results = $this->testResults['checker_1']['1 error 1 warning'];
     TestChecker1::setTestResult($expected_results);
@@ -141,8 +142,8 @@ class ReadinessValidationTest extends AutomaticUpdatesFunctionalTestBase {
     $this->drupalGet('admin/reports/status');
     // Confirm that on the status page if there is only 1 warning or error the
     // the summaries will not be displayed.
-    $this->assertReadinessReportMatches($expected_results['1:error']->getMessages()[0], 'error', static::$errorsExplanation);
-    $this->assertReadinessReportMatches($expected_results['1:warning']->getMessages()[0], 'warning', static::$warningsExplanation);
+    $this->assertErrors([$expected_results['1:error']]);
+    $this->assertWarnings([$expected_results['1:warning']]);
     $assert->pageTextNotContains($expected_results['1:error']->getSummary());
     $assert->pageTextNotContains($expected_results['1:warning']->getSummary());
 
@@ -152,8 +153,8 @@ class ReadinessValidationTest extends AutomaticUpdatesFunctionalTestBase {
     $this->drupalGet('admin/reports/status');
     // Confirm that both messages and summaries will be displayed on status
     // report when there multiple messages.
-    $this->assertReadinessReportMatches($expected_results['1:errors']->getSummary() . ' ' . implode('', $expected_results['1:errors']->getMessages()), 'error', static::$errorsExplanation);
-    $this->assertReadinessReportMatches($expected_results['1:warnings']->getSummary() . ' ' . implode('', $expected_results['1:warnings']->getMessages()), 'warning', static::$warningsExplanation);
+    $this->assertErrors([$expected_results['1:errors']]);
+    $this->assertWarnings([$expected_results['1:warnings']]);
 
     $key_value->delete('readiness_validation_last_run');
     $expected_results = $this->testResults['checker_1']['2 warnings'];
@@ -162,14 +163,14 @@ class ReadinessValidationTest extends AutomaticUpdatesFunctionalTestBase {
     $assert->pageTextContainsOnce('Update readiness checks');
     // Confirm that warnings will display on the status report if there are no
     // errors.
-    $this->assertReadinessReportMatches($expected_results[0]->getSummary() . ' ' . implode('', $expected_results[0]->getMessages()), 'warning', static::$warningsExplanation);
+    $this->assertWarnings($expected_results);
 
     $key_value->delete('readiness_validation_last_run');
     $expected_results = $this->testResults['checker_1']['1 warning'];
     TestChecker1::setTestResult($expected_results);
     $this->drupalGet('admin/reports/status');
     $assert->pageTextContainsOnce('Update readiness checks');
-    $this->assertReadinessReportMatches($expected_results[0]->getMessages()[0], 'warning', static::$warningsExplanation);
+    $this->assertWarnings($expected_results);
   }
 
   /**
@@ -188,7 +189,7 @@ class ReadinessValidationTest extends AutomaticUpdatesFunctionalTestBase {
     // If site is ready for updates no message will be displayed on admin pages.
     $this->drupalLogin($this->reportViewerUser);
     $this->drupalGet('admin/reports/status');
-    $this->assertReadinessReportMatches('Your site is ready for automatic updates.', 'checked', FALSE);
+    $this->assertNoErrors();
     $this->drupalGet('admin/structure');
     $assert->elementNotExists('css', $messages_section_selector);
 
@@ -307,7 +308,7 @@ class ReadinessValidationTest extends AutomaticUpdatesFunctionalTestBase {
     // the functionality to retrieve our fake release history metadata.
     $this->container->get('module_installer')->install(['automatic_updates', 'automatic_updates_test']);
     $this->drupalGet('admin/reports/status');
-    $this->assertReadinessReportMatches('Your site is ready for automatic updates. Run readiness checks now.', 'checked');
+    $this->assertNoErrors(TRUE);
 
     $expected_results = $this->testResults['checker_1']['1 error'];
     TestChecker2::setTestResult($expected_results);
@@ -368,23 +369,114 @@ class ReadinessValidationTest extends AutomaticUpdatesFunctionalTestBase {
   }
 
   /**
-   * Asserts status report readiness report item matches a format.
+   * Asserts that the readiness requirement displays no errors or warnings.
    *
-   * @param string $format
-   *   The string to match.
-   * @param string $section
-   *   The section of the status report in which the string should appear.
-   * @param string $message_prefix
-   *   The prefix for before the string.
+   * @param bool $run_link
+   *   (optional) Whether there should be a link to run the readiness checks.
+   *   Defaults to FALSE.
    */
-  private function assertReadinessReportMatches(string $format, string $section = 'error', string $message_prefix = ''): void {
-    $format = 'Update readiness checks ' . ($message_prefix ? "$message_prefix " : '') . $format;
+  private function assertNoErrors(bool $run_link = FALSE): void {
+    $this->assertRequirement('checked', 'Your site is ready for automatic updates.', [], $run_link);
+  }
 
-    $text = $this->getSession()->getPage()->find(
-      'css',
-      "h3#$section ~ details.system-status-report__entry:contains('Update readiness checks')"
-    )->getText();
-    $this->assertStringMatchesFormat($format, $text);
+  /**
+   * Asserts that the displayed readiness requirement contains warnings.
+   *
+   * @param \Drupal\automatic_updates\Validation\ValidationResult[] $expected_results
+   *   The readiness check results that should be visible.
+   * @param bool $run_link
+   *   (optional) Whether there should be a link to run the readiness checks.
+   *   Defaults to FALSE.
+   */
+  private function assertWarnings(array $expected_results, bool $run_link = FALSE): void {
+    $this->assertRequirement('warning', static::$warningsExplanation, $expected_results, $run_link);
+  }
+
+  /**
+   * Asserts that the displayed readiness requirement contains errors.
+   *
+   * @param \Drupal\automatic_updates\Validation\ValidationResult[] $expected_results
+   *   The readiness check results that should be visible.
+   * @param bool $run_link
+   *   (optional) Whether there should be a link to run the readiness checks.
+   *   Defaults to FALSE.
+   */
+  private function assertErrors(array $expected_results, bool $run_link = FALSE): void {
+    $this->assertRequirement('error', static::$errorsExplanation, $expected_results, $run_link);
+  }
+
+  /**
+   * Asserts that the readiness requirement is correct.
+   *
+   * @param string $section
+   *   The section of the status report in which the requirement is expected to
+   *   be. Can be one of 'error', 'warning', 'checked', or 'ok'.
+   * @param string $preamble
+   *   The text that should appear before the result messages.
+   * @param \Drupal\automatic_updates\Validation\ValidationResult[] $expected_results
+   *   The expected readiness check results, in the order we expect them to be
+   *   displayed.
+   * @param bool $run_link
+   *   (optional) Whether there should be a link to run the readiness checks.
+   *   Defaults to FALSE.
+   *
+   * @see \Drupal\Core\Render\Element\StatusReport::getInfo()
+   */
+  private function assertRequirement(string $section, string $preamble, array $expected_results, bool $run_link = FALSE): void {
+    // Get the meaty part of the requirement element, and ensure that it begins
+    // with the preamble, if any.
+    $requirement = $this->assertSession()
+      ->elementExists('css', "h3#$section ~ details.system-status-report__entry:contains('Update readiness checks') .system-status-report__entry__value");
+
+    if ($preamble) {
+      $this->assertStringStartsWith($preamble, $requirement->getText());
+    }
+
+    // Convert the expected results into strings.
+    $expected_messages = [];
+    foreach ($expected_results as $result) {
+      $messages = $result->getMessages();
+      if (count($messages) > 1) {
+        $expected_messages[] = $result->getSummary();
+      }
+      $expected_messages = array_merge($expected_messages, $messages);
+    }
+    $expected_messages = array_map('strval', $expected_messages);
+
+    // The results should appear in the given order.
+    $this->assertSame($expected_messages, $this->getMessagesFromRequirement($requirement));
+    // Check for the presence or absence of a link to run the checks.
+    $this->assertSame($run_link, $requirement->hasLink('Run readiness checks'));
+  }
+
+  /**
+   * Extracts the readiness result messages from the requirement element.
+   *
+   * @param \Behat\Mink\Element\NodeElement $requirement
+   *   The page element containing the readiness check results.
+   *
+   * @return string[]
+   *   The readiness result messages (including summaries), in the order they
+   *   appear on the page.
+   */
+  private function getMessagesFromRequirement(NodeElement $requirement): array {
+    $messages = [];
+
+    // Each list item will either contain a simple string (for results with only
+    // one message), or a details element with a series of messages.
+    $items = $requirement->findAll('css', 'li');
+    foreach ($items as $item) {
+      $details = $item->find('css', 'details');
+
+      if ($details) {
+        $messages[] = $details->find('css', 'summary')->getText();
+        $messages = array_merge($messages, $this->getMessagesFromRequirement($details));
+      }
+      else {
+        $messages[] = $item->getText();
+      }
+    }
+    return array_unique($messages);
   }
 
   /**

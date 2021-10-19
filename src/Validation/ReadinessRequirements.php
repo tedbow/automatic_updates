@@ -137,7 +137,10 @@ final class ReadinessRequirements implements ContainerInjectionInterface {
       'severity' => $severity,
       'value' => $this->getFailureMessageForSeverity($severity),
       'description' => [
-        'messages' => $severity_messages,
+        'messages' => [
+          '#theme' => 'item_list',
+          '#items' => $severity_messages,
+        ],
       ],
     ];
     if ($run_link = $this->createRunLink()) {
