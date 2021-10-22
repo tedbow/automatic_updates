@@ -2,7 +2,7 @@
 
 namespace Drupal\automatic_updates\Validator;
 
-use Drupal\automatic_updates\Event\ReadinessCheckEvent;
+use Drupal\automatic_updates\AutomaticUpdatesEvents;
 use Drupal\automatic_updates\Event\UpdateEvent;
 use Drupal\automatic_updates\Validation\ValidationResult;
 use Drupal\Core\Extension\ExtensionVersion;
@@ -91,7 +91,7 @@ class ComposerExecutableValidator implements EventSubscriberInterface, ProcessOu
    */
   public static function getSubscribedEvents() {
     return [
-      ReadinessCheckEvent::class => 'checkForComposerExecutable',
+      AutomaticUpdatesEvents::READINESS_CHECK => 'checkForComposerExecutable',
     ];
   }
 

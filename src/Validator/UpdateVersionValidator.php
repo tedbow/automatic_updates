@@ -3,7 +3,7 @@
 namespace Drupal\automatic_updates\Validator;
 
 use Composer\Semver\Semver;
-use Drupal\automatic_updates\Event\PreStartEvent;
+use Drupal\automatic_updates\AutomaticUpdatesEvents;
 use Drupal\automatic_updates\Event\ReadinessCheckEvent;
 use Drupal\automatic_updates\Event\UpdateEvent;
 use Drupal\automatic_updates\Validation\ValidationResult;
@@ -101,8 +101,8 @@ class UpdateVersionValidator implements EventSubscriberInterface {
    */
   public static function getSubscribedEvents() {
     return [
-      PreStartEvent::class => 'checkUpdateVersion',
-      ReadinessCheckEvent::class => 'checkReadinessUpdateVersion',
+      AutomaticUpdatesEvents::PRE_START => 'checkUpdateVersion',
+      AutomaticUpdatesEvents::READINESS_CHECK => 'checkReadinessUpdateVersion',
     ];
   }
 

@@ -2,7 +2,6 @@
 
 namespace Drupal\automatic_updates;
 
-use Drupal\automatic_updates\Event\PostCommitEvent;
 use Drupal\automatic_updates\Event\PreCommitEvent;
 use Drupal\automatic_updates\Event\PreStartEvent;
 use Drupal\automatic_updates\Event\UpdateEvent;
@@ -118,7 +117,7 @@ class Updater {
     }
     $stage_key = $this->createActiveStage($packages);
     /** @var \Drupal\automatic_updates\Event\PreStartEvent $event */
-    $event = $this->dispatchUpdateEvent(new PreStartEvent($composer, $packages));
+    $event = $this->dispatchUpdateEvent(new PreStartEvent($composer, $packages), AutomaticUpdatesEvents::PRE_START);
     $this->stage->create($this->getExclusions($event));
     return $stage_key;
   }
@@ -158,9 +157,9 @@ class Updater {
     $stage_composer = ComposerUtility::createForDirectory($stage_dir);
 
     /** @var \Drupal\automatic_updates\Event\PreCommitEvent $event */
-    $event = $this->dispatchUpdateEvent(new PreCommitEvent($active_composer, $stage_composer));
+    $event = $this->dispatchUpdateEvent(new PreCommitEvent($active_composer, $stage_composer), AutomaticUpdatesEvents::PRE_COMMIT);
     $this->stage->apply($this->getExclusions($event));
-    $this->dispatchUpdateEvent(new PostCommitEvent($active_composer));
+    $this->dispatchUpdateEvent(new UpdateEvent($active_composer), AutomaticUpdatesEvents::POST_COMMIT);
   }
 
   /**
@@ -202,6 +201,8 @@ class Updater {
    *
    * @param \Drupal\automatic_updates\Event\UpdateEvent $event
    *   The update event.
+   * @param string $event_name
+   *   The name of the event to dispatch.
    *
    * @return \Drupal\automatic_updates\Event\UpdateEvent
    *   The event object.
@@ -209,8 +210,8 @@ class Updater {
    * @throws \Drupal\automatic_updates\Exception\UpdateException
    *   If any of the event subscribers adds a validation error.
    */
-  public function dispatchUpdateEvent(UpdateEvent $event): UpdateEvent {
-    $this->eventDispatcher->dispatch($event);
+  public function dispatchUpdateEvent(UpdateEvent $event, string $event_name): UpdateEvent {
+    $this->eventDispatcher->dispatch($event, $event_name);
     if ($checker_results = $event->getResults(SystemManager::REQUIREMENT_ERROR)) {
       throw new UpdateException($checker_results,
         "Unable to complete the update because of errors.");

@@ -2,6 +2,7 @@
 
 namespace Drupal\automatic_updates\Event;
 
+use Drupal\automatic_updates\AutomaticUpdatesEvents;
 use Drupal\Core\File\FileSystemInterface;
 use Drupal\Core\StreamWrapper\LocalStream;
 use Drupal\Core\StreamWrapper\StreamWrapperManagerInterface;
@@ -157,8 +158,8 @@ class ExcludedPathsSubscriber implements EventSubscriberInterface {
    */
   public static function getSubscribedEvents() {
     return [
-      PreStartEvent::class => 'preStart',
-      PreCommitEvent::class => 'preCommit',
+      AutomaticUpdatesEvents::PRE_START => 'preStart',
+      AutomaticUpdatesEvents::PRE_COMMIT => 'preCommit',
     ];
   }
 

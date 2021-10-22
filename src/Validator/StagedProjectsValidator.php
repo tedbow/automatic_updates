@@ -2,6 +2,7 @@
 
 namespace Drupal\automatic_updates\Validator;
 
+use Drupal\automatic_updates\AutomaticUpdatesEvents;
 use Drupal\automatic_updates\Event\PreCommitEvent;
 use Drupal\automatic_updates\Validation\ValidationResult;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
@@ -123,7 +124,7 @@ final class StagedProjectsValidator implements EventSubscriberInterface {
    * {@inheritdoc}
    */
   public static function getSubscribedEvents() {
-    $events[PreCommitEvent::class][] = ['validateStagedProjects'];
+    $events[AutomaticUpdatesEvents::PRE_COMMIT][] = ['validateStagedProjects'];
     return $events;
   }
 

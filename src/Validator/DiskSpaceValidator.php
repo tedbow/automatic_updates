@@ -2,7 +2,7 @@
 
 namespace Drupal\automatic_updates\Validator;
 
-use Drupal\automatic_updates\Event\ReadinessCheckEvent;
+use Drupal\automatic_updates\AutomaticUpdatesEvents;
 use Drupal\automatic_updates\Event\UpdateEvent;
 use Drupal\automatic_updates\Validation\ValidationResult;
 use Drupal\Component\FileSystem\FileSystem;
@@ -165,7 +165,7 @@ class DiskSpaceValidator implements EventSubscriberInterface {
    */
   public static function getSubscribedEvents() {
     return [
-      ReadinessCheckEvent::class => 'checkDiskSpace',
+      AutomaticUpdatesEvents::READINESS_CHECK => 'checkDiskSpace',
     ];
   }
 

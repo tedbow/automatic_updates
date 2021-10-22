@@ -2,9 +2,7 @@
 
 namespace Drupal\automatic_updates_test\ReadinessChecker;
 
-use Drupal\automatic_updates\Event\PreCommitEvent;
-use Drupal\automatic_updates\Event\PreStartEvent;
-use Drupal\automatic_updates\Event\ReadinessCheckEvent;
+use Drupal\automatic_updates\AutomaticUpdatesEvents;
 use Drupal\automatic_updates\Event\UpdateEvent;
 use Drupal\Core\State\StateInterface;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
@@ -47,9 +45,9 @@ class TestChecker1 implements EventSubscriberInterface {
    *   stored results.
    * @param string $event_name
    *   (optional )The event name. Defaults to
-   *   ReadinessCheckEvent::class.
+   *   AutomaticUpdatesEvents::READINESS_CHECK.
    */
-  public static function setTestResult($checker_results, string $event_name = ReadinessCheckEvent::class): void {
+  public static function setTestResult($checker_results, string $event_name = AutomaticUpdatesEvents::READINESS_CHECK): void {
     $key = static::STATE_KEY . ".$event_name";
 
     if (isset($checker_results)) {
@@ -85,7 +83,7 @@ class TestChecker1 implements EventSubscriberInterface {
    *   The update event.
    */
   public function runPreChecks(UpdateEvent $event): void {
-    $this->addResults($event, static::STATE_KEY . "." . ReadinessCheckEvent::class);
+    $this->addResults($event, static::STATE_KEY . "." . AutomaticUpdatesEvents::READINESS_CHECK);
   }
 
   /**
@@ -95,7 +93,7 @@ class TestChecker1 implements EventSubscriberInterface {
    *   The update event.
    */
   public function runPreCommitChecks(UpdateEvent $event): void {
-    $this->addResults($event, static::STATE_KEY . "." . PreCommitEvent::class);
+    $this->addResults($event, static::STATE_KEY . "." . AutomaticUpdatesEvents::PRE_COMMIT);
   }
 
   /**
@@ -105,7 +103,7 @@ class TestChecker1 implements EventSubscriberInterface {
    *   The update event.
    */
   public function runStartChecks(UpdateEvent $event): void {
-    $this->addResults($event, static::STATE_KEY . "." . PreStartEvent::class);
+    $this->addResults($event, static::STATE_KEY . "." . AutomaticUpdatesEvents::PRE_START);
   }
 
   /**
@@ -113,9 +111,9 @@ class TestChecker1 implements EventSubscriberInterface {
    */
   public static function getSubscribedEvents() {
     $priority = defined('AUTOMATIC_UPDATES_TEST_SET_PRIORITY') ? AUTOMATIC_UPDATES_TEST_SET_PRIORITY : 5;
-    $events[ReadinessCheckEvent::class][] = ['runPreChecks', $priority];
-    $events[PreStartEvent::class][] = ['runStartChecks', $priority];
-    $events[PreCommitEvent::class][] = ['runPreCommitChecks', $priority];
+    $events[AutomaticUpdatesEvents::READINESS_CHECK][] = ['runPreChecks', $priority];
+    $events[AutomaticUpdatesEvents::PRE_START][] = ['runStartChecks', $priority];
+    $events[AutomaticUpdatesEvents::PRE_COMMIT][] = ['runPreCommitChecks', $priority];
     return $events;
   }
 

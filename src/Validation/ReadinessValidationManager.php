@@ -2,6 +2,7 @@
 
 namespace Drupal\automatic_updates\Validation;
 
+use Drupal\automatic_updates\AutomaticUpdatesEvents;
 use Drupal\automatic_updates\Event\ReadinessCheckEvent;
 use Drupal\automatic_updates\UpdateRecommender;
 use Drupal\Component\Datetime\TimeInterface;
@@ -92,13 +93,13 @@ class ReadinessValidationManager {
       $package_versions = [];
     }
     $event = new ReadinessCheckEvent($composer, $package_versions);
-    $this->eventDispatcher->dispatch($event);
+    $this->eventDispatcher->dispatch($event, AutomaticUpdatesEvents::READINESS_CHECK);
     $results = $event->getResults();
     $this->keyValueExpirable->setWithExpire(
       'readiness_validation_last_run',
       [
         'results' => $results,
-        'listeners' => $this->getListenersAsString(ReadinessCheckEvent::class),
+        'listeners' => $this->getListenersAsString(AutomaticUpdatesEvents::READINESS_CHECK),
       ],
       $this->resultsTimeToLive * 60 * 60
     );
@@ -179,7 +180,7 @@ class ReadinessValidationManager {
     $last_run = $this->keyValueExpirable->get('readiness_validation_last_run');
 
     // If the listeners have not changed return the results.
-    if ($last_run && $last_run['listeners'] === $this->getListenersAsString(ReadinessCheckEvent::class)) {
+    if ($last_run && $last_run['listeners'] === $this->getListenersAsString(AutomaticUpdatesEvents::READINESS_CHECK)) {
       return $last_run['results'];
     }
     return NULL;

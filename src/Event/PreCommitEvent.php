@@ -6,8 +6,6 @@ use Drupal\package_manager\ComposerUtility;
 
 /**
  * Event fired before staged changes are copied into the active site.
- *
- * Validation results added by subscribers are not cached.
  */
 class PreCommitEvent extends UpdateEvent {
 
