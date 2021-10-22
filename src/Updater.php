@@ -10,11 +10,9 @@ use Drupal\Core\State\StateInterface;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\Core\StringTranslation\TranslationInterface;
 use Drupal\package_manager\ComposerUtility;
+use Drupal\package_manager\PathLocator as PackageManagerPathLocator;
+use Drupal\package_manager\Stage;
 use Drupal\system\SystemManager;
-use PhpTuf\ComposerStager\Domain\BeginnerInterface;
-use PhpTuf\ComposerStager\Domain\CleanerInterface;
-use PhpTuf\ComposerStager\Domain\CommitterInterface;
-use PhpTuf\ComposerStager\Domain\StagerInterface;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 
 /**
@@ -30,34 +28,6 @@ class Updater {
    * @var string
    */
   public const STATE_KEY = 'AUTOMATIC_UPDATES_CURRENT';
-
-  /**
-   * The composer_stager beginner service.
-   *
-   * @var \Drupal\automatic_updates\ComposerStager\Beginner
-   */
-  protected $beginner;
-
-  /**
-   * The composer_stager stager service.
-   *
-   * @var \PhpTuf\ComposerStager\Domain\StagerInterface
-   */
-  protected $stager;
-
-  /**
-   * The composer_stager cleaner service.
-   *
-   * @var \PhpTuf\ComposerStager\Domain\CleanerInterface
-   */
-  protected $cleaner;
-
-  /**
-   * The composer_stager committer service.
-   *
-   * @var \PhpTuf\ComposerStager\Domain\CommitterInterface
-   */
-  protected $committer;
 
   /**
    * The state service.
@@ -76,9 +46,16 @@ class Updater {
   /**
    * The path locator service.
    *
-   * @var \Drupal\automatic_updates\PathLocator
+   * @var \Drupal\package_manager\PathLocator
    */
   protected $pathLocator;
+
+  /**
+   * The stage service.
+   *
+   * @var \Drupal\package_manager\Stage
+   */
+  protected $stage;
 
   /**
    * Constructs an Updater object.
@@ -87,28 +64,19 @@ class Updater {
    *   The state service.
    * @param \Drupal\Core\StringTranslation\TranslationInterface $translation
    *   The string translation service.
-   * @param \PhpTuf\ComposerStager\Domain\BeginnerInterface $beginner
-   *   The Composer Stager's beginner service.
-   * @param \PhpTuf\ComposerStager\Domain\StagerInterface $stager
-   *   The Composer Stager's stager service.
-   * @param \PhpTuf\ComposerStager\Domain\CleanerInterface $cleaner
-   *   The Composer Stager's cleaner service.
-   * @param \PhpTuf\ComposerStager\Domain\CommitterInterface $committer
-   *   The Composer Stager's committer service.
    * @param \Symfony\Component\EventDispatcher\EventDispatcherInterface $event_dispatcher
    *   The event dispatcher service.
-   * @param \Drupal\automatic_updates\PathLocator $path_locator
+   * @param \Drupal\package_manager\PathLocator $path_locator
    *   The path locator service.
+   * @param \Drupal\package_manager\Stage $stage
+   *   The stage service.
    */
-  public function __construct(StateInterface $state, TranslationInterface $translation, BeginnerInterface $beginner, StagerInterface $stager, CleanerInterface $cleaner, CommitterInterface $committer, EventDispatcherInterface $event_dispatcher, PathLocator $path_locator) {
+  public function __construct(StateInterface $state, TranslationInterface $translation, EventDispatcherInterface $event_dispatcher, PackageManagerPathLocator $path_locator, Stage $stage) {
     $this->state = $state;
-    $this->beginner = $beginner;
-    $this->stager = $stager;
-    $this->cleaner = $cleaner;
-    $this->committer = $committer;
     $this->setStringTranslation($translation);
     $this->eventDispatcher = $event_dispatcher;
     $this->pathLocator = $path_locator;
+    $this->stage = $stage;
   }
 
   /**
@@ -150,7 +118,7 @@ class Updater {
     $stage_key = $this->createActiveStage($packages);
     /** @var \Drupal\automatic_updates\Event\PreStartEvent $event */
     $event = $this->dispatchUpdateEvent(new PreStartEvent($composer, $packages), AutomaticUpdatesEvents::PRE_START);
-    $this->beginner->begin($this->pathLocator->getActiveDirectory(), $this->pathLocator->getStageDirectory(), $this->getExclusions($event));
+    $this->stage->create($this->getExclusions($event));
     return $stage_key;
   }
 
@@ -175,19 +143,7 @@ class Updater {
    */
   public function stage(): void {
     $current = $this->state->get(static::STATE_KEY);
-    $this->stagePackages($current['package_versions']);
-  }
-
-  /**
-   * Installs Composer packages in the staging area.
-   *
-   * @param string[] $packages
-   *   The versions of the packages to stage, keyed by package name.
-   */
-  protected function stagePackages(array $packages): void {
-    $command = array_merge(['require'], $packages);
-    $command[] = '--update-with-all-dependencies';
-    $this->stageCommand($command);
+    $this->stage->require($current['package_versions']);
   }
 
   /**
@@ -202,7 +158,7 @@ class Updater {
 
     /** @var \Drupal\automatic_updates\Event\PreCommitEvent $event */
     $event = $this->dispatchUpdateEvent(new PreCommitEvent($active_composer, $stage_composer), AutomaticUpdatesEvents::PRE_COMMIT);
-    $this->committer->commit($stage_dir, $active_dir, $this->getExclusions($event));
+    $this->stage->apply($this->getExclusions($event));
     $this->dispatchUpdateEvent(new UpdateEvent($active_composer), AutomaticUpdatesEvents::POST_COMMIT);
   }
 
@@ -210,24 +166,8 @@ class Updater {
    * Cleans the current update.
    */
   public function clean(): void {
-    $stage_dir = $this->pathLocator->getStageDirectory();
-    if (is_dir($stage_dir)) {
-      $this->cleaner->clean($stage_dir);
-    }
+    $this->stage->destroy();
     $this->state->delete(static::STATE_KEY);
-  }
-
-  /**
-   * Stages a Composer command.
-   *
-   * @param string[] $command
-   *   The command array as expected by
-   *   \PhpTuf\ComposerStager\Domain\StagerInterface::stage().
-   *
-   * @see \PhpTuf\ComposerStager\Domain\StagerInterface::stage()
-   */
-  protected function stageCommand(array $command): void {
-    $this->stager->stage($command, $this->pathLocator->getStageDirectory());
   }
 
   /**

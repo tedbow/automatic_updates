@@ -3,7 +3,6 @@
 namespace Drupal\Tests\automatic_updates\Kernel;
 
 use Drupal\automatic_updates\PathLocator;
-use Prophecy\Argument;
 
 /**
  * @coversDefaultClass \Drupal\automatic_updates\Updater
@@ -34,7 +33,7 @@ class UpdaterTest extends AutomaticUpdatesKernelTestBase {
     $locator = $this->prophesize(PathLocator::class);
     $locator->getActiveDirectory()->willReturn(__DIR__ . '/../../fixtures/fake-site');
     $locator->getStageDirectory()->willReturn('/tmp');
-    $this->container->set('automatic_updates.path_locator', $locator->reveal());
+    $this->container->set('package_manager.path_locator', $locator->reveal());
 
     $this->container->get('automatic_updates.updater')->begin([
       'drupal' => '9.8.1',
@@ -44,14 +43,9 @@ class UpdaterTest extends AutomaticUpdatesKernelTestBase {
     $kernel = $this->container->get('kernel');
     $kernel->rebuildContainer();
     $this->container = $kernel->getContainer();
-    $stager = $this->prophesize('\PhpTuf\ComposerStager\Domain\StagerInterface');
-    $command = [
-      'require',
-      'drupal/core-recommended:9.8.1',
-      '--update-with-all-dependencies',
-    ];
-    $stager->stage($command, Argument::cetera())->shouldBeCalled();
-    $this->container->set('package_manager.stager', $stager->reveal());
+    $stage = $this->prophesize('\Drupal\package_manager\Stage');
+    $stage->require(['drupal/core-recommended:9.8.1'])->shouldBeCalled();
+    $this->container->set('package_manager.stage', $stage->reveal());
     $this->container->get('automatic_updates.updater')->stage();
   }
 

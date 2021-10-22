@@ -74,6 +74,23 @@ services:
       - '@package_manager.file_syncer'
       - '@package_manager.file_system'
   package_manager.cleaner:
-    class: PhpTuf\ComposerStager\Domain\Cleaner
+    class: Drupal\package_manager\Cleaner
     arguments:
       - '@package_manager.file_system'
+      - '%site.path%'
+      - '@package_manager.path_locator'
+  package_manager.path_locator:
+    class: Drupal\package_manager\PathLocator
+    arguments:
+      - '@config.factory'
+      - '%app.root%'
+
+  # Public API.
+  package_manager.stage:
+    class: Drupal\package_manager\Stage
+    arguments:
+      - '@package_manager.path_locator'
+      - '@package_manager.beginner'
+      - '@package_manager.stager'
+      - '@package_manager.committer'
+      - '@package_manager.cleaner'

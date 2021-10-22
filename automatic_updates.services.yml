@@ -12,21 +12,9 @@ services:
     arguments:
       - '@state'
       - '@string_translation'
-      - '@package_manager.beginner'
-      - '@package_manager.stager'
-      - '@package_manager.cleaner'
-      - '@package_manager.committer'
       - '@event_dispatcher'
-      - '@automatic_updates.path_locator'
-  automatic_updates.cleaner:
-    class: Drupal\automatic_updates\ComposerStager\Cleaner
-    decorates: package_manager.cleaner
-    public: false
-    arguments:
-      - '@automatic_updates.cleaner.inner'
-      - '%site.path%'
-      - '@automatic_updates.path_locator'
-    properties: { _serviceId: package_manager.cleaner }
+      - '@package_manager.path_locator'
+      - '@package_manager.stage'
   automatic_updates.update_refresh_subscriber:
     class: Drupal\automatic_updates\Event\UpdateRefreshSubscriber
     arguments:

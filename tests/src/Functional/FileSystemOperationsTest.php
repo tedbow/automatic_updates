@@ -2,10 +2,11 @@
 
 namespace Drupal\Tests\automatic_updates\Functional;
 
-use Drupal\automatic_updates\ComposerStager\Cleaner;
-use Drupal\automatic_updates\PathLocator;
+use Drupal\package_manager\Cleaner;
 use Drupal\automatic_updates\Updater;
 use Drupal\Core\Site\Settings;
+use Drupal\package_manager\PathLocator;
+use Drupal\package_manager\Stage;
 
 /**
  * Tests handling of files and directories during an update.
@@ -64,20 +65,25 @@ class FileSystemOperationsTest extends AutomaticUpdatesFunctionalTestBase {
     // will otherwise default to the site path being used for the test site,
     // which doesn't exist in the fake site fixture.
     $cleaner = new Cleaner(
-      $this->container->get('package_manager.cleaner'),
+      $this->container->get('package_manager.file_system'),
       'sites/default',
       $locator->reveal()
+    );
+
+    $stage = new Stage(
+      $locator->reveal(),
+      $this->container->get('package_manager.beginner'),
+      $this->container->get('package_manager.stager'),
+      $this->container->get('package_manager.committer'),
+      $cleaner
     );
 
     $this->updater = new Updater(
       $this->container->get('state'),
       $this->container->get('string_translation'),
-      $this->container->get('package_manager.beginner'),
-      $this->container->get('package_manager.stager'),
-      $cleaner,
-      $this->container->get('package_manager.committer'),
       $this->container->get('event_dispatcher'),
-      $locator->reveal()
+      $locator->reveal(),
+      $stage
     );
 
     // Use the public and private files directories in the fake site fixture.
