@@ -6,6 +6,15 @@ use Drupal\package_manager\ComposerUtility;
 
 /**
  * Event fired when checking if the site could perform an update.
+ *
+ * An update is not actually being started when this event is being fired. It
+ * should be used to notify site admins if the site is in a state which will
+ * not allow automatic updates to succeed.
+ *
+ * This event should only be dispatched from ReadinessValidationManager to
+ * allow caching of the results.
+ *
+ * @see \Drupal\automatic_updates\Validation\ReadinessValidationManager
  */
 class ReadinessCheckEvent extends UpdateEvent {
 

@@ -2,7 +2,6 @@
 
 namespace Drupal\automatic_updates\Validator;
 
-use Drupal\automatic_updates\AutomaticUpdatesEvents;
 use Drupal\automatic_updates\Event\ReadinessCheckEvent;
 use Drupal\automatic_updates\Validation\ValidationResult;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
@@ -42,7 +41,7 @@ class CoreComposerValidator implements EventSubscriberInterface {
    */
   public static function getSubscribedEvents() {
     return [
-      AutomaticUpdatesEvents::READINESS_CHECK => ['checkCoreRequirements', 1000],
+      ReadinessCheckEvent::class => ['checkCoreRequirements', 1000],
     ];
   }
 
