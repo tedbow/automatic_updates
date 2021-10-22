@@ -2,7 +2,8 @@
 
 namespace Drupal\automatic_updates\Validator;
 
-use Drupal\automatic_updates\AutomaticUpdatesEvents;
+use Drupal\automatic_updates\Event\PreStartEvent;
+use Drupal\automatic_updates\Event\ReadinessCheckEvent;
 use Drupal\automatic_updates\Event\UpdateEvent;
 use Drupal\automatic_updates\Validation\ValidationResult;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
@@ -83,8 +84,8 @@ class WritableFileSystemValidator implements EventSubscriberInterface {
    */
   public static function getSubscribedEvents() {
     return [
-      AutomaticUpdatesEvents::READINESS_CHECK => 'checkPermissions',
-      AutomaticUpdatesEvents::PRE_START => 'checkPermissions',
+      ReadinessCheckEvent::class => 'checkPermissions',
+      PreStartEvent::class => 'checkPermissions',
     ];
   }
 

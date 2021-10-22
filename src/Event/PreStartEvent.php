@@ -6,6 +6,9 @@ use Drupal\package_manager\ComposerUtility;
 
 /**
  * Event fired before an update begins.
+ *
+ * This event is fired before any files are staged. Validation results added
+ * by subscribers are not cached.
  */
 class PreStartEvent extends UpdateEvent {
 

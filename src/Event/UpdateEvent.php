@@ -9,11 +9,12 @@ use Drupal\package_manager\ComposerUtility;
 /**
  * Event fired when a site is updating.
  *
- * Subscribers to this event should call ::addValidationResult().
- *
- * @see \Drupal\automatic_updates\AutomaticUpdatesEvents
+ * These events allow listeners to validate updates at various points in the
+ * update process.  Listeners to these events should add validation results via
+ * ::addValidationResult() if necessary. Only error level validation results
+ * will stop an update from continuing.
  */
-class UpdateEvent extends Event {
+abstract class UpdateEvent extends Event {
 
   /**
    * The validation results.
