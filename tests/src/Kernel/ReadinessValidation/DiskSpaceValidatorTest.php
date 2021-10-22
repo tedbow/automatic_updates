@@ -151,7 +151,7 @@ class DiskSpaceValidatorTest extends AutomaticUpdatesKernelTestBase {
    * @dataProvider providerDiskSpaceValidation
    */
   public function testDiskSpaceValidation(bool $shared_disk, array $free_space, array $expected_results): void {
-    $path_locator = $this->prophesize('\Drupal\automatic_updates\PathLocator');
+    $path_locator = $this->prophesize('\Drupal\package_manager\PathLocator');
     $path_locator->getProjectRoot()->willReturn('root');
     $path_locator->getVendorDirectory()->willReturn('vendor');
 

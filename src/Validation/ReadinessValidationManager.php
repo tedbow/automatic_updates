@@ -4,11 +4,11 @@ namespace Drupal\automatic_updates\Validation;
 
 use Drupal\automatic_updates\AutomaticUpdatesEvents;
 use Drupal\automatic_updates\Event\ReadinessCheckEvent;
-use Drupal\automatic_updates\PathLocator;
 use Drupal\automatic_updates\UpdateRecommender;
 use Drupal\Component\Datetime\TimeInterface;
 use Drupal\Core\KeyValueStore\KeyValueExpirableFactoryInterface;
 use Drupal\package_manager\ComposerUtility;
+use Drupal\package_manager\PathLocator;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 
 /**
@@ -47,7 +47,7 @@ class ReadinessValidationManager {
   /**
    * The path locator service.
    *
-   * @var \Drupal\automatic_updates\PathLocator
+   * @var \Drupal\package_manager\PathLocator
    */
   protected $pathLocator;
 
@@ -58,7 +58,7 @@ class ReadinessValidationManager {
    *   The key/value expirable factory.
    * @param \Drupal\Component\Datetime\TimeInterface $time
    *   The time service.
-   * @param \Drupal\automatic_updates\PathLocator $path_locator
+   * @param \Drupal\package_manager\PathLocator $path_locator
    *   The path locator service.
    * @param \Symfony\Component\EventDispatcher\EventDispatcherInterface $dispatcher
    *   The event dispatcher service.

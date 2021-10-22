@@ -2,9 +2,9 @@
 
 namespace Drupal\Tests\automatic_updates\Kernel\ReadinessValidation;
 
-use Drupal\automatic_updates\PathLocator;
 use Drupal\automatic_updates\Validation\ValidationResult;
 use Drupal\Core\DependencyInjection\ContainerBuilder;
+use Drupal\package_manager\PathLocator;
 use Drupal\Tests\automatic_updates\Kernel\AutomaticUpdatesKernelTestBase;
 
 /**
@@ -38,7 +38,7 @@ class CoreComposerValidatorTest extends AutomaticUpdatesKernelTestBase {
     // Point to a valid composer.json with no requirements.
     $locator = $this->prophesize(PathLocator::class);
     $locator->getActiveDirectory()->willReturn(__DIR__ . '/../../../fixtures/project_staged_validation/no_core_requirements');
-    $this->container->set('automatic_updates.path_locator', $locator->reveal());
+    $this->container->set('package_manager.path_locator', $locator->reveal());
 
     $error = ValidationResult::createError([
       'Drupal core does not appear to be required in the project-level composer.json.',

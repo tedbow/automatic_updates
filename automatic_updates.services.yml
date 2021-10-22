@@ -4,7 +4,7 @@ services:
     arguments:
       - '@keyvalue.expirable'
       - '@datetime.time'
-      - '@automatic_updates.path_locator'
+      - '@package_manager.path_locator'
       - '@event_dispatcher'
       - 24
   automatic_updates.updater:
@@ -46,7 +46,7 @@ services:
   automatic_updates.disk_space_validator:
     class: Drupal\automatic_updates\Validator\DiskSpaceValidator
     arguments:
-      - '@automatic_updates.path_locator'
+      - '@package_manager.path_locator'
       - '@string_translation'
     tags:
       - { name: event_subscriber }
@@ -61,7 +61,7 @@ services:
   automatic_updates.validator.file_system_permissions:
     class: Drupal\automatic_updates\Validator\WritableFileSystemValidator
     arguments:
-      - '@automatic_updates.path_locator'
+      - '@package_manager.path_locator'
       - '%app.root%'
       - '@string_translation'
     tags:
@@ -70,8 +70,3 @@ services:
     class: Drupal\automatic_updates\Validator\CoreComposerValidator
     tags:
       - { name: event_subscriber }
-  automatic_updates.path_locator:
-    class: Drupal\automatic_updates\PathLocator
-    arguments:
-      - '@config.factory'
-      - '%app.root%'

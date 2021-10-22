@@ -49,7 +49,7 @@ class FileSystemOperationsTest extends AutomaticUpdatesFunctionalTestBase {
     // active directory, and has a staging area within the site directory for
     // this test.
     $drupal_root = $this->getDrupalRoot();
-    /** @var \Drupal\automatic_updates\PathLocator|\Prophecy\Prophecy\ObjectProphecy $locator */
+    /** @var \Drupal\package_manager\PathLocator|\Prophecy\Prophecy\ObjectProphecy $locator */
     $locator = $this->prophesize(PathLocator::class);
     $locator->getActiveDirectory()->willReturn(__DIR__ . '/../../fixtures/fake-site');
     $this->stageDir = implode(DIRECTORY_SEPARATOR, [

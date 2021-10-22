@@ -2,7 +2,7 @@
 
 namespace Drupal\Tests\automatic_updates\Kernel;
 
-use Drupal\automatic_updates\PathLocator;
+use Drupal\package_manager\PathLocator;
 
 /**
  * @coversDefaultClass \Drupal\automatic_updates\Updater

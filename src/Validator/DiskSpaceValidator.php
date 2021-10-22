@@ -4,12 +4,12 @@ namespace Drupal\automatic_updates\Validator;
 
 use Drupal\automatic_updates\AutomaticUpdatesEvents;
 use Drupal\automatic_updates\Event\UpdateEvent;
-use Drupal\automatic_updates\PathLocator;
 use Drupal\automatic_updates\Validation\ValidationResult;
 use Drupal\Component\FileSystem\FileSystem;
 use Drupal\Component\Utility\Bytes;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\Core\StringTranslation\TranslationInterface;
+use Drupal\package_manager\PathLocator;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 /**
@@ -22,14 +22,14 @@ class DiskSpaceValidator implements EventSubscriberInterface {
   /**
    * The path locator service.
    *
-   * @var \Drupal\automatic_updates\PathLocator
+   * @var \Drupal\package_manager\PathLocator
    */
   protected $pathLocator;
 
   /**
    * Constructs a DiskSpaceValidator object.
    *
-   * @param \Drupal\automatic_updates\PathLocator $path_locator
+   * @param \Drupal\package_manager\PathLocator $path_locator
    *   The path locator service.
    * @param \Drupal\Core\StringTranslation\TranslationInterface $translation
    *   The translation service.

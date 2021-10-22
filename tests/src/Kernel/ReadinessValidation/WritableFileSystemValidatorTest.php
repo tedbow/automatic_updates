@@ -2,10 +2,10 @@
 
 namespace Drupal\Tests\automatic_updates\Kernel\ReadinessValidation;
 
-use Drupal\automatic_updates\PathLocator;
 use Drupal\automatic_updates\Validation\ValidationResult;
 use Drupal\automatic_updates\Validator\WritableFileSystemValidator;
 use Drupal\Core\DependencyInjection\ContainerBuilder;
+use Drupal\package_manager\PathLocator;
 use Drupal\Tests\automatic_updates\Kernel\AutomaticUpdatesKernelTestBase;
 use org\bovigo\vfs\vfsStream;
 
