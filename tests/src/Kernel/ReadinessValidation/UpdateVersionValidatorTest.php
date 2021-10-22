@@ -46,4 +46,13 @@ class UpdateVersionValidatorTest extends AutomaticUpdatesKernelTestBase {
     $this->assertCheckerResultsFromManager([$result], TRUE);
   }
 
+  /**
+   * Tests an update version that is a lower version than the current.
+   */
+  public function testDowngrading(): void {
+    $this->setCoreVersion('9.8.2');
+    $result = ValidationResult::createError(['Update version 9.8.1 is lower than 9.8.2, downgrading is not supported.']);
+    $this->assertCheckerResultsFromManager([$result], TRUE);
+  }
+
 }

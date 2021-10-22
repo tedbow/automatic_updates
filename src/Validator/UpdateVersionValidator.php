@@ -2,6 +2,7 @@
 
 namespace Drupal\automatic_updates\Validator;
 
+use Composer\Semver\Semver;
 use Drupal\automatic_updates\AutomaticUpdatesEvents;
 use Drupal\automatic_updates\Event\ReadinessCheckEvent;
 use Drupal\automatic_updates\Event\UpdateEvent;
@@ -50,14 +51,23 @@ class UpdateVersionValidator implements EventSubscriberInterface {
    *   The event object.
    */
   public function checkUpdateVersion(UpdateEvent $event): void {
-    $from_version = ExtensionVersion::createFromVersionString($this->getCoreVersion());
+    $from_version_string = $this->getCoreVersion();
+    $from_version = ExtensionVersion::createFromVersionString($from_version_string);
     $core_package_names = $event->getActiveComposer()->getCorePackageNames();
     // All the core packages will be updated to the same version, so it doesn't
     // matter which specific package we're looking at.
     $core_package_name = reset($core_package_names);
-    $to_version = ExtensionVersion::createFromVersionString($event->getPackageVersions()[$core_package_name]);
-
-    if ($from_version->getMajorVersion() !== $to_version->getMajorVersion()) {
+    $to_version_string = $event->getPackageVersions()[$core_package_name];
+    $to_version = ExtensionVersion::createFromVersionString($to_version_string);
+    if (Semver::satisfies($to_version_string, "< $from_version_string")) {
+      $messages[] = $this->t('Update version @to_version is lower than @from_version, downgrading is not supported.', [
+        '@to_version' => $to_version_string,
+        '@from_version' => $from_version_string,
+      ]);
+      $error = ValidationResult::createError($messages);
+      $event->addValidationResult($error);
+    }
+    elseif ($from_version->getMajorVersion() !== $to_version->getMajorVersion()) {
       $error = ValidationResult::createError([
         $this->t('Updating from one major version to another is not supported.'),
       ]);
@@ -69,6 +79,7 @@ class UpdateVersionValidator implements EventSubscriberInterface {
       ]);
       $event->addValidationResult($error);
     }
+
   }
 
   /**
