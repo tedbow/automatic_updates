@@ -224,11 +224,12 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
    */
   public function testMinorVersionUpdateNotSupported(string $update_form_url): void {
     $this->setCoreVersion('9.7.1');
+    $this->checkForUpdates();
 
     $this->drupalGet($update_form_url);
 
     $assert_session = $this->assertSession();
-    $assert_session->pageTextContainsOnce('Updating from one minor version to another is not supported.');
+    $assert_session->pageTextContainsOnce('Drupal cannot be automatically updated from its current version, 9.7.1, to the recommended version, 9.8.1, because automatic updates from one minor version to another are not supported.');
     $assert_session->buttonNotExists('Update');
   }
 

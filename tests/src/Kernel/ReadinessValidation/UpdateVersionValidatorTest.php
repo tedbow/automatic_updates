@@ -32,7 +32,9 @@ class UpdateVersionValidatorTest extends AutomaticUpdatesKernelTestBase {
    */
   public function testMajorUpdates(): void {
     $this->setCoreVersion('8.9.1');
-    $result = ValidationResult::createError(['Updating from one major version to another is not supported.']);
+    $result = ValidationResult::createError([
+      'Drupal cannot be automatically updated from its current version, 8.9.1, to the recommended version, 9.8.1, because automatic updates from one major version to another are not supported.',
+    ]);
     $this->assertCheckerResultsFromManager([$result], TRUE);
 
   }
@@ -42,7 +44,9 @@ class UpdateVersionValidatorTest extends AutomaticUpdatesKernelTestBase {
    */
   public function testMinorUpdates(): void {
     $this->setCoreVersion('9.7.1');
-    $result = ValidationResult::createError(['Updating from one minor version to another is not supported.']);
+    $result = ValidationResult::createError([
+      'Drupal cannot be automatically updated from its current version, 9.7.1, to the recommended version, 9.8.1, because automatic updates from one minor version to another are not supported.',
+    ]);
     $this->assertCheckerResultsFromManager([$result], TRUE);
   }
 
