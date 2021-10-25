@@ -2,7 +2,7 @@
 
 namespace Drupal\Tests\automatic_updates\Kernel\ReadinessValidation;
 
-use Drupal\automatic_updates\Validation\ValidationResult;
+use Drupal\package_manager\ValidationResult;
 use Drupal\automatic_updates\Validator\ComposerExecutableValidator;
 use Drupal\Tests\automatic_updates\Kernel\AutomaticUpdatesKernelTestBase;
 use PhpTuf\ComposerStager\Exception\IOException;
@@ -111,7 +111,7 @@ class ComposerExecutableValidatorTest extends AutomaticUpdatesKernelTestBase {
    *
    * @param string $reported_version
    *   The version of Composer that `composer --version` should report.
-   * @param \Drupal\automatic_updates\Validation\ValidationResult[] $expected_results
+   * @param \Drupal\package_manager\ValidationResult[] $expected_results
    *   The expected validation results.
    *
    * @dataProvider providerComposerVersionValidation

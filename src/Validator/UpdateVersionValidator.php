@@ -6,7 +6,7 @@ use Composer\Semver\Semver;
 use Drupal\automatic_updates\Event\PreStartEvent;
 use Drupal\automatic_updates\Event\ReadinessCheckEvent;
 use Drupal\automatic_updates\Event\UpdateEvent;
-use Drupal\automatic_updates\Validation\ValidationResult;
+use Drupal\package_manager\ValidationResult;
 use Drupal\Core\Extension\ExtensionVersion;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\Core\StringTranslation\TranslationInterface;

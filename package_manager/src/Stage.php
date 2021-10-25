@@ -10,6 +10,8 @@ use Drupal\package_manager\Event\PreApplyEvent;
 use Drupal\package_manager\Event\PreCreateEvent;
 use Drupal\package_manager\Event\PreDestroyEvent;
 use Drupal\package_manager\Event\PreRequireEvent;
+use Drupal\package_manager\Event\StageEvent;
+use Drupal\system\SystemManager;
 use PhpTuf\ComposerStager\Domain\BeginnerInterface;
 use PhpTuf\ComposerStager\Domain\CleanerInterface;
 use PhpTuf\ComposerStager\Domain\CommitterInterface;
@@ -105,9 +107,9 @@ class Stage {
     $active_dir = $this->pathLocator->getActiveDirectory();
     $stage_dir = $this->pathLocator->getStageDirectory();
 
-    $this->eventDispatcher->dispatch(new PreCreateEvent());
+    $this->dispatch(new PreCreateEvent());
     $this->beginner->begin($active_dir, $stage_dir, $exclusions);
-    $this->eventDispatcher->dispatch(new PostCreateEvent());
+    $this->dispatch(new PostCreateEvent());
   }
 
   /**
@@ -120,9 +122,9 @@ class Stage {
     $command = array_merge(['require'], $constraints);
     $command[] = '--update-with-all-dependencies';
 
-    $this->eventDispatcher->dispatch(new PreRequireEvent());
+    $this->dispatch(new PreRequireEvent());
     $this->stager->stage($command, $this->pathLocator->getStageDirectory());
-    $this->eventDispatcher->dispatch(new PostRequireEvent());
+    $this->dispatch(new PostRequireEvent());
   }
 
   /**
@@ -137,21 +139,36 @@ class Stage {
     $active_dir = $this->pathLocator->getActiveDirectory();
     $stage_dir = $this->pathLocator->getStageDirectory();
 
-    $this->eventDispatcher->dispatch(new PreApplyEvent());
+    $this->dispatch(new PreApplyEvent());
     $this->committer->commit($stage_dir, $active_dir, $exclusions);
-    $this->eventDispatcher->dispatch(new PostApplyEvent());
+    $this->dispatch(new PostApplyEvent());
   }
 
   /**
    * Deletes the staging area.
    */
   public function destroy(): void {
-    $this->eventDispatcher->dispatch(new PreDestroyEvent());
+    $this->dispatch(new PreDestroyEvent());
     $stage_dir = $this->pathLocator->getStageDirectory();
     if (is_dir($stage_dir)) {
       $this->cleaner->clean($stage_dir);
     }
-    $this->eventDispatcher->dispatch(new PostDestroyEvent());
+    $this->dispatch(new PostDestroyEvent());
+  }
+
+  /**
+   * Dispatches an event and handles any errors that it collects.
+   *
+   * @param \Drupal\package_manager\Event\StageEvent $event
+   *   The event object.
+   */
+  protected function dispatch(StageEvent $event): void {
+    $this->eventDispatcher->dispatch($event);
+
+    $errors = $event->getResults(SystemManager::REQUIREMENT_ERROR);
+    if ($errors) {
+      throw new StageException($errors);
+    }
   }
 
 }

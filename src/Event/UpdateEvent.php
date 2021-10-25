@@ -2,9 +2,9 @@
 
 namespace Drupal\automatic_updates\Event;
 
-use Drupal\automatic_updates\Validation\ValidationResult;
 use Drupal\Component\EventDispatcher\Event;
 use Drupal\package_manager\ComposerUtility;
+use Drupal\package_manager\ValidationResult;
 
 /**
  * Event fired when a site is updating.
@@ -19,7 +19,7 @@ abstract class UpdateEvent extends Event {
   /**
    * The validation results.
    *
-   * @var \Drupal\automatic_updates\Validation\ValidationResult[]
+   * @var \Drupal\package_manager\ValidationResult[]
    */
   protected $results = [];
 
@@ -53,7 +53,7 @@ abstract class UpdateEvent extends Event {
   /**
    * Adds a validation result.
    *
-   * @param \Drupal\automatic_updates\Validation\ValidationResult $validation_result
+   * @param \Drupal\package_manager\ValidationResult $validation_result
    *   The validation result.
    */
   public function addValidationResult(ValidationResult $validation_result): void {
@@ -67,7 +67,7 @@ abstract class UpdateEvent extends Event {
    *   (optional) The severity for the results to return. Should be one of the
    *   SystemManager::REQUIREMENT_* constants.
    *
-   * @return \Drupal\automatic_updates\Validation\ValidationResult[]
+   * @return \Drupal\package_manager\ValidationResult[]
    *   The validation results.
    */
   public function getResults(?int $severity = NULL): array {

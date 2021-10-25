@@ -1,6 +1,6 @@
 <?php
 
-namespace Drupal\automatic_updates\Validation;
+namespace Drupal\package_manager;
 
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\system\SystemManager;

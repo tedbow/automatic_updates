@@ -2,13 +2,13 @@
 
 namespace Drupal\Tests\automatic_updates\Unit;
 
-use Drupal\automatic_updates\Validation\ValidationResult;
+use Drupal\package_manager\ValidationResult;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\system\SystemManager;
 use Drupal\Tests\UnitTestCase;
 
 /**
- * @coversDefaultClass \Drupal\automatic_updates\Validation\ValidationResult
+ * @coversDefaultClass \Drupal\package_manager\ValidationResult
  *
  * @group automatic_updates
  */
@@ -76,7 +76,7 @@ class ValidationResultTest extends UnitTestCase {
   /**
    * Asserts a check result is valid.
    *
-   * @param \Drupal\automatic_updates\Validation\ValidationResult $result
+   * @param \Drupal\package_manager\ValidationResult $result
    *   The validation result to check.
    * @param array $expected_messages
    *   The expected messages.

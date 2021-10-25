@@ -4,7 +4,7 @@ namespace Drupal\Tests\automatic_updates\Functional;
 
 use Drupal\automatic_updates\Event\PreStartEvent;
 use Drupal\automatic_updates\Exception\UpdateException;
-use Drupal\automatic_updates\Validation\ValidationResult;
+use Drupal\package_manager\ValidationResult;
 use Drupal\automatic_updates_test\ReadinessChecker\TestChecker1;
 use Drupal\Tests\automatic_updates\Traits\ValidationTestTrait;
 

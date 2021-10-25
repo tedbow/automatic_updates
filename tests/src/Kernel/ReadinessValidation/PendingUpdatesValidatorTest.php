@@ -2,7 +2,7 @@
 
 namespace Drupal\Tests\automatic_updates\Kernel\ReadinessValidation;
 
-use Drupal\automatic_updates\Validation\ValidationResult;
+use Drupal\package_manager\ValidationResult;
 use Drupal\Tests\automatic_updates\Kernel\AutomaticUpdatesKernelTestBase;
 
 /**

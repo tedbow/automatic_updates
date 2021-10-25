@@ -2,7 +2,7 @@
 
 namespace Drupal\Tests\automatic_updates\Traits;
 
-use Drupal\automatic_updates\Validation\ValidationResult;
+use Drupal\package_manager\ValidationResult;
 
 /**
  * Common methods for testing validation.
@@ -26,7 +26,7 @@ trait ValidationTestTrait {
   /**
    * Test validation results.
    *
-   * @var \Drupal\automatic_updates\Validation\ValidationResult[][][]
+   * @var \Drupal\package_manager\ValidationResult[][][]
    */
   protected $testResults;
 
@@ -91,9 +91,9 @@ trait ValidationTestTrait {
   /**
    * Asserts two validation result sets are equal.
    *
-   * @param \Drupal\automatic_updates\Validation\ValidationResult[] $expected_results
+   * @param \Drupal\package_manager\ValidationResult[] $expected_results
    *   The expected validation results.
-   * @param \Drupal\automatic_updates\Validation\ValidationResult[]|null $actual_results
+   * @param \Drupal\package_manager\ValidationResult[]|null $actual_results
    *   The actual validation results or NULL if known are available.
    */
   protected function assertValidationResultsEqual(array $expected_results, array $actual_results): void {
@@ -119,7 +119,7 @@ trait ValidationTestTrait {
    *   (optional) The severity for the results to return. Should be one of the
    *   SystemManager::REQUIREMENT_* constants.
    *
-   * @return \Drupal\automatic_updates\Validation\ValidationResult[]|null
+   * @return \Drupal\package_manager\ValidationResult[]|null
    *   The messages of the type.
    */
   protected function getResultsFromManager(bool $call_run = FALSE, ?int $severity = NULL): ?array {
@@ -133,7 +133,7 @@ trait ValidationTestTrait {
   /**
    * Asserts expected validation results from the manager.
    *
-   * @param \Drupal\automatic_updates\Validation\ValidationResult[] $expected_results
+   * @param \Drupal\package_manager\ValidationResult[] $expected_results
    *   The expected results.
    * @param bool $call_run
    *   (Optional) Whether to call ::run() on the manager. Defaults to FALSE.

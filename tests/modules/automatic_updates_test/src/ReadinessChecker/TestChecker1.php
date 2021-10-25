@@ -42,7 +42,7 @@ class TestChecker1 implements EventSubscriberInterface {
    * This method is static to enable setting the expected messages before the
    * test module is enabled.
    *
-   * @param \Drupal\automatic_updates\Validation\ValidationResult[]|\Throwable|null $checker_results
+   * @param \Drupal\package_manager\ValidationResult[]|\Throwable|null $checker_results
    *   The test validation results, or an exception to throw, or NULL to delete
    *   stored results.
    * @param string $event_name

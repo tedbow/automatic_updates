@@ -2,7 +2,7 @@
 
 namespace Drupal\Tests\automatic_updates\Kernel\ReadinessValidation;
 
-use Drupal\automatic_updates\Validation\ValidationResult;
+use Drupal\package_manager\ValidationResult;
 use Drupal\automatic_updates\Validator\WritableFileSystemValidator;
 use Drupal\Core\DependencyInjection\ContainerBuilder;
 use Drupal\package_manager\PathLocator;

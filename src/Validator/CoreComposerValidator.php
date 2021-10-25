@@ -3,7 +3,7 @@
 namespace Drupal\automatic_updates\Validator;
 
 use Drupal\automatic_updates\Event\ReadinessCheckEvent;
-use Drupal\automatic_updates\Validation\ValidationResult;
+use Drupal\package_manager\ValidationResult;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 

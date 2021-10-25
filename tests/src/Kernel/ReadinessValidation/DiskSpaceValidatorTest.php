@@ -2,7 +2,7 @@
 
 namespace Drupal\Tests\automatic_updates\Kernel\ReadinessValidation;
 
-use Drupal\automatic_updates\Validation\ValidationResult;
+use Drupal\package_manager\ValidationResult;
 use Drupal\automatic_updates\Validator\DiskSpaceValidator;
 use Drupal\Component\Utility\Bytes;
 use Drupal\Tests\automatic_updates\Kernel\AutomaticUpdatesKernelTestBase;
@@ -145,7 +145,7 @@ class DiskSpaceValidatorTest extends AutomaticUpdatesKernelTestBase {
    *   are the locations (only 'root', 'vendor', and 'temp' are supported), and
    *   the values are the space that should be reported, in a format that can be
    *   parsed by \Drupal\Component\Utility\Bytes::toNumber().
-   * @param \Drupal\automatic_updates\Validation\ValidationResult[] $expected_results
+   * @param \Drupal\package_manager\ValidationResult[] $expected_results
    *   The expected validation results.
    *
    * @dataProvider providerDiskSpaceValidation

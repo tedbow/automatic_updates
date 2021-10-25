@@ -146,7 +146,7 @@ class ReadinessValidationManager {
    *   (optional) The severity for the results to return. Should be one of the
    *   SystemManager::REQUIREMENT_* constants.
    *
-   * @return \Drupal\automatic_updates\Validation\ValidationResult[]|
+   * @return \Drupal\package_manager\ValidationResult[]|
    *   The validation result objects or NULL if no results are
    *   available or if the stored results are no longer valid.
    *
@@ -172,7 +172,7 @@ class ReadinessValidationManager {
    * readiness check event are the same as the last time the event was
    * dispatched.
    *
-   * @return \Drupal\automatic_updates\Validation\ValidationResult[]|null
+   * @return \Drupal\package_manager\ValidationResult[]|null
    *   The stored results if available and still valid, otherwise null.
    */
   protected function getStoredValidResults(): ?array {

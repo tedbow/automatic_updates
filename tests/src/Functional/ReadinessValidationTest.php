@@ -113,7 +113,7 @@ class ReadinessValidationTest extends AutomaticUpdatesFunctionalTestBase {
     $this->drupalLogin($this->checkerRunnerUser);
     $this->drupalGet('admin/reports/status');
     $this->assertNoErrors(TRUE);
-    /** @var \Drupal\automatic_updates\Validation\ValidationResult[] $expected_results */
+    /** @var \Drupal\package_manager\ValidationResult[] $expected_results */
     $expected_results = $this->testResults['checker_1']['1 error'];
     TestChecker1::setTestResult($expected_results);
 
@@ -382,7 +382,7 @@ class ReadinessValidationTest extends AutomaticUpdatesFunctionalTestBase {
   /**
    * Asserts that the displayed readiness requirement contains warnings.
    *
-   * @param \Drupal\automatic_updates\Validation\ValidationResult[] $expected_results
+   * @param \Drupal\package_manager\ValidationResult[] $expected_results
    *   The readiness check results that should be visible.
    * @param bool $run_link
    *   (optional) Whether there should be a link to run the readiness checks.
@@ -395,7 +395,7 @@ class ReadinessValidationTest extends AutomaticUpdatesFunctionalTestBase {
   /**
    * Asserts that the displayed readiness requirement contains errors.
    *
-   * @param \Drupal\automatic_updates\Validation\ValidationResult[] $expected_results
+   * @param \Drupal\package_manager\ValidationResult[] $expected_results
    *   The readiness check results that should be visible.
    * @param bool $run_link
    *   (optional) Whether there should be a link to run the readiness checks.
@@ -413,7 +413,7 @@ class ReadinessValidationTest extends AutomaticUpdatesFunctionalTestBase {
    *   be. Can be one of 'error', 'warning', 'checked', or 'ok'.
    * @param string $preamble
    *   The text that should appear before the result messages.
-   * @param \Drupal\automatic_updates\Validation\ValidationResult[] $expected_results
+   * @param \Drupal\package_manager\ValidationResult[] $expected_results
    *   The expected readiness check results, in the order we expect them to be
    *   displayed.
    * @param bool $run_link

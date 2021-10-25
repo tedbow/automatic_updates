@@ -10,14 +10,14 @@ class UpdateException extends \RuntimeException {
   /**
    * The validation results for the exception.
    *
-   * @var \Drupal\automatic_updates\Validation\ValidationResult[]
+   * @var \Drupal\package_manager\ValidationResult[]
    */
   protected $validationResults;
 
   /**
    * Constructs an UpdateException object.
    *
-   * @param \Drupal\automatic_updates\Validation\ValidationResult[] $validation_results
+   * @param \Drupal\package_manager\ValidationResult[] $validation_results
    *   The validation results.
    * @param string $message
    *   The exception message.
@@ -30,7 +30,7 @@ class UpdateException extends \RuntimeException {
   /**
    * Gets the validation results for the exception.
    *
-   * @return \Drupal\automatic_updates\Validation\ValidationResult[]
+   * @return \Drupal\package_manager\ValidationResult[]
    *   The validation results.
    */
   public function getValidationResults(): array {
