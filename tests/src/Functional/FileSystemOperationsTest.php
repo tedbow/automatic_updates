@@ -75,7 +75,8 @@ class FileSystemOperationsTest extends AutomaticUpdatesFunctionalTestBase {
       $this->container->get('package_manager.beginner'),
       $this->container->get('package_manager.stager'),
       $this->container->get('package_manager.committer'),
-      $cleaner
+      $cleaner,
+      $this->container->get('event_dispatcher')
     );
 
     $this->updater = new Updater(

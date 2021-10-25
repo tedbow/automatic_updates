@@ -94,3 +94,4 @@ services:
       - '@package_manager.stager'
       - '@package_manager.committer'
       - '@package_manager.cleaner'
+      - '@event_dispatcher'

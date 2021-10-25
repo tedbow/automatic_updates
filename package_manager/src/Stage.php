@@ -2,10 +2,19 @@
 
 namespace Drupal\package_manager;
 
+use Drupal\package_manager\Event\PostApplyEvent;
+use Drupal\package_manager\Event\PostCreateEvent;
+use Drupal\package_manager\Event\PostDestroyEvent;
+use Drupal\package_manager\Event\PostRequireEvent;
+use Drupal\package_manager\Event\PreApplyEvent;
+use Drupal\package_manager\Event\PreCreateEvent;
+use Drupal\package_manager\Event\PreDestroyEvent;
+use Drupal\package_manager\Event\PreRequireEvent;
 use PhpTuf\ComposerStager\Domain\BeginnerInterface;
 use PhpTuf\ComposerStager\Domain\CleanerInterface;
 use PhpTuf\ComposerStager\Domain\CommitterInterface;
 use PhpTuf\ComposerStager\Domain\StagerInterface;
+use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 
 /**
  * Creates and manages a staging area in which to install or update code.
@@ -53,6 +62,13 @@ class Stage {
   protected $cleaner;
 
   /**
+   * The event dispatcher service.
+   *
+   * @var \Symfony\Contracts\EventDispatcher\EventDispatcherInterface
+   */
+  protected $eventDispatcher;
+
+  /**
    * Constructs a new Stage object.
    *
    * @param \Drupal\package_manager\PathLocator $path_locator
@@ -65,13 +81,16 @@ class Stage {
    *   The committer service from Composer Stager.
    * @param \PhpTuf\ComposerStager\Domain\CleanerInterface $cleaner
    *   The cleaner service from Composer Stager.
+   * @param \Symfony\Contracts\EventDispatcher\EventDispatcherInterface $event_dispatcher
+   *   The event dispatcher service.
    */
-  public function __construct(PathLocator $path_locator, BeginnerInterface $beginner, StagerInterface $stager, CommitterInterface $committer, CleanerInterface $cleaner) {
+  public function __construct(PathLocator $path_locator, BeginnerInterface $beginner, StagerInterface $stager, CommitterInterface $committer, CleanerInterface $cleaner, EventDispatcherInterface $event_dispatcher) {
     $this->pathLocator = $path_locator;
     $this->beginner = $beginner;
     $this->stager = $stager;
     $this->committer = $committer;
     $this->cleaner = $cleaner;
+    $this->eventDispatcher = $event_dispatcher;
   }
 
   /**
@@ -85,7 +104,10 @@ class Stage {
   public function create(?array $exclusions = []): void {
     $active_dir = $this->pathLocator->getActiveDirectory();
     $stage_dir = $this->pathLocator->getStageDirectory();
+
+    $this->eventDispatcher->dispatch(new PreCreateEvent());
     $this->beginner->begin($active_dir, $stage_dir, $exclusions);
+    $this->eventDispatcher->dispatch(new PostCreateEvent());
   }
 
   /**
@@ -97,7 +119,10 @@ class Stage {
   public function require(array $constraints): void {
     $command = array_merge(['require'], $constraints);
     $command[] = '--update-with-all-dependencies';
+
+    $this->eventDispatcher->dispatch(new PreRequireEvent());
     $this->stager->stage($command, $this->pathLocator->getStageDirectory());
+    $this->eventDispatcher->dispatch(new PostRequireEvent());
   }
 
   /**
@@ -111,17 +136,22 @@ class Stage {
   public function apply(?array $exclusions = []): void {
     $active_dir = $this->pathLocator->getActiveDirectory();
     $stage_dir = $this->pathLocator->getStageDirectory();
+
+    $this->eventDispatcher->dispatch(new PreApplyEvent());
     $this->committer->commit($stage_dir, $active_dir, $exclusions);
+    $this->eventDispatcher->dispatch(new PostApplyEvent());
   }
 
   /**
    * Deletes the staging area.
    */
   public function destroy(): void {
+    $this->eventDispatcher->dispatch(new PreDestroyEvent());
     $stage_dir = $this->pathLocator->getStageDirectory();
     if (is_dir($stage_dir)) {
       $this->cleaner->clean($stage_dir);
     }
+    $this->eventDispatcher->dispatch(new PostDestroyEvent());
   }
 
 }
