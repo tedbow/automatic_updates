@@ -59,4 +59,13 @@ class UpdateVersionValidatorTest extends AutomaticUpdatesKernelTestBase {
     $this->assertCheckerResultsFromManager([$result], TRUE);
   }
 
+  /**
+   * Tests a current version that is a dev version.
+   */
+  public function testUpdatesFromDevVersion(): void {
+    $this->setCoreVersion('9.8.0-dev');
+    $result = ValidationResult::createError(['Drupal cannot be automatically updated from its current version, 9.8.0-dev, to the recommended version, 9.8.1, because automatic updates from a dev version to any other version are not supported.']);
+    $this->assertCheckerResultsFromManager([$result], TRUE);
+  }
+
 }

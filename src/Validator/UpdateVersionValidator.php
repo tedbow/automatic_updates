@@ -67,6 +67,14 @@ class UpdateVersionValidator implements EventSubscriberInterface {
       $error = ValidationResult::createError($messages);
       $event->addValidationResult($error);
     }
+    elseif ($from_version->getVersionExtra() === 'dev') {
+      $messages[] = $this->t('Drupal cannot be automatically updated from its current version, @from_version, to the recommended version, @to_version, because automatic updates from a dev version to any other version are not supported.', [
+        '@to_version' => $to_version_string,
+        '@from_version' => $from_version_string,
+      ]);
+      $error = ValidationResult::createError($messages);
+      $event->addValidationResult($error);
+    }
     elseif ($from_version->getMajorVersion() !== $to_version->getMajorVersion()) {
       $messages[] = $this->t('Drupal cannot be automatically updated from its current version, @from_version, to the recommended version, @to_version, because automatic updates from one major version to another are not supported.', [
         '@to_version' => $to_version_string,
