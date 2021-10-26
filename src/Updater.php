@@ -117,26 +117,9 @@ class Updater {
       $packages[$package] = $project_versions['drupal'];
     }
     $stage_key = $this->createActiveStage($packages);
-    /** @var \Drupal\automatic_updates\Event\PreStartEvent $event */
-    $event = $this->dispatchUpdateEvent(new PreStartEvent($composer, $packages));
-    $this->stage->create($this->getExclusions($event));
+    $this->dispatchUpdateEvent(new PreStartEvent($composer, $packages));
+    $this->stage->create();
     return $stage_key;
-  }
-
-  /**
-   * Gets the excluded paths collected by an event object.
-   *
-   * @param \Drupal\automatic_updates\Event\PreStartEvent|\Drupal\automatic_updates\Event\PreCommitEvent $event
-   *   The event object.
-   *
-   * @return string[]
-   *   The paths to exclude, relative to the active directory.
-   */
-  private function getExclusions(UpdateEvent $event): array {
-    $make_relative = function (string $path): string {
-      return str_replace($this->pathLocator->getActiveDirectory() . '/', '', $path);
-    };
-    return array_map($make_relative, $event->getExcludedPaths());
   }
 
   /**
@@ -157,9 +140,8 @@ class Updater {
     $stage_dir = $this->pathLocator->getStageDirectory();
     $stage_composer = ComposerUtility::createForDirectory($stage_dir);
 
-    /** @var \Drupal\automatic_updates\Event\PreCommitEvent $event */
-    $event = $this->dispatchUpdateEvent(new PreCommitEvent($active_composer, $stage_composer));
-    $this->stage->apply($this->getExclusions($event));
+    $this->dispatchUpdateEvent(new PreCommitEvent($active_composer, $stage_composer));
+    $this->stage->apply();
     $this->dispatchUpdateEvent(new PostCommitEvent($active_composer));
   }
 

@@ -1,6 +1,6 @@
 <?php
 
-namespace Drupal\automatic_updates\Event;
+namespace Drupal\package_manager\Event;
 
 /**
  * Common functionality for events which can collect excluded paths.
@@ -15,7 +15,7 @@ trait ExcludedPathsTrait {
   protected $excludedPaths = [];
 
   /**
-   * Adds an absolute path to exclude from the update operation.
+   * Adds an absolute path to exclude from the current operation.
    *
    * @todo This should only accept paths relative to the active directory.
    *
@@ -27,7 +27,7 @@ trait ExcludedPathsTrait {
   }
 
   /**
-   * Returns the paths to exclude from the update operation.
+   * Returns the paths to exclude from the current operation.
    *
    * @return string[]
    *   The paths to exclude.

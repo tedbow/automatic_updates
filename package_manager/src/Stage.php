@@ -97,18 +97,15 @@ class Stage {
 
   /**
    * Copies the active code base into the staging area.
-   *
-   * @param array|null $exclusions
-   *   Paths to exclude from being copied into the staging area.
-   *
-   * @todo Remove the $exclusions parameter when this method fires events.
    */
-  public function create(?array $exclusions = []): void {
+  public function create(): void {
     $active_dir = $this->pathLocator->getActiveDirectory();
     $stage_dir = $this->pathLocator->getStageDirectory();
 
-    $this->dispatch(new PreCreateEvent());
-    $this->beginner->begin($active_dir, $stage_dir, $exclusions);
+    $event = new PreCreateEvent();
+    $this->dispatch($event);
+
+    $this->beginner->begin($active_dir, $stage_dir, $event->getExcludedPaths());
     $this->dispatch(new PostCreateEvent());
   }
 
@@ -129,18 +126,15 @@ class Stage {
 
   /**
    * Applies staged changes to the active directory.
-   *
-   * @param array|null $exclusions
-   *   Paths to exclude from being copied into the active directory.
-   *
-   * @todo Remove the $exclusions parameter when this method fires events.
    */
-  public function apply(?array $exclusions = []): void {
+  public function apply(): void {
     $active_dir = $this->pathLocator->getActiveDirectory();
     $stage_dir = $this->pathLocator->getStageDirectory();
 
-    $this->dispatch(new PreApplyEvent());
-    $this->committer->commit($stage_dir, $active_dir, $exclusions);
+    $event = new PreApplyEvent();
+    $this->dispatch($event);
+
+    $this->committer->commit($stage_dir, $active_dir, $event->getExcludedPaths());
     $this->dispatch(new PostApplyEvent());
   }
 

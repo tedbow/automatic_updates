@@ -3,6 +3,7 @@
 namespace Drupal\automatic_updates\Event;
 
 use Drupal\package_manager\ComposerUtility;
+use Drupal\package_manager\Event\ExcludedPathsTrait;
 
 /**
  * Event fired before staged changes are copied into the active site.

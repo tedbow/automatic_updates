@@ -2,9 +2,12 @@
 
 namespace Drupal\automatic_updates\Event;
 
+use Drupal\Core\Extension\ModuleExtensionList;
 use Drupal\Core\File\FileSystemInterface;
 use Drupal\Core\StreamWrapper\LocalStream;
 use Drupal\Core\StreamWrapper\StreamWrapperManagerInterface;
+use Drupal\package_manager\Event\PreApplyEvent;
+use Drupal\package_manager\Event\PreCreateEvent;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 /**
@@ -41,6 +44,13 @@ class ExcludedPathsSubscriber implements EventSubscriberInterface {
   protected $streamWrapperManager;
 
   /**
+   * The module list service.
+   *
+   * @var \Drupal\Core\Extension\ModuleExtensionList
+   */
+  protected $moduleList;
+
+  /**
    * Constructs an UpdateSubscriber.
    *
    * @param string $app_root
@@ -51,21 +61,24 @@ class ExcludedPathsSubscriber implements EventSubscriberInterface {
    *   The file system service.
    * @param \Drupal\Core\StreamWrapper\StreamWrapperManagerInterface $stream_wrapper_manager
    *   The stream wrapper manager service.
+   * @param \Drupal\Core\Extension\ModuleExtensionList $module_list
+   *   The module list service.
    */
-  public function __construct(string $app_root, string $site_path, FileSystemInterface $file_system, StreamWrapperManagerInterface $stream_wrapper_manager) {
+  public function __construct(string $app_root, string $site_path, FileSystemInterface $file_system, StreamWrapperManagerInterface $stream_wrapper_manager, ModuleExtensionList $module_list) {
     $this->appRoot = $app_root;
     $this->sitePath = $site_path;
     $this->fileSystem = $file_system;
     $this->streamWrapperManager = $stream_wrapper_manager;
+    $this->moduleList = $module_list;
   }
 
   /**
    * Reacts before staged updates are committed the active directory.
    *
-   * @param \Drupal\automatic_updates\Event\PreCommitEvent $event
+   * @param \Drupal\package_manager\Event\PreApplyEvent $event
    *   The event object.
    */
-  public function preCommit(PreCommitEvent $event): void {
+  public function preApply(PreApplyEvent $event): void {
     // Don't copy anything from the staging area's sites/default.
     // @todo Make this a lot smarter in https://www.drupal.org/i/3228955.
     $event->excludePath('sites/default');
@@ -79,10 +92,10 @@ class ExcludedPathsSubscriber implements EventSubscriberInterface {
   /**
    * Reacts to the beginning of an update process.
    *
-   * @param \Drupal\automatic_updates\Event\PreStartEvent $event
+   * @param \Drupal\package_manager\Event\PreCreateEvent $event
    *   The event object.
    */
-  public function preStart(PreStartEvent $event): void {
+  public function preCreate(PreCreateEvent $event): void {
     // Automated test site directories should never be staged.
     $event->excludePath('sites/simpletest');
 
@@ -100,7 +113,8 @@ class ExcludedPathsSubscriber implements EventSubscriberInterface {
     }
     // If this module is a git clone, exclude it.
     if (is_dir(__DIR__ . '/../../.git')) {
-      $event->excludePath($this->fileSystem->realpath(__DIR__ . '/../..'));
+      $dir = $this->moduleList->getPath('automatic_updates');
+      $event->excludePath($dir);
     }
 
     // Exclude site-specific settings files.
@@ -157,8 +171,8 @@ class ExcludedPathsSubscriber implements EventSubscriberInterface {
    */
   public static function getSubscribedEvents() {
     return [
-      PreStartEvent::class => 'preStart',
-      PreCommitEvent::class => 'preCommit',
+      PreCreateEvent::class => 'preCreate',
+      PreApplyEvent::class => 'preApply',
     ];
   }
 
