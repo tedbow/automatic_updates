@@ -165,4 +165,26 @@ class Stage {
     }
   }
 
+  /**
+   * Returns a Composer utility object for the active directory.
+   *
+   * @return \Drupal\package_manager\ComposerUtility
+   *   The Composer utility object.
+   */
+  public function getActiveComposer(): ComposerUtility {
+    $dir = $this->pathLocator->getActiveDirectory();
+    return ComposerUtility::createForDirectory($dir);
+  }
+
+  /**
+   * Returns a Composer utility object for the stage directory.
+   *
+   * @return \Drupal\package_manager\ComposerUtility
+   *   The Composer utility object.
+   */
+  public function getStageComposer(): ComposerUtility {
+    $dir = $this->pathLocator->getStageDirectory();
+    return ComposerUtility::createForDirectory($dir);
+  }
+
 }

@@ -2,11 +2,11 @@
 
 namespace Drupal\automatic_updates_test\ReadinessChecker;
 
-use Drupal\automatic_updates\Event\PreCommitEvent;
 use Drupal\automatic_updates\Event\PreStartEvent;
 use Drupal\automatic_updates\Event\ReadinessCheckEvent;
 use Drupal\automatic_updates\Event\UpdateEvent;
 use Drupal\Core\State\StateInterface;
+use Drupal\package_manager\Event\PreApplyEvent;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 /**
@@ -63,12 +63,12 @@ class TestChecker1 implements EventSubscriberInterface {
   /**
    * Adds test result to an update event from a state setting.
    *
-   * @param \Drupal\automatic_updates\Event\UpdateEvent $event
+   * @param object $event
    *   The update event.
    * @param string $state_key
    *   The state key.
    */
-  protected function addResults(UpdateEvent $event, string $state_key): void {
+  protected function addResults(object $event, string $state_key): void {
     $results = $this->state->get($state_key, []);
     if ($results instanceof \Throwable) {
       throw $results;
@@ -89,13 +89,13 @@ class TestChecker1 implements EventSubscriberInterface {
   }
 
   /**
-   * Adds test results for the pre-commit event.
+   * Adds test results for the pre-apply event.
    *
-   * @param \Drupal\automatic_updates\Event\UpdateEvent $event
+   * @param \Drupal\package_manager\Event\PreApplyEvent $event
    *   The update event.
    */
-  public function runPreCommitChecks(UpdateEvent $event): void {
-    $this->addResults($event, static::STATE_KEY . "." . PreCommitEvent::class);
+  public function runPreApplyChecks(PreApplyEvent $event): void {
+    $this->addResults($event, static::STATE_KEY . "." . PreApplyEvent::class);
   }
 
   /**
@@ -115,7 +115,7 @@ class TestChecker1 implements EventSubscriberInterface {
     $priority = defined('AUTOMATIC_UPDATES_TEST_SET_PRIORITY') ? AUTOMATIC_UPDATES_TEST_SET_PRIORITY : 5;
     $events[ReadinessCheckEvent::class][] = ['runPreChecks', $priority];
     $events[PreStartEvent::class][] = ['runStartChecks', $priority];
-    $events[PreCommitEvent::class][] = ['runPreCommitChecks', $priority];
+    $events[PreApplyEvent::class][] = ['runPreApplyChecks', $priority];
     return $events;
   }
 

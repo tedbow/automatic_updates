@@ -2,6 +2,7 @@
 
 namespace Drupal\automatic_updates\Event;
 
+use Drupal\package_manager\Event\PostApplyEvent;
 use Drupal\update\UpdateManagerInterface;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
@@ -40,7 +41,7 @@ class UpdateRefreshSubscriber implements EventSubscriberInterface {
    */
   public static function getSubscribedEvents() {
     return [
-      PostCommitEvent::class => ['clearData', 1000],
+      PostApplyEvent::class => ['clearData', 1000],
     ];
   }
 

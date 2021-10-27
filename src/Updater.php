@@ -2,8 +2,6 @@
 
 namespace Drupal\automatic_updates;
 
-use Drupal\automatic_updates\Event\PostCommitEvent;
-use Drupal\automatic_updates\Event\PreCommitEvent;
 use Drupal\automatic_updates\Event\PreStartEvent;
 use Drupal\automatic_updates\Event\UpdateEvent;
 use Drupal\automatic_updates\Exception\UpdateException;
@@ -134,15 +132,7 @@ class Updater {
    * Commits the current update.
    */
   public function commit(): void {
-    $active_dir = $this->pathLocator->getActiveDirectory();
-    $active_composer = ComposerUtility::createForDirectory($active_dir);
-
-    $stage_dir = $this->pathLocator->getStageDirectory();
-    $stage_composer = ComposerUtility::createForDirectory($stage_dir);
-
-    $this->dispatchUpdateEvent(new PreCommitEvent($active_composer, $stage_composer));
     $this->stage->apply();
-    $this->dispatchUpdateEvent(new PostCommitEvent($active_composer));
   }
 
   /**

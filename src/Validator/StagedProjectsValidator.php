@@ -2,7 +2,7 @@
 
 namespace Drupal\automatic_updates\Validator;
 
-use Drupal\automatic_updates\Event\PreCommitEvent;
+use Drupal\package_manager\Event\PreApplyEvent;
 use Drupal\package_manager\ValidationResult;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\Core\StringTranslation\TranslationInterface;
@@ -28,13 +28,14 @@ final class StagedProjectsValidator implements EventSubscriberInterface {
   /**
    * Validates the staged packages.
    *
-   * @param \Drupal\automatic_updates\Event\PreCommitEvent $event
+   * @param \Drupal\package_manager\Event\PreApplyEvent $event
    *   The event object.
    */
-  public function validateStagedProjects(PreCommitEvent $event): void {
+  public function validateStagedProjects(PreApplyEvent $event): void {
+    $stage = $event->getStage();
     try {
-      $active_packages = $event->getActiveComposer()->getDrupalExtensionPackages();
-      $staged_packages = $event->getStageComposer()->getDrupalExtensionPackages();
+      $active_packages = $stage->getActiveComposer()->getDrupalExtensionPackages();
+      $staged_packages = $stage->getStageComposer()->getDrupalExtensionPackages();
     }
     catch (\Throwable $e) {
       $result = ValidationResult::createError([
@@ -123,7 +124,7 @@ final class StagedProjectsValidator implements EventSubscriberInterface {
    * {@inheritdoc}
    */
   public static function getSubscribedEvents() {
-    $events[PreCommitEvent::class][] = ['validateStagedProjects'];
+    $events[PreApplyEvent::class][] = ['validateStagedProjects'];
     return $events;
   }
 
