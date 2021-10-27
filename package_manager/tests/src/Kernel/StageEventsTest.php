@@ -19,6 +19,8 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 /**
  * Tests that the staging area fires events during its lifecycle.
  *
+ * @covers \Drupal\package_manager\Event\StageEvent
+ *
  * @group package_manager
  */
 class StageEventsTest extends KernelTestBase implements EventSubscriberInterface {
@@ -62,6 +64,9 @@ class StageEventsTest extends KernelTestBase implements EventSubscriberInterface
    */
   public function handleEvent(StageEvent $event): void {
     array_push($this->events, get_class($event));
+
+    // The event should have a reference to the stage which fired it.
+    $this->assertSame($event->getStage(), $this->container->get('package_manager.stage'));
 
     // Adding a warning to the event, should not trigger an exception.
     $result = ValidationResult::createWarning([

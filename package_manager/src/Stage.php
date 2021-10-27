@@ -102,11 +102,11 @@ class Stage {
     $active_dir = $this->pathLocator->getActiveDirectory();
     $stage_dir = $this->pathLocator->getStageDirectory();
 
-    $event = new PreCreateEvent();
+    $event = new PreCreateEvent($this);
     $this->dispatch($event);
 
     $this->beginner->begin($active_dir, $stage_dir, $event->getExcludedPaths());
-    $this->dispatch(new PostCreateEvent());
+    $this->dispatch(new PostCreateEvent($this));
   }
 
   /**
@@ -119,9 +119,9 @@ class Stage {
     $command = array_merge(['require'], $constraints);
     $command[] = '--update-with-all-dependencies';
 
-    $this->dispatch(new PreRequireEvent());
+    $this->dispatch(new PreRequireEvent($this));
     $this->stager->stage($command, $this->pathLocator->getStageDirectory());
-    $this->dispatch(new PostRequireEvent());
+    $this->dispatch(new PostRequireEvent($this));
   }
 
   /**
@@ -131,23 +131,23 @@ class Stage {
     $active_dir = $this->pathLocator->getActiveDirectory();
     $stage_dir = $this->pathLocator->getStageDirectory();
 
-    $event = new PreApplyEvent();
+    $event = new PreApplyEvent($this);
     $this->dispatch($event);
 
     $this->committer->commit($stage_dir, $active_dir, $event->getExcludedPaths());
-    $this->dispatch(new PostApplyEvent());
+    $this->dispatch(new PostApplyEvent($this));
   }
 
   /**
    * Deletes the staging area.
    */
   public function destroy(): void {
-    $this->dispatch(new PreDestroyEvent());
+    $this->dispatch(new PreDestroyEvent($this));
     $stage_dir = $this->pathLocator->getStageDirectory();
     if (is_dir($stage_dir)) {
       $this->cleaner->clean($stage_dir);
     }
-    $this->dispatch(new PostDestroyEvent());
+    $this->dispatch(new PostDestroyEvent($this));
   }
 
   /**

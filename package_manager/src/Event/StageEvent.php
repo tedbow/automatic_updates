@@ -2,6 +2,7 @@
 
 namespace Drupal\package_manager\Event;
 
+use Drupal\package_manager\Stage;
 use Drupal\package_manager\ValidationResult;
 use Symfony\Contracts\EventDispatcher\Event;
 
@@ -16,6 +17,33 @@ abstract class StageEvent extends Event {
    * @var \Drupal\package_manager\ValidationResult[]
    */
   protected $results = [];
+
+  /**
+   * The stage which fired this event.
+   *
+   * @var \Drupal\package_manager\Stage
+   */
+  protected $stage;
+
+  /**
+   * Constructs a StageEvent object.
+   *
+   * @param \Drupal\package_manager\Stage $stage
+   *   The stage which fired this event.
+   */
+  public function __construct(Stage $stage) {
+    $this->stage = $stage;
+  }
+
+  /**
+   * Returns the stage which fired this event.
+   *
+   * @return \Drupal\package_manager\Stage
+   *   The stage which fired this event.
+   */
+  public function getStage(): Stage {
+    return $this->stage;
+  }
 
   /**
    * Gets the validation results.
