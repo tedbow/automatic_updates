@@ -12,6 +12,7 @@ use Drupal\package_manager\Event\PreCreateEvent;
 use Drupal\package_manager\Event\PreDestroyEvent;
 use Drupal\package_manager\Event\PreRequireEvent;
 use Drupal\package_manager\Event\StageEvent;
+use Drupal\package_manager\Stage;
 use Drupal\package_manager\StageException;
 use Drupal\package_manager\ValidationResult;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
@@ -41,6 +42,29 @@ class StageEventsTest extends KernelTestBase implements EventSubscriberInterface
   private $events = [];
 
   /**
+   * The stage under test.
+   *
+   * @var \Drupal\package_manager\Stage
+   */
+  private $stage;
+
+  /**
+   * {@inheritdoc}
+   */
+  protected function setUp(): void {
+    parent::setUp();
+
+    $this->stage = new Stage(
+      $this->container->get('package_manager.path_locator'),
+      $this->container->get('package_manager.beginner'),
+      $this->container->get('package_manager.stager'),
+      $this->container->get('package_manager.committer'),
+      $this->container->get('package_manager.cleaner'),
+      $this->container->get('event_dispatcher')
+    );
+  }
+
+  /**
    * {@inheritdoc}
    */
   public static function getSubscribedEvents() {
@@ -66,7 +90,7 @@ class StageEventsTest extends KernelTestBase implements EventSubscriberInterface
     array_push($this->events, get_class($event));
 
     // The event should have a reference to the stage which fired it.
-    $this->assertSame($event->getStage(), $this->container->get('package_manager.stage'));
+    $this->assertSame($event->getStage(), $this->stage);
 
     // Adding a warning to the event, should not trigger an exception.
     $result = ValidationResult::createWarning([
@@ -81,11 +105,10 @@ class StageEventsTest extends KernelTestBase implements EventSubscriberInterface
   public function testEvents(): void {
     $this->container->get('event_dispatcher')->addSubscriber($this);
 
-    $stage = $this->container->get('package_manager.stage');
-    $stage->create();
-    $stage->require(['ext-json:*']);
-    $stage->apply();
-    $stage->destroy();
+    $this->stage->create();
+    $this->stage->require(['ext-json:*']);
+    $this->stage->apply();
+    $this->stage->destroy();
 
     $this->assertSame($this->events, [
       PreCreateEvent::class,
@@ -139,11 +162,10 @@ class StageEventsTest extends KernelTestBase implements EventSubscriberInterface
       ->addListener($event_class, $handler);
 
     try {
-      $stage = $this->container->get('package_manager.stage');
-      $stage->create();
-      $stage->require(['ext-json:*']);
-      $stage->apply();
-      $stage->destroy();
+      $this->stage->create();
+      $this->stage->require(['ext-json:*']);
+      $this->stage->apply();
+      $this->stage->destroy();
 
       $this->fail('Expected \Drupal\package_manager\StageException to be thrown.');
     }

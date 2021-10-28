@@ -39,7 +39,7 @@ class StagedProjectsValidatorTest extends AutomaticUpdatesKernelTestBase {
     $this->container->set('package_manager.path_locator', $locator->reveal());
 
     $event = new PreApplyEvent(
-      $this->container->get('package_manager.stage')
+      $this->container->get('automatic_updates.updater')
     );
 
     $this->container->get('event_dispatcher')->dispatch($event);

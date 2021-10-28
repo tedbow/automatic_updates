@@ -6,20 +6,14 @@ use Drupal\automatic_updates\Event\PreStartEvent;
 use Drupal\automatic_updates\Event\UpdateEvent;
 use Drupal\automatic_updates\Exception\UpdateException;
 use Drupal\Core\State\StateInterface;
-use Drupal\Core\StringTranslation\StringTranslationTrait;
-use Drupal\Core\StringTranslation\TranslationInterface;
 use Drupal\package_manager\ComposerUtility;
-use Drupal\package_manager\PathLocator as PackageManagerPathLocator;
 use Drupal\package_manager\Stage;
 use Drupal\system\SystemManager;
-use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 
 /**
  * Defines a service to perform updates.
  */
-class Updater {
-
-  use StringTranslationTrait;
+class Updater extends Stage {
 
   /**
    * The state key in which to store the status of the update.
@@ -36,46 +30,16 @@ class Updater {
   protected $state;
 
   /**
-   * The event dispatcher service.
-   *
-   * @var \Symfony\Component\EventDispatcher\EventDispatcherInterface
-   */
-  protected $eventDispatcher;
-
-  /**
-   * The path locator service.
-   *
-   * @var \Drupal\package_manager\PathLocator
-   */
-  protected $pathLocator;
-
-  /**
-   * The stage service.
-   *
-   * @var \Drupal\package_manager\Stage
-   */
-  protected $stage;
-
-  /**
    * Constructs an Updater object.
    *
    * @param \Drupal\Core\State\StateInterface $state
    *   The state service.
-   * @param \Drupal\Core\StringTranslation\TranslationInterface $translation
-   *   The string translation service.
-   * @param \Symfony\Component\EventDispatcher\EventDispatcherInterface $event_dispatcher
-   *   The event dispatcher service.
-   * @param \Drupal\package_manager\PathLocator $path_locator
-   *   The path locator service.
-   * @param \Drupal\package_manager\Stage $stage
-   *   The stage service.
+   * @param mixed ...$arguments
+   *   Additional arguments to pass to the parent constructor.
    */
-  public function __construct(StateInterface $state, TranslationInterface $translation, EventDispatcherInterface $event_dispatcher, PackageManagerPathLocator $path_locator, Stage $stage) {
+  public function __construct(StateInterface $state, ...$arguments) {
     $this->state = $state;
-    $this->setStringTranslation($translation);
-    $this->eventDispatcher = $event_dispatcher;
-    $this->pathLocator = $path_locator;
-    $this->stage = $stage;
+    parent::__construct(...$arguments);
   }
 
   /**
@@ -116,7 +80,7 @@ class Updater {
     }
     $stage_key = $this->createActiveStage($packages);
     $this->dispatchUpdateEvent(new PreStartEvent($composer, $packages));
-    $this->stage->create();
+    $this->create();
     return $stage_key;
   }
 
@@ -125,21 +89,21 @@ class Updater {
    */
   public function stage(): void {
     $current = $this->state->get(static::STATE_KEY);
-    $this->stage->require($current['package_versions']);
+    $this->require($current['package_versions']);
   }
 
   /**
    * Commits the current update.
    */
   public function commit(): void {
-    $this->stage->apply();
+    $this->apply();
   }
 
   /**
    * Cleans the current update.
    */
   public function clean(): void {
-    $this->stage->destroy();
+    $this->destroy();
     $this->state->delete(static::STATE_KEY);
   }
 

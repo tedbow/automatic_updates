@@ -11,10 +11,12 @@ services:
     class: Drupal\automatic_updates\Updater
     arguments:
       - '@state'
-      - '@string_translation'
-      - '@event_dispatcher'
       - '@package_manager.path_locator'
-      - '@package_manager.stage'
+      - '@package_manager.beginner'
+      - '@package_manager.stager'
+      - '@package_manager.committer'
+      - '@package_manager.cleaner'
+      - '@event_dispatcher'
   automatic_updates.update_refresh_subscriber:
     class: Drupal\automatic_updates\Event\UpdateRefreshSubscriber
     arguments:

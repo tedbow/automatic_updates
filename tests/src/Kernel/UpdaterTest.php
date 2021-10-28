@@ -3,6 +3,8 @@
 namespace Drupal\Tests\automatic_updates\Kernel;
 
 use Drupal\package_manager\PathLocator;
+use PhpTuf\ComposerStager\Domain\StagerInterface;
+use Prophecy\Argument;
 
 /**
  * @coversDefaultClass \Drupal\automatic_updates\Updater
@@ -43,9 +45,19 @@ class UpdaterTest extends AutomaticUpdatesKernelTestBase {
     $kernel = $this->container->get('kernel');
     $kernel->rebuildContainer();
     $this->container = $kernel->getContainer();
-    $stage = $this->prophesize('\Drupal\package_manager\Stage');
-    $stage->require(['drupal/core-recommended:9.8.1'])->shouldBeCalled();
-    $this->container->set('package_manager.stage', $stage->reveal());
+    // When we call Updater::stage(), the stored project versions should be
+    // read from state and passed to Composer Stager's Stager service, in the
+    // form of a Composer command. We set up a mock here to ensure that those
+    // calls are made as expected.
+    $stager = $this->prophesize(StagerInterface::class);
+    $command = [
+      'require',
+      'drupal/core-recommended:9.8.1',
+      '--update-with-all-dependencies',
+    ];
+    $stager->stage($command, Argument::cetera())->shouldBeCalled();
+    $this->container->set('package_manager.stager', $stager->reveal());
+
     $this->container->get('automatic_updates.updater')->stage();
   }
 
