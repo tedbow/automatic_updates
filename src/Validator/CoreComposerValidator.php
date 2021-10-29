@@ -25,7 +25,7 @@ class CoreComposerValidator implements EventSubscriberInterface {
     // If neither is, then core cannot be updated, which we consider an error
     // condition.
     $core_requirements = array_intersect(
-      $event->getActiveComposer()->getCorePackageNames(),
+      $event->getStage()->getActiveComposer()->getCorePackageNames(),
       ['drupal/core', 'drupal/core-recommended']
     );
     if (empty($core_requirements)) {

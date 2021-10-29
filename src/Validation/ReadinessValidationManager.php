@@ -3,6 +3,7 @@
 namespace Drupal\automatic_updates\Validation;
 
 use Drupal\automatic_updates\Event\ReadinessCheckEvent;
+use Drupal\automatic_updates\Updater;
 use Drupal\automatic_updates\UpdateRecommender;
 use Drupal\Component\Datetime\TimeInterface;
 use Drupal\Core\KeyValueStore\KeyValueExpirableFactoryInterface;
@@ -51,6 +52,13 @@ class ReadinessValidationManager {
   protected $pathLocator;
 
   /**
+   * The updater service.
+   *
+   * @var \Drupal\automatic_updates\Updater
+   */
+  protected $updater;
+
+  /**
    * Constructs a ReadinessValidationManager.
    *
    * @param \Drupal\Core\KeyValueStore\KeyValueExpirableFactoryInterface $key_value_expirable_factory
@@ -61,14 +69,17 @@ class ReadinessValidationManager {
    *   The path locator service.
    * @param \Symfony\Component\EventDispatcher\EventDispatcherInterface $dispatcher
    *   The event dispatcher service.
+   * @param \Drupal\automatic_updates\Updater $updater
+   *   The updater service.
    * @param int $results_time_to_live
    *   The number of hours to store results.
    */
-  public function __construct(KeyValueExpirableFactoryInterface $key_value_expirable_factory, TimeInterface $time, PathLocator $path_locator, EventDispatcherInterface $dispatcher, int $results_time_to_live) {
+  public function __construct(KeyValueExpirableFactoryInterface $key_value_expirable_factory, TimeInterface $time, PathLocator $path_locator, EventDispatcherInterface $dispatcher, Updater $updater, int $results_time_to_live) {
     $this->keyValueExpirable = $key_value_expirable_factory->get('automatic_updates');
     $this->time = $time;
     $this->pathLocator = $path_locator;
     $this->eventDispatcher = $dispatcher;
+    $this->updater = $updater;
     $this->resultsTimeToLive = $results_time_to_live;
   }
 
@@ -91,7 +102,7 @@ class ReadinessValidationManager {
     else {
       $package_versions = [];
     }
-    $event = new ReadinessCheckEvent($composer, $package_versions);
+    $event = new ReadinessCheckEvent($this->updater, $package_versions);
     $this->eventDispatcher->dispatch($event);
     $results = $event->getResults();
     $this->keyValueExpirable->setWithExpire(

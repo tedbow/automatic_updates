@@ -2,13 +2,12 @@
 
 namespace Drupal\automatic_updates;
 
-use Drupal\automatic_updates\Event\PreStartEvent;
-use Drupal\automatic_updates\Event\UpdateEvent;
 use Drupal\automatic_updates\Exception\UpdateException;
 use Drupal\Core\State\StateInterface;
 use Drupal\package_manager\ComposerUtility;
+use Drupal\package_manager\Event\StageEvent;
 use Drupal\package_manager\Stage;
-use Drupal\system\SystemManager;
+use Drupal\package_manager\StageException;
 
 /**
  * Defines a service to perform updates.
@@ -79,17 +78,33 @@ class Updater extends Stage {
       $packages[$package] = $project_versions['drupal'];
     }
     $stage_key = $this->createActiveStage($packages);
-    $this->dispatchUpdateEvent(new PreStartEvent($composer, $packages));
     $this->create();
     return $stage_key;
+  }
+
+  /**
+   * Returns the package versions that will be required during the update.
+   *
+   * @return string[]
+   *   The package versions, as a set of Composer constraints where the keys are
+   *   the package names, and the values are the version constraints.
+   */
+  public function getPackageVersions(): array {
+    $metadata = $this->state->get(static::STATE_KEY, []);
+    return $metadata['package_versions'];
   }
 
   /**
    * Stages the update.
    */
   public function stage(): void {
-    $current = $this->state->get(static::STATE_KEY);
-    $this->require($current['package_versions']);
+    $metadata = $this->state->get(static::STATE_KEY, []);
+
+    $requirements = [];
+    foreach ($metadata['package_versions'] as $package => $constraint) {
+      $requirements[] = "$package:$constraint";
+    }
+    $this->require($requirements);
   }
 
   /**
@@ -117,41 +132,25 @@ class Updater extends Stage {
    *   The active update ID.
    */
   private function createActiveStage(array $package_versions): string {
-    $requirements = [];
-    foreach ($package_versions as $package_name => $version) {
-      $requirements[] = "$package_name:$version";
-    }
-
     $value = static::STATE_KEY . microtime();
-    $this->state->set(
-      static::STATE_KEY,
-      [
-        'id' => $value,
-        'package_versions' => $requirements,
-      ]
-    );
+
+    $this->state->set(static::STATE_KEY, [
+      'id' => $value,
+      'package_versions' => $package_versions,
+    ]);
     return $value;
   }
 
   /**
-   * Dispatches an update event.
-   *
-   * @param \Drupal\automatic_updates\Event\UpdateEvent $event
-   *   The update event.
-   *
-   * @return \Drupal\automatic_updates\Event\UpdateEvent
-   *   The event object.
-   *
-   * @throws \Drupal\automatic_updates\Exception\UpdateException
-   *   If any of the event subscribers adds a validation error.
+   * {@inheritdoc}
    */
-  public function dispatchUpdateEvent(UpdateEvent $event): UpdateEvent {
-    $this->eventDispatcher->dispatch($event);
-    if ($checker_results = $event->getResults(SystemManager::REQUIREMENT_ERROR)) {
-      throw new UpdateException($checker_results,
-        "Unable to complete the update because of errors.");
+  protected function dispatch(StageEvent $event): void {
+    try {
+      parent::dispatch($event);
     }
-    return $event;
+    catch (StageException $e) {
+      throw new UpdateException($e->getResults(), $e->getMessage() ?: "Unable to complete the update because of errors.", $e->getCode(), $e);
+    }
   }
 
 }

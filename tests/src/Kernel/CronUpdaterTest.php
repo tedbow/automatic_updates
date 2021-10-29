@@ -4,6 +4,7 @@ namespace Drupal\Tests\automatic_updates\Kernel;
 
 use Drupal\automatic_updates\CronUpdater;
 use Drupal\Core\Form\FormState;
+use Drupal\package_manager\ComposerUtility;
 use Drupal\update\UpdateSettingsForm;
 
 /**
@@ -100,6 +101,10 @@ class CronUpdaterTest extends AutomaticUpdatesKernelTestBase {
     // depending on configuration.
     $will_update = (int) $will_update;
     $updater = $this->prophesize('\Drupal\automatic_updates\Updater');
+
+    $composer = ComposerUtility::createForDirectory(__DIR__ . '/../../fixtures/fake-site');
+    $updater->getActiveComposer()->willReturn($composer);
+
     $updater->begin(['drupal' => '9.8.1'])->shouldBeCalledTimes($will_update);
     $updater->stage()->shouldBeCalledTimes($will_update);
     $updater->commit()->shouldBeCalledTimes($will_update);

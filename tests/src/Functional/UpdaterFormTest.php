@@ -2,8 +2,8 @@
 
 namespace Drupal\Tests\automatic_updates\Functional;
 
-use Drupal\automatic_updates\Event\PreStartEvent;
 use Drupal\automatic_updates\Exception\UpdateException;
+use Drupal\package_manager\Event\PreCreateEvent;
 use Drupal\package_manager\ValidationResult;
 use Drupal\automatic_updates_test\ReadinessChecker\TestChecker1;
 use Drupal\Tests\automatic_updates\Traits\ValidationTestTrait;
@@ -177,7 +177,7 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
     // Repackage the validation error as an exception, so we can test what
     // happens if a validator throws once the update has started.
     $error = new UpdateException($expected_results, 'The update exploded.');
-    TestChecker1::setTestResult($error, PreStartEvent::class);
+    TestChecker1::setTestResult($error, PreCreateEvent::class);
     $session->reload();
     $assert_session->pageTextNotContains(static::$errorsExplanation);
     $assert_session->pageTextNotContains(static::$warningsExplanation);
@@ -193,7 +193,7 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
 
     // If a validator flags an error, but doesn't throw, the update should still
     // be halted.
-    TestChecker1::setTestResult($expected_results, PreStartEvent::class);
+    TestChecker1::setTestResult($expected_results, PreCreateEvent::class);
     $this->deleteStagedUpdate();
     $page->pressButton('Update');
     $this->checkForMetaRefresh();
@@ -206,7 +206,7 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
     // If a validator flags a warning, but doesn't throw, the update should
     // continue.
     $expected_results = $this->testResults['checker_1']['1 warning'];
-    TestChecker1::setTestResult($expected_results, PreStartEvent::class);
+    TestChecker1::setTestResult($expected_results, PreCreateEvent::class);
     $session->reload();
     $this->deleteStagedUpdate();
     $page->pressButton('Update');

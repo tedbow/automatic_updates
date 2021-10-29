@@ -2,9 +2,9 @@
 
 namespace Drupal\automatic_updates\Validator;
 
-use Drupal\automatic_updates\Event\PreStartEvent;
 use Drupal\automatic_updates\Event\ReadinessCheckEvent;
-use Drupal\automatic_updates\Event\UpdateEvent;
+use Drupal\package_manager\Event\PreCreateEvent;
+use Drupal\package_manager\Event\StageEvent;
 use Drupal\package_manager\ValidationResult;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\Core\StringTranslation\TranslationInterface;
@@ -52,10 +52,10 @@ class PendingUpdatesValidator implements EventSubscriberInterface {
   /**
    * Validates that there are no pending database updates.
    *
-   * @param \Drupal\automatic_updates\Event\UpdateEvent $event
-   *   The update event.
+   * @param \Drupal\package_manager\Event\StageEvent $event
+   *   The event object.
    */
-  public function checkPendingUpdates(UpdateEvent $event) {
+  public function checkPendingUpdates(StageEvent $event): void {
     require_once $this->appRoot . '/core/includes/install.inc';
     require_once $this->appRoot . '/core/includes/update.inc';
 
@@ -77,7 +77,7 @@ class PendingUpdatesValidator implements EventSubscriberInterface {
    */
   public static function getSubscribedEvents() {
     return [
-      PreStartEvent::class => 'checkPendingUpdates',
+      PreCreateEvent::class => 'checkPendingUpdates',
       ReadinessCheckEvent::class => 'checkPendingUpdates',
     ];
   }

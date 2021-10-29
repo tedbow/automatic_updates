@@ -3,7 +3,6 @@
 namespace Drupal\automatic_updates\Validator;
 
 use Drupal\automatic_updates\Event\ReadinessCheckEvent;
-use Drupal\automatic_updates\Event\UpdateEvent;
 use Drupal\package_manager\ValidationResult;
 use Drupal\Component\FileSystem\FileSystem;
 use Drupal\Component\Utility\Bytes;
@@ -100,10 +99,10 @@ class DiskSpaceValidator implements EventSubscriberInterface {
   /**
    * Checks that there is enough free space to perform automatic updates.
    *
-   * @param \Drupal\automatic_updates\Event\UpdateEvent $event
-   *   The update event object.
+   * @param \Drupal\automatic_updates\Event\ReadinessCheckEvent $event
+   *   The event object.
    */
-  public function checkDiskSpace(UpdateEvent $event): void {
+  public function checkDiskSpace(ReadinessCheckEvent $event): void {
     $root_path = $this->pathLocator->getProjectRoot();
     $vendor_path = $this->pathLocator->getVendorDirectory();
     $messages = [];

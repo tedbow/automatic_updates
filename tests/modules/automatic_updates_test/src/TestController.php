@@ -42,7 +42,7 @@ class TestController extends ControllerBase {
     }
     catch (UpdateException $e) {
       $messages = [];
-      foreach ($e->getValidationResults() as $result) {
+      foreach ($e->getResults() as $result) {
         if ($summary = $result->getSummary()) {
           $messages[] = $summary;
         }

@@ -39,7 +39,7 @@ class BatchProcessor {
     ];
 
     if ($error instanceof UpdateException) {
-      foreach ($error->getValidationResults() as $result) {
+      foreach ($error->getResults() as $result) {
         $messages = $result->getMessages();
         if (count($messages) > 1) {
           array_unshift($messages, $result->getSummary());

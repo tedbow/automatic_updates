@@ -3,7 +3,6 @@
 namespace Drupal\automatic_updates\Validator;
 
 use Drupal\automatic_updates\Event\ReadinessCheckEvent;
-use Drupal\automatic_updates\Event\UpdateEvent;
 use Drupal\package_manager\ValidationResult;
 use Drupal\Core\Extension\ExtensionVersion;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
@@ -50,10 +49,10 @@ class ComposerExecutableValidator implements EventSubscriberInterface, ProcessOu
   /**
    * Validates that the Composer executable can be found.
    *
-   * @param \Drupal\automatic_updates\Event\UpdateEvent $event
+   * @param \Drupal\automatic_updates\Event\ReadinessCheckEvent $event
    *   The event object.
    */
-  public function checkForComposerExecutable(UpdateEvent $event): void {
+  public function checkForComposerExecutable(ReadinessCheckEvent $event): void {
     try {
       $this->composer->run(['--version'], $this);
     }

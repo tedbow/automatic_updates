@@ -3,9 +3,10 @@
 namespace Drupal\automatic_updates\Validator;
 
 use Composer\Semver\Semver;
-use Drupal\automatic_updates\Event\PreStartEvent;
 use Drupal\automatic_updates\Event\ReadinessCheckEvent;
-use Drupal\automatic_updates\Event\UpdateEvent;
+use Drupal\automatic_updates\Updater;
+use Drupal\package_manager\Event\PreCreateEvent;
+use Drupal\package_manager\Event\StageEvent;
 use Drupal\package_manager\ValidationResult;
 use Drupal\Core\Extension\ExtensionVersion;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
@@ -47,17 +48,37 @@ class UpdateVersionValidator implements EventSubscriberInterface {
   /**
    * Validates that core is not being updated to another minor or major version.
    *
-   * @param \Drupal\automatic_updates\Event\PreStartEvent|\Drupal\automatic_updates\Event\ReadinessCheckEvent $event
+   * @param \Drupal\package_manager\Event\StageEvent $event
    *   The event object.
    */
-  public function checkUpdateVersion(UpdateEvent $event): void {
+  public function checkUpdateVersion(StageEvent $event): void {
+    $stage = $event->getStage();
+    // We only want to do this check if the stage belongs to Automatic Updates.
+    if (!$stage instanceof Updater) {
+      return;
+    }
+
+    if ($event instanceof ReadinessCheckEvent) {
+      $package_versions = $event->getPackageVersions();
+      // During readiness checks, we might not know the desired package
+      // versions, which means there's nothing to validate.
+      if (empty($package_versions)) {
+        return;
+      }
+    }
+    else {
+      // If the stage has begun its life cycle, we expect it knows the desired
+      // package versions.
+      $package_versions = $stage->getPackageVersions();
+    }
+
     $from_version_string = $this->getCoreVersion();
     $from_version = ExtensionVersion::createFromVersionString($from_version_string);
-    $core_package_names = $event->getActiveComposer()->getCorePackageNames();
+    $core_package_names = $stage->getActiveComposer()->getCorePackageNames();
     // All the core packages will be updated to the same version, so it doesn't
     // matter which specific package we're looking at.
     $core_package_name = reset($core_package_names);
-    $to_version_string = $event->getPackageVersions()[$core_package_name];
+    $to_version_string = $package_versions[$core_package_name];
     $to_version = ExtensionVersion::createFromVersionString($to_version_string);
     if (Semver::satisfies($to_version_string, "< $from_version_string")) {
       $messages[] = $this->t('Update version @to_version is lower than @from_version, downgrading is not supported.', [
@@ -91,21 +112,6 @@ class UpdateVersionValidator implements EventSubscriberInterface {
       $error = ValidationResult::createError($messages);
       $event->addValidationResult($error);
     }
-
-  }
-
-  /**
-   * Validates readiness check event.
-   *
-   * @param \Drupal\automatic_updates\Event\ReadinessCheckEvent $event
-   *   The readiness check event object.
-   */
-  public function checkReadinessUpdateVersion(ReadinessCheckEvent $event): void {
-    // During readiness checks, we might not know the desired package versions,
-    // which means there's nothing to validate.
-    if ($event->getPackageVersions()) {
-      $this->checkUpdateVersion($event);
-    }
   }
 
   /**
@@ -113,8 +119,8 @@ class UpdateVersionValidator implements EventSubscriberInterface {
    */
   public static function getSubscribedEvents() {
     return [
-      PreStartEvent::class => 'checkUpdateVersion',
-      ReadinessCheckEvent::class => 'checkReadinessUpdateVersion',
+      PreCreateEvent::class => 'checkUpdateVersion',
+      ReadinessCheckEvent::class => 'checkUpdateVersion',
     ];
   }
 

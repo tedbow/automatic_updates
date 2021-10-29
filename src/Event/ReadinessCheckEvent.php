@@ -2,7 +2,8 @@
 
 namespace Drupal\automatic_updates\Event;
 
-use Drupal\package_manager\ComposerUtility;
+use Drupal\automatic_updates\Updater;
+use Drupal\package_manager\Event\StageEvent;
 
 /**
  * Event fired when checking if the site could perform an update.
@@ -16,22 +17,37 @@ use Drupal\package_manager\ComposerUtility;
  *
  * @see \Drupal\automatic_updates\Validation\ReadinessValidationManager
  */
-class ReadinessCheckEvent extends UpdateEvent {
+class ReadinessCheckEvent extends StageEvent {
 
-  use PackagesAwareTrait;
+  /**
+   * The desired package versions to update to, keyed by package name.
+   *
+   * @var string[]
+   */
+  protected $packageVersions;
 
   /**
    * Constructs a ReadinessCheckEvent object.
    *
-   * @param \Drupal\package_manager\ComposerUtility $active_composer
-   *   A Composer utility object for the active directory.
+   * @param \Drupal\automatic_updates\Updater $updater
+   *   The updater service.
    * @param string[] $package_versions
    *   (optional) The desired package versions to update to, keyed by package
    *   name.
    */
-  public function __construct(ComposerUtility $active_composer, array $package_versions = []) {
-    parent::__construct($active_composer);
+  public function __construct(Updater $updater, array $package_versions = []) {
+    parent::__construct($updater);
     $this->packageVersions = $package_versions;
+  }
+
+  /**
+   * Returns the desired package versions to update to.
+   *
+   * @return string[]
+   *   The desired package versions to update to, keyed by package name.
+   */
+  public function getPackageVersions(): array {
+    return $this->packageVersions;
   }
 
 }

@@ -2,11 +2,10 @@
 
 namespace Drupal\automatic_updates_test\ReadinessChecker;
 
-use Drupal\automatic_updates\Event\PreStartEvent;
 use Drupal\automatic_updates\Event\ReadinessCheckEvent;
-use Drupal\automatic_updates\Event\UpdateEvent;
 use Drupal\Core\State\StateInterface;
 use Drupal\package_manager\Event\PreApplyEvent;
+use Drupal\package_manager\Event\PreCreateEvent;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 /**
@@ -65,11 +64,9 @@ class TestChecker1 implements EventSubscriberInterface {
    *
    * @param object $event
    *   The update event.
-   * @param string $state_key
-   *   The state key.
    */
-  protected function addResults(object $event, string $state_key): void {
-    $results = $this->state->get($state_key, []);
+  public function addResults(object $event): void {
+    $results = $this->state->get(static::STATE_KEY . '.' . get_class($event), []);
     if ($results instanceof \Throwable) {
       throw $results;
     }
@@ -79,43 +76,13 @@ class TestChecker1 implements EventSubscriberInterface {
   }
 
   /**
-   * Adds test results for the readiness check event.
-   *
-   * @param \Drupal\automatic_updates\Event\UpdateEvent $event
-   *   The update event.
-   */
-  public function runPreChecks(UpdateEvent $event): void {
-    $this->addResults($event, static::STATE_KEY . "." . ReadinessCheckEvent::class);
-  }
-
-  /**
-   * Adds test results for the pre-apply event.
-   *
-   * @param \Drupal\package_manager\Event\PreApplyEvent $event
-   *   The update event.
-   */
-  public function runPreApplyChecks(PreApplyEvent $event): void {
-    $this->addResults($event, static::STATE_KEY . "." . PreApplyEvent::class);
-  }
-
-  /**
-   * Adds test results for the pre-start event.
-   *
-   * @param \Drupal\automatic_updates\Event\UpdateEvent $event
-   *   The update event.
-   */
-  public function runStartChecks(UpdateEvent $event): void {
-    $this->addResults($event, static::STATE_KEY . "." . PreStartEvent::class);
-  }
-
-  /**
    * {@inheritdoc}
    */
   public static function getSubscribedEvents() {
     $priority = defined('AUTOMATIC_UPDATES_TEST_SET_PRIORITY') ? AUTOMATIC_UPDATES_TEST_SET_PRIORITY : 5;
-    $events[ReadinessCheckEvent::class][] = ['runPreChecks', $priority];
-    $events[PreStartEvent::class][] = ['runStartChecks', $priority];
-    $events[PreApplyEvent::class][] = ['runPreApplyChecks', $priority];
+    $events[ReadinessCheckEvent::class][] = ['addResults', $priority];
+    $events[PreCreateEvent::class][] = ['addResults', $priority];
+    $events[PreApplyEvent::class][] = ['addResults', $priority];
     return $events;
   }
 

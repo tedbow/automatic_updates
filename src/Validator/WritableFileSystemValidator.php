@@ -2,9 +2,9 @@
 
 namespace Drupal\automatic_updates\Validator;
 
-use Drupal\automatic_updates\Event\PreStartEvent;
 use Drupal\automatic_updates\Event\ReadinessCheckEvent;
-use Drupal\automatic_updates\Event\UpdateEvent;
+use Drupal\package_manager\Event\PreCreateEvent;
+use Drupal\package_manager\Event\StageEvent;
 use Drupal\package_manager\ValidationResult;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\Core\StringTranslation\TranslationInterface;
@@ -51,7 +51,7 @@ class WritableFileSystemValidator implements EventSubscriberInterface {
   /**
    * Checks that the file system is writable.
    *
-   * @param \Drupal\automatic_updates\Event\UpdateEvent $event
+   * @param \Drupal\package_manager\Event\StageEvent $event
    *   The event object.
    *
    * @todo It might make sense to use a more sophisticated method of testing
@@ -59,7 +59,7 @@ class WritableFileSystemValidator implements EventSubscriberInterface {
    *   false negatives/positives due to things like SELinux, exotic file
    *   systems, and so forth.
    */
-  public function checkPermissions(UpdateEvent $event): void {
+  public function checkPermissions(StageEvent $event): void {
     $messages = [];
 
     if (!is_writable($this->appRoot)) {
@@ -85,7 +85,7 @@ class WritableFileSystemValidator implements EventSubscriberInterface {
   public static function getSubscribedEvents() {
     return [
       ReadinessCheckEvent::class => 'checkPermissions',
-      PreStartEvent::class => 'checkPermissions',
+      PreCreateEvent::class => 'checkPermissions',
     ];
   }
 

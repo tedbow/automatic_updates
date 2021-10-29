@@ -6,6 +6,7 @@ services:
       - '@datetime.time'
       - '@package_manager.path_locator'
       - '@event_dispatcher'
+      - '@automatic_updates.updater'
       - 24
   automatic_updates.updater:
     class: Drupal\automatic_updates\Updater
