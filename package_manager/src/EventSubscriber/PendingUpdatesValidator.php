@@ -1,8 +1,7 @@
 <?php
 
-namespace Drupal\automatic_updates\Validator;
+namespace Drupal\package_manager\EventSubscriber;
 
-use Drupal\automatic_updates\Event\ReadinessCheckEvent;
 use Drupal\package_manager\Event\PreCreateEvent;
 use Drupal\package_manager\Event\StageEvent;
 use Drupal\package_manager\ValidationResult;
@@ -10,12 +9,11 @@ use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\Core\StringTranslation\TranslationInterface;
 use Drupal\Core\Update\UpdateRegistry;
 use Drupal\Core\Url;
-use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 /**
  * Validates that there are no pending database updates.
  */
-class PendingUpdatesValidator implements EventSubscriberInterface {
+class PendingUpdatesValidator implements StageValidatorInterface {
 
   use StringTranslationTrait;
 
@@ -50,12 +48,9 @@ class PendingUpdatesValidator implements EventSubscriberInterface {
   }
 
   /**
-   * Validates that there are no pending database updates.
-   *
-   * @param \Drupal\package_manager\Event\StageEvent $event
-   *   The event object.
+   * {@inheritdoc}
    */
-  public function checkPendingUpdates(StageEvent $event): void {
+  public function validateStage(StageEvent $event): void {
     require_once $this->appRoot . '/core/includes/install.inc';
     require_once $this->appRoot . '/core/includes/update.inc';
 
@@ -77,8 +72,7 @@ class PendingUpdatesValidator implements EventSubscriberInterface {
    */
   public static function getSubscribedEvents() {
     return [
-      PreCreateEvent::class => 'checkPendingUpdates',
-      ReadinessCheckEvent::class => 'checkPendingUpdates',
+      PreCreateEvent::class => 'validateStage',
     ];
   }
 

@@ -2,11 +2,9 @@
 
 namespace Drupal\Tests\package_manager\Kernel;
 
-use Drupal\KernelTests\KernelTestBase;
 use Drupal\package_manager\Event\PreCreateEvent;
 use Drupal\package_manager\EventSubscriber\ComposerExecutableValidator;
 use Drupal\package_manager\ValidationResult;
-use Drupal\Tests\package_manager\Traits\ValidationTestTrait;
 use PhpTuf\ComposerStager\Exception\IOException;
 use PhpTuf\ComposerStager\Infrastructure\Process\ExecutableFinderInterface;
 use Prophecy\Argument;
@@ -16,29 +14,7 @@ use Prophecy\Argument;
  *
  * @group package_manager
  */
-class ComposerExecutableValidatorTest extends KernelTestBase {
-
-  use ValidationTestTrait;
-
-  /**
-   * {@inheritdoc}
-   */
-  protected static $modules = ['package_manager'];
-
-  /**
-   * Runs the validator under test, and asserts its results match expectations.
-   *
-   * @param \Drupal\package_manager\ValidationResult[] $expected_results
-   *   The expected validation results.
-   */
-  private function assertResults(array $expected_results): void {
-    $stage = $this->prophesize('\Drupal\package_manager\Stage');
-    $event = new PreCreateEvent($stage->reveal());
-    $this->container->get('package_manager.validator.composer_executable')
-      ->validateStage($event);
-
-    $this->assertValidationResultsEqual($expected_results, $event->getResults());
-  }
+class ComposerExecutableValidatorTest extends PackageManagerKernelTestBase {
 
   /**
    * Tests that an error is raised if the Composer executable isn't found.
@@ -58,7 +34,7 @@ class ComposerExecutableValidatorTest extends KernelTestBase {
     $error = ValidationResult::createError([
       $exception->getMessage(),
     ]);
-    $this->assertResults([$error]);
+    $this->assertResults([$error], PreCreateEvent::class);
   }
 
   /**
@@ -155,7 +131,7 @@ class ComposerExecutableValidatorTest extends KernelTestBase {
 
     // If the validator can't find a recognized, supported version of Composer,
     // it should produce errors.
-    $this->assertResults($expected_results);
+    $this->assertResults($expected_results, PreCreateEvent::class);
   }
 
 }

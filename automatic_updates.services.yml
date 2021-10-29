@@ -59,11 +59,9 @@ services:
     tags:
       - { name: event_subscriber }
   automatic_updates.pending_updates_validator:
-    class: Drupal\automatic_updates\Validator\PendingUpdatesValidator
+    class: Drupal\automatic_updates\Validator\PackageManagerReadinessCheck
     arguments:
-      - '%app.root%'
-      - '@update.post_update_registry'
-      - '@string_translation'
+      - '@package_manager.validator.pending_updates'
     tags:
       - { name: event_subscriber }
   automatic_updates.validator.file_system_permissions:

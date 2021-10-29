@@ -2,26 +2,17 @@
 
 namespace Drupal\Tests\package_manager\Kernel;
 
-use Drupal\KernelTests\KernelTestBase;
 use Drupal\package_manager\Event\PreCreateEvent;
 use Drupal\package_manager\EventSubscriber\DiskSpaceValidator;
 use Drupal\package_manager\ValidationResult;
 use Drupal\Component\Utility\Bytes;
-use Drupal\Tests\package_manager\Traits\ValidationTestTrait;
 
 /**
  * @covers \Drupal\package_manager\EventSubscriber\DiskSpaceValidator
  *
  * @group package_manager
  */
-class DiskSpaceValidatorTest extends KernelTestBase {
-
-  use ValidationTestTrait;
-
-  /**
-   * {@inheritdoc}
-   */
-  protected static $modules = ['package_manager'];
+class DiskSpaceValidatorTest extends PackageManagerKernelTestBase {
 
   /**
    * Data provider for ::testDiskSpaceValidation().
@@ -201,11 +192,7 @@ class DiskSpaceValidatorTest extends KernelTestBase {
     $validator->sharedDisk = $shared_disk;
     $validator->freeSpace = array_map([Bytes::class, 'toNumber'], $free_space);
 
-    $stage = $this->prophesize('\Drupal\package_manager\Stage');
-    $event = new PreCreateEvent($stage->reveal());
-    $validator->validateStage($event);
-
-    $this->assertValidationResultsEqual($expected_results, $event->getResults());
+    $this->assertResults($expected_results, PreCreateEvent::class);
   }
 
 }

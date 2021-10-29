@@ -16,6 +16,7 @@ use Prophecy\Argument;
  *
  * @see \Drupal\Tests\package_manager\Kernel\ComposerExecutableValidatorTest
  * @see \Drupal\Tests\package_manager\Kernel\DiskSpaceValidatorTest
+ * @see \Drupal\Tests\package_manager\Kernel\PendingUpdatesValidatorTest
  */
 class PackageManagerReadinessChecksTest extends AutomaticUpdatesKernelTestBase {
 
@@ -37,6 +38,7 @@ class PackageManagerReadinessChecksTest extends AutomaticUpdatesKernelTestBase {
     return [
       ['package_manager.validator.composer_executable'],
       ['package_manager.validator.disk_space'],
+      ['package_manager.validator.pending_updates'],
     ];
   }
 
