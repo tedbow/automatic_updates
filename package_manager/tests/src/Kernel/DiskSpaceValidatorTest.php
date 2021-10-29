@@ -1,29 +1,27 @@
 <?php
 
-namespace Drupal\Tests\automatic_updates\Kernel\ReadinessValidation;
+namespace Drupal\Tests\package_manager\Kernel;
 
+use Drupal\KernelTests\KernelTestBase;
+use Drupal\package_manager\Event\PreCreateEvent;
+use Drupal\package_manager\EventSubscriber\DiskSpaceValidator;
 use Drupal\package_manager\ValidationResult;
-use Drupal\automatic_updates\Validator\DiskSpaceValidator;
 use Drupal\Component\Utility\Bytes;
-use Drupal\Tests\automatic_updates\Kernel\AutomaticUpdatesKernelTestBase;
-use Drupal\Core\StringTranslation\PluralTranslatableMarkup;
-use Drupal\Core\StringTranslation\TranslatableMarkup;
-use Drupal\Core\StringTranslation\TranslationInterface;
+use Drupal\Tests\package_manager\Traits\ValidationTestTrait;
 
 /**
- * @covers \Drupal\automatic_updates\Validator\DiskSpaceValidator
+ * @covers \Drupal\package_manager\EventSubscriber\DiskSpaceValidator
  *
- * @group automatic_updates
+ * @group package_manager
  */
-class DiskSpaceValidatorTest extends AutomaticUpdatesKernelTestBase {
+class DiskSpaceValidatorTest extends KernelTestBase {
+
+  use ValidationTestTrait;
 
   /**
    * {@inheritdoc}
    */
-  protected static $modules = [
-    'automatic_updates',
-    'package_manager',
-  ];
+  protected static $modules = ['package_manager'];
 
   /**
    * Data provider for ::testDiskSpaceValidation().
@@ -35,7 +33,7 @@ class DiskSpaceValidatorTest extends AutomaticUpdatesKernelTestBase {
     $root_insufficient = t('Drupal root filesystem "root" has insufficient space. There must be at least 1024 megabytes free.');
     $vendor_insufficient = t('Vendor filesystem "vendor" has insufficient space. There must be at least 1024 megabytes free.');
     $temp_insufficient = t('Directory "temp" has insufficient space. There must be at least 1024 megabytes free.');
-    $summary = t("There is not enough disk space to perform an automatic update.");
+    $summary = t("There is not enough disk space to create a staging area.");
 
     return [
       'shared, vendor and temp sufficient, root insufficient' => [
@@ -202,38 +200,12 @@ class DiskSpaceValidatorTest extends AutomaticUpdatesKernelTestBase {
     };
     $validator->sharedDisk = $shared_disk;
     $validator->freeSpace = array_map([Bytes::class, 'toNumber'], $free_space);
-    $this->container->set('automatic_updates.disk_space_validator', $validator);
-    $this->assertCheckerResultsFromManager($expected_results, TRUE);
-  }
 
-}
-/**
- * Implements a translation manager in tests.
- *
- * @todo Copied from core/modules/user/tests/src/Unit/PermissionHandlerTest.php
- *   when moving to core open an issue consolidate this test class.
- */
-class TestTranslationManager implements TranslationInterface {
+    $stage = $this->prophesize('\Drupal\package_manager\Stage');
+    $event = new PreCreateEvent($stage->reveal());
+    $validator->validateStage($event);
 
-  /**
-   * {@inheritdoc}
-   */
-  public function translate($string, array $args = [], array $options = []) {
-    return new TranslatableMarkup($string, $args, $options, $this);
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public function translateString(TranslatableMarkup $translated_string) {
-    return $translated_string->getUntranslatedString();
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public function formatPlural($count, $singular, $plural, array $args = [], array $options = []) {
-    return new PluralTranslatableMarkup($count, $singular, $plural, $args, $options, $this);
+    $this->assertValidationResultsEqual($expected_results, $event->getResults());
   }
 
 }

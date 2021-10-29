@@ -32,8 +32,11 @@ class UpdaterTest extends AutomaticUpdatesKernelTestBase {
     // Point to a fake site which requires Drupal core via a distribution. The
     // lock file should be scanned to determine the core packages, which should
     // result in drupal/core-recommended being updated.
+    $fixture_dir = __DIR__ . '/../../fixtures/fake-site';
     $locator = $this->prophesize(PathLocator::class);
-    $locator->getActiveDirectory()->willReturn(__DIR__ . '/../../fixtures/fake-site');
+    $locator->getActiveDirectory()->willReturn($fixture_dir);
+    $locator->getProjectRoot()->willReturn($fixture_dir);
+    $locator->getVendorDirectory()->willReturn($fixture_dir);
     $locator->getStageDirectory()->willReturn('/tmp');
     $this->container->set('package_manager.path_locator', $locator->reveal());
 

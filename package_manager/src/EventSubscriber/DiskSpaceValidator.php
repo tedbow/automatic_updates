@@ -1,20 +1,20 @@
 <?php
 
-namespace Drupal\automatic_updates\Validator;
+namespace Drupal\package_manager\EventSubscriber;
 
-use Drupal\automatic_updates\Event\ReadinessCheckEvent;
+use Drupal\package_manager\Event\PreCreateEvent;
+use Drupal\package_manager\Event\StageEvent;
 use Drupal\package_manager\ValidationResult;
 use Drupal\Component\FileSystem\FileSystem;
 use Drupal\Component\Utility\Bytes;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\Core\StringTranslation\TranslationInterface;
 use Drupal\package_manager\PathLocator;
-use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 /**
  * Validates that there is enough free disk space to do automatic updates.
  */
-class DiskSpaceValidator implements EventSubscriberInterface {
+class DiskSpaceValidator implements StageValidatorInterface {
 
   use StringTranslationTrait;
 
@@ -97,12 +97,9 @@ class DiskSpaceValidator implements EventSubscriberInterface {
   }
 
   /**
-   * Checks that there is enough free space to perform automatic updates.
-   *
-   * @param \Drupal\automatic_updates\Event\ReadinessCheckEvent $event
-   *   The event object.
+   * {@inheritdoc}
    */
-  public function checkDiskSpace(ReadinessCheckEvent $event): void {
+  public function validateStage(StageEvent $event): void {
     $root_path = $this->pathLocator->getProjectRoot();
     $vendor_path = $this->pathLocator->getVendorDirectory();
     $messages = [];
@@ -141,7 +138,7 @@ class DiskSpaceValidator implements EventSubscriberInterface {
 
     if ($messages) {
       $summary = count($messages) > 1
-        ? $this->t("There is not enough disk space to perform an automatic update.")
+        ? $this->t("There is not enough disk space to create a staging area.")
         : NULL;
 
       $error = ValidationResult::createError($messages, $summary);
@@ -164,7 +161,7 @@ class DiskSpaceValidator implements EventSubscriberInterface {
    */
   public static function getSubscribedEvents() {
     return [
-      ReadinessCheckEvent::class => 'checkDiskSpace',
+      PreCreateEvent::class => 'validateStage',
     ];
   }
 

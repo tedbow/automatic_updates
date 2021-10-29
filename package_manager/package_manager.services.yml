@@ -93,3 +93,10 @@ services:
       - '@string_translation'
     tags:
       - { name: event_subscriber }
+  package_manager.validator.disk_space:
+    class: Drupal\package_manager\EventSubscriber\DiskSpaceValidator
+    arguments:
+      - '@package_manager.path_locator'
+      - '@string_translation'
+    tags:
+      - { name: event_subscriber }
