@@ -1,6 +1,6 @@
 <?php
 
-namespace Drupal\Tests\automatic_updates\Unit;
+namespace Drupal\Tests\package_manager\Unit;
 
 use Drupal\package_manager\ValidationResult;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
@@ -10,7 +10,7 @@ use Drupal\Tests\UnitTestCase;
 /**
  * @coversDefaultClass \Drupal\package_manager\ValidationResult
  *
- * @group automatic_updates
+ * @group package_manager
  */
 class ValidationResultTest extends UnitTestCase {
 

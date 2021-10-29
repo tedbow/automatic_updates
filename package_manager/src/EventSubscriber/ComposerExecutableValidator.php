@@ -1,8 +1,9 @@
 <?php
 
-namespace Drupal\automatic_updates\Validator;
+namespace Drupal\package_manager\EventSubscriber;
 
-use Drupal\automatic_updates\Event\ReadinessCheckEvent;
+use Drupal\package_manager\Event\PreCreateEvent;
+use Drupal\package_manager\Event\StageEvent;
 use Drupal\package_manager\ValidationResult;
 use Drupal\Core\Extension\ExtensionVersion;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
@@ -10,12 +11,11 @@ use Drupal\Core\StringTranslation\TranslationInterface;
 use PhpTuf\ComposerStager\Domain\Output\ProcessOutputCallbackInterface;
 use PhpTuf\ComposerStager\Exception\ExceptionInterface;
 use PhpTuf\ComposerStager\Infrastructure\Process\Runner\ComposerRunnerInterface;
-use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 /**
  * Validates that the Composer executable can be found in the correct version.
  */
-class ComposerExecutableValidator implements EventSubscriberInterface, ProcessOutputCallbackInterface {
+class ComposerExecutableValidator implements StageValidatorInterface, ProcessOutputCallbackInterface {
 
   use StringTranslationTrait;
 
@@ -47,12 +47,9 @@ class ComposerExecutableValidator implements EventSubscriberInterface, ProcessOu
   }
 
   /**
-   * Validates that the Composer executable can be found.
-   *
-   * @param \Drupal\automatic_updates\Event\ReadinessCheckEvent $event
-   *   The event object.
+   * {@inheritdoc}
    */
-  public function checkForComposerExecutable(ReadinessCheckEvent $event): void {
+  public function validateStage(StageEvent $event): void {
     try {
       $this->composer->run(['--version'], $this);
     }
@@ -90,7 +87,7 @@ class ComposerExecutableValidator implements EventSubscriberInterface, ProcessOu
    */
   public static function getSubscribedEvents() {
     return [
-      ReadinessCheckEvent::class => 'checkForComposerExecutable',
+      PreCreateEvent::class => 'validateStage',
     ];
   }
 

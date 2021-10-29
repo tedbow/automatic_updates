@@ -47,8 +47,9 @@ services:
     tags:
       - { name: event_subscriber }
   automatic_updates.composer_executable_validator:
-    class: Drupal\automatic_updates\Validator\ComposerExecutableValidator
-    arguments: ['@package_manager.composer_runner','@string_translation']
+    class: Drupal\automatic_updates\Validator\PackageManagerReadinessCheck
+    arguments:
+      - '@package_manager.validator.composer_executable'
     tags:
       - { name: event_subscriber }
   automatic_updates.disk_space_validator:

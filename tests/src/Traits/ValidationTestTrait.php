@@ -4,10 +4,14 @@ namespace Drupal\Tests\automatic_updates\Traits;
 
 use Drupal\package_manager\ValidationResult;
 
+use Drupal\Tests\package_manager\Traits\ValidationTestTrait as PackageManagerValidationTestTrait;
+
 /**
  * Common methods for testing validation.
  */
 trait ValidationTestTrait {
+
+  use PackageManagerValidationTestTrait;
 
   /**
    * Expected explanation text when readiness checkers return error messages.
@@ -85,28 +89,6 @@ trait ValidationTestTrait {
           t("$listener_number:No need for this summary with only 1 warning.")
         ),
       ];
-    }
-  }
-
-  /**
-   * Asserts two validation result sets are equal.
-   *
-   * @param \Drupal\package_manager\ValidationResult[] $expected_results
-   *   The expected validation results.
-   * @param \Drupal\package_manager\ValidationResult[]|null $actual_results
-   *   The actual validation results or NULL if known are available.
-   */
-  protected function assertValidationResultsEqual(array $expected_results, array $actual_results): void {
-    $this->assertCount(count($expected_results), $actual_results);
-
-    foreach ($expected_results as $expected_result) {
-      $actual_result = array_shift($actual_results);
-      $this->assertSame($expected_result->getSeverity(), $actual_result->getSeverity());
-      $this->assertSame((string) $expected_result->getSummary(), (string) $actual_result->getSummary());
-      $this->assertSame(
-        array_map('strval', $expected_result->getMessages()),
-        array_map('strval', $actual_result->getMessages())
-      );
     }
   }
 

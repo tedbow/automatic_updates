@@ -84,3 +84,12 @@ services:
     arguments:
       - '@config.factory'
       - '%app.root%'
+
+  # Validators.
+  package_manager.validator.composer_executable:
+    class: Drupal\package_manager\EventSubscriber\ComposerExecutableValidator
+    arguments:
+      - '@package_manager.composer_runner'
+      - '@string_translation'
+    tags:
+      - { name: event_subscriber }
