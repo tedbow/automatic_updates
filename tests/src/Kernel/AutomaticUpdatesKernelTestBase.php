@@ -99,6 +99,7 @@ abstract class AutomaticUpdatesKernelTestBase extends KernelTestBase {
     // give us control over the filesystem permissions.
     // @see \Drupal\Tests\automatic_updates\Build\CoreUpdateTest::assertReadOnlyFileSystemError()
     $container->removeDefinition('automatic_updates.validator.file_system_permissions');
+    $container->removeDefinition('package_manager.validator.file_system');
   }
 
   /**

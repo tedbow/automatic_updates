@@ -1,20 +1,18 @@
 <?php
 
-namespace Drupal\automatic_updates\Validator;
+namespace Drupal\package_manager\EventSubscriber;
 
-use Drupal\automatic_updates\Event\ReadinessCheckEvent;
 use Drupal\package_manager\Event\PreCreateEvent;
 use Drupal\package_manager\Event\StageEvent;
 use Drupal\package_manager\ValidationResult;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\Core\StringTranslation\TranslationInterface;
 use Drupal\package_manager\PathLocator;
-use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 /**
  * Checks that the file system is writable.
  */
-class WritableFileSystemValidator implements EventSubscriberInterface {
+class WritableFileSystemValidator implements StageValidatorInterface {
 
   use StringTranslationTrait;
 
@@ -49,17 +47,14 @@ class WritableFileSystemValidator implements EventSubscriberInterface {
   }
 
   /**
-   * Checks that the file system is writable.
-   *
-   * @param \Drupal\package_manager\Event\StageEvent $event
-   *   The event object.
+   * {@inheritdoc}
    *
    * @todo It might make sense to use a more sophisticated method of testing
    *   writability than is_writable(), since it's not clear if that can return
    *   false negatives/positives due to things like SELinux, exotic file
    *   systems, and so forth.
    */
-  public function checkPermissions(StageEvent $event): void {
+  public function validateStage(StageEvent $event): void {
     $messages = [];
 
     if (!is_writable($this->appRoot)) {
@@ -84,8 +79,7 @@ class WritableFileSystemValidator implements EventSubscriberInterface {
    */
   public static function getSubscribedEvents() {
     return [
-      ReadinessCheckEvent::class => 'checkPermissions',
-      PreCreateEvent::class => 'checkPermissions',
+      PreCreateEvent::class => 'validateStage',
     ];
   }
 

@@ -108,3 +108,11 @@ services:
       - '@string_translation'
     tags:
       - { name: event_subscriber }
+  package_manager.validator.file_system:
+    class: Drupal\package_manager\EventSubscriber\WritableFileSystemValidator
+    arguments:
+      - '@package_manager.path_locator'
+      - '%app.root%'
+      - '@string_translation'
+    tags:
+      - { name: event_subscriber }

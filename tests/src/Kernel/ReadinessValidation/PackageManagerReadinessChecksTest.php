@@ -3,6 +3,7 @@
 namespace Drupal\Tests\automatic_updates\Kernel\ReadinessValidation;
 
 use Drupal\automatic_updates\Event\ReadinessCheckEvent;
+use Drupal\Core\DependencyInjection\ContainerBuilder;
 use Drupal\package_manager\EventSubscriber\StageValidatorInterface;
 use Drupal\Tests\automatic_updates\Kernel\AutomaticUpdatesKernelTestBase;
 use Prophecy\Argument;
@@ -17,6 +18,7 @@ use Prophecy\Argument;
  * @see \Drupal\Tests\package_manager\Kernel\ComposerExecutableValidatorTest
  * @see \Drupal\Tests\package_manager\Kernel\DiskSpaceValidatorTest
  * @see \Drupal\Tests\package_manager\Kernel\PendingUpdatesValidatorTest
+ * @see \Drupal\Tests\package_manager\Kernel\WritableFileSystemValidatorTest
  */
 class PackageManagerReadinessChecksTest extends AutomaticUpdatesKernelTestBase {
 
@@ -29,6 +31,13 @@ class PackageManagerReadinessChecksTest extends AutomaticUpdatesKernelTestBase {
   ];
 
   /**
+   * {@inheritdoc}
+   */
+  protected function disableValidators(ContainerBuilder $container): void {
+    // No need to disable any validators in this test.
+  }
+
+  /**
    * Data provider for ::testValidatorInvoked().
    *
    * @return string[][]
@@ -39,6 +48,7 @@ class PackageManagerReadinessChecksTest extends AutomaticUpdatesKernelTestBase {
       ['package_manager.validator.composer_executable'],
       ['package_manager.validator.disk_space'],
       ['package_manager.validator.pending_updates'],
+      ['package_manager.validator.file_system'],
     ];
   }
 

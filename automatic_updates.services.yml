@@ -65,11 +65,9 @@ services:
     tags:
       - { name: event_subscriber }
   automatic_updates.validator.file_system_permissions:
-    class: Drupal\automatic_updates\Validator\WritableFileSystemValidator
+    class: Drupal\automatic_updates\Validator\PackageManagerReadinessCheck
     arguments:
-      - '@package_manager.path_locator'
-      - '%app.root%'
-      - '@string_translation'
+      - '@package_manager.validator.file_system'
     tags:
       - { name: event_subscriber }
   automatic_updates.validator.core_composer:

@@ -30,7 +30,10 @@ abstract class AutomaticUpdatesFunctionalTestBase extends BrowserTestBase {
     // over the filesystem permissions.
     // @see \Drupal\Tests\automatic_updates\Build\CoreUpdateTest::assertReadOnlyFileSystemError()
     $settings['settings']['automatic_updates_disable_validators'] = (object) [
-      'value' => ['automatic_updates.validator.file_system_permissions'],
+      'value' => [
+        'automatic_updates.validator.file_system_permissions',
+        'package_manager.validator.file_system',
+      ],
       'required' => TRUE,
     ];
     $this->writeSettings($settings);

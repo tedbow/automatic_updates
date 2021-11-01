@@ -2,6 +2,7 @@
 
 namespace Drupal\Tests\package_manager\Kernel;
 
+use Drupal\Core\DependencyInjection\ContainerBuilder;
 use Drupal\KernelTests\KernelTestBase;
 use Drupal\package_manager\Event\StageEvent;
 use Drupal\package_manager\Stage;
@@ -22,6 +23,27 @@ abstract class PackageManagerKernelTestBase extends KernelTestBase {
     'package_manager',
     'package_manager_bypass',
   ];
+
+  /**
+   * {@inheritdoc}
+   */
+  public function register(ContainerBuilder $container) {
+    parent::register($container);
+    $this->disableValidators($container);
+  }
+
+  /**
+   * Disables any validators that will interfere with this test.
+   */
+  protected function disableValidators(ContainerBuilder $container): void {
+    // Disable the filesystem permissions validator, since we cannot guarantee
+    // that the current code base will be writable in all testing situations.
+    // We test this validator functionally in Automatic Updates' build tests,
+    // since those do give us control over the filesystem permissions.
+    // @see \Drupal\Tests\automatic_updates\Build\CoreUpdateTest::assertReadOnlyFileSystemError()
+    // @see \Drupal\Tests\package_manager\Kernel\WritableFileSystemValidatorTest
+    $container->removeDefinition('package_manager.validator.file_system');
+  }
 
   /**
    * Asserts validation results are returned from a stage life cycle event.

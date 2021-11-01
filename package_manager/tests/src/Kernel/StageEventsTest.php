@@ -2,7 +2,6 @@
 
 namespace Drupal\Tests\package_manager\Kernel;
 
-use Drupal\KernelTests\KernelTestBase;
 use Drupal\package_manager\Event\PostApplyEvent;
 use Drupal\package_manager\Event\PostCreateEvent;
 use Drupal\package_manager\Event\PostDestroyEvent;
@@ -24,15 +23,7 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
  *
  * @group package_manager
  */
-class StageEventsTest extends KernelTestBase implements EventSubscriberInterface {
-
-  /**
-   * {@inheritdoc}
-   */
-  protected static $modules = [
-    'package_manager',
-    'package_manager_bypass',
-  ];
+class StageEventsTest extends PackageManagerKernelTestBase implements EventSubscriberInterface {
 
   /**
    * The events that were fired, in the order they were fired.

@@ -1,41 +1,48 @@
 <?php
 
-namespace Drupal\Tests\automatic_updates\Kernel\ReadinessValidation;
+namespace Drupal\Tests\package_manager\Kernel;
 
+use Drupal\package_manager\Event\PreCreateEvent;
+use Drupal\package_manager\EventSubscriber\WritableFileSystemValidator;
 use Drupal\package_manager\ValidationResult;
-use Drupal\automatic_updates\Validator\WritableFileSystemValidator;
 use Drupal\Core\DependencyInjection\ContainerBuilder;
 use Drupal\package_manager\PathLocator;
-use Drupal\Tests\automatic_updates\Kernel\AutomaticUpdatesKernelTestBase;
 use org\bovigo\vfs\vfsStream;
 
 /**
  * Unit tests the file system permissions validator.
  *
- * This validator is tested functionally in our build tests, since those give
- * us control over the file system permissions.
+ * This validator is tested functionally in Automatic Updates' build tests,
+ * since those give us control over the file system permissions.
  *
  * @see \Drupal\Tests\automatic_updates\Build\CoreUpdateTest::assertReadOnlyFileSystemError()
  *
- * @covers \Drupal\automatic_updates\Validator\WritableFileSystemValidator
+ * @covers \Drupal\package_manager\EventSubscriber\WritableFileSystemValidator
  *
- * @group automatic_updates
+ * @group package_manager
  */
-class WritableFileSystemValidatorTest extends AutomaticUpdatesKernelTestBase {
+class WritableFileSystemValidatorTest extends PackageManagerKernelTestBase {
 
   /**
    * {@inheritdoc}
    */
-  protected static $modules = [
-    'automatic_updates',
-    'package_manager',
-  ];
+  public function register(ContainerBuilder $container) {
+    parent::register($container);
+
+    // Replace the file system permissions validator with our test-only
+    // implementation.
+    $container->getDefinition('package_manager.validator.file_system')
+      ->setClass(TestValidator::class);
+  }
 
   /**
    * {@inheritdoc}
    */
   protected function disableValidators(ContainerBuilder $container): void {
-    // No need to disable any validators in this test.
+    // Disable the disk space validator, since it tries to inspect the file
+    // system in ways that vfsStream doesn't support, like calling stat() and
+    // disk_free_space().
+    $container->removeDefinition('package_manager.validator.disk_space');
   }
 
   /**
@@ -94,19 +101,34 @@ class WritableFileSystemValidatorTest extends AutomaticUpdatesKernelTestBase {
    * @dataProvider providerWritable
    */
   public function testWritable(int $root_permissions, int $vendor_permissions, array $expected_results): void {
-    $files = vfsStream::setup('root', $root_permissions);
-    $files->addChild(vfsStream::newDirectory('vendor', $vendor_permissions));
+    $root = vfsStream::setup('root', $root_permissions);
+    $vendor = vfsStream::newDirectory('vendor', $vendor_permissions);
+    $root->addChild($vendor);
 
     $path_locator = $this->prophesize(PathLocator::class);
-    $path_locator->getVendorDirectory()->willReturn(vfsStream::url('root/vendor'));
+    $path_locator->getActiveDirectory()->willReturn($root->url());
+    $path_locator->getStageDirectory()->willReturn('/fake/stage/dir');
+    $path_locator->getWebRoot()->willReturn('');
+    $path_locator->getVendorDirectory()->willReturn($vendor->url());
+    $this->container->set('package_manager.path_locator', $path_locator->reveal());
 
-    $validator = new WritableFileSystemValidator(
-      $path_locator->reveal(),
-      vfsStream::url('root'),
-      $this->container->get('string_translation')
-    );
-    $this->container->set('automatic_updates.validator.file_system_permissions', $validator);
-    $this->assertCheckerResultsFromManager($expected_results, TRUE);
+    /** @var \Drupal\Tests\package_manager\Kernel\TestValidator $validator */
+    $validator = $this->container->get('package_manager.validator.file_system');
+    $validator->appRoot = $root->url();
+
+    $this->assertResults($expected_results, PreCreateEvent::class);
   }
+
+}
+
+/**
+ * A test version of the file system permissions validator.
+ */
+class TestValidator extends WritableFileSystemValidator {
+
+  /**
+   * {@inheritdoc}
+   */
+  public $appRoot;
 
 }
