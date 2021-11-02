@@ -2,6 +2,7 @@
 
 namespace Drupal\Tests\package_manager\Kernel;
 
+use Drupal\Core\DependencyInjection\ContainerBuilder;
 use Drupal\package_manager\Event\PreCreateEvent;
 use Drupal\package_manager\EventSubscriber\DiskSpaceValidator;
 use Drupal\package_manager\ValidationResult;
@@ -13,6 +14,18 @@ use Drupal\Component\Utility\Bytes;
  * @group package_manager
  */
 class DiskSpaceValidatorTest extends PackageManagerKernelTestBase {
+
+  /**
+   * {@inheritdoc}
+   */
+  public function register(ContainerBuilder $container) {
+    parent::register($container);
+
+    // Replace the validator under test with a mocked version which can be
+    // rigged up to return specific values for various filesystem checks.
+    $container->getDefinition('package_manager.validator.disk_space')
+      ->setClass(TestDiskSpaceValidator::class);
+  }
 
   /**
    * Data provider for ::testDiskSpaceValidation().
@@ -142,57 +155,61 @@ class DiskSpaceValidatorTest extends PackageManagerKernelTestBase {
   public function testDiskSpaceValidation(bool $shared_disk, array $free_space, array $expected_results): void {
     $path_locator = $this->prophesize('\Drupal\package_manager\PathLocator');
     $path_locator->getProjectRoot()->willReturn('root');
+    $path_locator->getActiveDirectory()->willReturn('root');
+    $path_locator->getStageDirectory()->willReturn('/fake/stage/dir');
     $path_locator->getVendorDirectory()->willReturn('vendor');
+    $this->container->set('package_manager.path_locator', $path_locator->reveal());
 
-    // Create a mocked version of the validator which can be rigged up to return
-    // specific values for various filesystem checks.
-    $validator = new class (
-      $path_locator->reveal(),
-      $this->container->get('string_translation')
-    ) extends DiskSpaceValidator {
-
-      /**
-       * Whether the root and vendor directories are on the same logical disk.
-       *
-       * @var bool
-       */
-      public $sharedDisk;
-
-      /**
-       * The amount of free space, keyed by location.
-       *
-       * @var float[]
-       */
-      public $freeSpace = [];
-
-      /**
-       * {@inheritdoc}
-       */
-      protected function stat(string $path): array {
-        return [
-          'dev' => $this->sharedDisk ? 'disk' : uniqid(),
-        ];
-      }
-
-      /**
-       * {@inheritdoc}
-       */
-      protected function freeSpace(string $path): float {
-        return $this->freeSpace[$path];
-      }
-
-      /**
-       * {@inheritdoc}
-       */
-      protected function temporaryDirectory(): string {
-        return 'temp';
-      }
-
-    };
+    /** @var \Drupal\Tests\package_manager\Kernel\TestDiskSpaceValidator $validator */
+    $validator = $this->container->get('package_manager.validator.disk_space');
     $validator->sharedDisk = $shared_disk;
     $validator->freeSpace = array_map([Bytes::class, 'toNumber'], $free_space);
 
     $this->assertResults($expected_results, PreCreateEvent::class);
+  }
+
+}
+
+/**
+ * A test version of the disk space validator.
+ */
+class TestDiskSpaceValidator extends DiskSpaceValidator {
+
+  /**
+   * Whether the root and vendor directories are on the same logical disk.
+   *
+   * @var bool
+   */
+  public $sharedDisk;
+
+  /**
+   * The amount of free space, keyed by location.
+   *
+   * @var float[]
+   */
+  public $freeSpace = [];
+
+  /**
+   * {@inheritdoc}
+   */
+  protected function stat(string $path): array {
+    return [
+      'dev' => $this->sharedDisk ? 'disk' : uniqid(),
+    ];
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  protected function freeSpace(string $path): float {
+    return $this->freeSpace[$path];
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  protected function temporaryDirectory(): string {
+    return 'temp';
   }
 
 }

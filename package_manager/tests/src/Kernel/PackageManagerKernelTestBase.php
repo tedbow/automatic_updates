@@ -67,6 +67,9 @@ abstract class PackageManagerKernelTestBase extends KernelTestBase {
       $stage->require(['drupal/core:9.8.1']);
       $stage->apply();
       $stage->destroy();
+
+      // If we did not get an exception, ensure we didn't expect any results.
+      $this->assertEmpty($expected_results);
     }
     catch (StageException $e) {
       $this->assertValidationResultsEqual($expected_results, $e->getResults());
@@ -74,9 +77,6 @@ abstract class PackageManagerKernelTestBase extends KernelTestBase {
       // that we can analyze it.
       $this->assertInstanceOf($event_class, $e->event);
     }
-    // If no errors are raised, we won't have asserted anything and the test
-    // will be marked as risky. To prevent that, assert an eternal truth.
-    $this->assertTrue(TRUE);
   }
 
 }

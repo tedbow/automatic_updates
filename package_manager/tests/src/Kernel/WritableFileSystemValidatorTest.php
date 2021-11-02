@@ -32,7 +32,7 @@ class WritableFileSystemValidatorTest extends PackageManagerKernelTestBase {
     // Replace the file system permissions validator with our test-only
     // implementation.
     $container->getDefinition('package_manager.validator.file_system')
-      ->setClass(TestValidator::class);
+      ->setClass(TestWritableFileSystemValidator::class);
   }
 
   /**
@@ -124,7 +124,7 @@ class WritableFileSystemValidatorTest extends PackageManagerKernelTestBase {
 /**
  * A test version of the file system permissions validator.
  */
-class TestValidator extends WritableFileSystemValidator {
+class TestWritableFileSystemValidator extends WritableFileSystemValidator {
 
   /**
    * {@inheritdoc}
