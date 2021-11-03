@@ -28,6 +28,17 @@ class DiskSpaceValidatorTest extends PackageManagerKernelTestBase {
   }
 
   /**
+   * {@inheritdoc}
+   */
+  protected function disableValidators(ContainerBuilder $container): void {
+    parent::disableValidators($container);
+
+    // Disable the lock file validator, since in this test we are validating an
+    // imaginary file system which doesn't have any lock files.
+    $container->removeDefinition('package_manager.validator.lock_file');
+  }
+
+  /**
    * Data provider for ::testDiskSpaceValidation().
    *
    * @return mixed[][]

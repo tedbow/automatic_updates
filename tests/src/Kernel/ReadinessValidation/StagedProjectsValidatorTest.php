@@ -2,6 +2,7 @@
 
 namespace Drupal\Tests\automatic_updates\Kernel\ReadinessValidation;
 
+use Drupal\Core\DependencyInjection\ContainerBuilder;
 use Drupal\package_manager\Event\PreApplyEvent;
 use Drupal\package_manager\PathLocator;
 use Drupal\Tests\automatic_updates\Kernel\AutomaticUpdatesKernelTestBase;
@@ -20,6 +21,17 @@ class StagedProjectsValidatorTest extends AutomaticUpdatesKernelTestBase {
     'automatic_updates',
     'package_manager',
   ];
+
+  /**
+   * {@inheritdoc}
+   */
+  protected function disableValidators(ContainerBuilder $container): void {
+    parent::disableValidators($container);
+
+    // This test deals with fake sites that don't necessarily have lock files,
+    // so disable lock file validation.
+    $container->removeDefinition('package_manager.validator.lock_file');
+  }
 
   /**
    * Runs the validator under test against an arbitrary pair of directories.

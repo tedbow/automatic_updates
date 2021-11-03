@@ -108,6 +108,14 @@ services:
       - '@string_translation'
     tags:
       - { name: event_subscriber }
+  package_manager.validator.lock_file:
+    class: Drupal\package_manager\EventSubscriber\LockFileValidator
+    arguments:
+      - '@state'
+      - '@package_manager.path_locator'
+      - '@string_translation'
+    tags:
+      - { name: event_subscriber }
   package_manager.validator.file_system:
     class: Drupal\package_manager\EventSubscriber\WritableFileSystemValidator
     arguments:

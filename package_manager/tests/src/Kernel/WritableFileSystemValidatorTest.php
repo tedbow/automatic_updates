@@ -43,6 +43,10 @@ class WritableFileSystemValidatorTest extends PackageManagerKernelTestBase {
     // system in ways that vfsStream doesn't support, like calling stat() and
     // disk_free_space().
     $container->removeDefinition('package_manager.validator.disk_space');
+
+    // Disable the lock file validator, since the mock file system we create in
+    // this test doesn't have any lock files to validate.
+    $container->removeDefinition('package_manager.validator.lock_file');
   }
 
   /**
@@ -112,7 +116,7 @@ class WritableFileSystemValidatorTest extends PackageManagerKernelTestBase {
     $path_locator->getVendorDirectory()->willReturn($vendor->url());
     $this->container->set('package_manager.path_locator', $path_locator->reveal());
 
-    /** @var \Drupal\Tests\package_manager\Kernel\TestValidator $validator */
+    /** @var \Drupal\Tests\package_manager\Kernel\TestWritableFileSystemValidator $validator */
     $validator = $this->container->get('package_manager.validator.file_system');
     $validator->appRoot = $root->url();
 

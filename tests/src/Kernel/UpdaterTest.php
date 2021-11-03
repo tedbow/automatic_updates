@@ -48,6 +48,9 @@ class UpdaterTest extends AutomaticUpdatesKernelTestBase {
     $kernel = $this->container->get('kernel');
     $kernel->rebuildContainer();
     $this->container = $kernel->getContainer();
+    // Keep using the mocked path locator.
+    $this->container->set('package_manager.path_locator', $locator->reveal());
+
     // When we call Updater::stage(), the stored project versions should be
     // read from state and passed to Composer Stager's Stager service, in the
     // form of a Composer command. We set up a mock here to ensure that those
