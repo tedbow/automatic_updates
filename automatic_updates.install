@@ -16,12 +16,4 @@ function automatic_updates_requirements($phase) {
     $readiness_requirement = \Drupal::classResolver(ReadinessRequirements::class);
     return $readiness_requirement->getRequirements();
   }
-  if ($phase === 'install' && !class_exists('PhpTuf\ComposerStager\Domain\Beginner')) {
-    return [
-      'automatic_updates' => [
-        'description' => t('External dependencies for Automatic Updates are not available. Composer must be used to download the module with dependencies.'),
-        'severity' => REQUIREMENT_ERROR,
-      ],
-    ];
-  }
 }
