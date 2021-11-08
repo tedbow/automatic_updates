@@ -27,10 +27,6 @@ services:
   automatic_updates.excluded_paths_subscriber:
     class: Drupal\automatic_updates\Event\ExcludedPathsSubscriber
     arguments:
-      - '%app.root%'
-      - '%site.path%'
-      - '@file_system'
-      - '@stream_wrapper_manager'
       - '@extension.list.module'
     tags:
       - { name: event_subscriber }
