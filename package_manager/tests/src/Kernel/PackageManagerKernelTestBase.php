@@ -46,6 +46,23 @@ abstract class PackageManagerKernelTestBase extends KernelTestBase {
   }
 
   /**
+   * Creates a stage object for testing purposes.
+   *
+   * @return \Drupal\Tests\package_manager\Kernel\TestStage
+   *   A stage object, with test-only modifications.
+   */
+  protected function createStage(): TestStage {
+    return new TestStage(
+      $this->container->get('package_manager.path_locator'),
+      $this->container->get('package_manager.beginner'),
+      $this->container->get('package_manager.stager'),
+      $this->container->get('package_manager.committer'),
+      $this->container->get('package_manager.cleaner'),
+      $this->container->get('event_dispatcher'),
+    );
+  }
+
+  /**
    * Asserts validation results are returned from a stage life cycle event.
    *
    * @param \Drupal\package_manager\ValidationResult[] $expected_results
@@ -55,14 +72,7 @@ abstract class PackageManagerKernelTestBase extends KernelTestBase {
    *   be passed if $expected_results is not empty.
    */
   protected function assertResults(array $expected_results, string $event_class = NULL): void {
-    $stage = new TestStage(
-      $this->container->get('package_manager.path_locator'),
-      $this->container->get('package_manager.beginner'),
-      $this->container->get('package_manager.stager'),
-      $this->container->get('package_manager.committer'),
-      $this->container->get('package_manager.cleaner'),
-      $this->container->get('event_dispatcher'),
-    );
+    $stage = $this->createStage();
 
     try {
       $stage->create();

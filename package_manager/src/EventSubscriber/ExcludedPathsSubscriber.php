@@ -2,6 +2,7 @@
 
 namespace Drupal\package_manager\EventSubscriber;
 
+use Drupal\Core\Database\Connection;
 use Drupal\Core\File\FileSystemInterface;
 use Drupal\Core\StreamWrapper\LocalStream;
 use Drupal\Core\StreamWrapper\StreamWrapperManagerInterface;
@@ -43,7 +44,14 @@ class ExcludedPathsSubscriber implements EventSubscriberInterface {
   protected $streamWrapperManager;
 
   /**
-   * Constructs an UpdateSubscriber.
+   * The database connection.
+   *
+   * @var \Drupal\Core\Database\Connection
+   */
+  protected $database;
+
+  /**
+   * Constructs an ExcludedPathsSubscriber.
    *
    * @param string $app_root
    *   The Drupal root.
@@ -53,12 +61,15 @@ class ExcludedPathsSubscriber implements EventSubscriberInterface {
    *   The file system service.
    * @param \Drupal\Core\StreamWrapper\StreamWrapperManagerInterface $stream_wrapper_manager
    *   The stream wrapper manager service.
+   * @param \Drupal\Core\Database\Connection $database
+   *   The database connection.
    */
-  public function __construct(string $app_root, string $site_path, FileSystemInterface $file_system, StreamWrapperManagerInterface $stream_wrapper_manager) {
+  public function __construct(string $app_root, string $site_path, FileSystemInterface $file_system, StreamWrapperManagerInterface $stream_wrapper_manager, Connection $database) {
     $this->appRoot = $app_root;
     $this->sitePath = $site_path;
     $this->fileSystem = $file_system;
     $this->streamWrapperManager = $stream_wrapper_manager;
+    $this->database = $database;
   }
 
   /**
@@ -112,6 +123,17 @@ class ExcludedPathsSubscriber implements EventSubscriberInterface {
     foreach ($settings_files as $settings_file) {
       $event->excludePath($this->sitePath . DIRECTORY_SEPARATOR . $settings_file);
       $event->excludePath($default_site . DIRECTORY_SEPARATOR . $settings_file);
+    }
+
+    // If the database is SQLite, it might be located in the active directory
+    // and we should not stage it.
+    if ($this->database->driver() === 'sqlite') {
+      $options = $this->database->getConnectionOptions();
+      $database = str_replace($this->appRoot, NULL, $options['database']);
+      $database = ltrim($database, '/');
+      $event->excludePath($database);
+      $event->excludePath("$database-shm");
+      $event->excludePath("$database-wal");
     }
   }
 

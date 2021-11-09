@@ -131,5 +131,6 @@ services:
       - '%site.path%'
       - '@file_system'
       - '@stream_wrapper_manager'
+      - '@database'
     tags:
       - { name: event_subscriber }

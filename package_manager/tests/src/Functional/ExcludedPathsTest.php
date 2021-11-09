@@ -2,6 +2,7 @@
 
 namespace Drupal\Tests\package_manager\Functional;
 
+use Drupal\Core\Database\Driver\sqlite\Connection;
 use Drupal\Core\Site\Settings;
 use Drupal\package_manager\PathLocator;
 use Drupal\package_manager\Stage;
@@ -64,10 +65,12 @@ class ExcludedPathsTest extends BrowserTestBase {
     $path_locator->getActiveDirectory()->willReturn($active_dir);
     $path_locator->getStageDirectory()->willReturn($stage_dir);
 
+    $site_path = 'sites/example.com';
+
     // Ensure that we are using directories within the fake site fixture for
     // public and private files.
     $settings = Settings::getAll();
-    $settings['file_public_path'] = 'sites/example.com/files';
+    $settings['file_public_path'] = "$site_path/files";
     $settings['file_private_path'] = 'private';
     new Settings($settings);
 
@@ -76,7 +79,18 @@ class ExcludedPathsTest extends BrowserTestBase {
     $reflector = new \ReflectionObject($subscriber);
     $property = $reflector->getProperty('sitePath');
     $property->setAccessible(TRUE);
-    $property->setValue($subscriber, 'sites/example.com');
+    $property->setValue($subscriber, $site_path);
+
+    // Mock a SQLite database connection to a file in the active directory. The
+    // file should not be staged.
+    $database = $this->prophesize(Connection::class);
+    $database->driver()->willReturn('sqlite');
+    $database->getConnectionOptions()->willReturn([
+      'database' => $site_path . '/db.sqlite',
+    ]);
+    $property = $reflector->getProperty('database');
+    $property->setAccessible(TRUE);
+    $property->setValue($subscriber, $database->reveal());
 
     $stage = new Stage(
       $path_locator->reveal(),
@@ -91,11 +105,16 @@ class ExcludedPathsTest extends BrowserTestBase {
     $this->assertDirectoryExists($stage_dir);
     $this->assertDirectoryNotExists("$stage_dir/sites/simpletest");
     $this->assertFileNotExists("$stage_dir/vendor/web.config");
-    $this->assertDirectoryNotExists("$stage_dir/sites/example.com/files");
+    $this->assertDirectoryNotExists("$stage_dir/$site_path/files");
     $this->assertDirectoryNotExists("$stage_dir/private");
-    $this->assertFileNotExists("$stage_dir/sites/example.com/settings.php");
-    $this->assertFileNotExists("$stage_dir/sites/example.com/settings.local.php");
-    $this->assertFileNotExists("$stage_dir/sites/example.com/services.yml");
+    $this->assertFileNotExists("$stage_dir/$site_path/settings.php");
+    $this->assertFileNotExists("$stage_dir/$site_path/settings.local.php");
+    $this->assertFileNotExists("$stage_dir/$site_path/services.yml");
+    // SQLite databases and their support files should never be staged.
+    $this->assertFileNotExists("$stage_dir/$site_path/db.sqlite");
+    $this->assertFileNotExists("$stage_dir/$site_path/db.sqlite-shm");
+    $this->assertFileNotExists("$stage_dir/$site_path/db.sqlite-wal");
+    // Default site-specific settings files should never be staged.
     $this->assertFileNotExists("$stage_dir/sites/default/settings.php");
     $this->assertFileNotExists("$stage_dir/sites/default/settings.local.php");
     $this->assertFileNotExists("$stage_dir/sites/default/services.yml");
