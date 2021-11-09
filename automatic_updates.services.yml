@@ -70,3 +70,13 @@ services:
     class: Drupal\automatic_updates\Validator\CoreComposerValidator
     tags:
       - { name: event_subscriber }
+  automatic_updates.cron_frequency_validator:
+    class: Drupal\automatic_updates\Validator\CronFrequencyValidator
+    arguments:
+      - '@config.factory'
+      - '@module_handler'
+      - '@state'
+      - '@datetime.time'
+      - '@string_translation'
+    tags:
+      - { name: event_subscriber }

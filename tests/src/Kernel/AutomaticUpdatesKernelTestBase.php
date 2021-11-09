@@ -60,6 +60,11 @@ abstract class AutomaticUpdatesKernelTestBase extends KernelTestBase {
     // update to 9.8.1 is available.
     $this->setCoreVersion('9.8.0');
     $this->setReleaseMetadata(__DIR__ . '/../../fixtures/release-history/drupal.9.8.1.xml');
+
+    // Set a last cron run time so that the cron frequency validator will run
+    // from a sane state.
+    // @see \Drupal\automatic_updates\Validator\CronFrequencyValidator
+    $this->container->get('state')->set('system.cron_last', time());
   }
 
   /**
