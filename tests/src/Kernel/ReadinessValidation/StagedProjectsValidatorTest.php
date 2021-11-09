@@ -3,8 +3,8 @@
 namespace Drupal\Tests\automatic_updates\Kernel\ReadinessValidation;
 
 use Drupal\Core\DependencyInjection\ContainerBuilder;
-use Drupal\package_manager\Event\PreApplyEvent;
 use Drupal\package_manager\PathLocator;
+use Drupal\package_manager\StageException;
 use Drupal\Tests\automatic_updates\Kernel\AutomaticUpdatesKernelTestBase;
 
 /**
@@ -50,12 +50,17 @@ class StagedProjectsValidatorTest extends AutomaticUpdatesKernelTestBase {
     $locator->getStageDirectory()->willReturn($stage_dir);
     $this->container->set('package_manager.path_locator', $locator->reveal());
 
-    $event = new PreApplyEvent(
-      $this->container->get('automatic_updates.updater')
-    );
-
-    $this->container->get('event_dispatcher')->dispatch($event);
-    return $event->getResults();
+    // The staged projects validator only runs before staged updates are
+    // applied. Since the active and stage directories may not exist, we don't
+    // want to invoke the other stages of the update because they may raise
+    // errors that are outside of the scope of what we're testing here.
+    try {
+      $this->container->get('automatic_updates.updater')->apply();
+      return [];
+    }
+    catch (StageException $e) {
+      return $e->getResults();
+    }
   }
 
   /**

@@ -3,7 +3,6 @@
 namespace Drupal\Tests\automatic_updates\Kernel\ReadinessValidation;
 
 use Drupal\package_manager\ValidationResult;
-use Drupal\Core\DependencyInjection\ContainerBuilder;
 use Drupal\package_manager\PathLocator;
 use Drupal\Tests\automatic_updates\Kernel\AutomaticUpdatesKernelTestBase;
 
@@ -23,21 +22,15 @@ class CoreComposerValidatorTest extends AutomaticUpdatesKernelTestBase {
   ];
 
   /**
-   * {@inheritdoc}
-   */
-  public function register(ContainerBuilder $container) {
-    parent::register($container);
-    // Disable validators which interfere with the validator under test.
-    $container->removeDefinition('automatic_updates.disk_space_validator');
-  }
-
-  /**
    * Tests that an error is raised if core is not required in composer.json.
    */
   public function testCoreNotRequired(): void {
     // Point to a valid composer.json with no requirements.
+    $active_dir = __DIR__ . '/../../../fixtures/project_staged_validation/no_core_requirements';
     $locator = $this->prophesize(PathLocator::class);
-    $locator->getActiveDirectory()->willReturn(__DIR__ . '/../../../fixtures/project_staged_validation/no_core_requirements');
+    $locator->getActiveDirectory()->willReturn($active_dir);
+    $locator->getProjectRoot()->willReturn($active_dir);
+    $locator->getVendorDirectory()->willReturn($active_dir . '/vendor');
     $this->container->set('package_manager.path_locator', $locator->reveal());
 
     $error = ValidationResult::createError([
