@@ -19,7 +19,7 @@ class Updater extends Stage {
    *
    * @var string
    */
-  public const STATE_KEY = 'AUTOMATIC_UPDATES_CURRENT';
+  protected const STATE_KEY = 'AUTOMATIC_UPDATES_CURRENT';
 
   /**
    * The state service.
@@ -77,7 +77,11 @@ class Updater extends Stage {
     foreach ($composer->getCorePackageNames() as $package) {
       $packages[$package] = $project_versions['drupal'];
     }
-    $stage_key = $this->createActiveStage($packages);
+    $stage_key = static::STATE_KEY . microtime();
+    $this->state->set(static::STATE_KEY, [
+      'id' => $stage_key,
+      'package_versions' => $packages,
+    ]);
     $this->create();
     return $stage_key;
   }
@@ -108,37 +112,11 @@ class Updater extends Stage {
   }
 
   /**
-   * Commits the current update.
-   */
-  public function commit(): void {
-    $this->apply();
-  }
-
-  /**
    * Cleans the current update.
    */
   public function clean(): void {
     $this->destroy();
     $this->state->delete(static::STATE_KEY);
-  }
-
-  /**
-   * Initializes an active update and returns its ID.
-   *
-   * @param string[] $package_versions
-   *   The versions of the packages to stage, keyed by package name.
-   *
-   * @return string
-   *   The active update ID.
-   */
-  private function createActiveStage(array $package_versions): string {
-    $value = static::STATE_KEY . microtime();
-
-    $this->state->set(static::STATE_KEY, [
-      'id' => $value,
-      'package_versions' => $package_versions,
-    ]);
-    return $value;
   }
 
   /**

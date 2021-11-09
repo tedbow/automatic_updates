@@ -131,7 +131,7 @@ class CronUpdater implements ContainerInjectionInterface {
         'drupal' => $recommended_version,
       ]);
       $this->updater->stage();
-      $this->updater->commit();
+      $this->updater->apply();
       $this->updater->clean();
     }
     catch (\Throwable $e) {

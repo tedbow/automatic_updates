@@ -33,7 +33,7 @@ class TestController extends ControllerBase {
     try {
       $updater->begin(['drupal' => $to_version]);
       $updater->stage();
-      $updater->commit();
+      $updater->apply();
       $updater->clean();
 
       $project = (new UpdateRecommender())->getProjectInfo();

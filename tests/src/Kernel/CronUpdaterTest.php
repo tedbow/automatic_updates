@@ -107,7 +107,7 @@ class CronUpdaterTest extends AutomaticUpdatesKernelTestBase {
 
     $updater->begin(['drupal' => '9.8.1'])->shouldBeCalledTimes($will_update);
     $updater->stage()->shouldBeCalledTimes($will_update);
-    $updater->commit()->shouldBeCalledTimes($will_update);
+    $updater->apply()->shouldBeCalledTimes($will_update);
     $updater->clean()->shouldBeCalledTimes($will_update);
     $this->container->set('automatic_updates.updater', $updater->reveal());
 

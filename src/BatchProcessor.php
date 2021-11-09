@@ -96,11 +96,11 @@ class BatchProcessor {
    * @param array $context
    *   The current context of the batch job.
    *
-   * @see \Drupal\automatic_updates\Updater::commit()
+   * @see \Drupal\automatic_updates\Updater::apply()
    */
   public static function commit(array &$context): void {
     try {
-      static::getUpdater()->commit();
+      static::getUpdater()->apply();
     }
     catch (\Throwable $e) {
       static::handleException($e, $context);
