@@ -15,11 +15,11 @@ use Drupal\package_manager\StageException;
 class Updater extends Stage {
 
   /**
-   * The state key in which to store the status of the update.
+   * State key under which to store the package versions targeted by the update.
    *
    * @var string
    */
-  protected const STATE_KEY = 'AUTOMATIC_UPDATES_CURRENT';
+  protected const PACKAGES_KEY = 'automatic_updates.packages';
 
   /**
    * The state service.
@@ -49,7 +49,7 @@ class Updater extends Stage {
    */
   public function hasActiveUpdate(): bool {
     $staged_dir = $this->pathLocator->getStageDirectory();
-    if (is_dir($staged_dir) || $this->state->get(static::STATE_KEY)) {
+    if (is_dir($staged_dir) || $this->state->get(static::PACKAGES_KEY)) {
       return TRUE;
     }
     return FALSE;
@@ -61,54 +61,62 @@ class Updater extends Stage {
    * @param string[] $project_versions
    *   The versions of the packages to update to, keyed by package name.
    *
-   * @return string
-   *   A key for this stage update process.
-   *
    * @throws \InvalidArgumentException
    *   Thrown if no project version for Drupal core is provided.
    */
-  public function begin(array $project_versions): string {
+  public function begin(array $project_versions): void {
     if (count($project_versions) !== 1 || !array_key_exists('drupal', $project_versions)) {
       throw new \InvalidArgumentException("Currently only updates to Drupal core are supported.");
     }
 
     $composer = ComposerUtility::createForDirectory($this->pathLocator->getActiveDirectory());
-    $packages = [];
+    $package_versions = $this->getPackageVersions();
+
     foreach ($composer->getCorePackageNames() as $package) {
-      $packages[$package] = $project_versions['drupal'];
+      $package_versions['production'][$package] = $project_versions['drupal'];
     }
-    $stage_key = static::STATE_KEY . microtime();
-    $this->state->set(static::STATE_KEY, [
-      'id' => $stage_key,
-      'package_versions' => $packages,
-    ]);
+    foreach ($composer->getCoreDevPackageNames() as $package) {
+      $package_versions['dev'][$package] = $project_versions['drupal'];
+    }
+    $this->state->set(static::PACKAGES_KEY, $package_versions);
     $this->create();
-    return $stage_key;
   }
 
   /**
    * Returns the package versions that will be required during the update.
    *
-   * @return string[]
-   *   The package versions, as a set of Composer constraints where the keys are
-   *   the package names, and the values are the version constraints.
+   * @return string[][]
+   *   An array with two sub-arrays: 'production' and 'dev'. Each is a set of
+   *   package versions, where the keys are package names and the values are
+   *   version constraints understood by Composer.
    */
   public function getPackageVersions(): array {
-    $metadata = $this->state->get(static::STATE_KEY, []);
-    return $metadata['package_versions'];
+    return $this->state->get(static::PACKAGES_KEY, [
+      'production' => [],
+      'dev' => [],
+    ]);
   }
 
   /**
    * Stages the update.
    */
   public function stage(): void {
-    $metadata = $this->state->get(static::STATE_KEY, []);
+    // Convert an associative array of package versions, keyed by name, to
+    // command-line arguments in the form `vendor/name:version`.
+    $map = function (array $versions): array {
+      $requirements = [];
+      foreach ($versions as $package => $version) {
+        $requirements[] = "$package:$version";
+      }
+      return $requirements;
+    };
+    $versions = array_map($map, $this->getPackageVersions());
 
-    $requirements = [];
-    foreach ($metadata['package_versions'] as $package => $constraint) {
-      $requirements[] = "$package:$constraint";
+    $this->require($versions['production']);
+
+    if ($versions['dev']) {
+      $this->require($versions['dev'], TRUE);
     }
-    $this->require($requirements);
   }
 
   /**
@@ -116,7 +124,7 @@ class Updater extends Stage {
    */
   public function clean(): void {
     $this->destroy();
-    $this->state->delete(static::STATE_KEY);
+    $this->state->delete(static::PACKAGES_KEY);
   }
 
   /**

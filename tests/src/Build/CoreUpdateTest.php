@@ -2,6 +2,8 @@
 
 namespace Drupal\Tests\automatic_updates\Build;
 
+use Drupal\Component\Serialization\Json;
+
 /**
  * Tests an end-to-end update of Drupal core.
  *
@@ -112,20 +114,18 @@ class CoreUpdateTest extends UpdateTestBase {
     ]);
     $repositories['drupal/core-recommended'] = $this->createPathRepository($dir);
 
-    // Create a fake version of drupal/core-project-message.
-    $dir = $this->copyPackage("$drupal_root/composer/Plugin/ProjectMessage");
-    $this->alterPackage($dir, ['version' => $version]);
-    $repositories['drupal/core-project-message'] = $this->createPathRepository($dir);
-
-    // Create a fake version of drupal/core-composer-scaffold.
-    $dir = $this->copyPackage("$drupal_root/composer/Plugin/Scaffold");
-    $this->alterPackage($dir, ['version' => $version]);
-    $repositories['drupal/core-composer-scaffold'] = $this->createPathRepository($dir);
-
-    // Create a fake version of drupal/core-vendor-hardening.
-    $dir = $this->copyPackage("$drupal_root/composer/Plugin/VendorHardening");
-    $this->alterPackage($dir, ['version' => $version]);
-    $repositories['drupal/core-vendor-hardening'] = $this->createPathRepository($dir);
+    // Create fake target versions of core plugins and metapackages.
+    $packages = [
+      'drupal/core-dev' => "$drupal_root/composer/Metapackage/DevDependencies",
+      'drupal/core-project-message' => "$drupal_root/composer/Plugin/ProjectMessage",
+      'drupal/core-composer-scaffold' => "$drupal_root/composer/Plugin/Scaffold",
+      'drupal/core-vendor-hardening' => "$drupal_root/composer/Plugin/VendorHardening",
+    ];
+    foreach ($packages as $name => $dir) {
+      $dir = $this->copyPackage($dir);
+      $this->alterPackage($dir, ['version' => $version]);
+      $repositories[$name] = $this->createPathRepository($dir);
+    }
 
     return [
       'repositories' => $repositories,
@@ -271,6 +271,28 @@ class CoreUpdateTest extends UpdateTestBase {
     // present in the README.
     $placeholder = file_get_contents($this->getWebRoot() . '/core/README.txt');
     $this->assertSame('Placeholder for Drupal core 9.8.1.', $placeholder);
+
+    $composer = file_get_contents($this->getWorkspaceDirectory() . '/composer.json');
+    $composer = Json::decode($composer);
+    // The production dependencies should have been updated.
+    $this->assertSame('9.8.1', $composer['require']['drupal/core-recommended']);
+    $this->assertSame('9.8.1', $composer['require']['drupal/core-composer-scaffold']);
+    $this->assertSame('9.8.1', $composer['require']['drupal/core-project-message']);
+    // The core-vendor-hardening plugin is only used by the legacy project
+    // template.
+    if ($composer['name'] === 'drupal/legacy-project') {
+      $this->assertSame('9.8.1', $composer['require']['drupal/core-vendor-hardening']);
+    }
+    // The production dependencies should not be listed as dev dependencies.
+    $this->assertArrayNotHasKey('drupal/core-recommended', $composer['require-dev']);
+    $this->assertArrayNotHasKey('drupal/core-composer-scaffold', $composer['require-dev']);
+    $this->assertArrayNotHasKey('drupal/core-project-message', $composer['require-dev']);
+    $this->assertArrayNotHasKey('drupal/core-vendor-hardening', $composer['require-dev']);
+
+    // The drupal/core-dev metapackage should not be a production dependency...
+    $this->assertArrayNotHasKey('drupal/core-dev', $composer['require']);
+    // ...but it should have been updated in the dev dependencies.
+    $this->assertSame('9.8.1', $composer['require-dev']['drupal/core-dev']);
   }
 
 }

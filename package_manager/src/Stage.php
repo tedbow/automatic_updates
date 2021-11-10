@@ -114,10 +114,16 @@ class Stage {
    *
    * @param string[] $constraints
    *   The packages to require, in the form 'vendor/name:version'.
+   * @param bool $dev
+   *   (optional) Whether the packages should be required as dev dependencies.
+   *   Defaults to FALSE.
    */
-  public function require(array $constraints): void {
+  public function require(array $constraints, bool $dev = FALSE): void {
     $command = array_merge(['require'], $constraints);
     $command[] = '--update-with-all-dependencies';
+    if ($dev) {
+      $command[] = '--dev';
+    }
 
     $this->dispatch(new PreRequireEvent($this));
     $this->stager->stage($command, $this->pathLocator->getStageDirectory());

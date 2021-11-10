@@ -110,6 +110,22 @@ class ComposerUtility {
   }
 
   /**
+   * Returns the names of the core packages in the dev dependencies.
+   *
+   * All packages listed in ../core_packages.json are considered core packages.
+   *
+   * @return string[]
+   *   The names of the core packages in the dev requirements.
+   *
+   * @todo Make this return a keyed array of packages, not just names.
+   */
+  public function getCoreDevPackageNames(): array {
+    $dev_packages = $this->composer->getPackage()->getDevRequires();
+    $dev_packages = array_keys($dev_packages);
+    return array_intersect(static::getCorePackageList(), $dev_packages);
+  }
+
+  /**
    * Returns all Drupal extension packages in the lock file.
    *
    * The following package types are considered Drupal extension packages:

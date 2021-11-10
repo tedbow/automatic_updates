@@ -56,14 +56,23 @@ class UpdaterTest extends AutomaticUpdatesKernelTestBase {
     // form of a Composer command. We set up a mock here to ensure that those
     // calls are made as expected.
     $stager = $this->prophesize(StagerInterface::class);
+    // The production dependencies should be updated first...
     $command = [
       'require',
       'drupal/core-recommended:9.8.1',
       '--update-with-all-dependencies',
     ];
     $stager->stage($command, Argument::cetera())->shouldBeCalled();
-    $this->container->set('package_manager.stager', $stager->reveal());
+    // ...followed by the dev dependencies.
+    $command = [
+      'require',
+      'drupal/core-dev:9.8.1',
+      '--update-with-all-dependencies',
+      '--dev',
+    ];
+    $stager->stage($command, Argument::cetera())->shouldBeCalled();
 
+    $this->container->set('package_manager.stager', $stager->reveal());
     $this->container->get('automatic_updates.updater')->stage();
   }
 

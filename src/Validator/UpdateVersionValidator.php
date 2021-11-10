@@ -69,7 +69,7 @@ class UpdateVersionValidator implements EventSubscriberInterface {
     else {
       // If the stage has begun its life cycle, we expect it knows the desired
       // package versions.
-      $package_versions = $stage->getPackageVersions();
+      $package_versions = $stage->getPackageVersions()['production'];
     }
 
     $from_version_string = $this->getCoreVersion();
@@ -107,7 +107,7 @@ class UpdateVersionValidator implements EventSubscriberInterface {
     elseif ($from_version->getMinorVersion() !== $to_version->getMinorVersion()) {
       $messages[] = $this->t('Drupal cannot be automatically updated from its current version, @from_version, to the recommended version, @to_version, because automatic updates from one minor version to another are not supported.', [
         '@from_version' => $this->getCoreVersion(),
-        '@to_version' => $event->getPackageVersions()[$core_package_name],
+        '@to_version' => $package_versions[$core_package_name],
       ]);
       $error = ValidationResult::createError($messages);
       $event->addValidationResult($error);
