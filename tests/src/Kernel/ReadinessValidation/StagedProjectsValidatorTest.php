@@ -3,6 +3,7 @@
 namespace Drupal\Tests\automatic_updates\Kernel\ReadinessValidation;
 
 use Drupal\Core\DependencyInjection\ContainerBuilder;
+use Drupal\package_manager\Event\PreApplyEvent;
 use Drupal\package_manager\PathLocator;
 use Drupal\package_manager\StageException;
 use Drupal\Tests\automatic_updates\Kernel\AutomaticUpdatesKernelTestBase;
@@ -20,6 +21,7 @@ class StagedProjectsValidatorTest extends AutomaticUpdatesKernelTestBase {
   protected static $modules = [
     'automatic_updates',
     'package_manager',
+    'package_manager_bypass',
   ];
 
   /**
@@ -47,15 +49,20 @@ class StagedProjectsValidatorTest extends AutomaticUpdatesKernelTestBase {
   private function validate(string $active_dir, string $stage_dir): array {
     $locator = $this->prophesize(PathLocator::class);
     $locator->getActiveDirectory()->willReturn($active_dir);
+    $locator->getProjectRoot()->willReturn($active_dir);
+    $locator->getVendorDirectory()->willReturn($active_dir);
     $locator->getStageDirectory()->willReturn($stage_dir);
     $this->container->set('package_manager.path_locator', $locator->reveal());
+
+    $updater = $this->container->get('automatic_updates.updater');
+    $updater->begin(['drupal' => '9.8.1']);
 
     // The staged projects validator only runs before staged updates are
     // applied. Since the active and stage directories may not exist, we don't
     // want to invoke the other stages of the update because they may raise
     // errors that are outside of the scope of what we're testing here.
     try {
-      $this->container->get('automatic_updates.updater')->apply();
+      $updater->apply();
       return [];
     }
     catch (StageException $e) {
@@ -67,11 +74,29 @@ class StagedProjectsValidatorTest extends AutomaticUpdatesKernelTestBase {
    * Tests that if an exception is thrown, the event will absorb it.
    */
   public function testEventConsumesExceptionResults(): void {
-    $results = $this->validate('/fake/active/dir', '/fake/stage/dir');
+    // Prepare a fake site in the virtual file system which contains valid
+    // Composer data.
+    $fixture = __DIR__ . '/../../../fixtures/fake-site';
+    copy("$fixture/composer.json", 'public://composer.json');
+    copy("$fixture/composer.lock", 'public://composer.lock');
+
+    $event_dispatcher = $this->container->get('event_dispatcher');
+    // Disable the disk space validator, since it doesn't work with vfsStream.
+    $disk_space_validator = $this->container->get('package_manager.validator.disk_space');
+    $event_dispatcher->removeSubscriber($disk_space_validator);
+    // Just before the staged changes are applied, delete the composer.json file
+    // to trigger an error. This uses the highest possible priority to guarantee
+    // it runs before any other subscribers.
+    $listener = function () {
+      unlink('public://composer.json');
+    };
+    $event_dispatcher->addListener(PreApplyEvent::class, $listener, PHP_INT_MAX);
+
+    $results = $this->validate('public://', '/fake/stage/dir');
     $this->assertCount(1, $results);
     $messages = reset($results)->getMessages();
     $this->assertCount(1, $messages);
-    $this->assertStringContainsString('Composer could not find the config file: /fake/active/dir/composer.json', (string) reset($messages));
+    $this->assertStringContainsString('Composer could not find the config file: public:///composer.json', (string) reset($messages));
   }
 
   /**

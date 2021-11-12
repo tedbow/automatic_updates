@@ -183,6 +183,8 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
     $assert_session->pageTextNotContains(static::$warningsExplanation);
     $page->pressButton('Update');
     $this->checkForMetaRefresh();
+    // If a validator flags an error, but doesn't throw, the update should still
+    // be halted.
     $assert_session->pageTextContainsOnce('An error has occurred.');
     $page->clickLink('the error page');
     $assert_session->pageTextContainsOnce((string) $expected_results[0]->getMessages()[0]);
@@ -190,11 +192,10 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
     $assert_session->pageTextNotContains($expected_results[0]->getSummary());
     // ...but we should see the exception message.
     $assert_session->pageTextContainsOnce('The update exploded.');
-
-    // If a validator flags an error, but doesn't throw, the update should still
-    // be halted.
+    // If the error is thrown in PreCreateEvent the update stage will not have
+    // been created.
+    $assert_session->buttonNotExists('Delete existing update');
     TestChecker1::setTestResult($expected_results, PreCreateEvent::class);
-    $this->deleteStagedUpdate();
     $page->pressButton('Update');
     $this->checkForMetaRefresh();
     $assert_session->pageTextContainsOnce('An error has occurred.');
@@ -207,8 +208,6 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
     // continue.
     $expected_results = $this->testResults['checker_1']['1 warning'];
     TestChecker1::setTestResult($expected_results, PreCreateEvent::class);
-    $session->reload();
-    $this->deleteStagedUpdate();
     $page->pressButton('Update');
     $this->checkForMetaRefresh();
     $assert_session->pageTextContains('Ready to update');
@@ -234,13 +233,41 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
   }
 
   /**
-   * Deletes a staged, failed update.
+   * Tests deleting an existing update.
+   *
+   * @todo Add test coverage for differences between stage owner and other users
+   *   in https://www.drupal.org/i/3248928.
    */
-  private function deleteStagedUpdate(): void {
-    $session = $this->getSession();
-    $session->getPage()->pressButton('Delete existing update');
-    $this->assertSession()->pageTextContains('Staged update deleted');
-    $session->reload();
+  public function testDeleteExistingUpdate() {
+    $assert_session = $this->assertSession();
+    $page = $this->getSession()->getPage();
+    $this->setCoreVersion('9.8.0');
+    $this->checkForUpdates();
+
+    $this->drupalGet('/admin/modules/automatic-update');
+    $page->pressButton('Update');
+    $this->checkForMetaRefresh();
+
+    // Confirm we are on the confirmation page.
+    $assert_session->addressEquals('/admin/automatic-update-ready');
+    $assert_session->buttonExists('Continue');
+
+    // Return to the start page.
+    $this->drupalGet('/admin/modules/automatic-update');
+    $assert_session->pageTextContainsOnce('Cannot begin an update because another Composer operation is currently in progress.');
+    $assert_session->buttonNotExists('Update');
+
+    // Delete the existing update.
+    $page->pressButton('Delete existing update');
+    $assert_session->pageTextNotContains('Cannot begin an update because another Composer operation is currently in progress.');
+
+    // Ensure we can start another update after deleting the existing one.
+    $page->pressButton('Update');
+    $this->checkForMetaRefresh();
+
+    // Confirm we are on the confirmation page.
+    $assert_session->addressEquals('/admin/automatic-update-ready');
+    $assert_session->buttonExists('Continue');
   }
 
 }

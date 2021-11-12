@@ -1,6 +1,11 @@
 {
   "packages": [
     {
+      "name": "drupal/core",
+      "version": "9.8.0",
+      "type": "drupal-core"
+    },
+    {
       "name": "drupal/test_module",
       "version": "1.3.0",
       "type": "drupal-module"

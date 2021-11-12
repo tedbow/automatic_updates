@@ -51,7 +51,8 @@ class StageEventsTest extends PackageManagerKernelTestBase implements EventSubsc
       $this->container->get('package_manager.stager'),
       $this->container->get('package_manager.committer'),
       $this->container->get('package_manager.cleaner'),
-      $this->container->get('event_dispatcher')
+      $this->container->get('event_dispatcher'),
+      $this->container->get('tempstore.shared')
     );
   }
 

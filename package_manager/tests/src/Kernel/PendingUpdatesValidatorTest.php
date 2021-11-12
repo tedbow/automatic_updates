@@ -18,22 +18,6 @@ class PendingUpdatesValidatorTest extends PackageManagerKernelTestBase {
   protected static $modules = ['system'];
 
   /**
-   * Registers all of the System module's post-update functions.
-   *
-   * Since kernel tests don't normally install modules and register their
-   * updates, this method makes sure that the validator is tested from a clean,
-   * fully up-to-date state.
-   */
-  private function registerPostUpdateFunctions(): void {
-    $updates = $this->container->get('update.post_update_registry')
-      ->getPendingUpdateFunctions();
-
-    $this->container->get('keyvalue')
-      ->get('post_update')
-      ->set('existing_updates', $updates);
-  }
-
-  /**
    * Tests that no error is raised if there are no pending updates.
    */
   public function testNoPendingUpdates(): void {

@@ -42,20 +42,6 @@ class Updater extends Stage {
   }
 
   /**
-   * Determines if there is an active update in progress.
-   *
-   * @return bool
-   *   TRUE if there is active update, otherwise FALSE.
-   */
-  public function hasActiveUpdate(): bool {
-    $staged_dir = $this->pathLocator->getStageDirectory();
-    if (is_dir($staged_dir) || $this->state->get(static::PACKAGES_KEY)) {
-      return TRUE;
-    }
-    return FALSE;
-  }
-
-  /**
    * Begins the update.
    *
    * @param string[] $project_versions

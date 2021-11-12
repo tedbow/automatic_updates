@@ -71,6 +71,11 @@ class UpdateReady extends FormBase {
    * {@inheritdoc}
    */
   public function buildForm(array $form, FormStateInterface $form_state) {
+    if (!$this->updater->isOwnedByCurrentUser()) {
+      $this->messenger->addError('Cannot continue the update because another Composer operation is currently in progress.');
+      return $form;
+    }
+
     $form['backup'] = [
       '#prefix' => '<strong>',
       '#markup' => $this->t('Back up your database and site before you continue. <a href=":backup_url">Learn how</a>.', [':backup_url' => 'https://www.drupal.org/node/22281']),

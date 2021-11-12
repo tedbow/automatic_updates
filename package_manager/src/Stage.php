@@ -2,6 +2,7 @@
 
 namespace Drupal\package_manager;
 
+use Drupal\Core\TempStore\SharedTempStoreFactory;
 use Drupal\package_manager\Event\PostApplyEvent;
 use Drupal\package_manager\Event\PostCreateEvent;
 use Drupal\package_manager\Event\PostDestroyEvent;
@@ -70,6 +71,21 @@ class Stage {
    */
   protected $eventDispatcher;
 
+
+  /**
+   * The tempstore key under which to store the active status of this stage.
+   *
+   * @var string
+   */
+  protected const TEMPSTORE_ACTIVE_KEY = 'active';
+
+  /**
+   * The shared temp store.
+   *
+   * @var \Drupal\Core\TempStore\SharedTempStore
+   */
+  protected $tempStore;
+
   /**
    * Constructs a new Stage object.
    *
@@ -85,20 +101,55 @@ class Stage {
    *   The cleaner service from Composer Stager.
    * @param \Symfony\Contracts\EventDispatcher\EventDispatcherInterface $event_dispatcher
    *   The event dispatcher service.
+   * @param \Drupal\Core\TempStore\SharedTempStoreFactory $shared_tempstore
+   *   The shared tempstore factory.
    */
-  public function __construct(PathLocator $path_locator, BeginnerInterface $beginner, StagerInterface $stager, CommitterInterface $committer, CleanerInterface $cleaner, EventDispatcherInterface $event_dispatcher) {
+  public function __construct(PathLocator $path_locator, BeginnerInterface $beginner, StagerInterface $stager, CommitterInterface $committer, CleanerInterface $cleaner, EventDispatcherInterface $event_dispatcher, SharedTempStoreFactory $shared_tempstore) {
     $this->pathLocator = $path_locator;
     $this->beginner = $beginner;
     $this->stager = $stager;
     $this->committer = $committer;
     $this->cleaner = $cleaner;
     $this->eventDispatcher = $event_dispatcher;
+    $this->tempStore = $shared_tempstore->get('package_manager_stage');
+  }
+
+  /**
+   * Determines if the staging area can be created.
+   *
+   * @return bool
+   *   TRUE if the staging area can be created, otherwise FALSE.
+   */
+  final public function isAvailable(): bool {
+    return empty($this->tempStore->getMetadata(static::TEMPSTORE_ACTIVE_KEY));
+  }
+
+  /**
+   * Determines if the current user or session is the owner of the staging area.
+   *
+   * @return bool
+   *   TRUE if the current session or user is the owner of the staging area,
+   *   otherwise FALSE.
+   */
+  final public function isOwnedByCurrentUser(): bool {
+    return !empty($this->tempStore->getIfOwner(static::TEMPSTORE_ACTIVE_KEY));
   }
 
   /**
    * Copies the active code base into the staging area.
    */
   public function create(): void {
+    if (!$this->isAvailable()) {
+      throw new StageException([], 'Cannot create a new stage because one already exists.');
+    }
+    // Mark the stage as unavailable as early as possible, before dispatching
+    // the pre-create event. The idea is to prevent a race condition if the
+    // event subscribers take a while to finish, and two different users attempt
+    // to create a staging area at around the same time. If an error occurs
+    // while the event is being processed, the stage is marked as available.
+    // @see ::dispatch()
+    $this->tempStore->set(static::TEMPSTORE_ACTIVE_KEY, TRUE);
+
     $active_dir = $this->pathLocator->getActiveDirectory();
     $stage_dir = $this->pathLocator->getStageDirectory();
 
@@ -119,6 +170,8 @@ class Stage {
    *   Defaults to FALSE.
    */
   public function require(array $constraints, bool $dev = FALSE): void {
+    $this->checkOwnership();
+
     $command = array_merge(['require'], $constraints);
     $command[] = '--update-with-all-dependencies';
     if ($dev) {
@@ -134,6 +187,8 @@ class Stage {
    * Applies staged changes to the active directory.
    */
   public function apply(): void {
+    $this->checkOwnership();
+
     $active_dir = $this->pathLocator->getActiveDirectory();
     $stage_dir = $this->pathLocator->getStageDirectory();
 
@@ -146,13 +201,26 @@ class Stage {
 
   /**
    * Deletes the staging area.
+   *
+   * @param bool $force
+   *   (optional) If TRUE, the staging area will be destroyed even if it is not
+   *   owned by the current user or session. Defaults to FALSE.
+   *
+   * @todo Do not allow the stage to be destroyed while it's being applied to
+   *   the active directory in https://www.drupal.org/i/3248909.
    */
-  public function destroy(): void {
+  public function destroy(bool $force = FALSE): void {
+    if (!$force) {
+      $this->checkOwnership();
+    }
+
     $this->dispatch(new PreDestroyEvent($this));
     $stage_dir = $this->pathLocator->getStageDirectory();
     if (is_dir($stage_dir)) {
       $this->cleaner->clean($stage_dir);
     }
+    // We're all done, so mark the stage as available.
+    $this->tempStore->delete(static::TEMPSTORE_ACTIVE_KEY);
     $this->dispatch(new PostDestroyEvent($this));
   }
 
@@ -161,13 +229,37 @@ class Stage {
    *
    * @param \Drupal\package_manager\Event\StageEvent $event
    *   The event object.
+   *
+   * @throws \Drupal\package_manager\StageException
+   *   If the event collects any validation errors, or a subscriber throws a
+   *   StageException directly.
+   * @throws \RuntimeException
+   *   If any other sort of error occurs.
    */
   protected function dispatch(StageEvent $event): void {
-    $this->eventDispatcher->dispatch($event);
+    try {
+      $this->eventDispatcher->dispatch($event);
 
-    $errors = $event->getResults(SystemManager::REQUIREMENT_ERROR);
-    if ($errors) {
-      throw new StageException($errors);
+      $errors = $event->getResults(SystemManager::REQUIREMENT_ERROR);
+      if ($errors) {
+        throw new StageException($errors);
+      }
+    }
+    catch (\Throwable $error) {
+      // If we are not going to be able to create the staging area, mark it as
+      // available.
+      // @see ::create()
+      if ($event instanceof PreCreateEvent) {
+        $this->tempStore->delete(static::TEMPSTORE_ACTIVE_KEY);
+      }
+
+      // Wrap the exception to preserve the backtrace, and re-throw it.
+      if ($error instanceof StageException) {
+        throw new StageException($error->getResults(), $error->getMessage(), $error->getCode(), $error);
+      }
+      else {
+        throw new \RuntimeException($error->getMessage(), $error->getCode(), $error);
+      }
     }
   }
 
@@ -191,6 +283,18 @@ class Stage {
   public function getStageComposer(): ComposerUtility {
     $dir = $this->pathLocator->getStageDirectory();
     return ComposerUtility::createForDirectory($dir);
+  }
+
+  /**
+   * Ensures that the current user or session owns the staging area.
+   *
+   * @throws \Drupal\package_manager\StageException
+   *   If the current user or session does not own the staging area.
+   */
+  protected function checkOwnership(): void {
+    if (!$this->isOwnedByCurrentUser()) {
+      throw new StageException([], 'Stage is not owned by the current user or session.');
+    }
   }
 
 }

@@ -59,6 +59,7 @@ abstract class PackageManagerKernelTestBase extends KernelTestBase {
       $this->container->get('package_manager.committer'),
       $this->container->get('package_manager.cleaner'),
       $this->container->get('event_dispatcher'),
+      $this->container->get('tempstore.shared')
     );
   }
 
@@ -91,6 +92,22 @@ abstract class PackageManagerKernelTestBase extends KernelTestBase {
       $this->assertNotEmpty($event_class);
       $this->assertInstanceOf($event_class, $e->event);
     }
+  }
+
+  /**
+   * Marks all pending post-update functions as completed.
+   *
+   * Since kernel tests don't normally install modules and register their
+   * updates, this method makes sure that we are testing from a clean, fully
+   * up-to-date state.
+   */
+  protected function registerPostUpdateFunctions(): void {
+    $updates = $this->container->get('update.post_update_registry')
+      ->getPendingUpdateFunctions();
+
+    $this->container->get('keyvalue')
+      ->get('post_update')
+      ->set('existing_updates', $updates);
   }
 
 }

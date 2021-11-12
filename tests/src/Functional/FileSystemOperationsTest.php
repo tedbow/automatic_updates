@@ -76,7 +76,8 @@ class FileSystemOperationsTest extends AutomaticUpdatesFunctionalTestBase {
       $this->container->get('package_manager.stager'),
       $this->container->get('package_manager.committer'),
       $cleaner,
-      $this->container->get('event_dispatcher')
+      $this->container->get('event_dispatcher'),
+      $this->container->get('tempstore.shared')
     );
 
     // Use the public and private files directories in the fake site fixture.

@@ -18,6 +18,7 @@ services:
       - '@package_manager.committer'
       - '@package_manager.cleaner'
       - '@event_dispatcher'
+      - '@tempstore.shared'
   automatic_updates.update_refresh_subscriber:
     class: Drupal\automatic_updates\Event\UpdateRefreshSubscriber
     arguments:

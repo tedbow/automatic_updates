@@ -191,7 +191,7 @@ class UpdaterForm extends FormBase {
       ->getResults(SystemManager::REQUIREMENT_ERROR);
 
     if (empty($errors)) {
-      $form['actions'] = $this->actions();
+      $form['actions'] = $this->actions($form_state);
     }
     return $form;
   }
@@ -199,14 +199,22 @@ class UpdaterForm extends FormBase {
   /**
    * Builds the form actions.
    *
+   * @param \Drupal\Core\Form\FormStateInterface $form_state
+   *   The form state.
+   *
    * @return mixed[][]
    *   The form's actions elements.
    */
-  protected function actions(): array {
+  protected function actions(FormStateInterface $form_state): array {
     $actions = ['#type' => 'actions'];
 
-    if ($this->updater->hasActiveUpdate()) {
-      $this->messenger()->addError($this->t('Another Composer update process is currently active'));
+    if (!$this->updater->isAvailable()) {
+      // If the form has been submitted do not display this error message
+      // because ::deleteExistingUpdate() may run on submit. The message will
+      // still be displayed on form build if needed.
+      if (!$form_state->getUserInput()) {
+        $this->messenger()->addError($this->t('Cannot begin an update because another Composer operation is currently in progress.'));
+      }
       $actions['delete'] = [
         '#type' => 'submit',
         '#value' => $this->t('Delete existing update'),

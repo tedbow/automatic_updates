@@ -98,7 +98,8 @@ class ExcludedPathsTest extends BrowserTestBase {
       $this->container->get('package_manager.stager'),
       $this->container->get('package_manager.committer'),
       $this->container->get('package_manager.cleaner'),
-      $this->container->get('event_dispatcher')
+      $this->container->get('event_dispatcher'),
+      $this->container->get('tempstore.shared'),
     );
     $stage->create();
 

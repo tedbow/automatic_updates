@@ -3,6 +3,7 @@
 namespace Drupal\Tests\automatic_updates\Kernel;
 
 use Drupal\package_manager\PathLocator;
+use Drupal\Tests\user\Traits\UserCreationTrait;
 use PhpTuf\ComposerStager\Domain\StagerInterface;
 use Prophecy\Argument;
 
@@ -13,6 +14,8 @@ use Prophecy\Argument;
  */
 class UpdaterTest extends AutomaticUpdatesKernelTestBase {
 
+  use UserCreationTrait;
+
   /**
    * {@inheritdoc}
    */
@@ -21,13 +24,27 @@ class UpdaterTest extends AutomaticUpdatesKernelTestBase {
     'automatic_updates_test',
     'package_manager',
     'package_manager_bypass',
+    'system',
+    'user',
   ];
+
+  /**
+   * {@inheritdoc}
+   */
+  protected function setUp(): void {
+    parent::setUp();
+    $this->installEntitySchema('user');
+  }
 
   /**
    * Tests that correct versions are staged after calling ::begin().
    */
   public function testCorrectVersionsStaged() {
     $this->setReleaseMetadata(__DIR__ . '/../../fixtures/release-history/drupal.9.8.1-security.xml');
+
+    // Create a user who will own the stage even after the container is rebuilt.
+    $user = $this->createUser([], NULL, TRUE, ['uid' => 2]);
+    $this->setCurrentUser($user);
 
     // Point to a fake site which requires Drupal core via a distribution. The
     // lock file should be scanned to determine the core packages, which should
@@ -48,8 +65,9 @@ class UpdaterTest extends AutomaticUpdatesKernelTestBase {
     $kernel = $this->container->get('kernel');
     $kernel->rebuildContainer();
     $this->container = $kernel->getContainer();
-    // Keep using the mocked path locator.
+    // Keep using the mocked path locator and current user.
     $this->container->set('package_manager.path_locator', $locator->reveal());
+    $this->setCurrentUser($user);
 
     // When we call Updater::stage(), the stored project versions should be
     // read from state and passed to Composer Stager's Stager service, in the
