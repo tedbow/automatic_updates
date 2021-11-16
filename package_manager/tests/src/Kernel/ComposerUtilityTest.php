@@ -4,6 +4,7 @@ namespace Drupal\Tests\package_manager\Kernel;
 
 use Drupal\KernelTests\KernelTestBase;
 use Drupal\package_manager\ComposerUtility;
+use org\bovigo\vfs\vfsStream;
 
 /**
  * @coversDefaultClass \Drupal\package_manager\ComposerUtility
@@ -16,6 +17,17 @@ class ComposerUtilityTest extends KernelTestBase {
    * {@inheritdoc}
    */
   protected static $modules = ['package_manager'];
+
+  /**
+   * Tests that ComposerUtility disables automatic creation of .htaccess files.
+   */
+  public function testHtaccessProtectionDisabled(): void {
+    $dir = vfsStream::setup()->url();
+    file_put_contents($dir . '/composer.json', '{}');
+
+    ComposerUtility::createForDirectory($dir);
+    $this->assertFileNotExists($dir . '/.htaccess');
+  }
 
   /**
    * Data provider for ::testCorePackagesFromLockFile().

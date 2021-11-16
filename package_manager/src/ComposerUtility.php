@@ -57,9 +57,17 @@ class ComposerUtility {
     // pass the home directory in.
     // @see \Composer\Factory::getHomeDir()
     $home = getenv('COMPOSER_HOME');
+    // Disable the automatic generation of .htaccess files in the Composer home
+    // directory, since we are temporarily overriding that directory.
+    // @see \Composer\Factory::createConfig()
+    // @see https://getcomposer.org/doc/06-config.md#htaccess-protect
+    $htaccess = getenv('COMPOSER_HTACCESS_PROTECT');
+
     putenv("COMPOSER_HOME=$dir");
+    putenv("COMPOSER_HTACCESS_PROTECT=false");
     $composer = Factory::create($io, $configuration);
     putenv("COMPOSER_HOME=$home");
+    putenv("COMPOSER_HTACCESS_PROTECT=$htaccess");
 
     return new static($composer);
   }
