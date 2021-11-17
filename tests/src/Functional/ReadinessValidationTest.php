@@ -3,6 +3,7 @@
 namespace Drupal\Tests\automatic_updates\Functional;
 
 use Behat\Mink\Element\NodeElement;
+use Drupal\automatic_updates\Event\ReadinessCheckEvent;
 use Drupal\automatic_updates_test\Datetime\TestTime;
 use Drupal\automatic_updates_test\ReadinessChecker\TestChecker1;
 use Drupal\automatic_updates_test2\ReadinessChecker\TestChecker2;
@@ -115,7 +116,7 @@ class ReadinessValidationTest extends AutomaticUpdatesFunctionalTestBase {
     $this->assertNoErrors(TRUE);
     /** @var \Drupal\package_manager\ValidationResult[] $expected_results */
     $expected_results = $this->testResults['checker_1']['1 error'];
-    TestChecker1::setTestResult($expected_results);
+    TestChecker1::setTestResult($expected_results, ReadinessCheckEvent::class);
 
     // Run the readiness checks.
     $this->clickLink('Run readiness checks');
@@ -136,7 +137,7 @@ class ReadinessValidationTest extends AutomaticUpdatesFunctionalTestBase {
     $this->assertErrors($expected_results);
 
     $expected_results = $this->testResults['checker_1']['1 error 1 warning'];
-    TestChecker1::setTestResult($expected_results);
+    TestChecker1::setTestResult($expected_results, ReadinessCheckEvent::class);
     $key_value->delete('readiness_validation_last_run');
     // Confirm a new message is displayed if the stored messages are deleted.
     $this->drupalGet('admin/reports/status');
@@ -149,7 +150,7 @@ class ReadinessValidationTest extends AutomaticUpdatesFunctionalTestBase {
 
     $key_value->delete('readiness_validation_last_run');
     $expected_results = $this->testResults['checker_1']['2 errors 2 warnings'];
-    TestChecker1::setTestResult($expected_results);
+    TestChecker1::setTestResult($expected_results, ReadinessCheckEvent::class);
     $this->drupalGet('admin/reports/status');
     // Confirm that both messages and summaries will be displayed on status
     // report when there multiple messages.
@@ -158,7 +159,7 @@ class ReadinessValidationTest extends AutomaticUpdatesFunctionalTestBase {
 
     $key_value->delete('readiness_validation_last_run');
     $expected_results = $this->testResults['checker_1']['2 warnings'];
-    TestChecker1::setTestResult($expected_results);
+    TestChecker1::setTestResult($expected_results, ReadinessCheckEvent::class);
     $this->drupalGet('admin/reports/status');
     $assert->pageTextContainsOnce('Update readiness checks');
     // Confirm that warnings will display on the status report if there are no
@@ -167,7 +168,7 @@ class ReadinessValidationTest extends AutomaticUpdatesFunctionalTestBase {
 
     $key_value->delete('readiness_validation_last_run');
     $expected_results = $this->testResults['checker_1']['1 warning'];
-    TestChecker1::setTestResult($expected_results);
+    TestChecker1::setTestResult($expected_results, ReadinessCheckEvent::class);
     $this->drupalGet('admin/reports/status');
     $assert->pageTextContainsOnce('Update readiness checks');
     $this->assertWarnings($expected_results);
@@ -196,7 +197,7 @@ class ReadinessValidationTest extends AutomaticUpdatesFunctionalTestBase {
     // Confirm a user without the permission to run readiness checks does not
     // have a link to run the checks when the checks need to be run again.
     $expected_results = $this->testResults['checker_1']['1 error'];
-    TestChecker1::setTestResult($expected_results);
+    TestChecker1::setTestResult($expected_results, ReadinessCheckEvent::class);
     // @todo Change this to use ::delayRequestTime() to simulate running cron
     //   after a 24 wait instead of directly deleting 'readiness_validation_last_run'
     //   https://www.drupal.org/node/3113971.
@@ -219,7 +220,7 @@ class ReadinessValidationTest extends AutomaticUpdatesFunctionalTestBase {
     $assert->pageTextContainsOnce($expected_results[0]->getMessages()[0]);
 
     $expected_results = $this->testResults['checker_1']['1 error 1 warning'];
-    TestChecker1::setTestResult($expected_results);
+    TestChecker1::setTestResult($expected_results, ReadinessCheckEvent::class);
     // Confirm a new message is displayed if the cron is run after an hour.
     $this->delayRequestTime();
     $this->cronRun();
@@ -238,7 +239,7 @@ class ReadinessValidationTest extends AutomaticUpdatesFunctionalTestBase {
     // Confirm that if cron runs less than hour after it previously ran it will
     // not run the checkers again.
     $unexpected_results = $this->testResults['checker_1']['2 errors 2 warnings'];
-    TestChecker1::setTestResult($unexpected_results);
+    TestChecker1::setTestResult($unexpected_results, ReadinessCheckEvent::class);
     $this->delayRequestTime(30);
     $this->cronRun();
     $this->drupalGet('admin/structure');
@@ -267,7 +268,7 @@ class ReadinessValidationTest extends AutomaticUpdatesFunctionalTestBase {
     $assert->pageTextNotContains($expected_results['1:warnings']->getSummary());
 
     $expected_results = $this->testResults['checker_1']['2 warnings'];
-    TestChecker1::setTestResult($expected_results);
+    TestChecker1::setTestResult($expected_results, ReadinessCheckEvent::class);
     $this->delayRequestTime();
     $this->cronRun();
     $this->drupalGet('admin/structure');
@@ -281,7 +282,7 @@ class ReadinessValidationTest extends AutomaticUpdatesFunctionalTestBase {
     $assert->pageTextContainsOnce($expected_results[0]->getSummary());
 
     $expected_results = $this->testResults['checker_1']['1 warning'];
-    TestChecker1::setTestResult($expected_results);
+    TestChecker1::setTestResult($expected_results, ReadinessCheckEvent::class);
     $this->delayRequestTime();
     $this->cronRun();
     $this->drupalGet('admin/structure');
@@ -311,7 +312,7 @@ class ReadinessValidationTest extends AutomaticUpdatesFunctionalTestBase {
     $this->assertNoErrors(TRUE);
 
     $expected_results = $this->testResults['checker_1']['1 error'];
-    TestChecker2::setTestResult($expected_results);
+    TestChecker2::setTestResult($expected_results, ReadinessCheckEvent::class);
     $this->container->get('module_installer')->install(['automatic_updates_test2']);
     $this->drupalGet('admin/structure');
     $assert->pageTextContainsOnce($expected_results[0]->getMessages()[0]);
@@ -319,7 +320,7 @@ class ReadinessValidationTest extends AutomaticUpdatesFunctionalTestBase {
     // Confirm that installing a module that does not provide a new checker does
     // not run the checkers on install.
     $unexpected_results = $this->testResults['checker_1']['2 errors 2 warnings'];
-    TestChecker2::setTestResult($unexpected_results);
+    TestChecker2::setTestResult($unexpected_results, ReadinessCheckEvent::class);
     $this->container->get('module_installer')->install(['help']);
     // Check for message on 'admin/structure' instead of the status report
     // because checkers will be run if needed on the status report.
@@ -339,9 +340,9 @@ class ReadinessValidationTest extends AutomaticUpdatesFunctionalTestBase {
     $this->drupalLogin($this->checkerRunnerUser);
 
     $expected_results_1 = $this->testResults['checker_1']['1 error'];
-    TestChecker1::setTestResult($expected_results_1);
+    TestChecker1::setTestResult($expected_results_1, ReadinessCheckEvent::class);
     $expected_results_2 = $this->testResults['checker_2']['1 error'];
-    TestChecker2::setTestResult($expected_results_2);
+    TestChecker2::setTestResult($expected_results_2, ReadinessCheckEvent::class);
     $this->container->get('module_installer')->install([
       'automatic_updates',
       'automatic_updates_test',

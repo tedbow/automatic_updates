@@ -2,6 +2,7 @@
 
 namespace Drupal\Tests\automatic_updates\Functional;
 
+use Drupal\automatic_updates\Event\ReadinessCheckEvent;
 use Drupal\automatic_updates\Exception\UpdateException;
 use Drupal\package_manager\Event\PreCreateEvent;
 use Drupal\package_manager\ValidationResult;
@@ -143,7 +144,7 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
     // Store a fake readiness error, which will be cached.
     $message = t("You've not experienced Shakespeare until you have read him in the original Klingon.");
     $error = ValidationResult::createError([$message]);
-    TestChecker1::setTestResult([$error]);
+    TestChecker1::setTestResult([$error], ReadinessCheckEvent::class);
 
     $this->drupalGet('/admin/reports/status');
     $page->clickLink('Run readiness checks');
@@ -158,7 +159,7 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
     // Set up a new fake error.
     $this->createTestValidationResults();
     $expected_results = $this->testResults['checker_1']['1 error'];
-    TestChecker1::setTestResult($expected_results);
+    TestChecker1::setTestResult($expected_results, ReadinessCheckEvent::class);
 
     // If a validator raises an error during readiness checking, the form should
     // not have a submit button.
@@ -172,12 +173,12 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
     $assert_session->pageTextContainsOnce(static::$errorsExplanation);
     $assert_session->pageTextNotContains(static::$warningsExplanation);
     $assert_session->pageTextNotContains((string) $message);
-    TestChecker1::setTestResult(NULL);
+    TestChecker1::setTestResult(NULL, ReadinessCheckEvent::class);
 
     // Repackage the validation error as an exception, so we can test what
     // happens if a validator throws once the update has started.
     $error = new UpdateException($expected_results, 'The update exploded.');
-    TestChecker1::setTestResult($error, PreCreateEvent::class);
+    TestChecker1::setException($error, PreCreateEvent::class);
     $session->reload();
     $assert_session->pageTextNotContains(static::$errorsExplanation);
     $assert_session->pageTextNotContains(static::$warningsExplanation);

@@ -4,3 +4,4 @@ description: 'Module for testing Automatic Updates.'
 package: Testing
 dependencies:
   - drupal:automatic_updates
+  - automatic_updates:package_manager_test_validation

@@ -1,0 +1,7 @@
+services:
+  package_manager_test_validation.subscriber:
+    class: Drupal\package_manager_test_validation\TestSubscriber
+    arguments:
+      - '@state'
+    tags:
+      - { name: event_subscriber }
