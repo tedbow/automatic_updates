@@ -3,7 +3,6 @@
 namespace Drupal\automatic_updates\Validator;
 
 use Drupal\automatic_updates\Event\ReadinessCheckEvent;
-use Drupal\package_manager\ValidationResult;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
@@ -29,10 +28,9 @@ class CoreComposerValidator implements EventSubscriberInterface {
       ['drupal/core', 'drupal/core-recommended']
     );
     if (empty($core_requirements)) {
-      $error = ValidationResult::createError([
+      $event->addError([
         $this->t('Drupal core does not appear to be required in the project-level composer.json.'),
       ]);
-      $event->addValidationResult($error);
     }
   }
 

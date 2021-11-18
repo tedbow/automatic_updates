@@ -3,8 +3,7 @@
 namespace Drupal\package_manager\EventSubscriber;
 
 use Drupal\package_manager\Event\PreCreateEvent;
-use Drupal\package_manager\Event\StageEvent;
-use Drupal\package_manager\ValidationResult;
+use Drupal\package_manager\Event\PreOperationStageEvent;
 use Drupal\Component\FileSystem\FileSystem;
 use Drupal\Component\Utility\Bytes;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
@@ -14,7 +13,7 @@ use Drupal\package_manager\PathLocator;
 /**
  * Validates that there is enough free disk space to do automatic updates.
  */
-class DiskSpaceValidator implements StageValidatorInterface {
+class DiskSpaceValidator implements PreOperationStageValidatorInterface {
 
   use StringTranslationTrait;
 
@@ -99,7 +98,7 @@ class DiskSpaceValidator implements StageValidatorInterface {
   /**
    * {@inheritdoc}
    */
-  public function validateStage(StageEvent $event): void {
+  public function validateStagePreOperation(PreOperationStageEvent $event): void {
     $root_path = $this->pathLocator->getProjectRoot();
     $vendor_path = $this->pathLocator->getVendorDirectory();
     $messages = [];
@@ -140,9 +139,7 @@ class DiskSpaceValidator implements StageValidatorInterface {
       $summary = count($messages) > 1
         ? $this->t("There is not enough disk space to create a staging area.")
         : NULL;
-
-      $error = ValidationResult::createError($messages, $summary);
-      $event->addValidationResult($error);
+      $event->addError($messages, $summary);
     }
   }
 
@@ -161,7 +158,7 @@ class DiskSpaceValidator implements StageValidatorInterface {
    */
   public static function getSubscribedEvents() {
     return [
-      PreCreateEvent::class => 'validateStage',
+      PreCreateEvent::class => 'validateStagePreOperation',
     ];
   }
 

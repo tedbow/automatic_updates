@@ -3,7 +3,10 @@
 namespace Drupal\automatic_updates\Event;
 
 use Drupal\automatic_updates\Updater;
-use Drupal\package_manager\Event\StageEvent;
+use Drupal\Core\StringTranslation\TranslatableMarkup;
+use Drupal\package_manager\Event\PreOperationStageEvent;
+use Drupal\package_manager\Event\WarningEventInterface;
+use Drupal\package_manager\ValidationResult;
 
 /**
  * Event fired when checking if the site could perform an update.
@@ -17,7 +20,7 @@ use Drupal\package_manager\Event\StageEvent;
  *
  * @see \Drupal\automatic_updates\Validation\ReadinessValidationManager
  */
-class ReadinessCheckEvent extends StageEvent {
+class ReadinessCheckEvent extends PreOperationStageEvent implements WarningEventInterface {
 
   /**
    * The desired package versions to update to, keyed by package name.
@@ -48,6 +51,13 @@ class ReadinessCheckEvent extends StageEvent {
    */
   public function getPackageVersions(): array {
     return $this->packageVersions;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function addWarning(array $messages, ?TranslatableMarkup $summary = NULL) {
+    $this->results[] = ValidationResult::createWarning($messages, $summary);
   }
 
 }

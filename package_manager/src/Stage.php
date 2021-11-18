@@ -12,7 +12,6 @@ use Drupal\package_manager\Event\PreCreateEvent;
 use Drupal\package_manager\Event\PreDestroyEvent;
 use Drupal\package_manager\Event\PreRequireEvent;
 use Drupal\package_manager\Event\StageEvent;
-use Drupal\system\SystemManager;
 use PhpTuf\ComposerStager\Domain\BeginnerInterface;
 use PhpTuf\ComposerStager\Domain\CleanerInterface;
 use PhpTuf\ComposerStager\Domain\CommitterInterface;
@@ -240,9 +239,9 @@ class Stage {
     try {
       $this->eventDispatcher->dispatch($event);
 
-      $errors = $event->getResults(SystemManager::REQUIREMENT_ERROR);
-      if ($errors) {
-        throw new StageException($errors);
+      $results = $event->getResults();
+      if ($results) {
+        throw new StageException($results);
       }
     }
     catch (\Throwable $error) {

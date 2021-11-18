@@ -12,6 +12,7 @@ use Drupal\package_manager\Event\PreCreateEvent;
 use Drupal\package_manager\Event\PreDestroyEvent;
 use Drupal\package_manager\Event\PreRequireEvent;
 use Drupal\package_manager\Event\StageEvent;
+use Drupal\system\SystemManager;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 /**
@@ -101,8 +102,14 @@ class TestSubscriber implements EventSubscriberInterface {
     if ($results instanceof \Throwable) {
       throw $results;
     }
+    /** @var \Drupal\package_manager\ValidationResult $result */
     foreach ($results as $result) {
-      $event->addValidationResult($result);
+      if ($result->getSeverity() === SystemManager::REQUIREMENT_ERROR) {
+        $event->addError($result->getMessages(), $result->getSummary());
+      }
+      else {
+        $event->addWarning($result->getMessages(), $result->getSummary());
+      }
     }
   }
 

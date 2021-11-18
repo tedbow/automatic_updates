@@ -6,8 +6,7 @@ use Composer\Semver\Semver;
 use Drupal\automatic_updates\Event\ReadinessCheckEvent;
 use Drupal\automatic_updates\Updater;
 use Drupal\package_manager\Event\PreCreateEvent;
-use Drupal\package_manager\Event\StageEvent;
-use Drupal\package_manager\ValidationResult;
+use Drupal\package_manager\Event\PreOperationStageEvent;
 use Drupal\Core\Extension\ExtensionVersion;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\Core\StringTranslation\TranslationInterface;
@@ -48,10 +47,10 @@ class UpdateVersionValidator implements EventSubscriberInterface {
   /**
    * Validates that core is not being updated to another minor or major version.
    *
-   * @param \Drupal\package_manager\Event\StageEvent $event
+   * @param \Drupal\package_manager\Event\PreOperationStageEvent $event
    *   The event object.
    */
-  public function checkUpdateVersion(StageEvent $event): void {
+  public function checkUpdateVersion(PreOperationStageEvent $event): void {
     $stage = $event->getStage();
     // We only want to do this check if the stage belongs to Automatic Updates.
     if (!$stage instanceof Updater) {
@@ -85,32 +84,28 @@ class UpdateVersionValidator implements EventSubscriberInterface {
         '@to_version' => $to_version_string,
         '@from_version' => $from_version_string,
       ]);
-      $error = ValidationResult::createError($messages);
-      $event->addValidationResult($error);
+      $event->addError($messages);
     }
     elseif ($from_version->getVersionExtra() === 'dev') {
       $messages[] = $this->t('Drupal cannot be automatically updated from its current version, @from_version, to the recommended version, @to_version, because automatic updates from a dev version to any other version are not supported.', [
         '@to_version' => $to_version_string,
         '@from_version' => $from_version_string,
       ]);
-      $error = ValidationResult::createError($messages);
-      $event->addValidationResult($error);
+      $event->addError($messages);
     }
     elseif ($from_version->getMajorVersion() !== $to_version->getMajorVersion()) {
       $messages[] = $this->t('Drupal cannot be automatically updated from its current version, @from_version, to the recommended version, @to_version, because automatic updates from one major version to another are not supported.', [
         '@to_version' => $to_version_string,
         '@from_version' => $from_version_string,
       ]);
-      $error = ValidationResult::createError($messages);
-      $event->addValidationResult($error);
+      $event->addError($messages);
     }
     elseif ($from_version->getMinorVersion() !== $to_version->getMinorVersion()) {
       $messages[] = $this->t('Drupal cannot be automatically updated from its current version, @from_version, to the recommended version, @to_version, because automatic updates from one minor version to another are not supported.', [
         '@from_version' => $this->getCoreVersion(),
         '@to_version' => $package_versions[$core_package_name],
       ]);
-      $error = ValidationResult::createError($messages);
-      $event->addValidationResult($error);
+      $event->addError($messages);
     }
   }
 

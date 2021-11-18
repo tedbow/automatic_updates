@@ -204,14 +204,6 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
     // Since there's only one message, we shouldn't see the summary.
     $assert_session->pageTextNotContains($expected_results[0]->getSummary());
     $assert_session->pageTextContainsOnce((string) $expected_results[0]->getMessages()[0]);
-
-    // If a validator flags a warning, but doesn't throw, the update should
-    // continue.
-    $expected_results = $this->testResults['checker_1']['1 warning'];
-    TestChecker1::setTestResult($expected_results, PreCreateEvent::class);
-    $page->pressButton('Update');
-    $this->checkForMetaRefresh();
-    $assert_session->pageTextContains('Ready to update');
   }
 
   /**

@@ -3,8 +3,7 @@
 namespace Drupal\package_manager\EventSubscriber;
 
 use Drupal\package_manager\Event\PreCreateEvent;
-use Drupal\package_manager\Event\StageEvent;
-use Drupal\package_manager\ValidationResult;
+use Drupal\package_manager\Event\PreOperationStageEvent;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\Core\StringTranslation\TranslationInterface;
 use Drupal\Core\Update\UpdateRegistry;
@@ -13,7 +12,7 @@ use Drupal\Core\Url;
 /**
  * Validates that there are no pending database updates.
  */
-class PendingUpdatesValidator implements StageValidatorInterface {
+class PendingUpdatesValidator implements PreOperationStageValidatorInterface {
 
   use StringTranslationTrait;
 
@@ -50,7 +49,7 @@ class PendingUpdatesValidator implements StageValidatorInterface {
   /**
    * {@inheritdoc}
    */
-  public function validateStage(StageEvent $event): void {
+  public function validateStagePreOperation(PreOperationStageEvent $event): void {
     require_once $this->appRoot . '/core/includes/install.inc';
     require_once $this->appRoot . '/core/includes/update.inc';
 
@@ -62,8 +61,7 @@ class PendingUpdatesValidator implements StageValidatorInterface {
       $message = $this->t('Some modules have database schema updates to install. You should run the <a href=":update">database update script</a> immediately.', [
         ':update' => Url::fromRoute('system.db_update')->toString(),
       ]);
-      $error = ValidationResult::createError([$message]);
-      $event->addValidationResult($error);
+      $event->addError([$message]);
     }
   }
 
@@ -72,7 +70,7 @@ class PendingUpdatesValidator implements StageValidatorInterface {
    */
   public static function getSubscribedEvents() {
     return [
-      PreCreateEvent::class => 'validateStage',
+      PreCreateEvent::class => 'validateStagePreOperation',
     ];
   }
 

@@ -11,7 +11,6 @@ use Drupal\Core\State\StateInterface;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\Core\StringTranslation\TranslationInterface;
 use Drupal\Core\Url;
-use Drupal\package_manager\ValidationResult;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 /**
@@ -136,12 +135,10 @@ class CronFrequencyValidator implements EventSubscriberInterface {
     $interval = $this->configFactory->get('automated_cron.settings')->get('interval');
 
     if ($interval > static::ERROR_INTERVAL) {
-      $error = ValidationResult::createError([$message]);
-      $event->addValidationResult($error);
+      $event->addError([$message]);
     }
     elseif ($interval > static::WARNING_INTERVAL) {
-      $warning = ValidationResult::createWarning([$message]);
-      $event->addValidationResult($warning);
+      $event->addWarning([$message]);
     }
   }
 
@@ -162,13 +159,12 @@ class CronFrequencyValidator implements EventSubscriberInterface {
     //   last cron run time is recorded after cron runs. Address this in
     //   https://www.drupal.org/project/automatic_updates/issues/3248544.
     if ($this->time->getRequestTime() - $cron_last > static::WARNING_INTERVAL) {
-      $error = ValidationResult::createError([
+      $event->addError([
         $this->t('Cron has not run recently. For more information, see the online handbook entry for <a href=":cron-handbook">configuring cron jobs</a> to run at least every @frequency hours.', [
           ':cron-handbook' => 'https://www.drupal.org/cron',
           '@frequency' => static::SUGGESTED_INTERVAL,
         ]),
       ]);
-      $event->addValidationResult($error);
     }
   }
 

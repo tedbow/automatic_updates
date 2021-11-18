@@ -3,7 +3,6 @@
 namespace Drupal\automatic_updates\Validator;
 
 use Drupal\package_manager\Event\PreApplyEvent;
-use Drupal\package_manager\ValidationResult;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\Core\StringTranslation\TranslationInterface;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
@@ -38,10 +37,9 @@ final class StagedProjectsValidator implements EventSubscriberInterface {
       $staged_packages = $stage->getStageComposer()->getDrupalExtensionPackages();
     }
     catch (\Throwable $e) {
-      $result = ValidationResult::createError([
+      $event->addError([
         $e->getMessage(),
       ]);
-      $event->addValidationResult($result);
       return;
     }
 
@@ -69,7 +67,7 @@ final class StagedProjectsValidator implements EventSubscriberInterface {
         'The update cannot proceed because the following Drupal project was installed during the update.',
         'The update cannot proceed because the following Drupal projects were installed during the update.'
       );
-      $event->addValidationResult(ValidationResult::createError($new_packages_messages, $new_packages_summary));
+      $event->addError($new_packages_messages, $new_packages_summary);
     }
 
     // Check if any Drupal projects were removed.
@@ -89,7 +87,7 @@ final class StagedProjectsValidator implements EventSubscriberInterface {
         'The update cannot proceed because the following Drupal project was removed during the update.',
         'The update cannot proceed because the following Drupal projects were removed during the update.'
       );
-      $event->addValidationResult(ValidationResult::createError($removed_packages_messages, $removed_packages_summary));
+      $event->addError($removed_packages_messages, $removed_packages_summary);
     }
 
     // Get all the packages that are neither newly installed or removed to
@@ -115,7 +113,7 @@ final class StagedProjectsValidator implements EventSubscriberInterface {
           'The update cannot proceed because the following Drupal project was unexpectedly updated. Only Drupal Core updates are currently supported.',
           'The update cannot proceed because the following Drupal projects were unexpectedly updated. Only Drupal Core updates are currently supported.'
         );
-        $event->addValidationResult(ValidationResult::createError($version_change_messages, $version_change_summary));
+        $event->addError($version_change_messages, $version_change_summary);
       }
     }
   }

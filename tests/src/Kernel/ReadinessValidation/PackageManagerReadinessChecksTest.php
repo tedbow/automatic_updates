@@ -4,7 +4,7 @@ namespace Drupal\Tests\automatic_updates\Kernel\ReadinessValidation;
 
 use Drupal\automatic_updates\Event\ReadinessCheckEvent;
 use Drupal\Core\DependencyInjection\ContainerBuilder;
-use Drupal\package_manager\EventSubscriber\StageValidatorInterface;
+use Drupal\package_manager\EventSubscriber\PreOperationStageValidatorInterface;
 use Drupal\Tests\automatic_updates\Kernel\AutomaticUpdatesKernelTestBase;
 use Prophecy\Argument;
 
@@ -65,8 +65,8 @@ class PackageManagerReadinessChecksTest extends AutomaticUpdatesKernelTestBase {
     // that it gets called with a readiness check event, when we run readiness
     // checks.
     $event = Argument::type(ReadinessCheckEvent::class);
-    $validator = $this->prophesize(StageValidatorInterface::class);
-    $validator->validateStage($event)->shouldBeCalled();
+    $validator = $this->prophesize(PreOperationStageValidatorInterface::class);
+    $validator->validateStagePreOperation($event)->shouldBeCalled();
     $this->container->set($service_id, $validator->reveal());
 
     $this->container->get('automatic_updates.readiness_validation_manager')

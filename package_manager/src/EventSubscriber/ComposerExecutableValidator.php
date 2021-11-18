@@ -3,8 +3,7 @@
 namespace Drupal\package_manager\EventSubscriber;
 
 use Drupal\package_manager\Event\PreCreateEvent;
-use Drupal\package_manager\Event\StageEvent;
-use Drupal\package_manager\ValidationResult;
+use Drupal\package_manager\Event\PreOperationStageEvent;
 use Drupal\Core\Extension\ExtensionVersion;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\Core\StringTranslation\TranslationInterface;
@@ -15,7 +14,7 @@ use PhpTuf\ComposerStager\Infrastructure\Process\Runner\ComposerRunnerInterface;
 /**
  * Validates that the Composer executable can be found in the correct version.
  */
-class ComposerExecutableValidator implements StageValidatorInterface, ProcessOutputCallbackInterface {
+class ComposerExecutableValidator implements PreOperationStageValidatorInterface, ProcessOutputCallbackInterface {
 
   use StringTranslationTrait;
 
@@ -49,15 +48,14 @@ class ComposerExecutableValidator implements StageValidatorInterface, ProcessOut
   /**
    * {@inheritdoc}
    */
-  public function validateStage(StageEvent $event): void {
+  public function validateStagePreOperation(PreOperationStageEvent $event): void {
     try {
       $this->composer->run(['--version'], $this);
     }
     catch (ExceptionInterface $e) {
-      $error = ValidationResult::createError([
+      $event->addError([
         $e->getMessage(),
       ]);
-      $event->addValidationResult($error);
       return;
     }
 
@@ -66,19 +64,17 @@ class ComposerExecutableValidator implements StageValidatorInterface, ProcessOut
         ->getMajorVersion();
 
       if ($major_version < 2) {
-        $error = ValidationResult::createError([
+        $event->addError([
           $this->t('Composer 2 or later is required, but version @version was detected.', [
             '@version' => $this->version,
           ]),
         ]);
-        $event->addValidationResult($error);
       }
     }
     else {
-      $error = ValidationResult::createError([
+      $event->addError([
         $this->t('The Composer version could not be detected.'),
       ]);
-      $event->addValidationResult($error);
     }
   }
 
@@ -87,7 +83,7 @@ class ComposerExecutableValidator implements StageValidatorInterface, ProcessOut
    */
   public static function getSubscribedEvents() {
     return [
-      PreCreateEvent::class => 'validateStage',
+      PreCreateEvent::class => 'validateStagePreOperation',
     ];
   }
 

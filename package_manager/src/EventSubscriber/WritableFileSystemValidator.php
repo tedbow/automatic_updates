@@ -3,8 +3,7 @@
 namespace Drupal\package_manager\EventSubscriber;
 
 use Drupal\package_manager\Event\PreCreateEvent;
-use Drupal\package_manager\Event\StageEvent;
-use Drupal\package_manager\ValidationResult;
+use Drupal\package_manager\Event\PreOperationStageEvent;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\Core\StringTranslation\TranslationInterface;
 use Drupal\package_manager\PathLocator;
@@ -12,7 +11,7 @@ use Drupal\package_manager\PathLocator;
 /**
  * Checks that the file system is writable.
  */
-class WritableFileSystemValidator implements StageValidatorInterface {
+class WritableFileSystemValidator implements PreOperationStageValidatorInterface {
 
   use StringTranslationTrait;
 
@@ -54,7 +53,7 @@ class WritableFileSystemValidator implements StageValidatorInterface {
    *   false negatives/positives due to things like SELinux, exotic file
    *   systems, and so forth.
    */
-  public function validateStage(StageEvent $event): void {
+  public function validateStagePreOperation(PreOperationStageEvent $event): void {
     $messages = [];
 
     if (!is_writable($this->appRoot)) {
@@ -69,8 +68,7 @@ class WritableFileSystemValidator implements StageValidatorInterface {
     }
 
     if ($messages) {
-      $result = ValidationResult::createError($messages, $this->t('The file system is not writable.'));
-      $event->addValidationResult($result);
+      $event->addError($messages, $this->t('The file system is not writable.'));
     }
   }
 
@@ -79,7 +77,7 @@ class WritableFileSystemValidator implements StageValidatorInterface {
    */
   public static function getSubscribedEvents() {
     return [
-      PreCreateEvent::class => 'validateStage',
+      PreCreateEvent::class => 'validateStagePreOperation',
     ];
   }
 

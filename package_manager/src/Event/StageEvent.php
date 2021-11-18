@@ -3,7 +3,6 @@
 namespace Drupal\package_manager\Event;
 
 use Drupal\package_manager\Stage;
-use Drupal\package_manager\ValidationResult;
 use Symfony\Contracts\EventDispatcher\Event;
 
 /**
@@ -62,16 +61,6 @@ abstract class StageEvent extends Event {
       });
     }
     return $this->results;
-  }
-
-  /**
-   * Adds a validation result.
-   *
-   * @param \Drupal\package_manager\ValidationResult $validation_result
-   *   The validation result.
-   */
-  public function addValidationResult(ValidationResult $validation_result): void {
-    $this->results[] = $validation_result;
   }
 
 }

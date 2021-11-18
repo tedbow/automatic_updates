@@ -8,15 +8,14 @@ use Drupal\Core\StringTranslation\TranslationInterface;
 use Drupal\package_manager\Event\PostDestroyEvent;
 use Drupal\package_manager\Event\PreApplyEvent;
 use Drupal\package_manager\Event\PreCreateEvent;
+use Drupal\package_manager\Event\PreOperationStageEvent;
 use Drupal\package_manager\Event\PreRequireEvent;
-use Drupal\package_manager\Event\StageEvent;
 use Drupal\package_manager\PathLocator;
-use Drupal\package_manager\ValidationResult;
 
 /**
  * Checks that the active lock file is unchanged during stage operations.
  */
-class LockFileValidator implements StageValidatorInterface {
+class LockFileValidator implements PreOperationStageValidatorInterface {
 
   use StringTranslationTrait;
 
@@ -87,17 +86,16 @@ class LockFileValidator implements StageValidatorInterface {
       $this->state->set(static::STATE_KEY, $hash);
     }
     else {
-      $result = ValidationResult::createError([
+      $event->addError([
         $this->t('Could not hash the active lock file.'),
       ]);
-      $event->addValidationResult($result);
     }
   }
 
   /**
    * {@inheritdoc}
    */
-  public function validateStage(StageEvent $event): void {
+  public function validateStagePreOperation(PreOperationStageEvent $event): void {
     // Ensure we can get a current hash of the lock file.
     $hash = $this->getHash();
     if (empty($hash)) {
@@ -118,8 +116,7 @@ class LockFileValidator implements StageValidatorInterface {
     // @todo Let the validation result carry all the relevant messages in
     //   https://www.drupal.org/i/3247479.
     if (isset($error)) {
-      $result = ValidationResult::createError([$error]);
-      $event->addValidationResult($result);
+      $event->addError([$error]);
     }
   }
 
@@ -136,8 +133,8 @@ class LockFileValidator implements StageValidatorInterface {
   public static function getSubscribedEvents() {
     return [
       PreCreateEvent::class => 'storeHash',
-      PreRequireEvent::class => 'validateStage',
-      PreApplyEvent::class => 'validateStage',
+      PreRequireEvent::class => 'validateStagePreOperation',
+      PreApplyEvent::class => 'validateStagePreOperation',
       PostDestroyEvent::class => 'deleteHash',
     ];
   }

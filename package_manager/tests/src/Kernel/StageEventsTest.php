@@ -2,6 +2,7 @@
 
 namespace Drupal\Tests\package_manager\Kernel;
 
+use Drupal\package_manager\Event\ErrorEventInterface;
 use Drupal\package_manager\Event\PostApplyEvent;
 use Drupal\package_manager\Event\PostCreateEvent;
 use Drupal\package_manager\Event\PostDestroyEvent;
@@ -11,9 +12,9 @@ use Drupal\package_manager\Event\PreCreateEvent;
 use Drupal\package_manager\Event\PreDestroyEvent;
 use Drupal\package_manager\Event\PreRequireEvent;
 use Drupal\package_manager\Event\StageEvent;
+use Drupal\package_manager\Event\WarningEventInterface;
 use Drupal\package_manager\Stage;
 use Drupal\package_manager\StageException;
-use Drupal\package_manager\ValidationResult;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 /**
@@ -75,7 +76,7 @@ class StageEventsTest extends PackageManagerKernelTestBase implements EventSubsc
   /**
    * Handles a staging area life cycle event.
    *
-   * @param \Drupal\package_manager\Event\StageEvent $event
+   * @param \Drupal\package_manager\Event\PreOperationStageEvent|\Drupal\package_manager\Event\PostOperationStageEvent $event
    *   The event object.
    */
   public function handleEvent(StageEvent $event): void {
@@ -83,12 +84,6 @@ class StageEventsTest extends PackageManagerKernelTestBase implements EventSubsc
 
     // The event should have a reference to the stage which fired it.
     $this->assertSame($event->getStage(), $this->stage);
-
-    // Adding a warning to the event, should not trigger an exception.
-    $result = ValidationResult::createWarning([
-      'This is a public service announcement, this is only a test.',
-    ]);
-    $event->addValidationResult($result);
   }
 
   /**
@@ -115,12 +110,12 @@ class StageEventsTest extends PackageManagerKernelTestBase implements EventSubsc
   }
 
   /**
-   * Data provider for ::testError().
+   * Data provider for ::testValidationResults().
    *
    * @return string[][]
    *   Sets of arguments to pass to the test method.
    */
-  public function providerError(): array {
+  public function providerValidationResults(): array {
     return [
       [PreCreateEvent::class],
       [PostCreateEvent::class],
@@ -134,20 +129,24 @@ class StageEventsTest extends PackageManagerKernelTestBase implements EventSubsc
   }
 
   /**
-   * Tests that an exception is thrown if an event collects an error.
+   * Tests that an exception is thrown if an event has validation results.
    *
    * @param string $event_class
    *   The event class to test.
    *
-   * @dataProvider providerError
+   * @dataProvider providerValidationResults
    */
-  public function testError(string $event_class): void {
+  public function testValidationResults(string $event_class): void {
     // Set up an event listener which will only flag an error for the event
     // class under test.
     $handler = function (StageEvent $event) use ($event_class): void {
       if (get_class($event) === $event_class) {
-        $result = ValidationResult::createError(['Burn, baby, burn']);
-        $event->addValidationResult($result);
+        if ($event instanceof ErrorEventInterface) {
+          $event->addError([['Burn, baby, burn']]);
+        }
+        elseif ($event instanceof WarningEventInterface) {
+          $event->addWarning(['Be careful about fires.']);
+        }
       }
     };
     $this->container->get('event_dispatcher')
