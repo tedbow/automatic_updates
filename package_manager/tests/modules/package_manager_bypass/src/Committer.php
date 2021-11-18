@@ -8,7 +8,7 @@ use PhpTuf\ComposerStager\Domain\Output\ProcessOutputCallbackInterface;
 /**
  * Defines an update committer which doesn't do any actual committing.
  */
-class Committer implements CommitterInterface {
+class Committer extends InvocationRecorderBase implements CommitterInterface {
 
   /**
    * The decorated committer service.
@@ -31,6 +31,7 @@ class Committer implements CommitterInterface {
    * {@inheritdoc}
    */
   public function commit(string $stagingDir, string $activeDir, ?array $exclusions = [], ?ProcessOutputCallbackInterface $callback = NULL, ?int $timeout = 120): void {
+    $this->saveInvocationArguments($activeDir, $stagingDir, $exclusions);
   }
 
   /**

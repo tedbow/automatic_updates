@@ -8,12 +8,13 @@ use PhpTuf\ComposerStager\Domain\StagerInterface;
 /**
  * Defines an update stager which doesn't actually do anything.
  */
-class Stager implements StagerInterface {
+class Stager extends InvocationRecorderBase implements StagerInterface {
 
   /**
    * {@inheritdoc}
    */
   public function stage(array $composerCommand, string $stagingDir, ?ProcessOutputCallbackInterface $callback = NULL, ?int $timeout = 120): void {
+    $this->saveInvocationArguments($composerCommand, $stagingDir);
   }
 
 }

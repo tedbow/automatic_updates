@@ -4,8 +4,6 @@ namespace Drupal\Tests\automatic_updates\Kernel;
 
 use Drupal\package_manager\PathLocator;
 use Drupal\Tests\user\Traits\UserCreationTrait;
-use PhpTuf\ComposerStager\Domain\StagerInterface;
-use Prophecy\Argument;
 
 /**
  * @coversDefaultClass \Drupal\automatic_updates\Updater
@@ -71,27 +69,32 @@ class UpdaterTest extends AutomaticUpdatesKernelTestBase {
 
     // When we call Updater::stage(), the stored project versions should be
     // read from state and passed to Composer Stager's Stager service, in the
-    // form of a Composer command. We set up a mock here to ensure that those
-    // calls are made as expected.
-    $stager = $this->prophesize(StagerInterface::class);
+    // form of a Composer command. This is done using package_manager_bypass's
+    // invocation recorder, rather than a regular mock, in order to test that
+    // the invocation recorder itself works.
     // The production dependencies should be updated first...
-    $command = [
+    $expected_require_arguments = [
       'require',
       'drupal/core-recommended:9.8.1',
       '--update-with-all-dependencies',
     ];
-    $stager->stage($command, Argument::cetera())->shouldBeCalled();
     // ...followed by the dev dependencies.
-    $command = [
+    $expected_require_dev_arguments = [
       'require',
       'drupal/core-dev:9.8.1',
       '--update-with-all-dependencies',
       '--dev',
     ];
-    $stager->stage($command, Argument::cetera())->shouldBeCalled();
-
-    $this->container->set('package_manager.stager', $stager->reveal());
     $this->container->get('automatic_updates.updater')->stage();
+
+    /** @var \Drupal\package_manager_bypass\InvocationRecorderBase $stager */
+    $stager = $this->container->get('package_manager.stager');
+    [
+      $actual_require_arguments,
+      $actual_require_dev_arguments,
+    ] = $stager->getInvocationArguments();
+    $this->assertSame($expected_require_arguments, $actual_require_arguments[0]);
+    $this->assertSame($expected_require_dev_arguments, $actual_require_dev_arguments[0]);
   }
 
   /**

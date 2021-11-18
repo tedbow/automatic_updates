@@ -131,6 +131,7 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
     $release_notes = $assert_session->elementExists('named', ['link', 'Release notes'], $cells[2]);
     $this->assertSame('Release notes for Drupal', $release_notes->getAttribute('title'));
     $assert_session->buttonExists('Update');
+    $this->assertUpdateStagedTimes(0);
   }
 
   /**
@@ -184,8 +185,10 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
     $assert_session->pageTextNotContains(static::$warningsExplanation);
     $page->pressButton('Update');
     $this->checkForMetaRefresh();
+
     // If a validator flags an error, but doesn't throw, the update should still
     // be halted.
+    $this->assertUpdateStagedTimes(0);
     $assert_session->pageTextContainsOnce('An error has occurred.');
     $page->clickLink('the error page');
     $assert_session->pageTextContainsOnce((string) $expected_results[0]->getMessages()[0]);
@@ -199,6 +202,7 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
     TestChecker1::setTestResult($expected_results, PreCreateEvent::class);
     $page->pressButton('Update');
     $this->checkForMetaRefresh();
+    $this->assertUpdateStagedTimes(0);
     $assert_session->pageTextContainsOnce('An error has occurred.');
     $page->clickLink('the error page');
     // Since there's only one message, we shouldn't see the summary.
@@ -240,6 +244,7 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
     $this->drupalGet('/admin/modules/automatic-update');
     $page->pressButton('Update');
     $this->checkForMetaRefresh();
+    $this->assertUpdateStagedTimes(1);
 
     // Confirm we are on the confirmation page.
     $assert_session->addressEquals('/admin/automatic-update-ready');
@@ -260,7 +265,28 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
 
     // Confirm we are on the confirmation page.
     $assert_session->addressEquals('/admin/automatic-update-ready');
+    $this->assertUpdateStagedTimes(2);
     $assert_session->buttonExists('Continue');
+  }
+
+  /**
+   * Asserts the number of times an update was staged.
+   *
+   * @param int $attempted_times
+   *   The expected number of times an update was staged.
+   */
+  private function assertUpdateStagedTimes(int $attempted_times): void {
+    /** @var \Drupal\package_manager_bypass\InvocationRecorderBase $beginner */
+    $beginner = $this->container->get('package_manager.beginner');
+    $this->assertCount($attempted_times, $beginner->getInvocationArguments());
+
+    /** @var \Drupal\package_manager_bypass\InvocationRecorderBase $stager */
+    $stager = $this->container->get('package_manager.stager');
+    $this->assertCount($attempted_times, $stager->getInvocationArguments());
+
+    /** @var \Drupal\package_manager_bypass\InvocationRecorderBase $committer */
+    $committer = $this->container->get('package_manager.committer');
+    $this->assertEmpty($committer->getInvocationArguments());
   }
 
 }
