@@ -8,8 +8,8 @@
 /**
  * Implements hook_requirements().
  */
-function package_manager_requirements($phase) {
-  if ($phase === 'install' && !class_exists('PhpTuf\ComposerStager\Domain\Beginner')) {
+function package_manager_requirements() {
+  if (!class_exists('PhpTuf\ComposerStager\Domain\Beginner')) {
     return [
       'package_manager' => [
         'description' => t('External dependencies for Package Manager are not available. Composer must be used to download the module with dependencies.'),
