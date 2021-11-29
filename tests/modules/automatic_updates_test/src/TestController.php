@@ -34,7 +34,7 @@ class TestController extends ControllerBase {
       $updater->begin(['drupal' => $to_version]);
       $updater->stage();
       $updater->apply();
-      $updater->clean();
+      $updater->destroy();
 
       $project = (new UpdateRecommender())->getProjectInfo();
       $content = $project['existing_version'];

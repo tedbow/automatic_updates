@@ -123,7 +123,7 @@ class BatchProcessor {
    */
   public static function clean(string $stage_id, array &$context): void {
     try {
-      static::getUpdater()->claim($stage_id)->clean();
+      static::getUpdater()->claim($stage_id)->destroy();
     }
     catch (\Throwable $e) {
       static::handleException($e, $context);

@@ -11,7 +11,6 @@ services:
   automatic_updates.updater:
     class: Drupal\automatic_updates\Updater
     arguments:
-      - '@state'
       - '@package_manager.path_locator'
       - '@package_manager.beginner'
       - '@package_manager.stager'

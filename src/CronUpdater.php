@@ -132,7 +132,7 @@ class CronUpdater implements ContainerInjectionInterface {
       ]);
       $this->updater->stage();
       $this->updater->apply();
-      $this->updater->clean();
+      $this->updater->destroy();
     }
     catch (\Throwable $e) {
       $this->logger->error($e->getMessage());

@@ -70,7 +70,6 @@ class FileSystemOperationsTest extends AutomaticUpdatesFunctionalTestBase {
     );
 
     $this->updater = new Updater(
-      $this->container->get('state'),
       $locator->reveal(),
       $this->container->get('package_manager.beginner'),
       $this->container->get('package_manager.stager'),
@@ -131,7 +130,7 @@ class FileSystemOperationsTest extends AutomaticUpdatesFunctionalTestBase {
     $this->assertTrue(chmod("$this->stageDir/sites/default", 0400));
     $this->assertNotIsWritable("$this->stageDir/sites/default/staged.txt");
     // If the site directory is not writable, this will throw an exception.
-    $this->updater->clean();
+    $this->updater->destroy();
     $this->assertDirectoryDoesNotExist($this->stageDir);
   }
 

@@ -43,6 +43,13 @@ class Stage {
   protected const TEMPSTORE_LOCK_KEY = 'lock';
 
   /**
+   * The tempstore key under which to store arbitrary metadata for this stage.
+   *
+   * @var string
+   */
+  protected const TEMPSTORE_METADATA_KEY = 'metadata';
+
+  /**
    * The path locator service.
    *
    * @var \Drupal\package_manager\PathLocator
@@ -136,6 +143,44 @@ class Stage {
    */
   final public function isAvailable(): bool {
     return empty($this->tempStore->getMetadata(static::TEMPSTORE_LOCK_KEY));
+  }
+
+  /**
+   * Returns a specific piece of metadata associated with this stage.
+   *
+   * Only the owner of the stage can access metadata, and the stage must either
+   * be claimed by its owner, or created during the current request.
+   *
+   * @param string $key
+   *   The metadata key.
+   *
+   * @return mixed
+   *   The metadata value, or NULL if it is not set.
+   */
+  protected function getMetadata(string $key) {
+    $this->checkOwnership();
+
+    $metadata = $this->tempStore->getIfOwner(static::TEMPSTORE_METADATA_KEY) ?: [];
+    return $metadata[$key] ?? NULL;
+  }
+
+  /**
+   * Stores arbitrary metadata associated with this stage.
+   *
+   * Only the owner of the stage can set metadata, and the stage must either be
+   * claimed by its owner, or created during the current request.
+   *
+   * @param string $key
+   *   The key under which to store the metadata.
+   * @param mixed $data
+   *   The metadata to store.
+   */
+  protected function setMetadata(string $key, $data): void {
+    $this->checkOwnership();
+
+    $metadata = $this->tempStore->get(static::TEMPSTORE_METADATA_KEY);
+    $metadata[$key] = $data;
+    $this->tempStore->set(static::TEMPSTORE_METADATA_KEY, $metadata);
   }
 
   /**
@@ -244,6 +289,7 @@ class Stage {
    * Marks the stage as available.
    */
   protected function markAsAvailable(): void {
+    $this->tempStore->delete(static::TEMPSTORE_METADATA_KEY);
     $this->tempStore->delete(static::TEMPSTORE_LOCK_KEY);
     $this->lock = NULL;
   }

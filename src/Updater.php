@@ -3,7 +3,6 @@
 namespace Drupal\automatic_updates;
 
 use Drupal\automatic_updates\Exception\UpdateException;
-use Drupal\Core\State\StateInterface;
 use Drupal\package_manager\ComposerUtility;
 use Drupal\package_manager\Event\StageEvent;
 use Drupal\package_manager\Stage;
@@ -13,33 +12,6 @@ use Drupal\package_manager\StageException;
  * Defines a service to perform updates.
  */
 class Updater extends Stage {
-
-  /**
-   * State key under which to store the package versions targeted by the update.
-   *
-   * @var string
-   */
-  protected const PACKAGES_KEY = 'automatic_updates.packages';
-
-  /**
-   * The state service.
-   *
-   * @var \Drupal\Core\State\StateInterface
-   */
-  protected $state;
-
-  /**
-   * Constructs an Updater object.
-   *
-   * @param \Drupal\Core\State\StateInterface $state
-   *   The state service.
-   * @param mixed ...$arguments
-   *   Additional arguments to pass to the parent constructor.
-   */
-  public function __construct(StateInterface $state, ...$arguments) {
-    $this->state = $state;
-    parent::__construct(...$arguments);
-  }
 
   /**
    * Begins the update.
@@ -59,7 +31,10 @@ class Updater extends Stage {
     }
 
     $composer = ComposerUtility::createForDirectory($this->pathLocator->getActiveDirectory());
-    $package_versions = $this->getPackageVersions();
+    $package_versions = [
+      'production' => [],
+      'dev' => [],
+    ];
 
     foreach ($composer->getCorePackageNames() as $package) {
       $package_versions['production'][$package] = $project_versions['drupal'];
@@ -67,7 +42,13 @@ class Updater extends Stage {
     foreach ($composer->getCoreDevPackageNames() as $package) {
       $package_versions['dev'][$package] = $project_versions['drupal'];
     }
-    $this->state->set(static::PACKAGES_KEY, $package_versions);
+
+    // Ensure that package versions are available to pre-create event
+    // subscribers. We can't use ::setMetadata() here because it requires the
+    // stage to be claimed, but that only happens during ::create().
+    $this->tempStore->set(static::TEMPSTORE_METADATA_KEY, [
+      'packages' => $package_versions,
+    ]);
     return $this->create();
   }
 
@@ -80,10 +61,7 @@ class Updater extends Stage {
    *   version constraints understood by Composer.
    */
   public function getPackageVersions(): array {
-    return $this->state->get(static::PACKAGES_KEY, [
-      'production' => [],
-      'dev' => [],
-    ]);
+    return $this->getMetadata('packages');
   }
 
   /**
@@ -108,18 +86,6 @@ class Updater extends Stage {
     if ($versions['dev']) {
       $this->require($versions['dev'], TRUE);
     }
-  }
-
-  /**
-   * Cleans the current update.
-   *
-   * @param bool $force
-   *   (optional) If TRUE, the staging area will be destroyed even if it is not
-   *   owned by the current user or session. Defaults to FALSE.
-   */
-  public function clean(bool $force = FALSE): void {
-    $this->destroy($force);
-    $this->state->delete(static::PACKAGES_KEY);
   }
 
   /**
