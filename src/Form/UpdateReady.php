@@ -9,6 +9,7 @@ use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Messenger\MessengerInterface;
 use Drupal\Core\State\StateInterface;
+use Drupal\package_manager\StageException;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
@@ -70,11 +71,19 @@ class UpdateReady extends FormBase {
   /**
    * {@inheritdoc}
    */
-  public function buildForm(array $form, FormStateInterface $form_state) {
-    if (!$this->updater->isOwnedByCurrentUser()) {
-      $this->messenger->addError('Cannot continue the update because another Composer operation is currently in progress.');
+  public function buildForm(array $form, FormStateInterface $form_state, string $stage_id = NULL) {
+    try {
+      $this->updater->claim($stage_id);
+    }
+    catch (StageException $e) {
+      $this->messenger()->addError($this->t('Cannot continue the update because another Composer operation is currently in progress.'));
       return $form;
     }
+
+    $form['stage_id'] = [
+      '#type' => 'value',
+      '#value' => $stage_id,
+    ];
 
     $form['backup'] = [
       '#prefix' => '<strong>',
@@ -108,11 +117,12 @@ class UpdateReady extends FormBase {
       $this->state->set('system.maintenance_mode', TRUE);
       // @todo unset after updater. After db update?
     }
+    $stage_id = $form_state->getValue('stage_id');
     $batch = (new BatchBuilder())
       ->setTitle($this->t('Apply updates'))
       ->setInitMessage($this->t('Preparing to apply updates'))
-      ->addOperation([BatchProcessor::class, 'commit'])
-      ->addOperation([BatchProcessor::class, 'clean'])
+      ->addOperation([BatchProcessor::class, 'commit'], [$stage_id])
+      ->addOperation([BatchProcessor::class, 'clean'], [$stage_id])
       ->setFinishCallback([BatchProcessor::class, 'finishCommit'])
       ->toArray();
 

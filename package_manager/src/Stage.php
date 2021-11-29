@@ -2,6 +2,7 @@
 
 namespace Drupal\package_manager;
 
+use Drupal\Component\Utility\Crypt;
 use Drupal\Core\TempStore\SharedTempStoreFactory;
 use Drupal\package_manager\Event\PostApplyEvent;
 use Drupal\package_manager\Event\PostCreateEvent;
@@ -25,8 +26,21 @@ use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
  * directory, use Composer to require packages into it, sync changes from the
  * staging directory back into the active code base, and then delete the
  * staging directory.
+ *
+ * Only one staging area can exist at any given time, and the stage is owned by
+ * the user or session that originally created it. Only the owner can perform
+ * operations on the staging area, and the stage must be "claimed" by its owner
+ * before any such operations are done. A stage is claimed by presenting a
+ * unique token that is generated when the stage is created.
  */
 class Stage {
+
+  /**
+   * The tempstore key under which to store the locking info for this stage.
+   *
+   * @var string
+   */
+  protected const TEMPSTORE_LOCK_KEY = 'lock';
 
   /**
    * The path locator service.
@@ -70,20 +84,21 @@ class Stage {
    */
   protected $eventDispatcher;
 
-
-  /**
-   * The tempstore key under which to store the active status of this stage.
-   *
-   * @var string
-   */
-  protected const TEMPSTORE_ACTIVE_KEY = 'active';
-
   /**
    * The shared temp store.
    *
    * @var \Drupal\Core\TempStore\SharedTempStore
    */
   protected $tempStore;
+
+  /**
+   * The lock info for the stage.
+   *
+   * Consists of a unique random string and the current class name.
+   *
+   * @var string[]
+   */
+  private $lock;
 
   /**
    * Constructs a new Stage object.
@@ -120,24 +135,24 @@ class Stage {
    *   TRUE if the staging area can be created, otherwise FALSE.
    */
   final public function isAvailable(): bool {
-    return empty($this->tempStore->getMetadata(static::TEMPSTORE_ACTIVE_KEY));
-  }
-
-  /**
-   * Determines if the current user or session is the owner of the staging area.
-   *
-   * @return bool
-   *   TRUE if the current session or user is the owner of the staging area,
-   *   otherwise FALSE.
-   */
-  final public function isOwnedByCurrentUser(): bool {
-    return !empty($this->tempStore->getIfOwner(static::TEMPSTORE_ACTIVE_KEY));
+    return empty($this->tempStore->getMetadata(static::TEMPSTORE_LOCK_KEY));
   }
 
   /**
    * Copies the active code base into the staging area.
+   *
+   * This will automatically claim the stage, so external code does NOT need to
+   * call ::claim(). However, if it was created during another request, the
+   * stage must be claimed before operations can be performed on it.
+   *
+   * @return string
+   *   Unique ID for the stage, which can be used to claim the stage before
+   *   performing other operations on it. Calling code should store this ID for
+   *   as long as the stage needs to exist.
+   *
+   * @see ::claim()
    */
-  public function create(): void {
+  public function create(): string {
     if (!$this->isAvailable()) {
       throw new StageException([], 'Cannot create a new stage because one already exists.');
     }
@@ -147,7 +162,9 @@ class Stage {
     // to create a staging area at around the same time. If an error occurs
     // while the event is being processed, the stage is marked as available.
     // @see ::dispatch()
-    $this->tempStore->set(static::TEMPSTORE_ACTIVE_KEY, TRUE);
+    $id = Crypt::randomBytesBase64();
+    $this->tempStore->set(static::TEMPSTORE_LOCK_KEY, [$id, static::class]);
+    $this->claim($id);
 
     $active_dir = $this->pathLocator->getActiveDirectory();
     $stage_dir = $this->pathLocator->getStageDirectory();
@@ -157,6 +174,7 @@ class Stage {
 
     $this->beginner->begin($active_dir, $stage_dir, $event->getExcludedPaths());
     $this->dispatch(new PostCreateEvent($this));
+    return $id;
   }
 
   /**
@@ -218,9 +236,16 @@ class Stage {
     if (is_dir($stage_dir)) {
       $this->cleaner->clean($stage_dir);
     }
-    // We're all done, so mark the stage as available.
-    $this->tempStore->delete(static::TEMPSTORE_ACTIVE_KEY);
+    $this->markAsAvailable();
     $this->dispatch(new PostDestroyEvent($this));
+  }
+
+  /**
+   * Marks the stage as available.
+   */
+  protected function markAsAvailable(): void {
+    $this->tempStore->delete(static::TEMPSTORE_LOCK_KEY);
+    $this->lock = NULL;
   }
 
   /**
@@ -249,7 +274,7 @@ class Stage {
       // available.
       // @see ::create()
       if ($event instanceof PreCreateEvent) {
-        $this->tempStore->delete(static::TEMPSTORE_ACTIVE_KEY);
+        $this->markAsAvailable();
       }
 
       // Wrap the exception to preserve the backtrace, and re-throw it.
@@ -285,13 +310,63 @@ class Stage {
   }
 
   /**
+   * Attempts to claim the stage.
+   *
+   * Once a stage has been created, no operations can be performed on it until
+   * it is claimed. This is to ensure that stage operations across multiple
+   * requests are being done by the same code, running under the same user or
+   * session that created the stage in the first place. To claim a stage, the
+   * calling code must provide the unique identifier that was generated when the
+   * stage was created.
+   *
+   * The stage is claimed when it is created, so external code does NOT need to
+   * call this method after calling ::create() in the same request.
+   *
+   * @param string $unique_id
+   *   The unique ID that was returned by ::create().
+   *
+   * @return $this
+   *
+   * @throws \Drupal\package_manager\StageException
+   *   If the stage cannot be claimed. This can happen if the current user or
+   *   session did not originally create the stage, if $unique_id doesn't match
+   *   the unique ID that was generated when the stage was created, or the
+   *   current class is not the same one that was used to create the stage.
+   *
+   * @see ::create()
+   */
+  final public function claim(string $unique_id): self {
+    if ($this->isAvailable()) {
+      throw new StageException([], 'Cannot claim the stage because no stage has been created.');
+    }
+
+    $stored_lock = $this->tempStore->getIfOwner(self::TEMPSTORE_LOCK_KEY);
+    if (!$stored_lock) {
+      throw new StageException([], 'Cannot claim the stage because it is not owned by the current user or session.');
+    }
+
+    if ($stored_lock === [$unique_id, static::class]) {
+      $this->lock = $stored_lock;
+      return $this;
+    }
+    throw new StageException([], 'Cannot claim the stage because the current lock does not match the stored lock.');
+  }
+
+  /**
    * Ensures that the current user or session owns the staging area.
    *
+   * @throws \LogicException
+   *   If ::claim() has not been previously called.
    * @throws \Drupal\package_manager\StageException
    *   If the current user or session does not own the staging area.
    */
-  protected function checkOwnership(): void {
-    if (!$this->isOwnedByCurrentUser()) {
+  final protected function checkOwnership(): void {
+    if (empty($this->lock)) {
+      throw new \LogicException('Stage must be claimed before performing any operations on it.');
+    }
+
+    $stored_lock = $this->tempStore->getIfOwner(static::TEMPSTORE_LOCK_KEY);
+    if ($stored_lock !== $this->lock) {
       throw new StageException([], 'Stage is not owned by the current user or session.');
     }
   }

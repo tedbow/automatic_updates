@@ -6,7 +6,7 @@ automatic_updates.update_readiness:
   requirements:
     _permission: 'administer software updates'
 automatic_updates.confirmation_page:
-  path: '/admin/automatic-update-ready'
+  path: '/admin/automatic-update-ready/{stage_id}'
   defaults:
     _form: '\Drupal\automatic_updates\Form\UpdateReady'
     _title: 'Ready to update'

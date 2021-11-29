@@ -47,10 +47,13 @@ class Updater extends Stage {
    * @param string[] $project_versions
    *   The versions of the packages to update to, keyed by package name.
    *
+   * @return string
+   *   The unique ID of the stage.
+   *
    * @throws \InvalidArgumentException
    *   Thrown if no project version for Drupal core is provided.
    */
-  public function begin(array $project_versions): void {
+  public function begin(array $project_versions): string {
     if (count($project_versions) !== 1 || !array_key_exists('drupal', $project_versions)) {
       throw new \InvalidArgumentException("Currently only updates to Drupal core are supported.");
     }
@@ -65,7 +68,7 @@ class Updater extends Stage {
       $package_versions['dev'][$package] = $project_versions['drupal'];
     }
     $this->state->set(static::PACKAGES_KEY, $package_versions);
-    $this->create();
+    return $this->create();
   }
 
   /**
@@ -87,6 +90,8 @@ class Updater extends Stage {
    * Stages the update.
    */
   public function stage(): void {
+    $this->checkOwnership();
+
     // Convert an associative array of package versions, keyed by name, to
     // command-line arguments in the form `vendor/name:version`.
     $map = function (array $versions): array {
@@ -107,9 +112,13 @@ class Updater extends Stage {
 
   /**
    * Cleans the current update.
+   *
+   * @param bool $force
+   *   (optional) If TRUE, the staging area will be destroyed even if it is not
+   *   owned by the current user or session. Defaults to FALSE.
    */
-  public function clean(): void {
-    $this->destroy();
+  public function clean(bool $force = FALSE): void {
+    $this->destroy($force);
     $this->state->delete(static::PACKAGES_KEY);
   }
 

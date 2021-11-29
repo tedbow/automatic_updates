@@ -51,8 +51,9 @@ class UpdateLockTest extends AutomaticUpdatesFunctionalTestBase {
     $this->drupalGet('/admin/modules/automatic-update');
     $page->pressButton('Update');
     $this->checkForMetaRefresh();
+    $this->assertUpdateReady();
     $assert_session->buttonExists('Continue');
-    $assert_session->addressEquals('/admin/automatic-update-ready');
+    $url = parse_url($this->getSession()->getCurrentUrl(), PHP_URL_PATH);
 
     // Another user cannot show up and try to start an update, since the other
     // user already started one.
@@ -63,13 +64,13 @@ class UpdateLockTest extends AutomaticUpdatesFunctionalTestBase {
 
     // If the current user did not start the update, they should not be able to
     // continue it, either.
-    $this->drupalGet('/admin/automatic-update-ready');
+    $this->drupalGet($url);
     $assert_session->pageTextContains('Cannot continue the update because another Composer operation is currently in progress.');
     $assert_session->buttonNotExists('Continue');
 
     // The user who started the update should be able to continue it.
     $this->drupalLogin($user_1);
-    $this->drupalGet('/admin/automatic-update-ready');
+    $this->drupalGet($url);
     $assert_session->pageTextNotContains('Cannot continue the update because another Composer operation is currently in progress.');
     $assert_session->buttonExists('Continue');
   }

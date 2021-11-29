@@ -234,7 +234,7 @@ class UpdaterForm extends FormBase {
    * Submit function to delete an existing in-progress update.
    */
   public function deleteExistingUpdate(): void {
-    $this->updater->clean();
+    $this->updater->clean(TRUE);
     $this->messenger()->addMessage($this->t("Staged update deleted"));
   }
 

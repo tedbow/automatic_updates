@@ -55,7 +55,7 @@ class UpdaterTest extends AutomaticUpdatesKernelTestBase {
     $locator->getStageDirectory()->willReturn('/tmp');
     $this->container->set('package_manager.path_locator', $locator->reveal());
 
-    $this->container->get('automatic_updates.updater')->begin([
+    $id = $this->container->get('automatic_updates.updater')->begin([
       'drupal' => '9.8.1',
     ]);
     // Rebuild the container to ensure the project versions are kept in state.
@@ -85,7 +85,7 @@ class UpdaterTest extends AutomaticUpdatesKernelTestBase {
       '--update-with-all-dependencies',
       '--dev',
     ];
-    $this->container->get('automatic_updates.updater')->stage();
+    $this->container->get('automatic_updates.updater')->claim($id)->stage();
 
     /** @var \Drupal\package_manager_bypass\InvocationRecorderBase $stager */
     $stager = $this->container->get('package_manager.stager');

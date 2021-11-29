@@ -247,7 +247,7 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
     $this->assertUpdateStagedTimes(1);
 
     // Confirm we are on the confirmation page.
-    $assert_session->addressEquals('/admin/automatic-update-ready');
+    $this->assertUpdateReady();
     $assert_session->buttonExists('Continue');
 
     // Return to the start page.
@@ -264,7 +264,7 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
     $this->checkForMetaRefresh();
 
     // Confirm we are on the confirmation page.
-    $assert_session->addressEquals('/admin/automatic-update-ready');
+    $this->assertUpdateReady();
     $this->assertUpdateStagedTimes(2);
     $assert_session->buttonExists('Continue');
   }

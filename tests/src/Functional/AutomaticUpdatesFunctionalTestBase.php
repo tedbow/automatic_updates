@@ -81,4 +81,12 @@ abstract class AutomaticUpdatesFunctionalTestBase extends BrowserTestBase {
     $this->checkForMetaRefresh();
   }
 
+  /**
+   * Asserts that we are on the "update ready" form.
+   */
+  protected function assertUpdateReady(): void {
+    $this->assertSession()
+      ->addressMatches('/\/admin\/automatic-update-ready\/[a-zA-Z0-9_\-]+$/');
+  }
+
 }

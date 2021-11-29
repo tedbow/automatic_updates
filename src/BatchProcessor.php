@@ -66,7 +66,8 @@ class BatchProcessor {
    */
   public static function begin(array $project_versions, array &$context): void {
     try {
-      static::getUpdater()->begin($project_versions);
+      $stage_unique = static::getUpdater()->begin($project_versions);
+      $context['results']['stage_id'] = $stage_unique;
     }
     catch (\Throwable $e) {
       static::handleException($e, $context);
@@ -83,7 +84,8 @@ class BatchProcessor {
    */
   public static function stage(array &$context): void {
     try {
-      static::getUpdater()->stage();
+      $stage_id = $context['results']['stage_id'];
+      static::getUpdater()->claim($stage_id)->stage();
     }
     catch (\Throwable $e) {
       static::handleException($e, $context);
@@ -93,14 +95,16 @@ class BatchProcessor {
   /**
    * Calls the updater's commit() method.
    *
+   * @param string $stage_id
+   *   The stage ID.
    * @param array $context
    *   The current context of the batch job.
    *
    * @see \Drupal\automatic_updates\Updater::apply()
    */
-  public static function commit(array &$context): void {
+  public static function commit(string $stage_id, array &$context): void {
     try {
-      static::getUpdater()->apply();
+      static::getUpdater()->claim($stage_id)->apply();
     }
     catch (\Throwable $e) {
       static::handleException($e, $context);
@@ -110,14 +114,16 @@ class BatchProcessor {
   /**
    * Calls the updater's clean() method.
    *
+   * @param string $stage_id
+   *   The stage ID.
    * @param array $context
    *   The current context of the batch job.
    *
    * @see \Drupal\automatic_updates\Updater::clean()
    */
-  public static function clean(array &$context): void {
+  public static function clean(string $stage_id, array &$context): void {
     try {
-      static::getUpdater()->clean();
+      static::getUpdater()->claim($stage_id)->clean();
     }
     catch (\Throwable $e) {
       static::handleException($e, $context);
@@ -136,8 +142,10 @@ class BatchProcessor {
    */
   public static function finishStage(bool $success, array $results, array $operations): ?RedirectResponse {
     if ($success) {
-      return new RedirectResponse(Url::fromRoute('automatic_updates.confirmation_page', [],
-        ['absolute' => TRUE])->toString());
+      $url = Url::fromRoute('automatic_updates.confirmation_page', [
+        'stage_id' => $results['stage_id'],
+      ]);
+      return new RedirectResponse($url->setAbsolute()->toString());
     }
     static::handleBatchError($results);
     return NULL;

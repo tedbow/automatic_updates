@@ -2,7 +2,9 @@
 
 namespace Drupal\Tests\package_manager\Kernel;
 
+use Drupal\package_manager\Event\PreCreateEvent;
 use Drupal\package_manager\StageException;
+use Drupal\package_manager_test_validation\TestSubscriber;
 use Drupal\Tests\user\Traits\UserCreationTrait;
 
 /**
@@ -17,7 +19,11 @@ class StageOwnershipTest extends PackageManagerKernelTestBase {
   /**
    * {@inheritdoc}
    */
-  protected static $modules = ['system', 'user'];
+  protected static $modules = [
+    'system',
+    'user',
+    'package_manager_test_validation',
+  ];
 
   /**
    * {@inheritdoc}
@@ -64,20 +70,13 @@ class StageOwnershipTest extends PackageManagerKernelTestBase {
    *   ownership and status of the other stage.
    */
   private function assertOwnershipIsEnforced(TestStage $will_create, TestStage $never_create): void {
-    // Before the staging area is created, isOwnedByCurrentUser() should return
-    // FALSE and isAvailable() should return TRUE.
-    $this->assertFalse($will_create->isOwnedByCurrentUser());
-    $this->assertFalse($never_create->isOwnedByCurrentUser());
+    // Before the staging area is created, isAvailable() should return TRUE.
     $this->assertTrue($will_create->isAvailable());
     $this->assertTrue($never_create->isAvailable());
 
-    $will_create->create();
-    // Only the staging area that was actually created should be owned by the
-    // current user...
-    $this->assertTrue($will_create->isOwnedByCurrentUser());
-    $this->assertFalse($never_create->isOwnedByCurrentUser());
-    // ...but both staging areas should be considered unavailable (i.e., cannot
-    // be created until the existing one is destroyed first).
+    $stage_id = $will_create->create();
+    // Both staging areas should be considered unavailable (i.e., cannot be
+    // created until the existing one is destroyed first).
     $this->assertFalse($will_create->isAvailable());
     $this->assertFalse($never_create->isAvailable());
 
@@ -93,6 +92,13 @@ class StageOwnershipTest extends PackageManagerKernelTestBase {
       }
     }
 
+    try {
+      $never_create->claim($stage_id);
+    }
+    catch (StageException $exception) {
+      $this->assertSame('Cannot claim the stage because it is not owned by the current user or session.', $exception->getMessage());
+    }
+
     // Only the stage's owner should be able to move it through its life cycle.
     $callbacks = [
       'require' => [
@@ -106,11 +112,92 @@ class StageOwnershipTest extends PackageManagerKernelTestBase {
         $never_create->$method(...$arguments);
         $this->fail("Able to call '$method' on a stage that was never created.");
       }
-      catch (StageException $exception) {
-        $this->assertSame('Stage is not owned by the current user or session.', $exception->getMessage());
+      catch (\LogicException $exception) {
+        $this->assertSame('Stage must be claimed before performing any operations on it.', $exception->getMessage());
       }
       // The call should succeed on the created stage.
       $will_create->$method(...$arguments);
+    }
+  }
+
+  /**
+   * Tests behavior of claiming a stage.
+   */
+  public function testClaim(): void {
+    // Log in as a user so that any stage instances created during the session
+    // should be able to successfully call ::claim().
+    $user_2 = $this->createUser([], NULL, FALSE, ['uid' => 2]);
+    $this->setCurrentUser($user_2);
+    $creator_stage = $this->createStage();
+
+    // Ensure that exceptions thrown during ::create() will not lock the stage.
+    $error = new \Exception('I am going to stop stage creation.');
+    TestSubscriber::setException($error, PreCreateEvent::class);
+    try {
+      $creator_stage->create();
+      $this->fail('Was able to create the stage despite throwing an exception in pre-create.');
+    }
+    catch (\RuntimeException $exception) {
+      $this->assertSame($error->getMessage(), $exception->getMessage());
+    }
+
+    // The stage should be available, and throw if we try to claim it.
+    $this->assertTrue($creator_stage->isAvailable());
+    try {
+      $creator_stage->claim('any-id-would-fail');
+      $this->fail('Was able to claim a stage that has not been created.');
+    }
+    catch (StageException $exception) {
+      $this->assertSame('Cannot claim the stage because no stage has been created.', $exception->getMessage());
+    }
+    TestSubscriber::setException(NULL, PreCreateEvent::class);
+
+    // Even if we own the stage, we should not be able to claim it with an
+    // incorrect ID.
+    $stage_id = $creator_stage->create();
+    try {
+      $this->createStage()->claim('not-correct-id');
+      $this->fail('Was able to claim an owned stage with an incorrect ID.');
+    }
+    catch (StageException $exception) {
+      $this->assertSame('Cannot claim the stage because the current lock does not match the stored lock.', $exception->getMessage());
+    }
+
+    // A stage that is successfully claimed should be able to call any method
+    // for its life cycle.
+    $callbacks = [
+      'require' => [
+        ['vendor/lib:0.0.1'],
+      ],
+      'apply' => [],
+      'destroy' => [],
+    ];
+    foreach ($callbacks as $method => $arguments) {
+      // Create a new stage instance for each method.
+      $this->createStage()->claim($stage_id)->$method(...$arguments);
+    }
+
+    // The stage cannot be claimed after it's been destroyed.
+    try {
+      $this->createStage()->claim($stage_id);
+      $this->fail('Was able to claim an owned stage after it was destroyed.');
+    }
+    catch (StageException $exception) {
+      $this->assertSame('Cannot claim the stage because no stage has been created.', $exception->getMessage());
+    }
+
+    // Create a new stage and then log in as a different user.
+    $new_stage_id = $this->createStage()->create();
+    $user_3 = $this->createUser([], NULL, FALSE, ['uid' => 3]);
+    $this->setCurrentUser($user_3);
+
+    // Even if they use the correct stage ID, the current user cannot claim a
+    // stage they didn't create.
+    try {
+      $this->createStage()->claim($new_stage_id);
+    }
+    catch (StageException $exception) {
+      $this->assertSame('Cannot claim the stage because it is not owned by the current user or session.', $exception->getMessage());
     }
   }
 
@@ -126,8 +213,8 @@ class StageOwnershipTest extends PackageManagerKernelTestBase {
       $not_owned->destroy();
       $this->fail("Able to destroy a stage that we don't own.");
     }
-    catch (StageException $exception) {
-      $this->assertSame('Stage is not owned by the current user or session.', $exception->getMessage());
+    catch (\LogicException $exception) {
+      $this->assertSame('Stage must be claimed before performing any operations on it.', $exception->getMessage());
     }
     // We should be able to destroy the stage if we ignore ownership.
     $not_owned->destroy(TRUE);
