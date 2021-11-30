@@ -18,9 +18,10 @@ services:
     arguments:
       - '@package_manager.symfony_file_system'
   package_manager.executable_finder:
-    class: PhpTuf\ComposerStager\Infrastructure\Process\ExecutableFinder
+    class: Drupal\package_manager\ExecutableFinder
     arguments:
       - '@package_manager.symfony_executable_finder'
+      - '@config.factory'
 
   # Executable runners.
   package_manager.rsync_runner:

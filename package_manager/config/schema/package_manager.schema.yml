@@ -5,3 +5,9 @@ package_manager.settings:
     file_syncer:
       type: string
       label: 'Which file syncer to use, or NULL to auto-detect'
+    executables:
+      type: sequence
+      label: 'Absolute paths to required executables, or NULL to rely on PATH'
+      sequence:
+        type: string
+        label: 'Absolute path to executable, or NULL'

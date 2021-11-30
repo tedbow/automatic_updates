@@ -1,1 +1,4 @@
 file_syncer: php
+executables:
+  composer: ~
+  rsync: ~
