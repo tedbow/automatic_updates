@@ -2,6 +2,7 @@
 
 namespace Drupal\automatic_updates\Validator;
 
+use Drupal\automatic_updates\Updater;
 use Drupal\package_manager\Event\PreApplyEvent;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\Core\StringTranslation\TranslationInterface;
@@ -32,6 +33,11 @@ final class StagedProjectsValidator implements EventSubscriberInterface {
    */
   public function validateStagedProjects(PreApplyEvent $event): void {
     $stage = $event->getStage();
+    // We only want to do this check if the stage belongs to Automatic Updates.
+    if (!$stage instanceof Updater) {
+      return;
+    }
+
     try {
       $active_packages = $stage->getActiveComposer()->getDrupalExtensionPackages();
       $staged_packages = $stage->getStageComposer()->getDrupalExtensionPackages();

@@ -1,15 +1,15 @@
 <?php
 
-namespace Drupal\automatic_updates\Event;
+namespace Drupal\package_manager\EventSubscriber;
 
 use Drupal\package_manager\Event\PostApplyEvent;
 use Drupal\update\UpdateManagerInterface;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 /**
- * Clears stale update data once a staged update has been committed.
+ * Clears stale update data once staged changes have been applied.
  */
-class UpdateRefreshSubscriber implements EventSubscriberInterface {
+class UpdateDataSubscriber implements EventSubscriberInterface {
 
   /**
    * The update manager service.
@@ -30,6 +30,10 @@ class UpdateRefreshSubscriber implements EventSubscriberInterface {
 
   /**
    * Clears stale update data.
+   *
+   * This will always run after any staging area is applied to the active
+   * directory, since it's likely that core and/or multiple extensions have been
+   * added, removed, or updated.
    */
   public function clearData(): void {
     $this->updateManager->refreshUpdateData();

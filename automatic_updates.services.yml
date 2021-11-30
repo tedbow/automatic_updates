@@ -18,12 +18,6 @@ services:
       - '@package_manager.cleaner'
       - '@event_dispatcher'
       - '@tempstore.shared'
-  automatic_updates.update_refresh_subscriber:
-    class: Drupal\automatic_updates\Event\UpdateRefreshSubscriber
-    arguments:
-      - '@update.manager'
-    tags:
-      - { name: event_subscriber }
   automatic_updates.excluded_paths_subscriber:
     class: Drupal\automatic_updates\Event\ExcludedPathsSubscriber
     arguments:
