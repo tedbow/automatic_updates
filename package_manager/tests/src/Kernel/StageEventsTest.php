@@ -13,8 +13,8 @@ use Drupal\package_manager\Event\PreDestroyEvent;
 use Drupal\package_manager\Event\PreRequireEvent;
 use Drupal\package_manager\Event\StageEvent;
 use Drupal\package_manager\Event\WarningEventInterface;
+use Drupal\package_manager\Exception\StageValidationException;
 use Drupal\package_manager\Stage;
-use Drupal\package_manager\StageException;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 /**
@@ -158,9 +158,9 @@ class StageEventsTest extends PackageManagerKernelTestBase implements EventSubsc
       $this->stage->apply();
       $this->stage->destroy();
 
-      $this->fail('Expected \Drupal\package_manager\StageException to be thrown.');
+      $this->fail('Expected \Drupal\package_manager\Exception\StageValidationException to be thrown.');
     }
-    catch (StageException $e) {
+    catch (StageValidationException $e) {
       $this->assertCount(1, $e->getResults());
     }
   }

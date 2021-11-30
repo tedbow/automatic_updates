@@ -5,8 +5,8 @@ namespace Drupal\automatic_updates;
 use Drupal\automatic_updates\Exception\UpdateException;
 use Drupal\package_manager\ComposerUtility;
 use Drupal\package_manager\Event\StageEvent;
+use Drupal\package_manager\Exception\StageValidationException;
 use Drupal\package_manager\Stage;
-use Drupal\package_manager\StageException;
 
 /**
  * Defines a service to perform updates.
@@ -95,7 +95,7 @@ class Updater extends Stage {
     try {
       parent::dispatch($event);
     }
-    catch (StageException $e) {
+    catch (StageValidationException $e) {
       throw new UpdateException($e->getResults(), $e->getMessage() ?: "Unable to complete the update because of errors.", $e->getCode(), $e);
     }
   }

@@ -1,11 +1,11 @@
 <?php
 
-namespace Drupal\package_manager;
+namespace Drupal\package_manager\Exception;
 
 /**
- * Exception thrown when the staging area encounters an error condition.
+ * Exception thrown if a stage has validation errors.
  */
-class StageException extends \RuntimeException {
+class StageValidationException extends StageException {
 
   /**
    * Any relevant validation results.

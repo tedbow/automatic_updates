@@ -3,7 +3,8 @@
 namespace Drupal\Tests\package_manager\Kernel;
 
 use Drupal\package_manager\Event\PreCreateEvent;
-use Drupal\package_manager\StageException;
+use Drupal\package_manager\Exception\StageException;
+use Drupal\package_manager\Exception\StageOwnershipException;
 use Drupal\package_manager_test_validation\TestSubscriber;
 use Drupal\Tests\user\Traits\UserCreationTrait;
 
@@ -95,7 +96,7 @@ class StageOwnershipTest extends PackageManagerKernelTestBase {
     try {
       $never_create->claim($stage_id);
     }
-    catch (StageException $exception) {
+    catch (StageOwnershipException $exception) {
       $this->assertSame('Cannot claim the stage because it is not owned by the current user or session.', $exception->getMessage());
     }
 
@@ -159,7 +160,7 @@ class StageOwnershipTest extends PackageManagerKernelTestBase {
       $this->createStage()->claim('not-correct-id');
       $this->fail('Was able to claim an owned stage with an incorrect ID.');
     }
-    catch (StageException $exception) {
+    catch (StageOwnershipException $exception) {
       $this->assertSame('Cannot claim the stage because the current lock does not match the stored lock.', $exception->getMessage());
     }
 
@@ -196,7 +197,7 @@ class StageOwnershipTest extends PackageManagerKernelTestBase {
     try {
       $this->createStage()->claim($new_stage_id);
     }
-    catch (StageException $exception) {
+    catch (StageOwnershipException $exception) {
       $this->assertSame('Cannot claim the stage because it is not owned by the current user or session.', $exception->getMessage());
     }
   }

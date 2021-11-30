@@ -13,6 +13,9 @@ use Drupal\package_manager\Event\PreCreateEvent;
 use Drupal\package_manager\Event\PreDestroyEvent;
 use Drupal\package_manager\Event\PreRequireEvent;
 use Drupal\package_manager\Event\StageEvent;
+use Drupal\package_manager\Exception\StageException;
+use Drupal\package_manager\Exception\StageOwnershipException;
+use Drupal\package_manager\Exception\StageValidationException;
 use PhpTuf\ComposerStager\Domain\BeginnerInterface;
 use PhpTuf\ComposerStager\Domain\CleanerInterface;
 use PhpTuf\ComposerStager\Domain\CommitterInterface;
@@ -199,7 +202,7 @@ class Stage {
    */
   public function create(): string {
     if (!$this->isAvailable()) {
-      throw new StageException([], 'Cannot create a new stage because one already exists.');
+      throw new StageException('Cannot create a new stage because one already exists.');
     }
     // Mark the stage as unavailable as early as possible, before dispatching
     // the pre-create event. The idea is to prevent a race condition if the
@@ -300,9 +303,9 @@ class Stage {
    * @param \Drupal\package_manager\Event\StageEvent $event
    *   The event object.
    *
-   * @throws \Drupal\package_manager\StageException
+   * @throws \Drupal\package_manager\Exception\StageValidationException
    *   If the event collects any validation errors, or a subscriber throws a
-   *   StageException directly.
+   *   StageValidationException directly.
    * @throws \RuntimeException
    *   If any other sort of error occurs.
    */
@@ -312,7 +315,7 @@ class Stage {
 
       $results = $event->getResults();
       if ($results) {
-        throw new StageException($results);
+        throw new StageValidationException($results);
       }
     }
     catch (\Throwable $error) {
@@ -324,8 +327,8 @@ class Stage {
       }
 
       // Wrap the exception to preserve the backtrace, and re-throw it.
-      if ($error instanceof StageException) {
-        throw new StageException($error->getResults(), $error->getMessage(), $error->getCode(), $error);
+      if ($error instanceof StageValidationException) {
+        throw new StageValidationException($error->getResults(), $error->getMessage(), $error->getCode(), $error);
       }
       else {
         throw new \RuntimeException($error->getMessage(), $error->getCode(), $error);
@@ -373,7 +376,7 @@ class Stage {
    *
    * @return $this
    *
-   * @throws \Drupal\package_manager\StageException
+   * @throws \Drupal\package_manager\Exception\StageException
    *   If the stage cannot be claimed. This can happen if the current user or
    *   session did not originally create the stage, if $unique_id doesn't match
    *   the unique ID that was generated when the stage was created, or the
@@ -383,19 +386,19 @@ class Stage {
    */
   final public function claim(string $unique_id): self {
     if ($this->isAvailable()) {
-      throw new StageException([], 'Cannot claim the stage because no stage has been created.');
+      throw new StageException('Cannot claim the stage because no stage has been created.');
     }
 
     $stored_lock = $this->tempStore->getIfOwner(self::TEMPSTORE_LOCK_KEY);
     if (!$stored_lock) {
-      throw new StageException([], 'Cannot claim the stage because it is not owned by the current user or session.');
+      throw new StageOwnershipException('Cannot claim the stage because it is not owned by the current user or session.');
     }
 
     if ($stored_lock === [$unique_id, static::class]) {
       $this->lock = $stored_lock;
       return $this;
     }
-    throw new StageException([], 'Cannot claim the stage because the current lock does not match the stored lock.');
+    throw new StageOwnershipException('Cannot claim the stage because the current lock does not match the stored lock.');
   }
 
   /**
@@ -403,7 +406,7 @@ class Stage {
    *
    * @throws \LogicException
    *   If ::claim() has not been previously called.
-   * @throws \Drupal\package_manager\StageException
+   * @throws \Drupal\package_manager\Exception\StageOwnershipException
    *   If the current user or session does not own the staging area.
    */
   final protected function checkOwnership(): void {
@@ -413,7 +416,7 @@ class Stage {
 
     $stored_lock = $this->tempStore->getIfOwner(static::TEMPSTORE_LOCK_KEY);
     if ($stored_lock !== $this->lock) {
-      throw new StageException([], 'Stage is not owned by the current user or session.');
+      throw new StageOwnershipException('Stage is not owned by the current user or session.');
     }
   }
 

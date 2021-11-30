@@ -4,8 +4,8 @@ namespace Drupal\Tests\automatic_updates\Kernel\ReadinessValidation;
 
 use Drupal\Core\DependencyInjection\ContainerBuilder;
 use Drupal\package_manager\Event\PreApplyEvent;
+use Drupal\package_manager\Exception\StageValidationException;
 use Drupal\package_manager\PathLocator;
-use Drupal\package_manager\StageException;
 use Drupal\Tests\automatic_updates\Kernel\AutomaticUpdatesKernelTestBase;
 
 /**
@@ -65,7 +65,7 @@ class StagedProjectsValidatorTest extends AutomaticUpdatesKernelTestBase {
       $updater->apply();
       return [];
     }
-    catch (StageException $e) {
+    catch (StageValidationException $e) {
       return $e->getResults();
     }
   }

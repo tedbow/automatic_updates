@@ -5,8 +5,9 @@ namespace Drupal\Tests\package_manager\Kernel;
 use Drupal\Core\DependencyInjection\ContainerBuilder;
 use Drupal\KernelTests\KernelTestBase;
 use Drupal\package_manager\Event\StageEvent;
+use Drupal\package_manager\Exception\StageException;
+use Drupal\package_manager\Exception\StageValidationException;
 use Drupal\package_manager\Stage;
-use Drupal\package_manager\StageException;
 use Drupal\Tests\package_manager\Traits\ValidationTestTrait;
 
 /**
@@ -84,7 +85,7 @@ abstract class PackageManagerKernelTestBase extends KernelTestBase {
       // If we did not get an exception, ensure we didn't expect any results.
       $this->assertEmpty($expected_results);
     }
-    catch (StageException $e) {
+    catch (StageValidationException $e) {
       $this->assertNotEmpty($expected_results);
       $this->assertValidationResultsEqual($expected_results, $e->getResults());
       // TestStage::dispatch() attaches the event object to the exception so
