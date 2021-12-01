@@ -2,6 +2,7 @@
 
 namespace Drupal\package_manager;
 
+use Drupal\Component\FileSystem\FileSystem;
 use Drupal\Component\Utility\Crypt;
 use Drupal\Core\File\FileSystemInterface;
 use Drupal\Core\TempStore\SharedTempStoreFactory;
@@ -281,7 +282,7 @@ class Stage {
 
     $this->dispatch(new PreDestroyEvent($this));
     // Delete all directories in parent staging directory.
-    $parent_stage_dir = $this->pathLocator->getStageDirectory();
+    $parent_stage_dir = static::getStagingRoot();
     if (is_dir($parent_stage_dir)) {
       $this->fileSystem->deleteRecursive($parent_stage_dir, function (string $path): void {
         $this->fileSystem->chmod($path, 0777);
@@ -438,7 +439,18 @@ class Stage {
     if (!$this->lock) {
       throw new \LogicException(__METHOD__ . '() cannot be called because the stage has not been created or claimed.');
     }
-    return $this->pathLocator->getStageDirectory() . DIRECTORY_SEPARATOR . $this->lock[0];
+    return static::getStagingRoot() . DIRECTORY_SEPARATOR . $this->lock[0];
+  }
+
+  /**
+   * Returns the directory where staging areas will be created.
+   *
+   * @return string
+   *   The absolute path of the directory containing the staging areas managed
+   *   by this class.
+   */
+  protected static function getStagingRoot(): string {
+    return FileSystem::getOsTemporaryDirectory() . DIRECTORY_SEPARATOR . '.package_manager';
   }
 
 }

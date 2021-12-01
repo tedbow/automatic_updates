@@ -26,13 +26,10 @@ class LockFileValidatorTest extends PackageManagerKernelTestBase {
 
     $vendor = vfsStream::newDirectory('vendor');
     $this->vfsRoot->addChild($vendor);
-    $stage = vfsStream::newDirectory('stage');
-    $this->vfsRoot->addChild($stage);
 
     $path_locator = $this->prophesize(PathLocator::class);
     $path_locator->getActiveDirectory()->willReturn($this->vfsRoot->url());
     $path_locator->getProjectRoot()->willReturn($this->vfsRoot->url());
-    $path_locator->getStageDirectory()->willReturn($stage->url());
     $path_locator->getWebRoot()->willReturn('');
     $path_locator->getVendorDirectory()->willReturn($vendor->url());
     $this->container->set('package_manager.path_locator', $path_locator->reveal());

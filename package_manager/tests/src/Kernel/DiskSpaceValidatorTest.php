@@ -167,7 +167,6 @@ class DiskSpaceValidatorTest extends PackageManagerKernelTestBase {
     $path_locator = $this->prophesize('\Drupal\package_manager\PathLocator');
     $path_locator->getProjectRoot()->willReturn('root');
     $path_locator->getActiveDirectory()->willReturn('root');
-    $path_locator->getStageDirectory()->willReturn('/fake/stage/dir');
     $path_locator->getVendorDirectory()->willReturn('vendor');
     $this->container->set('package_manager.path_locator', $path_locator->reveal());
 

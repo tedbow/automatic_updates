@@ -26,7 +26,7 @@ class FileSystemOperationsTest extends AutomaticUpdatesFunctionalTestBase {
   /**
    * The updater service under test.
    *
-   * @var \Drupal\automatic_updates\Updater
+   * @var \Drupal\Tests\automatic_updates\Functional\TestUpdater
    */
   private $updater;
 
@@ -55,11 +55,10 @@ class FileSystemOperationsTest extends AutomaticUpdatesFunctionalTestBase {
       $this->siteDirectory,
       'stage',
     ]);
-    $locator->getStageDirectory()->willReturn($this->stageDir);
     $locator->getProjectRoot()->willReturn($drupal_root);
     $locator->getWebRoot()->willReturn('');
 
-    $this->updater = new Updater(
+    $this->updater = new TestUpdater(
       $locator->reveal(),
       $this->container->get('package_manager.beginner'),
       $this->container->get('package_manager.stager'),
@@ -68,6 +67,7 @@ class FileSystemOperationsTest extends AutomaticUpdatesFunctionalTestBase {
       $this->container->get('event_dispatcher'),
       $this->container->get('tempstore.shared')
     );
+    $this->updater::$stagingRoot = $this->stageDir;
 
     // Use the public and private files directories in the fake site fixture.
     $settings = Settings::getAll();
@@ -122,6 +122,27 @@ class FileSystemOperationsTest extends AutomaticUpdatesFunctionalTestBase {
     // If the site directory is not writable, this will throw an exception.
     $this->updater->destroy();
     $this->assertDirectoryDoesNotExist($this->stageDir);
+  }
+
+}
+
+/**
+ * A test-only version of the updater.
+ */
+class TestUpdater extends Updater {
+
+  /**
+   * The directory where staging areas will be created.
+   *
+   * @var string
+   */
+  public static $stagingRoot;
+
+  /**
+   * {@inheritdoc}
+   */
+  protected static function getStagingRoot(): string {
+    return static::$stagingRoot ?: parent::getStagingRoot();
   }
 
 }

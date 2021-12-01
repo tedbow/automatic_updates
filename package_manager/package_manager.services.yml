@@ -77,7 +77,6 @@ services:
   package_manager.path_locator:
     class: Drupal\package_manager\PathLocator
     arguments:
-      - '@config.factory'
       - '%app.root%'
 
   # Validators.

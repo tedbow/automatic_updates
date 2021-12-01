@@ -3,20 +3,11 @@
 namespace Drupal\package_manager;
 
 use Composer\Autoload\ClassLoader;
-use Drupal\Component\FileSystem\FileSystem;
-use Drupal\Core\Config\ConfigFactoryInterface;
 
 /**
  * Computes file system paths that are needed to stage code changes.
  */
 class PathLocator {
-
-  /**
-   * The config factory service.
-   *
-   * @var \Drupal\Core\Config\ConfigFactoryInterface
-   */
-  protected $configFactory;
 
   /**
    * The absolute path of the running Drupal code base.
@@ -28,13 +19,10 @@ class PathLocator {
   /**
    * Constructs a PathLocator object.
    *
-   * @param \Drupal\Core\Config\ConfigFactoryInterface $config_factory
-   *   The config factory service.
    * @param string $app_root
    *   The absolute path of the running Drupal code base.
    */
-  public function __construct(ConfigFactoryInterface $config_factory, string $app_root) {
-    $this->configFactory = $config_factory;
+  public function __construct(string $app_root) {
     $this->appRoot = $app_root;
   }
 
@@ -46,23 +34,6 @@ class PathLocator {
    */
   public function getActiveDirectory(): string {
     return $this->getProjectRoot();
-  }
-
-  /**
-   * Returns the path of the directory where changes should be staged.
-   *
-   * This directory may be made world-writeable for clean-up, so it should be
-   * somewhere that doesn't put the Drupal installation at risk. Each staging
-   * area will use a sub-directory with a random name.
-   *
-   * @return string
-   *   The absolute path of the directory where changes should be staged.
-   */
-  public function getStageDirectory(): string {
-    // Append the site ID to the directory in order to support parallel test
-    // runs, or multiple sites hosted on the same server.
-    $site_id = $this->configFactory->get('system.site')->get('uuid');
-    return FileSystem::getOsTemporaryDirectory() . DIRECTORY_SEPARATOR . '.package_manager_' . $site_id;
   }
 
   /**

@@ -52,7 +52,6 @@ class UpdaterTest extends AutomaticUpdatesKernelTestBase {
     $locator->getActiveDirectory()->willReturn($fixture_dir);
     $locator->getProjectRoot()->willReturn($fixture_dir);
     $locator->getVendorDirectory()->willReturn($fixture_dir);
-    $locator->getStageDirectory()->willReturn('/tmp');
     $this->container->set('package_manager.path_locator', $locator->reveal());
 
     $id = $this->container->get('automatic_updates.updater')->begin([

@@ -2,6 +2,7 @@
 
 namespace Drupal\Tests\automatic_updates\Kernel\ReadinessValidation;
 
+use Drupal\automatic_updates\Updater;
 use Drupal\Core\DependencyInjection\ContainerBuilder;
 use Drupal\package_manager\Event\PreApplyEvent;
 use Drupal\package_manager\Exception\StageValidationException;
@@ -25,6 +26,16 @@ class StagedProjectsValidatorTest extends AutomaticUpdatesKernelTestBase {
     'package_manager',
     'package_manager_bypass',
   ];
+
+  /**
+   * {@inheritdoc}
+   */
+  public function register(ContainerBuilder $container) {
+    parent::register($container);
+
+    $container->getDefinition('automatic_updates.updater')
+      ->setClass(TestUpdater::class);
+  }
 
   /**
    * {@inheritdoc}
@@ -62,12 +73,12 @@ class StagedProjectsValidatorTest extends AutomaticUpdatesKernelTestBase {
       // subdirectory using the stage ID after it is created below.
       $vendor = vfsStream::newDirectory('au_stage');
       $this->vfsRoot->addChild($vendor);
-      $locator->getStageDirectory()->willReturn($this->vfsRoot->url() . DIRECTORY_SEPARATOR . 'au_stage');
+      TestUpdater::$stagingRoot = $vendor->url();
     }
     else {
       // If we are testing non-existent staging directory we can use the path
       // directly.
-      $locator->getStageDirectory()->willReturn($stage_dir);
+      TestUpdater::$stagingRoot = $stage_dir;
     }
 
     $this->container->set('package_manager.path_locator', $locator->reveal());
@@ -210,6 +221,27 @@ class StagedProjectsValidatorTest extends AutomaticUpdatesKernelTestBase {
     $result = array_pop($results);
     $this->assertSame("No lockfile found. Unable to read locked packages", (string) $result->getMessages()[0]);
     $this->assertSame('', (string) $result->getSummary());
+  }
+
+}
+
+/**
+ * A test-only version of the updater.
+ */
+class TestUpdater extends Updater {
+
+  /**
+   * The directory where staging areas will be created.
+   *
+   * @var string
+   */
+  public static $stagingRoot;
+
+  /**
+   * {@inheritdoc}
+   */
+  protected static function getStagingRoot(): string {
+    return static::$stagingRoot ?: parent::getStagingRoot();
   }
 
 }

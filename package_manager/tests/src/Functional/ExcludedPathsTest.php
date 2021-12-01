@@ -59,11 +59,9 @@ class ExcludedPathsTest extends BrowserTestBase {
    */
   public function testExcludedPaths(): void {
     $active_dir = __DIR__ . '/../../fixtures/fake_site';
-    $parent_stage_dir = $this->siteDirectory . '/stage';
 
     $path_locator = $this->prophesize(PathLocator::class);
     $path_locator->getActiveDirectory()->willReturn($active_dir);
-    $path_locator->getStageDirectory()->willReturn($parent_stage_dir);
 
     $site_path = 'sites/example.com';
 
@@ -92,7 +90,7 @@ class ExcludedPathsTest extends BrowserTestBase {
     $property->setAccessible(TRUE);
     $property->setValue($subscriber, $database->reveal());
 
-    $stage = new Stage(
+    $stage = new class(
       $path_locator->reveal(),
       $this->container->get('package_manager.beginner'),
       $this->container->get('package_manager.stager'),
@@ -100,8 +98,25 @@ class ExcludedPathsTest extends BrowserTestBase {
       $this->container->get('file_system'),
       $this->container->get('event_dispatcher'),
       $this->container->get('tempstore.shared'),
-    );
-    $stage_dir = $parent_stage_dir . DIRECTORY_SEPARATOR . $stage->create();
+    ) extends Stage {
+
+      /**
+       * The directory where staging areas will be created.
+       *
+       * @var string
+       */
+      public static $stagingRoot;
+
+      /**
+       * {@inheritdoc}
+       */
+      protected static function getStagingRoot(): string {
+        return static::$stagingRoot;
+      }
+
+    };
+    $stage::$stagingRoot = $this->siteDirectory . '/stage';
+    $stage_dir = $stage::$stagingRoot . DIRECTORY_SEPARATOR . $stage->create();
 
     $this->assertDirectoryExists($stage_dir);
     $this->assertDirectoryNotExists("$stage_dir/sites/simpletest");
