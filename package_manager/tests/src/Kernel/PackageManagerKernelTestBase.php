@@ -58,7 +58,7 @@ abstract class PackageManagerKernelTestBase extends KernelTestBase {
       $this->container->get('package_manager.beginner'),
       $this->container->get('package_manager.stager'),
       $this->container->get('package_manager.committer'),
-      $this->container->get('package_manager.cleaner'),
+      $this->container->get('file_system'),
       $this->container->get('event_dispatcher'),
       $this->container->get('tempstore.shared')
     );

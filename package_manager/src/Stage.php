@@ -3,6 +3,7 @@
 namespace Drupal\package_manager;
 
 use Drupal\Component\Utility\Crypt;
+use Drupal\Core\File\FileSystemInterface;
 use Drupal\Core\TempStore\SharedTempStoreFactory;
 use Drupal\package_manager\Event\PostApplyEvent;
 use Drupal\package_manager\Event\PostCreateEvent;
@@ -17,7 +18,6 @@ use Drupal\package_manager\Exception\StageException;
 use Drupal\package_manager\Exception\StageOwnershipException;
 use Drupal\package_manager\Exception\StageValidationException;
 use PhpTuf\ComposerStager\Domain\BeginnerInterface;
-use PhpTuf\ComposerStager\Domain\CleanerInterface;
 use PhpTuf\ComposerStager\Domain\CommitterInterface;
 use PhpTuf\ComposerStager\Domain\StagerInterface;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
@@ -81,11 +81,11 @@ class Stage {
   protected $committer;
 
   /**
-   * The cleaner service from Composer Stager.
+   * The file system service.
    *
-   * @var \PhpTuf\ComposerStager\Domain\CleanerInterface
+   * @var \Drupal\Core\File\FileSystemInterface
    */
-  protected $cleaner;
+  protected $fileSystem;
 
   /**
    * The event dispatcher service.
@@ -121,19 +121,19 @@ class Stage {
    *   The stager service from Composer Stager.
    * @param \PhpTuf\ComposerStager\Domain\CommitterInterface $committer
    *   The committer service from Composer Stager.
-   * @param \PhpTuf\ComposerStager\Domain\CleanerInterface $cleaner
-   *   The cleaner service from Composer Stager.
+   * @param \Drupal\Core\File\FileSystemInterface $file_system
+   *   The file system service.
    * @param \Symfony\Contracts\EventDispatcher\EventDispatcherInterface $event_dispatcher
    *   The event dispatcher service.
    * @param \Drupal\Core\TempStore\SharedTempStoreFactory $shared_tempstore
    *   The shared tempstore factory.
    */
-  public function __construct(PathLocator $path_locator, BeginnerInterface $beginner, StagerInterface $stager, CommitterInterface $committer, CleanerInterface $cleaner, EventDispatcherInterface $event_dispatcher, SharedTempStoreFactory $shared_tempstore) {
+  public function __construct(PathLocator $path_locator, BeginnerInterface $beginner, StagerInterface $stager, CommitterInterface $committer, FileSystemInterface $file_system, EventDispatcherInterface $event_dispatcher, SharedTempStoreFactory $shared_tempstore) {
     $this->pathLocator = $path_locator;
     $this->beginner = $beginner;
     $this->stager = $stager;
     $this->committer = $committer;
-    $this->cleaner = $cleaner;
+    $this->fileSystem = $file_system;
     $this->eventDispatcher = $event_dispatcher;
     $this->tempStore = $shared_tempstore->get('package_manager_stage');
   }
@@ -215,7 +215,7 @@ class Stage {
     $this->claim($id);
 
     $active_dir = $this->pathLocator->getActiveDirectory();
-    $stage_dir = $this->pathLocator->getStageDirectory();
+    $stage_dir = $this->getStageDirectory();
 
     $event = new PreCreateEvent($this);
     $this->dispatch($event);
@@ -244,7 +244,7 @@ class Stage {
     }
 
     $this->dispatch(new PreRequireEvent($this));
-    $this->stager->stage($command, $this->pathLocator->getStageDirectory());
+    $this->stager->stage($command, $this->getStageDirectory());
     $this->dispatch(new PostRequireEvent($this));
   }
 
@@ -255,7 +255,7 @@ class Stage {
     $this->checkOwnership();
 
     $active_dir = $this->pathLocator->getActiveDirectory();
-    $stage_dir = $this->pathLocator->getStageDirectory();
+    $stage_dir = $this->getStageDirectory();
 
     $event = new PreApplyEvent($this);
     $this->dispatch($event);
@@ -280,9 +280,12 @@ class Stage {
     }
 
     $this->dispatch(new PreDestroyEvent($this));
-    $stage_dir = $this->pathLocator->getStageDirectory();
-    if (is_dir($stage_dir)) {
-      $this->cleaner->clean($stage_dir);
+    // Delete all directories in parent staging directory.
+    $parent_stage_dir = $this->pathLocator->getStageDirectory();
+    if (is_dir($parent_stage_dir)) {
+      $this->fileSystem->deleteRecursive($parent_stage_dir, function (string $path): void {
+        $this->fileSystem->chmod($path, 0777);
+      });
     }
     $this->markAsAvailable();
     $this->dispatch(new PostDestroyEvent($this));
@@ -354,7 +357,7 @@ class Stage {
    *   The Composer utility object.
    */
   public function getStageComposer(): ComposerUtility {
-    $dir = $this->pathLocator->getStageDirectory();
+    $dir = $this->getStageDirectory();
     return ComposerUtility::createForDirectory($dir);
   }
 
@@ -418,6 +421,24 @@ class Stage {
     if ($stored_lock !== $this->lock) {
       throw new StageOwnershipException('Stage is not owned by the current user or session.');
     }
+  }
+
+  /**
+   * Returns the path of the directory where changes should be staged.
+   *
+   * @return string
+   *   The absolute path of the directory where changes should be staged.
+   *
+   * @throws \LogicException
+   *   If this method is called before the stage has been created or claimed.
+   *
+   * @todo Make this method public in https://www.drupal.org/i/3251972.
+   */
+  protected function getStageDirectory(): string {
+    if (!$this->lock) {
+      throw new \LogicException(__METHOD__ . '() cannot be called because the stage has not been created or claimed.');
+    }
+    return $this->pathLocator->getStageDirectory() . DIRECTORY_SEPARATOR . $this->lock[0];
   }
 
 }

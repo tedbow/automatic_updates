@@ -74,12 +74,6 @@ services:
     arguments:
       - '@package_manager.file_syncer'
       - '@package_manager.file_system'
-  package_manager.cleaner:
-    class: Drupal\package_manager\Cleaner
-    arguments:
-      - '@package_manager.file_system'
-      - '%site.path%'
-      - '@package_manager.path_locator'
   package_manager.path_locator:
     class: Drupal\package_manager\PathLocator
     arguments:

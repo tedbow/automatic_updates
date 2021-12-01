@@ -7,6 +7,8 @@ use Drupal\package_manager\Event\PreApplyEvent;
 use Drupal\package_manager\Exception\StageValidationException;
 use Drupal\package_manager\PathLocator;
 use Drupal\Tests\automatic_updates\Kernel\AutomaticUpdatesKernelTestBase;
+use org\bovigo\vfs\vfsStream;
+use Symfony\Component\Filesystem\Filesystem;
 
 /**
  * @covers \Drupal\automatic_updates\Validator\StagedProjectsValidator
@@ -48,14 +50,37 @@ class StagedProjectsValidatorTest extends AutomaticUpdatesKernelTestBase {
    */
   private function validate(string $active_dir, string $stage_dir): array {
     $locator = $this->prophesize(PathLocator::class);
+
     $locator->getActiveDirectory()->willReturn($active_dir);
     $locator->getProjectRoot()->willReturn($active_dir);
     $locator->getVendorDirectory()->willReturn($active_dir);
-    $locator->getStageDirectory()->willReturn($stage_dir);
+
+    $stage_dir_exists = is_dir($stage_dir);
+    if ($stage_dir_exists) {
+      // If we are testing a fixture with existing stage directory then we
+      // need to use a virtual file system directory, so we can create a
+      // subdirectory using the stage ID after it is created below.
+      $vendor = vfsStream::newDirectory('au_stage');
+      $this->vfsRoot->addChild($vendor);
+      $locator->getStageDirectory()->willReturn($this->vfsRoot->url() . DIRECTORY_SEPARATOR . 'au_stage');
+    }
+    else {
+      // If we are testing non-existent staging directory we can use the path
+      // directly.
+      $locator->getStageDirectory()->willReturn($stage_dir);
+    }
+
     $this->container->set('package_manager.path_locator', $locator->reveal());
 
     $updater = $this->container->get('automatic_updates.updater');
-    $updater->begin(['drupal' => '9.8.1']);
+    $stage_id = $updater->begin(['drupal' => '9.8.1']);
+    if ($stage_dir_exists) {
+      // Copy the fixture's staging directory into a subdirectory using the
+      // stage ID as the directory name.
+      $sub_directory = vfsStream::newDirectory($stage_id);
+      $vendor->addChild($sub_directory);
+      (new Filesystem())->mirror($stage_dir, $sub_directory->url());
+    }
 
     // The staged projects validator only runs before staged updates are
     // applied. Since the active and stage directories may not exist, we don't

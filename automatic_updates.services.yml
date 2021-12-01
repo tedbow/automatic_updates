@@ -15,7 +15,7 @@ services:
       - '@package_manager.beginner'
       - '@package_manager.stager'
       - '@package_manager.committer'
-      - '@package_manager.cleaner'
+      - '@file_system'
       - '@event_dispatcher'
       - '@tempstore.shared'
   automatic_updates.excluded_paths_subscriber:

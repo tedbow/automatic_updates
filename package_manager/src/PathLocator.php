@@ -52,7 +52,8 @@ class PathLocator {
    * Returns the path of the directory where changes should be staged.
    *
    * This directory may be made world-writeable for clean-up, so it should be
-   * somewhere that doesn't put the Drupal installation at risk.
+   * somewhere that doesn't put the Drupal installation at risk. Each staging
+   * area will use a sub-directory with a random name.
    *
    * @return string
    *   The absolute path of the directory where changes should be staged.

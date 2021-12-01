@@ -2,7 +2,6 @@
 
 namespace Drupal\Tests\automatic_updates\Functional;
 
-use Drupal\package_manager\Cleaner;
 use Drupal\automatic_updates\Updater;
 use Drupal\Core\Site\Settings;
 use Drupal\package_manager\PathLocator;
@@ -60,21 +59,12 @@ class FileSystemOperationsTest extends AutomaticUpdatesFunctionalTestBase {
     $locator->getProjectRoot()->willReturn($drupal_root);
     $locator->getWebRoot()->willReturn('');
 
-    // Create a cleaner that uses 'sites/default' as its site path, since it
-    // will otherwise default to the site path being used for the test site,
-    // which doesn't exist in the fake site fixture.
-    $cleaner = new Cleaner(
-      $this->container->get('package_manager.file_system'),
-      'sites/default',
-      $locator->reveal()
-    );
-
     $this->updater = new Updater(
       $locator->reveal(),
       $this->container->get('package_manager.beginner'),
       $this->container->get('package_manager.stager'),
       $this->container->get('package_manager.committer'),
-      $cleaner,
+      $this->container->get('file_system'),
       $this->container->get('event_dispatcher'),
       $this->container->get('tempstore.shared')
     );
@@ -103,19 +93,19 @@ class FileSystemOperationsTest extends AutomaticUpdatesFunctionalTestBase {
    * @covers \Drupal\automatic_updates\Updater::getExclusions
    */
   public function testExclusions(): void {
-    $this->updater->begin(['drupal' => '9.8.1']);
-    $this->assertFileDoesNotExist("$this->stageDir/sites/default/settings.php");
-    $this->assertFileDoesNotExist("$this->stageDir/sites/default/settings.local.php");
-    $this->assertFileDoesNotExist("$this->stageDir/sites/default/services.yml");
+    $stage_id = $this->updater->begin(['drupal' => '9.8.1']);
+    $this->assertFileDoesNotExist("$this->stageDir/$stage_id/sites/default/settings.php");
+    $this->assertFileDoesNotExist("$this->stageDir/$stage_id/sites/default/settings.local.php");
+    $this->assertFileDoesNotExist("$this->stageDir/$stage_id/sites/default/services.yml");
     // A file in sites/default, that isn't one of the site-specific settings
     // files, should be staged.
-    $this->assertFileExists("$this->stageDir/sites/default/staged.txt");
-    $this->assertDirectoryDoesNotExist("$this->stageDir/sites/simpletest");
-    $this->assertDirectoryDoesNotExist("$this->stageDir/files/public");
-    $this->assertDirectoryDoesNotExist("$this->stageDir/files/private");
+    $this->assertFileExists("$this->stageDir/$stage_id/sites/default/staged.txt");
+    $this->assertDirectoryDoesNotExist("$this->stageDir/$stage_id/sites/simpletest");
+    $this->assertDirectoryDoesNotExist("$this->stageDir/$stage_id/files/public");
+    $this->assertDirectoryDoesNotExist("$this->stageDir/$stage_id/files/private");
     // A file that's in the general files directory, but not in the public or
     // private directories, should be staged.
-    $this->assertFileExists("$this->stageDir/files/staged.txt");
+    $this->assertFileExists("$this->stageDir/$stage_id/files/staged.txt");
   }
 
   /**
@@ -124,11 +114,11 @@ class FileSystemOperationsTest extends AutomaticUpdatesFunctionalTestBase {
    * @covers \Drupal\automatic_updates\Cleaner
    */
   public function testClean(): void {
-    $this->updater->begin(['drupal' => '9.8.1']);
+    $stage_id = $this->updater->begin(['drupal' => '9.8.1']);
     // Make the staged site directory read-only, so we can test that it will be
     // made writable on clean-up.
-    $this->assertTrue(chmod("$this->stageDir/sites/default", 0400));
-    $this->assertNotIsWritable("$this->stageDir/sites/default/staged.txt");
+    $this->assertTrue(chmod("$this->stageDir/$stage_id/sites/default", 0400));
+    $this->assertNotIsWritable("$this->stageDir/$stage_id/sites/default/staged.txt");
     // If the site directory is not writable, this will throw an exception.
     $this->updater->destroy();
     $this->assertDirectoryDoesNotExist($this->stageDir);

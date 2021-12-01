@@ -59,11 +59,11 @@ class ExcludedPathsTest extends BrowserTestBase {
    */
   public function testExcludedPaths(): void {
     $active_dir = __DIR__ . '/../../fixtures/fake_site';
-    $stage_dir = $this->siteDirectory . '/stage';
+    $parent_stage_dir = $this->siteDirectory . '/stage';
 
     $path_locator = $this->prophesize(PathLocator::class);
     $path_locator->getActiveDirectory()->willReturn($active_dir);
-    $path_locator->getStageDirectory()->willReturn($stage_dir);
+    $path_locator->getStageDirectory()->willReturn($parent_stage_dir);
 
     $site_path = 'sites/example.com';
 
@@ -97,11 +97,11 @@ class ExcludedPathsTest extends BrowserTestBase {
       $this->container->get('package_manager.beginner'),
       $this->container->get('package_manager.stager'),
       $this->container->get('package_manager.committer'),
-      $this->container->get('package_manager.cleaner'),
+      $this->container->get('file_system'),
       $this->container->get('event_dispatcher'),
       $this->container->get('tempstore.shared'),
     );
-    $stage->create();
+    $stage_dir = $parent_stage_dir . DIRECTORY_SEPARATOR . $stage->create();
 
     $this->assertDirectoryExists($stage_dir);
     $this->assertDirectoryNotExists("$stage_dir/sites/simpletest");

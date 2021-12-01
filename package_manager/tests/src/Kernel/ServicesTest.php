@@ -24,7 +24,6 @@ class ServicesTest extends KernelTestBase {
       'package_manager.beginner',
       'package_manager.stager',
       'package_manager.committer',
-      'package_manager.cleaner',
     ];
     foreach ($services as $service) {
       $this->assertIsObject($this->container->get($service));
