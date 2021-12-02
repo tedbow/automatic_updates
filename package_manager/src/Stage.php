@@ -435,7 +435,7 @@ class Stage {
    *
    * @todo Make this method public in https://www.drupal.org/i/3251972.
    */
-  protected function getStageDirectory(): string {
+  public function getStageDirectory(): string {
     if (!$this->lock) {
       throw new \LogicException(__METHOD__ . '() cannot be called because the stage has not been created or claimed.');
     }
