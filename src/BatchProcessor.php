@@ -2,8 +2,8 @@
 
 namespace Drupal\automatic_updates;
 
-use Drupal\automatic_updates\Exception\UpdateException;
 use Drupal\Core\Url;
+use Drupal\package_manager\Exception\StageValidationException;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 
 /**
@@ -38,7 +38,7 @@ class BatchProcessor {
       $error->getMessage(),
     ];
 
-    if ($error instanceof UpdateException) {
+    if ($error instanceof StageValidationException) {
       foreach ($error->getResults() as $result) {
         $messages = $result->getMessages();
         if (count($messages) > 1) {
