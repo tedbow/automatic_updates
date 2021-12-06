@@ -5,7 +5,6 @@ namespace Drupal\automatic_updates\Event;
 use Drupal\automatic_updates\Updater;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\package_manager\Event\PreOperationStageEvent;
-use Drupal\package_manager\Event\WarningEventInterface;
 use Drupal\package_manager\ValidationResult;
 
 /**
@@ -20,7 +19,7 @@ use Drupal\package_manager\ValidationResult;
  *
  * @see \Drupal\automatic_updates\Validation\ReadinessValidationManager
  */
-class ReadinessCheckEvent extends PreOperationStageEvent implements WarningEventInterface {
+class ReadinessCheckEvent extends PreOperationStageEvent {
 
   /**
    * The desired package versions to update to, keyed by package name.

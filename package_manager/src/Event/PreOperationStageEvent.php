@@ -8,7 +8,7 @@ use Drupal\package_manager\ValidationResult;
 /**
  * Base class for events dispatched before a stage life cycle operation.
  */
-abstract class PreOperationStageEvent extends StageEvent implements ErrorEventInterface {
+abstract class PreOperationStageEvent extends StageEvent {
 
   /**
    * {@inheritdoc}

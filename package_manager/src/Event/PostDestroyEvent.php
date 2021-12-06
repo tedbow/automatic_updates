@@ -5,5 +5,5 @@ namespace Drupal\package_manager\Event;
 /**
  * Event fired after the staging area is destroyed.
  */
-class PostDestroyEvent extends PostOperationStageEvent {
+class PostDestroyEvent extends StageEvent {
 }

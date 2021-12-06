@@ -2,7 +2,6 @@
 
 namespace Drupal\Tests\package_manager\Kernel;
 
-use Drupal\package_manager\Event\ErrorEventInterface;
 use Drupal\package_manager\Event\PostApplyEvent;
 use Drupal\package_manager\Event\PostCreateEvent;
 use Drupal\package_manager\Event\PostDestroyEvent;
@@ -10,9 +9,9 @@ use Drupal\package_manager\Event\PostRequireEvent;
 use Drupal\package_manager\Event\PreApplyEvent;
 use Drupal\package_manager\Event\PreCreateEvent;
 use Drupal\package_manager\Event\PreDestroyEvent;
+use Drupal\package_manager\Event\PreOperationStageEvent;
 use Drupal\package_manager\Event\PreRequireEvent;
 use Drupal\package_manager\Event\StageEvent;
-use Drupal\package_manager\Event\WarningEventInterface;
 use Drupal\package_manager\Exception\StageValidationException;
 use Drupal\package_manager\Stage;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
@@ -76,7 +75,7 @@ class StageEventsTest extends PackageManagerKernelTestBase implements EventSubsc
   /**
    * Handles a staging area life cycle event.
    *
-   * @param \Drupal\package_manager\Event\PreOperationStageEvent|\Drupal\package_manager\Event\PostOperationStageEvent $event
+   * @param \Drupal\package_manager\Event\StageEvent $event
    *   The event object.
    */
   public function handleEvent(StageEvent $event): void {
@@ -118,13 +117,9 @@ class StageEventsTest extends PackageManagerKernelTestBase implements EventSubsc
   public function providerValidationResults(): array {
     return [
       [PreCreateEvent::class],
-      [PostCreateEvent::class],
       [PreRequireEvent::class],
-      [PostRequireEvent::class],
       [PreApplyEvent::class],
-      [PostApplyEvent::class],
       [PreDestroyEvent::class],
-      [PostDestroyEvent::class],
     ];
   }
 
@@ -141,11 +136,8 @@ class StageEventsTest extends PackageManagerKernelTestBase implements EventSubsc
     // class under test.
     $handler = function (StageEvent $event) use ($event_class): void {
       if (get_class($event) === $event_class) {
-        if ($event instanceof ErrorEventInterface) {
+        if ($event instanceof PreOperationStageEvent) {
           $event->addError([['Burn, baby, burn']]);
-        }
-        elseif ($event instanceof WarningEventInterface) {
-          $event->addWarning(['Be careful about fires.']);
         }
       }
     };
