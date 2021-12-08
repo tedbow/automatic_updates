@@ -1,1 +1,2 @@
 # This file should never be staged.
+must_not_be: 'empty'
