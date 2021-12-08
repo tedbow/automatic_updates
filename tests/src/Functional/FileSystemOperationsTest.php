@@ -118,7 +118,7 @@ class FileSystemOperationsTest extends AutomaticUpdatesFunctionalTestBase {
     // Make the staged site directory read-only, so we can test that it will be
     // made writable on clean-up.
     $this->assertTrue(chmod("$this->stageDir/$stage_id/sites/default", 0400));
-    $this->assertNotIsWritable("$this->stageDir/$stage_id/sites/default/staged.txt");
+    $this->assertIsNotWritable("$this->stageDir/$stage_id/sites/default/staged.txt");
     // If the site directory is not writable, this will throw an exception.
     $this->updater->destroy();
     $this->assertDirectoryDoesNotExist($this->stageDir);

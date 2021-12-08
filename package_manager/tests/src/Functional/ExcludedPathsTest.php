@@ -119,21 +119,21 @@ class ExcludedPathsTest extends BrowserTestBase {
     $stage_dir = $stage::$stagingRoot . DIRECTORY_SEPARATOR . $stage->create();
 
     $this->assertDirectoryExists($stage_dir);
-    $this->assertDirectoryNotExists("$stage_dir/sites/simpletest");
-    $this->assertFileNotExists("$stage_dir/vendor/web.config");
-    $this->assertDirectoryNotExists("$stage_dir/$site_path/files");
-    $this->assertDirectoryNotExists("$stage_dir/private");
-    $this->assertFileNotExists("$stage_dir/$site_path/settings.php");
-    $this->assertFileNotExists("$stage_dir/$site_path/settings.local.php");
-    $this->assertFileNotExists("$stage_dir/$site_path/services.yml");
+    $this->assertDirectoryDoesNotExist("$stage_dir/sites/simpletest");
+    $this->assertFileDoesNotExist("$stage_dir/vendor/web.config");
+    $this->assertDirectoryDoesNotExist("$stage_dir/$site_path/files");
+    $this->assertDirectoryDoesNotExist("$stage_dir/private");
+    $this->assertFileDoesNotExist("$stage_dir/$site_path/settings.php");
+    $this->assertFileDoesNotExist("$stage_dir/$site_path/settings.local.php");
+    $this->assertFileDoesNotExist("$stage_dir/$site_path/services.yml");
     // SQLite databases and their support files should never be staged.
-    $this->assertFileNotExists("$stage_dir/$site_path/db.sqlite");
-    $this->assertFileNotExists("$stage_dir/$site_path/db.sqlite-shm");
-    $this->assertFileNotExists("$stage_dir/$site_path/db.sqlite-wal");
+    $this->assertFileDoesNotExist("$stage_dir/$site_path/db.sqlite");
+    $this->assertFileDoesNotExist("$stage_dir/$site_path/db.sqlite-shm");
+    $this->assertFileDoesNotExist("$stage_dir/$site_path/db.sqlite-wal");
     // Default site-specific settings files should never be staged.
-    $this->assertFileNotExists("$stage_dir/sites/default/settings.php");
-    $this->assertFileNotExists("$stage_dir/sites/default/settings.local.php");
-    $this->assertFileNotExists("$stage_dir/sites/default/services.yml");
+    $this->assertFileDoesNotExist("$stage_dir/sites/default/settings.php");
+    $this->assertFileDoesNotExist("$stage_dir/sites/default/settings.local.php");
+    $this->assertFileDoesNotExist("$stage_dir/sites/default/services.yml");
     // A non-excluded file in the default site directory should be staged.
     $this->assertFileExists("$stage_dir/sites/default/stage.txt");
 
@@ -148,7 +148,7 @@ class ExcludedPathsTest extends BrowserTestBase {
     }
     $stage->apply();
     foreach ($files as $file) {
-      $this->assertFileNotExists("$active_dir/$file");
+      $this->assertFileDoesNotExist("$active_dir/$file");
     }
   }
 

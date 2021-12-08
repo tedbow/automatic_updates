@@ -26,7 +26,7 @@ class ComposerUtilityTest extends KernelTestBase {
     file_put_contents($dir . '/composer.json', '{}');
 
     ComposerUtility::createForDirectory($dir);
-    $this->assertFileNotExists($dir . '/.htaccess');
+    $this->assertFileDoesNotExist($dir . '/.htaccess');
   }
 
   /**

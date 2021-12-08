@@ -51,7 +51,7 @@ class CoreUpdateTest extends UpdateTestBase {
     // ignores .htaccess files and everything in them, so a Composer-generated
     // .htaccess file won't cause this test to fail.
     if ($template === 'drupal/recommended-project') {
-      $this->assertFileNotExists($dir . '/.htaccess');
+      $this->assertFileDoesNotExist($dir . '/.htaccess');
     }
 
     // Ensure that Drupal thinks we are running 9.8.0, then refresh information
