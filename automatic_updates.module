@@ -5,6 +5,7 @@
  * Contains hook implementations for Automatic Updates.
  */
 
+use Drupal\Core\Routing\RouteMatchInterface;
 use Drupal\automatic_updates\CronUpdater;
 use Drupal\automatic_updates\UpdateRecommender;
 use Drupal\automatic_updates\Validation\AdminReadinessMessages;
@@ -12,6 +13,21 @@ use Drupal\Core\Extension\ExtensionVersion;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Url;
 use Drupal\update\ProjectSecurityData;
+
+/**
+ * Implements hook_help().
+ */
+function automatic_updates_help($route_name, RouteMatchInterface $route_match) {
+  // @todo Fully document all the modules features in
+  //   https://www.drupal.org/i/3253591.
+  switch ($route_name) {
+    case 'help.page.auto_updates':
+      $output = '<h3>' . t('About') . '</h3>';
+      $output .= '<p>' . t('Automatic Updates lets you update Drupal core.') . '</p>';
+      $output .= '<p>' . t('For more information, see the <a href=":automatic-updates-documentation">online documentation for the Automatic Updates module</a>.', [':automatic-updates-documentation' => 'https://www.drupal.org/docs/8/update/automatic-updates']) . '</p>';
+      return $output;
+  }
+}
 
 /**
  * Implements hook_page_top().
