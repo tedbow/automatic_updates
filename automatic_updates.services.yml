@@ -30,6 +30,12 @@ services:
       - '@string_translation'
     tags:
       - { name: event_subscriber }
+  automatic_updates.validator.settings:
+    class: Drupal\automatic_updates\Validator\SettingsValidator
+    arguments:
+      - '@string_translation'
+    tags:
+      - { name: event_subscriber }
   automatic_updates.update_version_validator:
     class: Drupal\automatic_updates\Validator\UpdateVersionValidator
     arguments:
