@@ -45,6 +45,10 @@ class LockFileValidatorTest extends PackageManagerKernelTestBase {
     // system in ways that vfsStream doesn't support, like calling stat() and
     // disk_free_space().
     $container->removeDefinition('package_manager.validator.disk_space');
+
+    // Disable the Composer settings validator, since it tries to read Composer
+    // files that may not exist in this test.
+    $container->removeDefinition('package_manager.validator.composer_settings');
   }
 
   /**

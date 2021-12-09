@@ -44,9 +44,11 @@ class WritableFileSystemValidatorTest extends PackageManagerKernelTestBase {
     // disk_free_space().
     $container->removeDefinition('package_manager.validator.disk_space');
 
-    // Disable the lock file validator, since the mock file system we create in
-    // this test doesn't have any lock files to validate.
+    // Disable the lock file and Composer settings validators, since in this
+    // test we are validating an imaginary file system which doesn't have any
+    // Composer files.
     $container->removeDefinition('package_manager.validator.lock_file');
+    $container->removeDefinition('package_manager.validator.composer_settings');
   }
 
   /**

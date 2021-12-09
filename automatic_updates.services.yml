@@ -48,6 +48,12 @@ services:
       - '@package_manager.validator.composer_executable'
     tags:
       - { name: event_subscriber }
+  automatic_updates.validator.composer_settings:
+    class: Drupal\automatic_updates\Validator\PackageManagerReadinessCheck
+    arguments:
+      - '@package_manager.validator.composer_settings'
+    tags:
+      - { name: event_subscriber }
   automatic_updates.disk_space_validator:
     class: Drupal\automatic_updates\Validator\PackageManagerReadinessCheck
     arguments:

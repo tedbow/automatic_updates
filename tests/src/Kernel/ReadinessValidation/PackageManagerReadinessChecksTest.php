@@ -49,6 +49,7 @@ class PackageManagerReadinessChecksTest extends AutomaticUpdatesKernelTestBase {
       ['package_manager.validator.disk_space'],
       ['package_manager.validator.pending_updates'],
       ['package_manager.validator.file_system'],
+      ['package_manager.validator.composer_settings'],
     ];
   }
 

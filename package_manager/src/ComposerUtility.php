@@ -38,6 +38,16 @@ class ComposerUtility {
   }
 
   /**
+   * Returns the underlying Composer instance.
+   *
+   * @return \Composer\Composer
+   *   The Composer instance.
+   */
+  public function getComposer(): Composer {
+    return $this->composer;
+  }
+
+  /**
    * Creates a utility object using the files in a given directory.
    *
    * @param string $dir

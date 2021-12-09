@@ -118,6 +118,12 @@ services:
       - '@string_translation'
     tags:
       - { name: event_subscriber }
+  package_manager.validator.composer_settings:
+    class: Drupal\package_manager\EventSubscriber\ComposerSettingsValidator
+    arguments:
+      - '@string_translation'
+    tags:
+      - { name: event_subscriber }
   package_manager.excluded_paths_subscriber:
     class: Drupal\package_manager\EventSubscriber\ExcludedPathsSubscriber
     arguments:
