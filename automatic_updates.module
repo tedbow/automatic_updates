@@ -73,9 +73,7 @@ function automatic_updates_module_implements_alter(&$implementations, $hook) {
  * Implements hook_cron().
  */
 function automatic_updates_cron() {
-  /** @var \Drupal\automatic_updates\CronUpdater $cron_updater */
-  $cron_updater = \Drupal::classResolver(CronUpdater::class);
-  $cron_updater->handleCron();
+  \Drupal::service('automatic_updates.cron_updater')->handleCron();
 
   /** @var \Drupal\automatic_updates\Validation\ReadinessValidationManager $checker_manager */
   $checker_manager = \Drupal::service('automatic_updates.readiness_validation_manager');

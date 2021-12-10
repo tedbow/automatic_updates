@@ -4,8 +4,8 @@ namespace Drupal\Tests\automatic_updates\Kernel;
 
 use Drupal\automatic_updates\CronUpdater;
 use Drupal\Core\Form\FormState;
-use Drupal\package_manager\ComposerUtility;
 use Drupal\update\UpdateSettingsForm;
+use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 
 /**
  * @covers \Drupal\automatic_updates\CronUpdater
@@ -21,6 +21,7 @@ class CronUpdaterTest extends AutomaticUpdatesKernelTestBase {
   protected static $modules = [
     'automatic_updates',
     'package_manager',
+    'package_manager_bypass',
   ];
 
   /**
@@ -97,21 +98,20 @@ class CronUpdaterTest extends AutomaticUpdatesKernelTestBase {
     $form_state->setValue('automatic_updates_cron', $setting);
     $form_builder->submitForm(UpdateSettingsForm::class, $form_state);
 
-    // Mock the updater so we can assert that its methods are called or bypassed
-    // depending on configuration.
-    $will_update = (int) $will_update;
-    $updater = $this->prophesize('\Drupal\automatic_updates\Updater');
+    // Since we're just trying to ensure that all of Package Manager's services
+    // are called as expected, disable validation by replacing the event
+    // dispatcher with a dummy version.
+    $event_dispatcher = $this->prophesize(EventDispatcherInterface::class);
+    $this->container->set('event_dispatcher', $event_dispatcher->reveal());
 
-    $composer = ComposerUtility::createForDirectory(__DIR__ . '/../../fixtures/fake-site');
-    $updater->getActiveComposer()->willReturn($composer);
-
-    $updater->begin(['drupal' => '9.8.1'])->shouldBeCalledTimes($will_update);
-    $updater->stage()->shouldBeCalledTimes($will_update);
-    $updater->apply()->shouldBeCalledTimes($will_update);
-    $updater->destroy()->shouldBeCalledTimes($will_update);
-    $this->container->set('automatic_updates.updater', $updater->reveal());
-
+    // Run cron and ensure that Package Manager's services were called or
+    // bypassed depending on configuration.
     $this->container->get('cron')->run();
+
+    $will_update = (int) $will_update;
+    $this->assertCount($will_update, $this->container->get('package_manager.beginner')->getInvocationArguments());
+    $this->assertCount($will_update, $this->container->get('package_manager.stager')->getInvocationArguments());
+    $this->assertCount($will_update, $this->container->get('package_manager.committer')->getInvocationArguments());
   }
 
 }

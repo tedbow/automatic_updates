@@ -3,9 +3,7 @@
 namespace Drupal\automatic_updates;
 
 use Drupal\Core\Config\ConfigFactoryInterface;
-use Drupal\Core\DependencyInjection\ContainerInjectionInterface;
 use Drupal\Core\Logger\LoggerChannelFactoryInterface;
-use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
  * Defines a service that updates via cron.
@@ -14,7 +12,7 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
  *   This class implements logic specific to Automatic Updates' cron hook
  *   implementation. It should not be called directly.
  */
-class CronUpdater implements ContainerInjectionInterface {
+class CronUpdater extends Updater {
 
   /**
    * All automatic updates are disabled.
@@ -38,13 +36,6 @@ class CronUpdater implements ContainerInjectionInterface {
   public const ALL = 'patch';
 
   /**
-   * The updater service.
-   *
-   * @var \Drupal\automatic_updates\Updater
-   */
-  protected $updater;
-
-  /**
    * The config factory service.
    *
    * @var \Drupal\Core\Config\ConfigFactoryInterface
@@ -61,28 +52,17 @@ class CronUpdater implements ContainerInjectionInterface {
   /**
    * Constructs a CronUpdater object.
    *
-   * @param \Drupal\automatic_updates\Updater $updater
-   *   The updater service.
    * @param \Drupal\Core\Config\ConfigFactoryInterface $config_factory
    *   The config factory service.
    * @param \Drupal\Core\Logger\LoggerChannelFactoryInterface $logger_factory
    *   The logger channel factory.
+   * @param mixed ...$arguments
+   *   Additional arguments to pass to the parent constructor.
    */
-  public function __construct(Updater $updater, ConfigFactoryInterface $config_factory, LoggerChannelFactoryInterface $logger_factory) {
-    $this->updater = $updater;
+  public function __construct(ConfigFactoryInterface $config_factory, LoggerChannelFactoryInterface $logger_factory, ...$arguments) {
+    parent::__construct(...$arguments);
     $this->configFactory = $config_factory;
     $this->logger = $logger_factory->get('automatic_updates');
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public static function create(ContainerInterface $container) {
-    return new static(
-      $container->get('automatic_updates.updater'),
-      $container->get('config.factory'),
-      $container->get('logger.factory')
-    );
   }
 
   /**
@@ -127,12 +107,12 @@ class CronUpdater implements ContainerInjectionInterface {
     //   cron runs.
     $recommended_version = $recommended_release->getVersion();
     try {
-      $this->updater->begin([
+      $this->begin([
         'drupal' => $recommended_version,
       ]);
-      $this->updater->stage();
-      $this->updater->apply();
-      $this->updater->destroy();
+      $this->stage();
+      $this->apply();
+      $this->destroy();
     }
     catch (\Throwable $e) {
       $this->logger->error($e->getMessage());

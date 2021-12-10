@@ -18,6 +18,18 @@ services:
       - '@file_system'
       - '@event_dispatcher'
       - '@tempstore.shared'
+  automatic_updates.cron_updater:
+    class: Drupal\automatic_updates\CronUpdater
+    arguments:
+      - '@config.factory'
+      - '@logger.factory'
+      - '@package_manager.path_locator'
+      - '@package_manager.beginner'
+      - '@package_manager.stager'
+      - '@package_manager.committer'
+      - '@file_system'
+      - '@event_dispatcher'
+      - '@tempstore.shared'
   automatic_updates.excluded_paths_subscriber:
     class: Drupal\automatic_updates\Event\ExcludedPathsSubscriber
     arguments:
@@ -83,6 +95,14 @@ services:
       - '@module_handler'
       - '@state'
       - '@datetime.time'
+      - '@string_translation'
+    tags:
+      - { name: event_subscriber }
+  automatic_updates.validator.staged_database_updates:
+    class: Drupal\automatic_updates\Validator\StagedDatabaseUpdateValidator
+    arguments:
+      - '@package_manager.path_locator'
+      - '@extension.list.module'
       - '@string_translation'
     tags:
       - { name: event_subscriber }
