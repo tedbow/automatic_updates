@@ -51,6 +51,7 @@ class UpdaterTest extends AutomaticUpdatesKernelTestBase {
     $locator = $this->prophesize(PathLocator::class);
     $locator->getActiveDirectory()->willReturn($fixture_dir);
     $locator->getProjectRoot()->willReturn($fixture_dir);
+    $locator->getWebRoot()->willReturn('');
     $locator->getVendorDirectory()->willReturn($fixture_dir);
     $this->container->set('package_manager.path_locator', $locator->reveal());
 

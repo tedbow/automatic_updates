@@ -2,7 +2,7 @@
 
 namespace Drupal\package_manager_bypass;
 
-use PhpTuf\ComposerStager\Domain\Output\ProcessOutputCallbackInterface;
+use PhpTuf\ComposerStager\Domain\Process\OutputCallbackInterface;
 use PhpTuf\ComposerStager\Domain\StagerInterface;
 
 /**
@@ -13,7 +13,7 @@ class Stager extends InvocationRecorderBase implements StagerInterface {
   /**
    * {@inheritdoc}
    */
-  public function stage(array $composerCommand, string $stagingDir, ?ProcessOutputCallbackInterface $callback = NULL, ?int $timeout = 120): void {
+  public function stage(array $composerCommand, string $stagingDir, ?OutputCallbackInterface $callback = NULL, ?int $timeout = 120): void {
     $this->saveInvocationArguments($composerCommand, $stagingDir);
   }
 

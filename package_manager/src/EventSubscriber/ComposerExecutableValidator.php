@@ -7,21 +7,21 @@ use Drupal\package_manager\Event\PreOperationStageEvent;
 use Drupal\Core\Extension\ExtensionVersion;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\Core\StringTranslation\TranslationInterface;
-use PhpTuf\ComposerStager\Domain\Output\ProcessOutputCallbackInterface;
+use PhpTuf\ComposerStager\Domain\Process\OutputCallbackInterface;
+use PhpTuf\ComposerStager\Domain\Process\Runner\ComposerRunnerInterface;
 use PhpTuf\ComposerStager\Exception\ExceptionInterface;
-use PhpTuf\ComposerStager\Infrastructure\Process\Runner\ComposerRunnerInterface;
 
 /**
  * Validates that the Composer executable can be found in the correct version.
  */
-class ComposerExecutableValidator implements PreOperationStageValidatorInterface, ProcessOutputCallbackInterface {
+class ComposerExecutableValidator implements PreOperationStageValidatorInterface, OutputCallbackInterface {
 
   use StringTranslationTrait;
 
   /**
    * The Composer runner.
    *
-   * @var \PhpTuf\ComposerStager\Infrastructure\Process\Runner\ComposerRunnerInterface
+   * @var \PhpTuf\ComposerStager\Domain\Process\Runner\ComposerRunnerInterface
    */
   protected $composer;
 
@@ -35,7 +35,7 @@ class ComposerExecutableValidator implements PreOperationStageValidatorInterface
   /**
    * Constructs a ComposerExecutableValidator object.
    *
-   * @param \PhpTuf\ComposerStager\Infrastructure\Process\Runner\ComposerRunnerInterface $composer
+   * @param \PhpTuf\ComposerStager\Domain\Process\Runner\ComposerRunnerInterface $composer
    *   The Composer runner.
    * @param \Drupal\Core\StringTranslation\TranslationInterface $translation
    *   The translation service.

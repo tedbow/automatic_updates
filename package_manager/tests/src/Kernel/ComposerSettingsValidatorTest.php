@@ -85,6 +85,7 @@ class ComposerSettingsValidatorTest extends PackageManagerKernelTestBase {
     $locator = $this->prophesize(PathLocator::class);
     $locator->getActiveDirectory()->willReturn($active_dir);
     $locator->getProjectRoot()->willReturn($active_dir);
+    $locator->getWebRoot()->willReturn('');
     $locator->getVendorDirectory()->willReturn($active_dir);
     $this->container->set('package_manager.path_locator', $locator->reveal());
 

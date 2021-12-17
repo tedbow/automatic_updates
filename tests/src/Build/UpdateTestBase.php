@@ -220,10 +220,7 @@ END;
     // Packagist.
     $repositories['packagist.org'] = FALSE;
 
-    $repositories['drupal/automatic_updates'] = [
-      'type' => 'path',
-      'url' => __DIR__ . '/../../..',
-    ];
+    $repositories['drupal/automatic_updates'] = $this->createPathRepository(__DIR__ . '/../../..');
     // Use whatever the current branch of automatic_updates is.
     $data['require']['drupal/automatic_updates'] = '*';
 
