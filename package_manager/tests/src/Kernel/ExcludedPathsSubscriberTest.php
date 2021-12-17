@@ -83,15 +83,15 @@ class ExcludedPathsSubscriberTest extends PackageManagerKernelTestBase {
     $connection->getConnectionOptions()->willReturn(['database' => $database]);
 
     $subscriber = new ExcludedPathsSubscriber(
+      $this->getDrupalRoot(),
       'sites/default',
-      $this->container->get('package_manager.symfony_file_system'),
+      $this->container->get('file_system'),
       $this->container->get('stream_wrapper_manager'),
-      $connection->reveal(),
-      $this->container->get('package_manager.path_locator')
+      $connection->reveal()
     );
 
     $event = new PreCreateEvent($this->createStage());
-    $subscriber->ignoreCommonPaths($event);
+    $subscriber->preCreate($event);
     // All of the expected exclusions should be flagged.
     $this->assertEmpty(array_diff($expected_exclusions, $event->getExcludedPaths()));
   }

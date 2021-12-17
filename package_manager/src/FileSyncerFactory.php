@@ -3,9 +3,9 @@
 namespace Drupal\package_manager;
 
 use Drupal\Core\Config\ConfigFactoryInterface;
-use PhpTuf\ComposerStager\Domain\FileSyncer\FileSyncerFactoryInterface;
-use PhpTuf\ComposerStager\Domain\FileSyncer\FileSyncerInterface;
+use PhpTuf\ComposerStager\Infrastructure\FileSyncer\FileSyncerFactoryInterface;
 use PhpTuf\ComposerStager\Infrastructure\FileSyncer\FileSyncerFactory as StagerFileSyncerFactory;
+use PhpTuf\ComposerStager\Infrastructure\FileSyncer\FileSyncerInterface;
 use Symfony\Component\Process\ExecutableFinder;
 
 /**
@@ -16,21 +16,21 @@ class FileSyncerFactory implements FileSyncerFactoryInterface {
   /**
    * The decorated file syncer factory.
    *
-   * @var \PhpTuf\ComposerStager\Domain\FileSyncer\FileSyncerFactoryInterface
+   * @var \PhpTuf\ComposerStager\Infrastructure\FileSyncer\FileSyncerFactoryInterface
    */
   protected $decorated;
 
   /**
    * The PHP file syncer service.
    *
-   * @var \PhpTuf\ComposerStager\Domain\FileSyncer\FileSyncerInterface
+   * @var \PhpTuf\ComposerStager\Infrastructure\FileSyncer\FileSyncerInterface
    */
   protected $phpFileSyncer;
 
   /**
    * The rsync file syncer service.
    *
-   * @var \PhpTuf\ComposerStager\Domain\FileSyncer\FileSyncerInterface
+   * @var \PhpTuf\ComposerStager\Infrastructure\FileSyncer\FileSyncerInterface
    */
   protected $rsyncFileSyncer;
 
@@ -46,9 +46,9 @@ class FileSyncerFactory implements FileSyncerFactoryInterface {
    *
    * @param \Symfony\Component\Process\ExecutableFinder $executable_finder
    *   The Symfony executable finder.
-   * @param \PhpTuf\ComposerStager\Domain\FileSyncer\FileSyncerInterface $php_file_syncer
+   * @param \PhpTuf\ComposerStager\Infrastructure\FileSyncer\FileSyncerInterface $php_file_syncer
    *   The PHP file syncer service.
-   * @param \PhpTuf\ComposerStager\Domain\FileSyncer\FileSyncerInterface $rsync_file_syncer
+   * @param \PhpTuf\ComposerStager\Infrastructure\FileSyncer\FileSyncerInterface $rsync_file_syncer
    *   The rsync file syncer service.
    * @param \Drupal\Core\Config\ConfigFactoryInterface $config_factory
    *   The config factory service.

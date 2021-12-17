@@ -15,23 +15,12 @@ trait ExcludedPathsTrait {
   protected $excludedPaths = [];
 
   /**
-   * Adds a path to exclude from the current operation.
+   * Adds an absolute path to exclude from the current operation.
    *
-   * If called on an instance of \Drupal\package_manager\Event\PreCreateEvent,
-   * excluded paths will not be copied into the staging area when the stage is
-   * created. If called on an instance of
-   * \Drupal\package_manager\Event\PreApplyEvent, excluded paths will not be
-   * deleted from the active directory when staged changes are applied. So,
-   * to ensure that a given path is never staged, but also preserved in the
-   * active directory, it should be passed to this method on both PreCreateEvent
-   * and PreApplyEvent. See
-   * \Drupal\package_manager\EventSubscriber\ExcludedPathsSubscriber for an
-   * example.
+   * @todo This should only accept paths relative to the active directory.
    *
    * @param string $path
-   *   The path to exclude, relative to the project root.
-   *
-   * @see \Drupal\package_manager\EventSubscriber\ExcludedPathsSubscriber
+   *   The path to exclude.
    */
   public function excludePath(string $path): void {
     $this->excludedPaths[] = $path;

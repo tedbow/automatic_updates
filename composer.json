@@ -13,7 +13,7 @@
   "require": {
     "ext-json": "*",
     "drupal/core": "^9.2",
-    "php-tuf/composer-stager": "0.3.0",
+    "php-tuf/composer-stager": "0.2.3",
     "composer/composer": "^2"
   },
   "config": {

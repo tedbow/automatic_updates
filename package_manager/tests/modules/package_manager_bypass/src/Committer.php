@@ -3,7 +3,7 @@
 namespace Drupal\package_manager_bypass;
 
 use PhpTuf\ComposerStager\Domain\CommitterInterface;
-use PhpTuf\ComposerStager\Domain\Process\OutputCallbackInterface;
+use PhpTuf\ComposerStager\Domain\Output\ProcessOutputCallbackInterface;
 
 /**
  * Defines an update committer which doesn't do any actual committing.
@@ -30,7 +30,7 @@ class Committer extends InvocationRecorderBase implements CommitterInterface {
   /**
    * {@inheritdoc}
    */
-  public function commit(string $stagingDir, string $activeDir, ?array $exclusions = [], ?OutputCallbackInterface $callback = NULL, ?int $timeout = 120): void {
+  public function commit(string $stagingDir, string $activeDir, ?array $exclusions = [], ?ProcessOutputCallbackInterface $callback = NULL, ?int $timeout = 120): void {
     $this->saveInvocationArguments($activeDir, $stagingDir, $exclusions);
   }
 
