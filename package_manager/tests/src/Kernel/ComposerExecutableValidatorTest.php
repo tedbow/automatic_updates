@@ -112,8 +112,8 @@ class ComposerExecutableValidatorTest extends PackageManagerKernelTestBase {
     // Mock the output of `composer --version`, will be passed to the validator,
     // which is itself a callback function that gets called repeatedly as
     // Composer produces output.
-    /** @var \PhpTuf\ComposerStager\Infrastructure\Process\Runner\ComposerRunnerInterface|\Prophecy\Prophecy\ObjectProphecy $runner */
-    $runner = $this->prophesize('\PhpTuf\ComposerStager\Infrastructure\Process\Runner\ComposerRunnerInterface');
+    /** @var \PhpTuf\ComposerStager\Domain\Process\Runner\ComposerRunnerInterface|\Prophecy\Prophecy\ObjectProphecy $runner */
+    $runner = $this->prophesize('\PhpTuf\ComposerStager\Domain\Process\Runner\ComposerRunnerInterface');
 
     $runner->run(['--version'], Argument::type(ComposerExecutableValidator::class))
       // Whatever is passed to ::run() will be passed to this mock callback in

@@ -64,6 +64,7 @@ class StagedProjectsValidatorTest extends AutomaticUpdatesKernelTestBase {
 
     $locator->getActiveDirectory()->willReturn($active_dir);
     $locator->getProjectRoot()->willReturn($active_dir);
+    $locator->getWebRoot()->willReturn('');
     $locator->getVendorDirectory()->willReturn($active_dir);
 
     $stage_dir_exists = is_dir($stage_dir);

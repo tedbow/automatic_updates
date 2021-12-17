@@ -113,6 +113,7 @@ class WritableFileSystemValidatorTest extends PackageManagerKernelTestBase {
 
     $path_locator = $this->prophesize(PathLocator::class);
     $path_locator->getActiveDirectory()->willReturn($root->url());
+    $path_locator->getProjectRoot()->willReturn($root->url());
     $path_locator->getWebRoot()->willReturn('');
     $path_locator->getVendorDirectory()->willReturn($vendor->url());
     $this->container->set('package_manager.path_locator', $path_locator->reveal());

@@ -4,8 +4,6 @@ services:
     class: Symfony\Component\Filesystem\Filesystem
   package_manager.symfony_executable_finder:
     class: Symfony\Component\Process\ExecutableFinder
-  package_manager.symfony_finder:
-    class: Symfony\Component\Finder\Finder
 
   # Basic infrastructure services.
   package_manager.process_factory:
@@ -45,8 +43,6 @@ services:
     class: PhpTuf\ComposerStager\Infrastructure\FileSyncer\PhpFileSyncer
     arguments:
       - '@package_manager.file_system'
-      - '@package_manager.symfony_finder'
-      - '@package_manager.symfony_finder'
   package_manager.file_syncer.factory:
     class: Drupal\package_manager\FileSyncerFactory
     arguments:
@@ -55,7 +51,7 @@ services:
       - '@package_manager.file_syncer.rsync'
       - '@config.factory'
   package_manager.file_syncer:
-    class: PhpTuf\ComposerStager\Infrastructure\FileSyncer\FileSyncerInterface
+    class: PhpTuf\ComposerStager\Domain\FileSyncer\FileSyncerInterface
     factory: ['@package_manager.file_syncer.factory', 'create']
 
   # Domain services.
@@ -127,10 +123,10 @@ services:
   package_manager.excluded_paths_subscriber:
     class: Drupal\package_manager\EventSubscriber\ExcludedPathsSubscriber
     arguments:
-      - '%app.root%'
       - '%site.path%'
-      - '@file_system'
+      - '@package_manager.symfony_file_system'
       - '@stream_wrapper_manager'
       - '@database'
+      - '@package_manager.path_locator'
     tags:
       - { name: event_subscriber }
