@@ -2,22 +2,12 @@
 
 namespace Drupal\Tests\automatic_updates\Build;
 
-use Drupal\BuildTests\QuickStart\QuickStartTestBase;
-use Drupal\Component\Serialization\Json;
 use Drupal\Component\Utility\Html;
-use Drupal\Tests\automatic_updates\Traits\LocalPackagesTrait;
-use Drupal\Tests\automatic_updates\Traits\SettingsTrait;
 
 /**
  * Base class for tests that perform in-place updates.
  */
-abstract class UpdateTestBase extends QuickStartTestBase {
-
-  use LocalPackagesTrait {
-    getPackagePath as traitGetPackagePath;
-    copyPackage as traitCopyPackage;
-  }
-  use SettingsTrait;
+abstract class UpdateTestBase extends TemplateProjectSiteTestBase {
 
   /**
    * A secondary server instance, to serve XML metadata about available updates.
@@ -25,15 +15,6 @@ abstract class UpdateTestBase extends QuickStartTestBase {
    * @var \Symfony\Component\Process\Process
    */
   private $metadataServer;
-
-  /**
-   * The test site's document root, relative to the workspace directory.
-   *
-   * @var string
-   *
-   * @see ::createTestSite()
-   */
-  private $webRoot;
 
   /**
    * {@inheritdoc}
@@ -48,36 +29,52 @@ abstract class UpdateTestBase extends QuickStartTestBase {
   /**
    * {@inheritdoc}
    */
-  protected function copyPackage(string $source_dir, string $destination_dir = NULL): string {
-    return $this->traitCopyPackage($source_dir, $destination_dir ?: $this->getWorkspaceDirectory());
+  protected function createTestProject(string $template): void {
+    parent::createTestProject($template);
+
+    // Install Automatic Updates into the test project and ensure it wasn't
+    // symlinked.
+    $dir = 'project';
+    $this->runComposer('composer config repo.automatic_updates path ' . __DIR__ . '/../../..', $dir);
+    $this->assertStringNotContainsString('Symlinking', $this->runComposer('COMPOSER_MIRROR_PATH_REPOS=1 composer require "drupal/automatic_updates:@dev"', $dir));
+
+    // Install Drupal. Always allow test modules to be installed in the UI and,
+    // for easier debugging, always display errors in their dubious glory.
+    $this->installQuickStart('minimal');
+    $php = <<<END
+\$settings['extension_discovery_scan_tests'] = TRUE;
+\$config['system.logging']['error_level'] = 'verbose';
+END;
+    $this->writeSettings($php);
+
+    // Install Automatic Updates and other modules needed for testing.
+    $this->formLogin($this->adminUsername, $this->adminPassword);
+    $this->installModules([
+      'automatic_updates',
+      'automatic_updates_test',
+      'update_test',
+    ]);
   }
 
   /**
-   * {@inheritdoc}
-   */
-  protected function getPackagePath(array $package): string {
-    if ($package['name'] === 'drupal/core') {
-      return 'core';
-    }
-
-    [$vendor, $name] = explode('/', $package['name']);
-
-    // Assume any contributed module is in modules/contrib/$name.
-    if ($vendor === 'drupal' && $package['type'] === 'drupal-module') {
-      return implode(DIRECTORY_SEPARATOR, ['modules', 'contrib', $name]);
-    }
-
-    return $this->traitGetPackagePath($package);
-  }
-
-  /**
-   * Returns the full path to the test site's document root.
+   * Appends PHP code to the test site's settings.php.
    *
-   * @return string
-   *   The full path of the test site's document root.
+   * @param string $php
+   *   The PHP code to append to the test site's settings.php.
    */
-  protected function getWebRoot(): string {
-    return $this->getWorkspaceDirectory() . DIRECTORY_SEPARATOR . $this->webRoot;
+  protected function writeSettings(string $php): void {
+    // Ensure settings are writable, since this is the only way we can set
+    // configuration values that aren't accessible in the UI.
+    $file = $this->getWebRoot() . '/sites/default/settings.php';
+    $this->assertFileExists($file);
+    chmod(dirname($file), 0744);
+    chmod($file, 0744);
+    $this->assertFileIsWritable($file);
+
+    $stream = fopen($file, 'a');
+    $this->assertIsResource($stream);
+    $this->assertIsInt(fwrite($stream, $php));
+    $this->assertTrue(fclose($stream));
   }
 
   /**
@@ -100,158 +97,12 @@ END;
     // about available updates.
     if (empty($this->metadataServer)) {
       $port = $this->findAvailablePort();
-      $this->metadataServer = $this->instantiateServer($port, $this->webRoot);
+      $this->metadataServer = $this->instantiateServer($port);
       $code .= <<<END
 \$config['update.settings']['fetch']['url'] = 'http://localhost:$port/automatic-update-test';
 END;
     }
-    $this->addSettings($code, $this->getWebRoot());
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public function visit($request_uri = '/', $working_dir = NULL) {
-    return parent::visit($request_uri, $working_dir ?: $this->webRoot);
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public function formLogin($username, $password, $working_dir = NULL) {
-    parent::formLogin($username, $password, $working_dir ?: $this->webRoot);
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public function installQuickStart($profile, $working_dir = NULL) {
-    parent::installQuickStart($profile, $working_dir ?: $this->webRoot);
-
-    // Always allow test modules to be installed in the UI and, for easier
-    // debugging, always display errors in their dubious glory.
-    $php = <<<END
-\$settings['extension_discovery_scan_tests'] = TRUE;
-\$config['system.logging']['error_level'] = 'verbose';
-END;
-    $this->addSettings($php, $this->getWebRoot());
-  }
-
-  /**
-   * Uses our already-installed dependencies to build a test site to update.
-   *
-   * @param string $template
-   *   The template project from which to build the test site. Can be
-   *   'drupal/recommended-project' or 'drupal/legacy-project'.
-   */
-  protected function createTestSite(string $template): void {
-    // Create the test site using one of the core project templates, but don't
-    // install dependencies just yet.
-    $template_dir = implode(DIRECTORY_SEPARATOR, [
-      $this->getDrupalRoot(),
-      'composer',
-      'Template',
-    ]);
-    $recommended_template = $this->createPathRepository($template_dir . DIRECTORY_SEPARATOR . 'RecommendedProject');
-    $legacy_template = $this->createPathRepository($template_dir . DIRECTORY_SEPARATOR . 'LegacyProject');
-
-    $dir = $this->getWorkspaceDirectory();
-    $command = sprintf(
-      "composer create-project %s %s --no-install --stability dev --repository '%s' --repository '%s'",
-      $template,
-      $dir,
-      Json::encode($recommended_template),
-      Json::encode($legacy_template)
-    );
-    $this->executeCommand($command);
-    $this->assertCommandSuccessful();
-
-    $composer = $dir . DIRECTORY_SEPARATOR . 'composer.json';
-    $data = $this->readJson($composer);
-
-    // Allow the test to configure the test site as necessary.
-    $data = $this->getInitialConfiguration($data);
-
-    // We need to know the path of the web root, relative to the project root,
-    // in order to install Drupal or visit the test site at all. Luckily, both
-    // template projects define this because the scaffold plugin needs to know
-    // it as well.
-    // @see ::visit()
-    // @see ::formLogin()
-    // @see ::installQuickStart()
-    $this->webRoot = $data['extra']['drupal-scaffold']['locations']['web-root'];
-
-    // Update the test site's composer.json.
-    $this->writeJson($composer, $data);
-    // Install dependencies, including dev.
-    $this->executeCommand('composer install');
-    $this->assertCommandSuccessful();
-  }
-
-  /**
-   * Returns the initial data to write to the test site's composer.json.
-   *
-   * This configuration will be used to build the pre-update test site.
-   *
-   * @param array $data
-   *   The current contents of the test site's composer.json.
-   *
-   * @return array
-   *   The data that should be written to the test site's composer.json.
-   */
-  protected function getInitialConfiguration(array $data): array {
-    $drupal_root = $this->getDrupalRoot();
-    $core_composer_dir = $drupal_root . DIRECTORY_SEPARATOR . 'composer';
-    $repositories = [];
-
-    // Add all the metapackages that are provided by Drupal core.
-    $metapackage_dir = $core_composer_dir . DIRECTORY_SEPARATOR . 'Metapackage';
-    $repositories['drupal/core-recommended'] = $this->createPathRepository($metapackage_dir . DIRECTORY_SEPARATOR . 'CoreRecommended');
-    $repositories['drupal/core-dev'] = $this->createPathRepository($metapackage_dir . DIRECTORY_SEPARATOR . 'DevDependencies');
-
-    // Add all the Composer plugins that are provided by Drupal core.
-    $plugin_dir = $core_composer_dir . DIRECTORY_SEPARATOR . 'Plugin';
-    $repositories['drupal/core-project-message'] = $this->createPathRepository($plugin_dir . DIRECTORY_SEPARATOR . 'ProjectMessage');
-    $repositories['drupal/core-composer-scaffold'] = $this->createPathRepository($plugin_dir . DIRECTORY_SEPARATOR . 'Scaffold');
-    $repositories['drupal/core-vendor-hardening'] = $this->createPathRepository($plugin_dir . DIRECTORY_SEPARATOR . 'VendorHardening');
-
-    $repositories = array_merge($repositories, $this->getLocalPackageRepositories($drupal_root));
-    // To ensure the test runs entirely offline, don't allow Composer to contact
-    // Packagist.
-    $repositories['packagist.org'] = FALSE;
-
-    $repositories['drupal/automatic_updates'] = $this->createPathRepository(__DIR__ . '/../../..');
-    // Use whatever the current branch of automatic_updates is.
-    $data['require']['drupal/automatic_updates'] = '*';
-
-    $data['repositories'] = $repositories;
-
-    // Since Drupal 9 requires PHP 7.3 or later, these packages are probably
-    // not installed, which can cause trouble during dependency resolution.
-    // The drupal/drupal package (defined with a composer.json that is part
-    // of core's repository) replaces these, so we need to emulate that here.
-    $data['replace']['symfony/polyfill-php72'] = '*';
-    $data['replace']['symfony/polyfill-php73'] = '*';
-
-    return $data;
-  }
-
-  /**
-   * Asserts that a specific version of Drupal core is running.
-   *
-   * Assumes that a user with permission to view the status report is logged in.
-   *
-   * @param string $expected_version
-   *   The version of core that should be running.
-   */
-  protected function assertCoreVersion(string $expected_version): void {
-    $this->visit('/admin/reports/status');
-    $item = $this->getMink()
-      ->assertSession()
-      ->elementExists('css', 'h3:contains("Drupal Version")')
-      ->getParent()
-      ->getText();
-    $this->assertStringContainsString($expected_version, $item);
+    $this->writeSettings($code);
   }
 
   /**
