@@ -28,6 +28,14 @@ abstract class PackageManagerKernelTestBase extends KernelTestBase {
   /**
    * {@inheritdoc}
    */
+  protected function setUp(): void {
+    parent::setUp();
+    $this->installConfig('package_manager');
+  }
+
+  /**
+   * {@inheritdoc}
+   */
   public function register(ContainerBuilder $container) {
     parent::register($container);
     $this->disableValidators($container);
@@ -117,6 +125,20 @@ abstract class PackageManagerKernelTestBase extends KernelTestBase {
  * Defines a stage specifically for testing purposes.
  */
 class TestStage extends Stage {
+
+  /**
+   * The directory where staging areas will be created.
+   *
+   * @var string
+   */
+  public static $stagingRoot;
+
+  /**
+   * {@inheritdoc}
+   */
+  protected static function getStagingRoot(): string {
+    return static::$stagingRoot ?: parent::getStagingRoot();
+  }
 
   /**
    * {@inheritdoc}
