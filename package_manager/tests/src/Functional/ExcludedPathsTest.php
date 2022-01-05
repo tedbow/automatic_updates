@@ -2,7 +2,7 @@
 
 namespace Drupal\Tests\package_manager\Functional;
 
-use Drupal\Core\Database\Driver\sqlite\Connection;
+use Drupal\Core\Database\Connection;
 use Drupal\Core\Site\Settings;
 use Drupal\package_manager\PathLocator;
 use Drupal\package_manager\Stage;

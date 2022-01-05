@@ -282,7 +282,10 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
 
     /** @var \Drupal\package_manager_bypass\InvocationRecorderBase $stager */
     $stager = $this->container->get('package_manager.stager');
-    $this->assertCount($attempted_times, $stager->getInvocationArguments());
+    // If an update was attempted, then there will be two calls to the stager:
+    // one to change the constraints in composer.json, and another to actually
+    // update the installed dependencies.
+    $this->assertCount($attempted_times * 2, $stager->getInvocationArguments());
 
     /** @var \Drupal\package_manager_bypass\InvocationRecorderBase $committer */
     $committer = $this->container->get('package_manager.committer');

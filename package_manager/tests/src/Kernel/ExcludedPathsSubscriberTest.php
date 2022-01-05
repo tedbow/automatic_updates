@@ -2,7 +2,7 @@
 
 namespace Drupal\Tests\package_manager\Kernel;
 
-use Drupal\Core\Database\Driver\sqlite\Connection;
+use Drupal\Core\Database\Connection;
 use Drupal\package_manager\Event\PreCreateEvent;
 use Drupal\package_manager\EventSubscriber\ExcludedPathsSubscriber;
 

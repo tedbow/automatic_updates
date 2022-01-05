@@ -238,14 +238,15 @@ class Stage {
   public function require(array $constraints, bool $dev = FALSE): void {
     $this->checkOwnership();
 
-    $command = array_merge(['require'], $constraints);
-    $command[] = '--update-with-all-dependencies';
+    $command = array_merge(['require', '--no-update'], $constraints);
     if ($dev) {
       $command[] = '--dev';
     }
 
     $this->dispatch(new PreRequireEvent($this));
-    $this->stager->stage($command, $this->getStageDirectory());
+    $dir = $this->getStageDirectory();
+    $this->stager->stage($command, $dir);
+    $this->stager->stage(['update', '--with-all-dependencies'], $dir);
     $this->dispatch(new PostRequireEvent($this));
   }
 

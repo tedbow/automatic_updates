@@ -36,7 +36,9 @@ abstract class UpdateTestBase extends TemplateProjectSiteTestBase {
     // symlinked.
     $dir = 'project';
     $this->runComposer('composer config repo.automatic_updates path ' . __DIR__ . '/../../..', $dir);
-    $this->assertStringNotContainsString('Symlinking', $this->runComposer('COMPOSER_MIRROR_PATH_REPOS=1 composer require "drupal/automatic_updates:@dev"', $dir));
+    $this->runComposer('composer require --no-update "drupal/automatic_updates:@dev"', $dir);
+    $output = $this->runComposer('COMPOSER_MIRROR_PATH_REPOS=1 composer update --with-all-dependencies', $dir);
+    $this->assertStringNotContainsString('Symlinking', $output);
 
     // Install Drupal. Always allow test modules to be installed in the UI and,
     // for easier debugging, always display errors in their dubious glory.

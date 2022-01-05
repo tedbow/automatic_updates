@@ -46,6 +46,16 @@ abstract class TemplateProjectSiteTestBase extends QuickStartTestBase {
   }
 
   /**
+   * {@inheritdoc}
+   */
+  public function getCodebaseFinder() {
+    // If core's npm dependencies are installed, we don't want them to be
+    // included in the upstream version of core that gets installed into the
+    // test site.
+    return parent::getCodebaseFinder()->notPath('#^core/node_modules#');
+  }
+
+  /**
    * Returns the full path to the test site's document root.
    *
    * @return string

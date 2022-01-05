@@ -75,26 +75,29 @@ class UpdaterTest extends AutomaticUpdatesKernelTestBase {
     // The production dependencies should be updated first...
     $expected_require_arguments = [
       'require',
+      '--no-update',
       'drupal/core-recommended:9.8.1',
-      '--update-with-all-dependencies',
     ];
     // ...followed by the dev dependencies.
     $expected_require_dev_arguments = [
       'require',
+      '--no-update',
       'drupal/core-dev:9.8.1',
-      '--update-with-all-dependencies',
       '--dev',
     ];
+    // In both cases, `composer update` will be called separately.
+    $expected_update_arguments = ['update', '--with-all-dependencies'];
+
     $this->container->get('automatic_updates.updater')->claim($id)->stage();
 
     /** @var \Drupal\package_manager_bypass\InvocationRecorderBase $stager */
     $stager = $this->container->get('package_manager.stager');
-    [
-      $actual_require_arguments,
-      $actual_require_dev_arguments,
-    ] = $stager->getInvocationArguments();
-    $this->assertSame($expected_require_arguments, $actual_require_arguments[0]);
-    $this->assertSame($expected_require_dev_arguments, $actual_require_dev_arguments[0]);
+    $invocation_arguments = $stager->getInvocationArguments();
+    $this->assertCount(4, $invocation_arguments);
+    $this->assertSame($expected_require_arguments, $invocation_arguments[0][0]);
+    $this->assertSame($expected_update_arguments, $invocation_arguments[1][0]);
+    $this->assertSame($expected_require_dev_arguments, $invocation_arguments[2][0]);
+    $this->assertSame($expected_update_arguments, $invocation_arguments[3][0]);
   }
 
   /**
