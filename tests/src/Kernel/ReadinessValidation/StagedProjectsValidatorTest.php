@@ -118,9 +118,15 @@ class StagedProjectsValidatorTest extends AutomaticUpdatesKernelTestBase {
     copy("$fixture/composer.lock", 'public://composer.lock');
 
     $event_dispatcher = $this->container->get('event_dispatcher');
-    // Disable the disk space validator, since it doesn't work with vfsStream.
-    $disk_space_validator = $this->container->get('package_manager.validator.disk_space');
-    $event_dispatcher->removeSubscriber($disk_space_validator);
+    // Disable the disk space validator, since it doesn't work with vfsStream,
+    // and the excluded paths subscriber, since it won't deal with this tiny
+    // virtual file system correctly.
+    $disable_subscribers = array_map([$this->container, 'get'], [
+      'package_manager.validator.disk_space',
+      'package_manager.excluded_paths_subscriber',
+    ]);
+    array_walk($disable_subscribers, [$event_dispatcher, 'removeSubscriber']);
+
     // Just before the staged changes are applied, delete the composer.json file
     // to trigger an error. This uses the highest possible priority to guarantee
     // it runs before any other subscribers.

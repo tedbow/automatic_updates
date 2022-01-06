@@ -3,10 +3,8 @@
 namespace Drupal\Tests\package_manager\Kernel;
 
 use Drupal\Core\Database\Connection;
-use Drupal\Core\DependencyInjection\ContainerBuilder;
+use Drupal\package_manager\Event\PreCreateEvent;
 use Drupal\package_manager\EventSubscriber\ExcludedPathsSubscriber;
-use Drupal\package_manager\PathLocator;
-use org\bovigo\vfs\vfsStream;
 
 /**
  * @covers \Drupal\package_manager\EventSubscriber\ExcludedPathsSubscriber
@@ -16,153 +14,56 @@ use org\bovigo\vfs\vfsStream;
 class ExcludedPathsTest extends PackageManagerKernelTestBase {
 
   /**
+   * The mocked SQLite database connection.
+   *
+   * @var \Drupal\Core\Database\Connection|\Prophecy\Prophecy\ObjectProphecy
+   */
+  private $mockDatabase;
+
+  /**
    * {@inheritdoc}
    */
   protected function setUp(): void {
     parent::setUp();
 
-    // Ensure that any staging directories created by TestStage are created
-    // in the virtual file system.
-    TestStage::$stagingRoot = $this->vfsRoot->url();
-
-    // We need to rebuild the container after setting a private file path, since
-    // the private stream wrapper is only registered if this setting is set.
-    // @see \Drupal\Core\CoreServiceProvider::register()
-    $this->setSetting('file_private_path', 'private');
-    $kernel = $this->container->get('kernel');
-    $kernel->rebuildContainer();
-    $this->container = $kernel->getContainer();
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public function register(ContainerBuilder $container) {
     // Normally, package_manager_bypass will disable all the actual staging
     // operations. In this case, we want to perform them so that we can be sure
     // that files are staged as expected.
     $this->setSetting('package_manager_bypass_stager', FALSE);
+    // The private stream wrapper is only registered if this setting is set.
+    // @see \Drupal\Core\CoreServiceProvider::register()
+    $this->setSetting('file_private_path', 'private');
 
-    $container->getDefinition('package_manager.excluded_paths_subscriber')
-      ->setClass(TestExcludedPathsSubscriber::class);
+    // Rebuild the container to make the new settings take effect.
+    $kernel = $this->container->get('kernel');
+    $kernel->rebuildContainer();
+    $this->container = $kernel->getContainer();
 
-    parent::register($container);
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  protected function disableValidators(ContainerBuilder $container): void {
-    parent::disableValidators($container);
-
-    // Disable the disk space validator, since it tries to inspect the file
-    // system in ways that vfsStream doesn't support, like calling stat() and
-    // disk_free_space().
-    $container->removeDefinition('package_manager.validator.disk_space');
-
-    // Disable the lock file and Composer settings validators, since in this
-    // test we have an imaginary file system without any Composer files.
-    $container->removeDefinition('package_manager.validator.lock_file');
+    // Mock a SQLite database connection so we can test that the subscriber will
+    // exclude the database files.
+    $this->mockDatabase = $this->prophesize(Connection::class);
+    $this->mockDatabase->driver()->willReturn('sqlite');
   }
 
   /**
    * Tests that certain paths are excluded from staging operations.
    */
   public function testExcludedPaths(): void {
-    $site = [
-      'composer.json' => '{}',
-      'private' => [
-        'ignore.txt' => 'This file should never be staged.',
-      ],
-      'sites' => [
-        'default' => [
-          'services.yml' => <<<END
-# This file should never be staged.
-must_not_be: 'empty'
-END,
-          'settings.local.php' => <<<END
-<?php
-
-/**
- * @file
- * This file should never be staged.
- */
-END,
-          'settings.php' => <<<END
-<?php
-
-/**
- * @file
- * This file should never be staged.
- */
-END,
-          'stage.txt' => 'This file should be staged.',
-        ],
-        'example.com' => [
-          'files' => [
-            'ignore.txt' => 'This file should never be staged.',
-          ],
-          'db.sqlite' => 'This file should never be staged.',
-          'db.sqlite-shm' => 'This file should never be staged.',
-          'db.sqlite-wal' => 'This file should never be staged.',
-          'services.yml' => <<<END
-# This file should never be staged.
-key: "value"
-END,
-          'settings.local.php' => <<<END
-<?php
-
-/**
- * @file
- * This file should never be staged.
- */
-END,
-          'settings.php' => <<<END
-<?php
-
-/**
- * @file
- * This file should never be staged.
- */
-END,
-        ],
-        'simpletest' => [
-          'ignore.txt' => 'This file should never be staged.',
-        ],
-      ],
-      'vendor' => [
-        '.htaccess' => '# This file should never be staged.',
-        'web.config' => 'This file should never be staged.',
-      ],
-    ];
-    vfsStream::create(['active' => $site], $this->vfsRoot);
-
-    $active_dir = $this->vfsRoot->getChild('active')->url();
-
-    $path_locator = $this->prophesize(PathLocator::class);
-    $path_locator->getActiveDirectory()->willReturn($active_dir);
-    $path_locator->getProjectRoot()->willReturn($active_dir);
-    $path_locator->getWebRoot()->willReturn('');
-    $path_locator->getVendorDirectory()->willReturn("$active_dir/vendor");
-    $this->container->set('package_manager.path_locator', $path_locator->reveal());
+    $this->createTestProject();
+    $active_dir = $this->container->get('package_manager.path_locator')
+      ->getActiveDirectory();
 
     $site_path = 'sites/example.com';
     // Ensure that we are using directories within the fake site fixture for
     // public and private files.
     $this->setSetting('file_public_path', "$site_path/files");
 
-    /** @var \Drupal\Tests\package_manager\Kernel\TestExcludedPathsSubscriber $subscriber */
-    $subscriber = $this->container->get('package_manager.excluded_paths_subscriber');
-    $subscriber->sitePath = $site_path;
-
     // Mock a SQLite database connection to a file in the active directory. The
     // file should not be staged.
-    $database = $this->prophesize(Connection::class);
-    $database->driver()->willReturn('sqlite');
-    $database->getConnectionOptions()->willReturn([
+    $this->mockDatabase->getConnectionOptions()->willReturn([
       'database' => $site_path . '/db.sqlite',
     ]);
-    $subscriber->database = $database->reveal();
+    $this->setUpSubscriber($site_path);
 
     $stage = $this->createStage();
     $stage->create();
@@ -185,6 +86,9 @@ END,
       'sites/default/settings.php',
       'sites/default/settings.local.php',
       'sites/default/services.yml',
+      // No git directories should be staged.
+      '.git/ignore.txt',
+      'modules/example/.git/ignore.txt',
     ];
     foreach ($ignore as $path) {
       $this->assertFileExists("$active_dir/$path");
@@ -192,6 +96,10 @@ END,
     }
     // A non-excluded file in the default site directory should be staged.
     $this->assertFileExists("$stage_dir/sites/default/stage.txt");
+    // Regular module files should be staged.
+    $this->assertFileExists("$stage_dir/modules/example/example.info.yml");
+    // Files that start with .git, but aren't actually .git, should be staged.
+    $this->assertFileExists("$stage_dir/.gitignore");
 
     // A new file added to the staging area in an excluded directory, should not
     // be copied to the active directory.
@@ -207,21 +115,94 @@ END,
     }
   }
 
-}
+  /**
+   * Data provider for ::testSqliteDatabaseExcluded().
+   *
+   * @return array[]
+   *   Sets of arguments to pass to the test method.
+   */
+  public function providerSqliteDatabaseExcluded(): array {
+    $drupal_root = $this->getDrupalRoot();
 
-/**
- * A test-only implementation of the excluded path event subscriber.
- */
-class TestExcludedPathsSubscriber extends ExcludedPathsSubscriber {
+    return [
+      'relative path, in site directory' => [
+        'sites/example.com/db.sqlite',
+        [
+          'sites/example.com/db.sqlite',
+          'sites/example.com/db.sqlite-shm',
+          'sites/example.com/db.sqlite-wal',
+        ],
+      ],
+      'relative path, at root' => [
+        'db.sqlite',
+        [
+          'db.sqlite',
+          'db.sqlite-shm',
+          'db.sqlite-wal',
+        ],
+      ],
+      'absolute path, in site directory' => [
+        $drupal_root . '/sites/example.com/db.sqlite',
+        [
+          'sites/example.com/db.sqlite',
+          'sites/example.com/db.sqlite-shm',
+          'sites/example.com/db.sqlite-wal',
+        ],
+      ],
+      'absolute path, at root' => [
+        $drupal_root . '/db.sqlite',
+        [
+          'db.sqlite',
+          'db.sqlite-shm',
+          'db.sqlite-wal',
+        ],
+      ],
+    ];
+  }
 
   /**
-   * {@inheritdoc}
+   * Tests that SQLite database paths are excluded from the staging area.
+   *
+   * The exclusion of SQLite databases from the staging area is functionally
+   * tested by \Drupal\Tests\package_manager\Functional\ExcludedPathsTest. The
+   * purpose of this test is to ensure that SQLite database paths are processed
+   * properly (e.g., converting an absolute path to a relative path) before
+   * being flagged for exclusion.
+   *
+   * @param string $database
+   *   The path of the SQLite database, as set in the database connection
+   *   options.
+   * @param string[] $expected_exclusions
+   *   The database paths which should be flagged for exclusion.
+   *
+   * @dataProvider providerSqliteDatabaseExcluded
    */
-  public $sitePath;
+  public function testSqliteDatabaseExcluded(string $database, array $expected_exclusions): void {
+    $this->mockDatabase->getConnectionOptions()->willReturn([
+      'database' => $database,
+    ]);
+
+    $event = new PreCreateEvent($this->createStage());
+    $this->setUpSubscriber();
+    $this->container->get('package_manager.excluded_paths_subscriber')->ignoreCommonPaths($event);
+    // All of the expected exclusions should be flagged.
+    $this->assertEmpty(array_diff($expected_exclusions, $event->getExcludedPaths()));
+  }
 
   /**
-   * {@inheritdoc}
+   * Sets up the event subscriber with a mocked database and site path.
+   *
+   * @param string $site_path
+   *   (optional) The site path. Defaults to 'sites/default'.
    */
-  public $database;
+  private function setUpSubscriber(string $site_path = 'sites/default'): void {
+    $this->container->set('package_manager.excluded_paths_subscriber', new ExcludedPathsSubscriber(
+      $site_path,
+      $this->container->get('package_manager.symfony_file_system'),
+      $this->container->get('stream_wrapper_manager'),
+      $this->mockDatabase->reveal(),
+      $this->container->get('package_manager.path_locator')
+    ));
+  }
 
 }

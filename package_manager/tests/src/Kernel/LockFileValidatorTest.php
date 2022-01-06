@@ -2,14 +2,11 @@
 
 namespace Drupal\Tests\package_manager\Kernel;
 
-use Drupal\Core\DependencyInjection\ContainerBuilder;
 use Drupal\package_manager\Event\PreApplyEvent;
 use Drupal\package_manager\Event\PreCreateEvent;
 use Drupal\package_manager\Event\PreRequireEvent;
 use Drupal\package_manager\EventSubscriber\LockFileValidator;
-use Drupal\package_manager\PathLocator;
 use Drupal\package_manager\ValidationResult;
-use org\bovigo\vfs\vfsStream;
 
 /**
  * @coversDefaultClass \Drupal\package_manager\EventSubscriber\LockFileValidator
@@ -19,36 +16,20 @@ use org\bovigo\vfs\vfsStream;
 class LockFileValidatorTest extends PackageManagerKernelTestBase {
 
   /**
-   * {@inheritdoc}
+   * The path of the active directory in the virtual file system.
+   *
+   * @var string
    */
-  protected function setUp(): void {
-    parent::setUp();
-
-    $vendor = vfsStream::newDirectory('vendor');
-    $this->vfsRoot->addChild($vendor);
-
-    $path_locator = $this->prophesize(PathLocator::class);
-    $path_locator->getActiveDirectory()->willReturn($this->vfsRoot->url());
-    $path_locator->getProjectRoot()->willReturn($this->vfsRoot->url());
-    $path_locator->getWebRoot()->willReturn('');
-    $path_locator->getVendorDirectory()->willReturn($vendor->url());
-    $this->container->set('package_manager.path_locator', $path_locator->reveal());
-  }
+  private $activeDir;
 
   /**
    * {@inheritdoc}
    */
-  protected function disableValidators(ContainerBuilder $container): void {
-    parent::disableValidators($container);
-
-    // Disable the disk space validator, since it tries to inspect the file
-    // system in ways that vfsStream doesn't support, like calling stat() and
-    // disk_free_space().
-    $container->removeDefinition('package_manager.validator.disk_space');
-
-    // Disable the Composer settings validator, since it tries to read Composer
-    // files that may not exist in this test.
-    $container->removeDefinition('package_manager.validator.composer_settings');
+  protected function setUp(): void {
+    parent::setUp();
+    $this->createTestProject();
+    $this->activeDir = $this->container->get('package_manager.path_locator')
+      ->getActiveDirectory();
   }
 
   /**
@@ -57,6 +38,8 @@ class LockFileValidatorTest extends PackageManagerKernelTestBase {
    * @covers ::storeHash
    */
   public function testCreateWithNoLock(): void {
+    unlink($this->activeDir . '/composer.lock');
+
     $no_lock = ValidationResult::createError(['Could not hash the active lock file.']);
     $this->assertResults([$no_lock], PreCreateEvent::class);
   }
@@ -68,12 +51,11 @@ class LockFileValidatorTest extends PackageManagerKernelTestBase {
    * @covers ::deleteHash
    */
   public function testCreateWithLock(): void {
-    $this->createActiveLockFile();
     $this->assertResults([]);
 
     // Change the lock file to ensure the stored hash of the previous version
     // has been deleted.
-    $this->vfsRoot->getChild('composer.lock')->setContent('"changed"');
+    file_put_contents($this->activeDir . '/composer.lock', 'changed');
     $this->assertResults([]);
   }
 
@@ -83,14 +65,12 @@ class LockFileValidatorTest extends PackageManagerKernelTestBase {
    * @dataProvider providerValidateStageEvents
    */
   public function testLockFileChanged(string $event_class): void {
-    $this->createActiveLockFile();
-
     // Add a listener with an extremely high priority to the same event that
     // should raise the validation error. Because the validator uses the default
     // priority of 0, this listener changes lock file before the validator
     // runs.
     $this->addListener($event_class, function () {
-      $this->vfsRoot->getChild('composer.lock')->setContent('"changed"');
+      file_put_contents($this->activeDir . '/composer.lock', 'changed');
     });
     $result = ValidationResult::createError([
       'Stored lock file hash does not match the active lock file.',
@@ -104,14 +84,12 @@ class LockFileValidatorTest extends PackageManagerKernelTestBase {
    * @dataProvider providerValidateStageEvents
    */
   public function testLockFileDeleted(string $event_class): void {
-    $this->createActiveLockFile();
-
     // Add a listener with an extremely high priority to the same event that
     // should raise the validation error. Because the validator uses the default
     // priority of 0, this listener deletes lock file before the validator
     // runs.
     $this->addListener($event_class, function () {
-      $this->vfsRoot->removeChild('composer.lock');
+      unlink($this->activeDir . '/composer.lock');
     });
     $result = ValidationResult::createError([
       'Could not hash the active lock file.',
@@ -125,8 +103,6 @@ class LockFileValidatorTest extends PackageManagerKernelTestBase {
    * @dataProvider providerValidateStageEvents
    */
   public function testNoStoredHash(string $event_class): void {
-    $this->createActiveLockFile();
-
     $reflector = new \ReflectionClassConstant(LockFileValidator::class, 'STATE_KEY');
     $state_key = $reflector->getValue();
 
@@ -158,14 +134,6 @@ class LockFileValidatorTest extends PackageManagerKernelTestBase {
         PreApplyEvent::class,
       ],
     ];
-  }
-
-  /**
-   * Creates a 'composer.lock' file in the active directory.
-   */
-  private function createActiveLockFile(): void {
-    $lock_file = vfsStream::newFile('composer.lock')->setContent('{}');
-    $this->vfsRoot->addChild($lock_file);
   }
 
   /**

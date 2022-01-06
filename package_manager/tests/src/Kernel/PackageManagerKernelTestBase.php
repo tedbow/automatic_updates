@@ -5,10 +5,13 @@ namespace Drupal\Tests\package_manager\Kernel;
 use Drupal\Core\DependencyInjection\ContainerBuilder;
 use Drupal\KernelTests\KernelTestBase;
 use Drupal\package_manager\Event\StageEvent;
+use Drupal\package_manager\EventSubscriber\DiskSpaceValidator;
 use Drupal\package_manager\Exception\StageException;
 use Drupal\package_manager\Exception\StageValidationException;
+use Drupal\package_manager\PathLocator;
 use Drupal\package_manager\Stage;
 use Drupal\Tests\package_manager\Traits\ValidationTestTrait;
+use org\bovigo\vfs\vfsStream;
 
 /**
  * Base class for kernel tests of Package Manager's functionality.
@@ -119,6 +122,129 @@ abstract class PackageManagerKernelTestBase extends KernelTestBase {
       ->set('existing_updates', $updates);
   }
 
+  /**
+   * Creates a test project in a virtual file system.
+   *
+   * This will create two directories at the root of the virtual file system:
+   * 'active', which is the active directory containing a fake Drupal code base,
+   * and 'stage', which is the root directory used to stage changes. The path
+   * locator service will also be mocked so that it points to the test project.
+   */
+  protected function createTestProject(): void {
+    $tree = [
+      'active' => [
+        'composer.json' => '{}',
+        'composer.lock' => '{}',
+        '.git' => [
+          'ignore.txt' => 'This file should never be staged.',
+        ],
+        '.gitignore' => 'This file should be staged.',
+        'private' => [
+          'ignore.txt' => 'This file should never be staged.',
+        ],
+        'modules' => [
+          'example' => [
+            'example.info.yml' => 'This file should be staged.',
+            '.git' => [
+              'ignore.txt' => 'This file should never be staged.',
+            ],
+          ],
+        ],
+        'sites' => [
+          'default' => [
+            'services.yml' => <<<END
+# This file should never be staged.
+must_not_be: 'empty'
+END,
+            'settings.local.php' => <<<END
+<?php
+
+/**
+ * @file
+ * This file should never be staged.
+ */
+END,
+            'settings.php' => <<<END
+<?php
+
+/**
+ * @file
+ * This file should never be staged.
+ */
+END,
+            'stage.txt' => 'This file should be staged.',
+          ],
+          'example.com' => [
+            'files' => [
+              'ignore.txt' => 'This file should never be staged.',
+            ],
+            'db.sqlite' => 'This file should never be staged.',
+            'db.sqlite-shm' => 'This file should never be staged.',
+            'db.sqlite-wal' => 'This file should never be staged.',
+            'services.yml' => <<<END
+# This file should never be staged.
+key: "value"
+END,
+            'settings.local.php' => <<<END
+<?php
+
+/**
+ * @file
+ * This file should never be staged.
+ */
+END,
+            'settings.php' => <<<END
+<?php
+
+/**
+ * @file
+ * This file should never be staged.
+ */
+END,
+          ],
+          'simpletest' => [
+            'ignore.txt' => 'This file should never be staged.',
+          ],
+        ],
+        'vendor' => [
+          '.htaccess' => '# This file should never be staged.',
+          'web.config' => 'This file should never be staged.',
+        ],
+      ],
+      'stage' => [],
+    ];
+    $root = vfsStream::create($tree, $this->vfsRoot)->url();
+    $active_dir = "$root/active";
+    TestStage::$stagingRoot = "$root/stage";
+
+    $path_locator = $this->prophesize(PathLocator::class);
+    $path_locator->getActiveDirectory()->willReturn($active_dir);
+    $path_locator->getProjectRoot()->willReturn($active_dir);
+    $path_locator->getWebRoot()->willReturn('');
+    $path_locator->getVendorDirectory()->willReturn("$active_dir/vendor");
+
+    // We won't need the prophet anymore.
+    $path_locator = $path_locator->reveal();
+    $this->container->set('package_manager.path_locator', $path_locator);
+
+    // Since the path locator now points to a virtual file system, we need to
+    // replace the disk space validator with a test-only version that bypasses
+    // system calls, like disk_free_space() and stat(), which aren't supported
+    // by vfsStream.
+    $validator = new TestDiskSpaceValidator(
+      $this->container->get('package_manager.path_locator'),
+      $this->container->get('string_translation')
+    );
+    // By default, the validator should report that the root, vendor, and
+    // temporary directories have basically infinite free space.
+    $validator->freeSpace = [
+      $path_locator->getActiveDirectory() => PHP_INT_MAX,
+      $path_locator->getVendorDirectory() => PHP_INT_MAX,
+      $validator->temporaryDirectory() => PHP_INT_MAX,
+    ];
+    $this->container->set('package_manager.validator.disk_space', $validator);
+  }
+
 }
 
 /**
@@ -153,6 +279,50 @@ class TestStage extends Stage {
       $e->event = $event;
       throw $e;
     }
+  }
+
+}
+
+/**
+ * A test version of the disk space validator to bypass system-level functions.
+ */
+class TestDiskSpaceValidator extends DiskSpaceValidator {
+
+  /**
+   * Whether the root and vendor directories are on the same logical disk.
+   *
+   * @var bool
+   */
+  public $sharedDisk = TRUE;
+
+  /**
+   * The amount of free space, keyed by path.
+   *
+   * @var float[]
+   */
+  public $freeSpace = [];
+
+  /**
+   * {@inheritdoc}
+   */
+  protected function stat(string $path): array {
+    return [
+      'dev' => $this->sharedDisk ? 'disk' : uniqid(),
+    ];
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  protected function freeSpace(string $path): float {
+    return $this->freeSpace[$path];
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function temporaryDirectory(): string {
+    return 'temp';
   }
 
 }

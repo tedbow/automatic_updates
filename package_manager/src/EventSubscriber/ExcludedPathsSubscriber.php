@@ -11,6 +11,7 @@ use Drupal\package_manager\Event\StageEvent;
 use Drupal\package_manager\PathLocator;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\Component\Filesystem\Filesystem;
+use Symfony\Component\Finder\Finder;
 
 /**
  * Defines an event subscriber to exclude certain paths from staging areas.
@@ -178,6 +179,20 @@ class ExcludedPathsSubscriber implements EventSubscriberInterface {
       $project[] = $options['database'];
       $project[] = $options['database'] . '-shm';
       $project[] = $options['database'] . '-wal';
+    }
+
+    // Find all .git directories in the project and exclude them. We cannot do
+    // this with FileSystemInterface::scanDirectory() because it unconditionally
+    // excludes anything starting with a dot.
+    $finder = Finder::create()
+      ->in($this->pathLocator->getProjectRoot())
+      ->directories()
+      ->name('.git')
+      ->ignoreVCS(FALSE)
+      ->ignoreDotFiles(FALSE);
+
+    foreach ($finder as $git_directory) {
+      $project[] = $git_directory->getPathname();
     }
 
     $this->excludeInWebRoot($event, $web);

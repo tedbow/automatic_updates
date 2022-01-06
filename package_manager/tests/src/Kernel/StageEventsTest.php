@@ -13,7 +13,6 @@ use Drupal\package_manager\Event\PreOperationStageEvent;
 use Drupal\package_manager\Event\PreRequireEvent;
 use Drupal\package_manager\Event\StageEvent;
 use Drupal\package_manager\Exception\StageValidationException;
-use Drupal\package_manager\Stage;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 /**
@@ -44,16 +43,7 @@ class StageEventsTest extends PackageManagerKernelTestBase implements EventSubsc
    */
   protected function setUp(): void {
     parent::setUp();
-
-    $this->stage = new Stage(
-      $this->container->get('package_manager.path_locator'),
-      $this->container->get('package_manager.beginner'),
-      $this->container->get('package_manager.stager'),
-      $this->container->get('package_manager.committer'),
-      $this->container->get('file_system'),
-      $this->container->get('event_dispatcher'),
-      $this->container->get('tempstore.shared')
-    );
+    $this->stage = $this->createStage();
   }
 
   /**
