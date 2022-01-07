@@ -164,7 +164,7 @@ class StagedDatabaseUpdateValidatorTest extends AutomaticUpdatesKernelTestBase {
       // The file we're creating shouldn't already exist in the staging area
       // unless it's a file we actually ship, which is a scenario covered by
       // ::testFileChanged().
-      $this->assertFileNotExists($file);
+      $this->assertFileDoesNotExist($file);
       file_put_contents($file, $this->randomString());
     }
 
