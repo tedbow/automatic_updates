@@ -17,7 +17,7 @@ function package_manager_help($route_name, RouteMatchInterface $route_match) {
     case 'help.page.package_manager':
       $output = '<h3>' . t('About') . '</h3>';
       $output .= '<p>' . t('Package Manager is an API for installing and updating Drupal core and contributed modules.') . '</p>';
-      $output .= '<p>' . t('For more information, see the <a href=":automatic-updates-documentation">online documentation for the Automatic Updates module</a>.', [':automatic-updates-documentation' => 'https://www.drupal.org/docs/8/update/automatic-updates']) . '</p>';
+      $output .= '<p>' . t('For more information, see the <a href=":package-manager-documentation">online documentation for the Package Manager module</a>.', [':package-manager-documentation' => 'https://www.drupal.org/docs/8/core/modules/package-manager']) . '</p>';
       return $output;
   }
 }
