@@ -1,0 +1,23 @@
+<?php
+
+/**
+ * @file
+ * Contains hook implementations for Package Manager.
+ */
+
+use Drupal\Core\Routing\RouteMatchInterface;
+
+/**
+ * Implements hook_help().
+ */
+function package_manager_help($route_name, RouteMatchInterface $route_match) {
+  // @todo Fully document all the modules features in
+  //   https://www.drupal.org/i/3253591.
+  switch ($route_name) {
+    case 'help.page.package_manager':
+      $output = '<h3>' . t('About') . '</h3>';
+      $output .= '<p>' . t('Package Manager is an API for installing and updating Drupal core and contributed modules.') . '</p>';
+      $output .= '<p>' . t('For more information, see the <a href=":automatic-updates-documentation">online documentation for the Automatic Updates module</a>.', [':automatic-updates-documentation' => 'https://www.drupal.org/docs/8/update/automatic-updates']) . '</p>';
+      return $output;
+  }
+}
