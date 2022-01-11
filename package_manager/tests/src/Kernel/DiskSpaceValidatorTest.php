@@ -7,7 +7,7 @@ use Drupal\package_manager\ValidationResult;
 use Drupal\Component\Utility\Bytes;
 
 /**
- * @covers \Drupal\package_manager\EventSubscriber\DiskSpaceValidator
+ * @covers \Drupal\package_manager\Validator\DiskSpaceValidator
  *
  * @group package_manager
  */

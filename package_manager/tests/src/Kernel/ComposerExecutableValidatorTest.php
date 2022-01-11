@@ -3,14 +3,14 @@
 namespace Drupal\Tests\package_manager\Kernel;
 
 use Drupal\package_manager\Event\PreCreateEvent;
-use Drupal\package_manager\EventSubscriber\ComposerExecutableValidator;
+use Drupal\package_manager\Validator\ComposerExecutableValidator;
 use Drupal\package_manager\ValidationResult;
 use PhpTuf\ComposerStager\Exception\IOException;
 use PhpTuf\ComposerStager\Infrastructure\Process\ExecutableFinderInterface;
 use Prophecy\Argument;
 
 /**
- * @covers \Drupal\package_manager\EventSubscriber\ComposerExecutableValidator
+ * @covers \Drupal\package_manager\Validator\ComposerExecutableValidator
  *
  * @group package_manager
  */
@@ -120,7 +120,7 @@ class ComposerExecutableValidatorTest extends PackageManagerKernelTestBase {
       // $arguments, and we know exactly what that will contain: an array of
       // command arguments for Composer, and the validator object.
       ->will(function (array $arguments) use ($reported_version) {
-        /** @var \Drupal\package_manager\EventSubscriber\ComposerExecutableValidator $validator */
+        /** @var \Drupal\package_manager\Validator\ComposerExecutableValidator $validator */
         $validator = $arguments[1];
         // Invoke the validator (which, as mentioned, is a callback function),
         // with fake output from `composer --version`. It should try to tease a

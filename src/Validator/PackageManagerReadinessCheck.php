@@ -3,7 +3,7 @@
 namespace Drupal\automatic_updates\Validator;
 
 use Drupal\automatic_updates\Event\ReadinessCheckEvent;
-use Drupal\package_manager\EventSubscriber\PreOperationStageValidatorInterface;
+use Drupal\package_manager\Validator\PreOperationStageValidatorInterface;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 /**
@@ -18,14 +18,14 @@ class PackageManagerReadinessCheck implements EventSubscriberInterface {
   /**
    * The validator to run.
    *
-   * @var \Drupal\package_manager\EventSubscriber\PreOperationStageValidatorInterface
+   * @var \Drupal\package_manager\Validator\PreOperationStageValidatorInterface
    */
   protected $validator;
 
   /**
    * Constructs a PackageManagerReadinessCheck object.
    *
-   * @param \Drupal\package_manager\EventSubscriber\PreOperationStageValidatorInterface $validator
+   * @param \Drupal\package_manager\Validator\PreOperationStageValidatorInterface $validator
    *   The Package Manager validator to run during readiness checking.
    */
   public function __construct(PreOperationStageValidatorInterface $validator) {

@@ -5,7 +5,7 @@ namespace Drupal\Tests\package_manager\Kernel;
 use Drupal\Core\DependencyInjection\ContainerBuilder;
 use Drupal\KernelTests\KernelTestBase;
 use Drupal\package_manager\Event\StageEvent;
-use Drupal\package_manager\EventSubscriber\DiskSpaceValidator;
+use Drupal\package_manager\Validator\DiskSpaceValidator;
 use Drupal\package_manager\Exception\StageException;
 use Drupal\package_manager\Exception\StageValidationException;
 use Drupal\package_manager\PathLocator;

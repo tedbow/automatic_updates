@@ -1,6 +1,6 @@
 <?php
 
-namespace Drupal\package_manager\EventSubscriber;
+namespace Drupal\package_manager\Validator;
 
 use Drupal\package_manager\Event\PreOperationStageEvent;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;

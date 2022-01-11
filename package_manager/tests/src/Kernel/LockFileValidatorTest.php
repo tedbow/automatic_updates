@@ -5,11 +5,11 @@ namespace Drupal\Tests\package_manager\Kernel;
 use Drupal\package_manager\Event\PreApplyEvent;
 use Drupal\package_manager\Event\PreCreateEvent;
 use Drupal\package_manager\Event\PreRequireEvent;
-use Drupal\package_manager\EventSubscriber\LockFileValidator;
+use Drupal\package_manager\Validator\LockFileValidator;
 use Drupal\package_manager\ValidationResult;
 
 /**
- * @coversDefaultClass \Drupal\package_manager\EventSubscriber\LockFileValidator
+ * @coversDefaultClass \Drupal\package_manager\Validator\LockFileValidator
  *
  * @group package_manager
  */

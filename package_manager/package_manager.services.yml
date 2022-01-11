@@ -77,21 +77,21 @@ services:
 
   # Validators.
   package_manager.validator.composer_executable:
-    class: Drupal\package_manager\EventSubscriber\ComposerExecutableValidator
+    class: Drupal\package_manager\Validator\ComposerExecutableValidator
     arguments:
       - '@package_manager.composer_runner'
       - '@string_translation'
     tags:
       - { name: event_subscriber }
   package_manager.validator.disk_space:
-    class: Drupal\package_manager\EventSubscriber\DiskSpaceValidator
+    class: Drupal\package_manager\Validator\DiskSpaceValidator
     arguments:
       - '@package_manager.path_locator'
       - '@string_translation'
     tags:
       - { name: event_subscriber }
   package_manager.validator.pending_updates:
-    class: Drupal\package_manager\EventSubscriber\PendingUpdatesValidator
+    class: Drupal\package_manager\Validator\PendingUpdatesValidator
     arguments:
       - '%app.root%'
       - '@update.post_update_registry'
@@ -99,7 +99,7 @@ services:
     tags:
       - { name: event_subscriber }
   package_manager.validator.lock_file:
-    class: Drupal\package_manager\EventSubscriber\LockFileValidator
+    class: Drupal\package_manager\Validator\LockFileValidator
     arguments:
       - '@state'
       - '@package_manager.path_locator'
@@ -107,7 +107,7 @@ services:
     tags:
       - { name: event_subscriber }
   package_manager.validator.file_system:
-    class: Drupal\package_manager\EventSubscriber\WritableFileSystemValidator
+    class: Drupal\package_manager\Validator\WritableFileSystemValidator
     arguments:
       - '@package_manager.path_locator'
       - '%app.root%'
@@ -115,7 +115,7 @@ services:
     tags:
       - { name: event_subscriber }
   package_manager.validator.composer_settings:
-    class: Drupal\package_manager\EventSubscriber\ComposerSettingsValidator
+    class: Drupal\package_manager\Validator\ComposerSettingsValidator
     arguments:
       - '@string_translation'
     tags:

@@ -4,7 +4,7 @@ namespace Drupal\Tests\automatic_updates\Kernel\ReadinessValidation;
 
 use Drupal\automatic_updates\Event\ReadinessCheckEvent;
 use Drupal\Core\DependencyInjection\ContainerBuilder;
-use Drupal\package_manager\EventSubscriber\PreOperationStageValidatorInterface;
+use Drupal\package_manager\Validator\PreOperationStageValidatorInterface;
 use Drupal\Tests\automatic_updates\Kernel\AutomaticUpdatesKernelTestBase;
 use Prophecy\Argument;
 

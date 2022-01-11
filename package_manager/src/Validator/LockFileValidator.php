@@ -1,6 +1,6 @@
 <?php
 
-namespace Drupal\package_manager\EventSubscriber;
+namespace Drupal\package_manager\Validator;
 
 use Drupal\Core\State\StateInterface;
 use Drupal\Core\StringTranslation\StringTranslationTrait;

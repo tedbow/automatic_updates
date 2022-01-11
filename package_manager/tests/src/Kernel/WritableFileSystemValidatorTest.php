@@ -3,7 +3,7 @@
 namespace Drupal\Tests\package_manager\Kernel;
 
 use Drupal\package_manager\Event\PreCreateEvent;
-use Drupal\package_manager\EventSubscriber\WritableFileSystemValidator;
+use Drupal\package_manager\Validator\WritableFileSystemValidator;
 use Drupal\package_manager\ValidationResult;
 use Drupal\Core\DependencyInjection\ContainerBuilder;
 
@@ -15,7 +15,7 @@ use Drupal\Core\DependencyInjection\ContainerBuilder;
  *
  * @see \Drupal\Tests\automatic_updates\Build\CoreUpdateTest::assertReadOnlyFileSystemError()
  *
- * @covers \Drupal\package_manager\EventSubscriber\WritableFileSystemValidator
+ * @covers \Drupal\package_manager\Validator\WritableFileSystemValidator
  *
  * @group package_manager
  */

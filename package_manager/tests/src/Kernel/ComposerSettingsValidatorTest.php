@@ -7,7 +7,7 @@ use Drupal\package_manager\Exception\StageValidationException;
 use Drupal\package_manager\ValidationResult;
 
 /**
- * @covers \Drupal\package_manager\EventSubscriber\ComposerSettingsValidator
+ * @covers \Drupal\package_manager\Validator\ComposerSettingsValidator
  *
  * @group package_manager
  */

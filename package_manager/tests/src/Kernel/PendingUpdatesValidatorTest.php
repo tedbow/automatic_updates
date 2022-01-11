@@ -6,7 +6,7 @@ use Drupal\package_manager\Event\PreCreateEvent;
 use Drupal\package_manager\ValidationResult;
 
 /**
- * @covers \Drupal\package_manager\EventSubscriber\PendingUpdatesValidator
+ * @covers \Drupal\package_manager\Validator\PendingUpdatesValidator
  *
  * @group package_manager
  */
