@@ -12,6 +12,7 @@ use Drupal\automatic_updates\Validation\ReadinessRequirements;
  */
 function automatic_updates_requirements($phase) {
   if ($phase === 'runtime') {
+    // Check that site is ready to perform automatic updates.
     /** @var \Drupal\automatic_updates\Validation\ReadinessRequirements $readiness_requirement */
     $readiness_requirement = \Drupal::classResolver(ReadinessRequirements::class);
     return $readiness_requirement->getRequirements();

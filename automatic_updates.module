@@ -47,6 +47,7 @@ function automatic_updates_page_top() {
     'automatic_updates.report_update',
     'automatic_updates.module_update',
   ];
+  // @see auto_updates_module_implements_alter()
   $route_name = \Drupal::routeMatch()->getRouteName();
   if (!in_array($route_name, $skip_routes, TRUE) && function_exists('update_page_top')) {
     update_page_top();
@@ -63,8 +64,7 @@ function automatic_updates_module_implements_alter(&$implementations, $hook) {
     // Remove hook_page_top() implementation from the Update module. This '
     // implementation displays error messages about security releases. We call
     // this implementation in our own automatic_updates_page_top() except on our
-    // own routes to avoid stale messages about the security releases after an
-    // update.
+    // own routes to avoid these messages while an update is in progress.
     unset($implementations['update']);
   }
 }
@@ -114,7 +114,9 @@ function automatic_updates_modules_uninstalled() {
  */
 function automatic_updates_form_update_manager_update_form_alter(&$form, FormStateInterface $form_state, $form_id) {
   // Remove current message that core updates are not supported with a link to
-  // use this modules form.
+  // use this module's form. The local task to 'update_manager_update_form' is
+  // replaced by our own from but this original form would still accessible via
+  // by its original URL.
   if (isset($form['manual_updates']['#rows']['drupal']['data']['title'])) {
     $current_route = \Drupal::routeMatch()->getRouteName();
     if ($current_route === 'update.module_update') {
@@ -141,6 +143,8 @@ function automatic_updates_form_update_settings_alter(array &$form, FormStateInt
   $drupal_project = $recommender->getProjectInfo();
   $version = ExtensionVersion::createFromVersionString($drupal_project['existing_version']);
   $current_minor = $version->getMajorVersion() . '.' . $version->getMinorVersion();
+  // @todo In https://www.drupal.org/node/2998285 use the update XML to
+  //   determine when the installed of core will become unsupported.
   $supported_until_version = $version->getMajorVersion() . '.'
       . ((int) $version->getMinorVersion() + ProjectSecurityData::CORE_MINORS_WITH_SECURITY_COVERAGE)
       . '.0';

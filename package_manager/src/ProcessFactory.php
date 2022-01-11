@@ -10,8 +10,6 @@ use Symfony\Component\Process\Process;
 
 /**
  * Defines a process factory which sets the COMPOSER_HOME environment variable.
- *
- * @todo Figure out how to do this in composer_stager.
  */
 final class ProcessFactory implements ProcessFactoryInterface {
 

@@ -9,7 +9,7 @@ use PhpTuf\ComposerStager\Infrastructure\FileSyncer\FileSyncerFactory as StagerF
 use Symfony\Component\Process\ExecutableFinder;
 
 /**
- * A file syncer factory which returns file syncers according to configuration.
+ * A file syncer factory which creates a file syncer according to configuration.
  */
 class FileSyncerFactory implements FileSyncerFactoryInterface {
 

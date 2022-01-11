@@ -61,21 +61,21 @@ class Stage {
   protected $pathLocator;
 
   /**
-   * The beginner service from Composer Stager.
+   * The beginner service.
    *
    * @var \PhpTuf\ComposerStager\Domain\BeginnerInterface
    */
   protected $beginner;
 
   /**
-   * The stager service from Composer Stager.
+   * The stager service.
    *
    * @var \PhpTuf\ComposerStager\Domain\StagerInterface
    */
   protected $stager;
 
   /**
-   * The committer service from Composer Stager.
+   * The committer service.
    *
    * @var \PhpTuf\ComposerStager\Domain\CommitterInterface
    */
@@ -117,11 +117,11 @@ class Stage {
    * @param \Drupal\package_manager\PathLocator $path_locator
    *   The path locator service.
    * @param \PhpTuf\ComposerStager\Domain\BeginnerInterface $beginner
-   *   The beginner service from Composer Stager.
+   *   The beginner service.
    * @param \PhpTuf\ComposerStager\Domain\StagerInterface $stager
-   *   The stager service from Composer Stager.
+   *   The stager service.
    * @param \PhpTuf\ComposerStager\Domain\CommitterInterface $committer
-   *   The committer service from Composer Stager.
+   *   The committer service.
    * @param \Drupal\Core\File\FileSystemInterface $file_system
    *   The file system service.
    * @param \Symfony\Contracts\EventDispatcher\EventDispatcherInterface $event_dispatcher
@@ -199,6 +199,9 @@ class Stage {
    *   performing other operations on it. Calling code should store this ID for
    *   as long as the stage needs to exist.
    *
+   * @throws \Drupal\package_manager\Exception\StageException
+   *   Thrown if a staging area already exists.
+   *
    * @see ::claim()
    */
   public function create(): string {
@@ -246,6 +249,8 @@ class Stage {
     $this->dispatch(new PreRequireEvent($this));
     $dir = $this->getStageDirectory();
     $this->stager->stage($command, $dir);
+    // @todo Limit the update command to only packages in $constraints in
+    //   https://www.drupal.org/i/3257849.
     $this->stager->stage(['update', '--with-all-dependencies'], $dir);
     $this->dispatch(new PostRequireEvent($this));
   }
@@ -285,6 +290,9 @@ class Stage {
     // Delete all directories in parent staging directory.
     $parent_stage_dir = static::getStagingRoot();
     if (is_dir($parent_stage_dir)) {
+      // @todo Ensure that even if attempting to delete this directory throws an
+      //   exception the stage is still marked as available in
+      //   https://www.drupal.org/i/3258048.
       $this->fileSystem->deleteRecursive($parent_stage_dir, function (string $path): void {
         $this->fileSystem->chmod($path, 0777);
       });
@@ -324,6 +332,7 @@ class Stage {
       }
     }
     catch (\Throwable $error) {
+      // @todo Simplify exception handling in https://www.drupal.org/i/3258056.
       // If we are not going to be able to create the staging area, mark it as
       // available.
       // @see ::create()
@@ -407,12 +416,16 @@ class Stage {
   }
 
   /**
-   * Ensures that the current user or session owns the staging area.
+   * Validates the ownership of staging area.
+   *
+   * The stage is considered under valid ownership if it was created by current
+   * user or session, using the current class.
    *
    * @throws \LogicException
    *   If ::claim() has not been previously called.
    * @throws \Drupal\package_manager\Exception\StageOwnershipException
-   *   If the current user or session does not own the staging area.
+   *   If the current user or session does not own the staging area, or it was
+   *   created by a different class.
    */
   final protected function checkOwnership(): void {
     if (empty($this->lock)) {

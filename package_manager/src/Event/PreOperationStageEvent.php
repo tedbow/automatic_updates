@@ -11,7 +11,7 @@ use Drupal\package_manager\ValidationResult;
 abstract class PreOperationStageEvent extends StageEvent {
 
   /**
-   * {@inheritdoc}
+   * Adds error information to the event.
    */
   public function addError(array $messages, ?TranslatableMarkup $summary = NULL) {
     $this->results[] = ValidationResult::createError($messages, $summary);

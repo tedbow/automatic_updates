@@ -11,7 +11,7 @@ use Drupal\Core\StringTranslation\TranslationInterface;
 use Drupal\package_manager\PathLocator;
 
 /**
- * Validates that there is enough free disk space to do automatic updates.
+ * Validates that there is enough free disk space to do staging operations.
  */
 class DiskSpaceValidator implements PreOperationStageValidatorInterface {
 
@@ -103,7 +103,8 @@ class DiskSpaceValidator implements PreOperationStageValidatorInterface {
     $vendor_path = $this->pathLocator->getVendorDirectory();
     $messages = [];
 
-    // @todo Make this configurable.
+    // @todo Make this configurable or set to a different value in
+    //   https://www.drupal.org/i/3166416.
     $minimum_mb = 1024;
     $minimum_bytes = Bytes::toNumber($minimum_mb . 'M');
 

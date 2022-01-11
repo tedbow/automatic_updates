@@ -48,7 +48,7 @@ class ComposerUtility {
   }
 
   /**
-   * Creates a utility object using the files in a given directory.
+   * Creates an instance of this class using the files in a given directory.
    *
    * @param string $dir
    *   The directory that contains composer.json and composer.lock.
@@ -111,7 +111,8 @@ class ComposerUtility {
    * @return string[]
    *   The names of the required core packages.
    *
-   * @todo Make this return a keyed array of packages, not just names.
+   * @todo Make this return a keyed array of packages, not just names in
+   *   https://www.drupal.org/i/3258059.
    */
   public function getCorePackageNames(): array {
     $core_packages = array_intersect(
@@ -135,7 +136,8 @@ class ComposerUtility {
    * @return string[]
    *   The names of the core packages in the dev requirements.
    *
-   * @todo Make this return a keyed array of packages, not just names.
+   * @todo Make this return a keyed array of packages, not just names in
+   *   https://www.drupal.org/i/3258059.
    */
   public function getCoreDevPackageNames(): array {
     $dev_packages = $this->composer->getPackage()->getDevRequires();

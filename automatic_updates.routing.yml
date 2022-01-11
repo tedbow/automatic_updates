@@ -13,7 +13,7 @@ automatic_updates.confirmation_page:
   requirements:
     _permission: 'administer software updates'
     _access_update_manager: 'TRUE'
-# Links to our updater form appear in two different sets of local tasks. To ensure the breadcrumbs and paths are
+# Links to our updater form appear in three different sets of local tasks. To ensure the breadcrumbs and paths are
 # consistent with the other local tasks in each set, we need two separate routes to the same form.
 automatic_updates.report_update:
   path: '/admin/reports/updates/automatic-update'

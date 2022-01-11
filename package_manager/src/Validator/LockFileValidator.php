@@ -109,7 +109,7 @@ class LockFileValidator implements PreOperationStageValidatorInterface {
     }
 
     // If we have both hashes, ensure they match.
-    if ($hash && $stored_hash && hash_equals($stored_hash, $hash) == FALSE) {
+    if ($hash && $stored_hash && !hash_equals($stored_hash, $hash)) {
       $error = $this->t('Stored lock file hash does not match the active lock file.');
     }
 

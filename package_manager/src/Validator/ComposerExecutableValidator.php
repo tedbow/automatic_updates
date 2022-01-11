@@ -12,7 +12,7 @@ use PhpTuf\ComposerStager\Domain\Process\Runner\ComposerRunnerInterface;
 use PhpTuf\ComposerStager\Exception\ExceptionInterface;
 
 /**
- * Validates that the Composer executable can be found in the correct version.
+ * Validates the Composer executable is the correct version.
  */
 class ComposerExecutableValidator implements PreOperationStageValidatorInterface, OutputCallbackInterface {
 
