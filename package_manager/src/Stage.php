@@ -4,6 +4,7 @@ namespace Drupal\package_manager;
 
 use Drupal\Component\FileSystem\FileSystem;
 use Drupal\Component\Utility\Crypt;
+use Drupal\Core\File\Exception\FileException;
 use Drupal\Core\File\FileSystemInterface;
 use Drupal\Core\TempStore\SharedTempStoreFactory;
 use Drupal\package_manager\Event\PostApplyEvent;
@@ -290,12 +291,17 @@ class Stage {
     // Delete all directories in parent staging directory.
     $parent_stage_dir = static::getStagingRoot();
     if (is_dir($parent_stage_dir)) {
-      // @todo Ensure that even if attempting to delete this directory throws an
-      //   exception the stage is still marked as available in
-      //   https://www.drupal.org/i/3258048.
-      $this->fileSystem->deleteRecursive($parent_stage_dir, function (string $path): void {
-        $this->fileSystem->chmod($path, 0777);
-      });
+      try {
+        $this->fileSystem->deleteRecursive($parent_stage_dir, function (string $path): void {
+          $this->fileSystem->chmod($path, 0777);
+        });
+      }
+      catch (FileException $e) {
+        // Deliberately swallow the exception so that the stage will be marked
+        // as available and the post-destroy event will be fired, even if the
+        // staging area can't actually be deleted. The file system service logs
+        // the exception, so we don't need to do anything else here.
+      }
     }
     $this->markAsAvailable();
     $this->dispatch(new PostDestroyEvent($this));

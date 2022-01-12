@@ -26,18 +26,17 @@ class ExcludedPathsTest extends PackageManagerKernelTestBase {
   protected function setUp(): void {
     parent::setUp();
 
-    // Normally, package_manager_bypass will disable all the actual staging
-    // operations. In this case, we want to perform them so that we can be sure
-    // that files are staged as expected.
-    $this->setSetting('package_manager_bypass_stager', FALSE);
     // The private stream wrapper is only registered if this setting is set.
     // @see \Drupal\Core\CoreServiceProvider::register()
     $this->setSetting('file_private_path', 'private');
-
-    // Rebuild the container to make the new settings take effect.
-    $kernel = $this->container->get('kernel');
-    $kernel->rebuildContainer();
-    $this->container = $kernel->getContainer();
+    // In this test, we want to perform the actual staging operations so that we
+    // can be sure that files are staged as expected. This will also rebuild
+    // the container, enabling the private stream wrapper.
+    $this->container->get('module_installer')->uninstall([
+      'package_manager_bypass',
+    ]);
+    // Ensure we have an up-to-date container.
+    $this->container = $this->container->get('kernel')->getContainer();
 
     // Mock a SQLite database connection so we can test that the subscriber will
     // exclude the database files.

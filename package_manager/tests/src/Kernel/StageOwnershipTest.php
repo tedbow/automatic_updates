@@ -2,11 +2,16 @@
 
 namespace Drupal\Tests\package_manager\Kernel;
 
+use Drupal\Core\File\FileSystem;
+use Drupal\Core\Logger\RfcLogLevel;
+use Drupal\package_manager\Event\PostDestroyEvent;
 use Drupal\package_manager\Event\PreCreateEvent;
 use Drupal\package_manager\Exception\StageException;
 use Drupal\package_manager\Exception\StageOwnershipException;
 use Drupal\package_manager_test_validation\TestSubscriber;
 use Drupal\Tests\user\Traits\UserCreationTrait;
+use Prophecy\Argument;
+use Psr\Log\LoggerInterface;
 
 /**
  * Tests that ownership of the stage is enforced.
@@ -32,6 +37,7 @@ class StageOwnershipTest extends PackageManagerKernelTestBase {
   protected function setUp(): void {
     parent::setUp();
     $this->installSchema('system', ['sequences']);
+    $this->installSchema('user', ['users_data']);
     $this->installEntitySchema('user');
     $this->registerPostUpdateFunctions();
   }
@@ -219,6 +225,72 @@ class StageOwnershipTest extends PackageManagerKernelTestBase {
     }
     // We should be able to destroy the stage if we ignore ownership.
     $not_owned->destroy(TRUE);
+  }
+
+  /**
+   * Tests that the stage is available if ::destroy() has a file system error.
+   */
+  public function testStageDestroyedWithFileSystemError(): void {
+    // Enable the Composer Stager library, since we will actually want to create
+    // the stage directory.
+    $this->container->get('module_installer')->uninstall([
+      'package_manager_bypass',
+    ]);
+    // Ensure we have an up-to-date container.
+    $this->container = $this->container->get('kernel')->getContainer();
+    $this->createTestProject();
+
+    $logger_channel = $this->container->get('logger.channel.file');
+    $arguments = [
+      $this->container->get('stream_wrapper_manager'),
+      $this->container->get('settings'),
+      $logger_channel,
+    ];
+    $this->container->set('file_system', new class (...$arguments) extends FileSystem {
+
+      /**
+       * {@inheritdoc}
+       */
+      public function chmod($uri, $mode = NULL) {
+        // Normally, the stage will call this method as it tries to make
+        // everything in the staging area writable so it can be deleted. We
+        // don't wan't to do that in this test, since we're specifically testing
+        // what happens when we try to delete a staging area with unwritable
+        // files.
+      }
+
+    });
+
+    $stage = $this->createStage();
+    $this->assertTrue($stage->isAvailable());
+    $stage->create();
+    $this->assertFalse($stage->isAvailable());
+
+    // Make the stage directory unwritable, which should prevent files in it
+    // from being deleted.
+    $dir = $stage->getStageDirectory();
+    chmod($dir, 0400);
+    $this->assertDirectoryIsNotWritable($dir);
+
+    // Mock a logger to prove that a file system error was raised while trying
+    // to delete the stage directory.
+    $logger = $this->prophesize(LoggerInterface::class);
+    $logger->log(
+      RfcLogLevel::ERROR,
+      "Failed to unlink file '%path'.",
+      Argument::withEntry('%path', "$dir/composer.json")
+    )->shouldBeCalled();
+    $logger_channel->addLogger($logger->reveal());
+
+    // Listen to the post-destroy event so we can confirm that it was fired, and
+    // the stage was made available, despite the file system error.
+    $stage_available = NULL;
+    $this->container->get('event_dispatcher')
+      ->addListener(PostDestroyEvent::class, function (PostDestroyEvent $event) use (&$stage_available): void {
+        $stage_available = $event->getStage()->isAvailable();
+      });
+    $stage->destroy();
+    $this->assertTrue($stage_available);
   }
 
 }
