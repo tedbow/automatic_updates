@@ -4,7 +4,6 @@ services:
     arguments:
       - '@keyvalue.expirable'
       - '@datetime.time'
-      - '@package_manager.path_locator'
       - '@event_dispatcher'
       - '@automatic_updates.updater'
       - 24

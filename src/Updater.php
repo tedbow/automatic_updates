@@ -3,7 +3,6 @@
 namespace Drupal\automatic_updates;
 
 use Drupal\automatic_updates\Exception\UpdateException;
-use Drupal\package_manager\ComposerUtility;
 use Drupal\package_manager\Event\StageEvent;
 use Drupal\package_manager\Exception\StageValidationException;
 use Drupal\package_manager\Stage;
@@ -30,7 +29,7 @@ class Updater extends Stage {
       throw new \InvalidArgumentException("Currently only updates to Drupal core are supported.");
     }
 
-    $composer = ComposerUtility::createForDirectory($this->pathLocator->getProjectRoot());
+    $composer = $this->getActiveComposer();
     $package_versions = [
       'production' => [],
       'dev' => [],

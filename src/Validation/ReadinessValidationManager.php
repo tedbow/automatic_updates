@@ -7,8 +7,6 @@ use Drupal\automatic_updates\Updater;
 use Drupal\automatic_updates\UpdateRecommender;
 use Drupal\Component\Datetime\TimeInterface;
 use Drupal\Core\KeyValueStore\KeyValueExpirableFactoryInterface;
-use Drupal\package_manager\ComposerUtility;
-use Drupal\package_manager\PathLocator;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 
 /**
@@ -44,12 +42,6 @@ class ReadinessValidationManager {
    */
   protected $resultsTimeToLive;
 
-  /**
-   * The path locator service.
-   *
-   * @var \Drupal\package_manager\PathLocator
-   */
-  protected $pathLocator;
 
   /**
    * The updater service.
@@ -65,8 +57,6 @@ class ReadinessValidationManager {
    *   The key/value expirable factory.
    * @param \Drupal\Component\Datetime\TimeInterface $time
    *   The time service.
-   * @param \Drupal\package_manager\PathLocator $path_locator
-   *   The path locator service.
    * @param \Symfony\Component\EventDispatcher\EventDispatcherInterface $dispatcher
    *   The event dispatcher service.
    * @param \Drupal\automatic_updates\Updater $updater
@@ -74,10 +64,9 @@ class ReadinessValidationManager {
    * @param int $results_time_to_live
    *   The number of hours to store results.
    */
-  public function __construct(KeyValueExpirableFactoryInterface $key_value_expirable_factory, TimeInterface $time, PathLocator $path_locator, EventDispatcherInterface $dispatcher, Updater $updater, int $results_time_to_live) {
+  public function __construct(KeyValueExpirableFactoryInterface $key_value_expirable_factory, TimeInterface $time, EventDispatcherInterface $dispatcher, Updater $updater, int $results_time_to_live) {
     $this->keyValueExpirable = $key_value_expirable_factory->get('automatic_updates');
     $this->time = $time;
-    $this->pathLocator = $path_locator;
     $this->eventDispatcher = $dispatcher;
     $this->updater = $updater;
     $this->resultsTimeToLive = $results_time_to_live;
@@ -89,7 +78,7 @@ class ReadinessValidationManager {
    * @return $this
    */
   public function run(): self {
-    $composer = ComposerUtility::createForDirectory($this->pathLocator->getProjectRoot());
+    $composer = $this->updater->getActiveComposer();
 
     $recommender = new UpdateRecommender();
     $release = $recommender->getRecommendedRelease(TRUE);
