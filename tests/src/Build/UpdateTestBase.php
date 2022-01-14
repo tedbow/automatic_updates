@@ -131,7 +131,7 @@ END;
 
     $form_id = $assert_session->elementExists('css', 'input[type="hidden"][name="form_id"]')
       ->getValue();
-    if (preg_match('/^system_modules_(experimental_)?confirm_form$/', $form_id)) {
+    if (preg_match('/^system_modules_(experimental_|non_stable_)?confirm_form$/', $form_id)) {
       $page->pressButton('Continue');
       $assert_session->statusCodeEquals(200);
     }
