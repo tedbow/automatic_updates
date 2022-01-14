@@ -3,6 +3,7 @@
 namespace Drupal\Tests\package_manager\Kernel;
 
 use Drupal\Core\Database\Connection;
+use Drupal\Core\DependencyInjection\ContainerBuilder;
 use Drupal\package_manager\Event\PreCreateEvent;
 use Drupal\package_manager\EventSubscriber\ExcludedPathsSubscriber;
 
@@ -14,18 +15,19 @@ use Drupal\package_manager\EventSubscriber\ExcludedPathsSubscriber;
 class ExcludedPathsTest extends PackageManagerKernelTestBase {
 
   /**
-   * The mocked SQLite database connection.
-   *
-   * @var \Drupal\Core\Database\Connection|\Prophecy\Prophecy\ObjectProphecy
-   */
-  private $mockDatabase;
-
-  /**
    * {@inheritdoc}
    */
-  protected function setUp(): void {
-    parent::setUp();
+  public function register(ContainerBuilder $container) {
+    parent::register($container);
 
+    $container->getDefinition('package_manager.excluded_paths_subscriber')
+      ->setClass(TestExcludedPathsSubscriber::class);
+  }
+
+  /**
+   * Tests that certain paths are excluded from staging operations.
+   */
+  public function testExcludedPaths(): void {
     // The private stream wrapper is only registered if this setting is set.
     // @see \Drupal\Core\CoreServiceProvider::register()
     $this->setSetting('file_private_path', 'private');
@@ -38,16 +40,6 @@ class ExcludedPathsTest extends PackageManagerKernelTestBase {
     // Ensure we have an up-to-date container.
     $this->container = $this->container->get('kernel')->getContainer();
 
-    // Mock a SQLite database connection so we can test that the subscriber will
-    // exclude the database files.
-    $this->mockDatabase = $this->prophesize(Connection::class);
-    $this->mockDatabase->driver()->willReturn('sqlite');
-  }
-
-  /**
-   * Tests that certain paths are excluded from staging operations.
-   */
-  public function testExcludedPaths(): void {
     $this->createTestProject();
     $active_dir = $this->container->get('package_manager.path_locator')
       ->getActiveDirectory();
@@ -59,10 +51,17 @@ class ExcludedPathsTest extends PackageManagerKernelTestBase {
 
     // Mock a SQLite database connection to a file in the active directory. The
     // file should not be staged.
-    $this->mockDatabase->getConnectionOptions()->willReturn([
+    $database = $this->prophesize(Connection::class);
+    $database->driver()->willReturn('sqlite');
+    $database->getConnectionOptions()->willReturn([
       'database' => $site_path . '/db.sqlite',
     ]);
-    $this->setUpSubscriber($site_path);
+
+    // Update the event subscriber's dependencies.
+    /** @var \Drupal\Tests\package_manager\Kernel\TestExcludedPathsSubscriber $subscriber */
+    $subscriber = $this->container->get('package_manager.excluded_paths_subscriber');
+    $subscriber->sitePath = $site_path;
+    $subscriber->database = $database->reveal();
 
     $stage = $this->createStage();
     $stage->create();
@@ -162,13 +161,11 @@ class ExcludedPathsTest extends PackageManagerKernelTestBase {
   /**
    * Tests that SQLite database paths are excluded from the staging area.
    *
-   * The exclusion of SQLite databases from the staging area is functionally
-   * tested by \Drupal\Tests\package_manager\Functional\ExcludedPathsTest. The
-   * purpose of this test is to ensure that SQLite database paths are processed
-   * properly (e.g., converting an absolute path to a relative path) before
-   * being flagged for exclusion.
+   * This test ensures that SQLite database paths are processed properly (e.g.,
+   * converting an absolute path to a relative path) before being flagged for
+   * exclusion.
    *
-   * @param string $database
+   * @param string $database_path
    *   The path of the SQLite database, as set in the database connection
    *   options.
    * @param string[] $expected_exclusions
@@ -176,32 +173,60 @@ class ExcludedPathsTest extends PackageManagerKernelTestBase {
    *
    * @dataProvider providerSqliteDatabaseExcluded
    */
-  public function testSqliteDatabaseExcluded(string $database, array $expected_exclusions): void {
-    $this->mockDatabase->getConnectionOptions()->willReturn([
-      'database' => $database,
+  public function testSqliteDatabaseExcluded(string $database_path, array $expected_exclusions): void {
+    $database = $this->prophesize(Connection::class);
+    $database->driver()->willReturn('sqlite');
+    $database->getConnectionOptions()->willReturn([
+      'database' => $database_path,
     ]);
 
+    // Update the event subscriber to use the mocked database.
+    /** @var \Drupal\Tests\package_manager\Kernel\TestExcludedPathsSubscriber $subscriber */
+    $subscriber = $this->container->get('package_manager.excluded_paths_subscriber');
+    $subscriber->database = $database->reveal();
+
     $event = new PreCreateEvent($this->createStage());
-    $this->setUpSubscriber();
-    $this->container->get('package_manager.excluded_paths_subscriber')->ignoreCommonPaths($event);
+    // Invoke the event subscriber directly, so we can check that the database
+    // was correctly excluded.
+    $subscriber->ignoreCommonPaths($event);
     // All of the expected exclusions should be flagged.
     $this->assertEmpty(array_diff($expected_exclusions, $event->getExcludedPaths()));
   }
 
   /**
-   * Sets up the event subscriber with a mocked database and site path.
-   *
-   * @param string $site_path
-   *   (optional) The site path. Defaults to 'sites/default'.
+   * Tests that unreadable directories are ignored by the event subscriber.
    */
-  private function setUpSubscriber(string $site_path = 'sites/default'): void {
-    $this->container->set('package_manager.excluded_paths_subscriber', new ExcludedPathsSubscriber(
-      $site_path,
-      $this->container->get('package_manager.symfony_file_system'),
-      $this->container->get('stream_wrapper_manager'),
-      $this->mockDatabase->reveal(),
-      $this->container->get('package_manager.path_locator')
-    ));
+  public function testUnreadableDirectoriesAreIgnored(): void {
+    $this->createTestProject();
+    $active_dir = $this->container->get('package_manager.path_locator')
+      ->getActiveDirectory();
+
+    // Create an unreadable directory within the active directory, which will
+    // raise an exception as the event subscriber tries to scan for .git
+    // directories...unless unreadable directories are being ignored, as they
+    // should be.
+    $unreadable_dir = $active_dir . '/unreadable';
+    mkdir($unreadable_dir, 0000);
+    $this->assertDirectoryIsNotReadable($unreadable_dir);
+
+    $this->createStage()->create();
   }
+
+}
+
+/**
+ * A test-only version of the excluded paths event subscriber.
+ */
+class TestExcludedPathsSubscriber extends ExcludedPathsSubscriber {
+
+  /**
+   * {@inheritdoc}
+   */
+  public $sitePath;
+
+  /**
+   * {@inheritdoc}
+   */
+  public $database;
 
 }

@@ -189,7 +189,8 @@ class ExcludedPathsSubscriber implements EventSubscriberInterface {
       ->directories()
       ->name('.git')
       ->ignoreVCS(FALSE)
-      ->ignoreDotFiles(FALSE);
+      ->ignoreDotFiles(FALSE)
+      ->ignoreUnreadableDirs();
 
     foreach ($finder as $git_directory) {
       $project[] = $git_directory->getPathname();
