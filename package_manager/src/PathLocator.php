@@ -27,16 +27,6 @@ class PathLocator {
   }
 
   /**
-   * Returns the path of the active code base.
-   *
-   * @return string
-   *   The absolute path of the active, running code base.
-   */
-  public function getActiveDirectory(): string {
-    return $this->getProjectRoot();
-  }
-
-  /**
    * Returns the absolute path of the project root.
    *
    * This is where the project-level composer.json should normally be found, and

@@ -42,7 +42,7 @@ class ExcludedPathsTest extends PackageManagerKernelTestBase {
 
     $this->createTestProject();
     $active_dir = $this->container->get('package_manager.path_locator')
-      ->getActiveDirectory();
+      ->getProjectRoot();
 
     $site_path = 'sites/example.com';
     // Ensure that we are using directories within the fake site fixture for
@@ -199,7 +199,7 @@ class ExcludedPathsTest extends PackageManagerKernelTestBase {
   public function testUnreadableDirectoriesAreIgnored(): void {
     $this->createTestProject();
     $active_dir = $this->container->get('package_manager.path_locator')
-      ->getActiveDirectory();
+      ->getProjectRoot();
 
     // Create an unreadable directory within the active directory, which will
     // raise an exception as the event subscriber tries to scan for .git

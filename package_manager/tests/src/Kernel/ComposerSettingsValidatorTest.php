@@ -61,7 +61,7 @@ class ComposerSettingsValidatorTest extends PackageManagerKernelTestBase {
   public function testSecureHttpValidation(string $contents, array $expected_results): void {
     $this->createTestProject();
     $active_dir = $this->container->get('package_manager.path_locator')
-      ->getActiveDirectory();
+      ->getProjectRoot();
     file_put_contents("$active_dir/composer.json", $contents);
 
     try {

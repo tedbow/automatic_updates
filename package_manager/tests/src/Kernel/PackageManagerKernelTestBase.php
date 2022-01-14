@@ -218,7 +218,6 @@ END,
     TestStage::$stagingRoot = "$root/stage";
 
     $path_locator = $this->prophesize(PathLocator::class);
-    $path_locator->getActiveDirectory()->willReturn($active_dir);
     $path_locator->getProjectRoot()->willReturn($active_dir);
     $path_locator->getWebRoot()->willReturn('');
     $path_locator->getVendorDirectory()->willReturn("$active_dir/vendor");
@@ -238,7 +237,7 @@ END,
     // By default, the validator should report that the root, vendor, and
     // temporary directories have basically infinite free space.
     $validator->freeSpace = [
-      $path_locator->getActiveDirectory() => PHP_INT_MAX,
+      $path_locator->getProjectRoot() => PHP_INT_MAX,
       $path_locator->getVendorDirectory() => PHP_INT_MAX,
       $validator->temporaryDirectory() => PHP_INT_MAX,
     ];

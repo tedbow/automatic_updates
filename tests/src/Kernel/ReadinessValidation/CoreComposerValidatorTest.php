@@ -28,7 +28,6 @@ class CoreComposerValidatorTest extends AutomaticUpdatesKernelTestBase {
     // Point to a valid composer.json with no requirements.
     $active_dir = __DIR__ . '/../../../fixtures/project_staged_validation/no_core_requirements';
     $locator = $this->prophesize(PathLocator::class);
-    $locator->getActiveDirectory()->willReturn($active_dir);
     $locator->getProjectRoot()->willReturn($active_dir);
     $locator->getVendorDirectory()->willReturn($active_dir . '/vendor');
     $this->container->set('package_manager.path_locator', $locator->reveal());

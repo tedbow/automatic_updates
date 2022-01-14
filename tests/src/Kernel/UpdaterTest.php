@@ -49,7 +49,6 @@ class UpdaterTest extends AutomaticUpdatesKernelTestBase {
     // result in drupal/core-recommended being updated.
     $fixture_dir = __DIR__ . '/../../fixtures/fake-site';
     $locator = $this->prophesize(PathLocator::class);
-    $locator->getActiveDirectory()->willReturn($fixture_dir);
     $locator->getProjectRoot()->willReturn($fixture_dir);
     $locator->getWebRoot()->willReturn('');
     $locator->getVendorDirectory()->willReturn($fixture_dir);

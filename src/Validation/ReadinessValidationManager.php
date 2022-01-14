@@ -89,7 +89,7 @@ class ReadinessValidationManager {
    * @return $this
    */
   public function run(): self {
-    $composer = ComposerUtility::createForDirectory($this->pathLocator->getActiveDirectory());
+    $composer = ComposerUtility::createForDirectory($this->pathLocator->getProjectRoot());
 
     $recommender = new UpdateRecommender();
     $release = $recommender->getRecommendedRelease(TRUE);

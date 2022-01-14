@@ -60,7 +60,7 @@ class StagedDatabaseUpdateValidator implements EventSubscriberInterface {
       return;
     }
 
-    $active_dir = $this->pathLocator->getActiveDirectory();
+    $active_dir = $this->pathLocator->getProjectRoot();
     $stage_dir = $stage->getStageDirectory();
 
     $web_root = $this->pathLocator->getWebRoot();

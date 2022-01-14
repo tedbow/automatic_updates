@@ -219,7 +219,7 @@ class Stage {
     $this->tempStore->set(static::TEMPSTORE_LOCK_KEY, [$id, static::class]);
     $this->claim($id);
 
-    $active_dir = $this->pathLocator->getActiveDirectory();
+    $active_dir = $this->pathLocator->getProjectRoot();
     $stage_dir = $this->getStageDirectory();
 
     $event = new PreCreateEvent($this);
@@ -262,7 +262,7 @@ class Stage {
   public function apply(): void {
     $this->checkOwnership();
 
-    $active_dir = $this->pathLocator->getActiveDirectory();
+    $active_dir = $this->pathLocator->getProjectRoot();
     $stage_dir = $this->getStageDirectory();
 
     $event = new PreApplyEvent($this);
@@ -363,7 +363,7 @@ class Stage {
    *   The Composer utility object.
    */
   public function getActiveComposer(): ComposerUtility {
-    $dir = $this->pathLocator->getActiveDirectory();
+    $dir = $this->pathLocator->getProjectRoot();
     return ComposerUtility::createForDirectory($dir);
   }
 

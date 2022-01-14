@@ -64,7 +64,7 @@ class LockFileValidator implements PreOperationStageValidatorInterface {
    *   does not exist.
    */
   protected function getHash() {
-    $file = $this->pathLocator->getActiveDirectory() . DIRECTORY_SEPARATOR . 'composer.lock';
+    $file = $this->pathLocator->getProjectRoot() . DIRECTORY_SEPARATOR . 'composer.lock';
     // We want to directly hash the lock file itself, rather than look at its
     // content-hash value, which is actually a hash of the relevant parts of
     // composer.json. We're trying to verify that the actual installed packages

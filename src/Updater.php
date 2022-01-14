@@ -30,7 +30,7 @@ class Updater extends Stage {
       throw new \InvalidArgumentException("Currently only updates to Drupal core are supported.");
     }
 
-    $composer = ComposerUtility::createForDirectory($this->pathLocator->getActiveDirectory());
+    $composer = ComposerUtility::createForDirectory($this->pathLocator->getProjectRoot());
     $package_versions = [
       'production' => [],
       'dev' => [],
