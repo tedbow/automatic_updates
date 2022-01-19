@@ -6,6 +6,8 @@ services:
       - '@datetime.time'
       - '@event_dispatcher'
       - '@automatic_updates.updater'
+      - '@automatic_updates.cron_updater'
+      - '@config.factory'
       - 24
   automatic_updates.updater:
     class: Drupal\automatic_updates\Updater

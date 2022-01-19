@@ -140,6 +140,9 @@ final class AdminReadinessMessages implements ContainerInjectionInterface {
         'update.settings',
         'system.status',
         'update.confirmation_page',
+        'automatic_updates.report_update',
+        'automatic_updates.module_update',
+        'automatic_updates.theme_update',
       ];
       return !in_array($this->currentRouteMatch->getRouteName(), $disabled_routes, TRUE);
     }

@@ -33,13 +33,24 @@ class ReadinessCheckEvent extends PreOperationStageEvent {
    *
    * @param \Drupal\automatic_updates\Updater $updater
    *   The updater service.
-   * @param string[] $package_versions
-   *   (optional) The desired package versions to update to, keyed by package
+   * @param string[] $project_versions
+   *   (optional) The versions of the packages to update to, keyed by package
    *   name.
    */
-  public function __construct(Updater $updater, array $package_versions = []) {
+  public function __construct(Updater $updater, array $project_versions = []) {
     parent::__construct($updater);
-    $this->packageVersions = $package_versions;
+    if ($project_versions) {
+      if (count($project_versions) !== 1 || !array_key_exists('drupal', $project_versions)) {
+        throw new \InvalidArgumentException("Currently only updates to Drupal core are supported.");
+      }
+      $core_packages = $this->getStage()->getActiveComposer()->getCorePackageNames();
+      // Update all core packages to the same version.
+      $package_versions = array_fill(0, count($core_packages), $project_versions['drupal']);
+      $this->packageVersions = array_combine($core_packages, $package_versions);
+    }
+    else {
+      $this->packageVersions = [];
+    }
   }
 
   /**

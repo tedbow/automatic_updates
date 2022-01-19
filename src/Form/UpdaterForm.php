@@ -3,8 +3,10 @@
 namespace Drupal\automatic_updates\Form;
 
 use Drupal\automatic_updates\BatchProcessor;
+use Drupal\automatic_updates\Event\ReadinessCheckEvent;
 use Drupal\automatic_updates\Updater;
 use Drupal\automatic_updates\UpdateRecommender;
+use Drupal\automatic_updates\Validation\ReadinessTrait;
 use Drupal\automatic_updates\Validation\ReadinessValidationManager;
 use Drupal\Core\Batch\BatchBuilder;
 use Drupal\Core\Form\FormBase;
@@ -15,6 +17,7 @@ use Drupal\Core\Url;
 use Drupal\system\SystemManager;
 use Drupal\update\UpdateManagerInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
+use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 
 /**
  * Defines a form to update Drupal core.
@@ -23,6 +26,8 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
  *   Form classes are internal.
  */
 class UpdaterForm extends FormBase {
+
+  use ReadinessTrait;
 
   /**
    * The updater service.
@@ -46,6 +51,13 @@ class UpdaterForm extends FormBase {
   protected $readinessValidationManager;
 
   /**
+   * The event dispatcher service.
+   *
+   * @var \Symfony\Component\EventDispatcher\EventDispatcherInterface
+   */
+  protected $eventDispatcher;
+
+  /**
    * Constructs a new UpdaterForm object.
    *
    * @param \Drupal\Core\State\StateInterface $state
@@ -54,11 +66,14 @@ class UpdaterForm extends FormBase {
    *   The updater service.
    * @param \Drupal\automatic_updates\Validation\ReadinessValidationManager $readiness_validation_manager
    *   The readiness validation manager service.
+   * @param \Symfony\Component\EventDispatcher\EventDispatcherInterface $event_dispatcher
+   *   The event dispatcher service.
    */
-  public function __construct(StateInterface $state, Updater $updater, ReadinessValidationManager $readiness_validation_manager) {
+  public function __construct(StateInterface $state, Updater $updater, ReadinessValidationManager $readiness_validation_manager, EventDispatcherInterface $event_dispatcher) {
     $this->updater = $updater;
     $this->state = $state;
     $this->readinessValidationManager = $readiness_validation_manager;
+    $this->eventDispatcher = $event_dispatcher;
   }
 
   /**
@@ -75,7 +90,8 @@ class UpdaterForm extends FormBase {
     return new static(
       $container->get('state'),
       $container->get('automatic_updates.updater'),
-      $container->get('automatic_updates.readiness_validation_manager')
+      $container->get('automatic_updates.readiness_validation_manager'),
+      $container->get('event_dispatcher')
     );
   }
 
@@ -182,16 +198,17 @@ class UpdaterForm extends FormBase {
       ],
     ];
 
-    // @todo Add a hasErrors() or getErrors() method to
-    // ReadinessValidationManager to make validation more introspectable.
-    // Re-running the readiness checks now should mean that when we display
-    // cached errors in automatic_updates_page_top(), we'll see errors that
-    // were raised during this run, instead of any previously cached results.
-    $errors = $this->readinessValidationManager->run()
-      ->getResults(SystemManager::REQUIREMENT_ERROR);
-
-    if (empty($errors)) {
+    $results = $this->getReadinessErrors($recommended_release->getVersion());
+    if (empty($results)) {
       $form['actions'] = $this->actions($form_state);
+    }
+    else {
+      $this->messenger()->addError($this->getFailureMessageForSeverity(SystemManager::REQUIREMENT_ERROR));
+      foreach ($results as $result) {
+        $messages = $result->getMessages();
+        $message = count($messages) === 1 ? $messages[0] : $result->getSummary();
+        $this->messenger()->addError($message);
+      }
     }
     return $form;
   }
@@ -254,6 +271,21 @@ class UpdaterForm extends FormBase {
       ->toArray();
 
     batch_set($batch);
+  }
+
+  /**
+   * Gets validation errors before an update begins.
+   *
+   * @param string $update_version
+   *   The version of Drupal to which we will update.
+   *
+   * @return \Drupal\package_manager\ValidationResult[]
+   *   The error validation results.
+   */
+  private function getReadinessErrors(string $update_version): array {
+    $event = new ReadinessCheckEvent($this->updater, ['drupal' => $update_version]);
+    $this->eventDispatcher->dispatch($event);
+    return $event->getResults(SystemManager::REQUIREMENT_ERROR);
   }
 
 }

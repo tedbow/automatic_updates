@@ -2,7 +2,9 @@
 
 namespace Drupal\Tests\automatic_updates\Kernel\ReadinessValidation;
 
+use Drupal\automatic_updates\CronUpdater;
 use Drupal\automatic_updates\Event\ReadinessCheckEvent;
+use Drupal\automatic_updates\Updater;
 use Drupal\automatic_updates_test\ReadinessChecker\TestChecker1;
 use Drupal\automatic_updates_test2\ReadinessChecker\TestChecker2;
 use Drupal\system\SystemManager;
@@ -208,6 +210,27 @@ class ReadinessValidationManagerTest extends AutomaticUpdatesKernelTestBase {
     $manager = $this->container->get('automatic_updates.readiness_validation_manager');
     $manager->runIfNoStoredResults();
     $this->assertCheckerResultsFromManager($expected_results);
+  }
+
+  /**
+   * Tests the Automatic Updates cron setting changes which stage class is used.
+   */
+  public function testCronSetting(): void {
+    $this->enableModules(['automatic_updates']);
+    $stage_class = NULL;
+    $listener = function (ReadinessCheckEvent $event) use (&$stage_class): void {
+      $stage_class = get_class($event->getStage());
+    };
+    $event_dispatcher = $this->container->get('event_dispatcher');
+    $event_dispatcher->addListener(ReadinessCheckEvent::class, $listener);
+    $this->container->get('automatic_updates.readiness_validation_manager')->run();
+    // By default, updates will be enabled on cron.
+    $this->assertSame(CronUpdater::class, $stage_class);
+    $this->config('automatic_updates.settings')
+      ->set('cron', CronUpdater::DISABLED)
+      ->save();
+    $this->container->get('automatic_updates.readiness_validation_manager')->run();
+    $this->assertSame(Updater::class, $stage_class);
   }
 
 }

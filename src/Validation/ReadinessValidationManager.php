@@ -2,10 +2,12 @@
 
 namespace Drupal\automatic_updates\Validation;
 
+use Drupal\automatic_updates\CronUpdater;
 use Drupal\automatic_updates\Event\ReadinessCheckEvent;
 use Drupal\automatic_updates\Updater;
 use Drupal\automatic_updates\UpdateRecommender;
 use Drupal\Component\Datetime\TimeInterface;
+use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\KeyValueStore\KeyValueExpirableFactoryInterface;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 
@@ -51,6 +53,20 @@ class ReadinessValidationManager {
   protected $updater;
 
   /**
+   * The cron updater service.
+   *
+   * @var \Drupal\automatic_updates\CronUpdater
+   */
+  protected $cronUpdater;
+
+  /**
+   * The config factory service.
+   *
+   * @var \Drupal\Core\Config\ConfigFactoryInterface
+   */
+  protected $config;
+
+  /**
    * Constructs a ReadinessValidationManager.
    *
    * @param \Drupal\Core\KeyValueStore\KeyValueExpirableFactoryInterface $key_value_expirable_factory
@@ -61,14 +77,20 @@ class ReadinessValidationManager {
    *   The event dispatcher service.
    * @param \Drupal\automatic_updates\Updater $updater
    *   The updater service.
+   * @param \Drupal\automatic_updates\CronUpdater $cron_updater
+   *   The cron updater service.
+   * @param \Drupal\Core\Config\ConfigFactoryInterface $config
+   *   The config factory service.
    * @param int $results_time_to_live
    *   The number of hours to store results.
    */
-  public function __construct(KeyValueExpirableFactoryInterface $key_value_expirable_factory, TimeInterface $time, EventDispatcherInterface $dispatcher, Updater $updater, int $results_time_to_live) {
+  public function __construct(KeyValueExpirableFactoryInterface $key_value_expirable_factory, TimeInterface $time, EventDispatcherInterface $dispatcher, Updater $updater, CronUpdater $cron_updater, ConfigFactoryInterface $config, int $results_time_to_live) {
     $this->keyValueExpirable = $key_value_expirable_factory->get('automatic_updates');
     $this->time = $time;
     $this->eventDispatcher = $dispatcher;
     $this->updater = $updater;
+    $this->cronUpdater = $cron_updater;
+    $this->config = $config;
     $this->resultsTimeToLive = $results_time_to_live;
   }
 
@@ -78,20 +100,20 @@ class ReadinessValidationManager {
    * @return $this
    */
   public function run(): self {
-    $composer = $this->updater->getActiveComposer();
-
     $recommender = new UpdateRecommender();
     $release = $recommender->getRecommendedRelease(TRUE);
-    if ($release) {
-      $core_packages = $composer->getCorePackageNames();
-      // Update all core packages to the same version.
-      $package_versions = array_fill(0, count($core_packages), $release->getVersion());
-      $package_versions = array_combine($core_packages, $package_versions);
+    // If updates will run during cron, use the cron updater service provided by
+    // this module. This will allow subscribers to ReadinessCheckEvent to run
+    // specific validation for conditions that only affect cron updates.
+    if ($this->config->get('automatic_updates.settings')->get('cron') == CronUpdater::DISABLED) {
+      $stage = $this->updater;
     }
     else {
-      $package_versions = [];
+      $stage = $this->cronUpdater;
     }
-    $event = new ReadinessCheckEvent($this->updater, $package_versions);
+
+    $project_versions = $release ? ['drupal' => $release->getVersion()] : [];
+    $event = new ReadinessCheckEvent($stage, $project_versions);
     $this->eventDispatcher->dispatch($event);
     $results = $event->getResults();
     $this->keyValueExpirable->setWithExpire(
@@ -116,10 +138,16 @@ class ReadinessValidationManager {
     $listeners = $this->eventDispatcher->getListeners($event_name);
     $string = '';
     foreach ($listeners as $listener) {
-      /** @var object $object */
-      $object = $listener[0];
-      $method = $listener[1];
-      $string .= '-' . get_class($object) . '::' . $method;
+      if (is_array($listener)) {
+        $string .= is_object($listener[0]) ? get_class($listener[0]) : $listener[0];
+        $string .= $listener[1];
+      }
+      elseif (is_object($listener)) {
+        $string .= "-" . get_class($listener);
+      }
+      elseif (is_string($listener)) {
+        $string .= "-$listener";
+      }
     }
     return $string;
   }
