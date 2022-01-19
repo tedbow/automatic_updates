@@ -35,11 +35,12 @@ class Updater extends Stage {
       'dev' => [],
     ];
 
+    $require_dev = $composer->getComposer()
+      ->getPackage()
+      ->getDevRequires();
     foreach ($composer->getCorePackageNames() as $package) {
-      $package_versions['production'][$package] = $project_versions['drupal'];
-    }
-    foreach ($composer->getCoreDevPackageNames() as $package) {
-      $package_versions['dev'][$package] = $project_versions['drupal'];
+      $group = array_key_exists($package, $require_dev) ? 'dev' : 'production';
+      $package_versions[$group][$package] = $project_versions['drupal'];
     }
 
     // Ensure that package versions are available to pre-create event
@@ -79,12 +80,7 @@ class Updater extends Stage {
       return $requirements;
     };
     $versions = array_map($map, $this->getPackageVersions());
-
-    $this->require($versions['production']);
-
-    if ($versions['dev']) {
-      $this->require($versions['dev'], TRUE);
-    }
+    $this->require($versions['production'], $versions['dev']);
   }
 
   /**

@@ -231,28 +231,38 @@ class Stage {
   }
 
   /**
-   * Requires packages in the staging area.
+   * Adds or updates packages in the staging area.
    *
-   * @param string[] $constraints
-   *   The packages to require, in the form 'vendor/name:version'.
-   * @param bool $dev
-   *   (optional) Whether the packages should be required as dev dependencies.
-   *   Defaults to FALSE.
+   * @param string[] $runtime
+   *   The packages to add as regular top-level dependencies, in the form
+   *   'vendor/name:version'.
+   * @param string[] $dev
+   *   (optional) The packages to add as dev dependencies, in the form
+   *   'vendor/name:version'. Defaults to an empty array.
    */
-  public function require(array $constraints, bool $dev = FALSE): void {
+  public function require(array $runtime, array $dev = []): void {
     $this->checkOwnership();
-
-    $command = array_merge(['require', '--no-update'], $constraints);
-    if ($dev) {
-      $command[] = '--dev';
-    }
 
     $this->dispatch(new PreRequireEvent($this));
     $dir = $this->getStageDirectory();
-    $this->stager->stage($command, $dir);
-    // @todo Limit the update command to only packages in $constraints in
-    //   https://www.drupal.org/i/3257849.
-    $this->stager->stage(['update', '--with-all-dependencies'], $dir);
+
+    // Change the runtime and dev requirements as needed, but don't update
+    // the installed packages yet.
+    if ($runtime) {
+      $command = array_merge(['require', '--no-update'], $runtime);
+      $this->stager->stage($command, $dir);
+    }
+    if ($dev) {
+      $command = array_merge(['require', '--dev', '--no-update'], $dev);
+      $this->stager->stage($command, $dir);
+    }
+
+    // If constraints were changed, update those packages.
+    if ($runtime || $dev) {
+      $command = array_merge(['update', '--with-all-dependencies'], $runtime, $dev);
+      $this->stager->stage($command, $dir);
+    }
+
     $this->dispatch(new PostRequireEvent($this));
   }
 
