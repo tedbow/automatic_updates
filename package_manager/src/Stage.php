@@ -333,9 +333,8 @@ class Stage {
    *   The event object.
    *
    * @throws \Drupal\package_manager\Exception\StageValidationException
-   *   If the event collects any validation errors, or a subscriber throws a
-   *   StageValidationException directly.
-   * @throws \RuntimeException
+   *   If the event collects any validation errors.
+   * @throws \Drupal\package_manager\Exception\StageException
    *   If any other sort of error occurs.
    */
   protected function dispatch(StageEvent $event): void {
@@ -344,25 +343,20 @@ class Stage {
 
       $results = $event->getResults();
       if ($results) {
-        throw new StageValidationException($results);
+        $error = new StageValidationException($results);
       }
     }
     catch (\Throwable $error) {
-      // @todo Simplify exception handling in https://www.drupal.org/i/3258056.
-      // If we are not going to be able to create the staging area, mark it as
-      // available.
+      $error = new StageException($error->getMessage(), $error->getCode(), $error);
+    }
+
+    if (isset($error)) {
+      // If we won't be able to create the staging area, mark it as available.
       // @see ::create()
       if ($event instanceof PreCreateEvent) {
         $this->markAsAvailable();
       }
-
-      // Wrap the exception to preserve the backtrace, and re-throw it.
-      if ($error instanceof StageValidationException) {
-        throw new StageValidationException($error->getResults(), $error->getMessage(), $error->getCode(), $error);
-      }
-      else {
-        throw new \RuntimeException($error->getMessage(), $error->getCode(), $error);
-      }
+      throw $error;
     }
   }
 

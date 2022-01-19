@@ -3,7 +3,6 @@
 namespace Drupal\Tests\automatic_updates\Functional;
 
 use Drupal\automatic_updates\Event\ReadinessCheckEvent;
-use Drupal\automatic_updates\Exception\UpdateException;
 use Drupal\package_manager\Event\PreCreateEvent;
 use Drupal\package_manager\ValidationResult;
 use Drupal\automatic_updates_test\ReadinessChecker\TestChecker1;
@@ -176,29 +175,29 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
     $assert_session->pageTextNotContains((string) $message);
     TestChecker1::setTestResult(NULL, ReadinessCheckEvent::class);
 
-    // Repackage the validation error as an exception, so we can test what
-    // happens if a validator throws once the update has started.
-    $error = new UpdateException($expected_results, 'The update exploded.');
+    // Make the validator throw an exception during pre-create.
+    $error = new \Exception('The update exploded.');
     TestChecker1::setException($error, PreCreateEvent::class);
     $session->reload();
     $assert_session->pageTextNotContains(static::$errorsExplanation);
     $assert_session->pageTextNotContains(static::$warningsExplanation);
     $page->pressButton('Update');
     $this->checkForMetaRefresh();
-
-    // If a validator flags an error, but doesn't throw, the update should still
-    // be halted.
     $this->assertUpdateStagedTimes(0);
     $assert_session->pageTextContainsOnce('An error has occurred.');
     $page->clickLink('the error page');
-    $assert_session->pageTextContainsOnce((string) $expected_results[0]->getMessages()[0]);
-    // Since there's only one error message, we shouldn't see the summary...
+    // We should see the exception message, but not the validation result's
+    // messages or summary, because exceptions thrown directly by event
+    // subscribers are wrapped in simple exceptions and re-thrown.
+    $assert_session->pageTextContainsOnce($error->getMessage());
+    $assert_session->pageTextNotContains((string) $expected_results[0]->getMessages()[0]);
     $assert_session->pageTextNotContains($expected_results[0]->getSummary());
-    // ...but we should see the exception message.
-    $assert_session->pageTextContainsOnce('The update exploded.');
-    // If the error is thrown in PreCreateEvent the update stage will not have
-    // been created.
+    // Since the error occurred during pre-create, there should be no existing
+    // update to delete.
     $assert_session->buttonNotExists('Delete existing update');
+
+    // If a validator flags an error, but doesn't throw, the update should still
+    // be halted.
     TestChecker1::setTestResult($expected_results, PreCreateEvent::class);
     $page->pressButton('Update');
     $this->checkForMetaRefresh();

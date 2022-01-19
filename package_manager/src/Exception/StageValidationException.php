@@ -4,6 +4,8 @@ namespace Drupal\package_manager\Exception;
 
 /**
  * Exception thrown if a stage has validation errors.
+ *
+ * Should not be thrown by external code.
  */
 class StageValidationException extends StageException {
 
