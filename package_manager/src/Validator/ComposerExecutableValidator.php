@@ -2,9 +2,9 @@
 
 namespace Drupal\package_manager\Validator;
 
+use Composer\Semver\Comparator;
 use Drupal\package_manager\Event\PreCreateEvent;
 use Drupal\package_manager\Event\PreOperationStageEvent;
-use Drupal\Core\Extension\ExtensionVersion;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\Core\StringTranslation\TranslationInterface;
 use PhpTuf\ComposerStager\Domain\Process\OutputCallbackInterface;
@@ -17,6 +17,13 @@ use PhpTuf\ComposerStager\Exception\ExceptionInterface;
 class ComposerExecutableValidator implements PreOperationStageValidatorInterface, OutputCallbackInterface {
 
   use StringTranslationTrait;
+
+  /**
+   * The minimum required version of Composer.
+   *
+   * @var string
+   */
+  public const MINIMUM_COMPOSER_VERSION = '2.2.4';
 
   /**
    * The Composer runner.
@@ -60,13 +67,11 @@ class ComposerExecutableValidator implements PreOperationStageValidatorInterface
     }
 
     if ($this->version) {
-      $major_version = ExtensionVersion::createFromVersionString($this->version)
-        ->getMajorVersion();
-
-      if ($major_version < 2) {
+      if (Comparator::lessThan($this->version, static::MINIMUM_COMPOSER_VERSION)) {
         $event->addError([
-          $this->t('Composer 2 or later is required, but version @version was detected.', [
-            '@version' => $this->version,
+          $this->t('Composer @minimum_version or later is required, but version @detected_version was detected.', [
+            '@minimum_version' => static::MINIMUM_COMPOSER_VERSION,
+            '@detected_version' => $this->version,
           ]),
         ]);
       }

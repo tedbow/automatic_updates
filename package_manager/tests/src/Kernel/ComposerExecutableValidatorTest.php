@@ -52,16 +52,21 @@ class ComposerExecutableValidatorTest extends PackageManagerKernelTestBase {
     // in the validation result, so we need a function to churn out those fake
     // results for the test method.
     $unsupported_version = function (string $version): ValidationResult {
+      $minimum_version = ComposerExecutableValidator::MINIMUM_COMPOSER_VERSION;
+
       return ValidationResult::createError([
-        "Composer 2 or later is required, but version $version was detected.",
+        "Composer $minimum_version or later is required, but version $version was detected.",
       ]);
     };
 
     return [
-      // A valid 2.x version of Composer should not produce any errors.
+      [
+        ComposerExecutableValidator::MINIMUM_COMPOSER_VERSION,
+        [],
+      ],
       [
         '2.1.6',
-        [],
+        [$unsupported_version('2.1.6')],
       ],
       [
         '1.10.22',
@@ -73,11 +78,11 @@ class ComposerExecutableValidatorTest extends PackageManagerKernelTestBase {
       ],
       [
         '2.0.0-alpha3',
-        [],
+        [$unsupported_version('2.0.0-alpha3')],
       ],
       [
         '2.1.0-RC1',
-        [],
+        [$unsupported_version('2.1.0-RC1')],
       ],
       [
         '1.0.0-RC',
