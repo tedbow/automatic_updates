@@ -86,7 +86,9 @@ class UpdaterTest extends AutomaticUpdatesKernelTestBase {
     // invocation recorder, rather than a regular mock, in order to test that
     // the invocation recorder itself works.
     // The production requirements are changed first, followed by the dev
-    // requirements. Then the installed packages are updated.
+    // requirements. Then the installed packages are updated. This is tested
+    // functionally in Package Manager.
+    // @see \Drupal\Tests\package_manager\Build\StagedUpdateTest
     $expected_arguments = [
       [
         'require',

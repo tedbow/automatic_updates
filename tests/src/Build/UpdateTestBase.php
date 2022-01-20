@@ -3,11 +3,12 @@
 namespace Drupal\Tests\automatic_updates\Build;
 
 use Drupal\Component\Utility\Html;
+use Drupal\Tests\package_manager\Build\TemplateProjectTestBase;
 
 /**
  * Base class for tests that perform in-place updates.
  */
-abstract class UpdateTestBase extends TemplateProjectSiteTestBase {
+abstract class UpdateTestBase extends TemplateProjectTestBase {
 
   /**
    * A secondary server instance, to serve XML metadata about available updates.
@@ -32,54 +33,14 @@ abstract class UpdateTestBase extends TemplateProjectSiteTestBase {
   protected function createTestProject(string $template): void {
     parent::createTestProject($template);
 
-    // BEGIN: DELETE FROM CORE MERGE REQUEST
-    // Install Automatic Updates into the test project and ensure it wasn't
-    // symlinked.
-    if (__NAMESPACE__ === 'Drupal\Tests\automatic_updates\Build') {
-      $dir = 'project';
-      $this->runComposer('composer config repo.automatic_updates path ' . __DIR__ . '/../../..', $dir);
-      $this->runComposer('composer require --no-update "drupal/automatic_updates:@dev"', $dir);
-      $output = $this->runComposer('COMPOSER_MIRROR_PATH_REPOS=1 composer update --with-all-dependencies', $dir);
-      $this->assertStringNotContainsString('Symlinking', $output);
-    }
-    // END: DELETE FROM CORE MERGE REQUEST
-    // Install Drupal. Always allow test modules to be installed in the UI and,
-    // for easier debugging, always display errors in their dubious glory.
+    // Install Drupal, Automatic Updates, and other modules needed for testing.
     $this->installQuickStart('minimal');
-    $php = <<<END
-\$settings['extension_discovery_scan_tests'] = TRUE;
-\$config['system.logging']['error_level'] = 'verbose';
-END;
-    $this->writeSettings($php);
-
-    // Install Automatic Updates and other modules needed for testing.
     $this->formLogin($this->adminUsername, $this->adminPassword);
     $this->installModules([
       'automatic_updates',
       'automatic_updates_test',
       'update_test',
     ]);
-  }
-
-  /**
-   * Appends PHP code to the test site's settings.php.
-   *
-   * @param string $php
-   *   The PHP code to append to the test site's settings.php.
-   */
-  protected function writeSettings(string $php): void {
-    // Ensure settings are writable, since this is the only way we can set
-    // configuration values that aren't accessible in the UI.
-    $file = $this->getWebRoot() . '/sites/default/settings.php';
-    $this->assertFileExists($file);
-    chmod(dirname($file), 0744);
-    chmod($file, 0744);
-    $this->assertFileIsWritable($file);
-
-    $stream = fopen($file, 'a');
-    $this->assertIsResource($stream);
-    $this->assertIsInt(fwrite($stream, $php));
-    $this->assertTrue(fclose($stream));
   }
 
   /**
@@ -108,33 +69,6 @@ END;
 END;
     }
     $this->writeSettings($code);
-  }
-
-  /**
-   * Installs modules in the UI.
-   *
-   * Assumes that a user with the appropriate permissions is logged in.
-   *
-   * @param string[] $modules
-   *   The machine names of the modules to install.
-   */
-  protected function installModules(array $modules): void {
-    $mink = $this->getMink();
-    $page = $mink->getSession()->getPage();
-    $assert_session = $mink->assertSession();
-
-    $this->visit('/admin/modules');
-    foreach ($modules as $module) {
-      $page->checkField("modules[$module][enable]");
-    }
-    $page->pressButton('Install');
-
-    $form_id = $assert_session->elementExists('css', 'input[type="hidden"][name="form_id"]')
-      ->getValue();
-    if (preg_match('/^system_modules_(experimental_|non_stable_)?confirm_form$/', $form_id)) {
-      $page->pressButton('Continue');
-      $assert_session->statusCodeEquals(200);
-    }
   }
 
   /**

@@ -1,14 +1,19 @@
 <?php
 
-namespace Drupal\Tests\automatic_updates\Build;
+namespace Drupal\Tests\package_manager\Build;
 
 use Drupal\BuildTests\QuickStart\QuickStartTestBase;
 use Drupal\Composer\Composer;
 
 /**
  * Base class for tests which create a test site from a core project template.
+ *
+ * The test site will be created from one of the core Composer project templates
+ * (drupal/recommended-project or drupal/legacy-project) and contain complete
+ * copies of Drupal core and all installed dependencies, completely independent
+ * of the currently running code base.
  */
-abstract class TemplateProjectSiteTestBase extends QuickStartTestBase {
+abstract class TemplateProjectTestBase extends QuickStartTestBase {
 
   /**
    * The web root of the test site, relative to the workspace directory.
@@ -30,6 +35,8 @@ abstract class TemplateProjectSiteTestBase extends QuickStartTestBase {
     ];
   }
 
+  // BEGIN: DELETE FROM CORE MERGE REQUEST
+
   /**
    * {@inheritdoc}
    */
@@ -44,6 +51,8 @@ abstract class TemplateProjectSiteTestBase extends QuickStartTestBase {
     // drupal/core-recommended.
     $this->runComposer('composer remove --no-update drupal/automatic_updates', 'composer/Metapackage/CoreRecommended');
   }
+
+  // END: DELETE FROM CORE MERGE REQUEST
 
   /**
    * {@inheritdoc}
@@ -77,6 +86,14 @@ abstract class TemplateProjectSiteTestBase extends QuickStartTestBase {
    */
   public function installQuickStart($profile, $working_dir = NULL) {
     parent::installQuickStart($profile, $working_dir ?: $this->webRoot);
+
+    // Always allow test modules to be installed in the UI and, for easier
+    // debugging, always display errors in their dubious glory.
+    $php = <<<END
+\$settings['extension_discovery_scan_tests'] = TRUE;
+\$config['system.logging']['error_level'] = 'verbose';
+END;
+    $this->writeSettings($php);
   }
 
   /**
@@ -197,6 +214,18 @@ abstract class TemplateProjectSiteTestBase extends QuickStartTestBase {
     // Now that we know the project was created successfully, we can set the
     // web root with confidence.
     $this->webRoot = 'project/' . $this->runComposer('composer config extra.drupal-scaffold.locations.web-root', 'project');
+
+    // BEGIN: DELETE FROM CORE MERGE REQUEST
+    // Install Automatic Updates into the test project and ensure it wasn't
+    // symlinked.
+    $automatic_updates_dir = realpath(__DIR__ . '/../../../..');
+    if (str_contains($automatic_updates_dir, 'automatic_updates')) {
+      $dir = 'project';
+      $this->runComposer("composer config repo.automatic_updates path $automatic_updates_dir", $dir);
+      $output = $this->runComposer('COMPOSER_MIRROR_PATH_REPOS=1 composer require --update-with-all-dependencies "drupal/automatic_updates:@dev"', $dir);
+      $this->assertStringNotContainsString('Symlinking', $output);
+    }
+    // END: DELETE FROM CORE MERGE REQUEST
   }
 
   /**
@@ -290,6 +319,56 @@ abstract class TemplateProjectSiteTestBase extends QuickStartTestBase {
       $output = json_decode($output, TRUE, JSON_THROW_ON_ERROR);
     }
     return $output;
+  }
+
+  /**
+   * Appends PHP code to the test site's settings.php.
+   *
+   * @param string $php
+   *   The PHP code to append to the test site's settings.php.
+   */
+  protected function writeSettings(string $php): void {
+    // Ensure settings are writable, since this is the only way we can set
+    // configuration values that aren't accessible in the UI.
+    $file = $this->getWebRoot() . '/sites/default/settings.php';
+    $this->assertFileExists($file);
+    chmod(dirname($file), 0744);
+    chmod($file, 0744);
+    $this->assertFileIsWritable($file);
+
+    $stream = fopen($file, 'a');
+    $this->assertIsResource($stream);
+    $this->assertIsInt(fwrite($stream, $php));
+    $this->assertTrue(fclose($stream));
+  }
+
+  /**
+   * Installs modules in the UI.
+   *
+   * Assumes that a user with the appropriate permissions is logged in.
+   *
+   * @param string[] $modules
+   *   The machine names of the modules to install.
+   */
+  protected function installModules(array $modules): void {
+    $mink = $this->getMink();
+    $page = $mink->getSession()->getPage();
+    $assert_session = $mink->assertSession();
+
+    $this->visit('/admin/modules');
+    foreach ($modules as $module) {
+      $page->checkField("modules[$module][enable]");
+    }
+    $page->pressButton('Install');
+
+    // If there is a confirmation form warning about additional dependencies
+    // or non-stable modules, submit it.
+    $form_id = $assert_session->elementExists('css', 'input[type="hidden"][name="form_id"]')
+      ->getValue();
+    if (preg_match('/^system_modules_(experimental_|non_stable_)?confirm_form$/', $form_id)) {
+      $page->pressButton('Continue');
+      $assert_session->statusCodeEquals(200);
+    }
   }
 
 }

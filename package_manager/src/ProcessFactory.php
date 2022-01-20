@@ -87,7 +87,7 @@ final class ProcessFactory implements ProcessFactoryInterface {
    */
   private function getComposerHomePath(): string {
     $home_path = $this->fileSystem->getTempDirectory();
-    $home_path .= '/automatic_updates_composer_home-';
+    $home_path .= '/package_manager_composer_home-';
     $home_path .= $this->configFactory->get('system.site')->get('uuid');
     $this->fileSystem->prepareDirectory($home_path, FileSystemInterface::CREATE_DIRECTORY | FileSystemInterface::MODIFY_PERMISSIONS);
 
