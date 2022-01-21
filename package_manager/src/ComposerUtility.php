@@ -73,9 +73,14 @@ class ComposerUtility {
     // @see https://getcomposer.org/doc/06-config.md#htaccess-protect
     $htaccess = getenv('COMPOSER_HTACCESS_PROTECT');
 
+    $factory = new Factory();
     putenv("COMPOSER_HOME=$dir");
     putenv("COMPOSER_HTACCESS_PROTECT=false");
-    $composer = Factory::create($io, $configuration);
+    // Initialize the Composer API with plugins disabled and only the root
+    // package loaded (i.e., nothing from the global Composer project will be
+    // considered or loaded). This allows us to inspect the project directory
+    // using Composer's API in a "hands-off" manner.
+    $composer = $factory->createComposer($io, $configuration, TRUE, $dir, FALSE);
     putenv("COMPOSER_HOME=$home");
     putenv("COMPOSER_HTACCESS_PROTECT=$htaccess");
 
@@ -104,7 +109,7 @@ class ComposerUtility {
   }
 
   /**
-   * Returns the names of the core packages in the lock file.
+   * Returns the names of the installed core packages.
    *
    * All packages listed in ../core_packages.json are considered core packages.
    *
@@ -116,7 +121,7 @@ class ComposerUtility {
    */
   public function getCorePackageNames(): array {
     $core_packages = array_intersect(
-      array_keys($this->getLockedPackages()),
+      array_keys($this->getInstalledPackages()),
       static::getCorePackageList()
     );
 
@@ -147,22 +152,23 @@ class ComposerUtility {
       ];
       return in_array($package->getType(), $drupal_package_types, TRUE);
     };
-    return array_filter($this->getLockedPackages(), $filter);
+    return array_filter($this->getInstalledPackages(), $filter);
   }
 
   /**
-   * Returns all packages in the lock file.
+   * Returns information on all installed packages.
    *
    * @return \Composer\Package\PackageInterface[]
-   *   All packages in the lock file, keyed by name.
+   *   All installed packages, keyed by name.
    */
-  protected function getLockedPackages(): array {
-    $locked_packages = $this->getComposer()->getLocker()
-      ->getLockedRepository(TRUE)
+  protected function getInstalledPackages(): array {
+    $installed_packages = $this->getComposer()
+      ->getRepositoryManager()
+      ->getLocalRepository()
       ->getPackages();
 
     $packages = [];
-    foreach ($locked_packages as $package) {
+    foreach ($installed_packages as $package) {
       $key = $package->getName();
       $packages[$key] = $package;
     }

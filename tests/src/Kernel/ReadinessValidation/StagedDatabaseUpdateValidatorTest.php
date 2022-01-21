@@ -52,6 +52,8 @@ class StagedDatabaseUpdateValidatorTest extends AutomaticUpdatesKernelTestBase {
     $active_dir = $this->getDrupalRoot();
     @copy("$active_dir/composer.json", "$stage_dir/composer.json");
     @copy("$active_dir/composer.lock", "$stage_dir/composer.lock");
+    mkdir("$stage_dir/vendor/composer", 0777, TRUE);
+    @copy("$active_dir/vendor/composer/installed.json", "$stage_dir/vendor/composer/installed.json");
 
     // Copy the .install and .post_update.php files from every installed module
     // into the staging directory.

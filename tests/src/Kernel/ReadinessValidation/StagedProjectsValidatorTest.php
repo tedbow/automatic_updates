@@ -114,7 +114,8 @@ class StagedProjectsValidatorTest extends AutomaticUpdatesKernelTestBase {
     // Composer data.
     $fixture = __DIR__ . '/../../../fixtures/fake-site';
     copy("$fixture/composer.json", 'public://composer.json');
-    copy("$fixture/composer.lock", 'public://composer.lock');
+    mkdir('public://vendor/composer', 0777, TRUE);
+    copy("$fixture/vendor/composer/installed.json", 'public://vendor/composer/installed.json');
 
     $event_dispatcher = $this->container->get('event_dispatcher');
     // Disable the disk space validator, since it doesn't work with vfsStream,
@@ -214,19 +215,6 @@ class StagedProjectsValidatorTest extends AutomaticUpdatesKernelTestBase {
     $results = $this->validate("$fixtures_dir/active", "$fixtures_dir/staged");
     $this->assertIsArray($results);
     $this->assertEmpty($results);
-  }
-
-  /**
-   * Tests validation when a composer.lock file is not found.
-   */
-  public function testNoLockFile(): void {
-    $fixtures_dir = realpath(__DIR__ . '/../../../fixtures/project_staged_validation/no_errors');
-
-    $results = $this->validate("$fixtures_dir/active", $fixtures_dir);
-    $this->assertCount(1, $results);
-    $result = array_pop($results);
-    $this->assertSame("No lockfile found. Unable to read locked packages", (string) $result->getMessages()[0]);
-    $this->assertSame('', (string) $result->getSummary());
   }
 
 }
