@@ -4,6 +4,7 @@ namespace Drupal\automatic_updates;
 
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Logger\LoggerChannelFactoryInterface;
+use Drupal\package_manager\Exception\StageValidationException;
 
 /**
  * Defines a service that updates via cron.
@@ -114,6 +115,10 @@ class CronUpdater extends Updater {
       $this->apply();
       $this->destroy();
     }
+    catch (StageValidationException $e) {
+      $this->logger->error($this->getLogMessageForValidationException($e));
+      return;
+    }
     catch (\Throwable $e) {
       $this->logger->error($e->getMessage());
       return;
@@ -126,6 +131,33 @@ class CronUpdater extends Updater {
         '%update_version' => $recommended_version,
       ]
     );
+  }
+
+  /**
+   * Generates a log message from a stage validation exception.
+   *
+   * @param \Drupal\package_manager\Exception\StageValidationException $exception
+   *   The validation exception.
+   *
+   * @return string
+   *   The formatted log message, including all the validation results.
+   */
+  protected function getLogMessageForValidationException(StageValidationException $exception): string {
+    $log_message = '';
+    foreach ($exception->getResults() as $result) {
+      $summary = $result->getSummary();
+      if ($summary) {
+        $log_message .= "<h3>$summary</h3><ul>";
+        foreach ($result->getMessages() as $message) {
+          $log_message .= "<li>$message</li>";
+        }
+        $log_message .= "</ul>";
+      }
+      else {
+        $log_message .= ($log_message ? ' ' : '') . $result->getMessages()[0];
+      }
+    }
+    return "<h2>{$exception->getMessage()}</h2>$log_message";
   }
 
 }

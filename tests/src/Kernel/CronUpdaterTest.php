@@ -3,8 +3,14 @@
 namespace Drupal\Tests\automatic_updates\Kernel;
 
 use Drupal\automatic_updates\CronUpdater;
+use Drupal\automatic_updates_test\ReadinessChecker\TestChecker1;
 use Drupal\Core\Form\FormState;
+use Drupal\Core\Logger\RfcLogLevel;
+use Drupal\package_manager\Event\PreCreateEvent;
+use Drupal\package_manager\ValidationResult;
+use Drupal\Tests\package_manager\Traits\PackageManagerBypassTestTrait;
 use Drupal\update\UpdateSettingsForm;
+use Psr\Log\Test\TestLogger;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 
 /**
@@ -15,6 +21,8 @@ use Symfony\Component\EventDispatcher\EventDispatcherInterface;
  */
 class CronUpdaterTest extends AutomaticUpdatesKernelTestBase {
 
+  use PackageManagerBypassTestTrait;
+
   /**
    * {@inheritdoc}
    */
@@ -22,6 +30,7 @@ class CronUpdaterTest extends AutomaticUpdatesKernelTestBase {
     'automatic_updates',
     'package_manager',
     'package_manager_bypass',
+    'automatic_updates_test',
   ];
 
   /**
@@ -115,6 +124,69 @@ class CronUpdaterTest extends AutomaticUpdatesKernelTestBase {
     // the installed dependencies.
     $this->assertCount($will_update * 2, $this->container->get('package_manager.stager')->getInvocationArguments());
     $this->assertCount($will_update, $this->container->get('package_manager.committer')->getInvocationArguments());
+  }
+
+  /**
+   * Data provider for testErrors().
+   *
+   * @return array[]
+   *   The test cases for testErrors().
+   */
+  public function providerErrors(): array {
+    $messages = [
+      'Precreate Event Error',
+      'Precreate Event Error 2',
+    ];
+    $summary = 'There were errors in updates';
+    $result_no_summary = ValidationResult::createError([$messages[0]]);
+    $result_with_summary = ValidationResult::createError($messages, t($summary));
+    $result_with_summary_message = "<h3>{$summary}</h3><ul><li>{$messages[0]}</li><li>{$messages[1]}</li></ul>";
+
+    return [
+      '1 result with summary' => [
+        [$result_with_summary],
+        $result_with_summary_message,
+      ],
+      '2 results with summary' => [
+        [$result_with_summary, $result_with_summary],
+        "$result_with_summary_message$result_with_summary_message",
+      ],
+      '1 result without summary' => [
+        [$result_no_summary],
+        $messages[0],
+      ],
+      '2 results without summary' => [
+        [$result_no_summary, $result_no_summary],
+        $messages[0] . ' ' . $messages[0],
+      ],
+      '1 result with summary, 1 result without summary' => [
+        [$result_with_summary, $result_no_summary],
+        $result_with_summary_message . ' ' . $messages[0],
+      ],
+    ];
+  }
+
+  /**
+   * Tests errors during a cron update attempt.
+   *
+   * @param \Drupal\package_manager\ValidationResult[] $validation_results
+   *   The expected validation results which should be logged.
+   * @param string $expected_log_message
+   *   The error message should be logged.
+   *
+   * @dataProvider providerErrors
+   */
+  public function testErrors(array $validation_results, string $expected_log_message): void {
+    TestChecker1::setTestResult($validation_results, PreCreateEvent::class);
+
+    $logger = new TestLogger();
+    $this->container->get('logger.factory')
+      ->get('automatic_updates')
+      ->addLogger($logger);
+
+    $this->container->get('cron')->run();
+    $this->assertUpdateStagedTimes(0);
+    $this->assertTrue($logger->hasRecord("<h2>Unable to complete the update because of errors.</h2>$expected_log_message", RfcLogLevel::ERROR));
   }
 
 }

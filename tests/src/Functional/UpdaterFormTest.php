@@ -6,6 +6,7 @@ use Drupal\automatic_updates\Event\ReadinessCheckEvent;
 use Drupal\package_manager\Event\PreCreateEvent;
 use Drupal\package_manager\ValidationResult;
 use Drupal\automatic_updates_test\ReadinessChecker\TestChecker1;
+use Drupal\Tests\package_manager\Traits\PackageManagerBypassTestTrait;
 use Drupal\Tests\automatic_updates\Traits\ValidationTestTrait;
 
 /**
@@ -16,6 +17,7 @@ use Drupal\Tests\automatic_updates\Traits\ValidationTestTrait;
 class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
 
   use ValidationTestTrait;
+  use PackageManagerBypassTestTrait;
 
   /**
    * {@inheritdoc}
@@ -266,29 +268,6 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
     $this->assertUpdateReady();
     $this->assertUpdateStagedTimes(2);
     $assert_session->buttonExists('Continue');
-  }
-
-  /**
-   * Asserts the number of times an update was staged.
-   *
-   * @param int $attempted_times
-   *   The expected number of times an update was staged.
-   */
-  private function assertUpdateStagedTimes(int $attempted_times): void {
-    /** @var \Drupal\package_manager_bypass\InvocationRecorderBase $beginner */
-    $beginner = $this->container->get('package_manager.beginner');
-    $this->assertCount($attempted_times, $beginner->getInvocationArguments());
-
-    /** @var \Drupal\package_manager_bypass\InvocationRecorderBase $stager */
-    $stager = $this->container->get('package_manager.stager');
-    // If an update was attempted, then there will be two calls to the stager:
-    // one to change the constraints in composer.json, and another to actually
-    // update the installed dependencies.
-    $this->assertCount($attempted_times * 2, $stager->getInvocationArguments());
-
-    /** @var \Drupal\package_manager_bypass\InvocationRecorderBase $committer */
-    $committer = $this->container->get('package_manager.committer');
-    $this->assertEmpty($committer->getInvocationArguments());
   }
 
 }
