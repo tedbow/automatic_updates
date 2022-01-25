@@ -4,7 +4,9 @@ namespace Drupal\automatic_updates\Form;
 
 use Drupal\automatic_updates\BatchProcessor;
 use Drupal\automatic_updates\Updater;
+use Drupal\automatic_updates\Validator\StagedDatabaseUpdateValidator;
 use Drupal\Core\Batch\BatchBuilder;
+use Drupal\Core\Extension\ModuleExtensionList;
 use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Messenger\MessengerInterface;
@@ -35,6 +37,20 @@ class UpdateReady extends FormBase {
   protected $state;
 
   /**
+   * The module list service.
+   *
+   * @var \Drupal\Core\Extension\ModuleExtensionList
+   */
+  protected $moduleList;
+
+  /**
+   * The staged database update validator service.
+   *
+   * @var \Drupal\automatic_updates\Validator\StagedDatabaseUpdateValidator
+   */
+  protected $stagedDatabaseUpdateValidator;
+
+  /**
    * Constructs a new UpdateReady object.
    *
    * @param \Drupal\automatic_updates\Updater $updater
@@ -43,11 +59,17 @@ class UpdateReady extends FormBase {
    *   The messenger service.
    * @param \Drupal\Core\State\StateInterface $state
    *   The state service.
+   * @param \Drupal\Core\Extension\ModuleExtensionList $module_list
+   *   The module list service.
+   * @param \Drupal\automatic_updates\Validator\StagedDatabaseUpdateValidator $staged_database_update_validator
+   *   The staged database update validator service.
    */
-  public function __construct(Updater $updater, MessengerInterface $messenger, StateInterface $state) {
+  public function __construct(Updater $updater, MessengerInterface $messenger, StateInterface $state, ModuleExtensionList $module_list, StagedDatabaseUpdateValidator $staged_database_update_validator) {
     $this->updater = $updater;
     $this->setMessenger($messenger);
     $this->state = $state;
+    $this->moduleList = $module_list;
+    $this->stagedDatabaseUpdateValidator = $staged_database_update_validator;
   }
 
   /**
@@ -64,7 +86,9 @@ class UpdateReady extends FormBase {
     return new static(
       $container->get('automatic_updates.updater'),
       $container->get('messenger'),
-      $container->get('state')
+      $container->get('state'),
+      $container->get('extension.list.module'),
+      $container->get('automatic_updates.validator.staged_database_updates')
     );
   }
 
@@ -78,6 +102,23 @@ class UpdateReady extends FormBase {
     catch (StageOwnershipException $e) {
       $this->messenger()->addError($this->t('Cannot continue the update because another Composer operation is currently in progress.'));
       return $form;
+    }
+
+    // Don't check for pending database updates if the form has been submitted,
+    // because we don't want to store the warning in the messenger during form
+    // submit.
+    if (!$form_state->getUserInput()) {
+      // If there are any installed modules with database updates in the staging
+      // area, warn the user that they might be sent to update.php once the
+      // staged changes have been applied.
+      $pending_updates = $this->getModulesWithStagedDatabaseUpdates();
+
+      if ($pending_updates) {
+        $this->messenger()->addWarning($this->t('Possible database updates were detected in the following modules; you may be redirected to the database update page in order to complete the update process.'));
+        foreach ($pending_updates as $info) {
+          $this->messenger()->addWarning($info['name']);
+        }
+      }
     }
 
     $form['stage_id'] = [
@@ -104,6 +145,20 @@ class UpdateReady extends FormBase {
     ];
 
     return $form;
+  }
+
+  /**
+   * Returns info for all installed modules that have staged database updates.
+   *
+   * @return array[]
+   *   The info arrays for the modules which have staged database updates, keyed
+   *   by module machine name.
+   */
+  protected function getModulesWithStagedDatabaseUpdates(): array {
+    $filter = function (string $name): bool {
+      return $this->stagedDatabaseUpdateValidator->hasStagedUpdates($this->updater, $this->moduleList->get($name));
+    };
+    return array_filter($this->moduleList->getAllInstalledInfo(), $filter, ARRAY_FILTER_USE_KEY);
   }
 
   /**

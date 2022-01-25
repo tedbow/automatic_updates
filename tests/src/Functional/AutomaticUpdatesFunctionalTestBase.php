@@ -24,19 +24,29 @@ abstract class AutomaticUpdatesFunctionalTestBase extends BrowserTestBase {
   protected function prepareSettings() {
     parent::prepareSettings();
 
-    // Disable the filesystem permissions validator, since we cannot guarantee
-    // that the current code base will be writable in all testing situations. We
-    // test this validator in our build tests, since those do give us control
-    // over the filesystem permissions.
-    // @see \Drupal\Tests\automatic_updates\Build\CoreUpdateTest::assertReadOnlyFileSystemError()
     $settings['settings']['automatic_updates_disable_validators'] = (object) [
-      'value' => [
-        'automatic_updates.validator.file_system_permissions',
-        'package_manager.validator.file_system',
-      ],
+      'value' => $this->disableValidators(),
       'required' => TRUE,
     ];
     $this->writeSettings($settings);
+  }
+
+  /**
+   * Returns the service IDs of any validators to disable.
+   *
+   * @return string[]
+   *   The service IDs of the validators to disable.
+   */
+  protected function disableValidators(): array {
+    // Disable the filesystem permissions validators, since we cannot guarantee
+    // that the current code base will be writable in all testing situations. We
+    // test these validators in our build tests, since those do give us control
+    // over the filesystem permissions.
+    // @see \Drupal\Tests\automatic_updates\Build\CoreUpdateTest::assertReadOnlyFileSystemError()
+    return [
+      'automatic_updates.validator.file_system_permissions',
+      'package_manager.validator.file_system',
+    ];
   }
 
   /**

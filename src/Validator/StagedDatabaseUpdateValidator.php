@@ -3,6 +3,7 @@
 namespace Drupal\automatic_updates\Validator;
 
 use Drupal\automatic_updates\CronUpdater;
+use Drupal\automatic_updates\Updater;
 use Drupal\Core\Extension\Extension;
 use Drupal\Core\Extension\ModuleExtensionList;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
@@ -60,22 +61,13 @@ class StagedDatabaseUpdateValidator implements EventSubscriberInterface {
       return;
     }
 
-    $active_dir = $this->pathLocator->getProjectRoot();
-    $stage_dir = $stage->getStageDirectory();
-
-    $web_root = $this->pathLocator->getWebRoot();
-    if ($web_root) {
-      $active_dir .= DIRECTORY_SEPARATOR . $web_root;
-      $stage_dir .= DIRECTORY_SEPARATOR . $web_root;
-    }
-
     $invalid_modules = [];
     // Although \Drupal\automatic_updates\Validator\StagedProjectsValidator
     // should prevent non-core modules from being added, updated, or removed in
     // the staging area, we check all installed modules so as not to rely on the
     // presence of StagedProjectsValidator.
     foreach ($this->moduleList->getAllInstalledInfo() as $name => $info) {
-      if ($this->hasStagedUpdates($active_dir, $stage_dir, $this->moduleList->get($name))) {
+      if ($this->hasStagedUpdates($stage, $this->moduleList->get($name))) {
         $invalid_modules[] = $info['name'];
       }
     }
@@ -88,10 +80,8 @@ class StagedDatabaseUpdateValidator implements EventSubscriberInterface {
   /**
    * Determines if a staged extension has changed update functions.
    *
-   * @param string $active_dir
-   *   The path of the running Drupal code base.
-   * @param string $stage_dir
-   *   The path of the staging area.
+   * @param \Drupal\automatic_updates\Updater $updater
+   *   The updater which is controlling the update process.
    * @param \Drupal\Core\Extension\Extension $extension
    *   The extension to check.
    *
@@ -111,7 +101,16 @@ class StagedDatabaseUpdateValidator implements EventSubscriberInterface {
    *
    * @see https://www.drupal.org/project/automatic_updates/issues/3253828
    */
-  protected function hasStagedUpdates(string $active_dir, string $stage_dir, Extension $extension): bool {
+  public function hasStagedUpdates(Updater $updater, Extension $extension): bool {
+    $active_dir = $this->pathLocator->getProjectRoot();
+    $stage_dir = $updater->getStageDirectory();
+
+    $web_root = $this->pathLocator->getWebRoot();
+    if ($web_root) {
+      $active_dir .= DIRECTORY_SEPARATOR . $web_root;
+      $stage_dir .= DIRECTORY_SEPARATOR . $web_root;
+    }
+
     $active_hashes = $this->getHashes($active_dir, $extension);
     $staged_hashes = $this->getHashes($stage_dir, $extension);
 

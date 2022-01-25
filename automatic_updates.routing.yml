@@ -13,6 +13,12 @@ automatic_updates.confirmation_page:
   requirements:
     _permission: 'administer software updates'
     _access_update_manager: 'TRUE'
+automatic_updates.finish:
+  path: '/automatic-update/finish'
+  defaults:
+    _controller: '\Drupal\automatic_updates\Controller\UpdateController::onFinish'
+  requirements:
+    _permission: 'administer software updates'
 # Links to our updater form appear in three different sets of local tasks. To ensure the breadcrumbs and paths are
 # consistent with the other local tasks in each set, we need two separate routes to the same form.
 automatic_updates.report_update:

@@ -46,6 +46,20 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
   }
 
   /**
+   * {@inheritdoc}
+   */
+  protected function disableValidators(): array {
+    $disabled_validators = parent::disableValidators();
+
+    // In this test class, all actual staging operations are bypassed by
+    // package_manager_bypass, which means this validator will complain because
+    // there is no actual Composer data for it to inspect.
+    $disabled_validators[] = 'automatic_updates.staged_projects_validator';
+
+    return $disabled_validators;
+  }
+
+  /**
    * Data provider for URLs to the update form.
    *
    * @return string[][]
@@ -268,6 +282,65 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
     $this->assertUpdateReady();
     $this->assertUpdateStagedTimes(2);
     $assert_session->buttonExists('Continue');
+  }
+
+  /**
+   * Tests the update form when staged modules have database updates.
+   */
+  public function testStagedDatabaseUpdates(): void {
+    $this->setCoreVersion('9.8.0');
+    $this->checkForUpdates();
+
+    // Simulate a staged database update in the System module.
+    $this->container->get('state')
+      ->set('automatic_updates_test.staged_database_updates', [
+        'system' => [
+          'name' => 'System',
+        ],
+      ]);
+
+    $page = $this->getSession()->getPage();
+    $this->drupalGet('/admin/modules/automatic-update');
+    $page->pressButton('Update');
+    $this->checkForMetaRefresh();
+    $this->assertUpdateStagedTimes(1);
+    $this->assertUpdateReady();
+    // We should see a warning about pending database updates, and once the
+    // staged changes have been applied, we should be redirected to update.php.
+    $assert_session = $this->assertSession();
+    $possible_update_message = 'Possible database updates were detected in the following modules; you may be redirected to the database update page in order to complete the update process.';
+    $assert_session->pageTextContains($possible_update_message);
+    $assert_session->pageTextContains('System');
+    $page->pressButton('Continue');
+    $this->checkForMetaRefresh();
+    $assert_session->addressEquals('/update.php');
+    $assert_session->pageTextNotContains($possible_update_message);
+    $assert_session->pageTextContainsOnce('Please apply database updates to complete the update process.');
+  }
+
+  /**
+   * Tests an update that has no errors or special conditions.
+   *
+   * @param string $update_form_url
+   *   The URL of the update form to visit.
+   *
+   * @dataProvider providerUpdateFormReferringUrl
+   */
+  public function testSuccessfulUpdate(string $update_form_url): void {
+    $this->setCoreVersion('9.8.0');
+    $this->checkForUpdates();
+
+    $page = $this->getSession()->getPage();
+    $this->drupalGet($update_form_url);
+    $page->pressButton('Update');
+    $this->checkForMetaRefresh();
+    $this->assertUpdateStagedTimes(1);
+    $this->assertUpdateReady();
+    $assert_session = $this->assertSession();
+    $page->pressButton('Continue');
+    $this->checkForMetaRefresh();
+    $assert_session->addressEquals('/admin/reports/updates');
+    $assert_session->pageTextContainsOnce('Update complete!');
   }
 
 }

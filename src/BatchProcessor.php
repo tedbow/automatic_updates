@@ -162,12 +162,11 @@ class BatchProcessor {
    *   A list of the operations that had not been completed by the batch API.
    */
   public static function finishCommit(bool $success, array $results, array $operations): ?RedirectResponse {
-
     if ($success) {
-      \Drupal::messenger()->addMessage('Update complete!');
-      // @todo redirect to update.php?
-      return new RedirectResponse(Url::fromRoute('update.status', [],
-        ['absolute' => TRUE])->toString());
+      $url = Url::fromRoute('automatic_updates.finish')
+        ->setAbsolute()
+        ->toString();
+      return new RedirectResponse($url);
     }
     static::handleBatchError($results);
     return NULL;
