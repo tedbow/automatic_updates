@@ -9,6 +9,8 @@ services:
       - '@automatic_updates.cron_updater'
       - '@config.factory'
       - 24
+    tags:
+      - { name: event_subscriber }
   automatic_updates.updater:
     class: Drupal\automatic_updates\Updater
     arguments:

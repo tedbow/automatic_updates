@@ -71,6 +71,21 @@ class ReadinessValidationTest extends AutomaticUpdatesFunctionalTestBase {
   }
 
   /**
+   * {@inheritdoc}
+   */
+  protected function disableValidators(): array {
+    $disable_validators = parent::disableValidators();
+    // Because all actual staging operations are bypassed by
+    // package_manager_bypass, disable this validator because it will complain
+    // if there's no actual Composer data to inspect.
+    // @todo Do this in ::testStoredResultsClearedAfterUpdate() only once
+    //   https://www.drupal.org/project/automatic_updates/issues/3260698 is
+    //   fixed.
+    $disable_validators[] = 'automatic_updates.staged_projects_validator';
+    return $disable_validators;
+  }
+
+  /**
    * Tests readiness checkers on status report page.
    */
   public function testReadinessChecksStatusReport(): void {
@@ -367,6 +382,53 @@ class ReadinessValidationTest extends AutomaticUpdatesFunctionalTestBase {
     $this->drupalGet('admin/structure');
     $assert->pageTextNotContains($expected_results_2[0]->getMessages()[0]);
     $assert->pageTextNotContains($expected_results_1[0]->getMessages()[0]);
+  }
+
+  /**
+   * Tests that stored validation results are deleted after an update.
+   */
+  public function testStoredResultsClearedAfterUpdate(): void {
+    $assert_session = $this->assertSession();
+    $page = $this->getSession()->getPage();
+    $this->drupalLogin($this->checkerRunnerUser);
+
+    // The current release is 9.8.1 (see ::setUp()), so ensure we're on an older
+    // version.
+    $this->setCoreVersion('9.8.0');
+
+    // Flag a validation warning, which will be displayed in the messages area,
+    // but not block or abort the update.
+    $results = $this->testResults['checker_1']['1 warning'];
+    TestChecker1::setTestResult($results, ReadinessCheckEvent::class);
+    $message = $results[0]->getMessages()[0];
+
+    $this->container->get('module_installer')->install([
+      'automatic_updates',
+      'automatic_updates_test',
+      'package_manager_bypass',
+    ]);
+
+    // The warning should be persistently visible, even after the checker stops
+    // flagging it.
+    $this->drupalGet('/admin/structure');
+    $assert_session->pageTextContains($message);
+    TestChecker1::setTestResult(NULL, ReadinessCheckEvent::class);
+    $this->getSession()->reload();
+    $assert_session->pageTextContains($message);
+
+    // Do the update; we don't expect any errors or special conditions to appear
+    // during it.
+    $this->drupalGet('/admin/modules/automatic-update');
+    $page->pressButton('Update');
+    $this->checkForMetaRefresh();
+    $this->assertUpdateReady();
+    $page->pressButton('Continue');
+    $this->checkForMetaRefresh();
+    $assert_session->pageTextContains('Update complete!');
+
+    // The warning should not be visible anymore.
+    $this->drupalGet('/admin/structure');
+    $assert_session->pageTextNotContains($message);
   }
 
   /**

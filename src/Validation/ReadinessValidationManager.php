@@ -9,12 +9,14 @@ use Drupal\automatic_updates\UpdateRecommender;
 use Drupal\Component\Datetime\TimeInterface;
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\KeyValueStore\KeyValueExpirableFactoryInterface;
+use Drupal\package_manager\Event\PostApplyEvent;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
+use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 /**
  * Defines a manager to run readiness validation.
  */
-class ReadinessValidationManager {
+class ReadinessValidationManager implements EventSubscriberInterface {
 
   /**
    * The key/value expirable storage.
@@ -214,6 +216,13 @@ class ReadinessValidationManager {
   }
 
   /**
+   * Deletes any stored readiness validation results.
+   */
+  public function clearStoredResults(): void {
+    $this->keyValueExpirable->delete('readiness_validation_last_run');
+  }
+
+  /**
    * Gets the timestamp of the last run.
    *
    * @return int|null
@@ -222,6 +231,15 @@ class ReadinessValidationManager {
    */
   public function getLastRunTime(): ?int {
     return $this->keyValueExpirable->get('readiness_check_timestamp');
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public static function getSubscribedEvents() {
+    return [
+      PostApplyEvent::class => 'clearStoredResults',
+    ];
   }
 
 }

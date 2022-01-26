@@ -23,6 +23,7 @@ class ReadinessValidationManagerTest extends AutomaticUpdatesKernelTestBase {
   protected static $modules = [
     'automatic_updates_test',
     'package_manager',
+    'package_manager_bypass',
     'user',
   ];
 
@@ -231,6 +232,47 @@ class ReadinessValidationManagerTest extends AutomaticUpdatesKernelTestBase {
       ->save();
     $this->container->get('automatic_updates.readiness_validation_manager')->run();
     $this->assertSame(Updater::class, $stage_class);
+  }
+
+  /**
+   * Tests that stored validation results are deleted after an update.
+   */
+  public function testStoredResultsDeletedPostApply(): void {
+    $this->container->get('module_installer')
+      ->install(['automatic_updates']);
+
+    // Ensure there's a simulated core release to update to.
+    $this->setReleaseMetadata(__DIR__ . '/../../../fixtures/release-history/drupal.9.8.1.xml');
+
+    // The readiness checker should raise a warning, so that the update is not
+    // blocked or aborted.
+    $results = $this->testResults['checker_1']['1 warning'];
+    TestChecker1::setTestResult($results, ReadinessCheckEvent::class);
+
+    // Ensure that the validation manager collects the warning.
+    /** @var \Drupal\automatic_updates\Validation\ReadinessValidationManager $manager */
+    $manager = $this->container->get('automatic_updates.readiness_validation_manager')
+      ->run();
+    TestChecker1::setTestResult(NULL, ReadinessCheckEvent::class);
+    // Even though the checker no longer returns any results, the previous
+    // results should be stored.
+    $this->assertValidationResultsEqual($results, $manager->getResults());
+
+    // Don't validate staged projects because actual staging operations are
+    // bypassed by package_manager_bypass, which will make this validator
+    // complain that there is no actual Composer data for it to inspect.
+    $validator = $this->container->get('automatic_updates.staged_projects_validator');
+    $this->container->get('event_dispatcher')->removeSubscriber($validator);
+
+    /** @var \Drupal\automatic_updates\Updater $updater */
+    $updater = $this->container->get('automatic_updates.updater');
+    $updater->begin(['drupal' => '9.8.1']);
+    $updater->stage();
+    $updater->apply();
+    $updater->destroy();
+
+    // The readiness validation manager shouldn't have any stored results.
+    $this->assertEmpty($manager->getResults());
   }
 
 }
