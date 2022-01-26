@@ -134,8 +134,8 @@ class CronUpdaterTest extends AutomaticUpdatesKernelTestBase {
    */
   public function providerErrors(): array {
     $messages = [
-      'Precreate Event Error',
-      'Precreate Event Error 2',
+      'PreCreate Event Error',
+      'PreCreate Event Error 2',
     ];
     $summary = 'There were errors in updates';
     $result_no_summary = ValidationResult::createError([$messages[0]]);
