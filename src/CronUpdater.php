@@ -116,7 +116,7 @@ class CronUpdater extends Updater {
       $this->destroy();
     }
     catch (StageValidationException $e) {
-      $this->logger->error($this->getLogMessageForValidationException($e));
+      $this->logger->error(static::formatValidationException($e));
       return;
     }
     catch (\Throwable $e) {
@@ -142,7 +142,7 @@ class CronUpdater extends Updater {
    * @return string
    *   The formatted log message, including all the validation results.
    */
-  protected function getLogMessageForValidationException(StageValidationException $exception): string {
+  protected static function formatValidationException(StageValidationException $exception): string {
     $log_message = '';
     foreach ($exception->getResults() as $result) {
       $summary = $result->getSummary();

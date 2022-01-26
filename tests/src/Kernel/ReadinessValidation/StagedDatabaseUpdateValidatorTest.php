@@ -2,11 +2,11 @@
 
 namespace Drupal\Tests\automatic_updates\Kernel\ReadinessValidation;
 
-use Drupal\automatic_updates\CronUpdater;
 use Drupal\Core\DependencyInjection\ContainerBuilder;
 use Drupal\package_manager\Exception\StageValidationException;
 use Drupal\package_manager\ValidationResult;
 use Drupal\Tests\automatic_updates\Kernel\AutomaticUpdatesKernelTestBase;
+use Drupal\Tests\automatic_updates\Kernel\TestCronUpdater;
 
 /**
  * @covers \Drupal\automatic_updates\Validator\StagedDatabaseUpdateValidator
@@ -39,7 +39,7 @@ class StagedDatabaseUpdateValidatorTest extends AutomaticUpdatesKernelTestBase {
 
     TestCronUpdater::$stagingRoot = $this->vfsRoot->url();
 
-    /** @var \Drupal\Tests\automatic_updates\Kernel\ReadinessValidation\TestCronUpdater $updater */
+    /** @var \Drupal\Tests\automatic_updates\Kernel\TestCronUpdater $updater */
     $updater = $this->container->get('automatic_updates.cron_updater');
     $updater->begin(['drupal' => '9.8.1']);
     $updater->stage();
@@ -181,27 +181,6 @@ class StagedDatabaseUpdateValidatorTest extends AutomaticUpdatesKernelTestBase {
     catch (StageValidationException $e) {
       $this->assertValidationResultsEqual($expected_results, $e->getResults());
     }
-  }
-
-}
-
-/**
- * A test-only version of the cron updater.
- */
-class TestCronUpdater extends CronUpdater {
-
-  /**
-   * The directory where staging areas will be created.
-   *
-   * @var string
-   */
-  public static $stagingRoot;
-
-  /**
-   * {@inheritdoc}
-   */
-  protected static function getStagingRoot(): string {
-    return static::$stagingRoot ?: parent::getStagingRoot();
   }
 
 }

@@ -2,8 +2,10 @@
 
 namespace Drupal\Tests\automatic_updates\Kernel;
 
+use Drupal\automatic_updates\CronUpdater;
 use Drupal\Core\DependencyInjection\ContainerBuilder;
 use Drupal\KernelTests\KernelTestBase;
+use Drupal\package_manager\Exception\StageValidationException;
 use Drupal\Tests\automatic_updates\Traits\ValidationTestTrait;
 use GuzzleHttp\Client;
 use GuzzleHttp\Handler\MockHandler;
@@ -121,6 +123,34 @@ abstract class AutomaticUpdatesKernelTestBase extends KernelTestBase {
       'handler' => HandlerStack::create($handler),
     ]);
     $this->container->set('http_client', $this->client);
+  }
+
+}
+
+/**
+ * A test-only version of the cron updater to expose internal methods.
+ */
+class TestCronUpdater extends CronUpdater {
+
+  /**
+   * The directory where staging areas will be created.
+   *
+   * @var string
+   */
+  public static $stagingRoot;
+
+  /**
+   * {@inheritdoc}
+   */
+  protected static function getStagingRoot(): string {
+    return static::$stagingRoot ?: parent::getStagingRoot();
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public static function formatValidationException(StageValidationException $exception): string {
+    return parent::formatValidationException($exception);
   }
 
 }

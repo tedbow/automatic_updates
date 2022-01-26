@@ -47,6 +47,7 @@ services:
     class: Drupal\automatic_updates\Validator\UpdateVersionValidator
     arguments:
       - '@string_translation'
+      - '@config.factory'
     tags:
       - { name: event_subscriber }
   automatic_updates.composer_executable_validator:

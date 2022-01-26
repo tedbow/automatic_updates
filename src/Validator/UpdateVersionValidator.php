@@ -3,8 +3,10 @@
 namespace Drupal\automatic_updates\Validator;
 
 use Composer\Semver\Semver;
+use Drupal\automatic_updates\CronUpdater;
 use Drupal\automatic_updates\Event\ReadinessCheckEvent;
 use Drupal\automatic_updates\Updater;
+use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\package_manager\Event\PreCreateEvent;
 use Drupal\package_manager\Event\PreOperationStageEvent;
 use Drupal\Core\Extension\ExtensionVersion;
@@ -20,13 +22,23 @@ class UpdateVersionValidator implements EventSubscriberInterface {
   use StringTranslationTrait;
 
   /**
+   * The config factory service.
+   *
+   * @var \Drupal\Core\Config\ConfigFactoryInterface
+   */
+  protected $configFactory;
+
+  /**
    * Constructs a UpdateVersionValidation object.
    *
    * @param \Drupal\Core\StringTranslation\TranslationInterface $translation
    *   The translation service.
+   * @param \Drupal\Core\Config\ConfigFactoryInterface $config_factory
+   *   The config factory service.
    */
-  public function __construct(TranslationInterface $translation) {
+  public function __construct(TranslationInterface $translation, ConfigFactoryInterface $config_factory) {
     $this->setStringTranslation($translation);
+    $this->configFactory = $config_factory;
   }
 
   /**
@@ -45,7 +57,7 @@ class UpdateVersionValidator implements EventSubscriberInterface {
   }
 
   /**
-   * Validates that core is not being updated to another minor or major version.
+   * Validates that core is being updated within an allowed version range.
    *
    * @param \Drupal\package_manager\Event\PreOperationStageEvent $event
    *   The event object.
@@ -79,33 +91,36 @@ class UpdateVersionValidator implements EventSubscriberInterface {
     $core_package_name = reset($core_package_names);
     $to_version_string = $package_versions[$core_package_name];
     $to_version = ExtensionVersion::createFromVersionString($to_version_string);
+    $variables = [
+      '@to_version' => $to_version_string,
+      '@from_version' => $from_version_string,
+    ];
     if (Semver::satisfies($to_version_string, "< $from_version_string")) {
-      $messages[] = $this->t('Update version @to_version is lower than @from_version, downgrading is not supported.', [
-        '@to_version' => $to_version_string,
-        '@from_version' => $from_version_string,
+      $event->addError([
+        $this->t('Update version @to_version is lower than @from_version, downgrading is not supported.', $variables),
       ]);
-      $event->addError($messages);
     }
     elseif ($from_version->getVersionExtra() === 'dev') {
-      $messages[] = $this->t('Drupal cannot be automatically updated from its current version, @from_version, to the recommended version, @to_version, because automatic updates from a dev version to any other version are not supported.', [
-        '@to_version' => $to_version_string,
-        '@from_version' => $from_version_string,
+      $event->addError([
+        $this->t('Drupal cannot be automatically updated from its current version, @from_version, to the recommended version, @to_version, because automatic updates from a dev version to any other version are not supported.', $variables),
       ]);
-      $event->addError($messages);
     }
     elseif ($from_version->getMajorVersion() !== $to_version->getMajorVersion()) {
-      $messages[] = $this->t('Drupal cannot be automatically updated from its current version, @from_version, to the recommended version, @to_version, because automatic updates from one major version to another are not supported.', [
-        '@to_version' => $to_version_string,
-        '@from_version' => $from_version_string,
+      $event->addError([
+        $this->t('Drupal cannot be automatically updated from its current version, @from_version, to the recommended version, @to_version, because automatic updates from one major version to another are not supported.', $variables),
       ]);
-      $event->addError($messages);
     }
     elseif ($from_version->getMinorVersion() !== $to_version->getMinorVersion()) {
-      $messages[] = $this->t('Drupal cannot be automatically updated from its current version, @from_version, to the recommended version, @to_version, because automatic updates from one minor version to another are not supported.', [
-        '@from_version' => $this->getCoreVersion(),
-        '@to_version' => $package_versions[$core_package_name],
-      ]);
-      $event->addError($messages);
+      if (!$this->configFactory->get('automatic_updates.settings')->get('allow_core_minor_updates')) {
+        $event->addError([
+          $this->t('Drupal cannot be automatically updated from its current version, @from_version, to the recommended version, @to_version, because automatic updates from one minor version to another are not supported.', $variables),
+        ]);
+      }
+      elseif ($stage instanceof CronUpdater) {
+        $event->addError([
+          $this->t('Drupal cannot be automatically updated from its current version, @from_version, to the recommended version, @to_version, because automatic updates from one minor version to another are not supported during cron.', $variables),
+        ]);
+      }
     }
   }
 

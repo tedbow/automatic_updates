@@ -1,1 +1,2 @@
 cron: security
+allow_core_minor_updates: false

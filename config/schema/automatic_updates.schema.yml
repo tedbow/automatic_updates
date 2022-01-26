@@ -5,3 +5,6 @@ automatic_updates.settings:
     cron:
       type: string
       label: 'Enable automatic updates during cron'
+    allow_core_minor_updates:
+      type: boolean
+      label: 'Allow minor level Drupal core updates'
