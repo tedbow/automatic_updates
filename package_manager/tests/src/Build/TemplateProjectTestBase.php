@@ -35,25 +35,6 @@ abstract class TemplateProjectTestBase extends QuickStartTestBase {
     ];
   }
 
-  // BEGIN: DELETE FROM CORE MERGE REQUEST
-
-  /**
-   * {@inheritdoc}
-   */
-  public function copyCodebase(\Iterator $iterator = NULL, $working_dir = NULL) {
-    parent::copyCodebase($iterator, $working_dir);
-
-    // In certain situations, like Drupal CI, automatic_updates might be
-    // required into the code base by Composer. This may cause it to be added to
-    // the drupal/core-recommended metapackage, which can prevent the test site
-    // from being built correctly, among other deleterious effects. To prevent
-    // such shenanigans, always remove drupal/automatic_updates from
-    // drupal/core-recommended.
-    $this->runComposer('composer remove --no-update drupal/automatic_updates', 'composer/Metapackage/CoreRecommended');
-  }
-
-  // END: DELETE FROM CORE MERGE REQUEST
-
   /**
    * {@inheritdoc}
    */
@@ -371,4 +352,22 @@ END;
     }
   }
 
+  // BEGIN: DELETE FROM CORE MERGE REQUEST
+
+  /**
+   * {@inheritdoc}
+   */
+  public function copyCodebase(\Iterator $iterator = NULL, $working_dir = NULL) {
+    parent::copyCodebase($iterator, $working_dir);
+
+    // In certain situations, like Drupal CI, automatic_updates might be
+    // required into the code base by Composer. This may cause it to be added to
+    // the drupal/core-recommended metapackage, which can prevent the test site
+    // from being built correctly, among other deleterious effects. To prevent
+    // such shenanigans, always remove drupal/automatic_updates from
+    // drupal/core-recommended.
+    $this->runComposer('composer remove --no-update drupal/automatic_updates', 'composer/Metapackage/CoreRecommended');
+  }
+
+  // END: DELETE FROM CORE MERGE REQUEST
 }
