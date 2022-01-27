@@ -14,6 +14,7 @@ use Drupal\package_manager\Event\PostRequireEvent;
 use Drupal\package_manager\Event\PreApplyEvent;
 use Drupal\package_manager\Event\PreCreateEvent;
 use Drupal\package_manager\Event\PreDestroyEvent;
+use Drupal\package_manager\Event\PreOperationStageEvent;
 use Drupal\package_manager\Event\PreRequireEvent;
 use Drupal\package_manager\Event\StageEvent;
 use Drupal\package_manager\Exception\StageException;
@@ -341,9 +342,11 @@ class Stage {
     try {
       $this->eventDispatcher->dispatch($event);
 
-      $results = $event->getResults();
-      if ($results) {
-        $error = new StageValidationException($results);
+      if ($event instanceof PreOperationStageEvent) {
+        $results = $event->getResults();
+        if ($results) {
+          $error = new StageValidationException($results);
+        }
       }
     }
     catch (\Throwable $error) {

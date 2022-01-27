@@ -11,13 +11,6 @@ use Symfony\Contracts\EventDispatcher\Event;
 abstract class StageEvent extends Event {
 
   /**
-   * The validation results.
-   *
-   * @var \Drupal\package_manager\ValidationResult[]
-   */
-  protected $results = [];
-
-  /**
    * The stage which fired this event.
    *
    * @var \Drupal\package_manager\Stage
@@ -42,25 +35,6 @@ abstract class StageEvent extends Event {
    */
   public function getStage(): Stage {
     return $this->stage;
-  }
-
-  /**
-   * Gets the validation results.
-   *
-   * @param int|null $severity
-   *   (optional) The severity for the results to return. Should be one of the
-   *   SystemManager::REQUIREMENT_* constants.
-   *
-   * @return \Drupal\package_manager\ValidationResult[]
-   *   The validation results.
-   */
-  public function getResults(?int $severity = NULL): array {
-    if ($severity !== NULL) {
-      return array_filter($this->results, function ($result) use ($severity) {
-        return $result->getSeverity() === $severity;
-      });
-    }
-    return $this->results;
   }
 
 }
