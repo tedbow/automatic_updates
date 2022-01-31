@@ -2,8 +2,8 @@
 
 namespace Drupal\automatic_updates\Controller;
 
+use Drupal\automatic_updates_9_3_shim\UpdateHookRegistry;
 use Drupal\Core\Controller\ControllerBase;
-use Drupal\Core\Update\UpdateHookRegistry;
 use Drupal\Core\Update\UpdateRegistry;
 use Drupal\Core\Url;
 use Symfony\Component\DependencyInjection\ContainerInterface;
@@ -20,7 +20,7 @@ class UpdateController extends ControllerBase {
   /**
    * The update hook registry service.
    *
-   * @var \Drupal\Core\Update\UpdateHookRegistry
+   * @var \Drupal\automatic_updates_9_3_shim\UpdateHookRegistry
    */
   protected $updateHookRegistry;
 
@@ -34,7 +34,7 @@ class UpdateController extends ControllerBase {
   /**
    * Constructs an UpdateController object.
    *
-   * @param \Drupal\Core\Update\UpdateHookRegistry $update_hook_registry
+   * @param \Drupal\automatic_updates_9_3_shim\UpdateHookRegistry $update_hook_registry
    *   The update hook registry service.
    * @param \Drupal\Core\Update\UpdateRegistry $post_update_registry
    *   The post-update registry service.
