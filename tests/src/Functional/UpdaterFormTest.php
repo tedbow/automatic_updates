@@ -6,8 +6,8 @@ use Drupal\automatic_updates\Event\ReadinessCheckEvent;
 use Drupal\package_manager\Event\PreCreateEvent;
 use Drupal\package_manager\ValidationResult;
 use Drupal\automatic_updates_test\ReadinessChecker\TestChecker1;
-use Drupal\Tests\package_manager\Traits\PackageManagerBypassTestTrait;
 use Drupal\Tests\automatic_updates\Traits\ValidationTestTrait;
+use Drupal\Tests\package_manager\Traits\PackageManagerBypassTestTrait;
 
 /**
  * @covers \Drupal\automatic_updates\Form\UpdaterForm
@@ -16,8 +16,8 @@ use Drupal\Tests\automatic_updates\Traits\ValidationTestTrait;
  */
 class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
 
-  use ValidationTestTrait;
   use PackageManagerBypassTestTrait;
+  use ValidationTestTrait;
 
   /**
    * {@inheritdoc}
@@ -38,25 +38,16 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
    * {@inheritdoc}
    */
   protected function setUp(): void {
+    // In this test class, all actual staging operations are bypassed by
+    // package_manager_bypass, which means this validator will complain because
+    // there is no actual Composer data for it to inspect.
+    $this->disableValidators[] = 'automatic_updates.staged_projects_validator';
+
     parent::setUp();
 
     $this->setReleaseMetadata(__DIR__ . '/../../fixtures/release-history/drupal.9.8.1-security.xml');
     $this->drupalLogin($this->rootUser);
     $this->checkForUpdates();
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  protected function disableValidators(): array {
-    $disabled_validators = parent::disableValidators();
-
-    // In this test class, all actual staging operations are bypassed by
-    // package_manager_bypass, which means this validator will complain because
-    // there is no actual Composer data for it to inspect.
-    $disabled_validators[] = 'automatic_updates.staged_projects_validator';
-
-    return $disabled_validators;
   }
 
   /**

@@ -3,7 +3,6 @@
 namespace Drupal\Tests\automatic_updates\Kernel\ReadinessValidation;
 
 use Drupal\automatic_updates\Event\ReadinessCheckEvent;
-use Drupal\Core\DependencyInjection\ContainerBuilder;
 use Drupal\package_manager\Validator\PreOperationStageValidatorInterface;
 use Drupal\Tests\automatic_updates\Kernel\AutomaticUpdatesKernelTestBase;
 use Prophecy\Argument;
@@ -33,9 +32,10 @@ class PackageManagerReadinessChecksTest extends AutomaticUpdatesKernelTestBase {
   /**
    * {@inheritdoc}
    */
-  protected function disableValidators(ContainerBuilder $container): void {
-    // No need to disable any validators in this test.
-  }
+  protected $disableValidators = [
+    // The parent class disables one of the validators that we're testing, so
+    // prevent that with an empty array.
+  ];
 
   /**
    * Data provider for ::testValidatorInvoked().

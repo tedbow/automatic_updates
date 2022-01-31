@@ -30,22 +30,21 @@ class StagedProjectsValidatorTest extends AutomaticUpdatesKernelTestBase {
   /**
    * {@inheritdoc}
    */
-  public function register(ContainerBuilder $container) {
-    parent::register($container);
-
-    $container->getDefinition('automatic_updates.updater')
-      ->setClass(TestUpdater::class);
+  protected function setUp(): void {
+    // This test deals with fake sites that don't necessarily have lock files,
+    // so disable lock file validation.
+    $this->disableValidators[] = 'package_manager.validator.lock_file';
+    parent::setUp();
   }
 
   /**
    * {@inheritdoc}
    */
-  protected function disableValidators(ContainerBuilder $container): void {
-    parent::disableValidators($container);
+  public function register(ContainerBuilder $container) {
+    parent::register($container);
 
-    // This test deals with fake sites that don't necessarily have lock files,
-    // so disable lock file validation.
-    $container->removeDefinition('package_manager.validator.lock_file');
+    $container->getDefinition('automatic_updates.updater')
+      ->setClass(TestUpdater::class);
   }
 
   /**

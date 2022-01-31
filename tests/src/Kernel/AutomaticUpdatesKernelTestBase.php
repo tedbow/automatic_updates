@@ -26,6 +26,21 @@ abstract class AutomaticUpdatesKernelTestBase extends KernelTestBase {
   protected static $modules = ['system', 'update', 'update_test'];
 
   /**
+   * The service IDs of any validators to disable.
+   *
+   * @var string[]
+   */
+  protected $disableValidators = [
+    // Disable the filesystem permissions validator, since we cannot guarantee
+    // that the current code base will be writable in all testing situations.
+    // We test this validator functionally in our build tests, since those do
+    // give us control over the filesystem permissions.
+    // @see \Drupal\Tests\automatic_updates\Build\CoreUpdateTest::assertReadOnlyFileSystemError()
+    'automatic_updates.validator.file_system_permissions',
+    'package_manager.validator.file_system',
+  ];
+
+  /**
    * The mocked HTTP client that returns metadata about available updates.
    *
    * We need to preserve this as a class property so that we can re-inject it
@@ -93,20 +108,11 @@ abstract class AutomaticUpdatesKernelTestBase extends KernelTestBase {
       $container->set('http_client', $this->client);
     }
 
-    $this->disableValidators($container);
-  }
-
-  /**
-   * Disables any validators that will interfere with this test.
-   */
-  protected function disableValidators(ContainerBuilder $container): void {
-    // Disable the filesystem permissions validator, since we cannot guarantee
-    // that the current code base will be writable in all testing situations.
-    // We test this validator functionally in our build tests, since those do
-    // give us control over the filesystem permissions.
-    // @see \Drupal\Tests\automatic_updates\Build\CoreUpdateTest::assertReadOnlyFileSystemError()
-    $container->removeDefinition('automatic_updates.validator.file_system_permissions');
-    $container->removeDefinition('package_manager.validator.file_system');
+    foreach ($this->disableValidators as $service_id) {
+      if ($container->hasDefinition($service_id)) {
+        $container->getDefinition($service_id)->clearTag('event_subscriber');
+      }
+    }
   }
 
   /**

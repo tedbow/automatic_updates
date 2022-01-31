@@ -71,21 +71,6 @@ class ReadinessValidationTest extends AutomaticUpdatesFunctionalTestBase {
   }
 
   /**
-   * {@inheritdoc}
-   */
-  protected function disableValidators(): array {
-    $disable_validators = parent::disableValidators();
-    // Because all actual staging operations are bypassed by
-    // package_manager_bypass, disable this validator because it will complain
-    // if there's no actual Composer data to inspect.
-    // @todo Do this in ::testStoredResultsClearedAfterUpdate() only once
-    //   https://www.drupal.org/project/automatic_updates/issues/3260698 is
-    //   fixed.
-    $disable_validators[] = 'automatic_updates.staged_projects_validator';
-    return $disable_validators;
-  }
-
-  /**
    * Tests readiness checkers on status report page.
    */
   public function testReadinessChecksStatusReport(): void {
@@ -388,6 +373,11 @@ class ReadinessValidationTest extends AutomaticUpdatesFunctionalTestBase {
    * Tests that stored validation results are deleted after an update.
    */
   public function testStoredResultsClearedAfterUpdate(): void {
+    // Because all actual staging operations are bypassed by
+    // package_manager_bypass, disable this validator because it will complain
+    // if there's no actual Composer data to inspect.
+    $this->disableValidators(['automatic_updates.staged_projects_validator']);
+
     $assert_session = $this->assertSession();
     $page = $this->getSession()->getPage();
     $this->drupalLogin($this->checkerRunnerUser);

@@ -29,6 +29,21 @@ abstract class PackageManagerKernelTestBase extends KernelTestBase {
   ];
 
   /**
+   * The service IDs of any validators to disable.
+   *
+   * @var string[]
+   */
+  protected $disableValidators = [
+    // Disable the filesystem permissions validator, since we cannot guarantee
+    // that the current code base will be writable in all testing situations.
+    // We test this validator functionally in Automatic Updates' build tests,
+    // since those do give us control over the filesystem permissions.
+    // @see \Drupal\Tests\automatic_updates\Build\CoreUpdateTest::assertReadOnlyFileSystemError()
+    // @see \Drupal\Tests\package_manager\Kernel\WritableFileSystemValidatorTest
+    'package_manager.validator.file_system',
+  ];
+
+  /**
    * {@inheritdoc}
    */
   protected function setUp(): void {
@@ -41,20 +56,12 @@ abstract class PackageManagerKernelTestBase extends KernelTestBase {
    */
   public function register(ContainerBuilder $container) {
     parent::register($container);
-    $this->disableValidators($container);
-  }
 
-  /**
-   * Disables any validators that will interfere with this test.
-   */
-  protected function disableValidators(ContainerBuilder $container): void {
-    // Disable the filesystem permissions validator, since we cannot guarantee
-    // that the current code base will be writable in all testing situations.
-    // We test this validator functionally in Automatic Updates' build tests,
-    // since those do give us control over the filesystem permissions.
-    // @see \Drupal\Tests\automatic_updates\Build\CoreUpdateTest::assertReadOnlyFileSystemError()
-    // @see \Drupal\Tests\package_manager\Kernel\WritableFileSystemValidatorTest
-    $container->removeDefinition('package_manager.validator.file_system');
+    foreach ($this->disableValidators as $service_id) {
+      if ($container->hasDefinition($service_id)) {
+        $container->getDefinition($service_id)->clearTag('event_subscriber');
+      }
+    }
   }
 
   /**

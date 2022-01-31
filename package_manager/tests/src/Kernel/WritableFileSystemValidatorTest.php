@@ -24,6 +24,14 @@ class WritableFileSystemValidatorTest extends PackageManagerKernelTestBase {
   /**
    * {@inheritdoc}
    */
+  protected $disableValidators = [
+    // The parent class disables the validator we're testing, so prevent that
+    // here with an empty array.
+  ];
+
+  /**
+   * {@inheritdoc}
+   */
   public function register(ContainerBuilder $container) {
     parent::register($container);
 
@@ -31,14 +39,6 @@ class WritableFileSystemValidatorTest extends PackageManagerKernelTestBase {
     // implementation.
     $container->getDefinition('package_manager.validator.file_system')
       ->setClass(TestWritableFileSystemValidator::class);
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  protected function disableValidators(ContainerBuilder $container): void {
-    // The parent method disables the validator we're testing, so we don't want
-    // to do anything here.
   }
 
   /**

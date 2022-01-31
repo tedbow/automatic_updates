@@ -2,6 +2,7 @@
 
 namespace Drupal\Tests\automatic_updates\Functional;
 
+use Drupal\Component\Serialization\Yaml;
 use Drupal\Tests\BrowserTestBase;
 
 /**
@@ -12,41 +13,54 @@ abstract class AutomaticUpdatesFunctionalTestBase extends BrowserTestBase {
   /**
    * {@inheritdoc}
    */
-  protected static $modules = [
-    'automatic_updates_test_disable_validators',
-    'update',
-    'update_test',
-  ];
+  protected static $modules = ['update', 'update_test'];
 
   /**
-   * {@inheritdoc}
-   */
-  protected function prepareSettings() {
-    parent::prepareSettings();
-
-    $settings['settings']['automatic_updates_disable_validators'] = (object) [
-      'value' => $this->disableValidators(),
-      'required' => TRUE,
-    ];
-    $this->writeSettings($settings);
-  }
-
-  /**
-   * Returns the service IDs of any validators to disable.
+   * The service IDs of any validators to disable.
    *
-   * @return string[]
-   *   The service IDs of the validators to disable.
+   * @var string[]
    */
-  protected function disableValidators(): array {
+  protected $disableValidators = [
     // Disable the filesystem permissions validators, since we cannot guarantee
     // that the current code base will be writable in all testing situations. We
     // test these validators in our build tests, since those do give us control
     // over the filesystem permissions.
     // @see \Drupal\Tests\automatic_updates\Build\CoreUpdateTest::assertReadOnlyFileSystemError()
-    return [
-      'automatic_updates.validator.file_system_permissions',
-      'package_manager.validator.file_system',
-    ];
+    'automatic_updates.validator.file_system_permissions',
+    'package_manager.validator.file_system',
+  ];
+
+  /**
+   * {@inheritdoc}
+   */
+  protected function setUp() {
+    parent::setUp();
+    $this->disableValidators($this->disableValidators);
+  }
+
+  /**
+   * Disables validators in the test site's services.yml.
+   *
+   * This modifies the service container such that the disabled validators are
+   * instances of stdClass, and not subscribed to any events.
+   *
+   * @param string[] $validators
+   *   The service IDs of the validators to disable.
+   */
+  protected function disableValidators(array $validators): void {
+    $services_file = $this->getDrupalRoot() . '/' . $this->siteDirectory . '/services.yml';
+    $this->assertFileIsWritable($services_file);
+    $services = file_get_contents($services_file);
+    $services = Yaml::decode($services);
+
+    foreach ($validators as $service_id) {
+      $services['services'][$service_id] = [
+        'class' => 'stdClass',
+      ];
+    }
+    file_put_contents($services_file, Yaml::encode($services));
+    // Ensure the container is rebuilt ASAP.
+    $this->kernel->invalidateContainer();
   }
 
   /**
