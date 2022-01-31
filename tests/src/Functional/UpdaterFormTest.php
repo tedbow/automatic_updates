@@ -263,6 +263,7 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
 
     // Delete the existing update.
     $page->pressButton('Delete existing update');
+    $assert_session->pageTextContains('Staged update deleted');
     $assert_session->pageTextNotContains('Cannot begin an update because another Composer operation is currently in progress.');
 
     // Ensure we can start another update after deleting the existing one.
@@ -273,6 +274,12 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
     $this->assertUpdateReady();
     $this->assertUpdateStagedTimes(2);
     $assert_session->buttonExists('Continue');
+    // Cancel the update, then ensure that we are bounced back to the start
+    // page, and that it will allow us to begin the update anew.
+    $page->pressButton('Cancel update');
+    $assert_session->addressEquals('/admin/reports/updates/automatic-update');
+    $assert_session->pageTextContains('The update was successfully cancelled.');
+    $assert_session->buttonExists('Update');
   }
 
   /**

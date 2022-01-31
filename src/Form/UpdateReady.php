@@ -139,6 +139,11 @@ class UpdateReady extends FormBase {
     ];
 
     $form['actions'] = ['#type' => 'actions'];
+    $form['actions']['cancel'] = [
+      '#type' => 'submit',
+      '#value' => $this->t('Cancel update'),
+      '#submit' => ['::cancel'],
+    ];
     $form['actions']['submit'] = [
       '#type' => 'submit',
       '#value' => $this->t('Continue'),
@@ -182,6 +187,15 @@ class UpdateReady extends FormBase {
       ->toArray();
 
     batch_set($batch);
+  }
+
+  /**
+   * Cancels the in-progress update.
+   */
+  public function cancel(array &$form, FormStateInterface $form_state): void {
+    $this->updater->destroy();
+    $this->messenger()->addStatus($this->t('The update was successfully cancelled.'));
+    $form_state->setRedirect('automatic_updates.report_update');
   }
 
 }
