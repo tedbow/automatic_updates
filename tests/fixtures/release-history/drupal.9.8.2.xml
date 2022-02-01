@@ -10,6 +10,18 @@
    <term><name>Projects</name><value>Drupal project</value></term>
   </terms>
 <releases>
+  <release>
+    <name>Drupal 9.8.2</name>
+    <version>9.8.2</version>
+    <status>published</status>
+    <release_link>http://example.com/drupal-9-8-2-release</release_link>
+    <download_link>http://example.com/drupal-9-8-2.tar.gz</download_link>
+    <date>1250425521</date>
+    <terms>
+      <term><name>Release type</name><value>New features</value></term>
+      <term><name>Release type</name><value>Bug fixes</value></term>
+    </terms>
+  </release>
  <release>
   <name>Drupal 9.8.1</name>
   <version>9.8.1</version>
@@ -34,5 +46,17 @@
      <term><name>Release type</name><value>Bug fixes</value></term>
    </terms>
  </release>
+  <release>
+    <name>Drupal 9.8.0-alpha1</name>
+    <version>9.8.0-alpha1</version>
+    <status>published</status>
+    <release_link>http://example.com/drupal-9-8-0-alpha1-release</release_link>
+    <download_link>http://example.com/drupal-9-8-0-alpha1.tar.gz</download_link>
+    <date>1250424521</date>
+    <terms>
+      <term><name>Release type</name><value>New features</value></term>
+      <term><name>Release type</name><value>Bug fixes</value></term>
+    </terms>
+  </release>
 </releases>
 </project>

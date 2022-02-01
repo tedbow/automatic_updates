@@ -45,7 +45,7 @@ class CronUpdaterTest extends AutomaticUpdatesKernelTestBase {
     return [
       'disabled, normal release' => [
         CronUpdater::DISABLED,
-        "$fixture_dir/drupal.9.8.1.xml",
+        "$fixture_dir/drupal.9.8.2.xml",
         FALSE,
       ],
       'disabled, security release' => [
@@ -60,12 +60,12 @@ class CronUpdaterTest extends AutomaticUpdatesKernelTestBase {
       ],
       'security only, normal release' => [
         CronUpdater::SECURITY,
-        "$fixture_dir/drupal.9.8.1.xml",
+        "$fixture_dir/drupal.9.8.2.xml",
         FALSE,
       ],
       'enabled, normal release' => [
         CronUpdater::ALL,
-        "$fixture_dir/drupal.9.8.1.xml",
+        "$fixture_dir/drupal.9.8.2.xml",
         TRUE,
       ],
       'enabled, security release' => [
@@ -94,6 +94,7 @@ class CronUpdaterTest extends AutomaticUpdatesKernelTestBase {
     // Our form alter does not refresh information on available updates, so
     // ensure that the appropriate update data is loaded beforehand.
     $this->setReleaseMetadata($release_data);
+    $this->setCoreVersion('9.8.0');
     update_get_available(TRUE);
 
     // Submit the configuration form programmatically, to prove our alterations

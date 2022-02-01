@@ -242,7 +242,7 @@ class ReadinessValidationManagerTest extends AutomaticUpdatesKernelTestBase {
       ->install(['automatic_updates']);
 
     // Ensure there's a simulated core release to update to.
-    $this->setReleaseMetadata(__DIR__ . '/../../../fixtures/release-history/drupal.9.8.1.xml');
+    $this->setReleaseMetadata(__DIR__ . '/../../../fixtures/release-history/drupal.9.8.2.xml');
 
     // The readiness checker should raise a warning, so that the update is not
     // blocked or aborted.

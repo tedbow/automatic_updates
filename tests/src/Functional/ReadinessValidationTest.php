@@ -54,7 +54,7 @@ class ReadinessValidationTest extends AutomaticUpdatesFunctionalTestBase {
    */
   protected function setUp(): void {
     parent::setUp();
-    $this->setReleaseMetadata(__DIR__ . '/../../fixtures/release-history/drupal.9.8.1.xml');
+    $this->setReleaseMetadata(__DIR__ . '/../../fixtures/release-history/drupal.9.8.2.xml');
     $this->setCoreVersion('9.8.1');
 
     $this->reportViewerUser = $this->createUser([
@@ -386,9 +386,8 @@ class ReadinessValidationTest extends AutomaticUpdatesFunctionalTestBase {
     // version.
     $this->setCoreVersion('9.8.0');
 
-    // Flag a validation warning, which will be displayed in the messages area,
-    // but not block or abort the update.
-    $results = $this->testResults['checker_1']['1 warning'];
+    // Flag a validation error, which will be displayed in the messages area.
+    $results = $this->testResults['checker_1']['1 error'];
     TestChecker1::setTestResult($results, ReadinessCheckEvent::class);
     $message = $results[0]->getMessages()[0];
 
@@ -398,7 +397,7 @@ class ReadinessValidationTest extends AutomaticUpdatesFunctionalTestBase {
       'package_manager_bypass',
     ]);
 
-    // The warning should be persistently visible, even after the checker stops
+    // The error should be persistently visible, even after the checker stops
     // flagging it.
     $this->drupalGet('/admin/structure');
     $assert_session->pageTextContains($message);
@@ -407,7 +406,10 @@ class ReadinessValidationTest extends AutomaticUpdatesFunctionalTestBase {
     $assert_session->pageTextContains($message);
 
     // Do the update; we don't expect any errors or special conditions to appear
-    // during it.
+    // during it. The Update button is displayed because the form does its own
+    // readiness check (without storing the results), and the checker is no
+    // longer raising an error.
+    // @todo Fine-tune this in https://www.drupal.org/node/3261758.
     $this->drupalGet('/admin/modules/automatic-update');
     $page->pressButton('Update');
     $this->checkForMetaRefresh();

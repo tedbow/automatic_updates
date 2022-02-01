@@ -26,7 +26,7 @@ class UpdateRecommenderTest extends AutomaticUpdatesKernelTestBase {
     $recommender = new UpdateRecommender();
     $recommended_release = $recommender->getRecommendedRelease(TRUE);
     $this->assertNotEmpty($recommended_release);
-    $this->assertSame('9.8.1', $recommended_release->getVersion());
+    $this->assertSame('9.8.2', $recommended_release->getVersion());
     // Getting the recommended release again should not trigger another request.
     $this->assertNotEmpty($recommender->getRecommendedRelease());
   }
@@ -35,7 +35,7 @@ class UpdateRecommenderTest extends AutomaticUpdatesKernelTestBase {
    * Tests fetching the recommended release when there is no update available.
    */
   public function testNoUpdateAvailable(): void {
-    $this->setCoreVersion('9.8.1');
+    $this->setCoreVersion('9.8.2');
 
     $recommender = new UpdateRecommender();
     $recommended_release = $recommender->getRecommendedRelease(TRUE);

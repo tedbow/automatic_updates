@@ -29,7 +29,7 @@ class UpdateLockTest extends AutomaticUpdatesFunctionalTestBase {
   protected function setUp(): void {
     parent::setUp();
 
-    $this->setReleaseMetadata(__DIR__ . '/../../fixtures/release-history/drupal.9.8.1.xml');
+    $this->setReleaseMetadata(__DIR__ . '/../../fixtures/release-history/drupal.9.8.2.xml');
     $this->drupalLogin($this->rootUser);
     $this->checkForUpdates();
   }

@@ -95,12 +95,14 @@ class UpdateVersionValidator implements EventSubscriberInterface {
       '@to_version' => $to_version_string,
       '@from_version' => $from_version_string,
     ];
+    $from_version_extra = $from_version->getVersionExtra();
+    $to_version_extra = $to_version->getVersionExtra();
     if (Semver::satisfies($to_version_string, "< $from_version_string")) {
       $event->addError([
         $this->t('Update version @to_version is lower than @from_version, downgrading is not supported.', $variables),
       ]);
     }
-    elseif ($from_version->getVersionExtra() === 'dev') {
+    elseif ($from_version_extra === 'dev') {
       $event->addError([
         $this->t('Drupal cannot be automatically updated from its current version, @from_version, to the recommended version, @to_version, because automatic updates from a dev version to any other version are not supported.', $variables),
       ]);
@@ -122,6 +124,30 @@ class UpdateVersionValidator implements EventSubscriberInterface {
         ]);
       }
     }
+    elseif ($stage instanceof CronUpdater) {
+      if ($from_version_extra || $to_version_extra) {
+        if ($from_version_extra) {
+          $messages[] = $this->t('Drupal cannot be automatically updated during cron from its current version, @from_version, because Automatic Updates only supports updating from stable versions during cron.', $variables);
+          $event->addError($messages);
+        }
+        if ($to_version_extra) {
+          // Because we do not support updating to a new minor version during
+          // cron it is probably impossible to update from a stable version to
+          // a unstable/pre-release version, but we should check this condition
+          // just in case.
+          $messages[] = $this->t('Drupal cannot be automatically updated during cron to the recommended version, @to_version, because Automatic Updates only supports updating to stable versions during cron.', $variables);
+          $event->addError($messages);
+        }
+      }
+      else {
+        $to_patch_version = (int) $this->getPatchVersion($to_version_string);
+        $from_patch_version = (int) $this->getPatchVersion($from_version_string);
+        if ($from_patch_version + 1 !== $to_patch_version) {
+          $messages[] = $this->t('Drupal cannot be automatically updated during cron from its current version, @from_version, to the recommended version, @to_version, because Automatic Updates only supports 1 patch version update during cron.', $variables);
+          $event->addError($messages);
+        }
+      }
+    }
   }
 
   /**
@@ -132,6 +158,28 @@ class UpdateVersionValidator implements EventSubscriberInterface {
       PreCreateEvent::class => 'checkUpdateVersion',
       ReadinessCheckEvent::class => 'checkUpdateVersion',
     ];
+  }
+
+  /**
+   * Gets the patch number for a version string.
+   *
+   * @todo Move this method to \Drupal\Core\Extension\ExtensionVersion in
+   *   https://www.drupal.org/i/3261744.
+   *
+   * @param string $version_string
+   *   The version string.
+   *
+   * @return string
+   *   The patch number.
+   */
+  private function getPatchVersion(string $version_string): string {
+    $version_extra = ExtensionVersion::createFromVersionString($version_string)
+      ->getVersionExtra();
+    if ($version_extra) {
+      $version_string = str_replace("-$version_extra", '', $version_string);
+    }
+    $version_parts = explode('.', $version_string);
+    return $version_parts[2];
   }
 
 }

@@ -75,8 +75,8 @@ abstract class AutomaticUpdatesKernelTestBase extends KernelTestBase {
 
     // By default, pretend we're running Drupal core 9.8.0 and a non-security
     // update to 9.8.1 is available.
-    $this->setCoreVersion('9.8.0');
-    $this->setReleaseMetadata(__DIR__ . '/../../fixtures/release-history/drupal.9.8.1.xml');
+    $this->setCoreVersion('9.8.1');
+    $this->setReleaseMetadata(__DIR__ . '/../../fixtures/release-history/drupal.9.8.2.xml');
 
     // Set a last cron run time so that the cron frequency validator will run
     // from a sane state.
