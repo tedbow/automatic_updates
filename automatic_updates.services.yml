@@ -82,10 +82,6 @@ services:
       - '@package_manager.validator.file_system'
     tags:
       - { name: event_subscriber }
-  automatic_updates.validator.core_composer:
-    class: Drupal\automatic_updates\Validator\CoreComposerValidator
-    tags:
-      - { name: event_subscriber }
   automatic_updates.cron_frequency_validator:
     class: Drupal\automatic_updates\Validator\CronFrequencyValidator
     arguments:

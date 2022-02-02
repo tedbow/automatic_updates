@@ -9,7 +9,7 @@
     "extra": {
         "_comment": [
             "This is an example composer.json that does not require Drupal core.",
-            "@see \\Drupal\\Tests\\automatic_updates\\Kernel\\ReadinessValidation\\RequirementsValidatorTest"
+            "@see \\Drupal\\Tests\\automatic_updates\\Kernel\\ReadinessValidation\\CoreComposerValidatorTest"
         ]
     }
 }

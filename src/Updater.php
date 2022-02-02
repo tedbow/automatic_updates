@@ -9,6 +9,11 @@ use Drupal\package_manager\Stage;
 
 /**
  * Defines a service to perform updates.
+ *
+ * Currently, only updates to Drupal core are supported. This is done by
+ * changing the constraint for either 'drupal/core' or 'drupal/core-recommended'
+ * in the project-level composer.json. If neither package is directly required
+ * in the project-level composer.json, a requirement will be added.
  */
 class Updater extends Stage {
 
