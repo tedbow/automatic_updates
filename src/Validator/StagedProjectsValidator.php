@@ -2,6 +2,7 @@
 
 namespace Drupal\automatic_updates\Validator;
 
+use Composer\Package\PackageInterface;
 use Drupal\automatic_updates\Updater;
 use Drupal\package_manager\Event\PreApplyEvent;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
@@ -39,8 +40,8 @@ final class StagedProjectsValidator implements EventSubscriberInterface {
     }
 
     try {
-      $active_packages = $stage->getActiveComposer()->getDrupalExtensionPackages();
-      $staged_packages = $stage->getStageComposer()->getDrupalExtensionPackages();
+      $active = $stage->getActiveComposer();
+      $stage = $stage->getStageComposer();
     }
     catch (\Throwable $e) {
       $event->addError([
@@ -55,8 +56,15 @@ final class StagedProjectsValidator implements EventSubscriberInterface {
       'drupal-theme' => $this->t('theme'),
       'drupal-custom-theme' => $this->t('custom theme'),
     ];
+    $filter = function (PackageInterface $package) use ($type_map): bool {
+      return array_key_exists($package->getType(), $type_map);
+    };
+    $new_packages = $stage->getPackagesNotIn($active);
+    $removed_packages = $active->getPackagesNotIn($stage);
+    $updated_packages = $active->getPackagesWithDifferentVersionsIn($stage);
+
     // Check if any new Drupal projects were installed.
-    if ($new_packages = array_diff_key($staged_packages, $active_packages)) {
+    if ($new_packages = array_filter($new_packages, $filter)) {
       $new_packages_messages = [];
 
       foreach ($new_packages as $new_package) {
@@ -77,7 +85,7 @@ final class StagedProjectsValidator implements EventSubscriberInterface {
     }
 
     // Check if any Drupal projects were removed.
-    if ($removed_packages = array_diff_key($active_packages, $staged_packages)) {
+    if ($removed_packages = array_filter($removed_packages, $filter)) {
       $removed_packages_messages = [];
       foreach ($removed_packages as $removed_package) {
         $removed_packages_messages[] = $this->t(
@@ -96,22 +104,21 @@ final class StagedProjectsValidator implements EventSubscriberInterface {
       $event->addError($removed_packages_messages, $removed_packages_summary);
     }
 
-    // Get all the packages that are neither newly installed or removed to
-    // check if their version numbers changed.
-    if ($pre_existing_packages = array_diff_key($staged_packages, $removed_packages, $new_packages)) {
-      foreach ($pre_existing_packages as $package_name => $staged_existing_package) {
-        $active_package = $active_packages[$package_name];
-        if ($staged_existing_package->getVersion() !== $active_package->getVersion()) {
-          $version_change_messages[] = $this->t(
-            "@type '@name' from @active_version to  @staged_version.",
-            [
-              '@type' => $type_map[$active_package->getType()],
-              '@name' => $active_package->getName(),
-              '@staged_version' => $staged_existing_package->getPrettyVersion(),
-              '@active_version' => $active_package->getPrettyVersion(),
-            ]
-          );
-        }
+    // Check if any Drupal projects were neither installed or removed, but had
+    // their version numbers changed.
+    if ($updated_packages = array_filter($updated_packages, $filter)) {
+      $staged_packages = $stage->getInstalledPackages();
+
+      foreach ($updated_packages as $name => $updated_package) {
+        $version_change_messages[] = $this->t(
+          "@type '@name' from @active_version to @staged_version.",
+          [
+            '@type' => $type_map[$updated_package->getType()],
+            '@name' => $updated_package->getName(),
+            '@staged_version' => $staged_packages[$name]->getPrettyVersion(),
+            '@active_version' => $updated_package->getPrettyVersion(),
+          ]
+        );
       }
       if (!empty($version_change_messages)) {
         $version_change_summary = $this->formatPlural(

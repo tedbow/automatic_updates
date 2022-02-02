@@ -1,0 +1,16 @@
+{
+  "packages": [
+    {
+      "name": "drupal/existing",
+      "version": "1.0.0"
+    },
+    {
+      "name": "drupal/updated",
+      "version": "1.0.0"
+    },
+    {
+      "name": "drupal/removed",
+      "version": "1.0.0"
+    }
+  ]
+}

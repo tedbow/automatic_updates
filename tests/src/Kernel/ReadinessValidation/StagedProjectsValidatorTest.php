@@ -199,8 +199,8 @@ class StagedProjectsValidatorTest extends AutomaticUpdatesKernelTestBase {
         "$fixtures_folder/version_changed",
         'The update cannot proceed because the following Drupal projects were unexpectedly updated. Only Drupal Core updates are currently supported.',
         [
-          "module 'drupal/test_module' from 1.3.0 to  1.3.1.",
-          "module 'drupal/dev-test_module' from 1.3.0 to  1.3.1.",
+          "module 'drupal/test_module' from 1.3.0 to 1.3.1.",
+          "module 'drupal/dev-test_module' from 1.3.0 to 1.3.1.",
         ],
       ],
     ];

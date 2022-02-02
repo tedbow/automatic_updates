@@ -6,6 +6,7 @@ use Composer\Composer;
 use Composer\Factory;
 use Composer\IO\NullIO;
 use Composer\Package\PackageInterface;
+use Composer\Semver\Comparator;
 use Drupal\Component\Serialization\Json;
 
 /**
@@ -134,34 +135,12 @@ class ComposerUtility {
   }
 
   /**
-   * Returns all Drupal extension packages in the lock file.
-   *
-   * The following package types are considered Drupal extension packages:
-   * drupal-module, drupal-theme, drupal-custom-module, and drupal-custom-theme.
-   *
-   * @return \Composer\Package\PackageInterface[]
-   *   All Drupal extension packages in the lock file, keyed by name.
-   */
-  public function getDrupalExtensionPackages(): array {
-    $filter = function (PackageInterface $package): bool {
-      $drupal_package_types = [
-        'drupal-module',
-        'drupal-theme',
-        'drupal-custom-module',
-        'drupal-custom-theme',
-      ];
-      return in_array($package->getType(), $drupal_package_types, TRUE);
-    };
-    return array_filter($this->getInstalledPackages(), $filter);
-  }
-
-  /**
    * Returns information on all installed packages.
    *
    * @return \Composer\Package\PackageInterface[]
    *   All installed packages, keyed by name.
    */
-  protected function getInstalledPackages(): array {
+  public function getInstalledPackages(): array {
     $installed_packages = $this->getComposer()
       ->getRepositoryManager()
       ->getLocalRepository()
@@ -173,6 +152,45 @@ class ComposerUtility {
       $packages[$key] = $package;
     }
     return $packages;
+  }
+
+  /**
+   * Returns the packages that are in the current project, but not in another.
+   *
+   * @param self $other
+   *   A Composer utility wrapper around a different directory.
+   *
+   * @return \Composer\Package\PackageInterface[]
+   *   The packages which are installed in the current project, but not in the
+   *   other one, keyed by name.
+   */
+  public function getPackagesNotIn(self $other): array {
+    return array_diff_key($this->getInstalledPackages(), $other->getInstalledPackages());
+  }
+
+  /**
+   * Returns the packages which have a different version in another project.
+   *
+   * This compares the current project with another one, and returns packages
+   * which are present in both, but in different versions.
+   *
+   * @param self $other
+   *   A Composer utility wrapper around a different directory.
+   *
+   * @return \Composer\Package\PackageInterface[]
+   *   The packages which are present in both the current project and the other
+   *   one, but in different versions, keyed by name.
+   */
+  public function getPackagesWithDifferentVersionsIn(self $other): array {
+    $theirs = $other->getInstalledPackages();
+
+    // Only compare packages that are both here and there.
+    $packages = array_intersect_key($this->getInstalledPackages(), $theirs);
+
+    $filter = function (PackageInterface $package, string $name) use ($theirs): bool {
+      return Comparator::notEqualTo($package->getVersion(), $theirs[$name]->getVersion());
+    };
+    return array_filter($packages, $filter, ARRAY_FILTER_USE_BOTH);
   }
 
 }
