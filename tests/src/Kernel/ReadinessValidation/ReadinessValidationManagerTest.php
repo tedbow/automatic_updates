@@ -112,14 +112,15 @@ class ReadinessValidationManagerTest extends AutomaticUpdatesKernelTestBase {
     $expected_results_all = array_merge($expected_results[0], $expected_results[1]);
     $this->assertCheckerResultsFromManager($expected_results_all);
 
-    // Confirm that the checkers are not run when a module that does not provide
-    // a readiness checker is installed.
-    $unexpected_results = [
+    // Confirm that the checkers are run when a module that does not provide a
+    // readiness checker is installed.
+    $expected_results = [
       array_pop($this->testResults['checker_1']),
       array_pop($this->testResults['checker_2']),
     ];
-    TestChecker1::setTestResult($unexpected_results[0], ReadinessCheckEvent::class);
-    TestChecker2::setTestResult($unexpected_results[1], ReadinessCheckEvent::class);
+    TestChecker1::setTestResult($expected_results[0], ReadinessCheckEvent::class);
+    TestChecker2::setTestResult($expected_results[1], ReadinessCheckEvent::class);
+    $expected_results_all = array_merge($expected_results[0], $expected_results[1]);
     $this->container->get('module_installer')->install(['help']);
     $this->assertCheckerResultsFromManager($expected_results_all);
   }
@@ -150,12 +151,12 @@ class ReadinessValidationManagerTest extends AutomaticUpdatesKernelTestBase {
     $this->container->get('module_installer')->uninstall(['automatic_updates_test2']);
     $this->assertCheckerResultsFromManager($expected_results[0]);
 
-    // Confirm that the checkers are not run when a module that does provide a
+    // Confirm that the checkers are run when a module that does not provide a
     // readiness checker is uninstalled.
-    $unexpected_results = [
+    $expected_results = [
       array_pop($this->testResults['checker_1']),
     ];
-    TestChecker1::setTestResult($unexpected_results[0], ReadinessCheckEvent::class);
+    TestChecker1::setTestResult($expected_results[0], ReadinessCheckEvent::class);
     $this->container->get('module_installer')->uninstall(['help']);
     $this->assertCheckerResultsFromManager($expected_results[0]);
   }

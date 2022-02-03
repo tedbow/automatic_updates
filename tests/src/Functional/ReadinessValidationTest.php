@@ -317,19 +317,19 @@ class ReadinessValidationTest extends AutomaticUpdatesFunctionalTestBase {
     $this->drupalGet('admin/structure');
     $assert->pageTextContainsOnce($expected_results[0]->getMessages()[0]);
 
-    // Confirm that installing a module that does not provide a new checker does
-    // not run the checkers on install.
-    $unexpected_results = $this->testResults['checker_1']['2 errors 2 warnings'];
-    TestChecker2::setTestResult($unexpected_results, ReadinessCheckEvent::class);
+    // Confirm that installing a module runs the checkers, even if the new
+    // module does not provide any validators.
+    $previous_results = $expected_results;
+    $expected_results = $this->testResults['checker_1']['2 errors 2 warnings'];
+    TestChecker2::setTestResult($expected_results, ReadinessCheckEvent::class);
     $this->container->get('module_installer')->install(['help']);
-    // Check for message on 'admin/structure' instead of the status report
-    // because checkers will be run if needed on the status report.
+    // Check for messages on 'admin/structure' instead of the status report,
+    // because validators will be run if needed on the status report.
     $this->drupalGet('admin/structure');
-    // Confirm that new checker message is not displayed because the checker was
-    // not run again.
-    $assert->pageTextContainsOnce($expected_results[0]->getMessages()[0]);
-    $assert->pageTextNotContains($unexpected_results['1:errors']->getMessages()[0]);
-    $assert->pageTextNotContains($unexpected_results['1:errors']->getSummary());
+    // Confirm that new checker messages are displayed.
+    $assert->pageTextNotContains($previous_results[0]->getMessages()[0]);
+    $assert->pageTextNotContains($expected_results['1:errors']->getMessages()[0]);
+    $assert->pageTextContainsOnce($expected_results['1:errors']->getSummary());
   }
 
   /**

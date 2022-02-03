@@ -95,7 +95,7 @@ function automatic_updates_modules_installed() {
   // case they provide readiness checker services.
   /** @var \Drupal\automatic_updates\Validation\ReadinessValidationManager $checker_manager */
   $checker_manager = \Drupal::service('automatic_updates.readiness_validation_manager');
-  $checker_manager->runIfNoStoredResults();
+  $checker_manager->run();
 }
 
 /**
@@ -106,7 +106,7 @@ function automatic_updates_modules_uninstalled() {
   // case they provided readiness checker services.
   /** @var \Drupal\automatic_updates\Validation\ReadinessValidationManager $checker_manager */
   $checker_manager = \Drupal::service('automatic_updates.readiness_validation_manager');
-  $checker_manager->runIfNoStoredResults();
+  $checker_manager->run();
 }
 
 /**
