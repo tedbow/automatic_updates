@@ -30,25 +30,55 @@ class UpdateVersionValidatorTest extends AutomaticUpdatesKernelTestBase {
   ];
 
   /**
-   * Tests an update version that is same major & minor version as the current.
+   * The logger for cron updates.
+   *
+   * @var \Psr\Log\Test\TestLogger
    */
-  public function testNoMajorOrMinorUpdates(): void {
-    $this->setCoreVersion('9.8.0');
-    $this->config('automatic_updates.settings')
-      ->set('cron', CronUpdater::DISABLED)
-      ->save();
-    $this->assertCheckerResultsFromManager([], TRUE);
+  private $logger;
+
+  /**
+   * {@inheritdoc}
+   */
+  protected function setUp(): void {
+    parent::setUp();
+
+    $this->logger = new TestLogger();
+    $this->container->get('logger.factory')
+      ->get('automatic_updates')
+      ->addLogger($this->logger);
   }
 
   /**
-   * Tests an update version that is a different major version than the current.
+   * Data provider for all possible cron update frequencies.
+   *
+   * @return array[]
+   *   Sets of arguments to pass to the test method.
    */
-  public function testMajorUpdates(): void {
-    $this->setCoreVersion('8.9.1');
-    $result = ValidationResult::createError([
-      'Drupal cannot be automatically updated from its current version, 8.9.1, to the recommended version, 9.8.2, because automatic updates from one major version to another are not supported.',
-    ]);
-    $this->assertCheckerResultsFromManager([$result], TRUE);
+  public function providerOnCurrentVersion(): array {
+    return [
+      'disabled' => [CronUpdater::DISABLED],
+      'security' => [CronUpdater::SECURITY],
+      'all' => [CronUpdater::ALL],
+    ];
+  }
+
+  /**
+   * Tests an update version that is same major & minor version as the current.
+   *
+   * @param string $cron_setting
+   *   The value of the automatic_updates.settings:cron config setting.
+   *
+   * @dataProvider providerOnCurrentVersion
+   */
+  public function testOnCurrentVersion(string $cron_setting): void {
+    $this->setCoreVersion('9.8.2');
+    $this->config('automatic_updates.settings')
+      ->set('cron', $cron_setting)
+      ->save();
+
+    $this->assertCheckerResultsFromManager([], TRUE);
+    $this->container->get('cron')->run();
+    $this->assertUpdateStagedTimes(0);
   }
 
   /**
@@ -129,18 +159,13 @@ class UpdateVersionValidatorTest extends AutomaticUpdatesKernelTestBase {
     $this->setCoreVersion('9.7.1');
     $this->assertCheckerResultsFromManager($expected_results, TRUE);
 
-    $logger = new TestLogger();
-    $this->container->get('logger.factory')
-      ->get('automatic_updates')
-      ->addLogger($logger);
-
     $this->container->get('cron')->run();
 
     // If cron updates are disabled, the update shouldn't have been started and
     // nothing should have been logged.
     if ($cron_setting === CronUpdater::DISABLED) {
       $this->assertUpdateStagedTimes(0);
-      $this->assertEmpty($logger->records);
+      $this->assertEmpty($this->logger->records);
     }
     // If cron updates are enabled, the validation errors have been logged, and
     // the update shouldn't have been started.
@@ -150,105 +175,275 @@ class UpdateVersionValidatorTest extends AutomaticUpdatesKernelTestBase {
       // An exception exactly like this one should have been thrown by
       // CronUpdater::dispatch(), and subsequently caught, formatted as HTML,
       // and logged.
-      $exception = new StageValidationException($expected_results, 'Unable to complete the update because of errors.');
-      $log_message = TestCronUpdater::formatValidationException($exception);
-      $this->assertTrue($logger->hasRecord($log_message, RfcLogLevel::ERROR));
+      $this->assertErrorsWereLogged($expected_results);
     }
     // If cron updates are enabled and no validation errors were expected, the
     // update should have started and nothing should have been logged.
     else {
       $this->assertUpdateStagedTimes(1);
-      $this->assertEmpty($logger->records);
+      $this->assertEmpty($this->logger->records);
     }
   }
 
   /**
-   * Tests an update version that is a lower version than the current.
+   * Data provider for ::testCronUpdateTwoPatchReleasesAhead().
+   *
+   * @return array[]
+   *   Sets of arguments to pass to the test method.
    */
-  public function testDowngrading(): void {
-    $this->setCoreVersion('9.8.3');
-    $result = ValidationResult::createError(['Update version 9.8.2 is lower than 9.8.3, downgrading is not supported.']);
-    $this->assertCheckerResultsFromManager([$result], TRUE);
-  }
+  public function providerCronUpdateTwoPatchReleasesAhead(): array {
+    $update_disallowed = ValidationResult::createError([
+      'Drupal cannot be automatically updated during cron from its current version, 9.8.0, to the recommended version, 9.8.2, because Automatic Updates only supports 1 patch version update during cron.',
+    ]);
 
-  /**
-   * Tests a current version that is a dev version.
-   */
-  public function testUpdatesFromDevVersion(): void {
-    $this->setCoreVersion('9.8.0-dev');
-    $result = ValidationResult::createError(['Drupal cannot be automatically updated from its current version, 9.8.0-dev, to the recommended version, 9.8.2, because automatic updates from a dev version to any other version are not supported.']);
-    $this->assertCheckerResultsFromManager([$result], TRUE);
+    return [
+      'disabled' => [
+        CronUpdater::DISABLED,
+        [],
+      ],
+      // The latest release is two patch releases ahead, so the update should be
+      // blocked even though the cron configuration allows it.
+      'security only' => [
+        CronUpdater::SECURITY,
+        [$update_disallowed],
+      ],
+      'all' => [
+        CronUpdater::ALL,
+        [$update_disallowed],
+      ],
+    ];
   }
 
   /**
    * Tests a cron update two patch releases ahead of the current version.
+   *
+   * @param string $cron_setting
+   *   The value of the automatic_updates.settings:cron config setting.
+   * @param \Drupal\package_manager\ValidationResult[] $expected_results
+   *   The expected validation results, which should be logged as errors if the
+   *   update is attempted during cron.
+   *
+   * @dataProvider providerCronUpdateTwoPatchReleasesAhead
    */
-  public function testCronUpdateTwoPatchReleasesAhead(): void {
+  public function testCronUpdateTwoPatchReleasesAhead(string $cron_setting, array $expected_results): void {
     $this->setCoreVersion('9.8.0');
-    $cron = $this->container->get('cron');
-    $config = $this->config('automatic_updates.settings');
+    $this->config('automatic_updates.settings')
+      ->set('cron', $cron_setting)
+      ->save();
 
-    $logger = new TestLogger();
-    $this->container->get('logger.factory')
-      ->get('automatic_updates')
-      ->addLogger($logger);
-
-    // The latest version is two patch releases ahead, so we won't update to it
-    // during cron, even if configuration allows it, and this should be flagged
-    // as an error during readiness checking. Trying to run the update anyway
-    // should raise an error.
-    $config->set('cron', CronUpdater::ALL)->save();
-    $result = ValidationResult::createError(['Drupal cannot be automatically updated during cron from its current version, 9.8.0, to the recommended version, 9.8.2, because Automatic Updates only supports 1 patch version update during cron.']);
-    $this->assertCheckerResultsFromManager([$result], TRUE);
-    $cron->run();
+    $this->assertCheckerResultsFromManager($expected_results, TRUE);
+    $this->container->get('cron')->run();
     $this->assertUpdateStagedTimes(0);
-    $this->assertTrue($logger->hasRecord("<h2>Unable to complete the update because of errors.</h2>Drupal cannot be automatically updated during cron from its current version, 9.8.0, to the recommended version, 9.8.2, because Automatic Updates only supports 1 patch version update during cron.", RfcLogLevel::ERROR));
 
-    // If cron updates are totally disabled, there's no problem here and no
-    // errors should be raised.
-    $config->set('cron', CronUpdater::DISABLED)->save();
-    $this->assertCheckerResultsFromManager([], TRUE);
+    // If cron updates are enabled for all patch releases, the error should have
+    // been raised and logged.
+    if ($cron_setting === CronUpdater::ALL) {
+      $this->assertErrorsWereLogged($expected_results);
+    }
+    else {
+      $this->assertArrayNotHasKey(RfcLogLevel::ERROR, $this->logger->recordsByLevel);
+    }
+  }
 
-    // Even if cron is configured to allow security updates only, the update
-    // will be blocked if it's more than one patch version ahead.
-    $config->set('cron', CronUpdater::SECURITY)->save();
-    $cron->run();
-    $this->assertUpdateStagedTimes(0);
-    $this->assertTrue($logger->hasRecord("<h2>Unable to complete the update because of errors.</h2>Drupal cannot be automatically updated during cron from its current version, 9.8.0, to the recommended version, 9.8.2, because Automatic Updates only supports 1 patch version update during cron.", RfcLogLevel::ERROR));
+  /**
+   * Data provider for ::testCronUpdateOnePatchReleaseAhead().
+   *
+   * @return array[]
+   *   Sets of arguments to pass to the test method.
+   */
+  public function providerCronUpdateOnePatchReleaseAhead(): array {
+    return [
+      'disabled' => [
+        CronUpdater::DISABLED,
+        FALSE,
+      ],
+      // The latest release is not a security update, so the update will only
+      // happen if cron is updates are allowed for any patch release.
+      'security' => [
+        CronUpdater::SECURITY,
+        FALSE,
+      ],
+      'all' => [
+        CronUpdater::ALL,
+        TRUE,
+      ],
+    ];
   }
 
   /**
    * Tests a cron update one patch release ahead of the current version.
+   *
+   * @param string $cron_setting
+   *   The value of the automatic_updates.settings:cron config setting.
+   * @param bool $will_update
+   *   TRUE if the update will occur, otherwise FALSE.
+   *
+   * @dataProvider providerCronUpdateOnePatchReleaseAhead
    */
-  public function testCronUpdateOnePatchReleaseAhead(): void {
-    $cron = $this->container->get('cron');
+  public function testCronUpdateOnePatchReleaseAhead(string $cron_setting, bool $will_update): void {
     $this->config('automatic_updates.settings')
-      ->set('cron', CronUpdater::ALL)
+      ->set('cron', $cron_setting)
       ->save();
     $this->assertCheckerResultsFromManager([], TRUE);
-    $cron->run();
-    $this->assertUpdateStagedTimes(1);
+    $this->container->get('cron')->run();
+    $this->assertUpdateStagedTimes((int) $will_update);
   }
 
   /**
-   * Tests a cron update where the current version is not stable.
+   * Data provider for ::testInvalidCronUpdate().
+   *
+   * @return array[]
+   *   Sets of arguments to pass to the test method.
    */
-  public function testCronUpdateFromUnstableVersion(): void {
-    $this->setCoreVersion('9.8.0-alpha1');
-    $this->config('automatic_updates.settings')
-      ->set('cron', CronUpdater::ALL)
-      ->save();
-    $logger = new TestLogger();
-    $this->container->get('logger.factory')
-      ->get('automatic_updates')
-      ->addLogger($logger);
-    $message = 'Drupal cannot be automatically updated during cron from its current version, 9.8.0-alpha1, because Automatic Updates only supports updating from stable versions during cron.';
-    $result = ValidationResult::createError([$message]);
-    $this->assertCheckerResultsFromManager([$result], TRUE);
+  public function providerInvalidCronUpdate(): array {
+    $unstable_current_version = ValidationResult::createError([
+      'Drupal cannot be automatically updated during cron from its current version, 9.8.0-alpha1, because Automatic Updates only supports updating from stable versions during cron.',
+    ]);
+    $dev_current_version = ValidationResult::createError([
+      'Drupal cannot be automatically updated from its current version, 9.8.0-dev, to the recommended version, 9.8.2, because automatic updates from a dev version to any other version are not supported.',
+    ]);
+    $newer_current_version = ValidationResult::createError([
+      'Update version 9.8.2 is lower than 9.8.3, downgrading is not supported.',
+    ]);
+    $different_major_version = ValidationResult::createError([
+      'Drupal cannot be automatically updated from its current version, 8.9.1, to the recommended version, 9.8.2, because automatic updates from one major version to another are not supported.',
+    ]);
 
+    return [
+      'unstable current version, cron disabled' => [
+        CronUpdater::DISABLED,
+        '9.8.0-alpha1',
+        // If cron updates are disabled, no error should be flagged, because
+        // the validation will be run with the regular updater, not the cron
+        // updater.
+        [],
+        [],
+      ],
+      'unstable current version, security updates allowed' => [
+        CronUpdater::SECURITY,
+        '9.8.0-alpha1',
+        [$unstable_current_version],
+        // The update will not run because the latest release is not a security
+        // release, so nothing should be logged.
+        [],
+      ],
+      'unstable current version, all updates allowed' => [
+        CronUpdater::ALL,
+        '9.8.0-alpha1',
+        [$unstable_current_version],
+        [$unstable_current_version],
+      ],
+      'dev current version, cron disabled' => [
+        CronUpdater::DISABLED,
+        '9.8.0-dev',
+        [$dev_current_version],
+        [],
+      ],
+      'dev current version, security updates allowed' => [
+        CronUpdater::SECURITY,
+        '9.8.0-dev',
+        [$dev_current_version],
+        // The update will not run because the latest release is not a security
+        // release, so nothing should be logged.
+        [],
+      ],
+      'dev current version, all updates allowed' => [
+        CronUpdater::ALL,
+        '9.8.0-dev',
+        [$dev_current_version],
+        [$dev_current_version],
+      ],
+      'newer current version, cron disabled' => [
+        CronUpdater::DISABLED,
+        '9.8.3',
+        [$newer_current_version],
+        [],
+      ],
+      'newer current version, security updates allowed' => [
+        CronUpdater::SECURITY,
+        '9.8.3',
+        [$newer_current_version],
+        // The update will not run because the latest release is not a security
+        // release, so nothing should be logged.
+        [],
+      ],
+      'newer current version, all updates allowed' => [
+        CronUpdater::ALL,
+        '9.8.3',
+        [$newer_current_version],
+        [$newer_current_version],
+      ],
+      'different current major, cron disabled' => [
+        CronUpdater::DISABLED,
+        '8.9.1',
+        [$different_major_version],
+        [],
+      ],
+      'different current major, security updates allowed' => [
+        CronUpdater::SECURITY,
+        '8.9.1',
+        [$different_major_version],
+        // The update will not run because the latest release is not a security
+        // release, so nothing should be logged.
+        [],
+      ],
+      'different current major, all updates allowed' => [
+        CronUpdater::ALL,
+        '8.9.1',
+        [$different_major_version],
+        [$different_major_version],
+      ],
+    ];
+  }
+
+  /**
+   * Tests invalid version jumps before and during a cron update.
+   *
+   * @param string $cron_setting
+   *   The value of the automatic_updates.settings:cron config setting.
+   * @param string $current_core_version
+   *   The current core version from which we are updating.
+   * @param \Drupal\package_manager\ValidationResult[] $expected_results
+   *   The validation results, if any, that should be flagged during readiness
+   *   checks.
+   * @param \Drupal\package_manager\ValidationResult[] $logged_results
+   *   The validation results, if any, that should be logged when cron is run.
+   *
+   * @dataProvider providerInvalidCronUpdate
+   */
+  public function testInvalidCronUpdate(string $cron_setting, string $current_core_version, array $expected_results, array $logged_results): void {
+    $this->setCoreVersion($current_core_version);
+    $this->config('automatic_updates.settings')
+      ->set('cron', $cron_setting)
+      ->save();
+
+    $this->assertCheckerResultsFromManager($expected_results, TRUE);
+
+    // Try running the update during cron, regardless of the validation results,
+    // and ensure it doesn't happen. In certain situations, this will be because
+    // of $cron_setting (e.g., if the latest release is a regular patch release
+    // but only security updates are allowed during cron); in other situations,
+    // it will be due to validation errors being raised when the staging area is
+    // created (in which case, we expect the errors to be logged).
     $this->container->get('cron')->run();
     $this->assertUpdateStagedTimes(0);
-    $this->assertTrue($logger->hasRecord("<h2>Unable to complete the update because of errors.</h2>$message", RfcLogLevel::ERROR));
+    if ($logged_results) {
+      $this->assertErrorsWereLogged($logged_results);
+    }
+  }
+
+  /**
+   * Asserts that validation errors were logged during a cron update.
+   *
+   * @param \Drupal\package_manager\ValidationResult[] $results
+   *   The validation errors should have been logged.
+   */
+  private function assertErrorsWereLogged(array $results): void {
+    $exception = new StageValidationException($results, 'Unable to complete the update because of errors.');
+    // The exception will be formatted in a specific, predictable way.
+    // @see \Drupal\Tests\automatic_updates\Kernel\CronUpdaterTest::testErrors()
+    $message = TestCronUpdater::formatValidationException($exception);
+    $this->assertTrue($this->logger->hasRecord($message, RfcLogLevel::ERROR));
   }
 
 }
