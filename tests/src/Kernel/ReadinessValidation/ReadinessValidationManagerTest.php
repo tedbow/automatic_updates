@@ -22,8 +22,6 @@ class ReadinessValidationManagerTest extends AutomaticUpdatesKernelTestBase {
    */
   protected static $modules = [
     'automatic_updates_test',
-    'package_manager',
-    'package_manager_bypass',
     'user',
   ];
 

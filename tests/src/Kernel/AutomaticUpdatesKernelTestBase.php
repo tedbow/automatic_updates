@@ -4,9 +4,9 @@ namespace Drupal\Tests\automatic_updates\Kernel;
 
 use Drupal\automatic_updates\CronUpdater;
 use Drupal\Core\DependencyInjection\ContainerBuilder;
-use Drupal\KernelTests\KernelTestBase;
 use Drupal\package_manager\Exception\StageValidationException;
 use Drupal\Tests\automatic_updates\Traits\ValidationTestTrait;
+use Drupal\Tests\package_manager\Kernel\PackageManagerKernelTestBase;
 use GuzzleHttp\Client;
 use GuzzleHttp\Handler\MockHandler;
 use GuzzleHttp\HandlerStack;
@@ -16,7 +16,7 @@ use GuzzleHttp\Psr7\Utils;
 /**
  * Base class for kernel tests of the Automatic Updates module.
  */
-abstract class AutomaticUpdatesKernelTestBase extends KernelTestBase {
+abstract class AutomaticUpdatesKernelTestBase extends PackageManagerKernelTestBase {
 
   use ValidationTestTrait;
 
@@ -24,21 +24,6 @@ abstract class AutomaticUpdatesKernelTestBase extends KernelTestBase {
    * {@inheritdoc}
    */
   protected static $modules = ['system', 'update', 'update_test'];
-
-  /**
-   * The service IDs of any validators to disable.
-   *
-   * @var string[]
-   */
-  protected $disableValidators = [
-    // Disable the filesystem permissions validator, since we cannot guarantee
-    // that the current code base will be writable in all testing situations.
-    // We test this validator functionally in our build tests, since those do
-    // give us control over the filesystem permissions.
-    // @see \Drupal\Tests\automatic_updates\Build\CoreUpdateTest::assertReadOnlyFileSystemError()
-    'automatic_updates.validator.file_system_permissions',
-    'package_manager.validator.file_system',
-  ];
 
   /**
    * The mocked HTTP client that returns metadata about available updates.
@@ -56,6 +41,11 @@ abstract class AutomaticUpdatesKernelTestBase extends KernelTestBase {
    * {@inheritdoc}
    */
   protected function setUp(): void {
+    // If Package Manager's file system permissions validator is disabled, also
+    // disable the Automatic Updates validator which wraps it.
+    if (in_array('package_manager.validator.file_system', $this->disableValidators, TRUE)) {
+      $this->disableValidators[] = 'automatic_updates.validator.file_system_permissions';
+    }
     parent::setUp();
 
     // The Update module's default configuration must be installed for our
@@ -106,12 +96,6 @@ abstract class AutomaticUpdatesKernelTestBase extends KernelTestBase {
     // re-inject it into the container.
     if ($this->client) {
       $container->set('http_client', $this->client);
-    }
-
-    foreach ($this->disableValidators as $service_id) {
-      if ($container->hasDefinition($service_id)) {
-        $container->getDefinition($service_id)->clearTag('event_subscriber');
-      }
     }
   }
 

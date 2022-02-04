@@ -18,11 +18,7 @@ class StagedDatabaseUpdateValidatorTest extends AutomaticUpdatesKernelTestBase {
   /**
    * {@inheritdoc}
    */
-  protected static $modules = [
-    'automatic_updates',
-    'package_manager',
-    'package_manager_bypass',
-  ];
+  protected static $modules = ['automatic_updates'];
 
   /**
    * The suffixes of the files that can contain database updates.
@@ -60,7 +56,7 @@ class StagedDatabaseUpdateValidatorTest extends AutomaticUpdatesKernelTestBase {
     $module_list = $this->container->get('module_handler')->getModuleList();
     foreach ($module_list as $name => $module) {
       $path = $module->getPath();
-      mkdir("$stage_dir/$path", 0777, TRUE);
+      @mkdir("$stage_dir/$path", 0777, TRUE);
 
       foreach (static::SUFFIXES as $suffix) {
         // If the source file doesn't exist, silence the warning it raises.

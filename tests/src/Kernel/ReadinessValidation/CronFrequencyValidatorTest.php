@@ -19,11 +19,7 @@ class CronFrequencyValidatorTest extends AutomaticUpdatesKernelTestBase {
   /**
    * {@inheritdoc}
    */
-  protected static $modules = [
-    'automatic_updates',
-    'package_manager',
-    'package_manager_bypass',
-  ];
+  protected static $modules = ['automatic_updates'];
 
   /**
    * Tests that nothing is validated if updates are disabled during cron.

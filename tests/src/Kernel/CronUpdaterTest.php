@@ -28,8 +28,6 @@ class CronUpdaterTest extends AutomaticUpdatesKernelTestBase {
    */
   protected static $modules = [
     'automatic_updates',
-    'package_manager',
-    'package_manager_bypass',
     'automatic_updates_test',
   ];
 

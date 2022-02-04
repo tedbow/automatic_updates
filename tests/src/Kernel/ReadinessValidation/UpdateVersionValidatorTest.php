@@ -23,11 +23,7 @@ class UpdateVersionValidatorTest extends AutomaticUpdatesKernelTestBase {
   /**
    * {@inheritdoc}
    */
-  protected static $modules = [
-    'automatic_updates',
-    'package_manager',
-    'package_manager_bypass',
-  ];
+  protected static $modules = ['automatic_updates'];
 
   /**
    * The logger for cron updates.
