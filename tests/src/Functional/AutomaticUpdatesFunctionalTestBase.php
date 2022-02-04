@@ -59,8 +59,7 @@ abstract class AutomaticUpdatesFunctionalTestBase extends BrowserTestBase {
       ];
     }
     file_put_contents($services_file, Yaml::encode($services));
-    // Ensure the container is rebuilt ASAP.
-    $this->kernel->invalidateContainer();
+    $this->rebuildContainer();
   }
 
   /**

@@ -373,11 +373,6 @@ class ReadinessValidationTest extends AutomaticUpdatesFunctionalTestBase {
    * Tests that stored validation results are deleted after an update.
    */
   public function testStoredResultsClearedAfterUpdate(): void {
-    // Because all actual staging operations are bypassed by
-    // package_manager_bypass, disable this validator because it will complain
-    // if there's no actual Composer data to inspect.
-    $this->disableValidators(['automatic_updates.staged_projects_validator']);
-
     $assert_session = $this->assertSession();
     $page = $this->getSession()->getPage();
     $this->drupalLogin($this->checkerRunnerUser);
@@ -396,6 +391,10 @@ class ReadinessValidationTest extends AutomaticUpdatesFunctionalTestBase {
       'automatic_updates_test',
       'package_manager_bypass',
     ]);
+    // Because all actual staging operations are bypassed by
+    // package_manager_bypass, disable this validator because it will complain
+    // if there's no actual Composer data to inspect.
+    $this->disableValidators(['automatic_updates.staged_projects_validator']);
 
     // The error should be persistently visible, even after the checker stops
     // flagging it.
