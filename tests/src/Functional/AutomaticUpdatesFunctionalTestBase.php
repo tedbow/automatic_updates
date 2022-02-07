@@ -2,7 +2,7 @@
 
 namespace Drupal\Tests\automatic_updates\Functional;
 
-use Drupal\Component\Serialization\Yaml;
+use Drupal\Core\Site\Settings;
 use Drupal\Tests\BrowserTestBase;
 
 /**
@@ -13,7 +13,11 @@ abstract class AutomaticUpdatesFunctionalTestBase extends BrowserTestBase {
   /**
    * {@inheritdoc}
    */
-  protected static $modules = ['update', 'update_test'];
+  protected static $modules = [
+    'automatic_updates_test_disable_validators',
+    'update',
+    'update_test',
+  ];
 
   /**
    * The service IDs of any validators to disable.
@@ -39,26 +43,32 @@ abstract class AutomaticUpdatesFunctionalTestBase extends BrowserTestBase {
   }
 
   /**
-   * Disables validators in the test site's services.yml.
+   * Disables validators in the test site's settings.
    *
    * This modifies the service container such that the disabled validators are
-   * instances of stdClass, and not subscribed to any events.
+   * not defined at all. This method will have no effect unless the
+   * automatic_updates_test_disable_validators module is installed.
    *
    * @param string[] $validators
    *   The service IDs of the validators to disable.
+   *
+   * @see \Drupal\automatic_updates_test_disable_validators\AutomaticUpdatesTestDisableValidatorsServiceProvider::alter()
    */
   protected function disableValidators(array $validators): void {
-    $services_file = $this->getDrupalRoot() . '/' . $this->siteDirectory . '/services.yml';
-    $this->assertFileIsWritable($services_file);
-    $services = file_get_contents($services_file);
-    $services = Yaml::decode($services);
+    $key = 'automatic_updates_test_disable_validators';
+    $disabled_validators = Settings::get($key, []);
 
     foreach ($validators as $service_id) {
-      $services['services'][$service_id] = [
-        'class' => 'stdClass',
-      ];
+      $disabled_validators[] = $service_id;
     }
-    file_put_contents($services_file, Yaml::encode($services));
+    $this->writeSettings([
+      'settings' => [
+        $key => (object) [
+          'value' => $disabled_validators,
+          'required' => TRUE,
+        ],
+      ],
+    ]);
     $this->rebuildContainer();
   }
 
