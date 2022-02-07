@@ -328,13 +328,21 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
     $this->setCoreVersion('9.8.0');
     $this->checkForUpdates();
 
+    // Flag a warning, which will not block the update but should be displayed
+    // on the updater form.
+    $this->createTestValidationResults();
+    $expected_results = $this->testResults['checker_1']['1 warning'];
+    TestChecker1::setTestResult($expected_results, ReadinessCheckEvent::class);
+    $messages = reset($expected_results)->getMessages();
+
     $page = $this->getSession()->getPage();
     $this->drupalGet($update_form_url);
+    $assert_session = $this->assertSession();
+    $assert_session->pageTextContains(reset($messages));
     $page->pressButton('Update');
     $this->checkForMetaRefresh();
     $this->assertUpdateStagedTimes(1);
     $this->assertUpdateReady();
-    $assert_session = $this->assertSession();
     $page->pressButton('Continue');
     $this->checkForMetaRefresh();
     $assert_session->addressEquals('/admin/reports/updates');

@@ -198,17 +198,21 @@ class UpdaterForm extends FormBase {
       ],
     ];
 
-    $results = $this->getReadinessErrors($recommended_release->getVersion());
-    if (empty($results)) {
-      $form['actions'] = $this->actions($form_state);
+    if ($form_state->isSubmitted()) {
+      $results = [];
     }
     else {
-      $this->messenger()->addError($this->getFailureMessageForSeverity(SystemManager::REQUIREMENT_ERROR));
-      foreach ($results as $result) {
-        $messages = $result->getMessages();
-        $message = count($messages) === 1 ? $messages[0] : $result->getSummary();
-        $this->messenger()->addError($message);
-      }
+      $event = new ReadinessCheckEvent($this->updater, [
+        'drupal' => $recommended_release->getVersion(),
+      ]);
+      $this->eventDispatcher->dispatch($event);
+      $results = $event->getResults();
+    }
+    $this->displayResults($results, $this->messenger());
+
+    // If there were no errors, allow the user to proceed with the update.
+    if ($this->getOverallSeverity($results) !== SystemManager::REQUIREMENT_ERROR) {
+      $form['actions'] = $this->actions($form_state);
     }
     return $form;
   }
@@ -271,21 +275,6 @@ class UpdaterForm extends FormBase {
       ->toArray();
 
     batch_set($batch);
-  }
-
-  /**
-   * Gets validation errors before an update begins.
-   *
-   * @param string $update_version
-   *   The version of Drupal to which we will update.
-   *
-   * @return \Drupal\package_manager\ValidationResult[]
-   *   The error validation results.
-   */
-  private function getReadinessErrors(string $update_version): array {
-    $event = new ReadinessCheckEvent($this->updater, ['drupal' => $update_version]);
-    $this->eventDispatcher->dispatch($event);
-    return $event->getResults(SystemManager::REQUIREMENT_ERROR);
   }
 
 }

@@ -164,24 +164,7 @@ final class AdminReadinessMessages implements ContainerInjectionInterface {
     if (empty($results)) {
       return FALSE;
     }
-    $failure_message = $this->getFailureMessageForSeverity($severity);
-    if ($severity === SystemManager::REQUIREMENT_ERROR) {
-      $this->messenger()->addError($failure_message);
-    }
-    else {
-      $this->messenger()->addWarning($failure_message);
-    }
-
-    foreach ($results as $result) {
-      $messages = $result->getMessages();
-      $message = count($messages) === 1 ? $messages[0] : $result->getSummary();
-      if ($severity === SystemManager::REQUIREMENT_ERROR) {
-        $this->messenger()->addError($message);
-      }
-      else {
-        $this->messenger()->addWarning($message);
-      }
-    }
+    $this->displayResults($results, $this->messenger());
     return TRUE;
   }
 
