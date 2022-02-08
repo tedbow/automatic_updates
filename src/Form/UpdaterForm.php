@@ -198,7 +198,7 @@ class UpdaterForm extends FormBase {
       ],
     ];
 
-    if ($form_state->isSubmitted()) {
+    if ($form_state->getUserInput()) {
       $results = [];
     }
     else {

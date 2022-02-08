@@ -297,21 +297,34 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
         ],
       ]);
 
+    // Flag a warning, which will not block the update but should be displayed
+    // on the updater form.
+    $this->createTestValidationResults();
+    $expected_results = $this->testResults['checker_1']['1 warning'];
+    TestChecker1::setTestResult($expected_results, ReadinessCheckEvent::class);
+    $messages = reset($expected_results)->getMessages();
+
     $page = $this->getSession()->getPage();
     $this->drupalGet('/admin/modules/automatic-update');
+    // The warning should be visible.
+    $assert_session = $this->assertSession();
+    $assert_session->pageTextContains(reset($messages));
     $page->pressButton('Update');
     $this->checkForMetaRefresh();
     $this->assertUpdateStagedTimes(1);
     $this->assertUpdateReady();
-    // We should see a warning about pending database updates, and once the
-    // staged changes have been applied, we should be redirected to update.php.
-    $assert_session = $this->assertSession();
+    // The warning from the updater form should be not be repeated, but we
+    // should see a warning about pending database updates, and once the staged
+    // changes have been applied, we should be redirected to update.php, where
+    // neither warning should be visible.
+    $assert_session->pageTextNotContains(reset($messages));
     $possible_update_message = 'Possible database updates were detected in the following modules; you may be redirected to the database update page in order to complete the update process.';
     $assert_session->pageTextContains($possible_update_message);
     $assert_session->pageTextContains('System');
     $page->pressButton('Continue');
     $this->checkForMetaRefresh();
     $assert_session->addressEquals('/update.php');
+    $assert_session->pageTextNotContains(reset($messages));
     $assert_session->pageTextNotContains($possible_update_message);
     $assert_session->pageTextContainsOnce('Please apply database updates to complete the update process.');
   }
@@ -328,23 +341,15 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
     $this->setCoreVersion('9.8.0');
     $this->checkForUpdates();
 
-    // Flag a warning, which will not block the update but should be displayed
-    // on the updater form.
-    $this->createTestValidationResults();
-    $expected_results = $this->testResults['checker_1']['1 warning'];
-    TestChecker1::setTestResult($expected_results, ReadinessCheckEvent::class);
-    $messages = reset($expected_results)->getMessages();
-
     $page = $this->getSession()->getPage();
     $this->drupalGet($update_form_url);
-    $assert_session = $this->assertSession();
-    $assert_session->pageTextContains(reset($messages));
     $page->pressButton('Update');
     $this->checkForMetaRefresh();
     $this->assertUpdateStagedTimes(1);
     $this->assertUpdateReady();
     $page->pressButton('Continue');
     $this->checkForMetaRefresh();
+    $assert_session = $this->assertSession();
     $assert_session->addressEquals('/admin/reports/updates');
     $assert_session->pageTextContainsOnce('Update complete!');
   }
