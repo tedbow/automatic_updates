@@ -2,11 +2,10 @@
 
 namespace Drupal\Tests\automatic_updates\Kernel\ReadinessValidation;
 
-use Drupal\Core\DependencyInjection\ContainerBuilder;
 use Drupal\package_manager\Exception\StageValidationException;
 use Drupal\package_manager\ValidationResult;
 use Drupal\Tests\automatic_updates\Kernel\AutomaticUpdatesKernelTestBase;
-use Drupal\Tests\automatic_updates\Kernel\TestCronUpdater;
+use Drupal\Tests\package_manager\Kernel\TestStage;
 
 /**
  * @covers \Drupal\automatic_updates\Validator\StagedDatabaseUpdateValidator
@@ -33,7 +32,7 @@ class StagedDatabaseUpdateValidatorTest extends AutomaticUpdatesKernelTestBase {
   protected function setUp(): void {
     parent::setUp();
 
-    TestCronUpdater::$stagingRoot = $this->vfsRoot->url();
+    TestStage::$stagingRoot = $this->vfsRoot->url();
 
     /** @var \Drupal\Tests\automatic_updates\Kernel\TestCronUpdater $updater */
     $updater = $this->container->get('automatic_updates.cron_updater');
@@ -63,16 +62,6 @@ class StagedDatabaseUpdateValidatorTest extends AutomaticUpdatesKernelTestBase {
         @copy("$active_dir/$path/$name.$suffix", "$stage_dir/$path/$name.$suffix");
       }
     }
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public function register(ContainerBuilder $container) {
-    parent::register($container);
-
-    $container->getDefinition('automatic_updates.cron_updater')
-      ->setClass(TestCronUpdater::class);
   }
 
   /**

@@ -2,7 +2,6 @@
 
 namespace Drupal\Tests\automatic_updates\Kernel;
 
-use Drupal\package_manager\PathLocator;
 use Drupal\Tests\user\Traits\UserCreationTrait;
 
 /**
@@ -45,11 +44,7 @@ class UpdaterTest extends AutomaticUpdatesKernelTestBase {
     // lock file should be scanned to determine the core packages, which should
     // result in drupal/core-recommended being updated.
     $fixture_dir = __DIR__ . '/../../fixtures/fake-site';
-    $locator = $this->prophesize(PathLocator::class);
-    $locator->getProjectRoot()->willReturn($fixture_dir);
-    $locator->getWebRoot()->willReturn('');
-    $locator->getVendorDirectory()->willReturn($fixture_dir);
-    $this->container->set('package_manager.path_locator', $locator->reveal());
+    $locator = $this->mockPathLocator($fixture_dir, $fixture_dir);
 
     $id = $this->container->get('automatic_updates.updater')->begin([
       'drupal' => '9.8.1',
@@ -60,7 +55,7 @@ class UpdaterTest extends AutomaticUpdatesKernelTestBase {
     $kernel->rebuildContainer();
     $this->container = $kernel->getContainer();
     // Keep using the mocked path locator and current user.
-    $this->container->set('package_manager.path_locator', $locator->reveal());
+    $this->container->set('package_manager.path_locator', $locator);
     $this->setCurrentUser($user);
 
     /** @var \Drupal\automatic_updates\Updater $updater */

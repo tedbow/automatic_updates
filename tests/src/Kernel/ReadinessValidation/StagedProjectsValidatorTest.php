@@ -2,12 +2,10 @@
 
 namespace Drupal\Tests\automatic_updates\Kernel\ReadinessValidation;
 
-use Drupal\automatic_updates\Updater;
-use Drupal\Core\DependencyInjection\ContainerBuilder;
 use Drupal\package_manager\Event\PreApplyEvent;
 use Drupal\package_manager\Exception\StageValidationException;
-use Drupal\package_manager\PathLocator;
 use Drupal\Tests\automatic_updates\Kernel\AutomaticUpdatesKernelTestBase;
+use Drupal\Tests\package_manager\Kernel\TestStage;
 use org\bovigo\vfs\vfsStream;
 use Symfony\Component\Filesystem\Filesystem;
 
@@ -34,16 +32,6 @@ class StagedProjectsValidatorTest extends AutomaticUpdatesKernelTestBase {
   }
 
   /**
-   * {@inheritdoc}
-   */
-  public function register(ContainerBuilder $container) {
-    parent::register($container);
-
-    $container->getDefinition('automatic_updates.updater')
-      ->setClass(TestUpdater::class);
-  }
-
-  /**
    * Runs the validator under test against an arbitrary pair of directories.
    *
    * @param string $active_dir
@@ -55,11 +43,7 @@ class StagedProjectsValidatorTest extends AutomaticUpdatesKernelTestBase {
    *   The validation results.
    */
   private function validate(string $active_dir, string $stage_dir): array {
-    $locator = $this->prophesize(PathLocator::class);
-
-    $locator->getProjectRoot()->willReturn($active_dir);
-    $locator->getWebRoot()->willReturn('');
-    $locator->getVendorDirectory()->willReturn($active_dir);
+    $this->mockPathLocator($active_dir, $active_dir);
 
     $stage_dir_exists = is_dir($stage_dir);
     if ($stage_dir_exists) {
@@ -68,15 +52,13 @@ class StagedProjectsValidatorTest extends AutomaticUpdatesKernelTestBase {
       // subdirectory using the stage ID after it is created below.
       $vendor = vfsStream::newDirectory('au_stage');
       $this->vfsRoot->addChild($vendor);
-      TestUpdater::$stagingRoot = $vendor->url();
+      TestStage::$stagingRoot = $vendor->url();
     }
     else {
       // If we are testing non-existent staging directory we can use the path
       // directly.
-      TestUpdater::$stagingRoot = $stage_dir;
+      TestStage::$stagingRoot = $stage_dir;
     }
-
-    $this->container->set('package_manager.path_locator', $locator->reveal());
 
     $updater = $this->container->get('automatic_updates.updater');
     $stage_id = $updater->begin(['drupal' => '9.8.1']);
@@ -210,27 +192,6 @@ class StagedProjectsValidatorTest extends AutomaticUpdatesKernelTestBase {
     $results = $this->validate("$fixtures_dir/active", "$fixtures_dir/staged");
     $this->assertIsArray($results);
     $this->assertEmpty($results);
-  }
-
-}
-
-/**
- * A test-only version of the updater.
- */
-class TestUpdater extends Updater {
-
-  /**
-   * The directory where staging areas will be created.
-   *
-   * @var string
-   */
-  public static $stagingRoot;
-
-  /**
-   * {@inheritdoc}
-   */
-  protected static function getStagingRoot(): string {
-    return static::$stagingRoot ?: parent::getStagingRoot();
   }
 
 }

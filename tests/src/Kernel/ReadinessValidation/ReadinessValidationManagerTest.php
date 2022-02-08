@@ -198,20 +198,20 @@ class ReadinessValidationManagerTest extends AutomaticUpdatesKernelTestBase {
    */
   public function testCronSetting(): void {
     $this->enableModules(['automatic_updates']);
-    $stage_class = NULL;
-    $listener = function (ReadinessCheckEvent $event) use (&$stage_class): void {
-      $stage_class = get_class($event->getStage());
+    $stage = NULL;
+    $listener = function (ReadinessCheckEvent $event) use (&$stage): void {
+      $stage = $event->getStage();
     };
     $event_dispatcher = $this->container->get('event_dispatcher');
     $event_dispatcher->addListener(ReadinessCheckEvent::class, $listener);
     $this->container->get('automatic_updates.readiness_validation_manager')->run();
     // By default, updates will be enabled on cron.
-    $this->assertSame(CronUpdater::class, $stage_class);
+    $this->assertInstanceOf(CronUpdater::class, $stage);
     $this->config('automatic_updates.settings')
       ->set('cron', CronUpdater::DISABLED)
       ->save();
     $this->container->get('automatic_updates.readiness_validation_manager')->run();
-    $this->assertSame(Updater::class, $stage_class);
+    $this->assertInstanceOf(Updater::class, $stage);
   }
 
   /**

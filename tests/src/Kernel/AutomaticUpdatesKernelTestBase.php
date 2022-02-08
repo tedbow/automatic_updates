@@ -3,10 +3,12 @@
 namespace Drupal\Tests\automatic_updates\Kernel;
 
 use Drupal\automatic_updates\CronUpdater;
+use Drupal\automatic_updates\Updater;
 use Drupal\Core\DependencyInjection\ContainerBuilder;
 use Drupal\package_manager\Exception\StageValidationException;
 use Drupal\Tests\automatic_updates\Traits\ValidationTestTrait;
 use Drupal\Tests\package_manager\Kernel\PackageManagerKernelTestBase;
+use Drupal\Tests\package_manager\Kernel\TestStage;
 use GuzzleHttp\Client;
 use GuzzleHttp\Handler\MockHandler;
 use GuzzleHttp\HandlerStack;
@@ -97,6 +99,17 @@ abstract class AutomaticUpdatesKernelTestBase extends PackageManagerKernelTestBa
     if ($this->client) {
       $container->set('http_client', $this->client);
     }
+
+    // Use the test-only implementations of the regular and cron updaters.
+    $overrides = [
+      'automatic_updates.updater' => TestUpdater::class,
+      'automatic_updates.cron_updater' => TestCronUpdater::class,
+    ];
+    foreach ($overrides as $service_id => $class) {
+      if ($container->hasDefinition($service_id)) {
+        $container->getDefinition($service_id)->setClass($class);
+      }
+    }
   }
 
   /**
@@ -118,22 +131,29 @@ abstract class AutomaticUpdatesKernelTestBase extends PackageManagerKernelTestBa
 }
 
 /**
- * A test-only version of the cron updater to expose internal methods.
+ * A test-only version of the regular updater to override internals.
  */
-class TestCronUpdater extends CronUpdater {
-
-  /**
-   * The directory where staging areas will be created.
-   *
-   * @var string
-   */
-  public static $stagingRoot;
+class TestUpdater extends Updater {
 
   /**
    * {@inheritdoc}
    */
   protected static function getStagingRoot(): string {
-    return static::$stagingRoot ?: parent::getStagingRoot();
+    return TestStage::getStagingRoot();
+  }
+
+}
+
+/**
+ * A test-only version of the cron updater to override and expose internals.
+ */
+class TestCronUpdater extends CronUpdater {
+
+  /**
+   * {@inheritdoc}
+   */
+  protected static function getStagingRoot(): string {
+    return TestStage::getStagingRoot();
   }
 
   /**

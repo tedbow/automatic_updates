@@ -221,17 +221,9 @@ END,
       'stage' => [],
     ];
     $root = vfsStream::create($tree, $this->vfsRoot)->url();
-    $active_dir = "$root/active";
     TestStage::$stagingRoot = "$root/stage";
 
-    $path_locator = $this->prophesize(PathLocator::class);
-    $path_locator->getProjectRoot()->willReturn($active_dir);
-    $path_locator->getWebRoot()->willReturn('');
-    $path_locator->getVendorDirectory()->willReturn("$active_dir/vendor");
-
-    // We won't need the prophet anymore.
-    $path_locator = $path_locator->reveal();
-    $this->container->set('package_manager.path_locator', $path_locator);
+    $path_locator = $this->mockPathLocator("$root/active");
 
     // Since the path locator now points to a virtual file system, we need to
     // replace the disk space validator with a test-only version that bypasses
@@ -251,6 +243,36 @@ END,
     $this->container->set('package_manager.validator.disk_space', $validator);
   }
 
+  /**
+   * Mocks the path locator and injects it into the service container.
+   *
+   * @param string $project_root
+   *   The project root.
+   * @param string|null $vendor_dir
+   *   (optional) The vendor directory. Defaults to `$project_root/vendor`.
+   * @param string $web_root
+   *   (optional) The web root, relative to the project root. Defaults to ''
+   *   (i.e., same as the project root).
+   *
+   * @return \Drupal\package_manager\PathLocator
+   *   The mocked path locator.
+   */
+  protected function mockPathLocator(string $project_root, string $vendor_dir = NULL, string $web_root = ''): PathLocator {
+    if (empty($vendor_dir)) {
+      $vendor_dir = $project_root . '/vendor';
+    }
+    $path_locator = $this->prophesize(PathLocator::class);
+    $path_locator->getProjectRoot()->willReturn($project_root);
+    $path_locator->getVendorDirectory()->willReturn($vendor_dir);
+    $path_locator->getWebRoot()->willReturn($web_root);
+
+    // We don't need the prophet anymore.
+    $path_locator = $path_locator->reveal();
+    $this->container->set('package_manager.path_locator', $path_locator);
+
+    return $path_locator;
+  }
+
 }
 
 /**
@@ -268,7 +290,7 @@ class TestStage extends Stage {
   /**
    * {@inheritdoc}
    */
-  protected static function getStagingRoot(): string {
+  public static function getStagingRoot(): string {
     return static::$stagingRoot ?: parent::getStagingRoot();
   }
 
