@@ -107,30 +107,46 @@ class CronUpdater extends Updater {
     // @todo Use the queue to add update jobs allowing jobs to span multiple
     //   cron runs.
     $recommended_version = $recommended_release->getVersion();
+
+    // Do the bulk of the update in its own try-catch structure, so that we can
+    // handle any exceptions or validation errors consistently, and destroy the
+    // stage regardless of whether the update succeeds.
     try {
       $this->begin([
         'drupal' => $recommended_version,
       ]);
       $this->stage();
       $this->apply();
-      $this->destroy();
-    }
-    catch (StageValidationException $e) {
-      $this->logger->error(static::formatValidationException($e));
-      return;
+
+      $this->logger->info(
+        'Drupal core has been updated from %previous_version to %update_version',
+        [
+          '%previous_version' => $project['existing_version'],
+          '%update_version' => $recommended_version,
+        ]
+      );
     }
     catch (\Throwable $e) {
-      $this->logger->error($e->getMessage());
+      $this->handleException($e);
+    }
+
+    // If an error occurred during the pre-create event, the stage will be
+    // marked as available and we shouldn't try to destroy it, since the stage
+    // must be claimed in order to be destroyed.
+    if ($this->isAvailable()) {
       return;
     }
 
-    $this->logger->info(
-      'Drupal core has been updated from %previous_version to %update_version',
-      [
-        '%previous_version' => $project['existing_version'],
-        '%update_version' => $recommended_version,
-      ]
-    );
+    // If any pre-destroy event subscribers raise validation errors, ensure they
+    // are formatted and logged. But if any pre- or post-destroy event
+    // subscribers throw another exception, don't bother catching it, since it
+    // will be caught and handled by the main cron service.
+    try {
+      $this->destroy();
+    }
+    catch (StageValidationException $e) {
+      $this->handleException($e);
+    }
   }
 
   /**
@@ -158,6 +174,19 @@ class CronUpdater extends Updater {
       }
     }
     return "<h2>{$exception->getMessage()}</h2>$log_message";
+  }
+
+  /**
+   * Handles an exception that is caught during an update.
+   *
+   * @param \Throwable $e
+   *   The caught exception.
+   */
+  protected function handleException(\Throwable $e): void {
+    $message = $e instanceof StageValidationException
+      ? static::formatValidationException($e)
+      : $e->getMessage();
+    $this->logger->error($message);
   }
 
 }

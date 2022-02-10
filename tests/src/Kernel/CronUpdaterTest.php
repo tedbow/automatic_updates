@@ -6,7 +6,15 @@ use Drupal\automatic_updates\CronUpdater;
 use Drupal\automatic_updates_test\ReadinessChecker\TestChecker1;
 use Drupal\Core\Form\FormState;
 use Drupal\Core\Logger\RfcLogLevel;
+use Drupal\package_manager\Event\PostApplyEvent;
+use Drupal\package_manager\Event\PostCreateEvent;
+use Drupal\package_manager\Event\PostDestroyEvent;
+use Drupal\package_manager\Event\PostRequireEvent;
+use Drupal\package_manager\Event\PreApplyEvent;
+use Drupal\package_manager\Event\PreDestroyEvent;
+use Drupal\package_manager\Event\PreRequireEvent;
 use Drupal\package_manager\Event\PreCreateEvent;
+use Drupal\package_manager\Exception\StageValidationException;
 use Drupal\package_manager\ValidationResult;
 use Drupal\Tests\package_manager\Traits\PackageManagerBypassTestTrait;
 use Drupal\update\UpdateSettingsForm;
@@ -30,6 +38,30 @@ class CronUpdaterTest extends AutomaticUpdatesKernelTestBase {
     'automatic_updates',
     'automatic_updates_test',
   ];
+
+  /**
+   * The test logger.
+   *
+   * @var \Psr\Log\Test\TestLogger
+   */
+  private $logger;
+
+  /**
+   * {@inheritdoc}
+   */
+  protected function setUp(): void {
+    // Because package_manager_bypass is enabled, a staging directory will not
+    // actually exist. Therefore, we need to disable these validators because
+    // they attempt to compare the active and stage directories.
+    $this->disableValidators[] = 'automatic_updates.validator.staged_database_updates';
+    $this->disableValidators[] = 'automatic_updates.staged_projects_validator';
+    parent::setUp();
+
+    $this->logger = new TestLogger();
+    $this->container->get('logger.factory')
+      ->get('automatic_updates')
+      ->addLogger($this->logger);
+  }
 
   /**
    * Data provider for ::testUpdaterCalled().
@@ -126,6 +158,68 @@ class CronUpdaterTest extends AutomaticUpdatesKernelTestBase {
   }
 
   /**
+   * Data provider for ::testStageDestroyedOnError().
+   *
+   * @return array[]
+   *   Sets of arguments to pass to the test method.
+   */
+  public function providerStageDestroyedOnError(): array {
+    return [
+      'pre-create exception' => [
+        PreCreateEvent::class,
+        'Exception',
+      ],
+      'post-create exception' => [
+        PostCreateEvent::class,
+        'Exception',
+      ],
+      'pre-require exception' => [
+        PreRequireEvent::class,
+        'Exception',
+      ],
+      'post-require exception' => [
+        PostRequireEvent::class,
+        'Exception',
+      ],
+      'pre-apply exception' => [
+        PreApplyEvent::class,
+        'Exception',
+      ],
+      'post-apply exception' => [
+        PostApplyEvent::class,
+        'Exception',
+      ],
+      'pre-destroy exception' => [
+        PreDestroyEvent::class,
+        'Exception',
+      ],
+      'post-destroy exception' => [
+        PostDestroyEvent::class,
+        'Exception',
+      ],
+      // Only pre-operation events can add validation results.
+      // @see \Drupal\package_manager\Event\PreOperationStageEvent
+      // @see \Drupal\package_manager\Stage::dispatch()
+      'pre-create validation error' => [
+        PreCreateEvent::class,
+        StageValidationException::class,
+      ],
+      'pre-require validation error' => [
+        PreRequireEvent::class,
+        StageValidationException::class,
+      ],
+      'pre-apply validation error' => [
+        PreApplyEvent::class,
+        StageValidationException::class,
+      ],
+      'pre-destroy validation error' => [
+        PreDestroyEvent::class,
+        StageValidationException::class,
+      ],
+    ];
+  }
+
+  /**
    * Data provider for testErrors().
    *
    * @return array[]
@@ -166,6 +260,100 @@ class CronUpdaterTest extends AutomaticUpdatesKernelTestBase {
   }
 
   /**
+   * Tests that the stage is destroyed if an error occurs during a cron update.
+   *
+   * @param string $event_class
+   *   The stage life cycle event which should raise an error.
+   * @param string $exception_class
+   *   The class of exception that will be thrown when the given event is fired.
+   *
+   * @dataProvider providerStageDestroyedOnError
+   */
+  public function testStageDestroyedOnError(string $event_class, string $exception_class): void {
+    $this->installConfig('automatic_updates');
+    $this->setCoreVersion('9.8.0');
+    // Ensure that there is a security release to which we should update.
+    $this->setReleaseMetadata(__DIR__ . "/../../fixtures/release-history/drupal.9.8.1-security.xml");
+
+    // If the pre- or post-destroy events throw an exception, it will not be
+    // caught by the cron updater, but it *will* be caught by the main cron
+    // service, which will log it as a cron error that we'll want to check for.
+    $cron_logger = new TestLogger();
+    $this->container->get('logger.factory')
+      ->get('cron')
+      ->addLogger($cron_logger);
+
+    // When the event specified by $event_class is fired, either throw an
+    // exception directly from the event subscriber, or set a validation error
+    // (if the exception class is StageValidationException).
+    if ($exception_class === StageValidationException::class) {
+      $results = [
+        ValidationResult::createError(['Destroy the stage!']),
+      ];
+      TestChecker1::setTestResult($results, $event_class);
+      $exception = new StageValidationException($results, 'Unable to complete the update because of errors.');
+      $expected_log_message = TestCronUpdater::formatValidationException($exception);
+    }
+    else {
+      /** @var \Throwable $exception */
+      $exception = new $exception_class('Destroy the stage!');
+      TestChecker1::setException($exception, $event_class);
+      $expected_log_message = $exception->getMessage();
+    }
+    // Ensure that nothing has been logged yet.
+    $this->assertEmpty($cron_logger->records);
+    $this->assertEmpty($this->logger->records);
+
+    /** @var \Drupal\automatic_updates\CronUpdater $updater */
+    $updater = $this->container->get('automatic_updates.cron_updater');
+    $this->assertTrue($updater->isAvailable());
+    $this->container->get('cron')->run();
+
+    $logged_by_updater = $this->logger->hasRecord($expected_log_message, RfcLogLevel::ERROR);
+    // To check if the exception was logged by the main cron service, we need
+    // to set up a special predicate, because exceptions logged by cron are
+    // always formatted in a particular way that we don't control. But the
+    // original exception object is stored with the log entry, so we look for
+    // that and confirm that its message is the same.
+    // @see watchdog_exception()
+    $predicate = function (array $record) use ($exception): bool {
+      if (isset($record['context']['exception'])) {
+        return $record['context']['exception']->getMessage() === $exception->getMessage();
+      }
+      return FALSE;
+    };
+    $logged_by_cron = $cron_logger->hasRecordThatPasses($predicate, RfcLogLevel::ERROR);
+
+    // If a pre-destroy event flags a validation error, it's handled like any
+    // other event (logged by the cron updater, but not the main cron service).
+    // But if a pre- or post-destroy event throws an exception, the cron updater
+    // won't try to catch it. Instead, it will be caught and logged by the main
+    // cron service.
+    if ($event_class === PreDestroyEvent::class || $event_class === PostDestroyEvent::class) {
+      if ($exception instanceof StageValidationException) {
+        $this->assertTrue($logged_by_updater);
+        $this->assertFalse($logged_by_cron);
+      }
+      else {
+        $this->assertFalse($logged_by_updater);
+        $this->assertTrue($logged_by_cron);
+      }
+      // If the pre-destroy event throws an exception or flags a validation
+      // error, the stage won't be destroyed. But, once the post-destroy event
+      // is fired, the stage should be fully destroyed and marked as available.
+      $this->assertSame($event_class === PostDestroyEvent::class, $updater->isAvailable());
+    }
+    // For all other events, the error should be caught and logged by the cron
+    // updater, not the main cron service, and the stage should always be
+    // destroyed and marked as available.
+    else {
+      $this->assertTrue($logged_by_updater);
+      $this->assertFalse($logged_by_cron);
+      $this->assertTrue($updater->isAvailable());
+    }
+  }
+
+  /**
    * Tests errors during a cron update attempt.
    *
    * @param \Drupal\package_manager\ValidationResult[] $validation_results
@@ -177,15 +365,9 @@ class CronUpdaterTest extends AutomaticUpdatesKernelTestBase {
    */
   public function testErrors(array $validation_results, string $expected_log_message): void {
     TestChecker1::setTestResult($validation_results, PreCreateEvent::class);
-
-    $logger = new TestLogger();
-    $this->container->get('logger.factory')
-      ->get('automatic_updates')
-      ->addLogger($logger);
-
     $this->container->get('cron')->run();
     $this->assertUpdateStagedTimes(0);
-    $this->assertTrue($logger->hasRecord("<h2>Unable to complete the update because of errors.</h2>$expected_log_message", RfcLogLevel::ERROR));
+    $this->assertTrue($this->logger->hasRecord("<h2>Unable to complete the update because of errors.</h2>$expected_log_message", RfcLogLevel::ERROR));
   }
 
 }
