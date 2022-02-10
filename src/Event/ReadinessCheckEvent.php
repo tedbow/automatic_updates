@@ -43,7 +43,7 @@ class ReadinessCheckEvent extends PreOperationStageEvent {
       if (count($project_versions) !== 1 || !array_key_exists('drupal', $project_versions)) {
         throw new \InvalidArgumentException("Currently only updates to Drupal core are supported.");
       }
-      $core_packages = $this->getStage()->getActiveComposer()->getCorePackageNames();
+      $core_packages = array_keys($this->getStage()->getActiveComposer()->getCorePackages());
       // Update all core packages to the same version.
       $package_versions = array_fill(0, count($core_packages), $project_versions['drupal']);
       $this->packageVersions = array_combine($core_packages, $package_versions);

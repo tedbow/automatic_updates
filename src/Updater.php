@@ -43,7 +43,7 @@ class Updater extends Stage {
     $require_dev = $composer->getComposer()
       ->getPackage()
       ->getDevRequires();
-    foreach ($composer->getCorePackageNames() as $package) {
+    foreach (array_keys($composer->getCorePackages()) as $package) {
       $group = array_key_exists($package, $require_dev) ? 'dev' : 'production';
       $package_versions[$group][$package] = $project_versions['drupal'];
     }

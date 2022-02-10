@@ -110,28 +110,25 @@ class ComposerUtility {
   }
 
   /**
-   * Returns the names of the installed core packages.
+   * Returns the installed core packages.
    *
    * All packages listed in ../core_packages.json are considered core packages.
    *
-   * @return string[]
-   *   The names of the required core packages.
-   *
-   * @todo Make this return a keyed array of packages, not just names in
-   *   https://www.drupal.org/i/3258059.
+   * @return \Composer\Package\PackageInterface[]
+   *   The installed core packages.
    */
-  public function getCorePackageNames(): array {
-    $core_packages = array_intersect(
-      array_keys($this->getInstalledPackages()),
-      static::getCorePackageList()
+  public function getCorePackages(): array {
+    $core_packages = array_intersect_key(
+      $this->getInstalledPackages(),
+      array_flip(static::getCorePackageList())
     );
 
     // If drupal/core-recommended is present, it supersedes drupal/core, since
     // drupal/core will always be one of its direct dependencies.
-    if (in_array('drupal/core-recommended', $core_packages, TRUE)) {
-      $core_packages = array_diff($core_packages, ['drupal/core']);
+    if (array_key_exists('drupal/core-recommended', $core_packages)) {
+      unset($core_packages['drupal/core']);
     }
-    return array_values($core_packages);
+    return $core_packages;
   }
 
   /**

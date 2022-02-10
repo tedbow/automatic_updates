@@ -85,10 +85,9 @@ class UpdateVersionValidator implements EventSubscriberInterface {
 
     $from_version_string = $this->getCoreVersion();
     $from_version = ExtensionVersion::createFromVersionString($from_version_string);
-    $core_package_names = $stage->getActiveComposer()->getCorePackageNames();
     // All the core packages will be updated to the same version, so it doesn't
     // matter which specific package we're looking at.
-    $core_package_name = reset($core_package_names);
+    $core_package_name = key($stage->getActiveComposer()->getCorePackages());
     $to_version_string = $package_versions[$core_package_name];
     $to_version = ExtensionVersion::createFromVersionString($to_version_string);
     $variables = [

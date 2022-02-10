@@ -62,14 +62,14 @@ class ComposerUtilityTest extends KernelTestBase {
    * @param string[] $expected_packages
    *   The names of the core packages which should be detected.
    *
-   * @covers ::getCorePackageNames
+   * @covers ::getCorePackages
    *
    * @dataProvider providerCorePackagesFromLockFile
    */
   public function testCorePackagesFromLockFile(string $dir, array $expected_packages): void {
     $packages = ComposerUtility::createForDirectory($dir)
-      ->getCorePackageNames();
-    $this->assertSame($expected_packages, $packages);
+      ->getCorePackages();
+    $this->assertSame($expected_packages, array_keys($packages));
   }
 
   /**
