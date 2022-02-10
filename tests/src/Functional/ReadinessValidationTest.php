@@ -7,7 +7,6 @@ use Drupal\automatic_updates\Event\ReadinessCheckEvent;
 use Drupal\automatic_updates_test\Datetime\TestTime;
 use Drupal\automatic_updates_test\ReadinessChecker\TestChecker1;
 use Drupal\automatic_updates_test2\ReadinessChecker\TestChecker2;
-use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\system\SystemManager;
 use Drupal\Tests\automatic_updates\Traits\ValidationTestTrait;
 use Drupal\Tests\Traits\Core\CronRunTrait;
@@ -19,7 +18,6 @@ use Drupal\Tests\Traits\Core\CronRunTrait;
  */
 class ReadinessValidationTest extends AutomaticUpdatesFunctionalTestBase {
 
-  use StringTranslationTrait;
   use CronRunTrait;
   use ValidationTestTrait;
 
@@ -408,7 +406,14 @@ class ReadinessValidationTest extends AutomaticUpdatesFunctionalTestBase {
     // during it. The Update button is displayed because the form does its own
     // readiness check (without storing the results), and the checker is no
     // longer raising an error.
-    // @todo Fine-tune this in https://www.drupal.org/node/3261758.
+    $this->drupalGet('/admin/modules/automatic-update');
+    $assert_session->buttonExists('Update');
+    // Ensure that the previous results are still displayed on another admin
+    // page, to confirm that the updater form is not discarding the previous
+    // results by doing its checks.
+    $this->drupalGet('/admin/structure');
+    $assert_session->pageTextContains($message);
+    // Proceed with the update.
     $this->drupalGet('/admin/modules/automatic-update');
     $page->pressButton('Update');
     $this->checkForMetaRefresh();
