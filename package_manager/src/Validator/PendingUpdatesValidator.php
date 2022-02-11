@@ -50,6 +50,22 @@ class PendingUpdatesValidator implements PreOperationStageValidatorInterface {
    * {@inheritdoc}
    */
   public function validateStagePreOperation(PreOperationStageEvent $event): void {
+    if ($this->updatesExist()) {
+      $message = $this->t('Some modules have database schema updates to install. You should run the <a href=":update">database update script</a> immediately.', [
+        ':update' => Url::fromRoute('system.db_update')->toString(),
+      ]);
+      $event->addError([$message]);
+    }
+  }
+
+  /**
+   * Checks if there are any pending update or post-update hooks.
+   *
+   * @return bool
+   *   TRUE if there are any pending update or post-update hooks, FALSE
+   *   otherwise.
+   */
+  public function updatesExist(): bool {
     require_once $this->appRoot . '/core/includes/install.inc';
     require_once $this->appRoot . '/core/includes/update.inc';
 
@@ -57,12 +73,7 @@ class PendingUpdatesValidator implements PreOperationStageValidatorInterface {
     $hook_updates = update_get_update_list();
     $post_updates = $this->updateRegistry->getPendingUpdateFunctions();
 
-    if ($hook_updates || $post_updates) {
-      $message = $this->t('Some modules have database schema updates to install. You should run the <a href=":update">database update script</a> immediately.', [
-        ':update' => Url::fromRoute('system.db_update')->toString(),
-      ]);
-      $event->addError([$message]);
-    }
+    return $hook_updates || $post_updates;
   }
 
   /**

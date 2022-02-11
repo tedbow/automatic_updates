@@ -2,10 +2,9 @@
 
 namespace Drupal\automatic_updates\Controller;
 
-use Drupal\automatic_updates_9_3_shim\UpdateHookRegistry;
 use Drupal\Core\Controller\ControllerBase;
-use Drupal\Core\Update\UpdateRegistry;
 use Drupal\Core\Url;
+use Drupal\package_manager\Validator\PendingUpdatesValidator;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 
@@ -18,30 +17,20 @@ use Symfony\Component\HttpFoundation\RedirectResponse;
 class UpdateController extends ControllerBase {
 
   /**
-   * The update hook registry service.
+   * The pending updates validator.
    *
-   * @var \Drupal\automatic_updates_9_3_shim\UpdateHookRegistry
+   * @var \Drupal\package_manager\Validator\PendingUpdatesValidator
    */
-  protected $updateHookRegistry;
-
-  /**
-   * The post-update registry service.
-   *
-   * @var \Drupal\Core\Update\UpdateRegistry
-   */
-  protected $postUpdateRegistry;
+  protected $pendingUpdatesValidator;
 
   /**
    * Constructs an UpdateController object.
    *
-   * @param \Drupal\automatic_updates_9_3_shim\UpdateHookRegistry $update_hook_registry
-   *   The update hook registry service.
-   * @param \Drupal\Core\Update\UpdateRegistry $post_update_registry
-   *   The post-update registry service.
+   * @param \Drupal\package_manager\Validator\PendingUpdatesValidator $pending_updates_validator
+   *   The pending updates validator.
    */
-  public function __construct(UpdateHookRegistry $update_hook_registry, UpdateRegistry $post_update_registry) {
-    $this->updateHookRegistry = $update_hook_registry;
-    $this->postUpdateRegistry = $post_update_registry;
+  public function __construct(PendingUpdatesValidator $pending_updates_validator) {
+    $this->pendingUpdatesValidator = $pending_updates_validator;
   }
 
   /**
@@ -49,8 +38,7 @@ class UpdateController extends ControllerBase {
    */
   public static function create(ContainerInterface $container) {
     return new static(
-      $container->get('update.update_hook_registry'),
-      $container->get('update.post_update_registry')
+      $container->get('package_manager.validator.pending_updates')
     );
   }
 
@@ -65,7 +53,7 @@ class UpdateController extends ControllerBase {
    *   A redirect to the appropriate destination.
    */
   public function onFinish(): RedirectResponse {
-    if ($this->pendingUpdatesExist()) {
+    if ($this->pendingUpdatesValidator->updatesExist()) {
       $message = $this->t('Please apply database updates to complete the update process.');
       $url = Url::fromRoute('system.db_update');
     }
@@ -75,27 +63,6 @@ class UpdateController extends ControllerBase {
     }
     $this->messenger()->addStatus($message);
     return new RedirectResponse($url->setAbsolute()->toString());
-  }
-
-  /**
-   * Checks if there are any pending database updates.
-   *
-   * @return bool
-   *   TRUE if there are any pending update hooks or post-updates, otherwise
-   *   FALSE.
-   */
-  protected function pendingUpdatesExist(): bool {
-    if ($this->postUpdateRegistry->getPendingUpdateFunctions()) {
-      return TRUE;
-    }
-
-    $modules = array_keys($this->moduleHandler()->getModuleList());
-    foreach ($modules as $module) {
-      if ($this->updateHookRegistry->getAvailableUpdates($module)) {
-        return TRUE;
-      }
-    }
-    return FALSE;
   }
 
 }

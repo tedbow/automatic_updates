@@ -1,19 +1,19 @@
 <?php
 
-namespace Drupal\automatic_updates_test\Controller;
+namespace Drupal\automatic_updates_test\Validator;
 
-use Drupal\automatic_updates\Controller\UpdateController;
+use Drupal\package_manager\Validator\PendingUpdatesValidator;
 
 /**
- * A test-only version of the update controller.
+ * Defines a test-only implementation of the pending updates validator.
  */
-class TestUpdateController extends UpdateController {
+class TestPendingUpdatesValidator extends PendingUpdatesValidator {
 
   /**
    * {@inheritdoc}
    */
-  protected function pendingUpdatesExist(): bool {
-    $pending_updates = $this->state()
+  public function updatesExist(): bool {
+    $pending_updates = \Drupal::state()
       ->get('automatic_updates_test.staged_database_updates', []);
 
     // If the System module should expose a pending update, create one that will
@@ -24,7 +24,7 @@ class TestUpdateController extends UpdateController {
       // @codingStandardsIgnoreLine
       eval('function system_update_4294967294() {}');
     }
-    return parent::pendingUpdatesExist();
+    return parent::updatesExist();
   }
 
 }
