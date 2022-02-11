@@ -1,21 +1,21 @@
 <?php
 
-namespace Drupal\automatic_updates_test2\ReadinessChecker;
+namespace Drupal\automatic_updates_test2\EventSubscriber;
 
 use Drupal\automatic_updates\Event\ReadinessCheckEvent;
-use Drupal\automatic_updates_test\ReadinessChecker\TestChecker1;
+use Drupal\automatic_updates_test\EventSubscriber\TestSubscriber1;
 use Drupal\package_manager\Event\PreCreateEvent;
 
 /**
  * A test readiness checker.
  */
-class TestChecker2 extends TestChecker1 {
+class TestSubscriber2 extends TestSubscriber1 {
 
   protected const STATE_KEY = 'automatic_updates_test2.checker_results';
 
   public static function getSubscribedEvents() {
-    $events[ReadinessCheckEvent::class][] = ['addResults', 4];
-    $events[PreCreateEvent::class][] = ['addResults', 4];
+    $events[ReadinessCheckEvent::class][] = ['handleEvent', 4];
+    $events[PreCreateEvent::class][] = ['handleEvent', 4];
 
     return $events;
   }

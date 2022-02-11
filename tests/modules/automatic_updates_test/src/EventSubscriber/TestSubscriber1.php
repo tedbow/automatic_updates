@@ -1,14 +1,14 @@
 <?php
 
-namespace Drupal\automatic_updates_test\ReadinessChecker;
+namespace Drupal\automatic_updates_test\EventSubscriber;
 
 use Drupal\automatic_updates\Event\ReadinessCheckEvent;
-use Drupal\package_manager_test_validation\TestSubscriber;
+use Drupal\package_manager_test_validation\EventSubscriber\TestSubscriber;
 
 /**
  * A test readiness checker.
  */
-class TestChecker1 extends TestSubscriber {
+class TestSubscriber1 extends TestSubscriber {
 
   /**
    * {@inheritdoc}

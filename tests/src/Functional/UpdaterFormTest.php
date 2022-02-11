@@ -5,7 +5,7 @@ namespace Drupal\Tests\automatic_updates\Functional;
 use Drupal\automatic_updates\Event\ReadinessCheckEvent;
 use Drupal\package_manager\Event\PreCreateEvent;
 use Drupal\package_manager\ValidationResult;
-use Drupal\automatic_updates_test\ReadinessChecker\TestChecker1;
+use Drupal\automatic_updates_test\EventSubscriber\TestSubscriber1;
 use Drupal\Tests\automatic_updates\Traits\ValidationTestTrait;
 use Drupal\Tests\package_manager\Traits\PackageManagerBypassTestTrait;
 
@@ -151,7 +151,7 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
     // Store a fake readiness error, which will be cached.
     $message = t("You've not experienced Shakespeare until you have read him in the original Klingon.");
     $error = ValidationResult::createError([$message]);
-    TestChecker1::setTestResult([$error], ReadinessCheckEvent::class);
+    TestSubscriber1::setTestResult([$error], ReadinessCheckEvent::class);
 
     $this->drupalGet('/admin/reports/status');
     $page->clickLink('Run readiness checks');
@@ -166,7 +166,7 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
     // Set up a new fake error.
     $this->createTestValidationResults();
     $expected_results = $this->testResults['checker_1']['1 error'];
-    TestChecker1::setTestResult($expected_results, ReadinessCheckEvent::class);
+    TestSubscriber1::setTestResult($expected_results, ReadinessCheckEvent::class);
 
     // If a validator raises an error during readiness checking, the form should
     // not have a submit button.
@@ -180,11 +180,11 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
     $assert_session->pageTextContainsOnce(static::$errorsExplanation);
     $assert_session->pageTextNotContains(static::$warningsExplanation);
     $assert_session->pageTextNotContains((string) $message);
-    TestChecker1::setTestResult(NULL, ReadinessCheckEvent::class);
+    TestSubscriber1::setTestResult(NULL, ReadinessCheckEvent::class);
 
     // Make the validator throw an exception during pre-create.
     $error = new \Exception('The update exploded.');
-    TestChecker1::setException($error, PreCreateEvent::class);
+    TestSubscriber1::setException($error, PreCreateEvent::class);
     $session->reload();
     $assert_session->pageTextNotContains(static::$errorsExplanation);
     $assert_session->pageTextNotContains(static::$warningsExplanation);
@@ -205,7 +205,7 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
 
     // If a validator flags an error, but doesn't throw, the update should still
     // be halted.
-    TestChecker1::setTestResult($expected_results, PreCreateEvent::class);
+    TestSubscriber1::setTestResult($expected_results, PreCreateEvent::class);
     $page->pressButton('Update');
     $this->checkForMetaRefresh();
     $this->assertUpdateStagedTimes(0);
@@ -301,7 +301,7 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
     // on the updater form.
     $this->createTestValidationResults();
     $expected_results = $this->testResults['checker_1']['1 warning'];
-    TestChecker1::setTestResult($expected_results, ReadinessCheckEvent::class);
+    TestSubscriber1::setTestResult($expected_results, ReadinessCheckEvent::class);
     $messages = reset($expected_results)->getMessages();
 
     $page = $this->getSession()->getPage();

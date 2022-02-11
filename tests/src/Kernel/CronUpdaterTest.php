@@ -3,7 +3,7 @@
 namespace Drupal\Tests\automatic_updates\Kernel;
 
 use Drupal\automatic_updates\CronUpdater;
-use Drupal\automatic_updates_test\ReadinessChecker\TestChecker1;
+use Drupal\automatic_updates_test\EventSubscriber\TestSubscriber1;
 use Drupal\Core\Form\FormState;
 use Drupal\Core\Logger\RfcLogLevel;
 use Drupal\package_manager\Event\PostApplyEvent;
@@ -290,14 +290,14 @@ class CronUpdaterTest extends AutomaticUpdatesKernelTestBase {
       $results = [
         ValidationResult::createError(['Destroy the stage!']),
       ];
-      TestChecker1::setTestResult($results, $event_class);
+      TestSubscriber1::setTestResult($results, $event_class);
       $exception = new StageValidationException($results, 'Unable to complete the update because of errors.');
       $expected_log_message = TestCronUpdater::formatValidationException($exception);
     }
     else {
       /** @var \Throwable $exception */
       $exception = new $exception_class('Destroy the stage!');
-      TestChecker1::setException($exception, $event_class);
+      TestSubscriber1::setException($exception, $event_class);
       $expected_log_message = $exception->getMessage();
     }
     // Ensure that nothing has been logged yet.
@@ -364,7 +364,7 @@ class CronUpdaterTest extends AutomaticUpdatesKernelTestBase {
    * @dataProvider providerErrors
    */
   public function testErrors(array $validation_results, string $expected_log_message): void {
-    TestChecker1::setTestResult($validation_results, PreCreateEvent::class);
+    TestSubscriber1::setTestResult($validation_results, PreCreateEvent::class);
     $this->container->get('cron')->run();
     $this->assertUpdateStagedTimes(0);
     $this->assertTrue($this->logger->hasRecord("<h2>Unable to complete the update because of errors.</h2>$expected_log_message", RfcLogLevel::ERROR));

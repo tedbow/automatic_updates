@@ -1,6 +1,6 @@
 services:
   package_manager_test_validation.subscriber:
-    class: Drupal\package_manager_test_validation\TestSubscriber
+    class: Drupal\package_manager_test_validation\EventSubscriber\TestSubscriber
     arguments:
       - '@state'
     tags:

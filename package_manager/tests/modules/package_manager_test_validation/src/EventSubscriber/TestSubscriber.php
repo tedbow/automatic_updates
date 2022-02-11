@@ -1,6 +1,6 @@
 <?php
 
-namespace Drupal\package_manager_test_validation;
+namespace Drupal\package_manager_test_validation\EventSubscriber;
 
 use Drupal\Core\State\StateInterface;
 use Drupal\package_manager\Event\PostApplyEvent;
@@ -96,7 +96,7 @@ class TestSubscriber implements EventSubscriberInterface {
    * @param \Drupal\package_manager\Event\StageEvent $event
    *   The event object.
    */
-  public function addResults(StageEvent $event): void {
+  public function handleEvent(StageEvent $event): void {
     $results = $this->state->get(static::STATE_KEY . '.' . get_class($event), []);
 
     if ($results instanceof \Throwable) {
@@ -120,14 +120,14 @@ class TestSubscriber implements EventSubscriberInterface {
     $priority = defined('PACKAGE_MANAGER_TEST_VALIDATOR_PRIORITY') ? PACKAGE_MANAGER_TEST_VALIDATOR_PRIORITY : 5;
 
     return [
-      PreCreateEvent::class => ['addResults', $priority],
-      PostCreateEvent::class => ['addResults', $priority],
-      PreRequireEvent::class => ['addResults', $priority],
-      PostRequireEvent::class => ['addResults', $priority],
-      PreApplyEvent::class => ['addResults', $priority],
-      PostApplyEvent::class => ['addResults', $priority],
-      PreDestroyEvent::class => ['addResults', $priority],
-      PostDestroyEvent::class => ['addResults', $priority],
+      PreCreateEvent::class => ['handleEvent', $priority],
+      PostCreateEvent::class => ['handleEvent', $priority],
+      PreRequireEvent::class => ['handleEvent', $priority],
+      PostRequireEvent::class => ['handleEvent', $priority],
+      PreApplyEvent::class => ['handleEvent', $priority],
+      PostApplyEvent::class => ['handleEvent', $priority],
+      PreDestroyEvent::class => ['handleEvent', $priority],
+      PostDestroyEvent::class => ['handleEvent', $priority],
     ];
   }
 

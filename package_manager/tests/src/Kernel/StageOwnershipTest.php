@@ -8,7 +8,7 @@ use Drupal\package_manager\Event\PostDestroyEvent;
 use Drupal\package_manager\Event\PreCreateEvent;
 use Drupal\package_manager\Exception\StageException;
 use Drupal\package_manager\Exception\StageOwnershipException;
-use Drupal\package_manager_test_validation\TestSubscriber;
+use Drupal\package_manager_test_validation\EventSubscriber\TestSubscriber;
 use Drupal\Tests\user\Traits\UserCreationTrait;
 use Prophecy\Argument;
 use Psr\Log\LoggerInterface;
