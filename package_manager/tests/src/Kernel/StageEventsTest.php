@@ -106,10 +106,10 @@ class StageEventsTest extends PackageManagerKernelTestBase implements EventSubsc
    */
   public function providerValidationResults(): array {
     return [
-      [PreCreateEvent::class],
-      [PreRequireEvent::class],
-      [PreApplyEvent::class],
-      [PreDestroyEvent::class],
+      'PreCreateEvent' => [PreCreateEvent::class],
+      'PreRequireEvent' => [PreRequireEvent::class],
+      'PreApplyEvent' => [PreApplyEvent::class],
+      'PreDestroyEvent' => [PreDestroyEvent::class],
     ];
   }
 

@@ -30,8 +30,8 @@ abstract class TemplateProjectTestBase extends QuickStartTestBase {
    */
   public function providerTemplate(): array {
     return [
-      ['RecommendedProject'],
-      ['LegacyProject'],
+      'RecommendedProject' => ['RecommendedProject'],
+      'LegacyProject' => ['LegacyProject'],
     ];
   }
 

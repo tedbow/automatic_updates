@@ -45,11 +45,11 @@ class PackageManagerReadinessChecksTest extends AutomaticUpdatesKernelTestBase {
    */
   public function providerValidatorInvoked(): array {
     return [
-      ['package_manager.validator.composer_executable'],
-      ['package_manager.validator.disk_space'],
-      ['package_manager.validator.pending_updates'],
-      ['package_manager.validator.file_system'],
-      ['package_manager.validator.composer_settings'],
+      'Composer executable validator' => ['package_manager.validator.composer_executable'],
+      'Disk space validator' => ['package_manager.validator.disk_space'],
+      'Pending updates validator' => ['package_manager.validator.pending_updates'],
+      'File system validator' => ['package_manager.validator.file_system'],
+      'Composer settings validator' => ['package_manager.validator.composer_settings'],
     ];
   }
 

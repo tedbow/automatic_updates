@@ -30,8 +30,8 @@ class SettingsValidatorTest extends AutomaticUpdatesKernelTestBase {
     ]);
 
     return [
-      [TRUE, [$result]],
-      [FALSE, []],
+      'HTTP fallback enabled' => [TRUE, [$result]],
+      'HTTP fallback disabled' => [FALSE, []],
     ];
   }
 

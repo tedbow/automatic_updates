@@ -94,8 +94,8 @@ class StagedDatabaseUpdateValidatorTest extends AutomaticUpdatesKernelTestBase {
   public function providerFileChanged(): array {
     $scenarios = [];
     foreach (static::SUFFIXES as $suffix) {
-      $scenarios[] = [$suffix, FALSE];
-      $scenarios[] = [$suffix, TRUE];
+      $scenarios["$suffix kept"] = [$suffix, FALSE];
+      $scenarios["$suffix deleted"] = [$suffix, TRUE];
     }
     return $scenarios;
   }

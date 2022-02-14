@@ -24,9 +24,9 @@ class FileSyncerFactoryTest extends KernelTestBase {
    */
   public function providerFactory(): array {
     return [
-      ['rsync'],
-      ['php'],
-      [NULL],
+      'rsync file syncer' => ['rsync'],
+      'php file syncer' => ['php'],
+      'no preference' => [NULL],
     ];
   }
 
