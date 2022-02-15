@@ -58,9 +58,9 @@ class ReadinessTraitTest extends UnitTestCase {
     // messages as errors and warnings, respectively.
     $results = [
       ValidationResult::createError(['Boo!']),
-      ValidationResult::createError(['Wednesday', 'Pugsley'], $this->t('The Addams Family')),
+      ValidationResult::createError(['Wednesday', 'Thursday'], $this->t('The Addams Family')),
       ValidationResult::createWarning(['Moo!']),
-      ValidationResult::createWarning(['Shaggy', 'Scooby'], $this->t('Mystery Mobile')),
+      ValidationResult::createWarning(['Shaggy', 'The dog'], $this->t('Mystery Mobile')),
     ];
     $this->displayResults($results, $messenger);
 
