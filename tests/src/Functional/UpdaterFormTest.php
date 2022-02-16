@@ -237,11 +237,10 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
 
   /**
    * Tests deleting an existing update.
-   *
-   * @todo Add test coverage for differences between stage owner and other users
-   *   in https://www.drupal.org/i/3248928.
    */
   public function testDeleteExistingUpdate() {
+    $conflict_message = 'Cannot begin an update because another Composer operation is currently in progress.';
+
     $assert_session = $this->assertSession();
     $page = $this->getSession()->getPage();
     $this->setCoreVersion('9.8.0');
@@ -256,16 +255,16 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
     $this->assertUpdateReady();
     $assert_session->buttonExists('Continue');
 
-    // Return to the start page.
+    // If we try to return to the start page, we should be redirected back to
+    // the confirmation page.
     $this->drupalGet('/admin/modules/automatic-update');
-    $assert_session->pageTextContainsOnce('Cannot begin an update because another Composer operation is currently in progress.');
-    $assert_session->buttonNotExists('Update');
+    $this->assertUpdateReady();
 
     // Delete the existing update.
-    $page->pressButton('Delete existing update');
-    $assert_session->pageTextContains('Staged update deleted');
-    $assert_session->pageTextNotContains('Cannot begin an update because another Composer operation is currently in progress.');
-
+    $page->pressButton('Cancel update');
+    $assert_session->addressEquals('/admin/reports/updates/automatic-update');
+    $assert_session->pageTextContains('The update was successfully cancelled.');
+    $assert_session->pageTextNotContains($conflict_message);
     // Ensure we can start another update after deleting the existing one.
     $page->pressButton('Update');
     $this->checkForMetaRefresh();
@@ -274,11 +273,19 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
     $this->assertUpdateReady();
     $this->assertUpdateStagedTimes(2);
     $assert_session->buttonExists('Continue');
-    // Cancel the update, then ensure that we are bounced back to the start
-    // page, and that it will allow us to begin the update anew.
-    $page->pressButton('Cancel update');
-    $assert_session->addressEquals('/admin/reports/updates/automatic-update');
-    $assert_session->pageTextContains('The update was successfully cancelled.');
+
+    // Log in as another administrative user and ensure that we cannot begin an
+    // update because the previous session already started one.
+    $account = $this->createUser([], NULL, TRUE);
+    $this->drupalLogin($account);
+    $this->drupalGet('/admin/reports/updates/automatic-update');
+    $assert_session->pageTextContains($conflict_message);
+    $assert_session->buttonNotExists('Update');
+    // We should be able to delete the previous update, and then we should be
+    // able to start a new one.
+    $page->pressButton('Delete existing update');
+    $assert_session->pageTextContains('Staged update deleted');
+    $assert_session->pageTextNotContains($conflict_message);
     $assert_session->buttonExists('Update');
   }
 

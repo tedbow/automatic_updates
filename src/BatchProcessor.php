@@ -12,6 +12,13 @@ use Symfony\Component\HttpFoundation\RedirectResponse;
 class BatchProcessor {
 
   /**
+   * The session key under which the stage ID is stored.
+   *
+   * @var string
+   */
+  public const STAGE_ID_SESSION_KEY = '_automatic_updates_stage_id';
+
+  /**
    * Gets the updater service.
    *
    * @return \Drupal\automatic_updates\Updater
@@ -66,8 +73,8 @@ class BatchProcessor {
    */
   public static function begin(array $project_versions, array &$context): void {
     try {
-      $stage_unique = static::getUpdater()->begin($project_versions);
-      $context['results']['stage_id'] = $stage_unique;
+      $stage_id = static::getUpdater()->begin($project_versions);
+      \Drupal::service('session')->set(static::STAGE_ID_SESSION_KEY, $stage_id);
     }
     catch (\Throwable $e) {
       static::handleException($e, $context);
@@ -84,7 +91,7 @@ class BatchProcessor {
    */
   public static function stage(array &$context): void {
     try {
-      $stage_id = $context['results']['stage_id'];
+      $stage_id = \Drupal::service('session')->get(static::STAGE_ID_SESSION_KEY);
       static::getUpdater()->claim($stage_id)->stage();
     }
     catch (\Throwable $e) {
@@ -142,8 +149,9 @@ class BatchProcessor {
    */
   public static function finishStage(bool $success, array $results, array $operations): ?RedirectResponse {
     if ($success) {
+      $stage_id = \Drupal::service('session')->get(static::STAGE_ID_SESSION_KEY);
       $url = Url::fromRoute('automatic_updates.confirmation_page', [
-        'stage_id' => $results['stage_id'],
+        'stage_id' => $stage_id,
       ]);
       return new RedirectResponse($url->setAbsolute()->toString());
     }
@@ -162,6 +170,8 @@ class BatchProcessor {
    *   A list of the operations that had not been completed by the batch API.
    */
   public static function finishCommit(bool $success, array $results, array $operations): ?RedirectResponse {
+    \Drupal::service('session')->remove(static::STAGE_ID_SESSION_KEY);
+
     if ($success) {
       $url = Url::fromRoute('automatic_updates.finish')
         ->setAbsolute()
