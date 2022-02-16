@@ -149,6 +149,6 @@
  *   \Drupal\package_manager\Event\PreCreateEvent::excludePath() to exclude a
  *   specific path from being copied from the active directory into the staging
  *   area, or \Drupal\package_manager\Event\PreApplyEvent::excludePath() to
- *   exclude a specific path from being copied from the staginga area back into
+ *   exclude a specific path from being copied from the staging area back into
  *   the active directory.
  */
