@@ -33,7 +33,7 @@ class UpdaterTest extends AutomaticUpdatesKernelTestBase {
   /**
    * Tests that correct versions are staged after calling ::begin().
    */
-  public function testCorrectVersionsStaged() {
+  public function testCorrectVersionsStaged(): void {
     $this->setReleaseMetadata(__DIR__ . '/../../fixtures/release-history/drupal.9.8.1-security.xml');
 
     // Create a user who will own the stage even after the container is rebuilt.

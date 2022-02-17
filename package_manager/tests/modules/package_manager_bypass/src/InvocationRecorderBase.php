@@ -27,7 +27,7 @@ abstract class InvocationRecorderBase {
    * @param mixed ...$arguments
    *   The arguments that the main class method was called with.
    */
-  protected function saveInvocationArguments(...$arguments) {
+  protected function saveInvocationArguments(...$arguments): void {
     $invocations = $this->getInvocationArguments();
     $invocations[] = $arguments;
     \Drupal::state()->set(static::class, $invocations);

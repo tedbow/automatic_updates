@@ -39,7 +39,7 @@ abstract class PreOperationStageEvent extends StageEvent {
   /**
    * Adds error information to the event.
    */
-  public function addError(array $messages, ?TranslatableMarkup $summary = NULL) {
+  public function addError(array $messages, ?TranslatableMarkup $summary = NULL): void {
     $this->results[] = ValidationResult::createError($messages, $summary);
   }
 

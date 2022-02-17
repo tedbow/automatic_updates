@@ -66,7 +66,7 @@ class ReadinessCheckEvent extends PreOperationStageEvent {
   /**
    * Adds warning information to the event.
    */
-  public function addWarning(array $messages, ?TranslatableMarkup $summary = NULL) {
+  public function addWarning(array $messages, ?TranslatableMarkup $summary = NULL): void {
     $this->results[] = ValidationResult::createWarning($messages, $summary);
   }
 

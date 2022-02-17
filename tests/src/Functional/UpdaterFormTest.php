@@ -238,7 +238,7 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
   /**
    * Tests deleting an existing update.
    */
-  public function testDeleteExistingUpdate() {
+  public function testDeleteExistingUpdate(): void {
     $conflict_message = 'Cannot begin an update because another Composer operation is currently in progress.';
 
     $assert_session = $this->assertSession();

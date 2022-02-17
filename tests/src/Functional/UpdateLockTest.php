@@ -37,7 +37,7 @@ class UpdateLockTest extends AutomaticUpdatesFunctionalTestBase {
   /**
    * Tests that only user who started an update can continue through it.
    */
-  public function testLock() {
+  public function testLock(): void {
     $page = $this->getSession()->getPage();
     $assert_session = $this->assertSession();
     $this->setCoreVersion('9.8.0');
