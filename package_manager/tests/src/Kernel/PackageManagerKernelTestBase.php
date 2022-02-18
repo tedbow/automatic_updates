@@ -78,7 +78,8 @@ abstract class PackageManagerKernelTestBase extends KernelTestBase {
       $this->container->get('package_manager.committer'),
       $this->container->get('file_system'),
       $this->container->get('event_dispatcher'),
-      $this->container->get('tempstore.shared')
+      $this->container->get('tempstore.shared'),
+      $this->container->get('datetime.time')
     );
   }
 
@@ -297,9 +298,9 @@ class TestStage extends Stage {
   /**
    * {@inheritdoc}
    */
-  protected function dispatch(StageEvent $event): void {
+  protected function dispatch(StageEvent $event, callable $on_error = NULL): void {
     try {
-      parent::dispatch($event);
+      parent::dispatch($event, $on_error);
     }
     catch (StageException $e) {
       // Attach the event object to the exception so that test code can verify

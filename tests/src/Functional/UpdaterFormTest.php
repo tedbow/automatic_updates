@@ -3,6 +3,8 @@
 namespace Drupal\Tests\automatic_updates\Functional;
 
 use Drupal\automatic_updates\Event\ReadinessCheckEvent;
+use Drupal\automatic_updates_test\Datetime\TestTime;
+use Drupal\package_manager\Event\PreApplyEvent;
 use Drupal\package_manager\Event\PreCreateEvent;
 use Drupal\package_manager\ValidationResult;
 use Drupal\automatic_updates_test\EventSubscriber\TestSubscriber1;
@@ -240,6 +242,7 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
    */
   public function testDeleteExistingUpdate(): void {
     $conflict_message = 'Cannot begin an update because another Composer operation is currently in progress.';
+    $cancelled_message = 'The update was successfully cancelled.';
 
     $assert_session = $this->assertSession();
     $page = $this->getSession()->getPage();
@@ -263,7 +266,7 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
     // Delete the existing update.
     $page->pressButton('Cancel update');
     $assert_session->addressEquals('/admin/reports/updates/automatic-update');
-    $assert_session->pageTextContains('The update was successfully cancelled.');
+    $assert_session->pageTextContains($cancelled_message);
     $assert_session->pageTextNotContains($conflict_message);
     // Ensure we can start another update after deleting the existing one.
     $page->pressButton('Update');
@@ -281,12 +284,60 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
     $this->drupalGet('/admin/reports/updates/automatic-update');
     $assert_session->pageTextContains($conflict_message);
     $assert_session->buttonNotExists('Update');
-    // We should be able to delete the previous update, and then we should be
-    // able to start a new one.
+    // We should be able to delete the previous update, then start a new one.
     $page->pressButton('Delete existing update');
     $assert_session->pageTextContains('Staged update deleted');
     $assert_session->pageTextNotContains($conflict_message);
-    $assert_session->buttonExists('Update');
+    $page->pressButton('Update');
+    $this->checkForMetaRefresh();
+    $this->assertUpdateReady();
+
+    // Stop execution during pre-apply. This should make Package Manager think
+    // the staged changes are being applied and raise an error if we try to
+    // cancel the update.
+    TestSubscriber1::setExit(PreApplyEvent::class);
+    $page->pressButton('Continue');
+    $this->checkForMetaRefresh();
+    $page->clickLink('the error page');
+    $page->pressButton('Cancel update');
+    // The exception should have been caught and displayed in the messages area.
+    $assert_session->statusCodeEquals(200);
+    $destroy_error = 'Cannot destroy the staging area while it is being applied to the active directory.';
+    $assert_session->pageTextContains($destroy_error);
+    $assert_session->pageTextNotContains($cancelled_message);
+
+    // We should get the same error if we log in as another user and try to
+    // delete the staged update.
+    $this->drupalLogin($this->rootUser);
+    $this->drupalGet('/admin/reports/updates/automatic-update');
+    $assert_session->pageTextContains($conflict_message);
+    $page->pressButton('Delete existing update');
+    $assert_session->statusCodeEquals(200);
+    $assert_session->pageTextContains($destroy_error);
+    $assert_session->pageTextNotContains('Staged update deleted');
+
+    // Two hours later, Package Manager should consider the stage to be stale,
+    // allowing the staged update to be deleted.
+    TestTime::setFakeTimeByOffset('+2 hours');
+    $this->getSession()->reload();
+    $assert_session->pageTextContains($conflict_message);
+    $page->pressButton('Delete existing update');
+    $assert_session->statusCodeEquals(200);
+    $assert_session->pageTextContains('Staged update deleted');
+
+    // If a legitimate error is raised during pre-apply, we should be able to
+    // delete the staged update right away.
+    $this->createTestValidationResults();
+    $results = $this->testResults['checker_1']['1 error'];
+    TestSubscriber1::setTestResult($results, PreApplyEvent::class);
+    $page->pressButton('Update');
+    $this->checkForMetaRefresh();
+    $this->assertUpdateReady();
+    $page->pressButton('Continue');
+    $this->checkForMetaRefresh();
+    $page->clickLink('the error page');
+    $page->pressButton('Cancel update');
+    $assert_session->pageTextContains($cancelled_message);
   }
 
   /**

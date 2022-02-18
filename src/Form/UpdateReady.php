@@ -11,6 +11,7 @@ use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Messenger\MessengerInterface;
 use Drupal\Core\State\StateInterface;
+use Drupal\package_manager\Exception\StageException;
 use Drupal\package_manager\Exception\StageOwnershipException;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
@@ -193,9 +194,14 @@ class UpdateReady extends FormBase {
    * Cancels the in-progress update.
    */
   public function cancel(array &$form, FormStateInterface $form_state): void {
-    $this->updater->destroy();
-    $this->messenger()->addStatus($this->t('The update was successfully cancelled.'));
-    $form_state->setRedirect('automatic_updates.report_update');
+    try {
+      $this->updater->destroy();
+      $this->messenger()->addStatus($this->t('The update was successfully cancelled.'));
+      $form_state->setRedirect('automatic_updates.report_update');
+    }
+    catch (StageException $e) {
+      $this->messenger()->addError($e->getMessage());
+    }
   }
 
 }

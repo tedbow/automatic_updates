@@ -2,6 +2,7 @@
 
 namespace Drupal\package_manager;
 
+use Drupal\Component\Datetime\TimeInterface;
 use Drupal\Component\FileSystem\FileSystem;
 use Drupal\Component\Utility\Crypt;
 use Drupal\Core\File\Exception\FileException;
@@ -56,6 +57,16 @@ class Stage {
   protected const TEMPSTORE_METADATA_KEY = 'metadata';
 
   /**
+   * The tempstore key under which to store the time that ::apply() was called.
+   *
+   * @var string
+   *
+   * @see ::apply()
+   * @see ::destroy()
+   */
+  private const TEMPSTORE_APPLY_TIME_KEY = 'apply_time';
+
+  /**
    * The path locator service.
    *
    * @var \Drupal\package_manager\PathLocator
@@ -105,6 +116,13 @@ class Stage {
   protected $tempStore;
 
   /**
+   * The time service.
+   *
+   * @var \Drupal\Component\Datetime\TimeInterface
+   */
+  protected $time;
+
+  /**
    * The lock info for the stage.
    *
    * Consists of a unique random string and the current class name.
@@ -130,14 +148,17 @@ class Stage {
    *   The event dispatcher service.
    * @param \Drupal\Core\TempStore\SharedTempStoreFactory $shared_tempstore
    *   The shared tempstore factory.
+   * @param \Drupal\Component\Datetime\TimeInterface $time
+   *   The time service.
    */
-  public function __construct(PathLocator $path_locator, BeginnerInterface $beginner, StagerInterface $stager, CommitterInterface $committer, FileSystemInterface $file_system, EventDispatcherInterface $event_dispatcher, SharedTempStoreFactory $shared_tempstore) {
+  public function __construct(PathLocator $path_locator, BeginnerInterface $beginner, StagerInterface $stager, CommitterInterface $committer, FileSystemInterface $file_system, EventDispatcherInterface $event_dispatcher, SharedTempStoreFactory $shared_tempstore, TimeInterface $time) {
     $this->pathLocator = $path_locator;
     $this->beginner = $beginner;
     $this->stager = $stager;
     $this->committer = $committer;
     $this->fileSystem = $file_system;
     $this->eventDispatcher = $event_dispatcher;
+    $this->time = $time;
     $this->tempStore = $shared_tempstore->get('package_manager_stage');
   }
 
@@ -224,7 +245,9 @@ class Stage {
     $stage_dir = $this->getStageDirectory();
 
     $event = new PreCreateEvent($this);
-    $this->dispatch($event);
+    // If an error occurs and we won't be able to create the stage, mark it as
+    // available.
+    $this->dispatch($event, [$this, 'markAsAvailable']);
 
     $this->beginner->begin($active_dir, $stage_dir, $event->getExcludedPaths());
     $this->dispatch(new PostCreateEvent($this));
@@ -277,9 +300,16 @@ class Stage {
     $stage_dir = $this->getStageDirectory();
 
     $event = new PreApplyEvent($this);
-    $this->dispatch($event);
+    $this->tempStore->set(self::TEMPSTORE_APPLY_TIME_KEY, $this->time->getRequestTime());
+    // If an error occurs while dispatching the event, ensure that ::destroy()
+    // doesn't think we're in the middle of applying the staged changes to the
+    // active directory.
+    $this->dispatch($event, function (): void {
+      $this->tempStore->delete(self::TEMPSTORE_APPLY_TIME_KEY);
+    });
 
     $this->committer->commit($stage_dir, $active_dir, $event->getExcludedPaths());
+    $this->tempStore->delete(self::TEMPSTORE_APPLY_TIME_KEY);
     $this->dispatch(new PostApplyEvent($this));
   }
 
@@ -290,12 +320,20 @@ class Stage {
    *   (optional) If TRUE, the staging area will be destroyed even if it is not
    *   owned by the current user or session. Defaults to FALSE.
    *
-   * @todo Do not allow the stage to be destroyed while it's being applied to
-   *   the active directory in https://www.drupal.org/i/3248909.
+   * @throws \Drupal\package_manager\Exception\StageException
+   *   If the staged changes are being applied to the active directory.
    */
   public function destroy(bool $force = FALSE): void {
     if (!$force) {
       $this->checkOwnership();
+    }
+
+    // If we started applying staged changes to the active directory less than
+    // an hour ago, prevent the stage from being destroyed.
+    // @see :apply()
+    $apply_time = $this->tempStore->get(self::TEMPSTORE_APPLY_TIME_KEY);
+    if (isset($apply_time) && $this->time->getRequestTime() - $apply_time < 3600) {
+      throw new StageException('Cannot destroy the staging area while it is being applied to the active directory.');
     }
 
     $this->dispatch(new PreDestroyEvent($this));
@@ -332,13 +370,16 @@ class Stage {
    *
    * @param \Drupal\package_manager\Event\StageEvent $event
    *   The event object.
+   * @param callable $on_error
+   *   (optional) A callback function to call if an error occurs, before any
+   *   exceptions are thrown.
    *
    * @throws \Drupal\package_manager\Exception\StageValidationException
    *   If the event collects any validation errors.
    * @throws \Drupal\package_manager\Exception\StageException
    *   If any other sort of error occurs.
    */
-  protected function dispatch(StageEvent $event): void {
+  protected function dispatch(StageEvent $event, callable $on_error = NULL): void {
     try {
       $this->eventDispatcher->dispatch($event);
 
@@ -354,10 +395,8 @@ class Stage {
     }
 
     if (isset($error)) {
-      // If we won't be able to create the staging area, mark it as available.
-      // @see ::create()
-      if ($event instanceof PreCreateEvent) {
-        $this->markAsAvailable();
+      if ($on_error) {
+        $on_error();
       }
       throw $error;
     }

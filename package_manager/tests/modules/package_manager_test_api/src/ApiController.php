@@ -42,6 +42,7 @@ class ApiController extends ControllerBase {
       $container->get('file_system'),
       $container->get('event_dispatcher'),
       $container->get('tempstore.shared'),
+      $container->get('datetime.time')
     );
     return new static($stage);
   }

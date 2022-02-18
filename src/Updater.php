@@ -91,9 +91,9 @@ class Updater extends Stage {
   /**
    * {@inheritdoc}
    */
-  protected function dispatch(StageEvent $event): void {
+  protected function dispatch(StageEvent $event, callable $on_error = NULL): void {
     try {
-      parent::dispatch($event);
+      parent::dispatch($event, $on_error);
     }
     catch (StageValidationException $e) {
       throw new UpdateException($e->getResults(), $e->getMessage() ?: "Unable to complete the update because of errors.", $e->getCode(), $e);

@@ -45,6 +45,19 @@ class TestSubscriber implements EventSubscriberInterface {
   }
 
   /**
+   * Sets whether a specific event will call exit().
+   *
+   * This is useful for simulating an unrecoverable (fatal) error when handling
+   * the given event.
+   *
+   * @param string $event
+   *   The event class.
+   */
+  public static function setExit(string $event): void {
+    \Drupal::state()->set(static::STATE_KEY . ".$event", 'exit');
+  }
+
+  /**
    * Sets validation results for a specific event.
    *
    * This method is static to enable setting the expected results before this
@@ -101,6 +114,9 @@ class TestSubscriber implements EventSubscriberInterface {
 
     if ($results instanceof \Throwable) {
       throw $results;
+    }
+    elseif ($results === 'exit') {
+      exit();
     }
     /** @var \Drupal\package_manager\ValidationResult $result */
     foreach ($results as $result) {

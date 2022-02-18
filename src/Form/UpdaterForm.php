@@ -14,6 +14,7 @@ use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Link;
 use Drupal\Core\State\StateInterface;
 use Drupal\Core\Url;
+use Drupal\package_manager\Exception\StageException;
 use Drupal\package_manager\Exception\StageOwnershipException;
 use Drupal\system\SystemManager;
 use Drupal\update\UpdateManagerInterface;
@@ -276,8 +277,13 @@ class UpdaterForm extends FormBase {
    * Submit function to delete an existing in-progress update.
    */
   public function deleteExistingUpdate(): void {
-    $this->updater->destroy(TRUE);
-    $this->messenger()->addMessage($this->t("Staged update deleted"));
+    try {
+      $this->updater->destroy(TRUE);
+      $this->messenger()->addMessage($this->t("Staged update deleted"));
+    }
+    catch (StageException $e) {
+      $this->messenger()->addError($e->getMessage());
+    }
   }
 
   /**

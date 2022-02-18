@@ -21,6 +21,7 @@ services:
       - '@file_system'
       - '@event_dispatcher'
       - '@tempstore.shared'
+      - '@datetime.time'
   automatic_updates.cron_updater:
     class: Drupal\automatic_updates\CronUpdater
     arguments:
@@ -33,6 +34,7 @@ services:
       - '@file_system'
       - '@event_dispatcher'
       - '@tempstore.shared'
+      - '@datetime.time'
   automatic_updates.staged_projects_validator:
     class: Drupal\automatic_updates\Validator\StagedProjectsValidator
     arguments:
