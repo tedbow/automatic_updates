@@ -7,6 +7,7 @@ use Drupal\automatic_updates\Event\ReadinessCheckEvent;
 use Drupal\automatic_updates_test\Datetime\TestTime;
 use Drupal\automatic_updates_test\EventSubscriber\TestSubscriber1;
 use Drupal\automatic_updates_test2\EventSubscriber\TestSubscriber2;
+use Drupal\Core\Url;
 use Drupal\system\SystemManager;
 use Drupal\Tests\automatic_updates\Traits\ValidationTestTrait;
 use Drupal\Tests\Traits\Core\CronRunTrait;
@@ -291,6 +292,15 @@ class ReadinessValidationTest extends AutomaticUpdatesFunctionalTestBase {
     $assert->pageTextContainsOnce(static::$warningsExplanation);
     $assert->pageTextContainsOnce($expected_results[0]->getMessages()[0]);
     $assert->pageTextNotContains($expected_results[0]->getSummary());
+
+    // Confirm readiness messages are not displayed when cron updates are
+    // disabled.
+    $this->drupalGet(Url::fromRoute('update.settings'));
+    $edit['automatic_updates_cron'] = 'disable';
+    $this->submitForm($edit, 'Save configuration');
+    $this->drupalGet('admin/structure');
+    $assert->pageTextNotContains(static::$warningsExplanation);
+    $assert->pageTextNotContains($expected_results[0]->getMessages()[0]);
   }
 
   /**

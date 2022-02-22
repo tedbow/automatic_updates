@@ -2,6 +2,8 @@
 
 namespace Drupal\automatic_updates\Validation;
 
+use Drupal\automatic_updates\CronUpdater;
+use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\DependencyInjection\ContainerInjectionInterface;
 use Drupal\Core\Messenger\MessengerInterface;
 use Drupal\Core\Messenger\MessengerTrait;
@@ -58,6 +60,13 @@ final class AdminReadinessMessages implements ContainerInjectionInterface {
   protected $currentRouteMatch;
 
   /**
+   * The config factory service.
+   *
+   * @var \Drupal\Core\Config\ConfigFactoryInterface
+   */
+  protected $config;
+
+  /**
    * Constructs a ReadinessRequirement object.
    *
    * @param \Drupal\automatic_updates\Validation\ReadinessValidationManager $readiness_checker_manager
@@ -72,14 +81,17 @@ final class AdminReadinessMessages implements ContainerInjectionInterface {
    *   The translation service.
    * @param \Drupal\Core\Routing\CurrentRouteMatch $current_route_match
    *   The current route match.
+   * @param \Drupal\Core\Config\ConfigFactoryInterface $config
+   *   The config factory service.
    */
-  public function __construct(ReadinessValidationManager $readiness_checker_manager, MessengerInterface $messenger, AdminContext $admin_context, AccountProxyInterface $current_user, TranslationInterface $translation, CurrentRouteMatch $current_route_match) {
+  public function __construct(ReadinessValidationManager $readiness_checker_manager, MessengerInterface $messenger, AdminContext $admin_context, AccountProxyInterface $current_user, TranslationInterface $translation, CurrentRouteMatch $current_route_match, ConfigFactoryInterface $config) {
     $this->readinessCheckerManager = $readiness_checker_manager;
     $this->setMessenger($messenger);
     $this->adminContext = $admin_context;
     $this->currentUser = $current_user;
     $this->setStringTranslation($translation);
     $this->currentRouteMatch = $current_route_match;
+    $this->config = $config;
   }
 
   /**
@@ -92,7 +104,8 @@ final class AdminReadinessMessages implements ContainerInjectionInterface {
       $container->get('router.admin_context'),
       $container->get('current_user'),
       $container->get('string_translation'),
-      $container->get('current_route_match')
+      $container->get('current_route_match'),
+      $container->get('config.factory')
     );
   }
 
@@ -127,6 +140,12 @@ final class AdminReadinessMessages implements ContainerInjectionInterface {
    *   Whether the messages should be displayed on the current page.
    */
   protected function displayResultsOnCurrentPage(): bool {
+    // If updates will not run during cron then we don't need to show the
+    // readiness checks on admin pages.
+    if ($this->config->get('automatic_updates.settings')->get('cron') === CronUpdater::DISABLED) {
+      return FALSE;
+    }
+
     if ($this->adminContext->isAdminRoute() && $this->currentUser->hasPermission('administer site configuration')) {
       // These routes don't need additional nagging.
       $disabled_routes = [
