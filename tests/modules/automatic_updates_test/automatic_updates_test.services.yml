@@ -1,8 +1,4 @@
 services:
-  automatic_updates_test.route_subscriber:
-    class: \Drupal\automatic_updates_test\Routing\RouteSubscriber
-    tags:
-      - { name: event_subscriber }
   automatic_updates_test.checker:
     class: Drupal\automatic_updates_test\EventSubscriber\TestSubscriber1
     tags:

@@ -363,15 +363,10 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
     $this->checkForMetaRefresh();
     $this->assertUpdateStagedTimes(1);
     $this->assertUpdateReady();
-    // Simulate a staged database update in the System module. We must do this
-    // after the update has started, because the pending updates validator
-    // will prevent an update from starting.
-    $this->container->get('state')
-      ->set('automatic_updates_test.staged_database_updates', [
-        'system' => [
-          'name' => 'System',
-        ],
-      ]);
+    // Simulate a staged database update in the automatic_updates_test module.
+    // We must do this after the update has started, because the pending updates
+    // validator will prevent an update from starting.
+    $this->container->get('state')->set('automatic_updates_test.new_update', TRUE);
     // The warning from the updater form should be not be repeated, but we
     // should see a warning about pending database updates, and once the staged
     // changes have been applied, we should be redirected to update.php, where
