@@ -1,0 +1,9 @@
+automatic_updates_extensions.update:
+  path: '/admin/automatic-update-extensions'
+  defaults:
+    _form: 'Drupal\automatic_updates_extensions\Form\UpdaterForm'
+    _title: 'Automatic Updates Form'
+  requirements:
+    _permission: 'administer software updates'
+  options:
+    _admin_route: TRUE

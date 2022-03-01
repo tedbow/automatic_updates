@@ -1,0 +1,7 @@
+name: 'Automatic Updates Extensions'
+type: module
+description: 'Allows updates to themes and modules'
+core_version_requirement: ^9.2
+dependencies:
+  - drupal:automatic_updates
+hidden: true

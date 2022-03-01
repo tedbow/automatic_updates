@@ -63,9 +63,6 @@ class TestController extends ControllerBase {
    * directory of mock XML files.
    */
   public function metadata($project_name = 'drupal', $version = NULL): Response {
-    if ($project_name !== 'drupal') {
-      return new Response();
-    }
     $xml_map = $this->config('update_test.settings')->get('xml_map');
     if (isset($xml_map[$project_name])) {
       $availability_scenario = $xml_map[$project_name];
