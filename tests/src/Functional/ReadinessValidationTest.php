@@ -64,6 +64,7 @@ class ReadinessValidationTest extends AutomaticUpdatesFunctionalTestBase {
       'administer site configuration',
       'administer software updates',
       'access administration pages',
+      'access site in maintenance mode',
     ]);
     $this->createTestValidationResults();
     $this->drupalLogin($this->reportViewerUser);

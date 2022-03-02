@@ -5,6 +5,8 @@ automatic_updates.update_readiness:
     _title: 'Update readiness checking'
   requirements:
     _permission: 'administer software updates'
+  options:
+    _maintenance_access: TRUE
 automatic_updates.confirmation_page:
   path: '/admin/automatic-update-ready/{stage_id}'
   defaults:
@@ -13,12 +15,16 @@ automatic_updates.confirmation_page:
   requirements:
     _permission: 'administer software updates'
     _access_update_manager: 'TRUE'
+  options:
+    _maintenance_access: TRUE
 automatic_updates.finish:
   path: '/automatic-update/finish'
   defaults:
     _controller: '\Drupal\automatic_updates\Controller\UpdateController::onFinish'
   requirements:
     _permission: 'administer software updates'
+  options:
+    _maintenance_access: TRUE
 # Links to our updater form appear in three different sets of local tasks. To ensure the breadcrumbs and paths are
 # consistent with the other local tasks in each set, we need two separate routes to the same form.
 automatic_updates.report_update:
@@ -30,6 +36,7 @@ automatic_updates.report_update:
     _permission: 'administer software updates'
   options:
     _admin_route: TRUE
+    _maintenance_access: TRUE
 automatic_updates.module_update:
   path: '/admin/modules/automatic-update'
   defaults:
@@ -39,6 +46,7 @@ automatic_updates.module_update:
     _permission: 'administer software updates'
   options:
     _admin_route: TRUE
+    _maintenance_access: TRUE
 automatic_updates.theme_update:
   path: '/admin/theme/automatic-update'
   defaults:
@@ -48,3 +56,4 @@ automatic_updates.theme_update:
     _permission: 'administer software updates'
   options:
     _admin_route: TRUE
+    _maintenance_access: TRUE

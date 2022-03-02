@@ -401,10 +401,16 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
     $this->checkForMetaRefresh();
     $this->assertUpdateStagedTimes(1);
     $this->assertUpdateReady();
+    $this->assertNotTrue($this->container->get('state')->get('system.maintenance_mode'));
     $page->pressButton('Continue');
     $this->checkForMetaRefresh();
     $assert_session = $this->assertSession();
     $assert_session->addressEquals('/admin/reports/updates');
+    // Assert that the site was put into maintenance mode.
+    // @todo Add test coverage to ensure that site is taken back out of
+    //   maintenance if it was not originally in maintenance mode when the
+    //   update started in https://www.drupal.org/i/3265057.
+    $this->assertTrue($this->container->get('state')->get('system.maintenance_mode'));
     $assert_session->pageTextContainsOnce('Update complete!');
   }
 

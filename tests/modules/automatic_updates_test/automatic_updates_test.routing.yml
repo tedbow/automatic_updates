@@ -5,9 +5,13 @@ automatic_updates_test.metadata:
     _controller: '\Drupal\automatic_updates_test\TestController::metadata'
   requirements:
     _access: 'TRUE'
+  options:
+    _maintenance_access: TRUE
 automatic_updates_test.update:
   path: '/automatic-update-test/update/{to_version}'
   defaults:
     _controller: '\Drupal\automatic_updates_test\TestController::update'
   requirements:
     _access: 'TRUE'
+  options:
+    _maintenance_access: TRUE
