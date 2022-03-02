@@ -73,6 +73,7 @@ class CoreUpdateTest extends UpdateTestBase {
 
     $mink->getSession()->reload();
     $assert_session->pageTextContains('9.8.1');
+    $this->assertUpdateSuccessful('9.8.1');
   }
 
   /**
