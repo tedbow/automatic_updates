@@ -33,7 +33,6 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
     'block',
     'automatic_updates',
     'automatic_updates_test',
-    'package_manager_bypass',
   ];
 
   /**

@@ -15,6 +15,7 @@ abstract class AutomaticUpdatesFunctionalTestBase extends BrowserTestBase {
    */
   protected static $modules = [
     'automatic_updates_test_disable_validators',
+    'package_manager_bypass',
     'update',
     'update_test',
   ];
@@ -32,6 +33,13 @@ abstract class AutomaticUpdatesFunctionalTestBase extends BrowserTestBase {
     // @see \Drupal\Tests\automatic_updates\Build\CoreUpdateTest::assertReadOnlyFileSystemError()
     'automatic_updates.validator.file_system_permissions',
     'package_manager.validator.file_system',
+    // Disable the Composer executable validator, since it may cause the tests
+    // to fail if a supported version of Composer is unavailable to the web
+    // server. This should be okay in most situations because, apart from the
+    // validator, only Composer Stager needs run Composer, and
+    // package_manager_bypass is disabling those operations.
+    'automatic_updates.composer_executable_validator',
+    'package_manager.validator.composer_executable',
   ];
 
   /**

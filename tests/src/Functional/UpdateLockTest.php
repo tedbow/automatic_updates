@@ -20,7 +20,6 @@ class UpdateLockTest extends AutomaticUpdatesFunctionalTestBase {
   protected static $modules = [
     'automatic_updates',
     'automatic_updates_test',
-    'package_manager_bypass',
   ];
 
   /**

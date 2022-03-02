@@ -398,11 +398,11 @@ class ReadinessValidationTest extends AutomaticUpdatesFunctionalTestBase {
     $this->container->get('module_installer')->install([
       'automatic_updates',
       'automatic_updates_test',
-      'package_manager_bypass',
     ]);
     // Because all actual staging operations are bypassed by
-    // package_manager_bypass, disable this validator because it will complain
-    // if there's no actual Composer data to inspect.
+    // package_manager_bypass (enabled by the parent class), disable this
+    // validator because it will complain if there's no actual Composer data to
+    // inspect.
     $this->disableValidators(['automatic_updates.staged_projects_validator']);
 
     // The error should be persistently visible, even after the checker stops
