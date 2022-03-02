@@ -7,7 +7,6 @@ use Drupal\automatic_updates\Event\ReadinessCheckEvent;
 use Drupal\automatic_updates\Updater;
 use Drupal\automatic_updates\UpdateRecommender;
 use Drupal\automatic_updates\Validation\ReadinessTrait;
-use Drupal\automatic_updates\Validation\ReadinessValidationManager;
 use Drupal\Core\Batch\BatchBuilder;
 use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
@@ -47,13 +46,6 @@ class UpdaterForm extends FormBase {
   protected $state;
 
   /**
-   * The readiness validation manager service.
-   *
-   * @var \Drupal\automatic_updates\Validation\ReadinessValidationManager
-   */
-  protected $readinessValidationManager;
-
-  /**
    * The event dispatcher service.
    *
    * @var \Symfony\Component\EventDispatcher\EventDispatcherInterface
@@ -74,17 +66,14 @@ class UpdaterForm extends FormBase {
    *   The state service.
    * @param \Drupal\automatic_updates\Updater $updater
    *   The updater service.
-   * @param \Drupal\automatic_updates\Validation\ReadinessValidationManager $readiness_validation_manager
-   *   The readiness validation manager service.
    * @param \Symfony\Component\EventDispatcher\EventDispatcherInterface $event_dispatcher
    *   The event dispatcher service.
    * @param \Symfony\Component\HttpFoundation\Session\SessionInterface $session
    *   The current session.
    */
-  public function __construct(StateInterface $state, Updater $updater, ReadinessValidationManager $readiness_validation_manager, EventDispatcherInterface $event_dispatcher, SessionInterface $session) {
+  public function __construct(StateInterface $state, Updater $updater, EventDispatcherInterface $event_dispatcher, SessionInterface $session) {
     $this->updater = $updater;
     $this->state = $state;
-    $this->readinessValidationManager = $readiness_validation_manager;
     $this->eventDispatcher = $event_dispatcher;
     $this->session = $session;
   }
@@ -103,7 +92,6 @@ class UpdaterForm extends FormBase {
     return new static(
       $container->get('state'),
       $container->get('automatic_updates.updater'),
-      $container->get('automatic_updates.readiness_validation_manager'),
       $container->get('event_dispatcher'),
       $container->get('session')
     );
