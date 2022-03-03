@@ -4,6 +4,7 @@ namespace Drupal\Tests\automatic_updates\Functional;
 
 use Drupal\automatic_updates\Event\ReadinessCheckEvent;
 use Drupal\automatic_updates_test\Datetime\TestTime;
+use Drupal\package_manager\Event\PostRequireEvent;
 use Drupal\package_manager\Event\PreApplyEvent;
 use Drupal\package_manager\Event\PreCreateEvent;
 use Drupal\package_manager\ValidationResult;
@@ -411,6 +412,33 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
     //   update started in https://www.drupal.org/i/3265057.
     $this->assertTrue($this->container->get('state')->get('system.maintenance_mode'));
     $assert_session->pageTextContainsOnce('Update complete!');
+  }
+
+  /**
+   * Tests that the update stage is destroyed if an error occurs during require.
+   */
+  public function testStageDestroyedOnError(): void {
+    $session = $this->getSession();
+    $assert_session = $this->assertSession();
+    $page = $session->getPage();
+    $this->setCoreVersion('9.8.0');
+    $this->checkForUpdates();
+
+    $this->drupalGet('/admin/modules/automatic-update');
+    $error = new \Exception('Some Exception');
+    TestSubscriber1::setException($error, PostRequireEvent::class);
+    $assert_session->pageTextNotContains(static::$errorsExplanation);
+    $assert_session->pageTextNotContains(static::$warningsExplanation);
+    $page->pressButton('Update');
+    $this->checkForMetaRefresh();
+    $this->assertUpdateStagedTimes(1);
+    $assert_session->pageTextContainsOnce('An error has occurred.');
+    $page->clickLink('the error page');
+    $assert_session->addressEquals('/admin/modules/automatic-update');
+    $assert_session->pageTextNotContains('Cannot begin an update because another Composer operation is currently in progress.');
+    $assert_session->buttonNotExists('Delete existing update');
+    $assert_session->pageTextContains('Some Exception');
+    $assert_session->buttonExists('Update');
   }
 
 }

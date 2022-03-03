@@ -95,6 +95,7 @@ class BatchProcessor {
       static::getUpdater()->claim($stage_id)->stage();
     }
     catch (\Throwable $e) {
+      static::clean($stage_id, $context);
       static::handleException($e, $context);
     }
   }
