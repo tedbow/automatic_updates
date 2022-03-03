@@ -35,6 +35,7 @@ class ApiController extends ControllerBase {
    */
   public static function create(ContainerInterface $container) {
     $stage = new Stage(
+      $container->get('config.factory'),
       $container->get('package_manager.path_locator'),
       $container->get('package_manager.beginner'),
       $container->get('package_manager.stager'),

@@ -5,6 +5,7 @@ namespace Drupal\package_manager;
 use Drupal\Component\Datetime\TimeInterface;
 use Drupal\Component\FileSystem\FileSystem;
 use Drupal\Component\Utility\Crypt;
+use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\File\Exception\FileException;
 use Drupal\Core\File\FileSystemInterface;
 use Drupal\Core\TempStore\SharedTempStoreFactory;
@@ -39,6 +40,16 @@ use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
  * operations on the staging area, and the stage must be "claimed" by its owner
  * before any such operations are done. A stage is claimed by presenting a
  * unique token that is generated when the stage is created.
+ *
+ * Although a site can only have one staging area, it is possible for privileged
+ * users to destroy a stage created by another user. To prevent such actions
+ * from putting the file system into an uncertain state (for example, if a stage
+ * is destroyed by another user while it is still being created), the staging
+ * directory has a randomly generated name. For additional cleanliness, all
+ * staging directories created by a specific site live in a single directory,
+ * called the "staging root" and identified by the UUID of the current site
+ * (e.g. `/tmp/.package_managerSITE_UUID`), which is deleted when any stage
+ * created by that site is destroyed.
  */
 class Stage {
 
@@ -65,6 +76,13 @@ class Stage {
    * @see ::destroy()
    */
   private const TEMPSTORE_APPLY_TIME_KEY = 'apply_time';
+
+  /**
+   * The config factory service.
+   *
+   * @var \Drupal\Core\Config\ConfigFactoryInterface
+   */
+  protected $configFactory;
 
   /**
    * The path locator service.
@@ -134,6 +152,8 @@ class Stage {
   /**
    * Constructs a new Stage object.
    *
+   * @param \Drupal\Core\Config\ConfigFactoryInterface $config_factory
+   *   The config factory service.
    * @param \Drupal\package_manager\PathLocator $path_locator
    *   The path locator service.
    * @param \PhpTuf\ComposerStager\Domain\BeginnerInterface $beginner
@@ -151,7 +171,8 @@ class Stage {
    * @param \Drupal\Component\Datetime\TimeInterface $time
    *   The time service.
    */
-  public function __construct(PathLocator $path_locator, BeginnerInterface $beginner, StagerInterface $stager, CommitterInterface $committer, FileSystemInterface $file_system, EventDispatcherInterface $event_dispatcher, SharedTempStoreFactory $shared_tempstore, TimeInterface $time) {
+  public function __construct(ConfigFactoryInterface $config_factory, PathLocator $path_locator, BeginnerInterface $beginner, StagerInterface $stager, CommitterInterface $committer, FileSystemInterface $file_system, EventDispatcherInterface $event_dispatcher, SharedTempStoreFactory $shared_tempstore, TimeInterface $time) {
+    $this->configFactory = $config_factory;
     $this->pathLocator = $path_locator;
     $this->beginner = $beginner;
     $this->stager = $stager;
@@ -337,20 +358,17 @@ class Stage {
     }
 
     $this->dispatch(new PreDestroyEvent($this));
-    // Delete all directories in parent staging directory.
-    $parent_stage_dir = static::getStagingRoot();
-    if (is_dir($parent_stage_dir)) {
-      try {
-        $this->fileSystem->deleteRecursive($parent_stage_dir, function (string $path): void {
-          $this->fileSystem->chmod($path, 0777);
-        });
-      }
-      catch (FileException $e) {
-        // Deliberately swallow the exception so that the stage will be marked
-        // as available and the post-destroy event will be fired, even if the
-        // staging area can't actually be deleted. The file system service logs
-        // the exception, so we don't need to do anything else here.
-      }
+    // Delete the staging root and everything in it.
+    try {
+      $this->fileSystem->deleteRecursive($this->getStagingRoot(), function (string $path): void {
+        $this->fileSystem->chmod($path, 0777);
+      });
+    }
+    catch (FileException $e) {
+      // Deliberately swallow the exception so that the stage will be marked
+      // as available and the post-destroy event will be fired, even if the
+      // staging area can't actually be deleted. The file system service logs
+      // the exception, so we don't need to do anything else here.
     }
     $this->markAsAvailable();
     $this->dispatch(new PostDestroyEvent($this));
@@ -498,14 +516,12 @@ class Stage {
    *
    * @throws \LogicException
    *   If this method is called before the stage has been created or claimed.
-   *
-   * @todo Make this method public in https://www.drupal.org/i/3251972.
    */
   public function getStageDirectory(): string {
     if (!$this->lock) {
       throw new \LogicException(__METHOD__ . '() cannot be called because the stage has not been created or claimed.');
     }
-    return static::getStagingRoot() . DIRECTORY_SEPARATOR . $this->lock[0];
+    return $this->getStagingRoot() . DIRECTORY_SEPARATOR . $this->lock[0];
   }
 
   /**
@@ -515,8 +531,9 @@ class Stage {
    *   The absolute path of the directory containing the staging areas managed
    *   by this class.
    */
-  protected static function getStagingRoot(): string {
-    return FileSystem::getOsTemporaryDirectory() . DIRECTORY_SEPARATOR . '.package_manager';
+  protected function getStagingRoot(): string {
+    $site_id = $this->configFactory->get('system.site')->get('uuid');
+    return FileSystem::getOsTemporaryDirectory() . DIRECTORY_SEPARATOR . '.package_manager' . $site_id;
   }
 
 }

@@ -26,11 +26,29 @@ class StageTest extends PackageManagerKernelTestBase {
 
   /**
    * @covers ::getStageDirectory
+   * @covers ::getStagingRoot
    */
   public function testGetStageDirectory(): void {
+    $this->container->get('module_installer')->install(['system']);
+    // Ensure we have an up-to-date-container.
+    $this->container = $this->container->get('kernel')->getContainer();
+
+    // Ensure that a site ID was generated.
+    // @see system_install()
+    $site_id = $this->config('system.site')->get('uuid');
+    $this->assertNotEmpty($site_id);
+
     $stage = $this->createStage();
     $id = $stage->create();
-    $this->assertStringEndsWith("/.package_manager/$id", $stage->getStageDirectory());
+    $this->assertStringEndsWith("/.package_manager$site_id/$id", $stage->getStageDirectory());
+    $stage->destroy();
+
+    $stage = $this->createStage();
+    $another_id = $stage->create();
+    // The new stage ID should be unique, but the parent directory should be
+    // unchanged.
+    $this->assertNotSame($id, $another_id);
+    $this->assertStringEndsWith("/.package_manager$site_id/$another_id", $stage->getStageDirectory());
   }
 
   /**

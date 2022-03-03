@@ -138,8 +138,8 @@ class TestUpdater extends Updater {
   /**
    * {@inheritdoc}
    */
-  protected static function getStagingRoot(): string {
-    return TestStage::getStagingRoot();
+  public function getStagingRoot(): string {
+    return TestStage::$stagingRoot ?: parent::getStagingRoot();
   }
 
 }
@@ -152,8 +152,8 @@ class TestCronUpdater extends CronUpdater {
   /**
    * {@inheritdoc}
    */
-  protected static function getStagingRoot(): string {
-    return TestStage::getStagingRoot();
+  public function getStagingRoot(): string {
+    return TestStage::$stagingRoot ?: parent::getStagingRoot();
   }
 
   /**

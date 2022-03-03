@@ -72,6 +72,7 @@ abstract class PackageManagerKernelTestBase extends KernelTestBase {
    */
   protected function createStage(): TestStage {
     return new TestStage(
+      $this->container->get('config.factory'),
       $this->container->get('package_manager.path_locator'),
       $this->container->get('package_manager.beginner'),
       $this->container->get('package_manager.stager'),
@@ -291,7 +292,7 @@ class TestStage extends Stage {
   /**
    * {@inheritdoc}
    */
-  public static function getStagingRoot(): string {
+  public function getStagingRoot(): string {
     return static::$stagingRoot ?: parent::getStagingRoot();
   }
 

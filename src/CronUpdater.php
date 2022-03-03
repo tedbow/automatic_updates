@@ -2,7 +2,6 @@
 
 namespace Drupal\automatic_updates;
 
-use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Logger\LoggerChannelFactoryInterface;
 use Drupal\package_manager\Exception\StageValidationException;
 
@@ -37,13 +36,6 @@ class CronUpdater extends Updater {
   public const ALL = 'patch';
 
   /**
-   * The config factory service.
-   *
-   * @var \Drupal\Core\Config\ConfigFactoryInterface
-   */
-  protected $configFactory;
-
-  /**
    * The logger.
    *
    * @var \Psr\Log\LoggerInterface
@@ -53,16 +45,13 @@ class CronUpdater extends Updater {
   /**
    * Constructs a CronUpdater object.
    *
-   * @param \Drupal\Core\Config\ConfigFactoryInterface $config_factory
-   *   The config factory service.
    * @param \Drupal\Core\Logger\LoggerChannelFactoryInterface $logger_factory
    *   The logger channel factory.
    * @param mixed ...$arguments
    *   Additional arguments to pass to the parent constructor.
    */
-  public function __construct(ConfigFactoryInterface $config_factory, LoggerChannelFactoryInterface $logger_factory, ...$arguments) {
+  public function __construct(LoggerChannelFactoryInterface $logger_factory, ...$arguments) {
     parent::__construct(...$arguments);
-    $this->configFactory = $config_factory;
     $this->logger = $logger_factory->get('automatic_updates');
   }
 
