@@ -120,6 +120,13 @@ services:
       - '@string_translation'
     tags:
       - { name: event_subscriber }
+  package_manager.validator.multisite:
+    class: Drupal\package_manager\Validator\MultisiteValidator
+    arguments:
+      - '@package_manager.path_locator'
+      - '@string_translation'
+    tags:
+      - { name: event_subscriber }
   package_manager.excluded_paths_subscriber:
     class: Drupal\package_manager\EventSubscriber\ExcludedPathsSubscriber
     arguments:

@@ -50,6 +50,7 @@ class PackageManagerReadinessChecksTest extends AutomaticUpdatesKernelTestBase {
       'Pending updates validator' => ['package_manager.validator.pending_updates'],
       'File system validator' => ['package_manager.validator.file_system'],
       'Composer settings validator' => ['package_manager.validator.composer_settings'],
+      'Multisite validator' => ['package_manager.validator.multisite'],
     ];
   }
 

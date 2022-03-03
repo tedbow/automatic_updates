@@ -85,6 +85,12 @@ services:
       - '@package_manager.validator.file_system'
     tags:
       - { name: event_subscriber }
+  automatic_updates.validator.multisite:
+    class: Drupal\automatic_updates\Validator\PackageManagerReadinessCheck
+    arguments:
+      - '@package_manager.validator.multisite'
+    tags:
+      - { name: event_subscriber }
   automatic_updates.cron_frequency_validator:
     class: Drupal\automatic_updates\Validator\CronFrequencyValidator
     arguments:

@@ -1,0 +1,74 @@
+<?php
+
+namespace Drupal\package_manager\Validator;
+
+use Drupal\Core\StringTranslation\StringTranslationTrait;
+use Drupal\Core\StringTranslation\TranslationInterface;
+use Drupal\package_manager\Event\PreCreateEvent;
+use Drupal\package_manager\Event\PreOperationStageEvent;
+use Drupal\package_manager\PathLocator;
+
+/**
+ * Checks that the current site is not part of a multisite.
+ */
+class MultisiteValidator implements PreOperationStageValidatorInterface {
+
+  use StringTranslationTrait;
+
+  /**
+   * The path locator service.
+   *
+   * @var \Drupal\package_manager\PathLocator
+   */
+  protected $pathLocator;
+
+  /**
+   * Constructs a new MultisiteValidator.
+   *
+   * @param \Drupal\package_manager\PathLocator $path_locator
+   *   The path locator service.
+   * @param \Drupal\Core\StringTranslation\TranslationInterface $translation
+   *   The string translation service.
+   */
+  public function __construct(PathLocator $path_locator, TranslationInterface $translation) {
+    $this->pathLocator = $path_locator;
+    $this->setStringTranslation($translation);
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function validateStagePreOperation(PreOperationStageEvent $event): void {
+    if ($this->isMultisite()) {
+      $event->addError([
+        $this->t('Multisites are not supported by Package Manager.'),
+      ]);
+    }
+  }
+
+  /**
+   * Detects if the current site is part of a multisite.
+   *
+   * @return bool
+   *   TRUE if the current site is part of a multisite, otherwise FALSE.
+   *
+   * @todo Make this smarter in https://www.drupal.org/node/3267646.
+   */
+  protected function isMultisite(): bool {
+    $web_root = $this->pathLocator->getWebRoot();
+    if ($web_root) {
+      $web_root .= '/';
+    }
+    return file_exists($this->pathLocator->getProjectRoot() . '/' . $web_root . 'sites/sites.php');
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public static function getSubscribedEvents() {
+    return [
+      PreCreateEvent::class => 'validateStagePreOperation',
+    ];
+  }
+
+}
