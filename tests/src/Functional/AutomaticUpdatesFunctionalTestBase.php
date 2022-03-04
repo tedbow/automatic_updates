@@ -51,6 +51,19 @@ abstract class AutomaticUpdatesFunctionalTestBase extends BrowserTestBase {
   }
 
   /**
+   * {@inheritdoc}
+   */
+  protected function tearDown(): void {
+    // If automatic_updates is installed, ensure any staging area created during
+    // the test is cleaned up.
+    $service_id = 'automatic_updates.updater';
+    if ($this->container->has($service_id)) {
+      $this->container->get($service_id)->destroy(TRUE);
+    }
+    parent::tearDown();
+  }
+
+  /**
    * Disables validators in the test site's settings.
    *
    * This modifies the service container such that the disabled validators are
@@ -124,10 +137,14 @@ abstract class AutomaticUpdatesFunctionalTestBase extends BrowserTestBase {
 
   /**
    * Asserts that we are on the "update ready" form.
+   *
+   * @param string $update_version
+   *   The version of Drupal core that we are updating to.
    */
-  protected function assertUpdateReady(): void {
-    $this->assertSession()
-      ->addressMatches('/\/admin\/automatic-update-ready\/[a-zA-Z0-9_\-]+$/');
+  protected function assertUpdateReady(string $update_version): void {
+    $assert_session = $this->assertSession();
+    $assert_session->addressMatches('/\/admin\/automatic-update-ready\/[a-zA-Z0-9_\-]+$/');
+    $assert_session->pageTextContainsOnce('Drupal core will be updated to ' . $update_version);
   }
 
 }

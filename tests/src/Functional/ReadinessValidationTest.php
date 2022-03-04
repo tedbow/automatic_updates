@@ -8,6 +8,7 @@ use Drupal\automatic_updates_test\Datetime\TestTime;
 use Drupal\automatic_updates_test\EventSubscriber\TestSubscriber1;
 use Drupal\automatic_updates_test2\EventSubscriber\TestSubscriber2;
 use Drupal\Core\Url;
+use Drupal\package_manager_test_fixture\EventSubscriber\FixtureStager;
 use Drupal\system\SystemManager;
 use Drupal\Tests\automatic_updates\Traits\ValidationTestTrait;
 use Drupal\Tests\Traits\Core\CronRunTrait;
@@ -398,6 +399,7 @@ class ReadinessValidationTest extends AutomaticUpdatesFunctionalTestBase {
     $this->container->get('module_installer')->install([
       'automatic_updates',
       'automatic_updates_test',
+      'package_manager_test_fixture',
     ]);
     // Because all actual staging operations are bypassed by
     // package_manager_bypass (enabled by the parent class), disable this
@@ -418,6 +420,7 @@ class ReadinessValidationTest extends AutomaticUpdatesFunctionalTestBase {
     // readiness check (without storing the results), and the checker is no
     // longer raising an error.
     $this->drupalGet('/admin/modules/automatic-update');
+    FixtureStager::setFixturePath(__DIR__ . '/../../fixtures/staged/9.8.1');
     $assert_session->buttonExists('Update');
     // Ensure that the previous results are still displayed on another admin
     // page, to confirm that the updater form is not discarding the previous
@@ -428,7 +431,7 @@ class ReadinessValidationTest extends AutomaticUpdatesFunctionalTestBase {
     $this->drupalGet('/admin/modules/automatic-update');
     $page->pressButton('Update');
     $this->checkForMetaRefresh();
-    $this->assertUpdateReady();
+    $this->assertUpdateReady('9.8.1');
     $page->pressButton('Continue');
     $this->checkForMetaRefresh();
     $assert_session->pageTextContains('Update complete!');

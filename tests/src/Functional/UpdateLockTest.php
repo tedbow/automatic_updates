@@ -2,6 +2,8 @@
 
 namespace Drupal\Tests\automatic_updates\Functional;
 
+use Drupal\package_manager_test_fixture\EventSubscriber\FixtureStager;
+
 /**
  * Tests that only one Automatic Update operation can be performed at a time.
  *
@@ -20,6 +22,7 @@ class UpdateLockTest extends AutomaticUpdatesFunctionalTestBase {
   protected static $modules = [
     'automatic_updates',
     'automatic_updates_test',
+    'package_manager_test_fixture',
   ];
 
   /**
@@ -48,9 +51,10 @@ class UpdateLockTest extends AutomaticUpdatesFunctionalTestBase {
     // We should be able to get partway through an update without issue.
     $this->drupalLogin($user_1);
     $this->drupalGet('/admin/modules/automatic-update');
+    FixtureStager::setFixturePath(__DIR__ . '/../../fixtures/staged/9.8.1');
     $page->pressButton('Update');
     $this->checkForMetaRefresh();
-    $this->assertUpdateReady();
+    $this->assertUpdateReady('9.8.1');
     $assert_session->buttonExists('Continue');
     $url = parse_url($this->getSession()->getCurrentUrl(), PHP_URL_PATH);
 

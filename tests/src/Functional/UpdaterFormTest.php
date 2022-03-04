@@ -4,11 +4,13 @@ namespace Drupal\Tests\automatic_updates\Functional;
 
 use Drupal\automatic_updates\Event\ReadinessCheckEvent;
 use Drupal\automatic_updates_test\Datetime\TestTime;
+use Drupal\Component\FileSystem\FileSystem;
 use Drupal\package_manager\Event\PostRequireEvent;
 use Drupal\package_manager\Event\PreApplyEvent;
 use Drupal\package_manager\Event\PreCreateEvent;
 use Drupal\package_manager\ValidationResult;
 use Drupal\automatic_updates_test\EventSubscriber\TestSubscriber1;
+use Drupal\package_manager_test_fixture\EventSubscriber\FixtureStager;
 use Drupal\Tests\automatic_updates\Traits\ValidationTestTrait;
 use Drupal\Tests\package_manager\Traits\PackageManagerBypassTestTrait;
 
@@ -34,6 +36,7 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
     'block',
     'automatic_updates',
     'automatic_updates_test',
+    'package_manager_test_fixture',
   ];
 
   /**
@@ -250,18 +253,19 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
     $this->checkForUpdates();
 
     $this->drupalGet('/admin/modules/automatic-update');
+    FixtureStager::setFixturePath(__DIR__ . '/../../fixtures/staged/9.8.1');
     $page->pressButton('Update');
     $this->checkForMetaRefresh();
     $this->assertUpdateStagedTimes(1);
 
     // Confirm we are on the confirmation page.
-    $this->assertUpdateReady();
+    $this->assertUpdateReady('9.8.1');
     $assert_session->buttonExists('Continue');
 
     // If we try to return to the start page, we should be redirected back to
     // the confirmation page.
     $this->drupalGet('/admin/modules/automatic-update');
-    $this->assertUpdateReady();
+    $this->assertUpdateReady('9.8.1');
 
     // Delete the existing update.
     $page->pressButton('Cancel update');
@@ -273,7 +277,7 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
     $this->checkForMetaRefresh();
 
     // Confirm we are on the confirmation page.
-    $this->assertUpdateReady();
+    $this->assertUpdateReady('9.8.1');
     $this->assertUpdateStagedTimes(2);
     $assert_session->buttonExists('Continue');
 
@@ -290,7 +294,7 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
     $assert_session->pageTextNotContains($conflict_message);
     $page->pressButton('Update');
     $this->checkForMetaRefresh();
-    $this->assertUpdateReady();
+    $this->assertUpdateReady('9.8.1');
 
     // Stop execution during pre-apply. This should make Package Manager think
     // the staged changes are being applied and raise an error if we try to
@@ -332,7 +336,7 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
     TestSubscriber1::setTestResult($results, PreApplyEvent::class);
     $page->pressButton('Update');
     $this->checkForMetaRefresh();
-    $this->assertUpdateReady();
+    $this->assertUpdateReady('9.8.1');
     $page->pressButton('Continue');
     $this->checkForMetaRefresh();
     $page->clickLink('the error page');
@@ -356,13 +360,14 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
 
     $page = $this->getSession()->getPage();
     $this->drupalGet('/admin/modules/automatic-update');
+    FixtureStager::setFixturePath(__DIR__ . '/../../fixtures/staged/9.8.1');
     // The warning should be visible.
     $assert_session = $this->assertSession();
     $assert_session->pageTextContains(reset($messages));
     $page->pressButton('Update');
     $this->checkForMetaRefresh();
     $this->assertUpdateStagedTimes(1);
-    $this->assertUpdateReady();
+    $this->assertUpdateReady('9.8.1');
     // Simulate a staged database update in the automatic_updates_test module.
     // We must do this after the update has started, because the pending updates
     // validator will prevent an update from starting.
@@ -397,10 +402,11 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
 
     $page = $this->getSession()->getPage();
     $this->drupalGet($update_form_url);
+    FixtureStager::setFixturePath(__DIR__ . '/../../fixtures/staged/9.8.1');
     $page->pressButton('Update');
     $this->checkForMetaRefresh();
     $this->assertUpdateStagedTimes(1);
-    $this->assertUpdateReady();
+    $this->assertUpdateReady('9.8.1');
     $this->assertNotTrue($this->container->get('state')->get('system.maintenance_mode'));
     $page->pressButton('Continue');
     $this->checkForMetaRefresh();
@@ -412,6 +418,39 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
     //   update started in https://www.drupal.org/i/3265057.
     $this->assertTrue($this->container->get('state')->get('system.maintenance_mode'));
     $assert_session->pageTextContainsOnce('Update complete!');
+  }
+
+  /**
+   * Tests what happens when a staged update is deleted without being destroyed.
+   */
+  public function testStagedUpdateDeletedImproperly(): void {
+    $this->setCoreVersion('9.8.0');
+    $this->checkForUpdates();
+
+    $page = $this->getSession()->getPage();
+    $this->drupalGet('/admin/modules/automatic-update');
+    FixtureStager::setFixturePath(__DIR__ . '/../../fixtures/staged/9.8.1');
+    $page->pressButton('Update');
+    $this->checkForMetaRefresh();
+    $this->assertUpdateStagedTimes(1);
+    $this->assertUpdateReady('9.8.1');
+    // Confirm if the staged directory is deleted without using destroy(), then
+    // an error message will be displayed on the page.
+    // @see \Drupal\package_manager\Stage::getStagingRoot()
+    $dir = FileSystem::getOsTemporaryDirectory() . '/.package_manager' . $this->config('system.site')->get('uuid');
+    $this->assertDirectoryExists($dir);
+    $this->container->get('file_system')->deleteRecursive($dir);
+    $this->getSession()->reload();
+    $assert_session = $this->assertSession();
+    $error_message = 'There was an error loading the pending update. Press the Cancel update button to start over.';
+    $assert_session->pageTextContainsOnce($error_message);
+    // We should be able to start over without any problems, and the error
+    // message should not be seen on the updater form.
+    $page->pressButton('Cancel update');
+    $assert_session->addressEquals('/admin/reports/updates/automatic-update');
+    $assert_session->pageTextNotContains($error_message);
+    $assert_session->pageTextContains('The update was successfully cancelled.');
+    $assert_session->buttonExists('Update');
   }
 
   /**

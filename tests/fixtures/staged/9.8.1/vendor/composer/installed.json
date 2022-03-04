@@ -1,0 +1,9 @@
+{
+  "packages": [
+    {
+      "name": "drupal/core",
+      "version": "9.8.1",
+      "type": "drupal-core"
+    }
+  ]
+}
