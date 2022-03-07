@@ -345,11 +345,33 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
   }
 
   /**
-   * Tests the update form when staged modules have database updates.
+   * Data provider for testStagedDatabaseUpdates().
+   *
+   * @return bool[][]
+   *   The test cases.
    */
-  public function testStagedDatabaseUpdates(): void {
+  public function providerStagedDatabaseUpdates() {
+    return [
+      'maintenance mode on' => [TRUE],
+      'maintenance mode off' => [FALSE],
+    ];
+  }
+
+  /**
+   * Tests the update form when staged modules have database updates.
+   *
+   * @param bool $maintenance_mode_on
+   *   Whether the site should be in maintenance mode at the beginning of the
+   *   update process.
+   *
+   * @dataProvider providerStagedDatabaseUpdates
+   */
+  public function testStagedDatabaseUpdates(bool $maintenance_mode_on): void {
     $this->setCoreVersion('9.8.0');
     $this->checkForUpdates();
+
+    $state = $this->container->get('state');
+    $state->set('system.maintenance_mode', $maintenance_mode_on);
 
     // Flag a warning, which will not block the update but should be displayed
     // on the updater form.
@@ -371,7 +393,7 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
     // Simulate a staged database update in the automatic_updates_test module.
     // We must do this after the update has started, because the pending updates
     // validator will prevent an update from starting.
-    $this->container->get('state')->set('automatic_updates_test.new_update', TRUE);
+    $state->set('automatic_updates_test.new_update', TRUE);
     // The warning from the updater form should be not be repeated, but we
     // should see a warning about pending database updates, and once the staged
     // changes have been applied, we should be redirected to update.php, where
@@ -380,12 +402,55 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
     $possible_update_message = 'Possible database updates were detected in the following modules; you may be redirected to the database update page in order to complete the update process.';
     $assert_session->pageTextContains($possible_update_message);
     $assert_session->pageTextContains('System');
+    $assert_session->checkboxChecked('maintenance_mode');
     $page->pressButton('Continue');
     $this->checkForMetaRefresh();
+    // Confirm that the site was in maintenance before the update was applied.
+    // @see \Drupal\package_manager_test_validation\EventSubscriber\TestSubscriber::handleEvent()
+    $this->assertTrue($state->get(PreApplyEvent::class . '.system.maintenance_mode'));
+    // Confirm the site remains in maintenance more when redirected to
+    // update.php.
+    $this->assertTrue($state->get('system.maintenance_mode'));
     $assert_session->addressEquals('/update.php');
     $assert_session->pageTextNotContains(reset($messages));
     $assert_session->pageTextNotContains($possible_update_message);
     $assert_session->pageTextContainsOnce('Please apply database updates to complete the update process.');
+    $this->assertTrue($state->get('system.maintenance_mode'));
+    $page->clickLink('Continue');
+    // @see automatic_updates_update_9001()
+    $assert_session->pageTextContains('Dynamic automatic_updates_update_9001');
+    $page->clickLink('Apply pending updates');
+    $this->checkForMetaRefresh();
+    $assert_session->pageTextContains('Updates were attempted.');
+    // Confirm the site was returned to the original maintenance module state.
+    $this->assertSame($state->get('system.maintenance_mode'), $maintenance_mode_on);
+  }
+
+  /**
+   * Data provider for testSuccessfulUpdate().
+   *
+   * @return string[][]
+   *   Test case parameters.
+   */
+  public function providerSuccessfulUpdate(): array {
+    return [
+      'Modules page, maintenance mode on' => [
+        '/admin/modules/automatic-update',
+        TRUE,
+      ],
+      'Modules page, maintenance mode off' => [
+        '/admin/modules/automatic-update',
+        FALSE,
+      ],
+      'Reports page, maintenance mode on' => [
+        '/admin/reports/updates/automatic-update',
+        TRUE,
+      ],
+      'Reports page, maintenance mode off' => [
+        '/admin/reports/updates/automatic-update',
+        FALSE,
+      ],
+    ];
   }
 
   /**
@@ -393,12 +458,16 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
    *
    * @param string $update_form_url
    *   The URL of the update form to visit.
+   * @param bool $maintenance_mode_on
+   *   Whether maintenance should be on at the beginning of the update.
    *
-   * @dataProvider providerUpdateFormReferringUrl
+   * @dataProvider providerSuccessfulUpdate
    */
-  public function testSuccessfulUpdate(string $update_form_url): void {
+  public function testSuccessfulUpdate(string $update_form_url, bool $maintenance_mode_on): void {
     $this->setCoreVersion('9.8.0');
     $this->checkForUpdates();
+    $state = $this->container->get('state');
+    $state->set('system.maintenance_mode', $maintenance_mode_on);
 
     $page = $this->getSession()->getPage();
     $this->drupalGet($update_form_url);
@@ -407,17 +476,18 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
     $this->checkForMetaRefresh();
     $this->assertUpdateStagedTimes(1);
     $this->assertUpdateReady('9.8.1');
-    $this->assertNotTrue($this->container->get('state')->get('system.maintenance_mode'));
+    // Confirm that the site was put into maintenance mode if needed.
+    $this->assertSame($state->get('system.maintenance_mode'), $maintenance_mode_on);
     $page->pressButton('Continue');
     $this->checkForMetaRefresh();
     $assert_session = $this->assertSession();
     $assert_session->addressEquals('/admin/reports/updates');
-    // Assert that the site was put into maintenance mode.
-    // @todo Add test coverage to ensure that site is taken back out of
-    //   maintenance if it was not originally in maintenance mode when the
-    //   update started in https://www.drupal.org/i/3265057.
-    $this->assertTrue($this->container->get('state')->get('system.maintenance_mode'));
+    // Confirm that the site was in maintenance before the update was applied.
+    // @see \Drupal\package_manager_test_validation\EventSubscriber\TestSubscriber::handleEvent()
+    $this->assertTrue($state->get(PreApplyEvent::class . '.system.maintenance_mode'));
     $assert_session->pageTextContainsOnce('Update complete!');
+    // Confirm the site was returned to the original maintenance mode state.
+    $this->assertSame($state->get('system.maintenance_mode'), $maintenance_mode_on);
   }
 
   /**

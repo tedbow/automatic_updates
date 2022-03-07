@@ -196,12 +196,13 @@ class UpdateReady extends FormBase {
    * {@inheritdoc}
    */
   public function submitForm(array &$form, FormStateInterface $form_state) {
-    $session = $this->getRequest()->getSession();
     // Store maintenance_mode setting so we can restore it when done.
-    $session->set('maintenance_mode', $this->state->get('system.maintenance_mode'));
+    $this->getRequest()
+      ->getSession()
+      ->set(BatchProcessor::MAINTENANCE_MODE_SESSION_KEY, $this->state->get('system.maintenance_mode'));
+
     if ($form_state->getValue('maintenance_mode')) {
       $this->state->set('system.maintenance_mode', TRUE);
-      // @todo unset after updater. After db update?
     }
     $stage_id = $form_state->getValue('stage_id');
     $batch = (new BatchBuilder())

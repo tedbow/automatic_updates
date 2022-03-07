@@ -5,6 +5,7 @@
  * Contains hook implementations for Automatic Updates.
  */
 
+use Drupal\automatic_updates\BatchProcessor;
 use Drupal\Core\Routing\RouteMatchInterface;
 use Drupal\automatic_updates\CronUpdater;
 use Drupal\automatic_updates\UpdateRecommender;
@@ -12,6 +13,7 @@ use Drupal\automatic_updates\Validation\AdminReadinessMessages;
 use Drupal\Core\Extension\ExtensionVersion;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Url;
+use Drupal\system\Controller\DbUpdateController;
 use Drupal\update\ProjectSecurityData;
 
 /**
@@ -197,6 +199,19 @@ function automatic_updates_local_tasks_alter(array &$local_tasks) {
   foreach ($new_routes as $local_task_id => $new_route) {
     if (!empty($local_tasks[$local_task_id])) {
       $local_tasks[$local_task_id]['route_name'] = $new_route;
+    }
+  }
+}
+
+/**
+ * Implements hook_batch_alter().
+ *
+ * @todo Remove this in https://www.drupal.org/i/3267817.
+ */
+function automatic_updates_batch_alter(array &$batch): void {
+  foreach ($batch['sets'] as &$batch_set) {
+    if (!empty($batch_set['finished']) && $batch_set['finished'] === [DbUpdateController::class, 'batchFinished']) {
+      $batch_set['finished'] = [BatchProcessor::class, 'dbUpdateBatchFinished'];
     }
   }
 }

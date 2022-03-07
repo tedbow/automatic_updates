@@ -112,6 +112,9 @@ class TestSubscriber implements EventSubscriberInterface {
   public function handleEvent(StageEvent $event): void {
     $results = $this->state->get(static::STATE_KEY . '.' . get_class($event), []);
 
+    // Record that value of maintenance mode for each event.
+    $this->state->set(get_class($event) . '.' . 'system.maintenance_mode', $this->state->get('system.maintenance_mode'));
+
     if ($results instanceof \Throwable) {
       throw $results;
     }

@@ -4,6 +4,7 @@ namespace Drupal\automatic_updates;
 
 use Drupal\Core\Url;
 use Drupal\package_manager\Exception\StageValidationException;
+use Drupal\system\Controller\DbUpdateController;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 
 /**
@@ -17,6 +18,13 @@ class BatchProcessor {
    * @var string
    */
   public const STAGE_ID_SESSION_KEY = '_automatic_updates_stage_id';
+
+  /**
+   * The session key which indicates if the update is done in maintenance mode.
+   *
+   * @var string
+   */
+  public const MAINTENANCE_MODE_SESSION_KEY = '_automatic_updates_maintenance_mode';
 
   /**
    * Gets the updater service.
@@ -197,6 +205,41 @@ class BatchProcessor {
     }
     else {
       \Drupal::messenger()->addError("Update error");
+    }
+  }
+
+  /**
+   * Reset maintenance mode after update.php.
+   *
+   * This wraps \Drupal\system\Controller\DbUpdateController::batchFinished()
+   * because that function would leave the site in maintenance mode if we
+   * redirected the user to update.php already in maintenance mode. We need to
+   * take the site out of maintenance mode, if it was not enabled before they
+   * submitted our confirmation form.
+   *
+   * @param bool $success
+   *   Whether the batch API tasks were all completed successfully.
+   * @param array $results
+   *   An array of all the results.
+   * @param array $operations
+   *   A list of the operations that had not been completed by the batch API.
+   *
+   * @todo Remove the need for this workaround in
+   *    https://www.drupal.org/i/3267817.
+   *
+   * @see \Drupal\update\Form\UpdateReady::submitForm()
+   * @see automatic_updates_batch_alter()
+   */
+  public static function dbUpdateBatchFinished(bool $success, array $results, array $operations) {
+    DbUpdateController::batchFinished($success, $results, $operations);
+    // Now that the update is done, we can put the site back online if it was
+    // previously not in maintenance mode.
+    // \Drupal\system\Controller\DbUpdateController::batchFinished() will not
+    // unset maintenance mode if the site was in maintenance mode when the user
+    // was redirected to update.php by
+    // \Drupal\automatic_updates\Controller\UpdateController::onFinish().
+    if (!\Drupal::request()->getSession()->remove(static::MAINTENANCE_MODE_SESSION_KEY)) {
+      \Drupal::state()->set('system.maintenance_mode', FALSE);
     }
   }
 
