@@ -4,6 +4,7 @@ namespace Drupal\Tests\automatic_updates\Kernel;
 
 use Drupal\automatic_updates\CronUpdater;
 use Drupal\automatic_updates_test\EventSubscriber\TestSubscriber1;
+use Drupal\Core\DependencyInjection\ContainerBuilder;
 use Drupal\Core\Form\FormState;
 use Drupal\Core\Logger\RfcLogLevel;
 use Drupal\package_manager\Event\PostApplyEvent;
@@ -61,6 +62,19 @@ class CronUpdaterTest extends AutomaticUpdatesKernelTestBase {
     $this->container->get('logger.factory')
       ->get('automatic_updates')
       ->addLogger($this->logger);
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function register(ContainerBuilder $container) {
+    parent::register($container);
+
+    // Since this test dynamically adds additional loggers to certain channels,
+    // we need to ensure they will persist even if the container is rebuilt when
+    // staged changes are applied.
+    // @see ::testStageDestroyedOnError()
+    $container->getDefinition('logger.factory')->addTag('persist');
   }
 
   /**

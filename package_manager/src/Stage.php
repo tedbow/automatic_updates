@@ -331,6 +331,15 @@ class Stage {
 
     $this->committer->commit($stage_dir, $active_dir, $event->getExcludedPaths());
     $this->tempStore->delete(self::TEMPSTORE_APPLY_TIME_KEY);
+
+    // Rebuild the container and clear all caches, to ensure that new services
+    // are picked up.
+    drupal_flush_all_caches();
+    // Refresh the event dispatcher so that new or changed event subscribers
+    // will be called. The other services we depend on are either stateless or
+    // unlikely to call newly added code during the current request.
+    $this->eventDispatcher = \Drupal::service('event_dispatcher');
+
     $this->dispatch(new PostApplyEvent($this));
   }
 

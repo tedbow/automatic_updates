@@ -1,6 +1,6 @@
-package_manager_test_api.require:
-  path: '/package-manager-test-api/require'
+package_manager_test_api:
+  path: '/package-manager-test-api'
   defaults:
-    _controller: 'Drupal\package_manager_test_api\ApiController::require'
+    _controller: 'Drupal\package_manager_test_api\ApiController::run'
   requirements:
     _access: 'TRUE'

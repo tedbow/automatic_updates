@@ -2,6 +2,7 @@
 
 namespace Drupal\Tests\package_manager\Kernel;
 
+use Drupal\Core\DependencyInjection\ContainerBuilder;
 use Drupal\package_manager\Event\PostApplyEvent;
 use Drupal\package_manager\Event\PostCreateEvent;
 use Drupal\package_manager\Event\PostDestroyEvent;
@@ -44,6 +45,18 @@ class StageEventsTest extends PackageManagerKernelTestBase implements EventSubsc
   protected function setUp(): void {
     parent::setUp();
     $this->stage = $this->createStage();
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function register(ContainerBuilder $container) {
+    parent::register($container);
+
+    // Since this test adds arbitrary event listeners that aren't services, we
+    // need to ensure they will persist even if the container is rebuilt when
+    // staged changes are applied.
+    $container->getDefinition('event_dispatcher')->addTag('persist');
   }
 
   /**
