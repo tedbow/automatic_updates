@@ -40,6 +40,10 @@ abstract class AutomaticUpdatesFunctionalTestBase extends BrowserTestBase {
     // package_manager_bypass is disabling those operations.
     'automatic_updates.composer_executable_validator',
     'package_manager.validator.composer_executable',
+    // Disable the lock file validator, because it may cause the tests to fail
+    // if either the active and stage directories don't have a composer.lock
+    // file, which is the case with some of our fixtures.
+    'package_manager.validator.lock_file',
   ];
 
   /**

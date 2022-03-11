@@ -57,14 +57,17 @@ class LockFileValidator implements PreOperationStageValidatorInterface {
   }
 
   /**
-   * Returns the current hash of the active directory's lock file.
+   * Returns the current hash of the given directory's lock file.
+   *
+   * @param string $directory
+   *   Path of a directory containing a composer.lock file.
    *
    * @return string|false
-   *   The hash of the active directory's lock file, or FALSE if the lock file
+   *   The hash of the given directory's lock file, or FALSE if the lock file
    *   does not exist.
    */
-  protected function getHash() {
-    $file = $this->pathLocator->getProjectRoot() . DIRECTORY_SEPARATOR . 'composer.lock';
+  protected function getLockFileHash(string $directory) {
+    $file = $directory . DIRECTORY_SEPARATOR . 'composer.lock';
     // We want to directly hash the lock file itself, rather than look at its
     // content-hash value, which is actually a hash of the relevant parts of
     // composer.json. We're trying to verify that the actual installed packages
@@ -81,7 +84,7 @@ class LockFileValidator implements PreOperationStageValidatorInterface {
    * Stores the current lock file hash.
    */
   public function storeHash(PreCreateEvent $event): void {
-    $hash = $this->getHash();
+    $hash = $this->getLockFileHash($this->pathLocator->getProjectRoot());
     if ($hash) {
       $this->state->set(static::STATE_KEY, $hash);
     }
@@ -97,8 +100,8 @@ class LockFileValidator implements PreOperationStageValidatorInterface {
    */
   public function validateStagePreOperation(PreOperationStageEvent $event): void {
     // Ensure we can get a current hash of the lock file.
-    $hash = $this->getHash();
-    if (empty($hash)) {
+    $active_hash = $this->getLockFileHash($this->pathLocator->getProjectRoot());
+    if (empty($active_hash)) {
       $error = $this->t('Could not hash the active lock file.');
     }
 
@@ -109,8 +112,17 @@ class LockFileValidator implements PreOperationStageValidatorInterface {
     }
 
     // If we have both hashes, ensure they match.
-    if ($hash && $stored_hash && !hash_equals($stored_hash, $hash)) {
+    if ($active_hash && $stored_hash && !hash_equals($stored_hash, $active_hash)) {
       $error = $this->t('Stored lock file hash does not match the active lock file.');
+    }
+
+    // Don't allow staged changes to be applied if the staged lock file has no
+    // apparent changes.
+    if (empty($error) && $event instanceof PreApplyEvent) {
+      $stage_hash = $this->getLockFileHash($event->getStage()->getStageDirectory());
+      if ($stage_hash && hash_equals($active_hash, $stage_hash)) {
+        $error = $this->t('There are no pending Composer operations.');
+      }
     }
 
     // @todo Let the validation result carry all the relevant messages in

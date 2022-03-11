@@ -2,6 +2,7 @@
 
 namespace Drupal\Tests\package_manager\Kernel;
 
+use Drupal\package_manager\Event\PostRequireEvent;
 use Drupal\package_manager\Event\PreApplyEvent;
 use Drupal\package_manager\Event\PreCreateEvent;
 use Drupal\package_manager\Event\PreRequireEvent;
@@ -117,6 +118,21 @@ class LockFileValidatorTest extends PackageManagerKernelTestBase {
       'Could not retrieve stored hash of the active lock file.',
     ]);
     $this->assertResults([$result], $event_class);
+  }
+
+  /**
+   * Tests validation when the staged and active lock files are identical.
+   */
+  public function testApplyWithNoChange(): void {
+    $this->addListener(PostRequireEvent::class, function (PostRequireEvent $event) {
+      $stage_dir = $event->getStage()->getStageDirectory();
+      mkdir($stage_dir);
+      copy("$this->activeDir/composer.lock", "$stage_dir/composer.lock");
+    });
+    $result = ValidationResult::createError([
+      'There are no pending Composer operations.',
+    ]);
+    $this->assertResults([$result], PreApplyEvent::class);
   }
 
   /**
