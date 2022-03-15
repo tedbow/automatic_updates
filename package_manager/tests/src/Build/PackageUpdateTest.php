@@ -43,6 +43,7 @@ class PackageUpdateTest extends TemplateProjectTestBase {
         'web/modules/contrib/alpha/composer.json',
         'web/modules/contrib/updated_module/composer.json',
         'bravo.txt',
+        "system_changes.json",
       ],
     ]);
     $this->visit("/package-manager-test-api?$query");
@@ -65,6 +66,21 @@ class PackageUpdateTest extends TemplateProjectTestBase {
     // created this file.
     // @see \Drupal\updated_module\PostApplySubscriber::postApply()
     $this->assertSame('Bravo!', $file_contents['bravo.txt']);
+
+    $results = json_decode($file_contents['system_changes.json'], TRUE);
+    $expected_pre_apply_results = [
+      'return value of existing global function' => 'pre-update-value',
+      'new global function exists' => 'not exists',
+    ];
+    $this->assertSame($expected_pre_apply_results, $results['pre']);
+
+    $expected_post_apply_results = [
+      // Existing functions will still use the pre-update version.
+      'return value of existing global function' => 'pre-update-value',
+      // New functions that were added in .module files will not be available.
+      'new global function exists' => 'not exists',
+    ];
+    $this->assertSame($expected_post_apply_results, $results['post']);
   }
 
   /**

@@ -1,0 +1,8 @@
+services:
+  package_manager_test_api.system_change_recorder:
+    class: Drupal\package_manager_test_api\SystemChangeRecorder
+    arguments:
+      - '@package_manager.path_locator'
+      - '@state'
+    tags:
+      - { name: event_subscriber }

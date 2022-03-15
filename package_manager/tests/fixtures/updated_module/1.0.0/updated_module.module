@@ -1,0 +1,15 @@
+<?php
+
+/**
+ * @file
+ * Contains global functions for testing updates to a .module file.
+ */
+
+/**
+ * A test function to test if global functions are reloaded during an update.
+ *
+ * @return string
+ */
+function _updated_module_global1(): string {
+  return "pre-update-value";
+}
