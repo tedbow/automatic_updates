@@ -1,0 +1,12 @@
+updated_module.changed:
+  path: '/updated-module/changed/pre'
+  defaults:
+    _controller: 'updated_module_hello'
+  requirements:
+    _access: 'TRUE'
+updated_module.deleted:
+  path: '/updated-module/deleted'
+  defaults:
+    _controller: 'updated_module_hello'
+  requirements:
+    _access: 'TRUE'

@@ -1,0 +1,12 @@
+updated_module.changed:
+  path: '/updated-module/changed/post'
+  defaults:
+    _controller: 'updated_module_hello'
+  requirements:
+    _access: 'TRUE'
+updated_module.added:
+  path: '/updated-module/added'
+  defaults:
+    _controller: 'updated_module_hello'
+  requirements:
+    _access: 'TRUE'

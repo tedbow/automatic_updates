@@ -6,6 +6,18 @@
  */
 
 /**
+ * Page controller that says hello.
+ *
+ * @return array
+ *   A renderable array of the page content.
+ */
+function updated_module_hello(): array {
+  return [
+    '#markup' => 'Hello!',
+  ];
+}
+
+/**
  * A test function to test if global functions are reloaded during an update.
  *
  * @return string

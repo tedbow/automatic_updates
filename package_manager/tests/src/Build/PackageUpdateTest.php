@@ -71,6 +71,9 @@ class PackageUpdateTest extends TemplateProjectTestBase {
     $expected_pre_apply_results = [
       'return value of existing global function' => 'pre-update-value',
       'new global function exists' => 'not exists',
+      'path of changed route' => '/updated-module/changed/pre',
+      'deleted route exists' => 'exists',
+      'new route exists' => 'not exists',
     ];
     $this->assertSame($expected_pre_apply_results, $results['pre']);
 
@@ -79,6 +82,12 @@ class PackageUpdateTest extends TemplateProjectTestBase {
       'return value of existing global function' => 'pre-update-value',
       // New functions that were added in .module files will not be available.
       'new global function exists' => 'not exists',
+      // Definitions for existing routes should be updated.
+      'path of changed route' => '/updated-module/changed/post',
+      // Routes deleted from the updated module should not be available.
+      'deleted route exists' => 'not exists',
+      // Routes added to the updated module should be available.
+      'new route exists' => 'exists',
     ];
     $this->assertSame($expected_post_apply_results, $results['post']);
   }

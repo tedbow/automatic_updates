@@ -4,5 +4,6 @@ services:
     arguments:
       - '@package_manager.path_locator'
       - '@state'
+      - '@router.no_access_checks'
     tags:
       - { name: event_subscriber }
