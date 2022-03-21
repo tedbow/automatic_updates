@@ -55,15 +55,8 @@ abstract class AutomaticUpdatesKernelTestBase extends PackageManagerKernelTestBa
     $this->installConfig('update');
 
     // Make the update system think that all of System's post-update functions
-    // have run. Since kernel tests don't normally install modules and register
-    // their updates, we need to do this so that all validators are tested from
-    // a clean, fully up-to-date state.
-    $updates = $this->container->get('update.post_update_registry')
-      ->getPendingUpdateFunctions();
-
-    $this->container->get('keyvalue')
-      ->get('post_update')
-      ->set('existing_updates', $updates);
+    // have run.
+    $this->registerPostUpdateFunctions();
 
     // By default, pretend we're running Drupal core 9.8.0 and a non-security
     // update to 9.8.1 is available.

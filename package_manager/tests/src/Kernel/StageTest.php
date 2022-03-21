@@ -4,7 +4,9 @@ namespace Drupal\Tests\package_manager\Kernel;
 
 use Drupal\Component\Datetime\Time;
 use Drupal\Core\DependencyInjection\ContainerBuilder;
+use Drupal\package_manager\Event\PostApplyEvent;
 use Drupal\package_manager\Event\PreApplyEvent;
+use Drupal\package_manager\Event\StageEvent;
 use Drupal\package_manager\Exception\StageException;
 
 /**
@@ -17,11 +19,34 @@ class StageTest extends PackageManagerKernelTestBase {
   /**
    * {@inheritdoc}
    */
+  protected static $modules = ['system'];
+
+  /**
+   * {@inheritdoc}
+   */
+  protected function setUp(): void {
+    parent::setUp();
+
+    $this->installConfig('system');
+    $this->config('system.site')->set('uuid', $this->randomMachineName())->save();
+    // Ensure that the core update system thinks that System's post-update
+    // functions have run.
+    $this->registerPostUpdateFunctions();
+  }
+
+  /**
+   * {@inheritdoc}
+   */
   public function register(ContainerBuilder $container) {
     parent::register($container);
 
     $container->getDefinition('datetime.time')
       ->setClass(TestTime::class);
+
+    // Since this test adds arbitrary event listeners that aren't services, we
+    // need to ensure they will persist even if the container is rebuilt when
+    // staged changes are applied.
+    $container->getDefinition('event_dispatcher')->addTag('persist');
   }
 
   /**
@@ -29,12 +54,7 @@ class StageTest extends PackageManagerKernelTestBase {
    * @covers ::getStagingRoot
    */
   public function testGetStageDirectory(): void {
-    $this->container->get('module_installer')->install(['system']);
-    // Ensure we have an up-to-date-container.
-    $this->container = $this->container->get('kernel')->getContainer();
-
-    // Ensure that a site ID was generated.
-    // @see system_install()
+    // Ensure that a site ID was generated in ::setUp().
     $site_id = $this->config('system.site')->get('uuid');
     $this->assertNotEmpty($site_id);
 
@@ -68,16 +88,62 @@ class StageTest extends PackageManagerKernelTestBase {
    */
   public function providerDestroyDuringApply(): array {
     return [
-      'force destroy, not stale' => [TRUE, 1, TRUE],
-      'regular destroy, not stale' => [FALSE, 1, TRUE],
-      'force destroy, stale' => [TRUE, 7200, FALSE],
-      'regular destroy, stale' => [FALSE, 7200, FALSE],
+      'force destroy on pre-apply, fresh' => [
+        PreApplyEvent::class,
+        TRUE,
+        1,
+        TRUE,
+      ],
+      'destroy on pre-apply, fresh' => [
+        PreApplyEvent::class,
+        FALSE,
+        1,
+        TRUE,
+      ],
+      'force destroy on pre-apply, stale' => [
+        PreApplyEvent::class,
+        TRUE,
+        7200,
+        FALSE,
+      ],
+      'destroy on pre-apply, stale' => [
+        PreApplyEvent::class,
+        FALSE,
+        7200,
+        FALSE,
+      ],
+      'force destroy on post-apply, fresh' => [
+        PostApplyEvent::class,
+        TRUE,
+        1,
+        TRUE,
+      ],
+      'destroy on post-apply, fresh' => [
+        PostApplyEvent::class,
+        FALSE,
+        1,
+        TRUE,
+      ],
+      'force destroy on post-apply, stale' => [
+        PostApplyEvent::class,
+        TRUE,
+        7200,
+        FALSE,
+      ],
+      'destroy on post-apply, stale' => [
+        PostApplyEvent::class,
+        FALSE,
+        7200,
+        FALSE,
+      ],
     ];
   }
 
   /**
    * Tests destroying a stage while applying it.
    *
+   * @param string $event_class
+   *   The event class for which to attempt to destroy the stage.
    * @param bool $force
    *   Whether or not the stage should be force destroyed.
    * @param int $time_offset
@@ -88,8 +154,8 @@ class StageTest extends PackageManagerKernelTestBase {
    *
    * @dataProvider providerDestroyDuringApply
    */
-  public function testDestroyDuringApply(bool $force, int $time_offset, bool $expect_exception): void {
-    $listener = function (PreApplyEvent $event) use ($force, $time_offset): void {
+  public function testDestroyDuringApply(string $event_class, bool $force, int $time_offset, bool $expect_exception): void {
+    $listener = function (StageEvent $event) use ($force, $time_offset): void {
       // Simulate that a certain amount of time has passed since we started
       // applying staged changes. After a point, it should be possible to
       // destroy the stage even if it hasn't finished.
@@ -102,7 +168,7 @@ class StageTest extends PackageManagerKernelTestBase {
       $event->getStage()->destroy($force);
     };
     $this->container->get('event_dispatcher')
-      ->addListener(PreApplyEvent::class, $listener);
+      ->addListener($event_class, $listener);
 
     $stage = $this->createStage();
     $stage->create();

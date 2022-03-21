@@ -320,17 +320,18 @@ class Stage {
     $active_dir = $this->pathLocator->getProjectRoot();
     $stage_dir = $this->getStageDirectory();
 
-    $event = new PreApplyEvent($this);
-    $this->tempStore->set(self::TEMPSTORE_APPLY_TIME_KEY, $this->time->getRequestTime());
-    // If an error occurs while dispatching the event, ensure that ::destroy()
+    // If an error occurs while dispatching the events, ensure that ::destroy()
     // doesn't think we're in the middle of applying the staged changes to the
     // active directory.
-    $this->dispatch($event, function (): void {
+    $release_apply = function (): void {
       $this->tempStore->delete(self::TEMPSTORE_APPLY_TIME_KEY);
-    });
+    };
+
+    $event = new PreApplyEvent($this);
+    $this->tempStore->set(self::TEMPSTORE_APPLY_TIME_KEY, $this->time->getRequestTime());
+    $this->dispatch($event, $release_apply);
 
     $this->committer->commit($stage_dir, $active_dir, $event->getExcludedPaths());
-    $this->tempStore->delete(self::TEMPSTORE_APPLY_TIME_KEY);
 
     // Rebuild the container and clear all caches, to ensure that new services
     // are picked up.
@@ -340,7 +341,8 @@ class Stage {
     // unlikely to call newly added code during the current request.
     $this->eventDispatcher = \Drupal::service('event_dispatcher');
 
-    $this->dispatch(new PostApplyEvent($this));
+    $this->dispatch(new PostApplyEvent($this), $release_apply);
+    $release_apply();
   }
 
   /**
