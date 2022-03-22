@@ -8,6 +8,7 @@ use Drupal\package_manager\Event\PostDestroyEvent;
 use Drupal\package_manager\Event\PreApplyEvent;
 use Drupal\package_manager\Event\StageEvent;
 use Drupal\package_manager\PathLocator;
+use Drupal\user\PermissionHandlerInterface;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\Component\Routing\RouterInterface;
 
@@ -38,6 +39,13 @@ class SystemChangeRecorder implements EventSubscriberInterface {
   private $router;
 
   /**
+   * The permission handler service.
+   *
+   * @var \Drupal\user\PermissionHandlerInterface
+   */
+  private $permissionHandler;
+
+  /**
    * Constructs a SystemChangeRecorder object.
    *
    * @param \Drupal\package_manager\PathLocator $path_locator
@@ -46,11 +54,14 @@ class SystemChangeRecorder implements EventSubscriberInterface {
    *   The state service.
    * @param \Symfony\Component\Routing\RouterInterface $router
    *   The router service.
+   * @param \Drupal\user\PermissionHandlerInterface $permissionHandler
+   *   The permission handler service.
    */
-  public function __construct(PathLocator $path_locator, StateInterface $state, RouterInterface $router) {
+  public function __construct(PathLocator $path_locator, StateInterface $state, RouterInterface $router, PermissionHandlerInterface $permissionHandler) {
     $this->pathLocator = $path_locator;
     $this->state = $state;
     $this->router = $router;
+    $this->permissionHandler = $permissionHandler;
   }
 
   /**
@@ -78,6 +89,13 @@ class SystemChangeRecorder implements EventSubscriberInterface {
     // Check if a route added in the updated module is available.
     $results['new route exists'] = $route_collection->get('updated_module.added') ? 'exists' : 'not exists';
 
+    $permissions = $this->permissionHandler->getPermissions();
+    // Check if changes to an existing permission are picked up.
+    $results['title of changed permission'] = $permissions['changed permission']['title'];
+    // Check if a permission removed from the updated module is not available.
+    $results['deleted permission exists'] = array_key_exists('deleted permission', $permissions) ? 'exists' : 'not exists';
+    // Check if a permission added in the updated module is available.
+    $results['new permission exists'] = array_key_exists('added permission', $permissions) ? 'exists' : 'not exists';
     $phase = $event instanceof PreApplyEvent ? 'pre' : 'post';
     $this->state->set("system_changes:$phase", $results);
   }

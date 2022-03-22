@@ -74,6 +74,9 @@ class PackageUpdateTest extends TemplateProjectTestBase {
       'path of changed route' => '/updated-module/changed/pre',
       'deleted route exists' => 'exists',
       'new route exists' => 'not exists',
+      'title of changed permission' => 'permission',
+      'deleted permission exists' => 'exists',
+      'new permission exists' => 'not exists',
     ];
     $this->assertSame($expected_pre_apply_results, $results['pre']);
 
@@ -88,6 +91,12 @@ class PackageUpdateTest extends TemplateProjectTestBase {
       'deleted route exists' => 'not exists',
       // Routes added to the updated module should be available.
       'new route exists' => 'exists',
+      // Title of the existing permission should be changed.
+      'title of changed permission' => 'changed permission',
+      // Permissions deleted from the updated module should not be available.
+      'deleted permission exists' => 'not exists',
+      // Permissions added to the updated module should be available.
+      'new permission exists' => 'exists',
     ];
     $this->assertSame($expected_post_apply_results, $results['post']);
   }
