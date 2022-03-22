@@ -137,3 +137,11 @@ services:
       - '@package_manager.path_locator'
     tags:
       - { name: event_subscriber }
+  package_manager.uninstall_validator:
+    class: Drupal\package_manager\PackageManagerUninstallValidator
+    tags:
+      - { name: module_install.uninstall_validator }
+    parent: container.trait
+    calls:
+      - ['setContainer', ['@service_container']]
+    lazy: true

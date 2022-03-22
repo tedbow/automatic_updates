@@ -4,6 +4,7 @@ namespace Drupal\Tests\package_manager\Kernel;
 
 use Drupal\Component\Datetime\Time;
 use Drupal\Core\DependencyInjection\ContainerBuilder;
+use Drupal\Core\Extension\ModuleUninstallValidatorException;
 use Drupal\package_manager\Event\PostApplyEvent;
 use Drupal\package_manager\Event\PreApplyEvent;
 use Drupal\package_manager\Event\StageEvent;
@@ -11,6 +12,8 @@ use Drupal\package_manager\Exception\StageException;
 
 /**
  * @coversDefaultClass \Drupal\package_manager\Stage
+ *
+ * @covers \Drupal\package_manager\PackageManagerUninstallValidator
  *
  * @group package_manager
  */
@@ -176,6 +179,32 @@ class StageTest extends PackageManagerKernelTestBase {
       $this->expectException(StageException::class);
       $this->expectExceptionMessage('Cannot destroy the staging area while it is being applied to the active directory.');
     }
+    $stage->apply();
+  }
+
+  /**
+   * Test uninstalling any module while the staged changes are being applied.
+   */
+  public function testUninstallModuleDuringApply(): void {
+    $listener = function (PreApplyEvent $event): void {
+      $this->assertTrue($event->getStage()->isApplying());
+
+      // Trying to uninstall any module while the stage is being applied should
+      // result in a module uninstall validation error.
+      try {
+        $this->container->get('module_installer')
+          ->uninstall(['package_manager_bypass']);
+        $this->fail('Expected an exception to be thrown while uninstalling a module.');
+      }
+      catch (ModuleUninstallValidatorException $e) {
+        $this->assertStringContainsString('Modules cannot be uninstalled while Package Manager is applying staged changes to the active code base.', $e->getMessage());
+      }
+    };
+    $this->container->get('event_dispatcher')
+      ->addListener(PreApplyEvent::class, $listener);
+
+    $stage = $this->createStage();
+    $stage->create();
     $stage->apply();
   }
 

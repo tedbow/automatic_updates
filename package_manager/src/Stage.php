@@ -359,12 +359,7 @@ class Stage {
     if (!$force) {
       $this->checkOwnership();
     }
-
-    // If we started applying staged changes to the active directory less than
-    // an hour ago, prevent the stage from being destroyed.
-    // @see :apply()
-    $apply_time = $this->tempStore->get(self::TEMPSTORE_APPLY_TIME_KEY);
-    if (isset($apply_time) && $this->time->getRequestTime() - $apply_time < 3600) {
+    if ($this->isApplying()) {
       throw new StageException('Cannot destroy the staging area while it is being applied to the active directory.');
     }
 
@@ -545,6 +540,23 @@ class Stage {
   protected function getStagingRoot(): string {
     $site_id = $this->configFactory->get('system.site')->get('uuid');
     return FileSystem::getOsTemporaryDirectory() . DIRECTORY_SEPARATOR . '.package_manager' . $site_id;
+  }
+
+  /**
+   * Checks if staged changes are being applied to the active directory.
+   *
+   * @return bool
+   *   TRUE if the staged changes are being applied to the active directory, and
+   *   it has been less than an hour since that operation began. If more than an
+   *   hour has elapsed since the changes started to be applied, FALSE is
+   *   returned even if the stage internally thinks that changes are still being
+   *   applied.
+   *
+   * @see ::apply()
+   */
+  final public function isApplying(): bool {
+    $apply_time = $this->tempStore->get(self::TEMPSTORE_APPLY_TIME_KEY);
+    return isset($apply_time) && $this->time->getRequestTime() - $apply_time < 3600;
   }
 
 }
