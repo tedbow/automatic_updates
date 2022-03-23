@@ -3,7 +3,6 @@
 namespace Drupal\automatic_updates_test;
 
 use Drupal\automatic_updates\Exception\UpdateException;
-use Drupal\automatic_updates\UpdateRecommender;
 use Drupal\Component\Utility\Environment;
 use Drupal\Core\Controller\ControllerBase;
 use Drupal\Core\Render\HtmlResponse;
@@ -36,8 +35,17 @@ class TestController extends ControllerBase {
       $updater->apply();
       $updater->destroy();
 
-      $project = (new UpdateRecommender())->getProjectInfo();
-      $content = $project['existing_version'];
+      // The code base has been updated, but as far as the PHP runtime is
+      // concerned, \Drupal::VERSION refers to the old version, until the next
+      // request. So check if the updated version is in Drupal.php and return
+      // a clear indication of whether it's there or not.
+      $drupal_php = file_get_contents(\Drupal::root() . '/core/lib/Drupal.php');
+      if (str_contains($drupal_php, "const VERSION = '$to_version';")) {
+        $content = "$to_version found in Drupal.php";
+      }
+      else {
+        $content = "$to_version not found in Drupal.php";
+      }
       $status = 200;
     }
     catch (UpdateException $e) {

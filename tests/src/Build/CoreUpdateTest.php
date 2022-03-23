@@ -71,8 +71,12 @@ class CoreUpdateTest extends UpdateTestBase {
     // directories are not writable.
     $this->assertReadOnlyFileSystemError('/automatic-update-test/update/9.8.1');
 
-    $mink->getSession()->reload();
-    $assert_session->pageTextContains('9.8.1');
+    $session = $mink->getSession();
+    $session->reload();
+    $this->assertSame('9.8.1 found in Drupal.php', trim($session->getPage()->getContent()));
+    // Even though the response is what we expect, assert the status code as
+    // well, to be extra-certain that there was no kind of server-side error.
+    $assert_session->statusCodeEquals(200);
     $this->assertUpdateSuccessful('9.8.1');
   }
 
