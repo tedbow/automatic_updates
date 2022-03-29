@@ -30,6 +30,7 @@ class ReadinessValidationManagerTest extends AutomaticUpdatesKernelTestBase {
    */
   protected function setUp(): void {
     parent::setUp();
+    $this->setCoreVersion('9.8.2');
     $this->installEntitySchema('user');
     $this->installSchema('user', ['users_data']);
     $this->createTestValidationResults();
@@ -222,6 +223,7 @@ class ReadinessValidationManagerTest extends AutomaticUpdatesKernelTestBase {
       ->install(['automatic_updates']);
 
     // Ensure there's a simulated core release to update to.
+    $this->setCoreVersion('9.8.1');
     $this->setReleaseMetadata(__DIR__ . '/../../../fixtures/release-history/drupal.9.8.2.xml');
 
     // The readiness checker should raise a warning, so that the update is not
@@ -246,7 +248,7 @@ class ReadinessValidationManagerTest extends AutomaticUpdatesKernelTestBase {
 
     /** @var \Drupal\automatic_updates\Updater $updater */
     $updater = $this->container->get('automatic_updates.updater');
-    $updater->begin(['drupal' => '9.8.1']);
+    $updater->begin(['drupal' => '9.8.2']);
     $updater->stage();
     $updater->apply();
     $updater->destroy();

@@ -43,15 +43,25 @@ class CronUpdater extends Updater {
   protected $logger;
 
   /**
+   * The cron release chooser service.
+   *
+   * @var \Drupal\automatic_updates\ReleaseChooser
+   */
+  protected $releaseChooser;
+
+  /**
    * Constructs a CronUpdater object.
    *
+   * @param \Drupal\automatic_updates\ReleaseChooser $release_chooser
+   *   The cron release chooser service.
    * @param \Drupal\Core\Logger\LoggerChannelFactoryInterface $logger_factory
    *   The logger channel factory.
    * @param mixed ...$arguments
    *   Additional arguments to pass to the parent constructor.
    */
-  public function __construct(LoggerChannelFactoryInterface $logger_factory, ...$arguments) {
+  public function __construct(ReleaseChooser $release_chooser, LoggerChannelFactoryInterface $logger_factory, ...$arguments) {
     parent::__construct(...$arguments);
+    $this->releaseChooser = $release_chooser;
     $this->logger = $logger_factory->get('automatic_updates');
   }
 
@@ -59,50 +69,35 @@ class CronUpdater extends Updater {
    * Handles updates during cron.
    */
   public function handleCron(): void {
-    $level = $this->configFactory->get('automatic_updates.settings')
-      ->get('cron');
-
-    // If automatic updates are disabled, bail out.
-    if ($level === static::DISABLED) {
+    if ($this->isDisabled()) {
       return;
     }
 
-    $recommender = new UpdateRecommender();
-    try {
-      $recommended_release = $recommender->getRecommendedRelease(TRUE);
+    $next_release = $this->releaseChooser->refresh()->getLatestInInstalledMinor();
+    if ($next_release) {
+      $this->performUpdate($next_release->getVersion());
     }
-    catch (\Throwable $e) {
-      $this->logger->error($e->getMessage());
-      return;
-    }
+  }
 
-    // If we're already up-to-date, there's nothing else we need to do.
-    if ($recommended_release === NULL) {
-      return;
-    }
-
-    $project = $recommender->getProjectInfo();
-    if (empty($project['existing_version'])) {
+  /**
+   * Performs the update.
+   *
+   * @param string $update_version
+   *   The version to which to update.
+   */
+  private function performUpdate(string $update_version): void {
+    $installed_version = (new ProjectInfo())->getInstalledVersion();
+    if (empty($installed_version)) {
       $this->logger->error('Unable to determine the current version of Drupal core.');
       return;
     }
-
-    // If automatic updates are only enabled for security releases, bail out if
-    // the recommended release is not a security release.
-    if ($level === static::SECURITY && !$recommended_release->isSecurityRelease()) {
-      return;
-    }
-
-    // @todo Use the queue to add update jobs allowing jobs to span multiple
-    //   cron runs.
-    $recommended_version = $recommended_release->getVersion();
 
     // Do the bulk of the update in its own try-catch structure, so that we can
     // handle any exceptions or validation errors consistently, and destroy the
     // stage regardless of whether the update succeeds.
     try {
       $this->begin([
-        'drupal' => $recommended_version,
+        'drupal' => $update_version,
       ]);
       $this->stage();
       $this->apply();
@@ -110,8 +105,8 @@ class CronUpdater extends Updater {
       $this->logger->info(
         'Drupal core has been updated from %previous_version to %update_version',
         [
-          '%previous_version' => $project['existing_version'],
-          '%update_version' => $recommended_version,
+          '%previous_version' => $installed_version,
+          '%update_version' => $update_version,
         ]
       );
     }
@@ -136,6 +131,16 @@ class CronUpdater extends Updater {
     catch (StageValidationException $e) {
       $this->handleException($e);
     }
+  }
+
+  /**
+   * Determines if cron updates are disabled.
+   *
+   * @return bool
+   *   TRUE if cron updates are disabled, otherwise FALSE.
+   */
+  private function isDisabled(): bool {
+    return $this->configFactory->get('automatic_updates.settings')->get('cron') === static::DISABLED;
   }
 
   /**

@@ -4,8 +4,8 @@ namespace Drupal\automatic_updates\Validation;
 
 use Drupal\automatic_updates\CronUpdater;
 use Drupal\automatic_updates\Event\ReadinessCheckEvent;
+use Drupal\automatic_updates\ProjectInfo;
 use Drupal\automatic_updates\Updater;
-use Drupal\automatic_updates\UpdateRecommender;
 use Drupal\Component\Datetime\TimeInterface;
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\KeyValueStore\KeyValueExpirableFactoryInterface;
@@ -102,20 +102,18 @@ class ReadinessValidationManager implements EventSubscriberInterface {
    * @return $this
    */
   public function run(): self {
-    $recommender = new UpdateRecommender();
-    $release = $recommender->getRecommendedRelease(TRUE);
     // If updates will run during cron, use the cron updater service provided by
     // this module. This will allow subscribers to ReadinessCheckEvent to run
     // specific validation for conditions that only affect cron updates.
-    if ($this->config->get('automatic_updates.settings')->get('cron') == CronUpdater::DISABLED) {
+    if ($this->config->get('automatic_updates.settings')->get('cron') === CronUpdater::DISABLED) {
       $stage = $this->updater;
     }
     else {
       $stage = $this->cronUpdater;
     }
-
-    $project_versions = $release ? ['drupal' => $release->getVersion()] : [];
-    $event = new ReadinessCheckEvent($stage, $project_versions);
+    $event = new ReadinessCheckEvent($stage);
+    // Version validators will need up-to-date project info.
+    (new ProjectInfo())->getProjectInfo(TRUE);
     $this->eventDispatcher->dispatch($event);
     $results = $event->getResults();
     $this->keyValueExpirable->setWithExpire(

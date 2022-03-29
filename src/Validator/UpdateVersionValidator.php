@@ -2,20 +2,28 @@
 
 namespace Drupal\automatic_updates\Validator;
 
-use Composer\Semver\Semver;
+use Composer\Semver\Comparator;
 use Drupal\automatic_updates\CronUpdater;
 use Drupal\automatic_updates\Event\ReadinessCheckEvent;
+use Drupal\automatic_updates\ProjectInfo;
 use Drupal\automatic_updates\Updater;
 use Drupal\Core\Config\ConfigFactoryInterface;
-use Drupal\package_manager\Event\PreCreateEvent;
-use Drupal\package_manager\Event\PreOperationStageEvent;
 use Drupal\Core\Extension\ExtensionVersion;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\Core\StringTranslation\TranslationInterface;
+use Drupal\package_manager\Event\PreCreateEvent;
+use Drupal\package_manager\Event\PreOperationStageEvent;
+use Drupal\package_manager\Event\StageEvent;
+use Drupal\package_manager\Stage;
+use Drupal\package_manager\ValidationResult;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 /**
  * Validates that core updates are within a supported version range.
+ *
+ * @internal
+ *   This class is an internal part of the module's update handling and
+ *   should not be used by external code.
  */
 class UpdateVersionValidator implements EventSubscriberInterface {
 
@@ -48,12 +56,7 @@ class UpdateVersionValidator implements EventSubscriberInterface {
    *   The running core version as known to the Update module.
    */
   protected function getCoreVersion(): string {
-    // We need to call these functions separately, because
-    // update_get_available() will include the file that contains
-    // update_calculate_project_data().
-    $available_updates = update_get_available();
-    $available_updates = update_calculate_project_data($available_updates);
-    return $available_updates['drupal']['existing_version'];
+    return (new ProjectInfo())->getInstalledVersion();
   }
 
   /**
@@ -63,88 +66,12 @@ class UpdateVersionValidator implements EventSubscriberInterface {
    *   The event object.
    */
   public function checkUpdateVersion(PreOperationStageEvent $event): void {
-    $stage = $event->getStage();
-    // We only want to do this check if the stage belongs to Automatic Updates.
-    if (!$stage instanceof Updater) {
+    if (!static::isStageSupported($event->getStage())) {
       return;
     }
-
-    if ($event instanceof ReadinessCheckEvent) {
-      $package_versions = $event->getPackageVersions();
-      // During readiness checks, we might not know the desired package
-      // versions, which means there's nothing to validate.
-      if (empty($package_versions)) {
-        return;
-      }
-    }
-    else {
-      // If the stage has begun its life cycle, we expect it knows the desired
-      // package versions.
-      $package_versions = $stage->getPackageVersions()['production'];
-    }
-
-    $from_version_string = $this->getCoreVersion();
-    $from_version = ExtensionVersion::createFromVersionString($from_version_string);
-    // All the core packages will be updated to the same version, so it doesn't
-    // matter which specific package we're looking at.
-    $core_package_name = key($stage->getActiveComposer()->getCorePackages());
-    $to_version_string = $package_versions[$core_package_name];
-    $to_version = ExtensionVersion::createFromVersionString($to_version_string);
-    $variables = [
-      '@to_version' => $to_version_string,
-      '@from_version' => $from_version_string,
-    ];
-    $from_version_extra = $from_version->getVersionExtra();
-    $to_version_extra = $to_version->getVersionExtra();
-    if (Semver::satisfies($to_version_string, "< $from_version_string")) {
-      $event->addError([
-        $this->t('Update version @to_version is lower than @from_version, downgrading is not supported.', $variables),
-      ]);
-    }
-    elseif ($from_version_extra === 'dev') {
-      $event->addError([
-        $this->t('Drupal cannot be automatically updated from its current version, @from_version, to the recommended version, @to_version, because automatic updates from a dev version to any other version are not supported.', $variables),
-      ]);
-    }
-    elseif ($from_version->getMajorVersion() !== $to_version->getMajorVersion()) {
-      $event->addError([
-        $this->t('Drupal cannot be automatically updated from its current version, @from_version, to the recommended version, @to_version, because automatic updates from one major version to another are not supported.', $variables),
-      ]);
-    }
-    elseif ($from_version->getMinorVersion() !== $to_version->getMinorVersion()) {
-      if (!$this->configFactory->get('automatic_updates.settings')->get('allow_core_minor_updates')) {
-        $event->addError([
-          $this->t('Drupal cannot be automatically updated from its current version, @from_version, to the recommended version, @to_version, because automatic updates from one minor version to another are not supported.', $variables),
-        ]);
-      }
-      elseif ($stage instanceof CronUpdater) {
-        $event->addError([
-          $this->t('Drupal cannot be automatically updated from its current version, @from_version, to the recommended version, @to_version, because automatic updates from one minor version to another are not supported during cron.', $variables),
-        ]);
-      }
-    }
-    elseif ($stage instanceof CronUpdater) {
-      if ($from_version_extra || $to_version_extra) {
-        if ($from_version_extra) {
-          $messages[] = $this->t('Drupal cannot be automatically updated during cron from its current version, @from_version, because Automatic Updates only supports updating from stable versions during cron.', $variables);
-          $event->addError($messages);
-        }
-        if ($to_version_extra) {
-          // Because we do not support updating to a new minor version during
-          // cron it is probably impossible to update from a stable version to
-          // a unstable/pre-release version, but we should check this condition
-          // just in case.
-          $messages[] = $this->t('Drupal cannot be automatically updated during cron to the recommended version, @to_version, because Automatic Updates only supports updating to stable versions during cron.', $variables);
-          $event->addError($messages);
-        }
-      }
-      else {
-        $to_patch_version = (int) $this->getPatchVersion($to_version_string);
-        $from_patch_version = (int) $this->getPatchVersion($from_version_string);
-        if ($from_patch_version + 1 !== $to_patch_version) {
-          $messages[] = $this->t('Drupal cannot be automatically updated during cron from its current version, @from_version, to the recommended version, @to_version, because Automatic Updates only supports 1 patch version update during cron.', $variables);
-          $event->addError($messages);
-        }
+    if ($to_version = $this->getUpdateVersion($event)) {
+      if ($result = $this->getValidationResult($to_version)) {
+        $event->addError($result->getMessages(), $result->getSummary());
       }
     }
   }
@@ -160,25 +87,120 @@ class UpdateVersionValidator implements EventSubscriberInterface {
   }
 
   /**
-   * Gets the patch number for a version string.
+   * Gets the update version.
    *
-   * @todo Move this method to \Drupal\Core\Extension\ExtensionVersion in
-   *   https://www.drupal.org/i/3261744.
+   * @param \Drupal\package_manager\Event\StageEvent $event
+   *   The event.
    *
-   * @param string $version_string
+   * @return string|null
+   *   The version that the site will update to if any, otherwise NULL.
+   */
+  protected function getUpdateVersion(StageEvent $event): ?string {
+    /** @var \Drupal\automatic_updates\Updater $updater */
+    $updater = $event->getStage();
+    if ($event instanceof ReadinessCheckEvent) {
+      $package_versions = $event->getPackageVersions();
+    }
+    else {
+      // If the stage has begun its life cycle, we expect it knows the desired
+      // package versions.
+      $package_versions = $updater->getPackageVersions()['production'];
+    }
+    if ($package_versions) {
+      // All the core packages will be updated to the same version, so it
+      // doesn't matter which specific package we're looking at.
+      $core_package_name = key($updater->getActiveComposer()->getCorePackages());
+      return $package_versions[$core_package_name];
+    }
+    else {
+      // During readiness checks we might not have a version to update to. Check
+      // if there are any possible updates and add a message about why we cannot
+      // update to that version.
+      // @todo Remove this code in https://www.drupal.org/i/3272326 when we add
+      //   add a validator that will warn if cron updates will no longer work
+      //   because the site is more than 1 patch release behind.
+      $project_info = new ProjectInfo();
+      if ($possible_releases = $project_info->getInstallableReleases()) {
+        $possible_release = array_pop($possible_releases);
+        return $possible_release->getVersion();
+      }
+    }
+    return NULL;
+  }
+
+  /**
+   * Determines if a version is valid.
+   *
+   * @param string $version
    *   The version string.
    *
-   * @return string
-   *   The patch number.
+   * @return bool
+   *   TRUE if the version is valid (i.e., the site can update to it), otherwise
+   *   FALSE.
    */
-  private function getPatchVersion(string $version_string): string {
-    $version_extra = ExtensionVersion::createFromVersionString($version_string)
-      ->getVersionExtra();
-    if ($version_extra) {
-      $version_string = str_replace("-$version_extra", '', $version_string);
+  public function isValidVersion(string $version): bool {
+    return empty($this->getValidationResult($version));
+  }
+
+  /**
+   * Validates if an update to a specific version is allowed.
+   *
+   * @param string $to_version_string
+   *   The version to update to.
+   *
+   * @return \Drupal\package_manager\ValidationResult|null
+   *   NULL if the update is allowed, otherwise returns a validation result with
+   *   the reason why the update is not allowed.
+   */
+  protected function getValidationResult(string $to_version_string): ?ValidationResult {
+    $from_version_string = $this->getCoreVersion();
+    $variables = [
+      '@to_version' => $to_version_string,
+      '@from_version' => $from_version_string,
+    ];
+    $from_version = ExtensionVersion::createFromVersionString($from_version_string);
+    // @todo Return multiple validation messages and summary in
+    //   https://www.drupal.org/project/automatic_updates/issues/3272068.
+    if ($from_version->getVersionExtra() === 'dev') {
+      return ValidationResult::createError([
+        $this->t('Drupal cannot be automatically updated from its current version, @from_version, to the recommended version, @to_version, because automatic updates from a dev version to any other version are not supported.', $variables),
+      ]);
     }
-    $version_parts = explode('.', $version_string);
-    return $version_parts[2];
+    if (Comparator::lessThan($to_version_string, $from_version_string)) {
+      return ValidationResult::createError([
+        $this->t('Update version @to_version is lower than @from_version, downgrading is not supported.', $variables),
+      ]);
+    }
+    $to_version = ExtensionVersion::createFromVersionString($to_version_string);
+    if ($from_version->getMajorVersion() !== $to_version->getMajorVersion()) {
+      return ValidationResult::createError([
+        $this->t('Drupal cannot be automatically updated from its current version, @from_version, to the recommended version, @to_version, because automatic updates from one major version to another are not supported.', $variables),
+      ]);
+    }
+    if ($from_version->getMinorVersion() !== $to_version->getMinorVersion()) {
+      if (!$this->configFactory->get('automatic_updates.settings')->get('allow_core_minor_updates')) {
+        return ValidationResult::createError([
+          $this->t('Drupal cannot be automatically updated from its current version, @from_version, to the recommended version, @to_version, because automatic updates from one minor version to another are not supported.', $variables),
+        ]);
+      }
+    }
+    return NULL;
+  }
+
+  /**
+   * Determines if a stage is supported by this validator.
+   *
+   * @param \Drupal\package_manager\Stage $stage
+   *   The stage to check.
+   *
+   * @return bool
+   *   TRUE if the stage is supported by this validator, otherwise FALSE.
+   */
+  protected static function isStageSupported(Stage $stage): bool {
+    // We only want to do this check if the stage belongs to Automatic Updates,
+    // and it is not a cron update.
+    // @see \Drupal\automatic_updates\Validator\CronUpdateVersionValidator
+    return $stage instanceof Updater && !$stage instanceof CronUpdater;
   }
 
 }

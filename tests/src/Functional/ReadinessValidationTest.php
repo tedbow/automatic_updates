@@ -54,7 +54,7 @@ class ReadinessValidationTest extends AutomaticUpdatesFunctionalTestBase {
    */
   protected function setUp(): void {
     parent::setUp();
-    $this->setReleaseMetadata(__DIR__ . '/../../fixtures/release-history/drupal.9.8.2.xml');
+    $this->setReleaseMetadata(__DIR__ . '/../../fixtures/release-history/drupal.9.8.1-security.xml');
     $this->setCoreVersion('9.8.1');
 
     $this->reportViewerUser = $this->createUser([

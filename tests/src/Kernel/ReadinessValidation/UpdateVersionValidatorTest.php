@@ -3,11 +3,8 @@
 namespace Drupal\Tests\automatic_updates\Kernel\ReadinessValidation;
 
 use Drupal\automatic_updates\CronUpdater;
-use Drupal\Core\Logger\RfcLogLevel;
-use Drupal\package_manager\Exception\StageValidationException;
 use Drupal\package_manager\ValidationResult;
 use Drupal\Tests\automatic_updates\Kernel\AutomaticUpdatesKernelTestBase;
-use Drupal\Tests\automatic_updates\Kernel\TestCronUpdater;
 use Drupal\Tests\package_manager\Traits\PackageManagerBypassTestTrait;
 use Psr\Log\Test\TestLogger;
 
@@ -167,11 +164,6 @@ class UpdateVersionValidatorTest extends AutomaticUpdatesKernelTestBase {
     // the update shouldn't have been started.
     elseif ($expected_results) {
       $this->assertUpdateStagedTimes(0);
-
-      // An exception exactly like this one should have been thrown by
-      // CronUpdater::dispatch(), and subsequently caught, formatted as HTML,
-      // and logged.
-      $this->assertErrorsWereLogged($expected_results);
     }
     // If cron updates are enabled and no validation errors were expected, the
     // update should have started and nothing should have been logged.
@@ -197,8 +189,6 @@ class UpdateVersionValidatorTest extends AutomaticUpdatesKernelTestBase {
         CronUpdater::DISABLED,
         [],
       ],
-      // The latest release is two patch releases ahead, so the update should be
-      // blocked even though the cron configuration allows it.
       'security only' => [
         CronUpdater::SECURITY,
         [$update_disallowed],
@@ -230,15 +220,6 @@ class UpdateVersionValidatorTest extends AutomaticUpdatesKernelTestBase {
     $this->assertCheckerResultsFromManager($expected_results, TRUE);
     $this->container->get('cron')->run();
     $this->assertUpdateStagedTimes(0);
-
-    // If cron updates are enabled for all patch releases, the error should have
-    // been raised and logged.
-    if ($cron_setting === CronUpdater::ALL) {
-      $this->assertErrorsWereLogged($expected_results);
-    }
-    else {
-      $this->assertArrayNotHasKey(RfcLogLevel::ERROR, $this->logger->recordsByLevel);
-    }
   }
 
   /**
@@ -280,7 +261,13 @@ class UpdateVersionValidatorTest extends AutomaticUpdatesKernelTestBase {
     $this->config('automatic_updates.settings')
       ->set('cron', $cron_setting)
       ->save();
-    $this->assertCheckerResultsFromManager([], TRUE);
+    if ($cron_setting === CronUpdater::SECURITY) {
+      $expected_result = ValidationResult::createError(['Drupal cannot be automatically updated during cron from its current version, 9.8.1, to the recommended version, 9.8.2, because 9.8.2 is not a security release.']);
+      $this->assertCheckerResultsFromManager([$expected_result], TRUE);
+    }
+    else {
+      $this->assertCheckerResultsFromManager([], TRUE);
+    }
     $this->container->get('cron')->run();
     $this->assertUpdateStagedTimes((int) $will_update);
   }
@@ -298,9 +285,6 @@ class UpdateVersionValidatorTest extends AutomaticUpdatesKernelTestBase {
     $dev_current_version = ValidationResult::createError([
       'Drupal cannot be automatically updated from its current version, 9.8.0-dev, to the recommended version, 9.8.2, because automatic updates from a dev version to any other version are not supported.',
     ]);
-    $newer_current_version = ValidationResult::createError([
-      'Update version 9.8.2 is lower than 9.8.3, downgrading is not supported.',
-    ]);
     $different_major_version = ValidationResult::createError([
       'Drupal cannot be automatically updated from its current version, 8.9.1, to the recommended version, 9.8.2, because automatic updates from one major version to another are not supported.',
     ]);
@@ -313,80 +297,45 @@ class UpdateVersionValidatorTest extends AutomaticUpdatesKernelTestBase {
         // the validation will be run with the regular updater, not the cron
         // updater.
         [],
-        [],
       ],
       'unstable current version, security updates allowed' => [
         CronUpdater::SECURITY,
         '9.8.0-alpha1',
         [$unstable_current_version],
-        // The update will not run because the latest release is not a security
-        // release, so nothing should be logged.
-        [],
       ],
       'unstable current version, all updates allowed' => [
         CronUpdater::ALL,
         '9.8.0-alpha1',
-        [$unstable_current_version],
         [$unstable_current_version],
       ],
       'dev current version, cron disabled' => [
         CronUpdater::DISABLED,
         '9.8.0-dev',
         [$dev_current_version],
-        [],
       ],
       'dev current version, security updates allowed' => [
         CronUpdater::SECURITY,
         '9.8.0-dev',
         [$dev_current_version],
-        // The update will not run because the latest release is not a security
-        // release, so nothing should be logged.
-        [],
       ],
       'dev current version, all updates allowed' => [
         CronUpdater::ALL,
         '9.8.0-dev',
         [$dev_current_version],
-        [$dev_current_version],
-      ],
-      'newer current version, cron disabled' => [
-        CronUpdater::DISABLED,
-        '9.8.3',
-        [$newer_current_version],
-        [],
-      ],
-      'newer current version, security updates allowed' => [
-        CronUpdater::SECURITY,
-        '9.8.3',
-        [$newer_current_version],
-        // The update will not run because the latest release is not a security
-        // release, so nothing should be logged.
-        [],
-      ],
-      'newer current version, all updates allowed' => [
-        CronUpdater::ALL,
-        '9.8.3',
-        [$newer_current_version],
-        [$newer_current_version],
       ],
       'different current major, cron disabled' => [
         CronUpdater::DISABLED,
         '8.9.1',
         [$different_major_version],
-        [],
       ],
       'different current major, security updates allowed' => [
         CronUpdater::SECURITY,
         '8.9.1',
         [$different_major_version],
-        // The update will not run because the latest release is not a security
-        // release, so nothing should be logged.
-        [],
       ],
       'different current major, all updates allowed' => [
         CronUpdater::ALL,
         '8.9.1',
-        [$different_major_version],
         [$different_major_version],
       ],
     ];
@@ -402,12 +351,10 @@ class UpdateVersionValidatorTest extends AutomaticUpdatesKernelTestBase {
    * @param \Drupal\package_manager\ValidationResult[] $expected_results
    *   The validation results, if any, that should be flagged during readiness
    *   checks.
-   * @param \Drupal\package_manager\ValidationResult[] $logged_results
-   *   The validation results, if any, that should be logged when cron is run.
    *
    * @dataProvider providerInvalidCronUpdate
    */
-  public function testInvalidCronUpdate(string $cron_setting, string $current_core_version, array $expected_results, array $logged_results): void {
+  public function testInvalidCronUpdate(string $cron_setting, string $current_core_version, array $expected_results): void {
     $this->setCoreVersion($current_core_version);
     $this->config('automatic_updates.settings')
       ->set('cron', $cron_setting)
@@ -423,23 +370,6 @@ class UpdateVersionValidatorTest extends AutomaticUpdatesKernelTestBase {
     // created (in which case, we expect the errors to be logged).
     $this->container->get('cron')->run();
     $this->assertUpdateStagedTimes(0);
-    if ($logged_results) {
-      $this->assertErrorsWereLogged($logged_results);
-    }
-  }
-
-  /**
-   * Asserts that validation errors were logged during a cron update.
-   *
-   * @param \Drupal\package_manager\ValidationResult[] $results
-   *   The validation errors should have been logged.
-   */
-  private function assertErrorsWereLogged(array $results): void {
-    $exception = new StageValidationException($results, 'Unable to complete the update because of errors.');
-    // The exception will be formatted in a specific, predictable way.
-    // @see \Drupal\Tests\automatic_updates\Kernel\CronUpdaterTest::testErrors()
-    $message = TestCronUpdater::formatValidationException($exception);
-    $this->assertTrue($this->logger->hasRecord($message, RfcLogLevel::ERROR));
   }
 
 }

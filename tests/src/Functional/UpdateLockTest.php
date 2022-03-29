@@ -56,7 +56,7 @@ class UpdateLockTest extends AutomaticUpdatesFunctionalTestBase {
     $this->checkForMetaRefresh();
     $this->assertUpdateReady('9.8.1');
     $assert_session->buttonExists('Continue');
-    $url = parse_url($this->getSession()->getCurrentUrl(), PHP_URL_PATH);
+    $url = $this->getSession()->getCurrentUrl();
 
     // Another user cannot show up and try to start an update, since the other
     // user already started one.

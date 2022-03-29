@@ -6,9 +6,9 @@
  */
 
 use Drupal\automatic_updates\BatchProcessor;
+use Drupal\automatic_updates\ProjectInfo;
 use Drupal\Core\Routing\RouteMatchInterface;
 use Drupal\automatic_updates\CronUpdater;
-use Drupal\automatic_updates\UpdateRecommender;
 use Drupal\automatic_updates\Validation\AdminReadinessMessages;
 use Drupal\Core\Extension\ExtensionVersion;
 use Drupal\Core\Form\FormStateInterface;
@@ -141,9 +141,8 @@ function automatic_updates_form_update_manager_update_form_alter(&$form, FormSta
  * Implements hook_form_FORM_ID_alter() for 'update_settings' form.
  */
 function automatic_updates_form_update_settings_alter(array &$form, FormStateInterface $form_state, string $form_id) {
-  $recommender = new UpdateRecommender();
-  $drupal_project = $recommender->getProjectInfo();
-  $version = ExtensionVersion::createFromVersionString($drupal_project['existing_version']);
+  $project_info = new ProjectInfo();
+  $version = ExtensionVersion::createFromVersionString($project_info->getInstalledVersion());
   $current_minor = $version->getMajorVersion() . '.' . $version->getMinorVersion();
   // @todo In https://www.drupal.org/node/2998285 use the update XML to
   //   determine when the installed of core will become unsupported.

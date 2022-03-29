@@ -4,8 +4,9 @@ namespace Drupal\automatic_updates\Form;
 
 use Drupal\automatic_updates\BatchProcessor;
 use Drupal\automatic_updates\Event\ReadinessCheckEvent;
+use Drupal\automatic_updates\ProjectInfo;
+use Drupal\automatic_updates\ReleaseChooser;
 use Drupal\automatic_updates\Updater;
-use Drupal\automatic_updates\UpdateRecommender;
 use Drupal\automatic_updates\Validation\ReadinessTrait;
 use Drupal\Core\Batch\BatchBuilder;
 use Drupal\Core\Form\FormBase;
@@ -19,7 +20,6 @@ use Drupal\system\SystemManager;
 use Drupal\update\UpdateManagerInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
-use Symfony\Component\HttpFoundation\Session\SessionInterface;
 
 /**
  * Defines a form to update Drupal core.
@@ -53,11 +53,11 @@ class UpdaterForm extends FormBase {
   protected $eventDispatcher;
 
   /**
-   * The current session.
+   * The release chooser service.
    *
-   * @var \Symfony\Component\HttpFoundation\Session\SessionInterface
+   * @var \Drupal\automatic_updates\ReleaseChooser
    */
-  protected $session;
+  protected $releaseChooser;
 
   /**
    * Constructs a new UpdaterForm object.
@@ -68,14 +68,14 @@ class UpdaterForm extends FormBase {
    *   The updater service.
    * @param \Symfony\Component\EventDispatcher\EventDispatcherInterface $event_dispatcher
    *   The event dispatcher service.
-   * @param \Symfony\Component\HttpFoundation\Session\SessionInterface $session
-   *   The current session.
+   * @param \Drupal\automatic_updates\ReleaseChooser $release_chooser
+   *   The release chooser service.
    */
-  public function __construct(StateInterface $state, Updater $updater, EventDispatcherInterface $event_dispatcher, SessionInterface $session) {
+  public function __construct(StateInterface $state, Updater $updater, EventDispatcherInterface $event_dispatcher, ReleaseChooser $release_chooser) {
     $this->updater = $updater;
     $this->state = $state;
     $this->eventDispatcher = $event_dispatcher;
-    $this->session = $session;
+    $this->releaseChooser = $release_chooser;
   }
 
   /**
@@ -93,7 +93,7 @@ class UpdaterForm extends FormBase {
       $container->get('state'),
       $container->get('automatic_updates.updater'),
       $container->get('event_dispatcher'),
-      $container->get('session')
+      $container->get('automatic_updates.release_chooser')
     );
   }
 
@@ -112,7 +112,7 @@ class UpdaterForm extends FormBase {
       // If there's a stage ID stored in the session, try to claim the stage
       // with it. If we succeed, then an update is already in progress, and the
       // current session started it, so redirect them to the confirmation form.
-      $stage_id = $this->session->get(BatchProcessor::STAGE_ID_SESSION_KEY);
+      $stage_id = $this->getRequest()->getSession()->get(BatchProcessor::STAGE_ID_SESSION_KEY);
       if ($stage_id) {
         try {
           $this->updater->claim($stage_id);
@@ -131,10 +131,24 @@ class UpdaterForm extends FormBase {
       '#theme' => 'update_last_check',
       '#last' => $this->state->get('update.last_check', 0),
     ];
+    $project_info = new ProjectInfo();
 
-    $recommender = new UpdateRecommender();
     try {
-      $recommended_release = $recommender->getRecommendedRelease(TRUE);
+      // @todo Until https://www.drupal.org/i/3264849 is fixed, we can only show
+      //   one release on the form. First, try to show the latest release in the
+      //   currently installed minor. Failing that, try to show the latest
+      //   release in the next minor. If neither of those are available, just
+      //   show the first available release.
+      $recommended_release = $this->releaseChooser->refresh()->getLatestInInstalledMinor();
+      if (!$recommended_release) {
+        $recommended_release = $this->releaseChooser->getLatestInNextMinor();
+        if (!$recommended_release) {
+          // @todo Do not list an update that can't be validated in
+          //   https://www.drupal.org/i/3271235.
+          $updates = $project_info->getInstallableReleases();
+          $recommended_release = array_pop($updates);
+        }
+      }
     }
     catch (\RuntimeException $e) {
       $form['message'] = [
@@ -148,6 +162,9 @@ class UpdaterForm extends FormBase {
 
     // If we're already up-to-date, there's nothing else we need to do.
     if ($recommended_release === NULL) {
+      // @todo Link to the Available Updates report if there are other updates
+      //   that are not supported by this module in
+      //   https://www.drupal.org/i/3271235.
       $this->messenger()->addMessage('No update available');
       return $form;
     }
@@ -159,7 +176,7 @@ class UpdaterForm extends FormBase {
       ],
     ];
 
-    $project = $recommender->getProjectInfo();
+    $project = $project_info->getProjectInfo();
     if (empty($project['title']) || empty($project['link'])) {
       throw new \UnexpectedValueException('Expected project data to have a title and link.');
     }
@@ -187,7 +204,7 @@ class UpdaterForm extends FormBase {
       'title' => [
         'data' => $title,
       ],
-      'installed_version' => $project['existing_version'],
+      'installed_version' => $project_info->getInstalledVersion(),
       'recommended_version' => [
         'data' => [
           // @todo Is an inline template the right tool here? Is there an Update

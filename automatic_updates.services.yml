@@ -26,6 +26,7 @@ services:
   automatic_updates.cron_updater:
     class: Drupal\automatic_updates\CronUpdater
     arguments:
+      - '@automatic_updates.cron_release_chooser'
       - '@logger.factory'
       - '@config.factory'
       - '@package_manager.path_locator'
@@ -55,6 +56,21 @@ services:
       - '@config.factory'
     tags:
       - { name: event_subscriber }
+  automatic_updates.cron_update_version_validator:
+    class: Drupal\automatic_updates\Validator\CronUpdateVersionValidator
+    arguments:
+      - '@string_translation'
+      - '@config.factory'
+    tags:
+      - { name: event_subscriber }
+  automatic_updates.release_chooser:
+    class: Drupal\automatic_updates\ReleaseChooser
+    arguments:
+      - '@automatic_updates.update_version_validator'
+  automatic_updates.cron_release_chooser:
+    class: Drupal\automatic_updates\ReleaseChooser
+    arguments:
+      - '@automatic_updates.cron_update_version_validator'
   automatic_updates.composer_executable_validator:
     class: Drupal\automatic_updates\Validator\PackageManagerReadinessCheck
     arguments:
