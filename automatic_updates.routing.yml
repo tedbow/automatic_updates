@@ -37,6 +37,7 @@ automatic_updates.report_update:
   options:
     _admin_route: TRUE
     _maintenance_access: TRUE
+    _automatic_updates_readiness_messages: skip
 automatic_updates.module_update:
   path: '/admin/modules/automatic-update'
   defaults:
@@ -47,6 +48,7 @@ automatic_updates.module_update:
   options:
     _admin_route: TRUE
     _maintenance_access: TRUE
+    _automatic_updates_readiness_messages: skip
 automatic_updates.theme_update:
   path: '/admin/theme/automatic-update'
   defaults:
@@ -57,3 +59,4 @@ automatic_updates.theme_update:
   options:
     _admin_route: TRUE
     _maintenance_access: TRUE
+    _automatic_updates_readiness_messages: skip

@@ -1,4 +1,8 @@
 services:
+  automatic_updates.route_subscriber:
+    class: Drupal\automatic_updates\Routing\RouteSubscriber
+    tags:
+      - { name: event_subscriber }
   automatic_updates.readiness_validation_manager:
     class: Drupal\automatic_updates\Validation\ReadinessValidationManager
     arguments:

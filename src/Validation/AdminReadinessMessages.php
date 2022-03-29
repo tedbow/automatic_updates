@@ -147,23 +147,8 @@ final class AdminReadinessMessages implements ContainerInjectionInterface {
     }
 
     if ($this->adminContext->isAdminRoute() && $this->currentUser->hasPermission('administer site configuration')) {
-      // These routes don't need additional nagging.
-      $disabled_routes = [
-        'update.theme_update',
-        'system.theme_install',
-        'update.module_update',
-        'update.module_install',
-        'update.status',
-        'update.report_update',
-        'update.report_install',
-        'update.settings',
-        'system.status',
-        'update.confirmation_page',
-        'automatic_updates.report_update',
-        'automatic_updates.module_update',
-        'automatic_updates.theme_update',
-      ];
-      return !in_array($this->currentRouteMatch->getRouteName(), $disabled_routes, TRUE);
+      $route = $this->currentRouteMatch->getRouteObject();
+      return $route && $route->getOption('_automatic_updates_readiness_messages') !== 'skip';
     }
     return FALSE;
   }
