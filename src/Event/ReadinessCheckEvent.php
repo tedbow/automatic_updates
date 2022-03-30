@@ -2,9 +2,9 @@
 
 namespace Drupal\automatic_updates\Event;
 
-use Drupal\automatic_updates\Updater;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\package_manager\Event\PreOperationStageEvent;
+use Drupal\package_manager\Stage;
 use Drupal\package_manager\ValidationResult;
 
 /**
@@ -31,14 +31,14 @@ class ReadinessCheckEvent extends PreOperationStageEvent {
   /**
    * Constructs a ReadinessCheckEvent object.
    *
-   * @param \Drupal\automatic_updates\Updater $updater
-   *   The updater service.
+   * @param \Drupal\package_manager\Stage $stage
+   *   The stage service.
    * @param string[] $project_versions
    *   (optional) The versions of the packages to update to, keyed by package
    *   name.
    */
-  public function __construct(Updater $updater, array $project_versions = []) {
-    parent::__construct($updater);
+  public function __construct(Stage $stage, array $project_versions = []) {
+    parent::__construct($stage);
     if ($project_versions) {
       if (count($project_versions) !== 1 || !array_key_exists('drupal', $project_versions)) {
         throw new \InvalidArgumentException("Currently only updates to Drupal core are supported.");
