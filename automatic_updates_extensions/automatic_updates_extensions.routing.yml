@@ -7,3 +7,4 @@ automatic_updates_extensions.update:
     _permission: 'administer software updates'
   options:
     _admin_route: TRUE
+    _automatic_updates_readiness_messages: skip
