@@ -20,12 +20,19 @@ use Drupal\update\ProjectSecurityData;
  * Implements hook_help().
  */
 function automatic_updates_help($route_name, RouteMatchInterface $route_match) {
-  // @todo Fully document all the modules features in
-  //   https://www.drupal.org/i/3253591.
   switch ($route_name) {
     case 'help.page.auto_updates':
       $output = '<h3>' . t('About') . '</h3>';
       $output .= '<p>' . t('Automatic Updates lets you update Drupal core.') . '</p>';
+      $output .= '<p>';
+      $output .= t('Automatic Updates will keep Drupal secure and up-to-date by automatically installing new patch-level updates, if available, when cron runs. It also provides a user interface to check if any updates are available and install them. You can <a href=":configure-form">configure Automatic Updates</a> to install all patch-level updates, only security updates, or no updates at all, during cron. By default, only security updates are installed during cron; this requires that you <a href=":update-form">install non-security updates through the user interface</a>.', [
+        ':configure-form' => Url::fromRoute('update.settings')->toString(),
+        ':update-form' => Url::fromRoute('automatic_updates.report_update')->toString(),
+      ]);
+      $output .= '</p>';
+      $output .= '<p>' . t('Additionally, Automatic Updates periodically runs checks to ensure that updates can be installed, and will warn site adminstrators if problems are detected.') . '</p>';
+      $output .= '<h3>' . t('Requirements') . '</h3>';
+      $output .= '<p>' . t('Automatic Updates requires Composer @version or later available as an executable, and PHP must have permission to run it. The path to the executable may be set in the <code>package_manager.settings:executables.composer</code> config setting, or it will be automatically detected.', ['@version' => ComposerExecutableValidator::MINIMUM_COMPOSER_VERSION]) . '</p>';
       $output .= '<p>' . t('For more information, see the <a href=":automatic-updates-documentation">online documentation for the Automatic Updates module</a>.', [':automatic-updates-documentation' => 'https://www.drupal.org/docs/8/update/automatic-updates']) . '</p>';
       return $output;
   }

@@ -6,17 +6,26 @@
  */
 
 use Drupal\Core\Routing\RouteMatchInterface;
+use Drupal\package_manager\Validator\ComposerExecutableValidator;
 
 /**
  * Implements hook_help().
  */
 function package_manager_help($route_name, RouteMatchInterface $route_match) {
-  // @todo Fully document all the modules features in
-  //   https://www.drupal.org/i/3253591.
   switch ($route_name) {
     case 'help.page.package_manager':
       $output = '<h3>' . t('About') . '</h3>';
-      $output .= '<p>' . t('Package Manager is an API for installing and updating Drupal core and contributed modules.') . '</p>';
+      $output .= '<p>' . t('Package Manager is a framework for updating Drupal core and installing contributed modules and themes via Composer. It has no user interface, but it provides an API for creating a temporary copy of the current site, making changes to the copy, and then syncing those changes back into the live site.') . '</p>';
+      $output .= '<p>' . t('Package Manager dispatches events before and after various operations, and external code can integrate with it by subscribing to those events. For more information, see <code>package_manager.api.php</code>.') . '</p>';
+      $output .= '<h3>' . t('Requirements') . '</h3>';
+      $output .= '<p>' . t('Package Manager requires Composer @version or later available as an executable, and PHP must have permission to run it. The path to the executable may be set in the <code>package_manager.settings:executables.composer</code> config setting, or it will be automatically detected.', ['@version' => ComposerExecutableValidator::MINIMUM_COMPOSER_VERSION]) . '</p>';
+      $output .= '<h3>' . t('Limitations') . '</h3>';
+      $output .= '<p>' . t("Because Package Manager modifies the current site's code base, it is intentionally limited in certain ways to prevent unexpected changes from being made to the live site:") . '</p>';
+      $output .= '<ul>';
+      $output .= '<li>' . t('Package Manager can only maintain one copy of the site at any given time. If a copy of the site already exists, another one cannot be created until the existing copy is destroyed.') . '</li>';
+      $output .= '<li>' . t('The temporary copy of the site is associated with the user or session that originally created it, and only that user or session can make changes to it.') . '</li>';
+      $output .= '<li>' . t('Modules cannot be uninstalled while Package Manager is syncing changes into live site.') . '<li>';
+      $output .= '</ul>';
       $output .= '<p>' . t('For more information, see the <a href=":package-manager-documentation">online documentation for the Package Manager module</a>.', [':package-manager-documentation' => 'https://www.drupal.org/docs/8/core/modules/package-manager']) . '</p>';
       return $output;
   }
