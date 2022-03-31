@@ -14,7 +14,6 @@ automatic_updates.confirmation_page:
     _title: 'Ready to update'
   requirements:
     _permission: 'administer software updates'
-    _access_update_manager: 'TRUE'
   options:
     _maintenance_access: TRUE
 automatic_updates.finish:
