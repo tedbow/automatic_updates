@@ -41,7 +41,7 @@ class MultisiteValidator implements PreOperationStageValidatorInterface {
   public function validateStagePreOperation(PreOperationStageEvent $event): void {
     if ($this->isMultisite()) {
       $event->addError([
-        $this->t('Multisites are not supported by Package Manager.'),
+        $this->t('Drupal multisite is not supported by Package Manager.'),
       ]);
     }
   }

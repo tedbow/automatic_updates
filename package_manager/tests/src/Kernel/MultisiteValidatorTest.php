@@ -24,7 +24,7 @@ class MultisiteValidatorTest extends PackageManagerKernelTestBase {
         TRUE,
         [
           ValidationResult::createError([
-            'Multisites are not supported by Package Manager.',
+            'Drupal multisite is not supported by Package Manager.',
           ]),
         ],
       ],
