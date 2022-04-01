@@ -4,9 +4,9 @@ namespace Drupal\automatic_updates_extensions\Form;
 
 use Drupal\automatic_updates\Event\ReadinessCheckEvent;
 use Drupal\automatic_updates\Validation\ReadinessTrait;
+use Drupal\automatic_updates_extensions\ExtensionUpdater;
 use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
-use Drupal\package_manager\Stage;
 use Drupal\system\SystemManager;
 use Drupal\update\UpdateManagerInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
@@ -20,11 +20,11 @@ class UpdaterForm extends FormBase {
   use ReadinessTrait;
 
   /**
-   * The updater service.
+   * The extension updater service.
    *
-   * @var \Drupal\automatic_updates\Updater
+   * @var \Drupal\automatic_updates_extensions\ExtensionUpdater
    */
-  private $stage;
+  private $extensionUpdater;
 
   /**
    * The event dispatcher service.
@@ -37,21 +37,8 @@ class UpdaterForm extends FormBase {
    * {@inheritdoc}
    */
   public static function create(ContainerInterface $container) {
-    // @todo Create a our servcie that extends stage instead of creating a
-    //   generic stage class here.
-    $stage = new Stage(
-      $container->get('config.factory'),
-      $container->get('package_manager.path_locator'),
-      $container->get('package_manager.beginner'),
-      $container->get('package_manager.stager'),
-      $container->get('package_manager.committer'),
-      $container->get('file_system'),
-      $container->get('event_dispatcher'),
-      $container->get('tempstore.shared'),
-      $container->get('datetime.time')
-    );
     return new static(
-      $stage,
+      $container->get('automatic_updates_extensions.updater'),
       $container->get('event_dispatcher'),
     );
   }
@@ -59,13 +46,13 @@ class UpdaterForm extends FormBase {
   /**
    * Constructs a new UpdaterForm object.
    *
-   * @param \Drupal\package_manager\Stage $stage
-   *   The stage service.
+   * @param \Drupal\automatic_updates_extensions\ExtensionUpdater $extension_updater
+   *   The extension updater service.
    * @param \Symfony\Component\EventDispatcher\EventDispatcherInterface $event_dispatcher
    *   The extension event dispatcher service.
    */
-  public function __construct(Stage $stage, EventDispatcherInterface $event_dispatcher) {
-    $this->stage = $stage;
+  public function __construct(ExtensionUpdater $extension_updater, EventDispatcherInterface $event_dispatcher) {
+    $this->extensionUpdater = $extension_updater;
     $this->eventDispatcher = $event_dispatcher;
   }
 
@@ -124,7 +111,7 @@ class UpdaterForm extends FormBase {
       $results = [];
     }
     else {
-      $event = new ReadinessCheckEvent($this->stage);
+      $event = new ReadinessCheckEvent($this->extensionUpdater);
       $this->eventDispatcher->dispatch($event);
       $results = $event->getResults();
     }
@@ -149,7 +136,7 @@ class UpdaterForm extends FormBase {
    */
   protected function actions(FormStateInterface $form_state): array {
     $actions = ['#type' => 'actions'];
-    if (!$this->stage->isAvailable()) {
+    if (!$this->extensionUpdater->isAvailable()) {
       // If the form has been submitted do not display this error message
       // because ::deleteExistingUpdate() may run on submit. The message will
       // still be displayed on form build if needed.
@@ -175,7 +162,7 @@ class UpdaterForm extends FormBase {
    * Submit function to delete an existing in-progress update.
    */
   public function deleteExistingUpdate(): void {
-    $this->stage->destroy(TRUE);
+    $this->extensionUpdater->destroy(TRUE);
     $this->messenger()->addMessage($this->t("Staged update deleted"));
   }
 
