@@ -77,6 +77,11 @@ class PackageUpdateTest extends TemplateProjectTestBase {
       'title of changed permission' => 'permission',
       'deleted permission exists' => 'exists',
       'new permission exists' => 'not exists',
+      'updated_module.existing_service exists' => 'exists',
+      'value of updated_module.existing_service' => 'Pre-update value',
+      'updated_module.deleted_service exists' => 'exists',
+      'value of updated_module.deleted_service' => 'Deleted service, should not exist after update',
+      'updated_module.added_service exists' => 'not exists',
     ];
     $this->assertSame($expected_pre_apply_results, $results['pre']);
 
@@ -97,6 +102,15 @@ class PackageUpdateTest extends TemplateProjectTestBase {
       'deleted permission exists' => 'not exists',
       // Permissions added to the updated module should be available.
       'new permission exists' => 'exists',
+      // The existing generic service should have a new string value.
+      'updated_module.existing_service exists' => 'exists',
+      'value of updated_module.existing_service' => 'Post-update value',
+      // Services deleted from the updated module should not be available.
+      'updated_module.deleted_service exists' => 'not exists',
+      // Services added to the updated module should be available and return
+      // the expected value.
+      'updated_module.added_service exists' => 'exists',
+      'value of updated_module.added_service' => 'New service, should not exist before update',
     ];
     $this->assertSame($expected_post_apply_results, $results['post']);
   }

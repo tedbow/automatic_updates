@@ -1,4 +1,12 @@
 services:
+  updated_module.existing_service:
+    class: stdClass
+    properties:
+      value: 'Post-update value'
+  updated_module.added_service:
+    class: stdClass
+    properties:
+      value: 'New service, should not exist before update'
   updated_module.post_apply_subscriber:
     class: Drupal\updated_module\PostApplySubscriber
     arguments:

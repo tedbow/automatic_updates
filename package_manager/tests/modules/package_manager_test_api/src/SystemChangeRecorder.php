@@ -54,14 +54,14 @@ class SystemChangeRecorder implements EventSubscriberInterface {
    *   The state service.
    * @param \Symfony\Component\Routing\RouterInterface $router
    *   The router service.
-   * @param \Drupal\user\PermissionHandlerInterface $permissionHandler
+   * @param \Drupal\user\PermissionHandlerInterface $permission_handler
    *   The permission handler service.
    */
-  public function __construct(PathLocator $path_locator, StateInterface $state, RouterInterface $router, PermissionHandlerInterface $permissionHandler) {
+  public function __construct(PathLocator $path_locator, StateInterface $state, RouterInterface $router, PermissionHandlerInterface $permission_handler) {
     $this->pathLocator = $path_locator;
     $this->state = $state;
     $this->router = $router;
-    $this->permissionHandler = $permissionHandler;
+    $this->permissionHandler = $permission_handler;
   }
 
   /**
@@ -96,8 +96,34 @@ class SystemChangeRecorder implements EventSubscriberInterface {
     $results['deleted permission exists'] = array_key_exists('deleted permission', $permissions) ? 'exists' : 'not exists';
     // Check if a permission added in the updated module is available.
     $results['new permission exists'] = array_key_exists('added permission', $permissions) ? 'exists' : 'not exists';
+
+    // Check if changes to an existing service are picked up.
+    $this->recordServiceValue('updated_module.existing_service', $results);
+    // Check if a service removed from the updated module is available.
+    $this->recordServiceValue('updated_module.deleted_service', $results);
+    // Check if a service added in the updated module is available.
+    $this->recordServiceValue('updated_module.added_service', $results);
+
     $phase = $event instanceof PreApplyEvent ? 'pre' : 'post';
     $this->state->set("system_changes:$phase", $results);
+  }
+
+  /**
+   * Checks if a given service exists, and records its ->value property.
+   *
+   * @param string $service_id
+   *   The ID of the service to check.
+   * @param array $results
+   *   The current set of results, passed by reference.
+   */
+  private function recordServiceValue(string $service_id, array &$results): void {
+    if (\Drupal::hasService($service_id)) {
+      $results["$service_id exists"] = 'exists';
+      $results["value of $service_id"] = \Drupal::service($service_id)->value;
+    }
+    else {
+      $results["$service_id exists"] = 'not exists';
+    }
   }
 
   /**
