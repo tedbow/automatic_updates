@@ -39,7 +39,7 @@ abstract class UpdateTestBase extends TemplateProjectTestBase {
     $this->installModules([
       'automatic_updates',
       'automatic_updates_test',
-      'update_test',
+      'automatic_updates_test_release_history',
     ]);
   }
 
@@ -65,7 +65,7 @@ END;
       $port = $this->findAvailablePort();
       $this->metadataServer = $this->instantiateServer($port);
       $code .= <<<END
-\$config['update.settings']['fetch']['url'] = 'http://localhost:$port/automatic-update-test';
+\$config['update.settings']['fetch']['url'] = 'http://localhost:$port/test-release-history';
 END;
     }
     $this->writeSettings($code);

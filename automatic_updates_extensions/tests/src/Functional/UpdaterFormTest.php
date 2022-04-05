@@ -54,7 +54,7 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
    */
   protected function setProjectInstalledVersion($version) {
     $this->config('update.settings')
-      ->set('fetch.url', $this->baseUrl . '/automatic-update-test')
+      ->set('fetch.url', $this->baseUrl . '/test-release-history')
       ->save();
     $system_info = [
       $this->updateProject => [

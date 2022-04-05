@@ -1,12 +1,3 @@
-automatic_updates_test.metadata:
-  path: '/automatic-update-test/{project_name}/{version}'
-  defaults:
-    _title: 'Update test'
-    _controller: '\Drupal\automatic_updates_test\TestController::metadata'
-  requirements:
-    _access: 'TRUE'
-  options:
-    _maintenance_access: TRUE
 automatic_updates_test.update:
   path: '/automatic-update-test/update/{to_version}'
   defaults:

@@ -4,6 +4,7 @@ namespace Drupal\Tests\automatic_updates\Functional;
 
 use Drupal\Core\Site\Settings;
 use Drupal\Tests\BrowserTestBase;
+use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
  * Base class for functional tests of the Automatic Updates module.
@@ -16,8 +17,6 @@ abstract class AutomaticUpdatesFunctionalTestBase extends BrowserTestBase {
   protected static $modules = [
     'automatic_updates_test_disable_validators',
     'package_manager_bypass',
-    'update',
-    'update_test',
   ];
 
   /**
@@ -52,6 +51,22 @@ abstract class AutomaticUpdatesFunctionalTestBase extends BrowserTestBase {
   protected function setUp() {
     parent::setUp();
     $this->disableValidators($this->disableValidators);
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  protected function installModulesFromClassProperty(ContainerInterface $container) {
+    $container->get('module_installer')->install([
+      'automatic_updates_test_release_history',
+    ]);
+    $this->container = $container->get('kernel')->getContainer();
+
+    // To prevent tests from making real requests to the Internet, use fake
+    // release metadata that exposes a pretend Drupal 9.8.2 release.
+    $this->setReleaseMetadata(__DIR__ . '/../../fixtures/release-history/drupal.9.8.2.xml');
+
+    parent::installModulesFromClassProperty($container);
   }
 
   /**
@@ -117,7 +132,7 @@ abstract class AutomaticUpdatesFunctionalTestBase extends BrowserTestBase {
    */
   protected function setReleaseMetadata(string $file): void {
     $this->config('update.settings')
-      ->set('fetch.url', $this->baseUrl . '/automatic-update-test')
+      ->set('fetch.url', $this->baseUrl . '/test-release-history')
       ->save();
 
     [$project, $fixture] = explode('.', basename($file, '.xml'), 2);
