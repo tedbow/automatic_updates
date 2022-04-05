@@ -17,7 +17,7 @@ function package_manager_help($route_name, RouteMatchInterface $route_match) {
       $output = '<h3>' . t('About') . '</h3>';
       $output .= '<p>' . t('Package Manager is a framework for updating Drupal core and installing contributed modules and themes via Composer. It has no user interface, but it provides an API for creating a temporary copy of the current site, making changes to the copy, and then syncing those changes back into the live site.') . '</p>';
       $output .= '<p>' . t('Package Manager dispatches events before and after various operations, and external code can integrate with it by subscribing to those events. For more information, see <code>package_manager.api.php</code>.') . '</p>';
-      $output .= '<h3>' . t('Requirements') . '</h3>';
+      $output .= '<h3 id="package-manager-requirements">' . t('Requirements') . '</h3>';
       $output .= '<p>' . t('Package Manager requires Composer @version or later available as an executable, and PHP must have permission to run it. The path to the executable may be set in the <code>package_manager.settings:executables.composer</code> config setting, or it will be automatically detected.', ['@version' => ComposerExecutableValidator::MINIMUM_COMPOSER_VERSION]) . '</p>';
       $output .= '<h3>' . t('Limitations') . '</h3>';
       $output .= '<p>' . t("Because Package Manager modifies the current site's code base, it is intentionally limited in certain ways to prevent unexpected changes from being made to the live site:") . '</p>';

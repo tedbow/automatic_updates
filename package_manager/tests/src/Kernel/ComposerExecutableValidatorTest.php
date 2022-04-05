@@ -2,6 +2,7 @@
 
 namespace Drupal\Tests\package_manager\Kernel;
 
+use Drupal\Core\Url;
 use Drupal\package_manager\Event\PreCreateEvent;
 use Drupal\package_manager\Validator\ComposerExecutableValidator;
 use Drupal\package_manager\ValidationResult;
@@ -35,6 +36,10 @@ class ComposerExecutableValidatorTest extends PackageManagerKernelTestBase {
       $exception->getMessage(),
     ]);
     $this->assertResults([$error], PreCreateEvent::class);
+
+    $this->enableModules(['help']);
+    $this->container->set('package_manager.executable_finder', $exec_finder->reveal());
+    $this->assertResultsWithHelp([$error], PreCreateEvent::class);
   }
 
   /**
@@ -137,6 +142,36 @@ class ComposerExecutableValidatorTest extends PackageManagerKernelTestBase {
     // If the validator can't find a recognized, supported version of Composer,
     // it should produce errors.
     $this->assertResults($expected_results, PreCreateEvent::class);
+
+    $this->enableModules(['help']);
+    $this->container->set('package_manager.composer_runner', $runner->reveal());
+    $this->assertResultsWithHelp($expected_results, PreCreateEvent::class);
+  }
+
+  /**
+   * Asserts that a set of validation results link to the Package Manager help.
+   *
+   * @param \Drupal\package_manager\ValidationResult[] $expected_results
+   *   The expected validation results.
+   * @param string|null $event_class
+   *   (optional) The class of the event which should return the results. Must
+   *   be passed if $expected_results is not empty.
+   */
+  private function assertResultsWithHelp(array $expected_results, string $event_class = NULL): void {
+    $url = Url::fromRoute('help.page', ['name' => 'package_manager'])
+      ->setOption('fragment', 'package-manager-requirements')
+      ->toString();
+
+    // Reformat the provided results so that they all have the link to the
+    // online documentation appended to them.
+    $map = function (string $message) use ($url): string {
+      return $message . ' See <a href="' . $url . '">the help page</a> for information on how to configure the path to Composer.';
+    };
+    foreach ($expected_results as $index => $result) {
+      $messages = array_map($map, $result->getMessages());
+      $expected_results[$index] = ValidationResult::createError($messages);
+    }
+    $this->assertResults($expected_results, $event_class);
   }
 
 }

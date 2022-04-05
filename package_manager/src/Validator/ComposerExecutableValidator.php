@@ -3,6 +3,8 @@
 namespace Drupal\package_manager\Validator;
 
 use Composer\Semver\Comparator;
+use Drupal\Core\Extension\ModuleHandlerInterface;
+use Drupal\Core\Url;
 use Drupal\package_manager\Event\PreCreateEvent;
 use Drupal\package_manager\Event\PreOperationStageEvent;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
@@ -33,6 +35,13 @@ class ComposerExecutableValidator implements PreOperationStageValidatorInterface
   protected $composer;
 
   /**
+   * The module handler service.
+   *
+   * @var \Drupal\Core\Extension\ModuleHandlerInterface
+   */
+  protected $moduleHandler;
+
+  /**
    * The detected version of Composer.
    *
    * @var string
@@ -44,11 +53,14 @@ class ComposerExecutableValidator implements PreOperationStageValidatorInterface
    *
    * @param \PhpTuf\ComposerStager\Domain\Process\Runner\ComposerRunnerInterface $composer
    *   The Composer runner.
+   * @param \Drupal\Core\Extension\ModuleHandlerInterface $module_handler
+   *   The module handler service.
    * @param \Drupal\Core\StringTranslation\TranslationInterface $translation
    *   The translation service.
    */
-  public function __construct(ComposerRunnerInterface $composer, TranslationInterface $translation) {
+  public function __construct(ComposerRunnerInterface $composer, ModuleHandlerInterface $module_handler, TranslationInterface $translation) {
     $this->composer = $composer;
+    $this->moduleHandler = $module_handler;
     $this->setStringTranslation($translation);
   }
 
@@ -60,27 +72,47 @@ class ComposerExecutableValidator implements PreOperationStageValidatorInterface
       $this->composer->run(['--version'], $this);
     }
     catch (ExceptionInterface $e) {
-      $event->addError([
-        $e->getMessage(),
-      ]);
+      $this->setError($e->getMessage(), $event);
       return;
     }
 
     if ($this->version) {
       if (Comparator::lessThan($this->version, static::MINIMUM_COMPOSER_VERSION)) {
-        $event->addError([
-          $this->t('Composer @minimum_version or later is required, but version @detected_version was detected.', [
-            '@minimum_version' => static::MINIMUM_COMPOSER_VERSION,
-            '@detected_version' => $this->version,
-          ]),
+        $message = $this->t('Composer @minimum_version or later is required, but version @detected_version was detected.', [
+          '@minimum_version' => static::MINIMUM_COMPOSER_VERSION,
+          '@detected_version' => $this->version,
         ]);
+        $this->setError($message, $event);
       }
     }
     else {
-      $event->addError([
-        $this->t('The Composer version could not be detected.'),
+      $this->setError($this->t('The Composer version could not be detected.'), $event);
+    }
+  }
+
+  /**
+   * Flags a validation error.
+   *
+   * @param string $message
+   *   The error message. If the Help module is enabled, a link to Package
+   *   Manager's online documentation will be appended.
+   * @param \Drupal\package_manager\Event\PreOperationStageEvent $event
+   *   The event object.
+   *
+   * @see package_manager_help()
+   */
+  protected function setError(string $message, PreOperationStageEvent $event): void {
+    if ($this->moduleHandler->moduleExists('help')) {
+      $url = Url::fromRoute('help.page', ['name' => 'package_manager'])
+        ->setOption('fragment', 'package-manager-requirements')
+        ->toString();
+
+      $message .= ' ';
+      $message .= $this->t('See <a href=":package-manager-help">the help page</a> for information on how to configure the path to Composer.', [
+        ':package-manager-help' => $url,
       ]);
     }
+    $event->addError([$message]);
   }
 
   /**
