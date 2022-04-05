@@ -364,18 +364,22 @@ class Stage {
     }
 
     $this->dispatch(new PreDestroyEvent($this));
-    // Delete the staging root and everything in it.
-    try {
-      $this->fileSystem->deleteRecursive($this->getStagingRoot(), function (string $path): void {
-        $this->fileSystem->chmod($path, 0777);
-      });
+    $staging_root = $this->getStagingRoot();
+    // If the staging root exists, delete it and everything in it.
+    if (file_exists($staging_root)) {
+      try {
+        $this->fileSystem->deleteRecursive($staging_root, function (string $path): void {
+          $this->fileSystem->chmod($path, 0777);
+        });
+      }
+      catch (FileException $e) {
+        // Deliberately swallow the exception so that the stage will be marked
+        // as available and the post-destroy event will be fired, even if the
+        // staging area can't actually be deleted. The file system service logs
+        // the exception, so we don't need to do anything else here.
+      }
     }
-    catch (FileException $e) {
-      // Deliberately swallow the exception so that the stage will be marked
-      // as available and the post-destroy event will be fired, even if the
-      // staging area can't actually be deleted. The file system service logs
-      // the exception, so we don't need to do anything else here.
-    }
+
     $this->markAsAvailable();
     $this->dispatch(new PostDestroyEvent($this));
   }
