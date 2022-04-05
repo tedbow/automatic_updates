@@ -114,6 +114,29 @@ END;
   }
 
   /**
+   * Adds a path repository to the test site.
+   *
+   * @param string $name
+   *   An arbitrary name for the repository.
+   * @param string $path
+   *   The path of the repository. Must exist in the file system.
+   * @param string $working_directory
+   *   (optional) The Composer working directory. Defaults to 'project'.
+   */
+  protected function addRepository(string $name, string $path, $working_directory = 'project'): void {
+    $this->assertDirectoryExists($path);
+
+    $repository = json_encode([
+      'type' => 'path',
+      'url' => $path,
+      'options' => [
+        'symlink' => FALSE,
+      ],
+    ], JSON_UNESCAPED_SLASHES);
+    $this->runComposer("composer config repo.$name '$repository'", $working_directory);
+  }
+
+  /**
    * Creates a test project from a given template and installs Drupal.
    *
    * @param string $template
@@ -142,15 +165,7 @@ END;
     // symlinking, we need to pass the JSON representations of the repositories
     // to `composer config`.
     foreach ($this->getCorePackages() as $name => $path) {
-      $repository = [
-        'type' => 'path',
-        'url' => $path,
-        'options' => [
-          'symlink' => FALSE,
-        ],
-      ];
-      $repository = json_encode($repository, JSON_UNESCAPED_SLASHES);
-      $this->runComposer("composer config repo.$name '$repository'", $template_dir);
+      $this->addRepository($name, $path, $template_dir);
     }
 
     // Add a local Composer repository with all third-party dependencies.

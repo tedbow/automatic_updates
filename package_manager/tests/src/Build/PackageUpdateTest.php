@@ -115,25 +115,4 @@ class PackageUpdateTest extends TemplateProjectTestBase {
     $this->assertSame($expected_post_apply_results, $results['post']);
   }
 
-  /**
-   * Adds a path repository to the test site.
-   *
-   * @param string $name
-   *   An arbitrary name for the repository.
-   * @param string $path
-   *   The path of the repository. Must exist in the file system.
-   */
-  private function addRepository(string $name, string $path): void {
-    $this->assertDirectoryExists($path);
-
-    $repository = json_encode([
-      'type' => 'path',
-      'url' => $path,
-      'options' => [
-        'symlink' => FALSE,
-      ],
-    ]);
-    $this->runComposer("composer config repo.$name '$repository'", 'project');
-  }
-
 }
