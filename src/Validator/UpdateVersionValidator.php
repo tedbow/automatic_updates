@@ -56,7 +56,7 @@ class UpdateVersionValidator implements EventSubscriberInterface {
    *   The running core version as known to the Update module.
    */
   protected function getCoreVersion(): string {
-    return (new ProjectInfo())->getInstalledVersion();
+    return (new ProjectInfo('drupal'))->getInstalledVersion();
   }
 
   /**
@@ -119,7 +119,7 @@ class UpdateVersionValidator implements EventSubscriberInterface {
       // @todo Remove this code in https://www.drupal.org/i/3272326 when we add
       //   add a validator that will warn if cron updates will no longer work
       //   because the site is more than 1 patch release behind.
-      $project_info = new ProjectInfo();
+      $project_info = new ProjectInfo('drupal');
       if ($possible_releases = $project_info->getInstallableReleases()) {
         $possible_release = array_pop($possible_releases);
         return $possible_release->getVersion();

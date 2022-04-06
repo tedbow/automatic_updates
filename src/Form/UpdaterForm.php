@@ -131,7 +131,7 @@ class UpdaterForm extends FormBase {
       '#theme' => 'update_last_check',
       '#last' => $this->state->get('update.last_check', 0),
     ];
-    $project_info = new ProjectInfo();
+    $project_info = new ProjectInfo('drupal');
 
     try {
       // @todo Until https://www.drupal.org/i/3264849 is fixed, we can only show
@@ -176,7 +176,7 @@ class UpdaterForm extends FormBase {
       ],
     ];
 
-    $project = $project_info->getProjectInfo();
+    $project = $project_info->getProjectInfo('drupal');
     if (empty($project['title']) || empty($project['link'])) {
       throw new \UnexpectedValueException('Expected project data to have a title and link.');
     }

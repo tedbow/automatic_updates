@@ -78,7 +78,7 @@ final class CronUpdateVersionValidator extends UpdateVersionValidator {
     // update release is a security release.
     $level = $this->configFactory->get('automatic_updates.settings')->get('cron');
     if ($level === CronUpdater::SECURITY) {
-      $releases = (new ProjectInfo())->getInstallableReleases();
+      $releases = (new ProjectInfo('drupal'))->getInstallableReleases();
       // @todo Remove this check and add validation to
       //   \Drupal\automatic_updates\Validator\UpdateVersionValidator::getValidationResult()
       //   to ensure the update release is always secure and supported in

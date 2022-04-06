@@ -86,7 +86,7 @@ class CronUpdater extends Updater {
    *   The version to which to update.
    */
   private function performUpdate(string $update_version): void {
-    $installed_version = (new ProjectInfo())->getInstalledVersion();
+    $installed_version = (new ProjectInfo('drupal'))->getInstalledVersion();
     if (empty($installed_version)) {
       $this->logger->error('Unable to determine the current version of Drupal core.');
       return;

@@ -122,20 +122,24 @@ class ProjectInfoTest extends UnitTestCase {
           '8.2.4' => $release_objects['8.2.4'],
         ],
       ],
+      [
+        NULL,
+        NULL,
+      ],
     ];
   }
 
   /**
    * @covers ::getInstallableReleases
    *
-   * @param array $project_data
+   * @param array|null $project_data
    *   The project data to return from ::getProjectInfo().
-   * @param \Drupal\automatic_updates_9_3_shim\ProjectRelease[] $expected_releases
+   * @param \Drupal\automatic_updates_9_3_shim\ProjectRelease[]|null $expected_releases
    *   The expected releases.
    *
    * @dataProvider providerGetInstallableReleases
    */
-  public function testGetInstallableReleases(array $project_data, array $expected_releases): void {
+  public function testGetInstallableReleases(?array $project_data, ?array $expected_releases): void {
     $project_info = $this->getMockedProjectInfo($project_data);
     $this->assertEqualsCanonicalizing($expected_releases, $project_info->getInstallableReleases());
   }
@@ -159,7 +163,7 @@ class ProjectInfoTest extends UnitTestCase {
     ];
     $project_info = $this->getMockedProjectInfo($project_data);
     $this->expectException('LogicException');
-    $this->expectExceptionMessage('Drupal core is out of date, but the recommended version could not be determined.');
+    $this->expectExceptionMessage("The 'drupal' project is out of date, but the recommended version could not be determined.");
     $project_info->getInstallableReleases();
   }
 
@@ -169,20 +173,23 @@ class ProjectInfoTest extends UnitTestCase {
   public function testGetInstalledVersion(): void {
     $project_info = $this->getMockedProjectInfo(['existing_version' => '1.2.3']);
     $this->assertSame('1.2.3', $project_info->getInstalledVersion());
+    $project_info = $this->getMockedProjectInfo(NULL);
+    $this->assertSame(NULL, $project_info->getInstalledVersion());
   }
 
   /**
    * Mocks a ProjectInfo object.
    *
-   * @param array $project_data
+   * @param array|null $project_data
    *   The project info that should be returned by the mock's ::getProjectInfo()
    *   method.
    *
    * @return \Drupal\automatic_updates\ProjectInfo
    *   The mocked object.
    */
-  private function getMockedProjectInfo(array $project_data): ProjectInfo {
+  private function getMockedProjectInfo(?array $project_data): ProjectInfo {
     $project_info = $this->getMockBuilder(ProjectInfo::class)
+      ->setConstructorArgs(['drupal'])
       ->onlyMethods(['getProjectInfo'])
       ->getMock();
     $project_info->expects($this->any())

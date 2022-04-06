@@ -113,7 +113,7 @@ class ReadinessValidationManager implements EventSubscriberInterface {
     }
     $event = new ReadinessCheckEvent($stage);
     // Version validators will need up-to-date project info.
-    (new ProjectInfo())->getProjectInfo(TRUE);
+    (new ProjectInfo('drupal'))->getProjectInfo(TRUE);
     $this->eventDispatcher->dispatch($event);
     $results = $event->getResults();
     $this->keyValueExpirable->setWithExpire(

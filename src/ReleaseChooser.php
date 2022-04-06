@@ -36,7 +36,7 @@ class ReleaseChooser {
    */
   public function __construct(UpdateVersionValidator $version_validator) {
     $this->versionValidator = $version_validator;
-    $this->projectInfo = new ProjectInfo();
+    $this->projectInfo = new ProjectInfo('drupal');
   }
 
   /**
