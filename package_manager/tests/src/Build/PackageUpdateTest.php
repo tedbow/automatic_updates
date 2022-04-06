@@ -82,6 +82,10 @@ class PackageUpdateTest extends TemplateProjectTestBase {
       'updated_module.deleted_service exists' => 'exists',
       'value of updated_module.deleted_service' => 'Deleted service, should not exist after update',
       'updated_module.added_service exists' => 'not exists',
+      'ChangedClass exists' => 'exists',
+      'value of ChangedClass' => 'Before Update',
+      'LoadedAndDeletedClass exists' => 'exists',
+      'value of LoadedAndDeletedClass' => 'This class will be loaded and then deleted',
     ];
     $this->assertSame($expected_pre_apply_results, $results['pre']);
 
@@ -111,6 +115,20 @@ class PackageUpdateTest extends TemplateProjectTestBase {
       // the expected value.
       'updated_module.added_service exists' => 'exists',
       'value of updated_module.added_service' => 'New service, should not exist before update',
+      // Existing class should be available.
+      'ChangedClass exists' => 'exists',
+      // Existing class will still use the pre-update version.
+      'value of ChangedClass' => 'Before Update',
+      // Classes loaded in pre-apply or before and deleted from the updated module should
+      // be available.
+      'LoadedAndDeletedClass exists' => 'exists',
+      'value of LoadedAndDeletedClass' => 'This class will be loaded and then deleted',
+      // Classes not loaded before the apply operation and deleted from the updated module
+      // should not be available.
+      'DeletedClass exists' => 'not exists',
+      // Classes added to the updated module should be available.
+      'AddedClass exists' => 'exists',
+      'value of AddedClass' => 'This class will be added',
     ];
     $this->assertSame($expected_post_apply_results, $results['post']);
   }

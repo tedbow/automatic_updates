@@ -105,7 +105,43 @@ class SystemChangeRecorder implements EventSubscriberInterface {
     $this->recordServiceValue('updated_module.added_service', $results);
 
     $phase = $event instanceof PreApplyEvent ? 'pre' : 'post';
+
+    // Check if changes to an existing class are picked up.
+    $this->recordClassValue('ChangedClass', $results);
+    // Check if changes to a class that has not been loaded before the update is
+    // applied, are picked up.
+    $this->recordClassValue('LoadedAndDeletedClass', $results);
+    // We can't check AddedClass and DeletedClass in the "pre" phase, because
+    // class_exists() uses auto-loading, so if we checked these classes in the
+    // "pre" phase, the results will persist into the "post" phase.
+    if ($phase === 'post') {
+      // Check if a class that was removed in the updated module is still
+      // loaded.
+      $this->recordClassValue('DeletedClass', $results);
+      // Check if a class that was added in the updated module is available.
+      $this->recordClassValue('AddedClass', $results);
+    }
+
     $this->state->set("system_changes:$phase", $results);
+  }
+
+  /**
+   * Checks if a given class exists, and records its 'value' property.
+   *
+   * @param string $class_name
+   *   The name of the class to check, not including the namespace.
+   * @param array $results
+   *   The current set of results, passed by reference.
+   */
+  private function recordClassValue(string $class_name, array &$results): void {
+    $full_class_name = "Drupal\updated_module\\$class_name";
+    if (class_exists($full_class_name)) {
+      $results["$class_name exists"] = 'exists';
+      $results["value of $class_name"] = $full_class_name::$value;
+    }
+    else {
+      $results["$class_name exists"] = 'not exists';
+    }
   }
 
   /**
