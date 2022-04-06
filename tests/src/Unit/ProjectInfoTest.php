@@ -122,7 +122,7 @@ class ProjectInfoTest extends UnitTestCase {
           '8.2.4' => $release_objects['8.2.4'],
         ],
       ],
-      [
+      'no data' => [
         NULL,
         NULL,
       ],
@@ -141,6 +141,12 @@ class ProjectInfoTest extends UnitTestCase {
    */
   public function testGetInstallableReleases(?array $project_data, ?array $expected_releases): void {
     $project_info = $this->getMockedProjectInfo($project_data);
+
+    // If data is returned, but there are no releases, we should get an
+    // exception.
+    if (isset($project_data, $expected_releases) && empty($project_data['releases'])) {
+      $this->expectExceptionMessage('There was a problem getting update information. Try again later.');
+    }
     $this->assertEqualsCanonicalizing($expected_releases, $project_info->getInstallableReleases());
   }
 

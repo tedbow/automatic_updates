@@ -35,30 +35,20 @@ class ProjectInfo {
   /**
    * Returns up-to-date project information.
    *
-   * @param bool $refresh
-   *   (optional) Whether to fetch the latest information about available
-   *   updates from drupal.org. This can be an expensive operation, so defaults
-   *   to FALSE.
-   *
    * @return array|null
    *   The retrieved project information.
    *
    * @throws \RuntimeException
    *   If data about available updates cannot be retrieved.
    */
-  public function getProjectInfo(bool $refresh = FALSE): ?array {
-    $available_updates = update_get_available($refresh);
+  public function getProjectInfo(): ?array {
+    $available_updates = update_get_available(TRUE);
     $project_data = update_calculate_project_data($available_updates);
     return $project_data[$this->name] ?? NULL;
   }
 
   /**
    * Gets all project releases to which the site can update.
-   *
-   * @param bool $refresh
-   *   (optional) Whether to fetch the latest information about available
-   *   updates from drupal.org. This can be an expensive operation, so defaults
-   *   to FALSE.
    *
    * @return \Drupal\automatic_updates_9_3_shim\ProjectRelease[]|null
    *   If the project information is available, an array of releases that can be
@@ -67,19 +57,19 @@ class ProjectInfo {
    *   first).
    *
    * @throws \RuntimeException
-   *   Thrown if $refresh is TRUE and there are no available releases.
+   *   Thrown if there are no available releases.
    *
    * @todo Remove or simplify this function in https://www.drupal.org/i/3252190.
    */
-  public function getInstallableReleases(bool $refresh = FALSE): ?array {
-    $project = $this->getProjectInfo($refresh);
+  public function getInstallableReleases(): ?array {
+    $project = $this->getProjectInfo();
     if (!$project) {
       return NULL;
     }
     $installed_version = $this->getInstalledVersion();
-    // If we refreshed and we were able to get available releases we should
-    // always have at least have the current release stored.
-    if ($refresh && empty($project['releases'])) {
+    // If we were able to get available releases we should always have at least
+    // the current release stored.
+    if (empty($project['releases'])) {
       throw new \RuntimeException('There was a problem getting update information. Try again later.');
     }
     // If we're already up-to-date, there's nothing else we need to do.
@@ -111,17 +101,12 @@ class ProjectInfo {
   /**
    * Returns the installed project version, according to the Update module.
    *
-   * @param bool $refresh
-   *   (optional) Whether to fetch the latest information about available
-   *   updates from drupal.org. This can be an expensive operation, so defaults
-   *   to FALSE.
-   *
    * @return string|null
    *   The installed project version as known to the Update module or NULL if
    *   the project information is not available.
    */
-  public function getInstalledVersion(bool $refresh = FALSE): ?string {
-    if ($project_data = $this->getProjectInfo($refresh)) {
+  public function getInstalledVersion(): ?string {
+    if ($project_data = $this->getProjectInfo()) {
       return $project_data['existing_version'];
     }
     return NULL;

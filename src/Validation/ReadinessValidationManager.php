@@ -4,7 +4,6 @@ namespace Drupal\automatic_updates\Validation;
 
 use Drupal\automatic_updates\CronUpdater;
 use Drupal\automatic_updates\Event\ReadinessCheckEvent;
-use Drupal\automatic_updates\ProjectInfo;
 use Drupal\automatic_updates\Updater;
 use Drupal\Component\Datetime\TimeInterface;
 use Drupal\Core\Config\ConfigFactoryInterface;
@@ -112,8 +111,6 @@ class ReadinessValidationManager implements EventSubscriberInterface {
       $stage = $this->cronUpdater;
     }
     $event = new ReadinessCheckEvent($stage);
-    // Version validators will need up-to-date project info.
-    (new ProjectInfo('drupal'))->getProjectInfo(TRUE);
     $this->eventDispatcher->dispatch($event);
     $results = $event->getResults();
     $this->keyValueExpirable->setWithExpire(

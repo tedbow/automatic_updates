@@ -40,17 +40,6 @@ class ReleaseChooser {
   }
 
   /**
-   * Refreshes the project information through the Update module.
-   *
-   * @return $this
-   *   The called object.
-   */
-  public function refresh(): self {
-    $this->projectInfo->getProjectInfo(TRUE);
-    return $this;
-  }
-
-  /**
    * Returns the releases that are installable.
    *
    * @return \Drupal\automatic_updates_9_3_shim\ProjectRelease[]

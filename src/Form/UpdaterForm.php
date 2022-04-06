@@ -139,7 +139,7 @@ class UpdaterForm extends FormBase {
       //   currently installed minor. Failing that, try to show the latest
       //   release in the next minor. If neither of those are available, just
       //   show the first available release.
-      $recommended_release = $this->releaseChooser->refresh()->getLatestInInstalledMinor();
+      $recommended_release = $this->releaseChooser->getLatestInInstalledMinor();
       if (!$recommended_release) {
         $recommended_release = $this->releaseChooser->getLatestInNextMinor();
         if (!$recommended_release) {
@@ -176,7 +176,7 @@ class UpdaterForm extends FormBase {
       ],
     ];
 
-    $project = $project_info->getProjectInfo('drupal');
+    $project = $project_info->getProjectInfo();
     if (empty($project['title']) || empty($project['link'])) {
       throw new \UnexpectedValueException('Expected project data to have a title and link.');
     }

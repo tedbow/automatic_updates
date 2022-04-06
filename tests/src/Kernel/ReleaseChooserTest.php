@@ -145,7 +145,6 @@ class ReleaseChooserTest extends AutomaticUpdatesKernelTestBase {
     $this->config('automatic_updates.settings')->set('allow_core_minor_updates', $minor_support)->save();
     /** @var \Drupal\automatic_updates\ReleaseChooser $chooser */
     $chooser = $this->container->get($chooser_service);
-    $chooser->refresh();
     $this->assertReleaseVersion($current_minor, $chooser->getLatestInInstalledMinor());
     $this->assertReleaseVersion($next_minor, $chooser->getLatestInNextMinor());
   }
