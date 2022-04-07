@@ -219,12 +219,8 @@ class ReadinessValidationManagerTest extends AutomaticUpdatesKernelTestBase {
    * Tests that stored validation results are deleted after an update.
    */
   public function testStoredResultsDeletedPostApply(): void {
-    $this->container->get('module_installer')
-      ->install(['automatic_updates']);
-
-    // Ensure there's a simulated core release to update to.
+    $this->enableModules(['automatic_updates']);
     $this->setCoreVersion('9.8.1');
-    $this->setReleaseMetadata(__DIR__ . '/../../../fixtures/release-history/drupal.9.8.2.xml');
 
     // The readiness checker should raise a warning, so that the update is not
     // blocked or aborted.

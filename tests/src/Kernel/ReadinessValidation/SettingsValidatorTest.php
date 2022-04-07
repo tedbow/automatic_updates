@@ -51,7 +51,7 @@ class SettingsValidatorTest extends AutomaticUpdatesKernelTestBase {
     $this->assertCheckerResultsFromManager($expected_results, TRUE);
     try {
       $this->container->get('automatic_updates.updater')->begin([
-        'drupal' => '9.8.1',
+        'drupal' => '9.8.2',
       ]);
       // If there was no exception, ensure we're not expecting any errors.
       $this->assertSame([], $expected_results);

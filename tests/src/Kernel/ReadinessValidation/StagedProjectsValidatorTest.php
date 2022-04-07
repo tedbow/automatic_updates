@@ -61,7 +61,7 @@ class StagedProjectsValidatorTest extends AutomaticUpdatesKernelTestBase {
     }
 
     $updater = $this->container->get('automatic_updates.updater');
-    $stage_id = $updater->begin(['drupal' => '9.8.1']);
+    $stage_id = $updater->begin(['drupal' => '9.8.2']);
     if ($stage_dir_exists) {
       // Copy the fixture's staging directory into a subdirectory using the
       // stage ID as the directory name.
