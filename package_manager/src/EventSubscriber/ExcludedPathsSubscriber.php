@@ -114,7 +114,7 @@ class ExcludedPathsSubscriber implements EventSubscriberInterface {
 
     foreach ($paths as $path) {
       // Make absolute paths relative to the project root.
-      $path = str_replace($project_root, NULL, $path);
+      $path = str_replace($project_root, '', $path);
       $path = ltrim($path, '/');
       $event->excludePath($path);
     }

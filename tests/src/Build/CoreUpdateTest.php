@@ -170,7 +170,7 @@ class CoreUpdateTest extends UpdateTestBase {
     $workspace_dir = $this->getWorkspaceDirectory();
 
     // Loop through core's metapackages and plugins, and alter them as needed.
-    $packages = str_replace("$workspace_dir/", NULL, $this->getCorePackages());
+    $packages = str_replace("$workspace_dir/", '', $this->getCorePackages());
     foreach ($packages as $path) {
       // Assign the new upstream version.
       $this->runComposer("composer config version $version", $path);

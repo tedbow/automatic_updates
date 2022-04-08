@@ -60,7 +60,7 @@ class PathLocator {
    *   project root and Drupal root are the same.
    */
   public function getWebRoot(): string {
-    $web_root = str_replace($this->getProjectRoot(), NULL, $this->appRoot);
+    $web_root = str_replace($this->getProjectRoot(), '', $this->appRoot);
     return trim($web_root, DIRECTORY_SEPARATOR);
   }
 
