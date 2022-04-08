@@ -28,6 +28,7 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
   protected static $modules = [
     'automatic_updates_test',
     'automatic_updates_extensions',
+    'block',
     'semver_test',
   ];
 
@@ -44,6 +45,8 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
   protected function setUp(): void {
     parent::setUp();
     $this->setReleaseMetadata(__DIR__ . '/../../../../tests/fixtures/release-history/semver_test.1.1.xml');
+    $this->drupalLogin($this->rootUser);
+    $this->drupalPlaceBlock('local_tasks_block', ['primary' => TRUE]);
   }
 
   /**
@@ -94,12 +97,12 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
     $this->drupalLogin($user);
     $this->setProjectInstalledVersion('8.1.0');
     $this->checkForUpdates();
-    $this->drupalGet('/admin/automatic-update-extensions');
+    $this->drupalGet('admin/reports/updates/automatic-update-extensions');
     $assert->pageTextContains('Access Denied');
     $assert->pageTextNotContains('Automatic Updates Form');
     $user = $this->createUser(['administer software updates']);
     $this->drupalLogin($user);
-    $this->drupalGet('/admin/automatic-update-extensions');
+    $this->drupalGet('admin/reports/updates/automatic-update-extensions');
     $this->assertTableShowsUpdates();
     $assert->pageTextContains('Automatic Updates Form');
     $assert->buttonExists('Update');
@@ -117,7 +120,7 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
     $this->drupalLogin($user);
     $this->setProjectInstalledVersion('8.1.1');
     $this->checkForUpdates();
-    $this->drupalGet('/admin/automatic-update-extensions');
+    $this->drupalGet('admin/reports/updates/automatic-update-extensions');
     $assert->pageTextContains('There are no available updates.');
     $assert->buttonNotExists('Update');
   }
@@ -134,7 +137,7 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
     $this->drupalLogin($user);
     $this->setProjectInstalledVersion('8.1.0');
     $this->checkForUpdates();
-    $this->drupalGet('/admin/automatic-update-extensions');
+    $this->drupalGet('admin/reports/updates/automatic-update-extensions');
     $this->assertTableShowsUpdates();
     $message = t("You've not experienced Shakespeare until you have read him in the original Klingon.");
     $error = ValidationResult::createError([$message]);
@@ -151,17 +154,14 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
    */
   public function testWarnings(): void {
     $assert = $this->assertSession();
-    $user = $this->createUser([
-      'administer site configuration',
-      'administer software updates',
-    ]);
-    $this->drupalLogin($user);
     $this->setProjectInstalledVersion('8.1.0');
     $this->checkForUpdates();
     $message = t("Warning! Updating this module may cause an error.");
     $warning = ValidationResult::createWarning([$message]);
     TestSubscriber1::setTestResult([$warning], ReadinessCheckEvent::class);
-    $this->drupalGet('/admin/automatic-update-extensions');
+    // Navigate to the automatic updates form.
+    $this->drupalGet('/admin/reports/updates');
+    $this->clickLink('Update Extensions');
     $this->assertTableShowsUpdates();
     $assert->pageTextContains(static::$warningsExplanation);
     $assert->pageTextNotContains(static::$errorsExplanation);
