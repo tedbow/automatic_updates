@@ -96,11 +96,11 @@ class StagedProjectsValidatorTest extends AutomaticUpdatesKernelTestBase {
 
     $event_dispatcher = $this->container->get('event_dispatcher');
     // Disable the disk space validator, since it doesn't work with vfsStream,
-    // and the excluded paths subscriber, since it won't deal with this tiny
+    // and the Git directory excluder, since it won't deal with this tiny
     // virtual file system correctly.
     $disable_subscribers = array_map([$this->container, 'get'], [
       'package_manager.validator.disk_space',
-      'package_manager.excluded_paths_subscriber',
+      'package_manager.git_excluder',
     ]);
     array_walk($disable_subscribers, [$event_dispatcher, 'removeSubscriber']);
 

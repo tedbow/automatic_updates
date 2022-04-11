@@ -31,7 +31,7 @@ trait ExcludedPathsTrait {
    * @param string $path
    *   The path to exclude, relative to the project root.
    *
-   * @see \Drupal\package_manager\EventSubscriber\ExcludedPathsSubscriber
+   * @see \Drupal\package_manager\PathExcluder\SiteConfigurationExcluder
    */
   public function excludePath(string $path): void {
     $this->excludedPaths[] = $path;

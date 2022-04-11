@@ -128,13 +128,43 @@ services:
       - '@string_translation'
     tags:
       - { name: event_subscriber }
-  package_manager.excluded_paths_subscriber:
-    class: Drupal\package_manager\EventSubscriber\ExcludedPathsSubscriber
+  package_manager.test_site_excluder:
+    class: Drupal\package_manager\PathExcluder\TestSiteExcluder
+    arguments:
+      - '@package_manager.path_locator'
+    tags:
+      - { name: event_subscriber }
+  package_manager.vendor_hardening_excluder:
+    class: Drupal\package_manager\PathExcluder\VendorHardeningExcluder
+    arguments:
+      - '@package_manager.path_locator'
+    tags:
+      - { name: event_subscriber }
+  package_manager.site_files_excluder:
+    class: Drupal\package_manager\PathExcluder\SiteFilesExcluder
+    arguments:
+      - '@package_manager.path_locator'
+      - '@stream_wrapper_manager'
+      - '@package_manager.symfony_file_system'
+    tags:
+      - { name: event_subscriber }
+  package_manager.sqlite_excluder:
+    class: Drupal\package_manager\PathExcluder\SqliteDatabaseExcluder
+    arguments:
+      - '@package_manager.path_locator'
+      - '@database'
+    tags:
+      - { name: event_subscriber }
+  package_manager.git_excluder:
+    class: Drupal\package_manager\PathExcluder\GitExcluder
+    arguments:
+      - '@package_manager.path_locator'
+    tags:
+      - { name: event_subscriber }
+  package_manager.site_configuration_excluder:
+    class: Drupal\package_manager\PathExcluder\SiteConfigurationExcluder
     arguments:
       - '%site.path%'
-      - '@package_manager.symfony_file_system'
-      - '@stream_wrapper_manager'
-      - '@database'
       - '@package_manager.path_locator'
     tags:
       - { name: event_subscriber }
