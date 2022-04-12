@@ -75,13 +75,12 @@ class SiteConfigurationExcluderTest extends PackageManagerKernelTestBase {
     // Regular module files should be staged.
     $this->assertFileExists("$stage_dir/modules/example/example.info.yml");
 
-    // A new file added to the staging area in an excluded directory, should not
-    // be copied to the active directory.
-    $file = "$stage_dir/sites/default/no-copy.txt";
+    // A new file added to the site directory in the staging area should be
+    // copied to the active directory.
+    $file = "$stage_dir/sites/default/new.txt";
     touch($file);
-    $this->assertFileExists($file);
     $stage->apply();
-    $this->assertFileDoesNotExist("$active_dir/sites/default/no-copy.txt");
+    $this->assertFileExists("$active_dir/sites/default/new.txt");
 
     // The ignored files should still be in the active directory.
     foreach ($ignore as $path) {

@@ -51,6 +51,9 @@ class CoreUpdateTest extends UpdateTestBase {
     $this->checkForUpdates();
     $this->visit('/admin/modules/automatic-update');
     $this->getMink()->assertSession()->pageTextContains('9.8.1');
+
+    // Ensure that Drupal has write-protected the site directory.
+    $this->assertDirectoryIsNotWritable($this->getWebRoot() . '/sites/default');
   }
 
   /**
@@ -184,10 +187,20 @@ class CoreUpdateTest extends UpdateTestBase {
     }
 
     // Change the \Drupal::VERSION constant and put placeholder text in the
-    // README so we can ensure that we really updated to the correct version.
+    // README so we can ensure that we really updated to the correct version. We
+    // also change the default site configuration files so we can ensure that
+    // these are updated as well, despite `sites/default` being write-protected.
     // @see ::assertUpdateSuccessful()
+    // @see ::createTestProject()
     Composer::setDrupalVersion($workspace_dir, $version);
     file_put_contents("$workspace_dir/core/README.txt", "Placeholder for Drupal core $version.");
+
+    foreach (['default.settings.php', 'default.services.yml'] as $file) {
+      $file = fopen("$workspace_dir/core/assets/scaffold/files/$file", 'a');
+      $this->assertIsResource($file);
+      fwrite($file, "# This is part of Drupal $version.\n");
+      fclose($file);
+    }
   }
 
   /**
@@ -225,11 +238,22 @@ class CoreUpdateTest extends UpdateTestBase {
     $this->getMink()->assertSession()->pageTextContains('No update available');
 
     // The status page should report that we're running the expected version and
-    // the README should contain the placeholder text written by
-    // ::setUpstreamCoreVersion().
+    // the README and default site configuration files should contain the
+    // placeholder text written by ::setUpstreamCoreVersion(), even though
+    // `sites/default` is write-protected.
+    // @see ::createTestProject()
+    // @see ::setUpstreamCoreVersion()
     $this->assertCoreVersion($expected_version);
-    $placeholder = file_get_contents($this->getWebRoot() . '/core/README.txt');
+    $web_root = $this->getWebRoot();
+    $placeholder = file_get_contents("$web_root/core/README.txt");
     $this->assertSame("Placeholder for Drupal core $expected_version.", $placeholder);
+
+    foreach (['default.settings.php', 'default.services.yml'] as $file) {
+      $file = $web_root . '/sites/default/' . $file;
+      $this->assertFileIsReadable($file);
+      $this->assertStringContainsString("# This is part of Drupal $expected_version.", file_get_contents($file));
+    }
+    $this->assertDirectoryIsNotWritable("$web_root/sites/default");
 
     $info = $this->runComposer('composer info --self --format json', 'project', TRUE);
 
