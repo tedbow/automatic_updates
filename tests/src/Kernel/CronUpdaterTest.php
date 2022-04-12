@@ -110,7 +110,7 @@ class CronUpdaterTest extends AutomaticUpdatesKernelTestBase {
       'enabled, normal release' => [
         CronUpdater::ALL,
         "$fixture_dir/drupal.9.8.2.xml",
-        FALSE,
+        TRUE,
       ],
       'enabled, security release' => [
         CronUpdater::ALL,

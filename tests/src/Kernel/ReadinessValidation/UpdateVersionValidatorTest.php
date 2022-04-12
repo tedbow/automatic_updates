@@ -180,22 +180,25 @@ class UpdateVersionValidatorTest extends AutomaticUpdatesKernelTestBase {
    *   Sets of arguments to pass to the test method.
    */
   public function providerCronUpdateTwoPatchReleasesAhead(): array {
-    $update_disallowed = ValidationResult::createError([
-      'Drupal cannot be automatically updated during cron from its current version, 9.8.0, to the recommended version, 9.8.2, because Automatic Updates only supports 1 patch version update during cron.',
-    ]);
-
     return [
       'disabled' => [
         CronUpdater::DISABLED,
         [],
+        0,
       ],
       'security only' => [
         CronUpdater::SECURITY,
-        [$update_disallowed],
+        [
+          ValidationResult::createError([
+            'Drupal cannot be automatically updated during cron from its current version, 9.8.0, to the recommended version, 9.8.1, because 9.8.1 is not a security release.',
+          ]),
+        ],
+        0,
       ],
       'all' => [
         CronUpdater::ALL,
-        [$update_disallowed],
+        [],
+        1,
       ],
     ];
   }
@@ -208,10 +211,12 @@ class UpdateVersionValidatorTest extends AutomaticUpdatesKernelTestBase {
    * @param \Drupal\package_manager\ValidationResult[] $expected_results
    *   The expected validation results, which should be logged as errors if the
    *   update is attempted during cron.
+   * @param int $expected_stage_times
+   *   The expected number of times the update should have been staged.
    *
    * @dataProvider providerCronUpdateTwoPatchReleasesAhead
    */
-  public function testCronUpdateTwoPatchReleasesAhead(string $cron_setting, array $expected_results): void {
+  public function testCronUpdateTwoPatchReleasesAhead(string $cron_setting, array $expected_results, int $expected_stage_times): void {
     $this->setCoreVersion('9.8.0');
     $this->config('automatic_updates.settings')
       ->set('cron', $cron_setting)
@@ -219,7 +224,7 @@ class UpdateVersionValidatorTest extends AutomaticUpdatesKernelTestBase {
 
     $this->assertCheckerResultsFromManager($expected_results, TRUE);
     $this->container->get('cron')->run();
-    $this->assertUpdateStagedTimes(0);
+    $this->assertUpdateStagedTimes($expected_stage_times);
   }
 
   /**
@@ -283,10 +288,10 @@ class UpdateVersionValidatorTest extends AutomaticUpdatesKernelTestBase {
       'Drupal cannot be automatically updated during cron from its current version, 9.8.0-alpha1, because Automatic Updates only supports updating from stable versions during cron.',
     ]);
     $dev_current_version = ValidationResult::createError([
-      'Drupal cannot be automatically updated from its current version, 9.8.0-dev, to the recommended version, 9.8.2, because automatic updates from a dev version to any other version are not supported.',
+      'Drupal cannot be automatically updated from its current version, 9.8.0-dev, to the recommended version, 9.8.0-alpha1, because automatic updates from a dev version to any other version are not supported.',
     ]);
     $different_major_version = ValidationResult::createError([
-      'Drupal cannot be automatically updated from its current version, 8.9.1, to the recommended version, 9.8.2, because automatic updates from one major version to another are not supported.',
+      'Drupal cannot be automatically updated from its current version, 8.9.1, to the recommended version, 9.7.0-alpha1, because automatic updates from one major version to another are not supported.',
     ]);
 
     return [

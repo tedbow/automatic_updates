@@ -3,8 +3,8 @@
 namespace Drupal\automatic_updates;
 
 use Composer\Semver\Comparator;
-use Composer\Semver\Semver;
 use Drupal\automatic_updates_9_3_shim\ProjectRelease;
+use Drupal\Core\Extension\ExtensionVersion;
 use Drupal\update\UpdateManagerInterface;
 
 /**
@@ -30,6 +30,37 @@ class ProjectInfo {
    */
   public function __construct(string $name) {
     $this->name = $name;
+  }
+
+  /**
+   * Determines if a release can be installed.
+   *
+   * @param \Drupal\automatic_updates_9_3_shim\ProjectRelease $release
+   *   The project release.
+   * @param string[] $support_branches
+   *   The supported branches.
+   *
+   * @return bool
+   *   TRUE if the release is installable, otherwise FALSE. A release will be
+   *   considered installable if it is secure, published, supported, in
+   *   a supported branch, and newer than currently installed version.
+   */
+  private function isInstallable(ProjectRelease $release, array $support_branches): bool {
+    if ($release->isInsecure() || !$release->isPublished() || $release->isUnsupported()) {
+      return FALSE;
+    }
+    $installed_version = $this->getInstalledVersion();
+    if (Comparator::lessThanOrEqualTo($release->getVersion(), $installed_version)) {
+      return FALSE;
+    }
+    $version = ExtensionVersion::createFromVersionString($release->getVersion());
+    foreach ($support_branches as $support_branch) {
+      $support_branch_version = ExtensionVersion::createFromSupportBranch($support_branch);
+      if ($support_branch_version->getMajorVersion() === $version->getMajorVersion() && $support_branch_version->getMinorVersion() === $version->getMinorVersion()) {
+        return TRUE;
+      }
+    }
+    return FALSE;
   }
 
   /**
@@ -66,36 +97,34 @@ class ProjectInfo {
     if (!$project) {
       return NULL;
     }
-    $installed_version = $this->getInstalledVersion();
-    // If we were able to get available releases we should always have at least
-    // the current release stored.
-    if (empty($project['releases'])) {
-      throw new \RuntimeException('There was a problem getting update information. Try again later.');
+    $available_updates = update_get_available()[$this->name];
+    if ($available_updates['project_status'] !== 'published') {
+      throw new \RuntimeException("The project '{$this->name}' can not be updated because its status is " . $available_updates['project_status']);
     }
+
     // If we're already up-to-date, there's nothing else we need to do.
     if ($project['status'] === UpdateManagerInterface::CURRENT) {
       return [];
     }
-    elseif (empty($project['recommended'])) {
-      // If we don't know what to recommend they update to, time to freak out.
-      throw new \LogicException("The '{$this->name}' project is out of date, but the recommended version could not be determined.");
+
+    if (empty($available_updates['releases'])) {
+      // If project is not current we should always have at least one release.
+      throw new \RuntimeException('There was a problem getting update information. Try again later.');
     }
+    $installed_version = $this->getInstalledVersion();
+    $support_branches = explode(',', $available_updates['supported_branches']);
     $installable_releases = [];
-    if (Comparator::greaterThan($project['recommended'], $installed_version)) {
-      $release = ProjectRelease::createFromArray($project['releases'][$project['recommended']]);
-      $installable_releases[$release->getVersion()] = $release;
-    }
-    if (!empty($project['security updates'])) {
-      foreach ($project['security updates'] as $security_update) {
-        $release = ProjectRelease::createFromArray($security_update);
-        $version = $release->getVersion();
-        if (Comparator::greaterThan($version, $installed_version)) {
-          $installable_releases[$version] = $release;
-        }
+    foreach ($available_updates['releases'] as $release_info) {
+      $release = ProjectRelease::createFromArray($release_info);
+      $version = $release->getVersion();
+      if (Comparator::lessThanOrEqualTo($version, $installed_version)) {
+        break;
+      }
+      if ($this->isInstallable($release, $support_branches)) {
+        $installable_releases[$version] = $release;
       }
     }
-    $sorted_versions = Semver::rsort(array_keys($installable_releases));
-    return array_replace(array_flip($sorted_versions), $installable_releases);
+    return $installable_releases;
   }
 
   /**

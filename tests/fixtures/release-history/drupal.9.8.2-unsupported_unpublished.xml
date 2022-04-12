@@ -32,12 +32,13 @@
   <terms>
     <term><name>Release type</name><value>New features</value></term>
     <term><name>Release type</name><value>Bug fixes</value></term>
+    <term><name>Release type</name><value>Unsupported</value></term>
   </terms>
  </release>
  <release>
    <name>Drupal 9.8.0</name>
    <version>9.8.0</version>
-   <status>published</status>
+   <status>unpublished</status>
    <release_link>http://example.com/drupal-9-8-0-release</release_link>
    <download_link>http://example.com/drupal-9-8-0.tar.gz</download_link>
    <date>1250424521</date>
