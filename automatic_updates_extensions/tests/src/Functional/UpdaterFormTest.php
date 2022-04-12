@@ -44,7 +44,7 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
    */
   protected function setUp(): void {
     parent::setUp();
-    $this->setReleaseMetadata(__DIR__ . '/../../../../tests/fixtures/release-history/semver_test.1.1.xml');
+    $this->setReleaseMetadata(__DIR__ . '/../../fixtures/release-history/semver_test.1.1.xml');
     $this->drupalLogin($this->rootUser);
     $this->drupalPlaceBlock('local_tasks_block', ['primary' => TRUE]);
   }

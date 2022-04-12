@@ -19,10 +19,10 @@ class TestController extends ControllerBase {
   public function metadata($project_name = 'drupal', $version = NULL): Response {
     $xml_map = $this->config('update_test.settings')->get('xml_map');
     if (isset($xml_map[$project_name])) {
-      $availability_scenario = $xml_map[$project_name];
+      $file = $xml_map[$project_name];
     }
     elseif (isset($xml_map['#all'])) {
-      $availability_scenario = $xml_map['#all'];
+      $file = $xml_map['#all'];
     }
     else {
       // The test didn't specify (for example, the webroot has other modules and
@@ -30,10 +30,9 @@ class TestController extends ControllerBase {
       // running the test. So, we default to a file we know won't exist, so at
       // least we'll get an empty xml response instead of a bunch of Drupal page
       // output.
-      $availability_scenario = '#broken#';
+      $file = '#broken#';
     }
 
-    $file = __DIR__ . "/../../../fixtures/release-history/$project_name.$availability_scenario.xml";
     $headers = ['Content-Type' => 'text/xml; charset=utf-8'];
     if (!is_file($file)) {
       // Return an empty response.
