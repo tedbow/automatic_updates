@@ -163,7 +163,7 @@ class UpdateVersionValidator implements EventSubscriberInterface {
     //   https://www.drupal.org/project/automatic_updates/issues/3272068.
     if ($from_version->getVersionExtra() === 'dev') {
       return ValidationResult::createError([
-        $this->t('Drupal cannot be automatically updated from its current version, @from_version, to the recommended version, @to_version, because automatic updates from a dev version to any other version are not supported.', $variables),
+        $this->t('Drupal cannot be automatically updated from the installed version, @from_version, because automatic updates from a dev version to any other version are not supported.', $variables),
       ]);
     }
     if (Comparator::lessThan($to_version_string, $from_version_string)) {

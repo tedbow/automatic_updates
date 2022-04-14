@@ -2,7 +2,6 @@
 
 namespace Drupal\automatic_updates;
 
-use Composer\Semver\Comparator;
 use Drupal\automatic_updates_9_3_shim\ProjectRelease;
 use Drupal\Core\Extension\ExtensionVersion;
 use Drupal\update\UpdateManagerInterface;
@@ -42,18 +41,17 @@ class ProjectInfo {
    *
    * @return bool
    *   TRUE if the release is installable, otherwise FALSE. A release will be
-   *   considered installable if it is secure, published, supported, in
-   *   a supported branch, and newer than currently installed version.
+   *   considered installable if it is secure, published, supported, and in
+   *   a supported branch.
    */
   private function isInstallable(ProjectRelease $release, array $support_branches): bool {
     if ($release->isInsecure() || !$release->isPublished() || $release->isUnsupported()) {
       return FALSE;
     }
-    $installed_version = $this->getInstalledVersion();
-    if (Comparator::lessThanOrEqualTo($release->getVersion(), $installed_version)) {
+    $version = ExtensionVersion::createFromVersionString($release->getVersion());
+    if ($version->getVersionExtra() === 'dev') {
       return FALSE;
     }
-    $version = ExtensionVersion::createFromVersionString($release->getVersion());
     foreach ($support_branches as $support_branch) {
       $support_branch_version = ExtensionVersion::createFromSupportBranch($support_branch);
       if ($support_branch_version->getMajorVersion() === $version->getMajorVersion() && $support_branch_version->getMinorVersion() === $version->getMinorVersion()) {
@@ -117,7 +115,8 @@ class ProjectInfo {
     foreach ($available_updates['releases'] as $release_info) {
       $release = ProjectRelease::createFromArray($release_info);
       $version = $release->getVersion();
-      if (Comparator::lessThanOrEqualTo($version, $installed_version)) {
+      if ($version === $installed_version) {
+        // Stop searching for releases as soon as we find the installed version.
         break;
       }
       if ($this->isInstallable($release, $support_branches)) {
@@ -136,6 +135,9 @@ class ProjectInfo {
    */
   public function getInstalledVersion(): ?string {
     if ($project_data = $this->getProjectInfo()) {
+      if (empty($project_data['existing_version'])) {
+        throw new \UnexpectedValueException("Project '{$this->name}' does not have 'existing_version' set");
+      }
       return $project_data['existing_version'];
     }
     return NULL;

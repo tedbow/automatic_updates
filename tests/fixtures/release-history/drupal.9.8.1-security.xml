@@ -49,5 +49,17 @@
             <term><name>Release type</name><value>Insecure</value></term>
         </terms>
     </release>
+    <release>
+        <name>Drupal 9.8.x-dev</name>
+        <version>9.8.x-dev</version>
+        <status>published</status>
+        <release_link>http://example.com/drupal-9-8-x-dex-release</release_link>
+        <download_link>http://example.com/drupal-9-8-x-dex.tar.gz</download_link>
+        <date>1250424521</date>
+        <terms>
+            <term><name>Release type</name><value>New features</value></term>
+            <term><name>Release type</name><value>Bug fixes</value></term>
+        </terms>
+    </release>
 </releases>
 </project>

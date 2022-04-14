@@ -147,7 +147,7 @@ class UpdateVersionValidatorTest extends AutomaticUpdatesKernelTestBase {
     // In order to test what happens when only security updates are enabled
     // during cron (the default behavior), ensure that the latest available
     // release is a security update.
-    $this->setReleaseMetadata(__DIR__ . '/../../../fixtures/release-history/drupal.9.8.1-security.xml');
+    $this->setReleaseMetadata([__DIR__ . '/../../../fixtures/release-history/drupal.9.8.1-security.xml']);
 
     $this->setCoreVersion('9.7.1');
     $this->assertCheckerResultsFromManager($expected_results, TRUE);
@@ -288,7 +288,7 @@ class UpdateVersionValidatorTest extends AutomaticUpdatesKernelTestBase {
       'Drupal cannot be automatically updated during cron from its current version, 9.8.0-alpha1, because Automatic Updates only supports updating from stable versions during cron.',
     ]);
     $dev_current_version = ValidationResult::createError([
-      'Drupal cannot be automatically updated from its current version, 9.8.0-dev, to the recommended version, 9.8.0-alpha1, because automatic updates from a dev version to any other version are not supported.',
+      'Drupal cannot be automatically updated from the installed version, 9.8.x-dev, because automatic updates from a dev version to any other version are not supported.',
     ]);
     $different_major_version = ValidationResult::createError([
       'Drupal cannot be automatically updated from its current version, 8.9.1, to the recommended version, 9.7.0-alpha1, because automatic updates from one major version to another are not supported.',
@@ -315,17 +315,17 @@ class UpdateVersionValidatorTest extends AutomaticUpdatesKernelTestBase {
       ],
       'dev current version, cron disabled' => [
         CronUpdater::DISABLED,
-        '9.8.0-dev',
+        '9.8.x-dev',
         [$dev_current_version],
       ],
       'dev current version, security updates allowed' => [
         CronUpdater::SECURITY,
-        '9.8.0-dev',
+        '9.8.x-dev',
         [$dev_current_version],
       ],
       'dev current version, all updates allowed' => [
         CronUpdater::ALL,
-        '9.8.0-dev',
+        '9.8.x-dev',
         [$dev_current_version],
       ],
       'different current major, cron disabled' => [

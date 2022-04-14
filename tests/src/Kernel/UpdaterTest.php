@@ -37,7 +37,7 @@ class UpdaterTest extends AutomaticUpdatesKernelTestBase {
     // Simulate that we're running Drupal 9.8.0 and a security update to 9.8.1
     // is available.
     $this->setCoreVersion('9.8.0');
-    $this->setReleaseMetadata(__DIR__ . '/../../fixtures/release-history/drupal.9.8.1-security.xml');
+    $this->setReleaseMetadata([__DIR__ . '/../../fixtures/release-history/drupal.9.8.1-security.xml']);
 
     // Create a user who will own the stage even after the container is rebuilt.
     $user = $this->createUser([], NULL, TRUE, ['uid' => 2]);

@@ -137,7 +137,7 @@ class CronUpdaterTest extends AutomaticUpdatesKernelTestBase {
   public function testUpdaterCalled(string $setting, string $release_data, bool $will_update): void {
     // Our form alter does not refresh information on available updates, so
     // ensure that the appropriate update data is loaded beforehand.
-    $this->setReleaseMetadata($release_data);
+    $this->setReleaseMetadata([$release_data]);
     $this->setCoreVersion('9.8.0');
     update_get_available(TRUE);
 
@@ -287,7 +287,7 @@ class CronUpdaterTest extends AutomaticUpdatesKernelTestBase {
     $this->installConfig('automatic_updates');
     $this->setCoreVersion('9.8.0');
     // Ensure that there is a security release to which we should update.
-    $this->setReleaseMetadata(__DIR__ . "/../../fixtures/release-history/drupal.9.8.1-security.xml");
+    $this->setReleaseMetadata([__DIR__ . "/../../fixtures/release-history/drupal.9.8.1-security.xml"]);
 
     // If the pre- or post-destroy events throw an exception, it will not be
     // caught by the cron updater, but it *will* be caught by the main cron

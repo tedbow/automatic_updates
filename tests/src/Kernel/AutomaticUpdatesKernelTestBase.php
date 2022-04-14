@@ -61,7 +61,7 @@ abstract class AutomaticUpdatesKernelTestBase extends PackageManagerKernelTestBa
     // By default, pretend we're running Drupal core 9.8.0 and a non-security
     // update to 9.8.1 is available.
     $this->setCoreVersion('9.8.1');
-    $this->setReleaseMetadata(__DIR__ . '/../../fixtures/release-history/drupal.9.8.2.xml');
+    $this->setReleaseMetadata([__DIR__ . '/../../fixtures/release-history/drupal.9.8.2.xml']);
 
     // Set a last cron run time so that the cron frequency validator will run
     // from a sane state.
@@ -108,13 +108,16 @@ abstract class AutomaticUpdatesKernelTestBase extends PackageManagerKernelTestBa
   /**
    * Sets the release metadata file to use when fetching available updates.
    *
-   * @param string $file
-   *   The path of the XML metadata file to use.
+   * @param string[] $files
+   *   The paths of the XML metadata files to use.
    */
-  protected function setReleaseMetadata(string $file): void {
-    $metadata = Utils::tryFopen($file, 'r');
-    $response = new Response(200, [], Utils::streamFor($metadata));
-    $handler = new MockHandler([$response]);
+  protected function setReleaseMetadata(array $files): void {
+    $responses = [];
+    foreach ($files as $file) {
+      $metadata = Utils::tryFopen($file, 'r');
+      $responses[] = new Response(200, [], Utils::streamFor($metadata));
+    }
+    $handler = new MockHandler($responses);
     $this->client = new Client([
       'handler' => HandlerStack::create($handler),
     ]);
