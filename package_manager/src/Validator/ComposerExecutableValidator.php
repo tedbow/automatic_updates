@@ -25,7 +25,7 @@ class ComposerExecutableValidator implements PreOperationStageValidatorInterface
    *
    * @var string
    */
-  public const MINIMUM_COMPOSER_VERSION = '2.2.4';
+  public const MINIMUM_COMPOSER_VERSION = '2.3.5';
 
   /**
    * The Composer runner.

@@ -14,17 +14,11 @@
     "ext-json": "*",
     "drupal/core": "^9.2",
     "php-tuf/composer-stager": "0.3.0",
-    "composer/composer": "^2"
+    "composer/composer": "^2.2.12 || ^2.3.5"
   },
   "config": {
     "platform": {
       "php": "7.3.0"
     }
-  },
-  "repositories": [
-    {
-      "type": "vcs",
-      "url": "https://github.com/php-tuf/composer-stager"
-    }
-  ]
+  }
 }
