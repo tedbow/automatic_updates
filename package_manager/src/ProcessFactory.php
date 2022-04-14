@@ -74,9 +74,27 @@ final class ProcessFactory implements ProcessFactoryInterface {
     if ($this->isComposerCommand($command)) {
       $env['COMPOSER_HOME'] = $this->getComposerHomePath();
     }
-    // Ensure that the running PHP binary is in the PATH.
-    $env['PATH'] = $this->getEnv('PATH') . ':' . dirname(PHP_BINARY);
+    // Ensure that the PHP interpreter is in the PATH.
+    $env['PATH'] = $this->getEnv('PATH') . ':' . static::getPhpDirectory();
     return $process->setEnv($env);
+  }
+
+  /**
+   * Returns the directory which contains the PHP interpreter.
+   *
+   * @return string
+   *   The path of the directory containing the PHP interpreter. If the server
+   *   is running in a command-line interface, the directory portion of
+   *   PHP_BINARY is returned; otherwise, the compile-time PHP_BINDIR is.
+   *
+   * @see php_sapi_name()
+   * @see https://www.php.net/manual/en/reserved.constants.php
+   */
+  protected static function getPhpDirectory(): string {
+    if (PHP_SAPI === 'cli' || PHP_SAPI === 'cli-server') {
+      return dirname(PHP_BINARY);
+    }
+    return PHP_BINDIR;
   }
 
   /**
