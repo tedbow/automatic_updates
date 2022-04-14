@@ -12,6 +12,9 @@ use Drupal\package_manager\PathLocator;
 use Drupal\package_manager\Stage;
 use Drupal\Tests\package_manager\Traits\ValidationTestTrait;
 use org\bovigo\vfs\vfsStream;
+use org\bovigo\vfs\vfsStreamDirectory;
+use org\bovigo\vfs\vfsStreamFile;
+use org\bovigo\vfs\visitor\vfsStreamAbstractVisitor;
 
 /**
  * Base class for kernel tests of Package Manager's functionality.
@@ -140,92 +143,41 @@ abstract class PackageManagerKernelTestBase extends KernelTestBase {
    * locator service will also be mocked so that it points to the test project.
    */
   protected function createTestProject(): void {
-    $tree = [
-      'active' => [
-        'composer.json' => '{}',
-        'composer.lock' => '{}',
-        '.git' => [
-          'ignore.txt' => 'This file should never be staged.',
-        ],
-        '.gitignore' => 'This file should be staged.',
-        'private' => [
-          'ignore.txt' => 'This file should never be staged.',
-        ],
-        'modules' => [
-          'example' => [
-            'example.info.yml' => 'This file should be staged.',
-            '.git' => [
-              'ignore.txt' => 'This file should never be staged.',
-            ],
-          ],
-        ],
-        'sites' => [
-          'default' => [
-            'services.yml' => <<<END
-# This file should never be staged.
-must_not_be: 'empty'
-END,
-            'settings.local.php' => <<<END
-<?php
+    // Create the active directory and copy its contents from a fixture.
+    $active_dir = vfsStream::newDirectory('active');
+    $this->vfsRoot->addChild($active_dir);
+    vfsStream::copyFromFileSystem(__DIR__ . '/../../fixtures/fake_site', $active_dir);
 
-/**
- * @file
- * This file should never be staged.
- */
-END,
-            'settings.php' => <<<END
-<?php
+    // Because we can't commit physical `.git` directories into the fixture, use
+    // a visitor to traverse the virtual file system and rename all `_git`
+    // directories to `.git`.
+    vfsStream::inspect(new class () extends vfsStreamAbstractVisitor {
 
-/**
- * @file
- * This file should never be staged.
- */
-END,
-            'stage.txt' => 'This file should be staged.',
-          ],
-          'example.com' => [
-            'files' => [
-              'ignore.txt' => 'This file should never be staged.',
-            ],
-            'db.sqlite' => 'This file should never be staged.',
-            'db.sqlite-shm' => 'This file should never be staged.',
-            'db.sqlite-wal' => 'This file should never be staged.',
-            'services.yml' => <<<END
-# This file should never be staged.
-key: "value"
-END,
-            'settings.local.php' => <<<END
-<?php
+      /**
+       * {@inheritdoc}
+       */
+      public function visitFile(vfsStreamFile $file) {}
 
-/**
- * @file
- * This file should never be staged.
- */
-END,
-            'settings.php' => <<<END
-<?php
+      /**
+       * {@inheritdoc}
+       */
+      public function visitDirectory(vfsStreamDirectory $dir) {
+        if ($dir->getName() === '_git') {
+          $dir->rename('.git');
+        }
+        foreach ($dir->getChildren() as $child) {
+          $this->visit($child);
+        }
+      }
 
-/**
- * @file
- * This file should never be staged.
- */
-END,
-          ],
-          'simpletest' => [
-            'ignore.txt' => 'This file should never be staged.',
-          ],
-        ],
-        'vendor' => [
-          '.htaccess' => '# This file should never be staged.',
-          'web.config' => 'This file should never be staged.',
-        ],
-      ],
-      'stage' => [],
-    ];
-    $root = vfsStream::create($tree, $this->vfsRoot)->url();
-    TestStage::$stagingRoot = "$root/stage";
+    });
 
-    $path_locator = $this->mockPathLocator("$root/active");
+    // Create a staging root directory alongside the active directory.
+    $stage_dir = vfsStream::newDirectory('stage');
+    $this->vfsRoot->addChild($stage_dir);
+    TestStage::$stagingRoot = $stage_dir->url();
+
+    $path_locator = $this->mockPathLocator($active_dir->url());
 
     // Since the path locator now points to a virtual file system, we need to
     // replace the disk space validator with a test-only version that bypasses

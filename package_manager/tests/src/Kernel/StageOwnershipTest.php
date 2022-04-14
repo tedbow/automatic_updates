@@ -10,8 +10,7 @@ use Drupal\package_manager\Exception\StageException;
 use Drupal\package_manager\Exception\StageOwnershipException;
 use Drupal\package_manager_test_validation\EventSubscriber\TestSubscriber;
 use Drupal\Tests\user\Traits\UserCreationTrait;
-use Prophecy\Argument;
-use Psr\Log\LoggerInterface;
+use Psr\Log\Test\TestLogger;
 
 /**
  * Tests that ownership of the stage is enforced.
@@ -272,15 +271,8 @@ class StageOwnershipTest extends PackageManagerKernelTestBase {
     chmod($dir, 0400);
     $this->assertDirectoryIsNotWritable($dir);
 
-    // Mock a logger to prove that a file system error was raised while trying
-    // to delete the stage directory.
-    $logger = $this->prophesize(LoggerInterface::class);
-    $logger->log(
-      RfcLogLevel::ERROR,
-      "Failed to unlink file '%path'.",
-      Argument::withEntry('%path', "$dir/composer.json")
-    )->shouldBeCalled();
-    $logger_channel->addLogger($logger->reveal());
+    $logger = new TestLogger();
+    $logger_channel->addLogger($logger);
 
     // Listen to the post-destroy event so we can confirm that it was fired, and
     // the stage was made available, despite the file system error.
@@ -291,6 +283,17 @@ class StageOwnershipTest extends PackageManagerKernelTestBase {
       });
     $stage->destroy();
     $this->assertTrue($stage_available);
+
+    // A file system error should have been logged while trying to delete the
+    // stage directory.
+    $predicate = function (array $record) use ($dir): bool {
+      return (
+        $record['message'] === "Failed to unlink file '%path'." &&
+        isset($record['context']['%path']) &&
+        str_contains($record['context']['%path'], $dir)
+      );
+    };
+    $this->assertTrue($logger->hasRecordThatPasses($predicate, RfcLogLevel::ERROR));
   }
 
 }
