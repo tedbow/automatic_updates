@@ -24,7 +24,7 @@ function package_manager_help($route_name, RouteMatchInterface $route_match) {
       $output .= '<ul>';
       $output .= '<li>' . t('Package Manager can only maintain one copy of the site at any given time. If a copy of the site already exists, another one cannot be created until the existing copy is destroyed.') . '</li>';
       $output .= '<li>' . t('The temporary copy of the site is associated with the user or session that originally created it, and only that user or session can make changes to it.') . '</li>';
-      $output .= '<li>' . t('Modules cannot be uninstalled while Package Manager is syncing changes into live site.') . '<li>';
+      $output .= '<li>' . t('Modules cannot be uninstalled while Package Manager is syncing changes into live site.') . '</li>';
       $output .= '</ul>';
       $output .= '<p>' . t('For more information, see the <a href=":package-manager-documentation">online documentation for the Package Manager module</a>.', [':package-manager-documentation' => 'https://www.drupal.org/docs/8/core/modules/package-manager']) . '</p>';
       return $output;
