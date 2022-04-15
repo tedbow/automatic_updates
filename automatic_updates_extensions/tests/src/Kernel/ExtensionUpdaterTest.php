@@ -28,6 +28,7 @@ class ExtensionUpdaterTest extends AutomaticUpdatesKernelTestBase {
    * {@inheritdoc}
    */
   protected function setUp(): void {
+    $this->disableValidators[] = 'automatic_updates_extensions.validator.target_release';
     parent::setUp();
     $this->installEntitySchema('user');
   }

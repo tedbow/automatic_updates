@@ -2,27 +2,38 @@
 
 namespace Drupal\Tests\automatic_updates_extensions\Build;
 
-use Drupal\Tests\package_manager\Build\TemplateProjectTestBase;
+use Drupal\Tests\automatic_updates\Build\UpdateTestBase;
 
 /**
  * Tests updating modules in a staging area.
  *
  * @group automatic_updates_extensions
  */
-class ModuleUpdateTest extends TemplateProjectTestBase {
+class ModuleUpdateTest extends UpdateTestBase {
 
   /**
    * Tests updating a module in a staging area.
    */
   public function testApi(): void {
     $this->createTestProject('RecommendedProject');
+    $this->setReleaseMetadata([
+      'drupal' => __DIR__ . '/../../../../tests/fixtures/release-history/drupal.9.8.1-security.xml',
+      'alpha'  => __DIR__ . '/../../fixtures/release-history/alpha.1.1.0.xml',
+    ]);
+
+    // Set 'version' and 'project' for the 'alpha' module to enable the Update
+    // to determine the update status.
+    $system_info = ['alpha' => ['version' => '1.0.0', 'project' => 'alpha']];
+    $system_info = var_export($system_info, TRUE);
+    $code = <<<END
+\$config['update_test.settings']['system_info'] = $system_info;
+END;
+    $this->writeSettings($code);
 
     $this->addRepository('alpha', __DIR__ . '/../../../../package_manager/tests/fixtures/alpha/1.0.0');
     $this->runComposer('COMPOSER_MIRROR_PATH_REPOS=1 composer require drupal/alpha --update-with-all-dependencies', 'project');
 
-    $this->installQuickStart('minimal');
-    $this->formLogin($this->adminUsername, $this->adminPassword);
-    $this->installModules(['automatic_updates_extensions_test_api']);
+    $this->installModules(['automatic_updates_extensions_test_api', 'alpha']);
 
     // Change both modules' upstream version.
     $this->addRepository('alpha', __DIR__ . '/../../../../package_manager/tests/fixtures/alpha/1.1.0');

@@ -11,7 +11,6 @@
   </terms>
 <releases>
   <release>
-    <!-- This release is not in a supported branch; therefore it should not be recommended. -->
     <name>Semver Test 8.2.0</name>
     <version>8.2.0</version>
     <tag>8.2.0</tag>

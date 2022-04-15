@@ -11,3 +11,7 @@ services:
       - '@event_dispatcher'
       - '@tempstore.shared'
       - '@datetime.time'
+  automatic_updates_extensions.validator.target_release:
+    class: Drupal\automatic_updates_extensions\Validator\UpdateReleaseValidator
+    tags:
+      - { name: event_subscriber }
