@@ -50,9 +50,9 @@ class StagedProjectsValidatorTest extends AutomaticUpdatesKernelTestBase {
       // If we are testing a fixture with existing stage directory then we
       // need to use a virtual file system directory, so we can create a
       // subdirectory using the stage ID after it is created below.
-      $vendor = vfsStream::newDirectory('au_stage');
-      $this->vfsRoot->addChild($vendor);
-      TestStage::$stagingRoot = $vendor->url();
+      $stage_vfs_dir = vfsStream::newDirectory('au_stage');
+      $this->vfsRoot->addChild($stage_vfs_dir);
+      TestStage::$stagingRoot = $stage_vfs_dir->url();
     }
     else {
       // If we are testing non-existent staging directory we can use the path
@@ -66,7 +66,7 @@ class StagedProjectsValidatorTest extends AutomaticUpdatesKernelTestBase {
       // Copy the fixture's staging directory into a subdirectory using the
       // stage ID as the directory name.
       $sub_directory = vfsStream::newDirectory($stage_id);
-      $vendor->addChild($sub_directory);
+      $stage_vfs_dir->addChild($sub_directory);
       (new Filesystem())->mirror($stage_dir, $sub_directory->url());
     }
 
