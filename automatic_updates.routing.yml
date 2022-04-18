@@ -7,6 +7,7 @@ automatic_updates.update_readiness:
     _permission: 'administer software updates'
   options:
     _maintenance_access: TRUE
+    _automatic_updates_readiness_messages: skip
 automatic_updates.confirmation_page:
   path: '/admin/automatic-update-ready/{stage_id}'
   defaults:
@@ -16,6 +17,7 @@ automatic_updates.confirmation_page:
     _permission: 'administer software updates'
   options:
     _maintenance_access: TRUE
+    _automatic_updates_readiness_messages: skip
 automatic_updates.finish:
   path: '/automatic-update/finish'
   defaults:
@@ -24,6 +26,7 @@ automatic_updates.finish:
     _permission: 'administer software updates'
   options:
     _maintenance_access: TRUE
+    _automatic_updates_readiness_messages: skip
 # Links to our updater form appear in three different sets of local tasks. To ensure the breadcrumbs and paths are
 # consistent with the other local tasks in each set, we need two separate routes to the same form.
 automatic_updates.report_update:

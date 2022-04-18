@@ -27,6 +27,7 @@ class RouteSubscriber extends RouteSubscriberBase {
       'update.settings',
       'system.status',
       'update.confirmation_page',
+      'system.batch_page.html',
     ];
     foreach ($disabled_routes as $route) {
       $route = $collection->get($route);

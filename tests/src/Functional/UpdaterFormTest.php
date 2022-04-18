@@ -153,17 +153,10 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
     $assert_session = $this->assertSession();
     $page = $session->getPage();
 
-    // Store a fake readiness error, which will be cached.
-    $message = t("You've not experienced Shakespeare until you have read him in the original Klingon.");
-    $error = ValidationResult::createError([$message]);
-    TestSubscriber1::setTestResult([$error], ReadinessCheckEvent::class);
-
-    $this->drupalGet('/admin/reports/status');
-    $page->clickLink('Run readiness checks');
-    $assert_session->pageTextContainsOnce((string) $message);
+    $cached_message = $this->setAndAssertCachedMessage();
     // Ensure that the fake error is cached.
     $session->reload();
-    $assert_session->pageTextContainsOnce((string) $message);
+    $assert_session->pageTextContainsOnce($cached_message);
 
     $this->setCoreVersion('9.8.0');
     $this->checkForUpdates();
@@ -184,7 +177,7 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
     $assert_session->pageTextContainsOnce((string) $expected_results[0]->getMessages()[0]);
     $assert_session->pageTextContainsOnce(static::$errorsExplanation);
     $assert_session->pageTextNotContains(static::$warningsExplanation);
-    $assert_session->pageTextNotContains((string) $message);
+    $assert_session->pageTextNotContains($cached_message);
     TestSubscriber1::setTestResult(NULL, ReadinessCheckEvent::class);
 
     // Make the validator throw an exception during pre-create.
@@ -193,6 +186,7 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
     $session->reload();
     $assert_session->pageTextNotContains(static::$errorsExplanation);
     $assert_session->pageTextNotContains(static::$warningsExplanation);
+    $assert_session->pageTextNotContains($cached_message);
     $page->pressButton('Update');
     $this->checkForMetaRefresh();
     $this->assertUpdateStagedTimes(0);
@@ -204,6 +198,7 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
     $assert_session->pageTextContainsOnce($error->getMessage());
     $assert_session->pageTextNotContains((string) $expected_results[0]->getMessages()[0]);
     $assert_session->pageTextNotContains($expected_results[0]->getSummary());
+    $assert_session->pageTextNotContains($cached_message);
     // Since the error occurred during pre-create, there should be no existing
     // update to delete.
     $assert_session->buttonNotExists('Delete existing update');
@@ -219,6 +214,7 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
     // Since there's only one message, we shouldn't see the summary.
     $assert_session->pageTextNotContains($expected_results[0]->getSummary());
     $assert_session->pageTextContainsOnce((string) $expected_results[0]->getMessages()[0]);
+    $assert_session->pageTextNotContains($cached_message);
   }
 
   /**
@@ -369,6 +365,7 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
   public function testStagedDatabaseUpdates(bool $maintenance_mode_on): void {
     $this->setCoreVersion('9.8.0');
     $this->checkForUpdates();
+    $cached_message = $this->setAndAssertCachedMessage();
 
     $state = $this->container->get('state');
     $state->set('system.maintenance_mode', $maintenance_mode_on);
@@ -386,6 +383,7 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
     // The warning should be visible.
     $assert_session = $this->assertSession();
     $assert_session->pageTextContains(reset($messages));
+    $assert_session->pageTextNotContains($cached_message);
     $page->pressButton('Update');
     $this->checkForMetaRefresh();
     $this->assertUpdateStagedTimes(1);
@@ -403,6 +401,7 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
     $assert_session->pageTextContains($possible_update_message);
     $assert_session->pageTextContains('System');
     $assert_session->checkboxChecked('maintenance_mode');
+    $assert_session->pageTextNotContains($cached_message);
     $page->pressButton('Continue');
     $this->checkForMetaRefresh();
     // Confirm that the site was in maintenance before the update was applied.
@@ -412,6 +411,7 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
     // update.php.
     $this->assertTrue($state->get('system.maintenance_mode'));
     $assert_session->addressEquals('/update.php');
+    $assert_session->pageTextNotContains($cached_message);
     $assert_session->pageTextNotContains(reset($messages));
     $assert_session->pageTextNotContains($possible_update_message);
     $assert_session->pageTextContainsOnce('Please apply database updates to complete the update process.');
@@ -424,6 +424,7 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
     $assert_session->pageTextContains('Updates were attempted.');
     // Confirm the site was returned to the original maintenance module state.
     $this->assertSame($state->get('system.maintenance_mode'), $maintenance_mode_on);
+    $assert_session->pageTextNotContains($cached_message);
   }
 
   /**
@@ -464,14 +465,17 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
    * @dataProvider providerSuccessfulUpdate
    */
   public function testSuccessfulUpdate(string $update_form_url, bool $maintenance_mode_on): void {
+    $assert_session = $this->assertSession();
     $this->setCoreVersion('9.8.0');
     $this->checkForUpdates();
     $state = $this->container->get('state');
     $state->set('system.maintenance_mode', $maintenance_mode_on);
-
     $page = $this->getSession()->getPage();
+    $cached_message = $this->setAndAssertCachedMessage();
+
     $this->drupalGet($update_form_url);
     FixtureStager::setFixturePath(__DIR__ . '/../../fixtures/staged/9.8.1');
+    $assert_session->pageTextNotContains($cached_message);
     $page->pressButton('Update');
     $this->checkForMetaRefresh();
     $this->assertUpdateStagedTimes(1);
@@ -480,8 +484,8 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
     $this->assertSame($state->get('system.maintenance_mode'), $maintenance_mode_on);
     $page->pressButton('Continue');
     $this->checkForMetaRefresh();
-    $assert_session = $this->assertSession();
     $assert_session->addressEquals('/admin/reports/updates');
+    $assert_session->pageTextNotContains($cached_message);
     // Confirm that the site was in maintenance before the update was applied.
     // @see \Drupal\package_manager_test_validation\EventSubscriber\TestSubscriber::handleEvent()
     $this->assertTrue($state->get(PreApplyEvent::class . '.system.maintenance_mode'));
@@ -548,6 +552,30 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
     $assert_session->buttonNotExists('Delete existing update');
     $assert_session->pageTextContains('Some Exception');
     $assert_session->buttonExists('Update');
+  }
+
+  /**
+   * Sets an error message, runs readiness checks, and asserts it is displayed.
+   *
+   * @return string
+   *   The cached error check message.
+   */
+  private function setAndAssertCachedMessage(): string {
+    // Store a readiness error, which will be cached.
+    $message = "You've not experienced Shakespeare until you have read him in the original Klingon.";
+    $result = ValidationResult::createError([$message]);
+    TestSubscriber1::setTestResult([$result], ReadinessCheckEvent::class);
+    // Run the readiness checks a visit an admin page the message will be
+    // displayed.
+    $this->drupalGet('/admin/reports/status');
+    $this->clickLink('Run readiness checks');
+    $this->drupalGet('/admin');
+    $this->assertSession()->pageTextContains($message);
+    // Clear the results so the only way the message could appear on the pages
+    // used for the update process is if they show the cached results.
+    TestSubscriber1::setTestResult(NULL, ReadinessCheckEvent::class);
+
+    return $message;
   }
 
 }
