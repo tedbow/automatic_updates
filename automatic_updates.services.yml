@@ -129,6 +129,10 @@ services:
       - '@string_translation'
     tags:
       - { name: event_subscriber }
+  automatic_updates.validator.xdebug:
+    class: Drupal\automatic_updates\Validator\XdebugValidator
+    tags:
+      - { name: event_subscriber }
   automatic_updates.validator.target_release:
     class: \Drupal\automatic_updates\Validator\UpdateReleaseValidator
     tags:

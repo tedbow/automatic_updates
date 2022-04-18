@@ -9,12 +9,19 @@
  * Implements hook_requirements().
  */
 function package_manager_requirements() {
+  $requirements = [];
+
   if (!class_exists('PhpTuf\ComposerStager\Domain\Beginner')) {
-    return [
-      'package_manager' => [
-        'description' => t('External dependencies for Package Manager are not available. Composer must be used to download the module with dependencies.'),
-        'severity' => REQUIREMENT_ERROR,
-      ],
+    $requirements['package_manager_composer_dependencies'] = [
+      'description' => t('External dependencies for Package Manager are not available. Composer must be used to download the module with dependencies.'),
+      'severity' => REQUIREMENT_ERROR,
     ];
   }
+  if (extension_loaded('xdebug')) {
+    $requirements['package_manager_xdebug'] = [
+      'description' => t('Xdebug is enabled, which may have a negative performance impact on Package Manager and any modules that use it.'),
+      'severity' => REQUIREMENT_WARNING,
+    ];
+  }
+  return $requirements;
 }
