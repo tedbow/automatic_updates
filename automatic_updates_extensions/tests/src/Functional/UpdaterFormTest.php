@@ -4,9 +4,12 @@ namespace Drupal\Tests\automatic_updates_extensions\Functional;
 
 use Drupal\automatic_updates\Event\ReadinessCheckEvent;
 use Drupal\automatic_updates_test\EventSubscriber\TestSubscriber1;
+use Drupal\package_manager\Event\PreApplyEvent;
 use Drupal\package_manager\ValidationResult;
 use Drupal\Tests\automatic_updates\Functional\AutomaticUpdatesFunctionalTestBase;
 use Drupal\Tests\automatic_updates\Traits\ValidationTestTrait;
+use Drupal\Tests\automatic_updates_extensions\Traits\FormTestTrait;
+use Drupal\Tests\package_manager\Traits\PackageManagerBypassTestTrait;
 
 /**
  * Tests updating using the form.
@@ -16,6 +19,8 @@ use Drupal\Tests\automatic_updates\Traits\ValidationTestTrait;
 class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
 
   use ValidationTestTrait;
+  use FormTestTrait;
+  use PackageManagerBypassTestTrait;
 
   /**
    * {@inheritdoc}
@@ -38,6 +43,19 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
    * @var string
    */
   protected $updateProject = 'semver_test';
+
+  /**
+   * Data provider for testSuccessfulUpdate().
+   *
+   * @return bool[]
+   *   The test cases.
+   */
+  public function providerMaintanceMode() {
+    return [
+      'maintiance_mode_on' => [TRUE],
+      'maintiance_mode_off' => [FALSE],
+    ];
+  }
 
   /**
    * {@inheritdoc}
@@ -81,11 +99,44 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
    * Asserts the table shows the updates.
    */
   private function assertTableShowsUpdates() {
-    $assert = $this->assertSession();
-    $assert->elementTextContains('css', '.update-recommended td:nth-of-type(2)', 'Semver Test');
-    $assert->elementTextContains('css', '.update-recommended td:nth-of-type(3)', '8.1.0');
-    $assert->elementTextContains('css', '.update-recommended td:nth-of-type(4)', '8.1.1');
-    $assert->elementsCount('css', '.update-recommended tbody tr', 1);
+    $this->assertUpdateTableRow($this->assertSession(), 'Semver Test', '8.1.0', '8.1.1');
+  }
+
+  /**
+   * Tests an update that has no errors or special conditions.
+   *
+   * @param bool $maintenance_mode_on
+   *   Whether maintenance should be on at the beginning of the update.
+   *
+   * @dataProvider providerMaintanceMode
+   */
+  public function testSuccessfulUpdate(bool $maintenance_mode_on): void {
+    $this->setProjectInstalledVersion('8.1.0');
+    $this->checkForUpdates();
+    $state = $this->container->get('state');
+    $state->set('system.maintenance_mode', $maintenance_mode_on);
+
+    $page = $this->getSession()->getPage();
+    // Navigate to the automatic updates form.
+    $this->drupalGet('/admin/reports/updates');
+    $this->clickLink('Update Extensions');
+    $this->assertTableShowsUpdates();
+    $page->checkField('projects[' . $this->updateProject . ']');
+    $page->pressButton('Update');
+    $this->checkForMetaRefresh();
+    $this->assertUpdateStagedTimes(1);
+    // Confirm that the site was put into maintenance mode if needed.
+    $this->assertSame($state->get('system.maintenance_mode'), $maintenance_mode_on);
+    $page->pressButton('Continue');
+    $this->checkForMetaRefresh();
+    $assert_session = $this->assertSession();
+    $assert_session->addressEquals('/admin/reports/updates');
+    // Confirm that the site was in maintenance before the update was applied.
+    // @see \Drupal\package_manager_test_validation\EventSubscriber\TestSubscriber::handleEvent()
+    $this->assertTrue($state->get(PreApplyEvent::class . '.system.maintenance_mode'));
+    $assert_session->pageTextContainsOnce('Update complete!');
+    // Confirm the site was returned to the original maintenance mode state.
+    $this->assertSame($state->get('system.maintenance_mode'), $maintenance_mode_on);
   }
 
   /**

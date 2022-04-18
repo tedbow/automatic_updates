@@ -4,7 +4,9 @@ namespace Drupal\automatic_updates_extensions\Form;
 
 use Drupal\automatic_updates\Event\ReadinessCheckEvent;
 use Drupal\automatic_updates\Validation\ReadinessTrait;
+use Drupal\automatic_updates_extensions\BatchProcessor;
 use Drupal\automatic_updates_extensions\ExtensionUpdater;
+use Drupal\Core\Batch\BatchBuilder;
 use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\system\SystemManager;
@@ -174,7 +176,18 @@ class UpdaterForm extends FormBase {
     $selected_projects = array_filter($projects);
     $recommended_versions = $form_state->getValue('recommended_versions');
     $selected_versions = array_intersect_key($recommended_versions, $selected_projects);
-    $this->messenger()->addMessage(print_r($selected_versions, TRUE));
+    $batch = (new BatchBuilder())
+      ->setTitle($this->t('Downloading updates'))
+      ->setInitMessage($this->t('Preparing to download updates'))
+      ->addOperation(
+        [BatchProcessor::class, 'begin'],
+        [$selected_versions]
+      )
+      ->addOperation([BatchProcessor::class, 'stage'])
+      ->setFinishCallback([BatchProcessor::class, 'finishStage'])
+      ->toArray();
+
+    batch_set($batch);
   }
 
   /**
