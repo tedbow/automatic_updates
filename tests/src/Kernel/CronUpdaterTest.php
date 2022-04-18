@@ -234,46 +234,6 @@ class CronUpdaterTest extends AutomaticUpdatesKernelTestBase {
   }
 
   /**
-   * Data provider for testErrors().
-   *
-   * @return array[]
-   *   The test cases for testErrors().
-   */
-  public function providerErrors(): array {
-    $messages = [
-      'PreCreate Event Error',
-      'PreCreate Event Error 2',
-    ];
-    $summary = 'There were errors in updates';
-    $result_no_summary = ValidationResult::createError([$messages[0]]);
-    $result_with_summary = ValidationResult::createError($messages, t($summary));
-    $result_with_summary_message = "<h3>{$summary}</h3><ul><li>{$messages[0]}</li><li>{$messages[1]}</li></ul>";
-
-    return [
-      '1 result with summary' => [
-        [$result_with_summary],
-        $result_with_summary_message,
-      ],
-      '2 results with summary' => [
-        [$result_with_summary, $result_with_summary],
-        "$result_with_summary_message$result_with_summary_message",
-      ],
-      '1 result without summary' => [
-        [$result_no_summary],
-        $messages[0],
-      ],
-      '2 results without summary' => [
-        [$result_no_summary, $result_no_summary],
-        $messages[0] . ' ' . $messages[0],
-      ],
-      '1 result with summary, 1 result without summary' => [
-        [$result_with_summary, $result_no_summary],
-        $result_with_summary_message . ' ' . $messages[0],
-      ],
-    ];
-  }
-
-  /**
    * Tests that the stage is destroyed if an error occurs during a cron update.
    *
    * @param string $event_class
@@ -305,15 +265,15 @@ class CronUpdaterTest extends AutomaticUpdatesKernelTestBase {
         ValidationResult::createError(['Destroy the stage!']),
       ];
       TestSubscriber1::setTestResult($results, $event_class);
-      $exception = new StageValidationException($results, 'Unable to complete the update because of errors.');
-      $expected_log_message = TestCronUpdater::formatValidationException($exception);
+      $exception = new StageValidationException($results);
     }
     else {
       /** @var \Throwable $exception */
       $exception = new $exception_class('Destroy the stage!');
       TestSubscriber1::setException($exception, $event_class);
-      $expected_log_message = $exception->getMessage();
     }
+    $expected_log_message = $exception->getMessage();
+
     // Ensure that nothing has been logged yet.
     $this->assertEmpty($cron_logger->records);
     $this->assertEmpty($this->logger->records);
@@ -365,23 +325,6 @@ class CronUpdaterTest extends AutomaticUpdatesKernelTestBase {
       $this->assertFalse($logged_by_cron);
       $this->assertTrue($updater->isAvailable());
     }
-  }
-
-  /**
-   * Tests errors during a cron update attempt.
-   *
-   * @param \Drupal\package_manager\ValidationResult[] $validation_results
-   *   The expected validation results which should be logged.
-   * @param string $expected_log_message
-   *   The error message should be logged.
-   *
-   * @dataProvider providerErrors
-   */
-  public function testErrors(array $validation_results, string $expected_log_message): void {
-    TestSubscriber1::setTestResult($validation_results, PreCreateEvent::class);
-    $this->container->get('cron')->run();
-    $this->assertUpdateStagedTimes(0);
-    $this->assertTrue($this->logger->hasRecord("<h2>Unable to complete the update because of errors.</h2>$expected_log_message", RfcLogLevel::ERROR));
   }
 
 }

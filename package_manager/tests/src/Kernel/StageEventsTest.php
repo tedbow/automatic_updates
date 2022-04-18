@@ -140,7 +140,7 @@ class StageEventsTest extends PackageManagerKernelTestBase implements EventSubsc
     $handler = function (StageEvent $event) use ($event_class): void {
       if (get_class($event) === $event_class) {
         if ($event instanceof PreOperationStageEvent) {
-          $event->addError([['Burn, baby, burn']]);
+          $event->addError(['Burn, baby, burn']);
         }
       }
     };

@@ -49,9 +49,7 @@ class BatchProcessor {
    *   have been recorded.
    */
   protected static function handleException(\Throwable $error, array &$context): void {
-    $error_messages = [
-      $error->getMessage(),
-    ];
+    $error_messages = [];
 
     if ($error instanceof StageValidationException) {
       foreach ($error->getResults() as $result) {
@@ -61,6 +59,9 @@ class BatchProcessor {
         }
         $error_messages = array_merge($error_messages, $messages);
       }
+    }
+    else {
+      $error_messages[] = $error->getMessage();
     }
 
     foreach ($error_messages as $error_message) {

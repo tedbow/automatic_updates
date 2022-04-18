@@ -54,7 +54,7 @@ class TestSubscriber implements EventSubscriberInterface {
    *   The event class.
    */
   public static function setExit(string $event): void {
-    \Drupal::state()->set(static::STATE_KEY . ".$event", 'exit');
+    \Drupal::state()->set(self::getStateKey($event), 'exit');
   }
 
   /**
@@ -69,7 +69,7 @@ class TestSubscriber implements EventSubscriberInterface {
    *   The event class.
    */
   public static function setTestResult(?array $results, string $event): void {
-    $key = static::STATE_KEY . '.' . $event;
+    $key = static::getStateKey($event);
 
     $state = \Drupal::state();
     if (isset($results)) {
@@ -92,7 +92,7 @@ class TestSubscriber implements EventSubscriberInterface {
    *   The event class.
    */
   public static function setException(?\Throwable $error, string $event): void {
-    $key = static::STATE_KEY . '.' . $event;
+    $key = self::getStateKey($event);
 
     $state = \Drupal::state();
     if (isset($error)) {
@@ -104,13 +104,27 @@ class TestSubscriber implements EventSubscriberInterface {
   }
 
   /**
+   * Computes the state key to use for a given event class.
+   *
+   * @param string $event
+   *   The event class.
+   *
+   * @return string
+   *   The state key under which to store the results for the given event.
+   */
+  protected static function getStateKey(string $event) {
+    $parts = explode('\\', $event);
+    return static::STATE_KEY . array_pop($parts);
+  }
+
+  /**
    * Adds validation results to a stage event.
    *
    * @param \Drupal\package_manager\Event\StageEvent $event
    *   The event object.
    */
   public function handleEvent(StageEvent $event): void {
-    $results = $this->state->get(static::STATE_KEY . '.' . get_class($event), []);
+    $results = $this->state->get(self::getStateKey(get_class($event)), []);
 
     // Record that value of maintenance mode for each event.
     $this->state->set(get_class($event) . '.' . 'system.maintenance_mode', $this->state->get('system.maintenance_mode'));

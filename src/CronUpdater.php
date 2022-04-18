@@ -111,7 +111,7 @@ class CronUpdater extends Updater {
       );
     }
     catch (\Throwable $e) {
-      $this->handleException($e);
+      $this->logger->error($e->getMessage());
     }
 
     // If an error occurred during the pre-create event, the stage will be
@@ -129,7 +129,7 @@ class CronUpdater extends Updater {
       $this->destroy();
     }
     catch (StageValidationException $e) {
-      $this->handleException($e);
+      $this->logger->error($e->getMessage());
     }
   }
 
@@ -141,46 +141,6 @@ class CronUpdater extends Updater {
    */
   private function isDisabled(): bool {
     return $this->configFactory->get('automatic_updates.settings')->get('cron') === static::DISABLED;
-  }
-
-  /**
-   * Generates a log message from a stage validation exception.
-   *
-   * @param \Drupal\package_manager\Exception\StageValidationException $exception
-   *   The validation exception.
-   *
-   * @return string
-   *   The formatted log message, including all the validation results.
-   */
-  protected static function formatValidationException(StageValidationException $exception): string {
-    $log_message = '';
-    foreach ($exception->getResults() as $result) {
-      $summary = $result->getSummary();
-      if ($summary) {
-        $log_message .= "<h3>$summary</h3><ul>";
-        foreach ($result->getMessages() as $message) {
-          $log_message .= "<li>$message</li>";
-        }
-        $log_message .= "</ul>";
-      }
-      else {
-        $log_message .= ($log_message ? ' ' : '') . $result->getMessages()[0];
-      }
-    }
-    return "<h2>{$exception->getMessage()}</h2>$log_message";
-  }
-
-  /**
-   * Handles an exception that is caught during an update.
-   *
-   * @param \Throwable $e
-   *   The caught exception.
-   */
-  protected function handleException(\Throwable $e): void {
-    $message = $e instanceof StageValidationException
-      ? static::formatValidationException($e)
-      : $e->getMessage();
-    $this->logger->error($message);
   }
 
 }

@@ -5,7 +5,6 @@ namespace Drupal\Tests\automatic_updates\Kernel;
 use Drupal\automatic_updates\CronUpdater;
 use Drupal\automatic_updates\Updater;
 use Drupal\Core\DependencyInjection\ContainerBuilder;
-use Drupal\package_manager\Exception\StageValidationException;
 use Drupal\Tests\automatic_updates\Traits\ValidationTestTrait;
 use Drupal\Tests\package_manager\Kernel\PackageManagerKernelTestBase;
 use Drupal\Tests\package_manager\Kernel\TestStage;
@@ -150,13 +149,6 @@ class TestCronUpdater extends CronUpdater {
    */
   public function getStagingRoot(): string {
     return TestStage::$stagingRoot ?: parent::getStagingRoot();
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public static function formatValidationException(StageValidationException $exception): string {
-    return parent::formatValidationException($exception);
   }
 
 }

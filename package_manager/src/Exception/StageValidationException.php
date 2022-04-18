@@ -21,12 +21,15 @@ class StageValidationException extends StageException {
    *
    * @param \Drupal\package_manager\ValidationResult[] $results
    *   Any relevant validation results.
+   * @param string $message
+   *   (optional) The exception message. Defaults to a plain text representation
+   *   of the validation results.
    * @param mixed ...$arguments
-   *   Arguments to pass to the parent constructor.
+   *   Additional arguments to pass to the parent constructor.
    */
-  public function __construct(array $results = [], ...$arguments) {
+  public function __construct(array $results = [], string $message = '', ...$arguments) {
     $this->results = $results;
-    parent::__construct(...$arguments);
+    parent::__construct($message ?: $this->getResultsAsText(), ...$arguments);
   }
 
   /**
@@ -37,6 +40,26 @@ class StageValidationException extends StageException {
    */
   public function getResults(): array {
     return $this->results;
+  }
+
+  /**
+   * Formats the validation results as plain text.
+   *
+   * @return string
+   *   The results, formatted as plain text.
+   */
+  protected function getResultsAsText(): string {
+    $text = '';
+
+    foreach ($this->getResults() as $result) {
+      $messages = $result->getMessages();
+      $summary = $result->getSummary();
+      if ($summary) {
+        array_unshift($messages, $summary);
+      }
+      $text .= implode("\n", $messages) . "\n";
+    }
+    return $text;
   }
 
 }
