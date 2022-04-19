@@ -107,8 +107,8 @@ class ComposerExecutableValidator implements PreOperationStageValidatorInterface
         ->setOption('fragment', 'package-manager-requirements')
         ->toString();
 
-      $message .= ' ';
-      $message .= $this->t('See <a href=":package-manager-help">the help page</a> for information on how to configure the path to Composer.', [
+      $message = $this->t('@message See <a href=":package-manager-help">the help page</a> for information on how to configure the path to Composer.', [
+        '@message' => $message,
         ':package-manager-help' => $url,
       ]);
     }
