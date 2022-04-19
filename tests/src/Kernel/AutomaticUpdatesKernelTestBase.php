@@ -47,6 +47,8 @@ abstract class AutomaticUpdatesKernelTestBase extends PackageManagerKernelTestBa
     if (in_array('package_manager.validator.file_system', $this->disableValidators, TRUE)) {
       $this->disableValidators[] = 'automatic_updates.validator.file_system_permissions';
     }
+    // Always disable the Xdebug validator to allow test to run with Xdebug on.
+    $this->disableValidators[] = 'automatic_updates.validator.xdebug';
     parent::setUp();
 
     // The Update module's default configuration must be installed for our
