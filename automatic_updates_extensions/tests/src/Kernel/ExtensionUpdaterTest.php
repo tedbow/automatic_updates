@@ -47,7 +47,9 @@ class ExtensionUpdaterTest extends AutomaticUpdatesKernelTestBase {
 
     $id = $this->container->get('automatic_updates_extensions.updater')->begin([
       'my_module' => '9.8.1',
-      'my_dev_module' => '9.8.2',
+      // Use a legacy version number to ensure they are converted to semantic
+      // version numbers which will work with the drupal.org Composer facade.
+      'my_dev_module' => '8.x-1.2-alpha1',
     ]);
     // Rebuild the container to ensure the package versions are persisted.
     /** @var \Drupal\Core\DrupalKernel $kernel */
@@ -66,7 +68,7 @@ class ExtensionUpdaterTest extends AutomaticUpdatesKernelTestBase {
         'drupal/my_module' => '9.8.1',
       ],
       'dev' => [
-        'drupal/my_dev_module' => '9.8.2',
+        'drupal/my_dev_module' => '1.2.0-alpha1',
       ],
     ];
     $this->assertSame($expected_versions, $extension_updater->claim($id)->getPackageVersions());
@@ -90,13 +92,13 @@ class ExtensionUpdaterTest extends AutomaticUpdatesKernelTestBase {
         'require',
         '--dev',
         '--no-update',
-        'drupal/my_dev_module:9.8.2',
+        'drupal/my_dev_module:1.2.0-alpha1',
       ],
       [
         'update',
         '--with-all-dependencies',
         'drupal/my_module:9.8.1',
-        'drupal/my_dev_module:9.8.2',
+        'drupal/my_dev_module:1.2.0-alpha1',
       ],
     ];
     $extension_updater->stage();
