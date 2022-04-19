@@ -37,7 +37,7 @@ class ExtensionUpdater extends Stage {
     foreach ($project_versions as $project_name => $version) {
       $package = "drupal/$project_name";
       $group = array_key_exists($package, $require_dev) ? 'dev' : 'production';
-      $package_versions[$group][$package] = static::convertToSemanticVersion($version);
+      $package_versions[$group][$package] = LegacyVersionUtility::convertToSemanticVersion($version);
     }
 
     // Ensure that package versions are available to pre-create event
@@ -89,30 +89,6 @@ class ExtensionUpdater extends Stage {
     }
     catch (StageValidationException $e) {
       throw new UpdateException($e->getResults(), $e->getMessage() ?: "Unable to complete the update because of errors.", $e->getCode(), $e);
-    }
-  }
-
-  /**
-   * Converts version numbers to semantic versions if needed.
-   *
-   * @param string $project_version
-   *   The version number.
-   *
-   * @return string
-   *   The version number, converted if needed.
-   */
-  private static function convertToSemanticVersion(string $project_version): string {
-    if (stripos($project_version, '8.x-') === 0) {
-      $project_version = substr($project_version, 4);
-      $version_parts = explode('-', $project_version);
-      $project_version = $version_parts[0] . '.0';
-      if (count($version_parts) === 2) {
-        $project_version .= '-' . $version_parts[1];
-      }
-      return $project_version;
-    }
-    else {
-      return $project_version;
     }
   }
 

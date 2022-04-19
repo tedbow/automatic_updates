@@ -35,6 +35,7 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
     'automatic_updates_extensions',
     'block',
     'semver_test',
+    'aaa_update_test',
   ];
 
   /**
@@ -47,13 +48,13 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
   /**
    * Data provider for testSuccessfulUpdate().
    *
-   * @return bool[]
+   * @return array[]
    *   The test cases.
    */
-  public function providerMaintanceMode() {
+  public function providerSuccessfulUpdate() {
     return [
-      'maintiance_mode_on' => [TRUE],
-      'maintiance_mode_off' => [FALSE],
+      'maintiance_mode_on, semver' => [TRUE, 'semver_test', '8.1.0', '8.1.1'],
+      'maintiance_mode_off, legacy' => [FALSE, 'aaa_update_test', '8.x-2.0', '8.x-2.1'],
     ];
   }
 
@@ -97,9 +98,16 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
 
   /**
    * Asserts the table shows the updates.
+   *
+   * @param string $expected_project_title
+   *   The expected project title.
+   * @param string $expected_installed_version
+   *   The expected installed version.
+   * @param string $expected_update_version
+   *   The expected update version.
    */
-  private function assertTableShowsUpdates() {
-    $this->assertUpdateTableRow($this->assertSession(), 'Semver Test', '8.1.0', '8.1.1');
+  private function assertTableShowsUpdates(string $expected_project_title, string $expected_installed_version, string $expected_update_version): void {
+    $this->assertUpdateTableRow($this->assertSession(), $expected_project_title, $expected_installed_version, $expected_update_version);
   }
 
   /**
@@ -107,11 +115,19 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
    *
    * @param bool $maintenance_mode_on
    *   Whether maintenance should be on at the beginning of the update.
+   * @param string $project_name
+   *   The project name.
+   * @param string $installed_version
+   *   The installed version.
+   * @param string $update_version
+   *   The update version.
    *
-   * @dataProvider providerMaintanceMode
+   * @dataProvider providerSuccessfulUpdate
    */
-  public function testSuccessfulUpdate(bool $maintenance_mode_on): void {
-    $this->setProjectInstalledVersion('8.1.0');
+  public function testSuccessfulUpdate(bool $maintenance_mode_on, string $project_name, string $installed_version, string $update_version): void {
+    $this->updateProject = $project_name;
+    $this->setReleaseMetadata(__DIR__ . "/../../fixtures/release-history/$project_name.1.1.xml");
+    $this->setProjectInstalledVersion($installed_version);
     $this->checkForUpdates();
     $state = $this->container->get('state');
     $state->set('system.maintenance_mode', $maintenance_mode_on);
@@ -120,7 +136,11 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
     // Navigate to the automatic updates form.
     $this->drupalGet('/admin/reports/updates');
     $this->clickLink('Update Extensions');
-    $this->assertTableShowsUpdates();
+    $this->assertTableShowsUpdates(
+      $project_name === 'semver_test' ? 'Semver Test' : 'AAA Update test',
+      $installed_version,
+      $update_version
+    );
     $page->checkField('projects[' . $this->updateProject . ']');
     $page->pressButton('Update');
     $this->checkForMetaRefresh();
@@ -154,7 +174,7 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
     $user = $this->createUser(['administer software updates']);
     $this->drupalLogin($user);
     $this->drupalGet('admin/reports/updates/automatic-update-extensions');
-    $this->assertTableShowsUpdates();
+    $this->assertTableShowsUpdates('Semver Test', '8.1.0', '8.1.1');
     $assert->pageTextContains('Automatic Updates Form');
     $assert->buttonExists('Update');
   }
@@ -189,7 +209,7 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
     $this->setProjectInstalledVersion('8.1.0');
     $this->checkForUpdates();
     $this->drupalGet('admin/reports/updates/automatic-update-extensions');
-    $this->assertTableShowsUpdates();
+    $this->assertTableShowsUpdates('Semver Test', '8.1.0', '8.1.1');
     $message = t("You've not experienced Shakespeare until you have read him in the original Klingon.");
     $error = ValidationResult::createError([$message]);
     TestSubscriber1::setTestResult([$error], ReadinessCheckEvent::class);
@@ -213,7 +233,7 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
     // Navigate to the automatic updates form.
     $this->drupalGet('/admin/reports/updates');
     $this->clickLink('Update Extensions');
-    $this->assertTableShowsUpdates();
+    $this->assertTableShowsUpdates('Semver Test', '8.1.0', '8.1.1');
     $assert->pageTextContains(static::$warningsExplanation);
     $assert->pageTextNotContains(static::$errorsExplanation);
     $assert->buttonExists('Update');
