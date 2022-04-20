@@ -81,43 +81,30 @@ class UpdateVersionValidatorTest extends AutomaticUpdatesKernelTestBase {
    *   Sets of arguments to pass to the test method.
    */
   public function providerMinorUpdates(): array {
-    $update_disallowed = ValidationResult::createError([
-      'Drupal cannot be automatically updated from its current version, 9.7.1, to the recommended version, 9.8.1, because automatic updates from one minor version to another are not supported.',
-    ]);
-    $cron_update_disallowed = ValidationResult::createError([
-      'Drupal cannot be automatically updated from its current version, 9.7.1, to the recommended version, 9.8.1, because automatic updates from one minor version to another are not supported during cron.',
-    ]);
-
     return [
       'cron disabled, minor updates not allowed' => [
         FALSE,
         CronUpdater::DISABLED,
-        [$update_disallowed],
       ],
       'cron disabled, minor updates allowed' => [
         TRUE,
         CronUpdater::DISABLED,
-        [],
       ],
       'security updates during cron, minor updates not allowed' => [
         FALSE,
         CronUpdater::SECURITY,
-        [$update_disallowed],
       ],
       'security updates during cron, minor updates allowed' => [
         TRUE,
         CronUpdater::SECURITY,
-        [$cron_update_disallowed],
       ],
       'cron enabled, minor updates not allowed' => [
         FALSE,
         CronUpdater::ALL,
-        [$update_disallowed],
       ],
       'cron enabled, minor updates allowed' => [
         TRUE,
         CronUpdater::ALL,
-        [$cron_update_disallowed],
       ],
     ];
   }
@@ -132,13 +119,10 @@ class UpdateVersionValidatorTest extends AutomaticUpdatesKernelTestBase {
    *   constants in \Drupal\automatic_updates\CronUpdater. This determines which
    *   stage the validator will use; if cron updates are enabled at all,
    *   it will be an instance of CronUpdater.
-   * @param \Drupal\package_manager\ValidationResult[] $expected_results
-   *   The validation results that should be returned from by the validation
-   *   manager, and logged if cron updates are enabled.
    *
    * @dataProvider providerMinorUpdates
    */
-  public function testMinorUpdates(bool $allow_minor_updates, string $cron_setting, array $expected_results): void {
+  public function testMinorUpdates(bool $allow_minor_updates, string $cron_setting): void {
     $this->config('automatic_updates.settings')
       ->set('allow_core_minor_updates', $allow_minor_updates)
       ->set('cron', $cron_setting)
@@ -150,27 +134,12 @@ class UpdateVersionValidatorTest extends AutomaticUpdatesKernelTestBase {
     $this->setReleaseMetadata([__DIR__ . '/../../../fixtures/release-history/drupal.9.8.1-security.xml']);
 
     $this->setCoreVersion('9.7.1');
-    $this->assertCheckerResultsFromManager($expected_results, TRUE);
+    $this->assertCheckerResultsFromManager([], TRUE);
 
     $this->container->get('cron')->run();
 
-    // If cron updates are disabled, the update shouldn't have been started and
-    // nothing should have been logged.
-    if ($cron_setting === CronUpdater::DISABLED) {
-      $this->assertUpdateStagedTimes(0);
-      $this->assertEmpty($this->logger->records);
-    }
-    // If cron updates are enabled, the validation errors have been logged, and
-    // the update shouldn't have been started.
-    elseif ($expected_results) {
-      $this->assertUpdateStagedTimes(0);
-    }
-    // If cron updates are enabled and no validation errors were expected, the
-    // update should have started and nothing should have been logged.
-    else {
-      $this->assertUpdateStagedTimes(1);
-      $this->assertEmpty($this->logger->records);
-    }
+    $this->assertUpdateStagedTimes(0);
+    $this->assertEmpty($this->logger->records);
   }
 
   /**
@@ -287,13 +256,6 @@ class UpdateVersionValidatorTest extends AutomaticUpdatesKernelTestBase {
     $unstable_current_version = ValidationResult::createError([
       'Drupal cannot be automatically updated during cron from its current version, 9.8.0-alpha1, because Automatic Updates only supports updating from stable versions during cron.',
     ]);
-    $dev_current_version = ValidationResult::createError([
-      'Drupal cannot be automatically updated from the installed version, 9.8.x-dev, because automatic updates from a dev version to any other version are not supported.',
-    ]);
-    $different_major_version = ValidationResult::createError([
-      'Drupal cannot be automatically updated from its current version, 8.9.1, to the recommended version, 9.7.0-alpha1, because automatic updates from one major version to another are not supported.',
-    ]);
-
     return [
       'unstable current version, cron disabled' => [
         CronUpdater::DISABLED,
@@ -316,32 +278,36 @@ class UpdateVersionValidatorTest extends AutomaticUpdatesKernelTestBase {
       'dev current version, cron disabled' => [
         CronUpdater::DISABLED,
         '9.8.x-dev',
-        [$dev_current_version],
+        [],
       ],
       'dev current version, security updates allowed' => [
         CronUpdater::SECURITY,
         '9.8.x-dev',
-        [$dev_current_version],
+        [],
       ],
       'dev current version, all updates allowed' => [
         CronUpdater::ALL,
         '9.8.x-dev',
-        [$dev_current_version],
+        [],
       ],
+      // @todo In the 3 following test cases the installed version is not
+      //   in a supported branch. These test expectations should be changed or
+      //   moved to a new test when we add a validator to check if the installed
+      //   version is in a supported branch in https://www.drupal.org/i/3275883.
       'different current major, cron disabled' => [
         CronUpdater::DISABLED,
         '8.9.1',
-        [$different_major_version],
+        [],
       ],
       'different current major, security updates allowed' => [
         CronUpdater::SECURITY,
         '8.9.1',
-        [$different_major_version],
+        [],
       ],
       'different current major, all updates allowed' => [
         CronUpdater::ALL,
         '8.9.1',
-        [$different_major_version],
+        [],
       ],
     ];
   }

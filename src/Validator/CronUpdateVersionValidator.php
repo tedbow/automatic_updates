@@ -2,6 +2,7 @@
 
 namespace Drupal\automatic_updates\Validator;
 
+use Composer\Semver\Semver;
 use Drupal\automatic_updates\CronUpdater;
 use Drupal\automatic_updates\ProjectInfo;
 use Drupal\automatic_updates\VersionParsingTrait;
@@ -25,6 +26,23 @@ final class CronUpdateVersionValidator extends UpdateVersionValidator {
    */
   protected static function isStageSupported(Stage $stage): bool {
     return $stage instanceof CronUpdater;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  protected function getNextPossibleUpdateVersion(): ?string {
+    $project_info = new ProjectInfo('drupal');
+    $installed_version = $project_info->getInstalledVersion();
+    if ($possible_releases = $project_info->getInstallableReleases()) {
+      // The next possible update version for cron should be the lowest possible
+      // release.
+      $possible_release = array_pop($possible_releases);
+      if (Semver::satisfies($possible_release->getVersion(), "~$installed_version")) {
+        return $possible_release->getVersion();
+      }
+    }
+    return NULL;
   }
 
   /**
