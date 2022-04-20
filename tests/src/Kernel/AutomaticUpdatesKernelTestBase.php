@@ -68,6 +68,14 @@ abstract class AutomaticUpdatesKernelTestBase extends PackageManagerKernelTestBa
     // from a sane state.
     // @see \Drupal\automatic_updates\Validator\CronFrequencyValidator
     $this->container->get('state')->set('system.cron_last', time());
+
+    // @todo Remove this when TUF integration is stable.
+    if (class_exists(CronUpdater::class)) {
+      $reflector = new \ReflectionClass(CronUpdater::class);
+      $reflector = $reflector->getProperty('disabled');
+      $reflector->setAccessible(TRUE);
+      $reflector->setValue(NULL, FALSE);
+    }
   }
 
   /**
