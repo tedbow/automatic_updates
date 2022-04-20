@@ -72,6 +72,10 @@ class ReleaseChooser {
     }
     $releases = $this->getInstallableReleases();
     foreach ($releases as $release) {
+      // Checks if the release is in the same minor as the currently installed
+      // version. For example, if the current version is 9.8.0 then the
+      // constraint ~9.8.0 (equivalent to >=9.8.0 && <9.9.0) will be used to
+      // check if the release is in the same minor.
       if (Semver::satisfies($release->getVersion(), "~$version")) {
         return $release;
       }
