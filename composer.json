@@ -14,7 +14,8 @@
     "ext-json": "*",
     "drupal/core": "^9.2",
     "php-tuf/composer-stager": "0.3.0",
-    "composer/composer": "^2.2.12 || ^2.3.5"
+    "composer/composer": "^2.2.12 || ^2.3.5",
+    "composer-runtime-api": "^2.0.9"
   },
   "config": {
     "platform": {
