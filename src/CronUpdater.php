@@ -15,15 +15,6 @@ use Drupal\package_manager\Exception\StageValidationException;
 class CronUpdater extends Updater {
 
   /**
-   * Whether or not cron updates are hard-disabled.
-   *
-   * @var bool
-   *
-   * @todo Remove this when TUF integration is stable.
-   */
-  private static $disabled = TRUE;
-
-  /**
    * All automatic updates are disabled.
    *
    * @var string
@@ -149,7 +140,7 @@ class CronUpdater extends Updater {
    *   TRUE if cron updates are disabled, otherwise FALSE.
    */
   private function isDisabled(): bool {
-    return self::$disabled ?: $this->configFactory->get('automatic_updates.settings')->get('cron') === static::DISABLED;
+    return $this->configFactory->get('automatic_updates.settings')->get('cron') === static::DISABLED;
   }
 
 }
