@@ -15,6 +15,15 @@ use Drupal\package_manager\Exception\StageValidationException;
 class CronUpdater extends Updater {
 
   /**
+   * Whether or not cron updates are hard-disabled.
+   *
+   * @var bool
+   *
+   * @todo Remove this when TUF integration is stable.
+   */
+  private static $disabled = TRUE;
+
+  /**
    * All automatic updates are disabled.
    *
    * @var string
@@ -69,7 +78,7 @@ class CronUpdater extends Updater {
    * Handles updates during cron.
    */
   public function handleCron(): void {
-    if ($this->isDisabled()) {
+    if ($this->getMode() === static::DISABLED) {
       return;
     }
 
@@ -134,13 +143,25 @@ class CronUpdater extends Updater {
   }
 
   /**
-   * Determines if cron updates are disabled.
+   * Gets the cron update mode.
    *
-   * @return bool
-   *   TRUE if cron updates are disabled, otherwise FALSE.
+   * @return string
+   *   The cron update mode. Will be one of the following constants:
+   *   - \Drupal\automatic_updates\CronUpdater::DISABLED if updates during cron
+   *     are entirely disabled.
+   *   - \Drupal\automatic_updates\CronUpdater::SECURITY only security updates
+   *     can be done during cron.
+   *   - \Drupal\automatic_updates\CronUpdater::ALL if all updates are allowed
+   *     during cron.
+   *
+   * @todo Make this always return a string, with a sensible default, in
+   *   https://www.drupal.org/i/3276534.
    */
-  private function isDisabled(): bool {
-    return $this->configFactory->get('automatic_updates.settings')->get('cron') === static::DISABLED;
+  final public function getMode(): ?string {
+    if (self::$disabled) {
+      return static::DISABLED;
+    }
+    return $this->configFactory->get('automatic_updates.settings')->get('cron');
   }
 
 }

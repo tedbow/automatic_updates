@@ -76,6 +76,13 @@ class CronFrequencyValidator implements EventSubscriberInterface {
   protected $time;
 
   /**
+   * The cron updater service.
+   *
+   * @var \Drupal\automatic_updates\CronUpdater
+   */
+  protected $cronUpdater;
+
+  /**
    * CronFrequencyValidator constructor.
    *
    * @param \Drupal\Core\Config\ConfigFactoryInterface $config_factory
@@ -88,13 +95,16 @@ class CronFrequencyValidator implements EventSubscriberInterface {
    *   The time service.
    * @param \Drupal\Core\StringTranslation\TranslationInterface $translation
    *   The translation service.
+   * @param \Drupal\automatic_updates\CronUpdater $cron_updater
+   *   The cron updater service.
    */
-  public function __construct(ConfigFactoryInterface $config_factory, ModuleHandlerInterface $module_handler, StateInterface $state, TimeInterface $time, TranslationInterface $translation) {
+  public function __construct(ConfigFactoryInterface $config_factory, ModuleHandlerInterface $module_handler, StateInterface $state, TimeInterface $time, TranslationInterface $translation, CronUpdater $cron_updater) {
     $this->configFactory = $config_factory;
     $this->moduleHandler = $module_handler;
     $this->state = $state;
     $this->time = $time;
     $this->setStringTranslation($translation);
+    $this->cronUpdater = $cron_updater;
   }
 
   /**
@@ -104,12 +114,9 @@ class CronFrequencyValidator implements EventSubscriberInterface {
    *   The event object.
    */
   public function checkCronFrequency(ReadinessCheckEvent $event): void {
-    $cron_enabled = $this->configFactory->get('automatic_updates.settings')
-      ->get('cron');
-
     // If automatic updates are disabled during cron, there's nothing we need
     // to validate.
-    if ($cron_enabled === CronUpdater::DISABLED) {
+    if ($this->cronUpdater->getMode() === CronUpdater::DISABLED) {
       return;
     }
     elseif ($this->moduleHandler->moduleExists('automated_cron')) {

@@ -3,7 +3,6 @@
 namespace Drupal\automatic_updates\Validation;
 
 use Drupal\automatic_updates\CronUpdater;
-use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\DependencyInjection\ContainerInjectionInterface;
 use Drupal\Core\Messenger\MessengerInterface;
 use Drupal\Core\Messenger\MessengerTrait;
@@ -60,11 +59,11 @@ final class AdminReadinessMessages implements ContainerInjectionInterface {
   protected $currentRouteMatch;
 
   /**
-   * The config factory service.
+   * The cron updater service.
    *
-   * @var \Drupal\Core\Config\ConfigFactoryInterface
+   * @var \Drupal\automatic_updates\CronUpdater
    */
-  protected $config;
+  protected $cronUpdater;
 
   /**
    * Constructs a ReadinessRequirement object.
@@ -81,17 +80,17 @@ final class AdminReadinessMessages implements ContainerInjectionInterface {
    *   The translation service.
    * @param \Drupal\Core\Routing\CurrentRouteMatch $current_route_match
    *   The current route match.
-   * @param \Drupal\Core\Config\ConfigFactoryInterface $config
-   *   The config factory service.
+   * @param \Drupal\automatic_updates\CronUpdater $cron_updater
+   *   The cron updater service.
    */
-  public function __construct(ReadinessValidationManager $readiness_checker_manager, MessengerInterface $messenger, AdminContext $admin_context, AccountProxyInterface $current_user, TranslationInterface $translation, CurrentRouteMatch $current_route_match, ConfigFactoryInterface $config) {
+  public function __construct(ReadinessValidationManager $readiness_checker_manager, MessengerInterface $messenger, AdminContext $admin_context, AccountProxyInterface $current_user, TranslationInterface $translation, CurrentRouteMatch $current_route_match, CronUpdater $cron_updater) {
     $this->readinessCheckerManager = $readiness_checker_manager;
     $this->setMessenger($messenger);
     $this->adminContext = $admin_context;
     $this->currentUser = $current_user;
     $this->setStringTranslation($translation);
     $this->currentRouteMatch = $current_route_match;
-    $this->config = $config;
+    $this->cronUpdater = $cron_updater;
   }
 
   /**
@@ -105,7 +104,7 @@ final class AdminReadinessMessages implements ContainerInjectionInterface {
       $container->get('current_user'),
       $container->get('string_translation'),
       $container->get('current_route_match'),
-      $container->get('config.factory')
+      $container->get('automatic_updates.cron_updater')
     );
   }
 
@@ -142,7 +141,7 @@ final class AdminReadinessMessages implements ContainerInjectionInterface {
   protected function displayResultsOnCurrentPage(): bool {
     // If updates will not run during cron then we don't need to show the
     // readiness checks on admin pages.
-    if ($this->config->get('automatic_updates.settings')->get('cron') === CronUpdater::DISABLED) {
+    if ($this->cronUpdater->getMode() === CronUpdater::DISABLED) {
       return FALSE;
     }
 

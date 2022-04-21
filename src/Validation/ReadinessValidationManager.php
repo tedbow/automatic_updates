@@ -6,7 +6,6 @@ use Drupal\automatic_updates\CronUpdater;
 use Drupal\automatic_updates\Event\ReadinessCheckEvent;
 use Drupal\automatic_updates\Updater;
 use Drupal\Component\Datetime\TimeInterface;
-use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\KeyValueStore\KeyValueExpirableFactoryInterface;
 use Drupal\package_manager\Event\PostApplyEvent;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
@@ -61,13 +60,6 @@ class ReadinessValidationManager implements EventSubscriberInterface {
   protected $cronUpdater;
 
   /**
-   * The config factory service.
-   *
-   * @var \Drupal\Core\Config\ConfigFactoryInterface
-   */
-  protected $config;
-
-  /**
    * Constructs a ReadinessValidationManager.
    *
    * @param \Drupal\Core\KeyValueStore\KeyValueExpirableFactoryInterface $key_value_expirable_factory
@@ -80,18 +72,15 @@ class ReadinessValidationManager implements EventSubscriberInterface {
    *   The updater service.
    * @param \Drupal\automatic_updates\CronUpdater $cron_updater
    *   The cron updater service.
-   * @param \Drupal\Core\Config\ConfigFactoryInterface $config
-   *   The config factory service.
    * @param int $results_time_to_live
    *   The number of hours to store results.
    */
-  public function __construct(KeyValueExpirableFactoryInterface $key_value_expirable_factory, TimeInterface $time, EventDispatcherInterface $dispatcher, Updater $updater, CronUpdater $cron_updater, ConfigFactoryInterface $config, int $results_time_to_live) {
+  public function __construct(KeyValueExpirableFactoryInterface $key_value_expirable_factory, TimeInterface $time, EventDispatcherInterface $dispatcher, Updater $updater, CronUpdater $cron_updater, int $results_time_to_live) {
     $this->keyValueExpirable = $key_value_expirable_factory->get('automatic_updates');
     $this->time = $time;
     $this->eventDispatcher = $dispatcher;
     $this->updater = $updater;
     $this->cronUpdater = $cron_updater;
-    $this->config = $config;
     $this->resultsTimeToLive = $results_time_to_live;
   }
 
@@ -104,7 +93,7 @@ class ReadinessValidationManager implements EventSubscriberInterface {
     // If updates will run during cron, use the cron updater service provided by
     // this module. This will allow subscribers to ReadinessCheckEvent to run
     // specific validation for conditions that only affect cron updates.
-    if ($this->config->get('automatic_updates.settings')->get('cron') === CronUpdater::DISABLED) {
+    if ($this->cronUpdater->getMode() === CronUpdater::DISABLED) {
       $stage = $this->updater;
     }
     else {

@@ -91,10 +91,14 @@ final class CronUpdateVersionValidator extends UpdateVersionValidator {
       ]);
     }
 
+    // We cannot use dependency injection to get the cron updater because that
+    // would create a circular service dependency.
+    $level = \Drupal::service('automatic_updates.cron_updater')
+      ->getMode();
+
     // If both the from and to version numbers are valid check if the current
     // settings only allow security updates during cron and if so ensure the
     // update release is a security release.
-    $level = $this->configFactory->get('automatic_updates.settings')->get('cron');
     if ($level === CronUpdater::SECURITY) {
       $releases = (new ProjectInfo('drupal'))->getInstallableReleases();
       // @todo Remove this check and add validation to

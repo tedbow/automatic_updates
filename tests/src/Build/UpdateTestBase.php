@@ -39,6 +39,7 @@ abstract class UpdateTestBase extends TemplateProjectTestBase {
     $this->installModules([
       'automatic_updates',
       'automatic_updates_test',
+      'automatic_updates_test_cron',
       'automatic_updates_test_release_history',
     ]);
   }

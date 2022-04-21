@@ -24,7 +24,12 @@ abstract class AutomaticUpdatesKernelTestBase extends PackageManagerKernelTestBa
   /**
    * {@inheritdoc}
    */
-  protected static $modules = ['system', 'update', 'update_test'];
+  protected static $modules = [
+    'automatic_updates_test_cron',
+    'system',
+    'update',
+    'update_test',
+  ];
 
   /**
    * The mocked HTTP client that returns metadata about available updates.
@@ -68,6 +73,9 @@ abstract class AutomaticUpdatesKernelTestBase extends PackageManagerKernelTestBa
     // from a sane state.
     // @see \Drupal\automatic_updates\Validator\CronFrequencyValidator
     $this->container->get('state')->set('system.cron_last', time());
+
+    // @todo Remove this when TUF integration is stable.
+    $this->container->get('automatic_updates_test_cron.enabler')->enableCron();
   }
 
   /**

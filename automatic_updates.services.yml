@@ -11,7 +11,6 @@ services:
       - '@event_dispatcher'
       - '@automatic_updates.updater'
       - '@automatic_updates.cron_updater'
-      - '@config.factory'
       - 24
     tags:
       - { name: event_subscriber }
@@ -119,6 +118,7 @@ services:
       - '@state'
       - '@datetime.time'
       - '@string_translation'
+      - '@automatic_updates.cron_updater'
     tags:
       - { name: event_subscriber }
   automatic_updates.validator.staged_database_updates:
@@ -134,6 +134,6 @@ services:
     tags:
       - { name: event_subscriber }
   automatic_updates.validator.target_release:
-    class: \Drupal\automatic_updates\Validator\UpdateReleaseValidator
+    class: Drupal\automatic_updates\Validator\UpdateReleaseValidator
     tags:
       - { name: event_subscriber }

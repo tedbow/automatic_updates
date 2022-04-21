@@ -15,6 +15,7 @@ abstract class AutomaticUpdatesFunctionalTestBase extends BrowserTestBase {
    * {@inheritdoc}
    */
   protected static $modules = [
+    'automatic_updates_test_cron',
     'automatic_updates_test_disable_validators',
     'package_manager_bypass',
   ];
