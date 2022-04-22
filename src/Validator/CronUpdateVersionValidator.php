@@ -25,7 +25,9 @@ final class CronUpdateVersionValidator extends UpdateVersionValidator {
    * {@inheritdoc}
    */
   protected static function isStageSupported(Stage $stage): bool {
-    return $stage instanceof CronUpdater;
+    // @todo Add test coverage for the call to getMode() in
+    //   https://www.drupal.org/i/3276662.
+    return $stage instanceof CronUpdater && $stage->getMode() !== CronUpdater::DISABLED;
   }
 
   /**
