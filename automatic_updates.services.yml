@@ -137,3 +137,7 @@ services:
     class: Drupal\automatic_updates\Validator\UpdateReleaseValidator
     tags:
       - { name: event_subscriber }
+  automatic_updates.config_subscriber:
+    class: Drupal\automatic_updates\EventSubscriber\ConfigSubscriber
+    tags:
+      - { name: event_subscriber }

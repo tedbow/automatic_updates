@@ -253,4 +253,27 @@ class ReadinessValidationManagerTest extends AutomaticUpdatesKernelTestBase {
     $this->assertEmpty($manager->getResults());
   }
 
+  /**
+   * Tests that certain config changes clear stored results.
+   */
+  public function testStoredResultsClearedOnConfigChanges(): void {
+    $this->enableModules(['automatic_updates']);
+
+    $results = $this->testResults['checker_1']['1 error'];
+    TestSubscriber1::setTestResult($results, ReadinessCheckEvent::class);
+    $this->assertCheckerResultsFromManager($results, TRUE);
+    // The results should be stored.
+    $this->assertCheckerResultsFromManager($results, FALSE);
+    // Changing the configured path to rsync should not clear the results.
+    $this->config('package_manager.settings')
+      ->set('executables.rsync', '/path/to/rsync')
+      ->save();
+    $this->assertCheckerResultsFromManager($results, FALSE);
+    // Changing the configured path to Composer should clear the results.
+    $this->config('package_manager.settings')
+      ->set('executables.composer', '/path/to/composer')
+      ->save();
+    $this->assertNull($this->getResultsFromManager(FALSE));
+  }
+
 }
