@@ -89,32 +89,32 @@ class CronUpdaterTest extends AutomaticUpdatesKernelTestBase {
     return [
       'disabled, normal release' => [
         CronUpdater::DISABLED,
-        "$fixture_dir/drupal.9.8.2.xml",
+        ['drupal' => "$fixture_dir/drupal.9.8.2.xml"],
         FALSE,
       ],
       'disabled, security release' => [
         CronUpdater::DISABLED,
-        "$fixture_dir/drupal.9.8.1-security.xml",
+        ['drupal' => "$fixture_dir/drupal.9.8.1-security.xml"],
         FALSE,
       ],
       'security only, security release' => [
         CronUpdater::SECURITY,
-        "$fixture_dir/drupal.9.8.1-security.xml",
+        ['drupal' => "$fixture_dir/drupal.9.8.1-security.xml"],
         TRUE,
       ],
       'security only, normal release' => [
         CronUpdater::SECURITY,
-        "$fixture_dir/drupal.9.8.2.xml",
+        ['drupal' => "$fixture_dir/drupal.9.8.2.xml"],
         FALSE,
       ],
       'enabled, normal release' => [
         CronUpdater::ALL,
-        "$fixture_dir/drupal.9.8.2.xml",
+        ['drupal' => "$fixture_dir/drupal.9.8.2.xml"],
         TRUE,
       ],
       'enabled, security release' => [
         CronUpdater::ALL,
-        "$fixture_dir/drupal.9.8.1-security.xml",
+        ['drupal' => "$fixture_dir/drupal.9.8.1-security.xml"],
         TRUE,
       ],
     ];
@@ -126,18 +126,19 @@ class CronUpdaterTest extends AutomaticUpdatesKernelTestBase {
    * @param string $setting
    *   Whether automatic updates should be enabled during cron. Possible values
    *   are 'disable', 'security', and 'patch'.
-   * @param string $release_data
+   * @param array $release_data
    *   If automatic updates are enabled, the path of the fake release metadata
-   *   that should be served when fetching information on available updates.
+   *   that should be served when fetching information on available updates,
+   *   keyed by project name.
    * @param bool $will_update
    *   Whether an update should be performed, given the previous two arguments.
    *
    * @dataProvider providerUpdaterCalled
    */
-  public function testUpdaterCalled(string $setting, string $release_data, bool $will_update): void {
+  public function testUpdaterCalled(string $setting, array $release_data, bool $will_update): void {
     // Our form alter does not refresh information on available updates, so
     // ensure that the appropriate update data is loaded beforehand.
-    $this->setReleaseMetadata([$release_data]);
+    $this->setReleaseMetadata($release_data);
     $this->setCoreVersion('9.8.0');
     update_get_available(TRUE);
 
@@ -247,7 +248,7 @@ class CronUpdaterTest extends AutomaticUpdatesKernelTestBase {
     $this->installConfig('automatic_updates');
     $this->setCoreVersion('9.8.0');
     // Ensure that there is a security release to which we should update.
-    $this->setReleaseMetadata([__DIR__ . "/../../fixtures/release-history/drupal.9.8.1-security.xml"]);
+    $this->setReleaseMetadata(['drupal' => __DIR__ . "/../../fixtures/release-history/drupal.9.8.1-security.xml"]);
 
     // If the pre- or post-destroy events throw an exception, it will not be
     // caught by the cron updater, but it *will* be caught by the main cron

@@ -131,7 +131,7 @@ class UpdateVersionValidatorTest extends AutomaticUpdatesKernelTestBase {
     // In order to test what happens when only security updates are enabled
     // during cron (the default behavior), ensure that the latest available
     // release is a security update.
-    $this->setReleaseMetadata([__DIR__ . '/../../../fixtures/release-history/drupal.9.8.1-security.xml']);
+    $this->setReleaseMetadata(['drupal' => __DIR__ . '/../../../fixtures/release-history/drupal.9.8.1-security.xml']);
 
     $this->setCoreVersion('9.7.1');
     $this->assertCheckerResultsFromManager([], TRUE);
