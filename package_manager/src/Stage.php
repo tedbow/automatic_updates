@@ -3,7 +3,6 @@
 namespace Drupal\package_manager;
 
 use Drupal\Component\Datetime\TimeInterface;
-use Drupal\Component\FileSystem\FileSystem;
 use Drupal\Component\Utility\Crypt;
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\File\Exception\FileException;
@@ -66,6 +65,15 @@ class Stage {
    * @var string
    */
   protected const TEMPSTORE_METADATA_KEY = 'metadata';
+
+  /**
+   * The tempstore key under which to store the path of the staging root.
+   *
+   * @var string
+   *
+   * @see ::getStagingRoot()
+   */
+  protected const TEMPSTORE_STAGING_ROOT_KEY = 'staging_root';
 
   /**
    * The tempstore key under which to store the time that ::apply() was called.
@@ -400,6 +408,7 @@ class Stage {
   protected function markAsAvailable(): void {
     $this->tempStore->delete(static::TEMPSTORE_METADATA_KEY);
     $this->tempStore->delete(static::TEMPSTORE_LOCK_KEY);
+    $this->tempStore->delete(static::TEMPSTORE_STAGING_ROOT_KEY);
     $this->lock = NULL;
   }
 
@@ -552,8 +561,16 @@ class Stage {
    *   by this class.
    */
   protected function getStagingRoot(): string {
-    $site_id = $this->configFactory->get('system.site')->get('uuid');
-    return FileSystem::getOsTemporaryDirectory() . DIRECTORY_SEPARATOR . '.package_manager' . $site_id;
+    // Since the staging root can depend on site settings, store it so that
+    // things won't break if the settings change during this stage's life
+    // cycle.
+    $dir = $this->tempStore->get(static::TEMPSTORE_STAGING_ROOT_KEY);
+    if (empty($dir)) {
+      $site_id = $this->configFactory->get('system.site')->get('uuid');
+      $dir = $this->fileSystem->getTempDirectory() . DIRECTORY_SEPARATOR . '.package_manager' . $site_id;
+      $this->tempStore->set(static::TEMPSTORE_STAGING_ROOT_KEY, $dir);
+    }
+    return $dir;
   }
 
   /**

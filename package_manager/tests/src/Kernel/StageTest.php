@@ -3,8 +3,10 @@
 namespace Drupal\Tests\package_manager\Kernel;
 
 use Drupal\Component\Datetime\Time;
+use Drupal\Component\FileSystem\FileSystem;
 use Drupal\Core\DependencyInjection\ContainerBuilder;
 use Drupal\Core\Extension\ModuleUninstallValidatorException;
+use Drupal\Core\Site\Settings;
 use Drupal\package_manager\Event\PostApplyEvent;
 use Drupal\package_manager\Event\PreApplyEvent;
 use Drupal\package_manager\Event\StageEvent;
@@ -63,15 +65,21 @@ class StageTest extends PackageManagerKernelTestBase {
 
     $stage = $this->createStage();
     $id = $stage->create();
-    $this->assertStringEndsWith("/.package_manager$site_id/$id", $stage->getStageDirectory());
+    // If the file_temp_path setting is empty, the stage directory should be
+    // created in the OS's temporary directory.
+    $this->assertEmpty(Settings::get('file_temp_path'));
+    $expected_dir = FileSystem::getOsTemporaryDirectory() . "/.package_manager$site_id/$id";
+    $this->assertSame($expected_dir, $stage->getStageDirectory());
+    // If the file_temp_path setting is changed, the existing stage shouldn't be
+    // affected...
+    $this->setSetting('file_temp_path', '/junk/drawer');
+    $this->assertSame($expected_dir, $stage->getStageDirectory());
     $stage->destroy();
-
+    // ...but a new stage should be.
     $stage = $this->createStage();
     $another_id = $stage->create();
-    // The new stage ID should be unique, but the parent directory should be
-    // unchanged.
     $this->assertNotSame($id, $another_id);
-    $this->assertStringEndsWith("/.package_manager$site_id/$another_id", $stage->getStageDirectory());
+    $this->assertSame("/junk/drawer/.package_manager$site_id/$another_id", $stage->getStageDirectory());
   }
 
   /**

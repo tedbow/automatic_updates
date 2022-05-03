@@ -4,7 +4,6 @@ namespace Drupal\Tests\automatic_updates\Functional;
 
 use Drupal\automatic_updates\Event\ReadinessCheckEvent;
 use Drupal\automatic_updates_test\Datetime\TestTime;
-use Drupal\Component\FileSystem\FileSystem;
 use Drupal\package_manager\Event\PostRequireEvent;
 use Drupal\package_manager\Event\PreApplyEvent;
 use Drupal\package_manager\Event\PreCreateEvent;
@@ -511,9 +510,11 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
     // Confirm if the staged directory is deleted without using destroy(), then
     // an error message will be displayed on the page.
     // @see \Drupal\package_manager\Stage::getStagingRoot()
-    $dir = FileSystem::getOsTemporaryDirectory() . '/.package_manager' . $this->config('system.site')->get('uuid');
+    /** @var \Drupal\Core\File\FileSystemInterface $file_system */
+    $file_system = $this->container->get('file_system');
+    $dir = $file_system->getTempDirectory() . '/.package_manager' . $this->config('system.site')->get('uuid');
     $this->assertDirectoryExists($dir);
-    $this->container->get('file_system')->deleteRecursive($dir);
+    $file_system->deleteRecursive($dir);
     $this->getSession()->reload();
     $assert_session = $this->assertSession();
     $error_message = 'There was an error loading the pending update. Press the Cancel update button to start over.';
