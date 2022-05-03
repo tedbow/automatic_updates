@@ -31,7 +31,7 @@ class Committer extends InvocationRecorderBase implements CommitterInterface {
    * {@inheritdoc}
    */
   public function commit(string $stagingDir, string $activeDir, ?array $exclusions = [], ?OutputCallbackInterface $callback = NULL, ?int $timeout = 120): void {
-    $this->saveInvocationArguments($activeDir, $stagingDir, $exclusions);
+    $this->saveInvocationArguments($stagingDir, $activeDir, $exclusions, $timeout);
   }
 
   /**

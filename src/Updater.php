@@ -22,6 +22,10 @@ class Updater extends Stage {
    *
    * @param string[] $project_versions
    *   The versions of the packages to update to, keyed by package name.
+   * @param int|null $timeout
+   *   (optional) How long to allow the file copying operation to run before
+   *   timing out, in seconds, or NULL to never time out. Defaults to 300
+   *   seconds.
    *
    * @return string
    *   The unique ID of the stage.
@@ -29,7 +33,7 @@ class Updater extends Stage {
    * @throws \InvalidArgumentException
    *   Thrown if no project version for Drupal core is provided.
    */
-  public function begin(array $project_versions): string {
+  public function begin(array $project_versions, ?int $timeout = 300): string {
     if (count($project_versions) !== 1 || !array_key_exists('drupal', $project_versions)) {
       throw new \InvalidArgumentException("Currently only updates to Drupal core are supported.");
     }
@@ -54,7 +58,7 @@ class Updater extends Stage {
     $this->tempStore->set(static::TEMPSTORE_METADATA_KEY, [
       'packages' => $package_versions,
     ]);
-    return $this->create();
+    return $this->create($timeout);
   }
 
   /**

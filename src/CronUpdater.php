@@ -76,15 +76,20 @@ class CronUpdater extends Updater {
 
   /**
    * Handles updates during cron.
+   *
+   * @param int|null $timeout
+   *   (optional) How long to allow the file copying operation to run before
+   *   timing out, in seconds, or NULL to never time out. Defaults to 300
+   *   seconds.
    */
-  public function handleCron(): void {
+  public function handleCron(?int $timeout = 300): void {
     if ($this->getMode() === static::DISABLED) {
       return;
     }
 
     $next_release = $this->releaseChooser->getLatestInInstalledMinor();
     if ($next_release) {
-      $this->performUpdate($next_release->getVersion());
+      $this->performUpdate($next_release->getVersion(), $timeout);
     }
   }
 
@@ -93,8 +98,11 @@ class CronUpdater extends Updater {
    *
    * @param string $update_version
    *   The version to which to update.
+   * @param int|null $timeout
+   *   How long to allow the operation to run before timing out, in seconds, or
+   *   NULL to never time out.
    */
-  private function performUpdate(string $update_version): void {
+  private function performUpdate(string $update_version, ?int $timeout): void {
     $installed_version = (new ProjectInfo('drupal'))->getInstalledVersion();
     if (empty($installed_version)) {
       $this->logger->error('Unable to determine the current version of Drupal core.');
@@ -105,9 +113,7 @@ class CronUpdater extends Updater {
     // handle any exceptions or validation errors consistently, and destroy the
     // stage regardless of whether the update succeeds.
     try {
-      $this->begin([
-        'drupal' => $update_version,
-      ]);
+      $this->begin(['drupal' => $update_version], $timeout);
       $this->stage();
       $this->apply();
 

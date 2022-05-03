@@ -208,6 +208,30 @@ class StageTest extends PackageManagerKernelTestBase {
     $stage->apply();
   }
 
+  /**
+   * Tests that Composer Stager is invoked with a long timeout.
+   */
+  public function testTimeouts(): void {
+    $stage = $this->createStage();
+    $stage->create(420);
+    $stage->apply();
+
+    $timeouts = [
+      // The beginner was given an explicit timeout.
+      'package_manager.beginner' => 420,
+      // The committer should have been called with a longer timeout than
+      // Composer Stager's default of 120 seconds.
+      'package_manager.committer' => 600,
+    ];
+    foreach ($timeouts as $service_id => $expected_timeout) {
+      $invocations = $this->container->get($service_id)->getInvocationArguments();
+
+      // The service should have been called with the expected timeout.
+      $this->assertCount(1, $invocations);
+      $this->assertSame($expected_timeout, end($invocations[0]));
+    }
+  }
+
 }
 
 /**

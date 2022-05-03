@@ -238,6 +238,11 @@ class Stage {
    * call ::claim(). However, if it was created during another request, the
    * stage must be claimed before operations can be performed on it.
    *
+   * @param int|null $timeout
+   *   (optional) How long to allow the file copying operation to run before
+   *   timing out, in seconds, or NULL to never time out. Defaults to 300
+   *   seconds.
+   *
    * @return string
    *   Unique ID for the stage, which can be used to claim the stage before
    *   performing other operations on it. Calling code should store this ID for
@@ -248,7 +253,7 @@ class Stage {
    *
    * @see ::claim()
    */
-  public function create(): string {
+  public function create(?int $timeout = 300): string {
     if (!$this->isAvailable()) {
       throw new StageException('Cannot create a new stage because one already exists.');
     }
@@ -270,7 +275,7 @@ class Stage {
     // available.
     $this->dispatch($event, [$this, 'markAsAvailable']);
 
-    $this->beginner->begin($active_dir, $stage_dir, $event->getExcludedPaths());
+    $this->beginner->begin($active_dir, $stage_dir, $event->getExcludedPaths(), NULL, $timeout);
     $this->dispatch(new PostCreateEvent($this));
     return $id;
   }
@@ -313,8 +318,13 @@ class Stage {
 
   /**
    * Applies staged changes to the active directory.
+   *
+   * @param int|null $timeout
+   *   (optional) How long to allow the file copying operation to run before
+   *   timing out, in seconds, or NULL to never time out. Defaults to 600
+   *   seconds.
    */
-  public function apply(): void {
+  public function apply(?int $timeout = 600): void {
     $this->checkOwnership();
 
     $active_dir = $this->pathLocator->getProjectRoot();
@@ -331,7 +341,7 @@ class Stage {
     $this->tempStore->set(self::TEMPSTORE_APPLY_TIME_KEY, $this->time->getRequestTime());
     $this->dispatch($event, $release_apply);
 
-    $this->committer->commit($stage_dir, $active_dir, $event->getExcludedPaths());
+    $this->committer->commit($stage_dir, $active_dir, $event->getExcludedPaths(), NULL, $timeout);
 
     // Rebuild the container and clear all caches, to ensure that new services
     // are picked up.

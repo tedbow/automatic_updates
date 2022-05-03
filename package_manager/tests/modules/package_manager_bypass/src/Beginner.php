@@ -14,7 +14,7 @@ class Beginner extends InvocationRecorderBase implements BeginnerInterface {
    * {@inheritdoc}
    */
   public function begin(string $activeDir, string $stagingDir, ?array $exclusions = [], ?OutputCallbackInterface $callback = NULL, ?int $timeout = 120): void {
-    $this->saveInvocationArguments($activeDir, $stagingDir, $exclusions);
+    $this->saveInvocationArguments($activeDir, $stagingDir, $exclusions, $timeout);
   }
 
 }
