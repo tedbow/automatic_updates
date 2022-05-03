@@ -6,7 +6,9 @@ use Drupal\automatic_updates_extensions\ExtensionUpdater;
 use Drupal\package_manager\Event\StageEvent;
 use Drupal\package_manager\Exception\StageException;
 use Drupal\package_manager\Exception\StageValidationException;
+use Drupal\package_manager\Stage;
 use Drupal\Tests\automatic_updates\Kernel\AutomaticUpdatesKernelTestBase;
+use Drupal\Tests\package_manager\Kernel\TestStage;
 use GuzzleHttp\Client;
 use GuzzleHttp\Handler\MockHandler;
 use GuzzleHttp\HandlerStack;
@@ -123,17 +125,13 @@ abstract class AutomaticUpdatesExtensionsKernelTestBase extends AutomaticUpdates
 class TestExtensionUpdater extends ExtensionUpdater {
 
   /**
-   * The directory where staging areas will be created.
-   *
-   * @var string
-   */
-  public static $stagingRoot;
-
-  /**
    * {@inheritdoc}
    */
-  public function getStagingRoot(): string {
-    return static::$stagingRoot ?: parent::getStagingRoot();
+  public function __construct(...$arguments) {
+    parent::__construct(...$arguments);
+
+    $mirror = new \ReflectionClass(Stage::class);
+    $this->tempStore->set($mirror->getConstant('TEMPSTORE_STAGING_ROOT_KEY'), TestStage::$stagingRoot);
   }
 
   /**

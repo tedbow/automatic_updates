@@ -244,8 +244,11 @@ class TestStage extends Stage {
   /**
    * {@inheritdoc}
    */
-  public function getStagingRoot(): string {
-    return static::$stagingRoot ?: parent::getStagingRoot();
+  public function __construct(...$arguments) {
+    parent::__construct(...$arguments);
+
+    $mirror = new \ReflectionClass(parent::class);
+    $this->tempStore->set($mirror->getConstant('TEMPSTORE_STAGING_ROOT_KEY'), static::$stagingRoot);
   }
 
   /**

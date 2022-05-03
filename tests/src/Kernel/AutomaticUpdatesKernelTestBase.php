@@ -5,6 +5,7 @@ namespace Drupal\Tests\automatic_updates\Kernel;
 use Drupal\automatic_updates\CronUpdater;
 use Drupal\automatic_updates\Updater;
 use Drupal\Core\DependencyInjection\ContainerBuilder;
+use Drupal\package_manager\Stage;
 use Drupal\Tests\automatic_updates\Traits\ValidationTestTrait;
 use Drupal\Tests\package_manager\Kernel\PackageManagerKernelTestBase;
 use Drupal\Tests\package_manager\Kernel\TestStage;
@@ -153,8 +154,11 @@ class TestUpdater extends Updater {
   /**
    * {@inheritdoc}
    */
-  public function getStagingRoot(): string {
-    return TestStage::$stagingRoot ?: parent::getStagingRoot();
+  public function __construct(...$arguments) {
+    parent::__construct(...$arguments);
+
+    $mirror = new \ReflectionClass(Stage::class);
+    $this->tempStore->set($mirror->getConstant('TEMPSTORE_STAGING_ROOT_KEY'), TestStage::$stagingRoot);
   }
 
 }
@@ -167,8 +171,11 @@ class TestCronUpdater extends CronUpdater {
   /**
    * {@inheritdoc}
    */
-  public function getStagingRoot(): string {
-    return TestStage::$stagingRoot ?: parent::getStagingRoot();
+  public function __construct(...$arguments) {
+    parent::__construct(...$arguments);
+
+    $mirror = new \ReflectionClass(Stage::class);
+    $this->tempStore->set($mirror->getConstant('TEMPSTORE_STAGING_ROOT_KEY'), TestStage::$stagingRoot);
   }
 
 }

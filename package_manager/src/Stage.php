@@ -73,7 +73,7 @@ class Stage {
    *
    * @see ::getStagingRoot()
    */
-  protected const TEMPSTORE_STAGING_ROOT_KEY = 'staging_root';
+  private const TEMPSTORE_STAGING_ROOT_KEY = 'staging_root';
 
   /**
    * The tempstore key under which to store the time that ::apply() was called.
@@ -408,7 +408,7 @@ class Stage {
   protected function markAsAvailable(): void {
     $this->tempStore->delete(static::TEMPSTORE_METADATA_KEY);
     $this->tempStore->delete(static::TEMPSTORE_LOCK_KEY);
-    $this->tempStore->delete(static::TEMPSTORE_STAGING_ROOT_KEY);
+    $this->tempStore->delete(self::TEMPSTORE_STAGING_ROOT_KEY);
     $this->lock = NULL;
   }
 
@@ -560,15 +560,15 @@ class Stage {
    *   The absolute path of the directory containing the staging areas managed
    *   by this class.
    */
-  protected function getStagingRoot(): string {
+  private function getStagingRoot(): string {
     // Since the staging root can depend on site settings, store it so that
     // things won't break if the settings change during this stage's life
     // cycle.
-    $dir = $this->tempStore->get(static::TEMPSTORE_STAGING_ROOT_KEY);
+    $dir = $this->tempStore->get(self::TEMPSTORE_STAGING_ROOT_KEY);
     if (empty($dir)) {
       $site_id = $this->configFactory->get('system.site')->get('uuid');
       $dir = $this->fileSystem->getTempDirectory() . DIRECTORY_SEPARATOR . '.package_manager' . $site_id;
-      $this->tempStore->set(static::TEMPSTORE_STAGING_ROOT_KEY, $dir);
+      $this->tempStore->set(self::TEMPSTORE_STAGING_ROOT_KEY, $dir);
     }
     return $dir;
   }
