@@ -2,12 +2,13 @@
 
 namespace Drupal\Tests\package_manager\Kernel;
 
+use Drupal\Core\DependencyInjection\ContainerBuilder;
 use Drupal\Core\Url;
 use Drupal\package_manager\Event\PreCreateEvent;
 use Drupal\package_manager\Validator\ComposerExecutableValidator;
 use Drupal\package_manager\ValidationResult;
+use PhpTuf\ComposerStager\Domain\Process\Runner\ComposerRunnerInterface;
 use PhpTuf\ComposerStager\Exception\IOException;
-use PhpTuf\ComposerStager\Infrastructure\Process\ExecutableFinderInterface;
 use Prophecy\Argument;
 
 /**
@@ -18,18 +19,41 @@ use Prophecy\Argument;
 class ComposerExecutableValidatorTest extends PackageManagerKernelTestBase {
 
   /**
+   * The mocked Composer runner.
+   *
+   * @var \Prophecy\Prophecy\ObjectProphecy|\PhpTuf\ComposerStager\Domain\Process\Runner\ComposerRunnerInterface
+   */
+  private $composerRunner;
+
+  /**
+   * {@inheritdoc}
+   */
+  protected function setUp(): void {
+    $this->composerRunner = $this->prophesize(ComposerRunnerInterface::class);
+    parent::setUp();
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function register(ContainerBuilder $container) {
+    parent::register($container);
+
+    $container->getDefinition('package_manager.validator.composer_executable')
+      ->setArgument('$composer', $this->composerRunner->reveal());
+  }
+
+  /**
    * Tests that an error is raised if the Composer executable isn't found.
    */
   public function testErrorIfComposerNotFound(): void {
     $exception = new IOException("This is your regularly scheduled error.");
 
-    // The executable finder throws an exception if it can't find the requested
-    // executable.
-    $exec_finder = $this->prophesize(ExecutableFinderInterface::class);
-    $exec_finder->find('composer')
+    // If the Composer executable isn't found, the executable finder will throw
+    // an exception, which will not be caught by the Composer runner.
+    $this->composerRunner->run(Argument::cetera())
       ->willThrow($exception)
       ->shouldBeCalled();
-    $this->container->set('package_manager.executable_finder', $exec_finder->reveal());
 
     // The validator should translate that exception into an error.
     $error = ValidationResult::createError([
@@ -38,7 +62,6 @@ class ComposerExecutableValidatorTest extends PackageManagerKernelTestBase {
     $this->assertResults([$error], PreCreateEvent::class);
 
     $this->enableModules(['help']);
-    $this->container->set('package_manager.executable_finder', $exec_finder->reveal());
     $this->assertResultsWithHelp([$error], PreCreateEvent::class);
   }
 
@@ -122,10 +145,7 @@ class ComposerExecutableValidatorTest extends PackageManagerKernelTestBase {
     // Mock the output of `composer --version`, will be passed to the validator,
     // which is itself a callback function that gets called repeatedly as
     // Composer produces output.
-    /** @var \PhpTuf\ComposerStager\Domain\Process\Runner\ComposerRunnerInterface|\Prophecy\Prophecy\ObjectProphecy $runner */
-    $runner = $this->prophesize('\PhpTuf\ComposerStager\Domain\Process\Runner\ComposerRunnerInterface');
-
-    $runner->run(['--version'], Argument::type(ComposerExecutableValidator::class))
+    $this->composerRunner->run(['--version'], Argument::type(ComposerExecutableValidator::class))
       // Whatever is passed to ::run() will be passed to this mock callback in
       // $arguments, and we know exactly what that will contain: an array of
       // command arguments for Composer, and the validator object.
@@ -137,14 +157,12 @@ class ComposerExecutableValidatorTest extends PackageManagerKernelTestBase {
         // recognized, supported version number out of this output.
         $validator($validator::OUT, "Composer version $reported_version");
       });
-    $this->container->set('package_manager.composer_runner', $runner->reveal());
 
     // If the validator can't find a recognized, supported version of Composer,
     // it should produce errors.
     $this->assertResults($expected_results, PreCreateEvent::class);
 
     $this->enableModules(['help']);
-    $this->container->set('package_manager.composer_runner', $runner->reveal());
     $this->assertResultsWithHelp($expected_results, PreCreateEvent::class);
   }
 

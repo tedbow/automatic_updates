@@ -18,9 +18,11 @@ class PackageManagerBypassServiceProvider extends ServiceProviderBase {
     parent::alter($container);
 
     $container->getDefinition('package_manager.beginner')
-      ->setClass(Beginner::class);
+      ->setClass(Beginner::class)
+      ->setArguments([]);
     $container->getDefinition('package_manager.stager')
-      ->setClass(Stager::class);
+      ->setClass(Stager::class)
+      ->setArguments([]);
 
     $container->register('package_manager_bypass.committer')
       ->setClass(Committer::class)

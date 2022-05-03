@@ -3,6 +3,9 @@
 namespace Drupal\Tests\package_manager\Kernel;
 
 use Drupal\KernelTests\KernelTestBase;
+use PhpTuf\ComposerStager\Domain\FileSyncer\FileSyncerInterface;
+use PhpTuf\ComposerStager\Infrastructure\FileSyncer\PhpFileSyncer;
+use PhpTuf\ComposerStager\Infrastructure\FileSyncer\RsyncFileSyncer;
 
 /**
  * @covers \Drupal\package_manager\FileSyncerFactory
@@ -40,19 +43,17 @@ class FileSyncerFactoryTest extends KernelTestBase {
    * @dataProvider providerFactory
    */
   public function testFactory(?string $configured_syncer): void {
-    $factory = $this->container->get('package_manager.file_syncer.factory');
-
     switch ($configured_syncer) {
       case 'rsync':
-        $expected_syncer = $this->container->get('package_manager.file_syncer.rsync');
+        $expected_syncer = RsyncFileSyncer::class;
         break;
 
       case 'php':
-        $expected_syncer = $this->container->get('package_manager.file_syncer.php');
+        $expected_syncer = PhpFileSyncer::class;
         break;
 
       default:
-        $expected_syncer = $factory->create();
+        $expected_syncer = FileSyncerInterface::class;
         break;
     }
 
@@ -60,7 +61,7 @@ class FileSyncerFactoryTest extends KernelTestBase {
       ->set('file_syncer', $configured_syncer)
       ->save();
 
-    $this->assertSame($expected_syncer, $factory->create());
+    $this->assertInstanceOf($expected_syncer, $this->container->get(FileSyncerInterface::class));
   }
 
 }

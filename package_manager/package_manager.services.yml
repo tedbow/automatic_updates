@@ -1,75 +1,66 @@
 services:
-  # Underlying Symfony utilities.
-  package_manager.symfony_file_system:
-    class: Symfony\Component\Filesystem\Filesystem
-  package_manager.symfony_executable_finder:
-    class: Symfony\Component\Process\ExecutableFinder
+  # Underlying Symfony utilities for Composer Stager.
+  Symfony\Component\Filesystem\Filesystem:
+    public: false
+  Symfony\Component\Process\ExecutableFinder:
+    public: false
 
-  # Basic infrastructure services.
-  package_manager.process_factory:
-    class: Drupal\package_manager\ProcessFactory
+  # Basic infrastructure services for Composer Stager.
+  Drupal\package_manager\ProcessFactory:
     arguments:
       - '@file_system'
       - '@config.factory'
-  package_manager.file_system:
-    class: PhpTuf\ComposerStager\Infrastructure\Filesystem\Filesystem
+    public: false
+  PhpTuf\ComposerStager\Infrastructure\Filesystem\Filesystem:
+    autowire: true
+    public: false
+  Drupal\package_manager\ExecutableFinder:
     arguments:
-      - '@package_manager.symfony_file_system'
-  package_manager.executable_finder:
-    class: Drupal\package_manager\ExecutableFinder
-    arguments:
-      - '@package_manager.symfony_executable_finder'
-      - '@config.factory'
+      $config_factory: '@config.factory'
+    autowire: true
+    public: false
+  PhpTuf\ComposerStager\Infrastructure\Process\ProcessFactoryInterface:
+    alias: 'Drupal\package_manager\ProcessFactory'
+  PhpTuf\ComposerStager\Domain\Filesystem\FilesystemInterface:
+    alias: 'PhpTuf\ComposerStager\Infrastructure\Filesystem\Filesystem'
+  PhpTuf\ComposerStager\Infrastructure\Process\ExecutableFinderInterface:
+    alias: 'Drupal\package_manager\ExecutableFinder'
 
-  # Executable runners.
-  package_manager.rsync_runner:
-    class: PhpTuf\ComposerStager\Infrastructure\Process\Runner\RsyncRunner
-    arguments:
-      - '@package_manager.executable_finder'
-      - '@package_manager.process_factory'
-  package_manager.composer_runner:
-    class: PhpTuf\ComposerStager\Infrastructure\Process\Runner\ComposerRunner
-    arguments:
-      - '@package_manager.executable_finder'
-      - '@package_manager.process_factory'
+  # Executable runners for Composer Stager.
+  PhpTuf\ComposerStager\Infrastructure\Process\Runner\RsyncRunner:
+    autowire: true
+    public: false
+  PhpTuf\ComposerStager\Infrastructure\Process\Runner\ComposerRunner:
+    autowire: true
+    public: false
+  PhpTuf\ComposerStager\Domain\Process\Runner\RsyncRunnerInterface:
+    alias: 'PhpTuf\ComposerStager\Infrastructure\Process\Runner\RsyncRunner'
+  PhpTuf\ComposerStager\Domain\Process\Runner\ComposerRunnerInterface:
+    alias: 'PhpTuf\ComposerStager\Infrastructure\Process\Runner\ComposerRunner'
 
-  # File syncers.
-  package_manager.file_syncer.rsync:
-    class: PhpTuf\ComposerStager\Infrastructure\FileSyncer\RsyncFileSyncer
+  # File syncers for Composer Stager.
+  PhpTuf\ComposerStager\Infrastructure\FileSyncer\RsyncFileSyncer:
+    autowire: true
+  PhpTuf\ComposerStager\Infrastructure\FileSyncer\PhpFileSyncer:
+    autowire: true
+  Drupal\package_manager\FileSyncerFactory:
     arguments:
-      - '@package_manager.file_system'
-      - '@package_manager.rsync_runner'
-  package_manager.file_syncer.php:
-    class: PhpTuf\ComposerStager\Infrastructure\FileSyncer\PhpFileSyncer
-    arguments:
-      - '@package_manager.file_system'
-  package_manager.file_syncer.factory:
-    class: Drupal\package_manager\FileSyncerFactory
-    arguments:
-      - '@package_manager.symfony_executable_finder'
-      - '@package_manager.file_syncer.php'
-      - '@package_manager.file_syncer.rsync'
-      - '@config.factory'
-  package_manager.file_syncer:
-    class: PhpTuf\ComposerStager\Domain\FileSyncer\FileSyncerInterface
-    factory: ['@package_manager.file_syncer.factory', 'create']
+      $config_factory: '@config.factory'
+    autowire: true
+    public: false
+  PhpTuf\ComposerStager\Domain\FileSyncer\FileSyncerInterface:
+    factory: ['@Drupal\package_manager\FileSyncerFactory', 'create']
 
-  # Domain services.
+  # Services provided to Drupal by Package Manager.
   package_manager.beginner:
     class: PhpTuf\ComposerStager\Domain\Beginner
-    arguments:
-      - '@package_manager.file_syncer'
-      - '@package_manager.file_system'
+    autowire: true
   package_manager.stager:
     class: PhpTuf\ComposerStager\Domain\Stager
-    arguments:
-      - '@package_manager.composer_runner'
-      - '@package_manager.file_system'
+    autowire: true
   package_manager.committer:
     class: PhpTuf\ComposerStager\Domain\Committer
-    arguments:
-      - '@package_manager.file_syncer'
-      - '@package_manager.file_system'
+    autowire: true
   package_manager.path_locator:
     class: Drupal\package_manager\PathLocator
     arguments:
@@ -79,7 +70,7 @@ services:
   package_manager.validator.composer_executable:
     class: Drupal\package_manager\Validator\ComposerExecutableValidator
     arguments:
-      - '@package_manager.composer_runner'
+      - '@PhpTuf\ComposerStager\Domain\Process\Runner\ComposerRunnerInterface'
       - '@module_handler'
       - '@string_translation'
     tags:
@@ -143,11 +134,11 @@ services:
   package_manager.site_files_excluder:
     class: Drupal\package_manager\PathExcluder\SiteFilesExcluder
     arguments:
-      - '@package_manager.path_locator'
-      - '@stream_wrapper_manager'
-      - '@package_manager.symfony_file_system'
+      $path_locator: '@package_manager.path_locator'
+      $stream_wrapper_manager: '@stream_wrapper_manager'
     tags:
       - { name: event_subscriber }
+    autowire: true
   package_manager.sqlite_excluder:
     class: Drupal\package_manager\PathExcluder\SqliteDatabaseExcluder
     arguments:
