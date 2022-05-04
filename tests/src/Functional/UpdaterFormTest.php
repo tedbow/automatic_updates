@@ -50,7 +50,15 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
     parent::setUp();
 
     $this->setReleaseMetadata(__DIR__ . '/../../fixtures/release-history/drupal.9.8.1-security.xml');
-    $this->drupalLogin($this->rootUser);
+    $user = $this->createUser([
+      'administer site configuration',
+      'administer software updates',
+      'access administration pages',
+      'access site in maintenance mode',
+      'administer modules',
+      'access site reports',
+    ]);
+    $this->drupalLogin($user);
     $this->checkForUpdates();
   }
 
@@ -307,7 +315,11 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
 
     // We should get the same error if we log in as another user and try to
     // delete the staged update.
-    $this->drupalLogin($this->rootUser);
+    $user = $this->createUser([
+      'administer software updates',
+      'access site in maintenance mode',
+    ]);
+    $this->drupalLogin($user);
     $this->drupalGet('/admin/reports/updates/automatic-update');
     $assert_session->pageTextContains($conflict_message);
     $page->pressButton('Delete existing update');

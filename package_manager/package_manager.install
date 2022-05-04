@@ -8,7 +8,7 @@
 /**
  * Implements hook_requirements().
  */
-function package_manager_requirements() {
+function package_manager_requirements(string $phase) {
   $requirements = [];
 
   if (!class_exists('PhpTuf\ComposerStager\Domain\Beginner')) {
@@ -18,7 +18,7 @@ function package_manager_requirements() {
       'severity' => REQUIREMENT_ERROR,
     ];
   }
-  if (extension_loaded('xdebug')) {
+  if ($phase === 'runtime' && extension_loaded('xdebug')) {
     $requirements['package_manager_xdebug'] = [
       'title' => 'Xdebug enabled',
       'description' => t('Xdebug is enabled, which may have a negative performance impact on Package Manager and any modules that use it.'),

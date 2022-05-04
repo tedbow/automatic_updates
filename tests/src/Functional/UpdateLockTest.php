@@ -31,7 +31,10 @@ class UpdateLockTest extends AutomaticUpdatesFunctionalTestBase {
   protected function setUp(): void {
     parent::setUp();
 
-    $this->drupalLogin($this->rootUser);
+    $user = $this->createUser([
+      'administer site configuration',
+    ]);
+    $this->drupalLogin($user);
     $this->checkForUpdates();
   }
 
