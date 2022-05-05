@@ -2,12 +2,12 @@
 
 namespace Drupal\Tests\package_manager\Kernel;
 
-use Drupal\package_manager\Event\PostRequireEvent;
 use Drupal\package_manager\Event\PreApplyEvent;
 use Drupal\package_manager\Event\PreCreateEvent;
 use Drupal\package_manager\Event\PreRequireEvent;
 use Drupal\package_manager\Validator\LockFileValidator;
 use Drupal\package_manager\ValidationResult;
+use Drupal\package_manager_test_fixture\EventSubscriber\FixtureStager;
 
 /**
  * @coversDefaultClass \Drupal\package_manager\Validator\LockFileValidator
@@ -56,7 +56,7 @@ class LockFileValidatorTest extends PackageManagerKernelTestBase {
 
     // Change the lock file to ensure the stored hash of the previous version
     // has been deleted.
-    file_put_contents($this->activeDir . '/composer.lock', 'changed');
+    file_put_contents($this->activeDir . '/composer.lock', '{"changed": true}');
     $this->assertResults([]);
   }
 
@@ -124,11 +124,11 @@ class LockFileValidatorTest extends PackageManagerKernelTestBase {
    * Tests validation when the staged and active lock files are identical.
    */
   public function testApplyWithNoChange(): void {
-    $this->addListener(PostRequireEvent::class, function (PostRequireEvent $event) {
-      $stage_dir = $event->getStage()->getStageDirectory();
-      mkdir($stage_dir);
-      copy("$this->activeDir/composer.lock", "$stage_dir/composer.lock");
-    });
+    // Ensure the lock file is not changed when the active directory is copied
+    // into the virtual staging area.
+    // @see \Drupal\package_manager_test_fixture\EventSubscriber\FixtureStager
+    FixtureStager::setFixturePath($this->activeDir, FALSE);
+
     $result = ValidationResult::createError([
       'There are no pending Composer operations.',
     ]);

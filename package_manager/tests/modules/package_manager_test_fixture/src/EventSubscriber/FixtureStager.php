@@ -57,12 +57,27 @@ class FixtureStager implements EventSubscriberInterface {
    * @see \Drupal\Tests\automatic_updates\Functional\AutomaticUpdatesFunctionalTestBase::tearDown()
    */
   public function copyFilesFromFixture(PostRequireEvent $event): void {
-    $fixturePath = $this->state->get(static::class);
+    [$fixturePath, $changeLock] = $this->state->get(static::class);
+
     if ($fixturePath && is_dir($fixturePath)) {
-      $this->fileSystem->mirror($fixturePath, $event->getStage()->getStageDirectory(), NULL, [
+      $destination = $event->getStage()->getStageDirectory();
+
+      $this->fileSystem->mirror($fixturePath, $destination, NULL, [
         'override' => TRUE,
         'delete' => TRUE,
       ]);
+
+      // Modify the lock file in the staging area, to simulate that a package
+      // was added, updated, or removed. Otherwise, tests must remember to
+      // disable the lock file validator.
+      // @see \Drupal\package_manager\Validator\LockFileValidator
+      $lock = $destination . '/composer.lock';
+      if ($changeLock && file_exists($lock)) {
+        $data = file_get_contents($lock);
+        $data = json_decode($data);
+        $data->_time = microtime();
+        file_put_contents($lock, json_encode($data, JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT));
+      }
     }
   }
 
@@ -80,9 +95,12 @@ class FixtureStager implements EventSubscriberInterface {
    *
    * @param string $path
    *   The path of the fixture to copy into the staging area.
+   * @param bool $change_lock
+   *   (optional) Whether to change the lock file, in order to simulate the
+   *   addition, updating, or removal of a package. Defaults to TRUE.
    */
-  public static function setFixturePath(string $path): void {
-    \Drupal::state()->set(static::class, $path);
+  public static function setFixturePath(string $path, bool $change_lock = TRUE): void {
+    \Drupal::state()->set(static::class, [$path, $change_lock]);
   }
 
 }

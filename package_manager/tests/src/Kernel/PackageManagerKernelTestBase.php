@@ -10,6 +10,7 @@ use Drupal\package_manager\Exception\StageException;
 use Drupal\package_manager\Exception\StageValidationException;
 use Drupal\package_manager\PathLocator;
 use Drupal\package_manager\Stage;
+use Drupal\package_manager_test_fixture\EventSubscriber\FixtureStager;
 use Drupal\Tests\package_manager\Traits\ValidationTestTrait;
 use org\bovigo\vfs\vfsStream;
 use org\bovigo\vfs\vfsStreamDirectory;
@@ -29,6 +30,7 @@ abstract class PackageManagerKernelTestBase extends KernelTestBase {
   protected static $modules = [
     'package_manager',
     'package_manager_bypass',
+    'package_manager_test_fixture',
   ];
 
   /**
@@ -188,7 +190,12 @@ abstract class PackageManagerKernelTestBase extends KernelTestBase {
     $this->vfsRoot->addChild($stage_dir);
     static::$testStagingRoot = $stage_dir->url();
 
-    $path_locator = $this->mockPathLocator($active_dir->url());
+    $active_dir = $active_dir->url();
+    $path_locator = $this->mockPathLocator($active_dir);
+
+    // Ensure that the active directory is copied into the virtual staging area,
+    // even if Package Manager's operations are bypassed.
+    FixtureStager::setFixturePath($active_dir);
 
     // Since the path locator now points to a virtual file system, we need to
     // replace the disk space validator with a test-only version that bypasses

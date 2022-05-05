@@ -29,40 +29,37 @@ class StagedDatabaseUpdateValidatorTest extends AutomaticUpdatesKernelTestBase {
    * {@inheritdoc}
    */
   protected function setUp(): void {
-    // In this test, we want to disable the lock file validator because, even
-    // though both the active and stage directories will have a valid lock file,
-    // this validator will complain because they don't differ at all.
-    $this->disableValidators[] = 'package_manager.validator.lock_file';
     parent::setUp();
 
-    static::$testStagingRoot = $this->vfsRoot->url();
+    $this->createTestProject();
 
     /** @var \Drupal\Tests\automatic_updates\Kernel\TestCronUpdater $updater */
     $updater = $this->container->get('automatic_updates.cron_updater');
     $updater->begin(['drupal' => '9.8.2']);
     $updater->stage();
+  }
 
-    $stage_dir = $updater->getStageDirectory();
-    mkdir($stage_dir);
+  /**
+   * {@inheritdoc}
+   */
+  protected function createTestProject(): void {
+    parent::createTestProject();
 
-    // To satisfy StagedProjectsValidator, copy the active Composer files into
-    // the staging area.
-    $active_dir = $this->getDrupalRoot();
-    @copy("$active_dir/composer.json", "$stage_dir/composer.json");
-    @copy("$active_dir/composer.lock", "$stage_dir/composer.lock");
-    mkdir("$stage_dir/vendor/composer", 0777, TRUE);
-    @copy("$active_dir/vendor/composer/installed.json", "$stage_dir/vendor/composer/installed.json");
+    $drupal_root = $this->getDrupalRoot();
+    $virtual_active_dir = $this->container->get('package_manager.path_locator')
+      ->getProjectRoot();
 
-    // Copy the .install and .post_update.php files from every installed module
-    // into the staging directory.
+    // Copy the .install and .post_update.php files from every installed module,
+    // in the *actual* Drupal code base that is running this test, into the
+    // virtual project (i.e., the active directory).
     $module_list = $this->container->get('module_handler')->getModuleList();
     foreach ($module_list as $name => $module) {
       $path = $module->getPath();
-      @mkdir("$stage_dir/$path", 0777, TRUE);
+      @mkdir("$virtual_active_dir/$path", 0777, TRUE);
 
       foreach (static::SUFFIXES as $suffix) {
         // If the source file doesn't exist, silence the warning it raises.
-        @copy("$active_dir/$path/$name.$suffix", "$stage_dir/$path/$name.$suffix");
+        @copy("$drupal_root/$path/$name.$suffix", "$virtual_active_dir/$path/$name.$suffix");
       }
     }
   }
