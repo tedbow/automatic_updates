@@ -3,12 +3,9 @@
 namespace Drupal\Tests\automatic_updates_extensions\Kernel;
 
 use Drupal\automatic_updates_extensions\ExtensionUpdater;
-use Drupal\package_manager\Event\StageEvent;
-use Drupal\package_manager\Exception\StageException;
 use Drupal\package_manager\Exception\StageValidationException;
-use Drupal\package_manager\Stage;
 use Drupal\Tests\automatic_updates\Kernel\AutomaticUpdatesKernelTestBase;
-use Drupal\Tests\package_manager\Kernel\TestStage;
+use Drupal\Tests\package_manager\Kernel\TestStageTrait;
 use GuzzleHttp\Client;
 use GuzzleHttp\Handler\MockHandler;
 use GuzzleHttp\HandlerStack;
@@ -124,29 +121,6 @@ abstract class AutomaticUpdatesExtensionsKernelTestBase extends AutomaticUpdates
  */
 class TestExtensionUpdater extends ExtensionUpdater {
 
-  /**
-   * {@inheritdoc}
-   */
-  public function __construct(...$arguments) {
-    parent::__construct(...$arguments);
-
-    $mirror = new \ReflectionClass(Stage::class);
-    $this->tempStore->set($mirror->getConstant('TEMPSTORE_STAGING_ROOT_KEY'), TestStage::$stagingRoot);
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  protected function dispatch(StageEvent $event, callable $on_error = NULL): void {
-    try {
-      parent::dispatch($event, $on_error);
-    }
-    catch (StageException $e) {
-      // Attach the event object to the exception so that test code can verify
-      // that the exception was thrown when a specific event was dispatched.
-      $e->event = $event;
-      throw $e;
-    }
-  }
+  use TestStageTrait;
 
 }

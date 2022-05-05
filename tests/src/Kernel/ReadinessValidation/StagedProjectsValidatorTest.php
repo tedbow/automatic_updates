@@ -5,7 +5,6 @@ namespace Drupal\Tests\automatic_updates\Kernel\ReadinessValidation;
 use Drupal\package_manager\Event\PreApplyEvent;
 use Drupal\package_manager\Exception\StageValidationException;
 use Drupal\Tests\automatic_updates\Kernel\AutomaticUpdatesKernelTestBase;
-use Drupal\Tests\package_manager\Kernel\TestStage;
 use org\bovigo\vfs\vfsStream;
 use Symfony\Component\Filesystem\Filesystem;
 
@@ -52,12 +51,12 @@ class StagedProjectsValidatorTest extends AutomaticUpdatesKernelTestBase {
       // subdirectory using the stage ID after it is created below.
       $stage_vfs_dir = vfsStream::newDirectory('au_stage');
       $this->vfsRoot->addChild($stage_vfs_dir);
-      TestStage::$stagingRoot = $stage_vfs_dir->url();
+      static::$testStagingRoot = $stage_vfs_dir->url();
     }
     else {
       // If we are testing non-existent staging directory we can use the path
       // directly.
-      TestStage::$stagingRoot = $stage_dir;
+      static::$testStagingRoot = $stage_dir;
     }
 
     $updater = $this->container->get('automatic_updates.updater');

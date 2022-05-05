@@ -32,6 +32,17 @@ abstract class PackageManagerKernelTestBase extends KernelTestBase {
   ];
 
   /**
+   * The test staging root.
+   *
+   * This value must be set before creating a test stage instance.
+   *
+   * @var string
+   *
+   * @see \Drupal\Tests\package_manager\Kernel\TestStageTrait::__construct()
+   */
+  public static $testStagingRoot;
+
+  /**
    * The service IDs of any validators to disable.
    *
    * @var string[]
@@ -175,7 +186,7 @@ abstract class PackageManagerKernelTestBase extends KernelTestBase {
     // Create a staging root directory alongside the active directory.
     $stage_dir = vfsStream::newDirectory('stage');
     $this->vfsRoot->addChild($stage_dir);
-    TestStage::$stagingRoot = $stage_dir->url();
+    static::$testStagingRoot = $stage_dir->url();
 
     $path_locator = $this->mockPathLocator($active_dir->url());
 
@@ -230,9 +241,9 @@ abstract class PackageManagerKernelTestBase extends KernelTestBase {
 }
 
 /**
- * Defines a stage specifically for testing purposes.
+ * Common functions for test stages.
  */
-class TestStage extends Stage {
+trait TestStageTrait {
 
   /**
    * The directory where staging areas will be created.
@@ -246,9 +257,8 @@ class TestStage extends Stage {
    */
   public function __construct(...$arguments) {
     parent::__construct(...$arguments);
-
-    $mirror = new \ReflectionClass(parent::class);
-    $this->tempStore->set($mirror->getConstant('TEMPSTORE_STAGING_ROOT_KEY'), static::$stagingRoot);
+    $mirror = new \ReflectionClass(Stage::class);
+    $this->tempStore->set($mirror->getConstant('TEMPSTORE_STAGING_ROOT_KEY'), PackageManagerKernelTestBase::$testStagingRoot);
   }
 
   /**
@@ -265,6 +275,14 @@ class TestStage extends Stage {
       throw $e;
     }
   }
+
+}
+/**
+ * Defines a stage specifically for testing purposes.
+ */
+class TestStage extends Stage {
+
+  use TestStageTrait;
 
 }
 

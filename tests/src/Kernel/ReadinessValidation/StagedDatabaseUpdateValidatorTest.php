@@ -5,7 +5,6 @@ namespace Drupal\Tests\automatic_updates\Kernel\ReadinessValidation;
 use Drupal\package_manager\Exception\StageValidationException;
 use Drupal\package_manager\ValidationResult;
 use Drupal\Tests\automatic_updates\Kernel\AutomaticUpdatesKernelTestBase;
-use Drupal\Tests\package_manager\Kernel\TestStage;
 
 /**
  * @covers \Drupal\automatic_updates\Validator\StagedDatabaseUpdateValidator
@@ -36,7 +35,7 @@ class StagedDatabaseUpdateValidatorTest extends AutomaticUpdatesKernelTestBase {
     $this->disableValidators[] = 'package_manager.validator.lock_file';
     parent::setUp();
 
-    TestStage::$stagingRoot = $this->vfsRoot->url();
+    static::$testStagingRoot = $this->vfsRoot->url();
 
     /** @var \Drupal\Tests\automatic_updates\Kernel\TestCronUpdater $updater */
     $updater = $this->container->get('automatic_updates.cron_updater');
