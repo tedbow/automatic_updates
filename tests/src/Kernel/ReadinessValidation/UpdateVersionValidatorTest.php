@@ -256,6 +256,7 @@ class UpdateVersionValidatorTest extends AutomaticUpdatesKernelTestBase {
     $unstable_current_version = ValidationResult::createError([
       'Drupal cannot be automatically updated during cron from its current version, 9.8.0-alpha1, because Automatic Updates only supports updating from stable versions during cron.',
     ]);
+
     return [
       'unstable current version, cron disabled' => [
         CronUpdater::DISABLED,
@@ -274,21 +275,6 @@ class UpdateVersionValidatorTest extends AutomaticUpdatesKernelTestBase {
         CronUpdater::ALL,
         '9.8.0-alpha1',
         [$unstable_current_version],
-      ],
-      'dev current version, cron disabled' => [
-        CronUpdater::DISABLED,
-        '9.8.x-dev',
-        [],
-      ],
-      'dev current version, security updates allowed' => [
-        CronUpdater::SECURITY,
-        '9.8.x-dev',
-        [],
-      ],
-      'dev current version, all updates allowed' => [
-        CronUpdater::ALL,
-        '9.8.x-dev',
-        [],
       ],
       // @todo In the 3 following test cases the installed version is not
       //   in a supported branch. These test expectations should be changed or

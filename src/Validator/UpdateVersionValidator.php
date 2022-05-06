@@ -172,13 +172,9 @@ class UpdateVersionValidator implements EventSubscriberInterface {
       '@from_version' => $from_version_string,
     ];
     $from_version = ExtensionVersion::createFromVersionString($from_version_string);
+
     // @todo Return multiple validation messages and summary in
     //   https://www.drupal.org/project/automatic_updates/issues/3272068.
-    if ($from_version->getVersionExtra() === 'dev') {
-      return ValidationResult::createError([
-        $this->t('Drupal cannot be automatically updated from the installed version, @from_version, because automatic updates from a dev version to any other version are not supported.', $variables),
-      ]);
-    }
     if (Comparator::lessThan($to_version_string, $from_version_string)) {
       return ValidationResult::createError([
         $this->t('Update version @to_version is lower than @from_version, downgrading is not supported.', $variables),
