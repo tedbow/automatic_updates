@@ -1,4 +1,9 @@
 {
+  "_readme": [
+    "This file simuluates a list of packages installed in a virtual staging area.",
+    "It will be compared against active.installed.json.",
+    "See \\Drupal\\Tests\\automatic_updates\\Kernel\\ReadinessValidation\\StagedProjectsValidatorTest::testErrors()"
+  ],
   "packages": [
     {
       "name": "drupal/core",

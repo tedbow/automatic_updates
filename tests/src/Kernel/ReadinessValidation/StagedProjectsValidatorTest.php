@@ -4,9 +4,8 @@ namespace Drupal\Tests\automatic_updates\Kernel\ReadinessValidation;
 
 use Drupal\package_manager\Event\PreApplyEvent;
 use Drupal\package_manager\Exception\StageValidationException;
+use Drupal\package_manager\ValidationResult;
 use Drupal\Tests\automatic_updates\Kernel\AutomaticUpdatesKernelTestBase;
-use org\bovigo\vfs\vfsStream;
-use Symfony\Component\Filesystem\Filesystem;
 
 /**
  * @covers \Drupal\automatic_updates\Validator\StagedProjectsValidator
@@ -21,130 +20,99 @@ class StagedProjectsValidatorTest extends AutomaticUpdatesKernelTestBase {
   protected static $modules = ['automatic_updates'];
 
   /**
+   * The active directory in the virtual file system.
+   *
+   * @var string
+   */
+  private $activeDir;
+
+  /**
    * {@inheritdoc}
    */
   protected function setUp(): void {
-    // This test deals with fake sites that don't necessarily have lock files,
-    // so disable lock file validation.
-    $this->disableValidators[] = 'package_manager.validator.lock_file';
     parent::setUp();
+
+    $this->createTestProject();
+    $this->activeDir = $this->container->get('package_manager.path_locator')
+      ->getProjectRoot();
   }
 
   /**
-   * Runs the validator under test against an arbitrary pair of directories.
+   * Asserts a set of validation results when staged changes are applied.
    *
-   * @param string $active_dir
-   *   The active directory to validate.
-   * @param string $stage_dir
-   *   The stage directory to validate.
-   *
-   * @return \Drupal\package_manager\ValidationResult[]
-   *   The validation results.
+   * @param \Drupal\package_manager\ValidationResult[] $expected_results
+   *   The expected validation results.
    */
-  private function validate(string $active_dir, string $stage_dir): array {
-    $this->mockPathLocator($active_dir, $active_dir);
-
-    $stage_dir_exists = is_dir($stage_dir);
-    if ($stage_dir_exists) {
-      // If we are testing a fixture with existing stage directory then we
-      // need to use a virtual file system directory, so we can create a
-      // subdirectory using the stage ID after it is created below.
-      $stage_vfs_dir = vfsStream::newDirectory('au_stage');
-      $this->vfsRoot->addChild($stage_vfs_dir);
-      static::$testStagingRoot = $stage_vfs_dir->url();
-    }
-    else {
-      // If we are testing non-existent staging directory we can use the path
-      // directly.
-      static::$testStagingRoot = $stage_dir;
-    }
-
+  private function validate(array $expected_results): void {
+    /** @var \Drupal\automatic_updates\Updater $updater */
     $updater = $this->container->get('automatic_updates.updater');
-    $stage_id = $updater->begin(['drupal' => '9.8.2']);
-    if ($stage_dir_exists) {
-      // Copy the fixture's staging directory into a subdirectory using the
-      // stage ID as the directory name.
-      $sub_directory = vfsStream::newDirectory($stage_id);
-      $stage_vfs_dir->addChild($sub_directory);
-      (new Filesystem())->mirror($stage_dir, $sub_directory->url());
-    }
+    $updater->begin(['drupal' => '9.8.2']);
+    $updater->stage();
 
-    // The staged projects validator only runs before staged updates are
-    // applied. Since the active and stage directories may not exist, we don't
-    // want to invoke the other stages of the update because they may raise
-    // errors that are outside of the scope of what we're testing here.
     try {
       $updater->apply();
-      return [];
+      $this->assertEmpty($expected_results);
     }
     catch (StageValidationException $e) {
-      return $e->getResults();
+      $this->assertValidationResultsEqual($expected_results, $e->getResults());
     }
   }
 
   /**
-   * Tests that if an exception is thrown, the event will absorb it.
+   * Tests that exceptions are turned into validation errors.
    */
   public function testEventConsumesExceptionResults(): void {
-    // Prepare a fake site in the virtual file system which contains valid
-    // Composer data.
-    $fixture = __DIR__ . '/../../../fixtures/fake-site';
-    copy("$fixture/composer.json", 'public://composer.json');
-    mkdir('public://vendor/composer', 0777, TRUE);
-    copy("$fixture/vendor/composer/installed.json", 'public://vendor/composer/installed.json');
-
-    $event_dispatcher = $this->container->get('event_dispatcher');
-    // Disable the disk space validator, since it doesn't work with vfsStream,
-    // and the Git directory excluder, since it won't deal with this tiny
-    // virtual file system correctly.
-    $disable_subscribers = array_map([$this->container, 'get'], [
-      'package_manager.validator.disk_space',
-      'package_manager.git_excluder',
-    ]);
-    array_walk($disable_subscribers, [$event_dispatcher, 'removeSubscriber']);
-
     // Just before the staged changes are applied, delete the composer.json file
     // to trigger an error. This uses the highest possible priority to guarantee
     // it runs before any other subscribers.
-    $listener = function () {
-      unlink('public://composer.json');
+    $listener = function (): void {
+      unlink("$this->activeDir/composer.json");
     };
-    $event_dispatcher->addListener(PreApplyEvent::class, $listener, PHP_INT_MAX);
+    $this->container->get('event_dispatcher')
+      ->addListener(PreApplyEvent::class, $listener, PHP_INT_MAX);
 
-    $results = $this->validate('public://', '/fake/stage/dir');
-    $this->assertCount(1, $results);
-    $messages = reset($results)->getMessages();
-    $this->assertCount(1, $messages);
-    $this->assertStringContainsString('Composer could not find the config file: public:///composer.json', (string) reset($messages));
+    $result = ValidationResult::createError([
+      "Composer could not find the config file: $this->activeDir/composer.json\n",
+    ]);
+    $this->validate([$result]);
   }
 
   /**
-   * Tests validations errors.
+   * Tests validation errors, or lack thereof.
    *
    * @param string $fixtures_dir
-   *   The fixtures directory that provides the active and staged composer.lock
-   *   files.
-   * @param string $expected_summary
-   *   The expected error summary.
+   *   A directory containing `active.installed.json` and
+   *   `staged.installed.json` files. These will be used as the virtual
+   *   project's active and staged `vendor/composer/installed.json` files,
+   *   respectively.
+   * @param string|null $expected_summary
+   *   The expected error summary, or NULL if no errors are expected.
    * @param string[] $expected_messages
-   *   The expected error messages.
+   *   The expected error messages, if any.
    *
    * @dataProvider providerErrors
    */
-  public function testErrors(string $fixtures_dir, string $expected_summary, array $expected_messages): void {
-    $this->assertNotEmpty($fixtures_dir);
-    $this->assertDirectoryExists($fixtures_dir);
+  public function testErrors(string $fixtures_dir, ?string $expected_summary, array $expected_messages): void {
+    $this->assertFileIsReadable("$fixtures_dir/active.installed.json");
+    $this->assertFileIsReadable("$fixtures_dir/staged.installed.json");
 
-    $results = $this->validate("$fixtures_dir/active", "$fixtures_dir/staged");
-    $this->assertCount(1, $results);
-    $result = array_pop($results);
-    $this->assertSame($expected_summary, (string) $result->getSummary());
-    $actual_messages = $result->getMessages();
-    $this->assertCount(count($expected_messages), $actual_messages);
-    foreach ($expected_messages as $message) {
-      $actual_message = array_shift($actual_messages);
-      $this->assertSame($message, (string) $actual_message);
+    copy("$fixtures_dir/active.installed.json", "$this->activeDir/vendor/composer/installed.json");
+
+    // Before any other pre-apply listener runs, replaced the staged
+    // `vendor/composer/installed.json` with the fixture's
+    // `staged.installed.json`.
+    $listener = function (PreApplyEvent $event) use ($fixtures_dir): void {
+      copy("$fixtures_dir/staged.installed.json", $event->getStage()->getStageDirectory() . "/vendor/composer/installed.json");
+    };
+    $this->container->get('event_dispatcher')
+      ->addListener(PreApplyEvent::class, $listener, PHP_INT_MAX);
+
+    $expected_results = [];
+    if ($expected_messages) {
+      // @codingStandardsIgnoreLine
+      $expected_results[] = ValidationResult::createError($expected_messages, t($expected_summary));
     }
+    $this->validate($expected_results);
   }
 
   /**
@@ -154,7 +122,7 @@ class StagedProjectsValidatorTest extends AutomaticUpdatesKernelTestBase {
    *   Test cases for testErrors().
    */
   public function providerErrors(): array {
-    $fixtures_folder = realpath(__DIR__ . '/../../../fixtures/project_staged_validation');
+    $fixtures_folder = __DIR__ . '/../../../fixtures/project_staged_validation';
     return [
       'new_project_added' => [
         "$fixtures_folder/new_project_added",
@@ -180,17 +148,12 @@ class StagedProjectsValidatorTest extends AutomaticUpdatesKernelTestBase {
           "module 'drupal/dev-test_module' from 1.3.0 to 1.3.1.",
         ],
       ],
+      'no_errors' => [
+        "$fixtures_folder/no_errors",
+        NULL,
+        [],
+      ],
     ];
-  }
-
-  /**
-   * Tests validation when there are no errors.
-   */
-  public function testNoErrors(): void {
-    $fixtures_dir = realpath(__DIR__ . '/../../../fixtures/project_staged_validation/no_errors');
-    $results = $this->validate("$fixtures_dir/active", "$fixtures_dir/staged");
-    $this->assertIsArray($results);
-    $this->assertEmpty($results);
   }
 
 }
