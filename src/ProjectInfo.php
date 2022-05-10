@@ -2,6 +2,7 @@
 
 namespace Drupal\automatic_updates;
 
+use Composer\Semver\Comparator;
 use Drupal\automatic_updates_9_3_shim\ProjectRelease;
 use Drupal\Core\Extension\ExtensionVersion;
 use Drupal\update\UpdateManagerInterface;
@@ -115,7 +116,9 @@ class ProjectInfo {
     foreach ($available_updates['releases'] as $release_info) {
       $release = ProjectRelease::createFromArray($release_info);
       $version = $release->getVersion();
-      if ($version === $installed_version) {
+      $semantic_version = LegacyVersionUtility::convertToSemanticVersion($version);
+      $semantic_installed_version = LegacyVersionUtility::convertToSemanticVersion($installed_version);
+      if (Comparator::lessThanOrEqualTo($semantic_version, $semantic_installed_version)) {
         // Stop searching for releases as soon as we find the installed version.
         break;
       }

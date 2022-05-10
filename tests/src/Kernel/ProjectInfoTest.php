@@ -104,6 +104,16 @@ class ProjectInfoTest extends AutomaticUpdatesKernelTestBase {
         '8.x-6.1',
         ['7.0.1', '7.0.0', '7.0.0-alpha1', '8.x-6.2'],
       ],
+      'contrib, semver and legacy, on semantic dev' => [
+        'aaa_automatic_updates_test.9.8.2.xml',
+        '7.0.x-dev',
+        ['7.0.1', '7.0.0', '7.0.0-alpha1'],
+      ],
+      'contrib, semver and legacy, on legacy dev' => [
+        'aaa_automatic_updates_test.9.8.2.xml',
+        '8.x-6.x-dev',
+        ['7.0.1', '7.0.0', '7.0.0-alpha1', '8.x-6.2', '8.x-6.1', '8.x-6.0', '8.x-6.0-alpha1'],
+      ],
     ];
   }
 
