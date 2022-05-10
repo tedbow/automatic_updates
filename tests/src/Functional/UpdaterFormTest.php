@@ -106,7 +106,6 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
     $this->drupalGet($update_form_url);
 
     $assert_session = $this->assertSession();
-    $assert_session->statusCodeEquals(200);
     $assert_session->pageTextContains('No update available');
     $assert_session->buttonNotExists('Update');
   }
@@ -239,7 +238,9 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
     $this->drupalGet($update_form_url);
 
     $assert_session = $this->assertSession();
-    $assert_session->pageTextContainsOnce('Drupal cannot be automatically updated from its current version, 9.7.1, to the recommended version, 9.8.1, because automatic updates from one minor version to another are not supported.');
+    $assert_session->pageTextContains('Updates were found, but they must be performed manually. See the list of available updates for more information.');
+    $this->clickLink('the list of available updates');
+    $assert_session->elementExists('css', 'table.update');
     $assert_session->buttonNotExists('Update');
   }
 
