@@ -3,7 +3,6 @@
 namespace Drupal\automatic_updates\Validator;
 
 use Composer\Semver\Comparator;
-use Composer\Semver\Semver;
 use Drupal\automatic_updates\CronUpdater;
 use Drupal\automatic_updates\Event\ReadinessCheckEvent;
 use Drupal\automatic_updates\ProjectInfo;
@@ -101,11 +100,6 @@ class UpdateVersionValidator implements EventSubscriberInterface {
     $updater = $event->getStage();
     if ($event instanceof ReadinessCheckEvent) {
       $package_versions = $event->getPackageVersions();
-      if (!$package_versions) {
-        // During readiness checks we might not have a version to update to.
-        // Use the next possible update version to run checks against.
-        return $this->getNextPossibleUpdateVersion();
-      }
     }
     else {
       // If the stage has begun its life cycle, we expect it knows the desired
@@ -117,26 +111,6 @@ class UpdateVersionValidator implements EventSubscriberInterface {
       // doesn't matter which specific package we're looking at.
       $core_package_name = key($updater->getActiveComposer()->getCorePackages());
       return $package_versions[$core_package_name];
-    }
-    return NULL;
-  }
-
-  /**
-   * Gets the next possible update version, if any.
-   *
-   * @return string|null
-   *   The next possible update version if available, otherwise NULL.
-   */
-  protected function getNextPossibleUpdateVersion(): ?string {
-    $project_info = new ProjectInfo('drupal');
-    $installed_version = $project_info->getInstalledVersion();
-    if ($possible_releases = $project_info->getInstallableReleases()) {
-      foreach ($possible_releases as $possible_release) {
-        $possible_version = $possible_release->getVersion();
-        if (Semver::satisfies($possible_release->getVersion(), "~$installed_version")) {
-          return $possible_version;
-        }
-      }
     }
     return NULL;
   }

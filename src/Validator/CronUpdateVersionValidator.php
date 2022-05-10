@@ -4,9 +4,11 @@ namespace Drupal\automatic_updates\Validator;
 
 use Composer\Semver\Semver;
 use Drupal\automatic_updates\CronUpdater;
+use Drupal\automatic_updates\Event\ReadinessCheckEvent;
 use Drupal\automatic_updates\ProjectInfo;
 use Drupal\automatic_updates\VersionParsingTrait;
 use Drupal\Core\Extension\ExtensionVersion;
+use Drupal\package_manager\Event\StageEvent;
 use Drupal\package_manager\Stage;
 use Drupal\package_manager\ValidationResult;
 
@@ -32,6 +34,16 @@ final class CronUpdateVersionValidator extends UpdateVersionValidator {
 
   /**
    * {@inheritdoc}
+   */
+  protected function getUpdateVersion(StageEvent $event): ?string {
+    return parent::getUpdateVersion($event) ?? ($event instanceof ReadinessCheckEvent ? $this->getNextPossibleUpdateVersion() : NULL);
+  }
+
+  /**
+   * Gets the next possible update version, if any.
+   *
+   * @return string|null
+   *   The next possible update version if available, otherwise NULL.
    */
   protected function getNextPossibleUpdateVersion(): ?string {
     $project_info = new ProjectInfo('drupal');
