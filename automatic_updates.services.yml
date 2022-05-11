@@ -66,6 +66,13 @@ services:
       - '@config.factory'
     tags:
       - { name: event_subscriber }
+  automatic_updates.validator.supported:
+    class: Drupal\automatic_updates\Validator\SupportedBranchValidator
+    arguments:
+      - '@string_translation'
+      - '@config.factory'
+    tags:
+      - { name: event_subscriber }
   automatic_updates.release_chooser:
     class: Drupal\automatic_updates\ReleaseChooser
     arguments:
