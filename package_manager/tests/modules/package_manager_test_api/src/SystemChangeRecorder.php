@@ -2,6 +2,7 @@
 
 namespace Drupal\package_manager_test_api;
 
+use Drupal\Core\Block\BlockManagerInterface;
 use Drupal\Core\State\StateInterface;
 use Drupal\package_manager\Event\PostApplyEvent;
 use Drupal\package_manager\Event\PostDestroyEvent;
@@ -46,6 +47,13 @@ class SystemChangeRecorder implements EventSubscriberInterface {
   private $permissionHandler;
 
   /**
+   * The block plugin manager.
+   *
+   * @var \Drupal\Core\Block\BlockManagerInterface
+   */
+  private $blockManager;
+
+  /**
    * Constructs a SystemChangeRecorder object.
    *
    * @param \Drupal\package_manager\PathLocator $path_locator
@@ -56,12 +64,15 @@ class SystemChangeRecorder implements EventSubscriberInterface {
    *   The router service.
    * @param \Drupal\user\PermissionHandlerInterface $permission_handler
    *   The permission handler service.
+   * @param \Drupal\Core\Block\BlockManagerInterface $block_manager
+   *   The block plugin manager.
    */
-  public function __construct(PathLocator $path_locator, StateInterface $state, RouterInterface $router, PermissionHandlerInterface $permission_handler) {
+  public function __construct(PathLocator $path_locator, StateInterface $state, RouterInterface $router, PermissionHandlerInterface $permission_handler, BlockManagerInterface $block_manager) {
     $this->pathLocator = $path_locator;
     $this->state = $state;
     $this->router = $router;
     $this->permissionHandler = $permission_handler;
+    $this->blockManager = $block_manager;
   }
 
   /**
@@ -106,6 +117,14 @@ class SystemChangeRecorder implements EventSubscriberInterface {
 
     $phase = $event instanceof PreApplyEvent ? 'pre' : 'post';
 
+    // Check if changes to a block plugin's definition and implementation are
+    // picked up.
+    $this->recordBlockState('updated_module_deleted_block', $results, $phase === 'pre');
+    $this->recordBlockState('updated_module_updated_block', $results, TRUE);
+    $this->recordBlockState('updated_module_added_block', $results, $phase === 'post');
+    // Record the state of a block that was NOT instantiated before the update.
+    $this->recordBlockState('updated_module_ignored_block', $results, $phase === 'post');
+
     // Check if changes to an existing class are picked up.
     $this->recordClassValue('ChangedClass', $results);
     // Check if changes to a class that has not been loaded before the update is
@@ -123,6 +142,33 @@ class SystemChangeRecorder implements EventSubscriberInterface {
     }
 
     $this->state->set("system_changes:$phase", $results);
+  }
+
+  /**
+   * Records the state of a block plugin.
+   *
+   * @param string $block_id
+   *   Tbe block plugin ID.
+   * @param array $results
+   *   The current set of results, passed by reference.
+   * @param bool $build
+   *   Whether or not to instantiate the block plugin and include its output
+   *   in the results.
+   */
+  private function recordBlockState(string $block_id, array &$results, bool $build): void {
+    if ($this->blockManager->hasDefinition($block_id)) {
+      $results["$block_id block exists"] = 'exists';
+      $plugin_definition = $this->blockManager->getDefinition($block_id);
+      $results["$block_id block label"] = (string) $plugin_definition['admin_label'];
+
+      if ($build) {
+        $build = $this->blockManager->createInstance($block_id)->build();
+        $results["$block_id block output"] = (string) $build['#markup'];
+      }
+    }
+    else {
+      $results["$block_id block exists"] = 'not exists';
+    }
   }
 
   /**
