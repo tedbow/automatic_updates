@@ -100,7 +100,12 @@ final class VersionValidator implements EventSubscriberInterface {
     if (!$this->isAllowedMinorUpdate($event)) {
       return;
     }
+
     if ($stage instanceof CronUpdater) {
+      $mode = $stage->getMode();
+      if ($mode === CronUpdater::DISABLED) {
+        return;
+      }
       if (!$this->isTargetVersionStable($event)) {
         return;
       }
@@ -111,7 +116,7 @@ final class VersionValidator implements EventSubscriberInterface {
         return;
       }
 
-      if ($stage->getMode() === CronUpdater::SECURITY && !$this->isTargetVersionSecurityRelease($event)) {
+      if ($mode === CronUpdater::SECURITY && !$this->isTargetVersionSecurityRelease($event)) {
         return;
       }
     }
