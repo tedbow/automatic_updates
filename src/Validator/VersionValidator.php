@@ -59,6 +59,44 @@ final class VersionValidator implements EventSubscriberInterface {
     if ($this->isTargetMajorVersionDifferent($event)) {
       return;
     }
+    if (!$this->isAllowedMinorUpdate($event)) {
+      return;
+    }
+  }
+
+  /**
+   * Checks if the target version of Drupal is a different minor version.
+   *
+   * @param \Drupal\package_manager\Event\StageEvent $event
+   *   The event object.
+   *
+   * @return bool
+   *   TRUE if the target version of Drupal is a different minor version and
+   *   updates to a different minor version are allowed; otherwise FALSE.
+   */
+  private function isAllowedMinorUpdate(StageEvent $event): bool {
+    $installed_version = $this->getInstalledVersion();
+    $target_version = $this->getTargetVersion($event);
+
+    $installed_minor = ExtensionVersion::createFromVersionString($installed_version)
+      ->getMinorVersion();
+    $target_minor = ExtensionVersion::createFromVersionString($target_version)
+      ->getMinorVersion();
+
+    $minor_updates_allowed = \Drupal::config('automatic_updates.settings')
+      ->get('allow_core_minor_updates');
+
+    if ($installed_minor === $target_minor || $minor_updates_allowed) {
+      return TRUE;
+    }
+
+    $event->addError([
+      $this->t('Drupal cannot be automatically updated from its current version, @from_version, to the recommended version, @to_version, because automatic updates from one minor version to another are not supported.', [
+        '@from_version' => $installed_version,
+        '@to_version' => $target_version,
+      ]),
+    ]);
+    return FALSE;
   }
 
   /**

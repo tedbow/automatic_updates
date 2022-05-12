@@ -8,7 +8,6 @@ use Drupal\automatic_updates\Event\ReadinessCheckEvent;
 use Drupal\automatic_updates\ProjectInfo;
 use Drupal\automatic_updates\Updater;
 use Drupal\Core\Config\ConfigFactoryInterface;
-use Drupal\Core\Extension\ExtensionVersion;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\Core\StringTranslation\TranslationInterface;
 use Drupal\package_manager\Event\PreCreateEvent;
@@ -165,23 +164,6 @@ class UpdateVersionValidator implements EventSubscriberInterface {
    *   the reason why the update is not allowed.
    */
   protected function getValidationResult(string $to_version_string): ?ValidationResult {
-    $from_version_string = $this->getCoreVersion();
-    $variables = [
-      '@to_version' => $to_version_string,
-      '@from_version' => $from_version_string,
-    ];
-    $from_version = ExtensionVersion::createFromVersionString($from_version_string);
-
-    // @todo Return multiple validation messages and summary in
-    //   https://www.drupal.org/project/automatic_updates/issues/3272068.
-    $to_version = ExtensionVersion::createFromVersionString($to_version_string);
-    if ($from_version->getMinorVersion() !== $to_version->getMinorVersion()) {
-      if (!$this->configFactory->get('automatic_updates.settings')->get('allow_core_minor_updates')) {
-        return ValidationResult::createError([
-          $this->t('Drupal cannot be automatically updated from its current version, @from_version, to the recommended version, @to_version, because automatic updates from one minor version to another are not supported.', $variables),
-        ]);
-      }
-    }
     return NULL;
   }
 

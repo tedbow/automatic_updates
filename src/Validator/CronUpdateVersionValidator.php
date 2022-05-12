@@ -51,9 +51,6 @@ final class CronUpdateVersionValidator extends UpdateVersionValidator {
    * {@inheritdoc}
    */
   public function getValidationResult(string $to_version_string): ?ValidationResult {
-    if ($result = parent::getValidationResult($to_version_string)) {
-      return $result;
-    }
     $from_version_string = $this->getCoreVersion();
     $to_version = ExtensionVersion::createFromVersionString($to_version_string);
     $from_version = ExtensionVersion::createFromVersionString($from_version_string);
