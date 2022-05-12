@@ -6,6 +6,7 @@ use Drupal\automatic_updates\Event\ReadinessCheckEvent;
 use Drupal\automatic_updates\ProjectInfo;
 use Drupal\automatic_updates\Updater;
 use Drupal\Core\Extension\ExtensionVersion;
+use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\package_manager\Event\PreCreateEvent;
 use Drupal\package_manager\Event\StageEvent;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
@@ -14,6 +15,8 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
  * Validates the installed and target versions of Drupal before an update.
  */
 final class VersionValidator implements EventSubscriberInterface {
+
+  use StringTranslationTrait;
 
   /**
    * Checks that the installed version of Drupal is updateable.
