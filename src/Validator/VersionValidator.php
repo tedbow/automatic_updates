@@ -343,14 +343,14 @@ final class VersionValidator implements EventSubscriberInterface {
    *
    * @param \Drupal\package_manager\Event\StageEvent $event
    *   The event object.
-   * @param string $target_version
-   *   The target version of Drupal.
+   * @param string|null $target_version
+   *   The target version of Drupal, or NULL if it's not known.
    *
    * @return bool
    *   TRUE if the target version of Drupal is in the list of secure, supported
    *   releases; otherwise FALSE.
    */
-  private function isTargetVersionAcceptable(StageEvent $event, string $target_version): bool {
+  private function isTargetVersionAcceptable(StageEvent $event, ?string $target_version): bool {
     // If the target version isn't in the list of installable releases, then it
     // isn't secure and supported and we should flag an error.
     $releases = $this->getAvailableReleases($event);
