@@ -34,10 +34,13 @@ class ReleaseChooser {
    * @param \Drupal\automatic_updates\Validator\VersionValidator $version_validator
    *   The version validator.
    */
-  public function __construct(VersionValidator $version_validator, Updater $updater) {
+  public function __construct(VersionValidator $version_validator) {
     $this->versionValidator = $version_validator;
-    $this->updater = $updater;
     $this->projectInfo = new ProjectInfo('drupal');
+  }
+
+  public function setUpdater(Updater $updater): void {
+    $this->updater = $updater;
   }
 
   /**

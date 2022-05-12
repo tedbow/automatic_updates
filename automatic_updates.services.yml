@@ -56,12 +56,14 @@ services:
     class: Drupal\automatic_updates\ReleaseChooser
     arguments:
       - '@automatic_updates.validator.version'
-      - '@automatic_updates.updater'
+    calls:
+      - ['setUpdater', ['@automatic_updates.updater']]
   automatic_updates.cron_release_chooser:
     class: Drupal\automatic_updates\ReleaseChooser
     arguments:
       - '@automatic_updates.validator.version'
-      - '@automatic_updates.cron_updater'
+    calls:
+      - ['setUpdater', ['@automatic_updates.cron_updater']]
   automatic_updates.composer_executable_validator:
     class: Drupal\automatic_updates\Validator\PackageManagerReadinessCheck
     arguments:
