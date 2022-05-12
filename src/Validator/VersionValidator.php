@@ -17,7 +17,6 @@ use Drupal\automatic_updates\Validator\Version\StableTargetVersionValidator;
 use Drupal\automatic_updates\Validator\Version\TargetSecurityReleaseValidator;
 use Drupal\automatic_updates\Validator\Version\TargetVersionInstallableValidator;
 use Drupal\automatic_updates\Validator\Version\TargetVersionPatchLevelValidator;
-use Drupal\automatic_updates\VersionParsingTrait;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\package_manager\Event\PreCreateEvent;
 use Drupal\package_manager\Event\StageEvent;
@@ -29,7 +28,6 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 final class VersionValidator implements EventSubscriberInterface {
 
   use StringTranslationTrait;
-  use VersionParsingTrait;
 
   /**
    * Checks that the installed version of Drupal is updateable.
