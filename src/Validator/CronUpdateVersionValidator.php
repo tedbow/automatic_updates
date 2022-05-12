@@ -52,19 +52,10 @@ final class CronUpdateVersionValidator extends UpdateVersionValidator {
    */
   public function getValidationResult(string $to_version_string): ?ValidationResult {
     $from_version_string = $this->getCoreVersion();
-    $from_version = ExtensionVersion::createFromVersionString($from_version_string);
     $variables = [
       '@to_version' => $to_version_string,
       '@from_version' => $from_version_string,
     ];
-
-    // Only updating to the next patch release is supported during cron.
-    $supported_patch_version = $from_version->getMajorVersion() . '.' . $from_version->getMinorVersion() . '.' . (((int) static::getPatchVersion($from_version_string)) + 1);
-    if ($to_version_string !== $supported_patch_version) {
-      return ValidationResult::createError([
-        $this->t('Drupal cannot be automatically updated during cron from its current version, @from_version, to the recommended version, @to_version, because Automatic Updates only supports 1 patch version update during cron.', $variables),
-      ]);
-    }
 
     // We cannot use dependency injection to get the cron updater because that
     // would create a circular service dependency.

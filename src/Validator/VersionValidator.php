@@ -8,6 +8,7 @@ use Drupal\automatic_updates\CronUpdater;
 use Drupal\automatic_updates\Event\ReadinessCheckEvent;
 use Drupal\automatic_updates\ProjectInfo;
 use Drupal\automatic_updates\Updater;
+use Drupal\automatic_updates\VersionParsingTrait;
 use Drupal\Core\Extension\ExtensionVersion;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\package_manager\Event\PreCreateEvent;
@@ -20,6 +21,7 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 final class VersionValidator implements EventSubscriberInterface {
 
   use StringTranslationTrait;
+  use VersionParsingTrait;
 
   /**
    * Checks that the installed version of Drupal is updateable.
@@ -105,7 +107,39 @@ final class VersionValidator implements EventSubscriberInterface {
       if ($this->isMinorUpdate($event)) {
         return;
       }
+      if ($this->isTargetVersionTooFarAhead($event)) {
+        return;
+      }
     }
+  }
+
+  /**
+   * Checks if the target version is too far ahead to be automatically updated.
+   *
+   * @param \Drupal\package_manager\Event\StageEvent $event
+   *   The event object.
+   *
+   * @return bool
+   *   TRUE if the target version of Drupal core is more than one patch release
+   *   ahead of the installed version; otherwise FALSE.
+   */
+  private function isTargetVersionTooFarAhead(StageEvent $event): bool {
+    $from_version_string = $this->getInstalledVersion();
+    $from_version = ExtensionVersion::createFromVersionString($from_version_string);
+
+    $to_version_string = $this->getTargetVersion($event);
+
+    $supported_patch_version = $from_version->getMajorVersion() . '.' . $from_version->getMinorVersion() . '.' . (((int) static::getPatchVersion($from_version_string)) + 1);
+    if ($to_version_string !== $supported_patch_version) {
+      $event->addError([
+        $this->t('Drupal cannot be automatically updated during cron from its current version, @from_version, to the recommended version, @to_version, because Automatic Updates only supports 1 patch version update during cron.', [
+          '@from_version' => $from_version_string,
+          '@to_version' => $to_version_string,
+        ]),
+      ]);
+      return TRUE;
+    }
+    return FALSE;
   }
 
   /**
