@@ -8,8 +8,6 @@ use Drupal\Tests\automatic_updates\Kernel\AutomaticUpdatesKernelTestBase;
 use Drupal\Tests\package_manager\Traits\PackageManagerBypassTestTrait;
 
 /**
- * @covers \Drupal\automatic_updates\Validator\CronUpdateVersionValidator
- *
  * @group automatic_updates
  */
 class CronUpdateVersionValidatorTest extends AutomaticUpdatesKernelTestBase {

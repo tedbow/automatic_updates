@@ -52,28 +52,16 @@ services:
       - '@string_translation'
     tags:
       - { name: event_subscriber }
-  automatic_updates.update_version_validator:
-    class: Drupal\automatic_updates\Validator\UpdateVersionValidator
-    arguments:
-      - '@string_translation'
-      - '@config.factory'
-    tags:
-      - { name: event_subscriber }
-  automatic_updates.cron_update_version_validator:
-    class: Drupal\automatic_updates\Validator\CronUpdateVersionValidator
-    arguments:
-      - '@string_translation'
-      - '@config.factory'
-    tags:
-      - { name: event_subscriber }
   automatic_updates.release_chooser:
     class: Drupal\automatic_updates\ReleaseChooser
     arguments:
-      - '@automatic_updates.update_version_validator'
+      - '@automatic_updates.validator.version'
+      - '@automatic_updates.updater'
   automatic_updates.cron_release_chooser:
     class: Drupal\automatic_updates\ReleaseChooser
     arguments:
-      - '@automatic_updates.cron_update_version_validator'
+      - '@automatic_updates.validator.version'
+      - '@automatic_updates.cron_updater'
   automatic_updates.composer_executable_validator:
     class: Drupal\automatic_updates\Validator\PackageManagerReadinessCheck
     arguments:

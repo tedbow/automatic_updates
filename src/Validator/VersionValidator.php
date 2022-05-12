@@ -40,6 +40,31 @@ final class VersionValidator implements EventSubscriberInterface {
     return $messages;
   }
 
+  public function validateVersion(Updater $updater, string $target_version): array {
+    $validators = [
+      TargetVersionInstallableValidator::class,
+      DowngradeValidator::class,
+      MajorVersionMatchValidator::class,
+      AllowedMinorUpdateValidator::class,
+    ];
+
+    if ($stage instanceof CronUpdater) {
+      $mode = $stage->getMode();
+
+      if ($mode !== CronUpdater::DISABLED) {
+        array_pop($validators);
+        $validators[] = StableTargetVersionValidator::class;
+        $validators[] = MinorUpdateValidator::class;
+        $validators[] = TargetVersionPatchLevelValidator::class;
+      }
+      if ($mode === CronUpdater::SECURITY) {
+        $validators[] = TargetSecurityReleaseValidator::class;
+      }
+    }
+
+    return $this->collectMessages($validators, $updater, $this->getInstalledVersion(), $target_version);
+  }
+
   /**
    * Checks that the installed version of Drupal is updateable.
    *
@@ -81,28 +106,7 @@ final class VersionValidator implements EventSubscriberInterface {
       return;
     }
 
-    $validators = [
-      TargetVersionInstallableValidator::class,
-      DowngradeValidator::class,
-      MajorVersionMatchValidator::class,
-      AllowedMinorUpdateValidator::class,
-    ];
-
-    if ($stage instanceof CronUpdater) {
-      $mode = $stage->getMode();
-
-      if ($mode !== CronUpdater::DISABLED) {
-        array_pop($validators);
-        $validators[] = StableTargetVersionValidator::class;
-        $validators[] = MinorUpdateValidator::class;
-        $validators[] = TargetVersionPatchLevelValidator::class;
-      }
-      if ($mode === CronUpdater::SECURITY) {
-        $validators[] = TargetSecurityReleaseValidator::class;
-      }
-    }
-
-    $messages = $this->collectMessages($validators, $stage, $this->getInstalledVersion(), $this->getTargetVersion($event));
+    $messages = $this->validateVersion($stage, $this->getTargetVersion($event));
     if ($messages) {
       $event->addError($messages, $this->t('Drupal cannot be automatically updated.'));
     }

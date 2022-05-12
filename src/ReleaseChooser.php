@@ -3,7 +3,7 @@
 namespace Drupal\automatic_updates;
 
 use Composer\Semver\Semver;
-use Drupal\automatic_updates\Validator\UpdateVersionValidator;
+use Drupal\automatic_updates\Validator\VersionValidator;
 use Drupal\automatic_updates_9_3_shim\ProjectRelease;
 use Drupal\Core\Extension\ExtensionVersion;
 
@@ -17,7 +17,7 @@ class ReleaseChooser {
   /**
    * The version validator service.
    *
-   * @var \Drupal\automatic_updates\Validator\UpdateVersionValidator
+   * @var \Drupal\automatic_updates\Validator\VersionValidator
    */
   protected $versionValidator;
 
@@ -31,11 +31,12 @@ class ReleaseChooser {
   /**
    * Constructs an ReleaseChooser object.
    *
-   * @param \Drupal\automatic_updates\Validator\UpdateVersionValidator $version_validator
+   * @param \Drupal\automatic_updates\Validator\VersionValidator $version_validator
    *   The version validator.
    */
-  public function __construct(UpdateVersionValidator $version_validator) {
+  public function __construct(VersionValidator $version_validator, Updater $updater) {
     $this->versionValidator = $version_validator;
+    $this->updater = $updater;
     $this->projectInfo = new ProjectInfo('drupal');
   }
 
@@ -47,9 +48,12 @@ class ReleaseChooser {
    *   service.
    */
   protected function getInstallableReleases(): array {
+    $filter = function (string $version): bool {
+      return $this->versionValidator->validateVersion($this->updater, $version);
+    };
     return array_filter(
       $this->projectInfo->getInstallableReleases(),
-      [$this->versionValidator, 'isValidVersion'],
+      $filter,
       ARRAY_FILTER_USE_KEY
     );
   }

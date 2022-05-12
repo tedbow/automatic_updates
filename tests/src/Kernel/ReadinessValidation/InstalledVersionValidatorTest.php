@@ -24,7 +24,6 @@ class InstalledVersionValidatorTest extends AutomaticUpdatesKernelTestBase {
   public function testInstalledVersionValidation(): void {
     $this->setCoreVersion('9.8.0-dev');
     // Disable cron to avoid messages from other validators.
-    // @see \Drupal\automatic_updates\Validator\CronUpdateVersionValidator
     $this->config('automatic_updates.settings')
       ->set('cron', CronUpdater::DISABLED)
       ->save();

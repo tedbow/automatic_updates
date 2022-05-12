@@ -9,8 +9,6 @@ use Drupal\Tests\package_manager\Traits\PackageManagerBypassTestTrait;
 use Psr\Log\Test\TestLogger;
 
 /**
- * @covers \Drupal\automatic_updates\Validator\UpdateVersionValidator
- *
  * @group automatic_updates
  */
 class UpdateVersionValidatorTest extends AutomaticUpdatesKernelTestBase {
