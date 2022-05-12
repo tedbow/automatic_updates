@@ -133,8 +133,8 @@ services:
     class: Drupal\automatic_updates\Validator\XdebugValidator
     tags:
       - { name: event_subscriber }
-  automatic_updates.validator.installed_version:
-    class: Drupal\automatic_updates\Validator\InstalledVersionValidator
+  automatic_updates.validator.version:
+    class: Drupal\automatic_updates\Validator\VersionValidator
     tags:
       - { name: event_subscriber }
   automatic_updates.validator.target_release:

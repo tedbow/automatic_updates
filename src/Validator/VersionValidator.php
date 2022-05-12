@@ -6,26 +6,23 @@ use Drupal\automatic_updates\Event\ReadinessCheckEvent;
 use Drupal\automatic_updates\ProjectInfo;
 use Drupal\automatic_updates\Updater;
 use Drupal\Core\Extension\ExtensionVersion;
-use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\package_manager\Event\PreCreateEvent;
-use Drupal\package_manager\Event\PreOperationStageEvent;
+use Drupal\package_manager\Event\StageEvent;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 /**
- * Validates that the site can update from the installed version of Drupal.
+ * Validates the installed and target versions of Drupal before an update.
  */
-class InstalledVersionValidator implements EventSubscriberInterface {
-
-  use StringTranslationTrait;
+final class VersionValidator implements EventSubscriberInterface {
 
   /**
-   * Checks that the site can update from the installed version of Drupal.
+   * Checks that the installed version of Drupal is updateable.
    *
-   * @param \Drupal\package_manager\Event\PreOperationStageEvent $event
+   * @param \Drupal\package_manager\Event\StageEvent $event
    *   The event object.
    */
-  public function checkInstalledVersion(PreOperationStageEvent $event): void {
-    // This check only works with Automatic Updates.
+  public function checkInstalledVersion(StageEvent $event): void {
+    // Only do these checks for automatic updates.
     if (!$event->getStage() instanceof Updater) {
       return;
     }
@@ -39,6 +36,7 @@ class InstalledVersionValidator implements EventSubscriberInterface {
         '@installed_version' => $installed_version,
       ]);
       $event->addError([$message]);
+      return;
     }
   }
 
@@ -46,9 +44,11 @@ class InstalledVersionValidator implements EventSubscriberInterface {
    * {@inheritdoc}
    */
   public static function getSubscribedEvents() {
+    $listeners = ['checkInstalledVersion'];
+
     return [
-      ReadinessCheckEvent::class => 'checkInstalledVersion',
-      PreCreateEvent::class => 'checkInstalledVersion',
+      ReadinessCheckEvent::class => $listeners,
+      PreCreateEvent::class => $listeners,
     ];
   }
 
