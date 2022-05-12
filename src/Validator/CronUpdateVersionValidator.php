@@ -61,11 +61,6 @@ final class CronUpdateVersionValidator extends UpdateVersionValidator {
     // @todo Return multiple validation messages and summary in
     //   https://www.drupal.org/project/automatic_updates/issues/3272068.
     // Validate that both the from and to versions are stable releases.
-    if ($from_version->getVersionExtra()) {
-      return ValidationResult::createError([
-        $this->t('Drupal cannot be automatically updated during cron from its current version, @from_version, because Automatic Updates only supports updating from stable versions during cron.', $variables),
-      ]);
-    }
     if ($to_version->getVersionExtra()) {
       // Because we do not support updating to a new minor version during
       // cron it is probably impossible to update from a stable version to

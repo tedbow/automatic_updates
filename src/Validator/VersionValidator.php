@@ -28,14 +28,48 @@ final class VersionValidator implements EventSubscriberInterface {
    *   The event object.
    */
   public function checkInstalledVersion(StageEvent $event): void {
+    $stage = $event->getStage();
+
     // Only do these checks for automatic updates.
-    if (!$event->getStage() instanceof Updater) {
+    if (!$stage instanceof Updater) {
       return;
     }
 
     if ($this->isDevSnapshotInstalled($event)) {
       return;
     }
+    if ($stage instanceof CronUpdater) {
+      if (!$this->isInstalledVersionStable($event)) {
+        return;
+      }
+    }
+  }
+
+  /**
+   * Checks if the installed version of Drupal is a stable release.
+   *
+   * @param \Drupal\package_manager\Event\StageEvent $event
+   *   The event object.
+   *
+   * @return bool
+   *   TRUE if the installed version of Drupal is a stable release; otherwise
+   *   FALSE.
+   */
+  private function isInstalledVersionStable(StageEvent $event): bool {
+    $installed_version = $this->getInstalledVersion();
+
+    $extra = ExtensionVersion::createFromVersionString($installed_version)
+      ->getVersionExtra();
+
+    if ($extra) {
+      $event->addError([
+        $this->t('Drupal cannot be automatically updated during cron from its current version, @from_version, because Automatic Updates only supports updating from stable versions during cron.', [
+          '@from_version' => $installed_version,
+        ]),
+      ]);
+      return FALSE;
+    }
+    return TRUE;
   }
 
   /**
