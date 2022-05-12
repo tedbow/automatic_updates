@@ -283,14 +283,14 @@ final class VersionValidator implements EventSubscriberInterface {
    *
    * @param string $installed_version
    *   The installed version of Drupal.
-   * @param string $target_version
-   *   The target version of Drupal core.
+   * @param string|null $target_version
+   *   The target version of Drupal core, or NULL if not known.
    *
    * @return \Drupal\Core\StringTranslation\TranslatableMarkup[]
    *   The error messages, if any.
    */
-  private function checkForDowngrade(string $installed_version, string $target_version): array {
-    if (Comparator::lessThan($target_version, $installed_version)) {
+  private function checkForDowngrade(string $installed_version, ?string $target_version): array {
+    if ($target_version && Comparator::lessThan($target_version, $installed_version)) {
       return [
         $this->t('Update version @target_version is lower than @installed_version, downgrading is not supported.'),
       ];
