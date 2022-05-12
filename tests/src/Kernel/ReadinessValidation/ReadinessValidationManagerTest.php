@@ -30,7 +30,11 @@ class ReadinessValidationManagerTest extends AutomaticUpdatesKernelTestBase {
    */
   protected function setUp(): void {
     parent::setUp();
-    $this->setCoreVersion('9.8.2');
+    // Because Automatic Updates' default configuration only allows cron to
+    // perform security updates, pretend we're on 9.8.0 and a security update
+    // to 9.8.1 is available, so that we have a release to which we can update.
+    $this->setCoreVersion('9.8.0');
+    $this->setReleaseMetadata(['drupal' => __DIR__ . '/../../../fixtures/release-history/drupal.9.8.1-security.xml']);
     $this->installEntitySchema('user');
     $this->installSchema('user', ['users_data']);
     $this->createTestValidationResults();
@@ -220,7 +224,6 @@ class ReadinessValidationManagerTest extends AutomaticUpdatesKernelTestBase {
    */
   public function testStoredResultsDeletedPostApply(): void {
     $this->enableModules(['automatic_updates']);
-    $this->setCoreVersion('9.8.1');
 
     // The readiness checker should raise a warning, so that the update is not
     // blocked or aborted.
@@ -244,7 +247,7 @@ class ReadinessValidationManagerTest extends AutomaticUpdatesKernelTestBase {
 
     /** @var \Drupal\automatic_updates\Updater $updater */
     $updater = $this->container->get('automatic_updates.updater');
-    $updater->begin(['drupal' => '9.8.2']);
+    $updater->begin(['drupal' => '9.8.1']);
     $updater->stage();
     $updater->apply();
     $updater->destroy();
