@@ -27,6 +27,22 @@ final class VersionValidator implements EventSubscriberInterface {
       return;
     }
 
+    if ($this->isDevSnapshotInstalled($event)) {
+      return;
+    }
+  }
+
+  /**
+   * Checks if the installed version of Drupal is a dev snapshot.
+   *
+   * @param \Drupal\package_manager\Event\StageEvent $event
+   *   THe event object.
+   *
+   * @return bool
+   *   TRUE if the installed version of Drupal is a dev snapshot, otherwise
+   *   FALSE.
+   */
+  private function isDevSnapshotInstalled(StageEvent $event): bool {
     $installed_version = (new ProjectInfo('drupal'))->getInstalledVersion();
     $extra = ExtensionVersion::createFromVersionString($installed_version)
       ->getVersionExtra();
@@ -36,8 +52,9 @@ final class VersionValidator implements EventSubscriberInterface {
         '@installed_version' => $installed_version,
       ]);
       $event->addError([$message]);
-      return;
+      return TRUE;
     }
+    return FALSE;
   }
 
   /**
