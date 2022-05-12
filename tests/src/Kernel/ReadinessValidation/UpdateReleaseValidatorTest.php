@@ -22,9 +22,10 @@ class UpdateReleaseValidatorTest extends AutomaticUpdatesKernelTestBase {
    * Tests that an error is raised when trying to update to an unknown release.
    */
   public function testUnknownReleaseRaisesError(): void {
-    $result = ValidationResult::createError([
+    $messages = [
       'Cannot update Drupal core to 9.8.99 because it is not in the list of installable releases.',
-    ]);
+    ];
+    $result = ValidationResult::createError($messages, t('Drupal cannot be automatically updated.'));
 
     try {
       $this->container->get('automatic_updates.updater')->begin([

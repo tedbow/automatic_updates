@@ -52,7 +52,7 @@ class ReleaseChooser {
    */
   protected function getInstallableReleases(): array {
     $filter = function (string $version): bool {
-      return $this->versionValidator->validateVersion($this->updater, $version);
+      return empty($this->versionValidator->validateVersion($this->updater, $version));
     };
     return array_filter(
       $this->projectInfo->getInstallableReleases(),

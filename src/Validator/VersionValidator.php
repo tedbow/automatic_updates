@@ -48,8 +48,8 @@ final class VersionValidator implements EventSubscriberInterface {
       AllowedMinorUpdateValidator::class,
     ];
 
-    if ($stage instanceof CronUpdater) {
-      $mode = $stage->getMode();
+    if ($updater instanceof CronUpdater) {
+      $mode = $updater->getMode();
 
       if ($mode !== CronUpdater::DISABLED) {
         array_pop($validators);
