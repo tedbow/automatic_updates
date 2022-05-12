@@ -40,10 +40,8 @@ final class VersionValidator implements EventSubscriberInterface {
     if ($this->isDevSnapshotInstalled($event)) {
       return;
     }
-    if ($stage instanceof CronUpdater) {
-      if (!$this->isInstalledVersionStable($event)) {
-        return;
-      }
+    if ($stage instanceof CronUpdater && $stage->getMode() !== CronUpdater::DISABLED && !$this->isInstalledVersionStable($event)) {
+      return;
     }
   }
 
