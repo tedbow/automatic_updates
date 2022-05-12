@@ -5,7 +5,6 @@ namespace Drupal\automatic_updates\Validator;
 use Composer\Semver\Semver;
 use Drupal\automatic_updates\CronUpdater;
 use Drupal\automatic_updates\ProjectInfo;
-use Drupal\automatic_updates\VersionParsingTrait;
 use Drupal\package_manager\Stage;
 
 /**
@@ -16,8 +15,6 @@ use Drupal\package_manager\Stage;
  *   should not be used by external code.
  */
 final class CronUpdateVersionValidator extends UpdateVersionValidator {
-
-  use VersionParsingTrait;
 
   /**
    * {@inheritdoc}
