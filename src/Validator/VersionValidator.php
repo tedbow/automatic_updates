@@ -353,7 +353,7 @@ final class VersionValidator implements EventSubscriberInterface {
   private function isTargetVersionAcceptable(StageEvent $event, string $target_version): bool {
     // If the target version isn't in the list of installable releases, then it
     // isn't secure and supported and we should flag an error.
-    $releases = $this->getAvailableReleases();
+    $releases = $this->getAvailableReleases($event);
     if (empty($releases) || !array_key_exists($target_version, $releases)) {
       $message = $this->t('Cannot update Drupal core to @target_version because it is not in the list of installable releases.', [
         '@target_version' => $target_version,
