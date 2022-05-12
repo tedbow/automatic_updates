@@ -37,10 +37,12 @@ final class VersionValidator implements EventSubscriberInterface {
       return;
     }
 
-    if ($this->isDevSnapshotInstalled($event)) {
+    $installed_version = $this->getInstalledVersion();
+
+    if ($this->isDevSnapshotInstalled($event, $installed_version)) {
       return;
     }
-    if ($stage instanceof CronUpdater && $stage->getMode() !== CronUpdater::DISABLED && !$this->isInstalledVersionStable($event)) {
+    if ($stage instanceof CronUpdater && $stage->getMode() !== CronUpdater::DISABLED && !$this->isInstalledVersionStable($event, $installed_version)) {
       return;
     }
   }
@@ -50,14 +52,14 @@ final class VersionValidator implements EventSubscriberInterface {
    *
    * @param \Drupal\package_manager\Event\StageEvent $event
    *   The event object.
+   * @param string $installed_version
+   *   The installed version of Drupal.
    *
    * @return bool
    *   TRUE if the installed version of Drupal is a stable release; otherwise
    *   FALSE.
    */
-  private function isInstalledVersionStable(StageEvent $event): bool {
-    $installed_version = $this->getInstalledVersion();
-
+  private function isInstalledVersionStable(StageEvent $event, string $installed_version): bool {
     $extra = ExtensionVersion::createFromVersionString($installed_version)
       ->getVersionExtra();
 
@@ -86,16 +88,19 @@ final class VersionValidator implements EventSubscriberInterface {
       return;
     }
 
-    if (!$this->isTargetVersionAcceptable($event)) {
+    $installed_version = $this->getInstalledVersion();
+    $target_version = $this->getTargetVersion($event);
+
+    if (!$this->isTargetVersionAcceptable($event, $target_version)) {
       return;
     }
-    if ($this->isTargetVersionDowngrade($event)) {
+    if ($this->isTargetVersionDowngrade($event, $installed_version, $target_version)) {
       return;
     }
-    if ($this->isTargetMajorVersionDifferent($event)) {
+    if ($this->isTargetMajorVersionDifferent($event, $installed_version, $target_version)) {
       return;
     }
-    if (!$this->isAllowedMinorUpdate($event)) {
+    if (!$this->isAllowedMinorUpdate($event, $installed_version, $target_version)) {
       return;
     }
 
@@ -104,17 +109,17 @@ final class VersionValidator implements EventSubscriberInterface {
       if ($mode === CronUpdater::DISABLED) {
         return;
       }
-      if (!$this->isTargetVersionStable($event)) {
+      if (!$this->isTargetVersionStable($event, $target_version)) {
         return;
       }
-      if ($this->isMinorUpdate($event)) {
+      if ($this->isMinorUpdate($event, $installed_version, $target_version)) {
         return;
       }
-      if ($this->isTargetVersionTooFarAhead($event)) {
+      if ($this->isTargetVersionTooFarAhead($event, $installed_version, $target_version)) {
         return;
       }
 
-      if ($mode === CronUpdater::SECURITY && !$this->isTargetVersionSecurityRelease($event)) {
+      if ($mode === CronUpdater::SECURITY && !$this->isTargetVersionSecurityRelease($event, $installed_version, $target_version)) {
         return;
       }
     }
@@ -125,19 +130,22 @@ final class VersionValidator implements EventSubscriberInterface {
    *
    * @param \Drupal\package_manager\Event\StageEvent $event
    *   The event object.
+   * @param string $installed_version
+   *   The installed version of Drupal.
+   * @param string $target_version
+   *   The target version of Drupal core.
    *
    * @return bool
    *   TRUE if the target version of Drupal core is a security release;
    *   otherwise FALSE.
    */
-  private function isTargetVersionSecurityRelease(StageEvent $event): bool {
-    $target_version = $this->getTargetVersion($event);
+  private function isTargetVersionSecurityRelease(StageEvent $event, string $installed_version, string $target_version): bool {
     $releases = $this->getAvailableReleases($event);
 
     if (!$releases[$target_version]->isSecurityRelease()) {
       $event->addError([
         $this->t('Drupal cannot be automatically updated during cron from its current version, @from_version, to the recommended version, @to_version, because @to_version is not a security release.', [
-          '@from_version' => $this->getInstalledVersion(),
+          '@from_version' => $installed_version,
           '@to_version' => $target_version,
         ]),
       ]);
@@ -151,23 +159,24 @@ final class VersionValidator implements EventSubscriberInterface {
    *
    * @param \Drupal\package_manager\Event\StageEvent $event
    *   The event object.
+   * @param string $installed_version
+   *   The installed version of Drupal.
+   * @param string $target_version
+   *   The target version of Drupal core.
    *
    * @return bool
    *   TRUE if the target version of Drupal core is more than one patch release
    *   ahead of the installed version; otherwise FALSE.
    */
-  private function isTargetVersionTooFarAhead(StageEvent $event): bool {
-    $from_version_string = $this->getInstalledVersion();
-    $from_version = ExtensionVersion::createFromVersionString($from_version_string);
+  private function isTargetVersionTooFarAhead(StageEvent $event, string $installed_version, string $target_version): bool {
+    $from_version = ExtensionVersion::createFromVersionString($installed_version);
 
-    $to_version_string = $this->getTargetVersion($event);
-
-    $supported_patch_version = $from_version->getMajorVersion() . '.' . $from_version->getMinorVersion() . '.' . (((int) static::getPatchVersion($from_version_string)) + 1);
-    if ($to_version_string !== $supported_patch_version) {
+    $supported_patch_version = $from_version->getMajorVersion() . '.' . $from_version->getMinorVersion() . '.' . (((int) static::getPatchVersion($installed_version)) + 1);
+    if ($target_version !== $supported_patch_version) {
       $event->addError([
         $this->t('Drupal cannot be automatically updated during cron from its current version, @from_version, to the recommended version, @to_version, because Automatic Updates only supports 1 patch version update during cron.', [
-          '@from_version' => $from_version_string,
-          '@to_version' => $to_version_string,
+          '@from_version' => $installed_version,
+          '@to_version' => $target_version,
         ]),
       ]);
       return TRUE;
@@ -180,15 +189,16 @@ final class VersionValidator implements EventSubscriberInterface {
    *
    * @param \Drupal\package_manager\Event\StageEvent $event
    *   The event object.
+   * @param string $installed_version
+   *   The installed version of Drupal.
+   * @param string $target_version
+   *   The target version of Drupal core.
    *
    * @return bool
    *   TRUE if the target version of Drupal is a different minor version;
    *   otherwise FALSE.
    */
-  private function isMinorUpdate(StageEvent $event): bool {
-    $installed_version = $this->getInstalledVersion();
-    $target_version = $this->getTargetVersion($event);
-
+  private function isMinorUpdate(StageEvent $event, string $installed_version, string $target_version): bool {
     $installed_minor = ExtensionVersion::createFromVersionString($installed_version)
       ->getMinorVersion();
     $target_minor = ExtensionVersion::createFromVersionString($target_version)
@@ -211,14 +221,14 @@ final class VersionValidator implements EventSubscriberInterface {
    *
    * @param \Drupal\package_manager\Event\StageEvent $event
    *   The event object.
+   * @param string $target_version
+   *   The target version of Drupal core.
    *
    * @return bool
    *   TRUE if the target version of Drupal core is a stable release; otherwise
    *   FALSE.
    */
-  private function isTargetVersionStable(StageEvent $event): bool {
-    $target_version = $this->getTargetVersion($event);
-
+  private function isTargetVersionStable(StageEvent $event, string $target_version): bool {
     $extra = ExtensionVersion::createFromVersionString($target_version)
       ->getVersionExtra();
 
@@ -238,15 +248,16 @@ final class VersionValidator implements EventSubscriberInterface {
    *
    * @param \Drupal\package_manager\Event\StageEvent $event
    *   The event object.
+   * @param string $installed_version
+   *   The installed version of Drupal.
+   * @param string $target_version
+   *   The target version of Drupal core.
    *
    * @return bool
    *   TRUE if the target version of Drupal is a different minor version and
    *   updates to a different minor version are allowed; otherwise FALSE.
    */
-  private function isAllowedMinorUpdate(StageEvent $event): bool {
-    $installed_version = $this->getInstalledVersion();
-    $target_version = $this->getTargetVersion($event);
-
+  private function isAllowedMinorUpdate(StageEvent $event, string $installed_version, string $target_version): bool {
     $installed_minor = ExtensionVersion::createFromVersionString($installed_version)
       ->getMinorVersion();
     $target_minor = ExtensionVersion::createFromVersionString($target_version)
@@ -273,15 +284,16 @@ final class VersionValidator implements EventSubscriberInterface {
    *
    * @param \Drupal\package_manager\Event\StageEvent $event
    *   The event object.
+   * @param string $installed_version
+   *   The installed version of Drupal.
+   * @param string $target_version
+   *   The target version of Drupal core.
    *
    * @return bool
    *   TRUE if the target version of Drupal core is a different major version
    *   than the installed version; otherwise FALSE.
    */
-  private function isTargetMajorVersionDifferent(StageEvent $event): bool {
-    $installed_version = $this->getInstalledVersion();
-    $target_version = $this->getTargetVersion($event);
-
+  private function isTargetMajorVersionDifferent(StageEvent $event, string $installed_version, string $target_version): bool {
     $installed_major = ExtensionVersion::createFromVersionString($installed_version)
       ->getMajorVersion();
     $target_major = ExtensionVersion::createFromVersionString($target_version)
@@ -304,15 +316,16 @@ final class VersionValidator implements EventSubscriberInterface {
    *
    * @param \Drupal\package_manager\Event\StageEvent $event
    *   The event object.
+   * @param string $installed_version
+   *   The installed version of Drupal.
+   * @param string $target_version
+   *   The target version of Drupal core.
    *
    * @return bool
    *   TRUE if the target version of Drupal core is lower than the installed
    *   version; otherwise FALSE.
    */
-  private function isTargetVersionDowngrade(StageEvent $event): bool {
-    $installed_version = $this->getInstalledVersion();
-    $target_version = $this->getTargetVersion($event);
-
+  private function isTargetVersionDowngrade(StageEvent $event, string $installed_version, string $target_version): bool {
     if (Comparator::lessThan($target_version, $installed_version)) {
       $event->addError([
         $this->t('Update version @to_version is lower than @from_version, downgrading is not supported.', [
@@ -330,13 +343,14 @@ final class VersionValidator implements EventSubscriberInterface {
    *
    * @param \Drupal\package_manager\Event\StageEvent $event
    *   The event object.
+   * @param string $target_version
+   *   The target version of Drupal.
    *
    * @return bool
    *   TRUE if the target version of Drupal is in the list of secure, supported
    *   releases; otherwise FALSE.
    */
-  private function isTargetVersionAcceptable(StageEvent $event): bool {
-    $target_version = $this->getTargetVersion($event);
+  private function isTargetVersionAcceptable(StageEvent $event, string $target_version): bool {
     // If the target version isn't in the list of installable releases, then it
     // isn't secure and supported and we should flag an error.
     $releases = $this->getAvailableReleases();
@@ -439,14 +453,15 @@ final class VersionValidator implements EventSubscriberInterface {
    * Checks if the installed version of Drupal is a dev snapshot.
    *
    * @param \Drupal\package_manager\Event\StageEvent $event
-   *   THe event object.
+   *   The event object.
+   * @param string $installed_version
+   *   The installed version of Drupal.
    *
    * @return bool
    *   TRUE if the installed version of Drupal is a dev snapshot, otherwise
    *   FALSE.
    */
-  private function isDevSnapshotInstalled(StageEvent $event): bool {
-    $installed_version = $this->getInstalledVersion();
+  private function isDevSnapshotInstalled(StageEvent $event, string $installed_version): bool {
     $extra = ExtensionVersion::createFromVersionString($installed_version)
       ->getVersionExtra();
 
