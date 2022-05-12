@@ -342,7 +342,7 @@ final class VersionValidator implements EventSubscriberInterface {
     }
 
     if ($package_versions) {
-      $core_package_name = key($updater->getActiveComposer()->getCorePackages());
+      $core_package_name = key($event->getStage()->getActiveComposer()->getCorePackages());
       return $package_versions[$core_package_name];
     }
     return $this->getTargetVersionFromAvailableReleases($event);
