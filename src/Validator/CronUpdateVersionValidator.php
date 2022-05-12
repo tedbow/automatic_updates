@@ -52,30 +52,11 @@ final class CronUpdateVersionValidator extends UpdateVersionValidator {
    */
   public function getValidationResult(string $to_version_string): ?ValidationResult {
     $from_version_string = $this->getCoreVersion();
-    $to_version = ExtensionVersion::createFromVersionString($to_version_string);
     $from_version = ExtensionVersion::createFromVersionString($from_version_string);
     $variables = [
       '@to_version' => $to_version_string,
       '@from_version' => $from_version_string,
     ];
-    // @todo Return multiple validation messages and summary in
-    //   https://www.drupal.org/project/automatic_updates/issues/3272068.
-    // Validate that both the from and to versions are stable releases.
-    if ($to_version->getVersionExtra()) {
-      // Because we do not support updating to a new minor version during
-      // cron it is probably impossible to update from a stable version to
-      // a unstable/pre-release version, but we should check this condition
-      // just in case.
-      return ValidationResult::createError([
-        $this->t('Drupal cannot be automatically updated during cron to the recommended version, @to_version, because Automatic Updates only supports updating to stable versions during cron.', $variables),
-      ]);
-    }
-
-    if ($from_version->getMinorVersion() !== $to_version->getMinorVersion()) {
-      return ValidationResult::createError([
-        $this->t('Drupal cannot be automatically updated from its current version, @from_version, to the recommended version, @to_version, because automatic updates from one minor version to another are not supported during cron.', $variables),
-      ]);
-    }
 
     // Only updating to the next patch release is supported during cron.
     $supported_patch_version = $from_version->getMajorVersion() . '.' . $from_version->getMinorVersion() . '.' . (((int) static::getPatchVersion($from_version_string)) + 1);

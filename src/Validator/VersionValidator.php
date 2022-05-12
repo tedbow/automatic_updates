@@ -79,8 +79,10 @@ final class VersionValidator implements EventSubscriberInterface {
    *   The event object.
    */
   public function checkTargetVersion(StageEvent $event): void {
+    $stage = $event->getStage();
+
     // Only do these checks for automatic updates.
-    if (!$event->getStage() instanceof Updater) {
+    if (!$stage instanceof Updater) {
       return;
     }
 
@@ -96,6 +98,72 @@ final class VersionValidator implements EventSubscriberInterface {
     if (!$this->isAllowedMinorUpdate($event)) {
       return;
     }
+    if ($stage instanceof CronUpdater) {
+      if (!$this->isTargetVersionStable($event)) {
+        return;
+      }
+      if ($this->isMinorUpdate($event)) {
+        return;
+      }
+    }
+  }
+
+  /**
+   * Checks if the target version of Drupal is a different minor version.
+   *
+   * @param \Drupal\package_manager\Event\StageEvent $event
+   *   The event object.
+   *
+   * @return bool
+   *   TRUE if the target version of Drupal is a different minor version;
+   *   otherwise FALSE.
+   */
+  private function isMinorUpdate(StageEvent $event): bool {
+    $installed_version = $this->getInstalledVersion();
+    $target_version = $this->getTargetVersion($event);
+
+    $installed_minor = ExtensionVersion::createFromVersionString($installed_version)
+      ->getMinorVersion();
+    $target_minor = ExtensionVersion::createFromVersionString($target_version)
+      ->getMinorVersion();
+
+    if ($installed_minor === $target_minor) {
+      return FALSE;
+    }
+    $event->addError([
+      $this->t('Drupal cannot be automatically updated from its current version, @from_version, to the recommended version, @to_version, because automatic updates from one minor version to another are not supported during cron.', [
+        '@from_version' => $installed_version,
+        '@to_version' => $target_version,
+      ]),
+    ]);
+    return TRUE;
+  }
+
+  /**
+   * Checks if the target version of Drupal is a stable release.
+   *
+   * @param \Drupal\package_manager\Event\StageEvent $event
+   *   The event object.
+   *
+   * @return bool
+   *   TRUE if the target version of Drupal core is a stable release; otherwise
+   *   FALSE.
+   */
+  private function isTargetVersionStable(StageEvent $event): bool {
+    $target_version = $this->getTargetVersion($event);
+
+    $extra = ExtensionVersion::createFromVersionString($target_version)
+      ->getVersionExtra();
+
+    if ($extra) {
+      $event->addError([
+        $this->t('Drupal cannot be automatically updated during cron to the recommended version, @to_version, because Automatic Updates only supports updating to stable versions during cron.', [
+          '@to_version' => $target_version,
+        ]),
+      ]);
+      return FALSE;
+    }
+    return TRUE;
   }
 
   /**
