@@ -10,7 +10,7 @@ class TargetSecurityReleaseValidator extends VersionValidatorBase {
    * {@inheritdoc}
    */
   protected function doValidation(Updater $updater, string $installed_version, ?string $target_version): array {
-    $releases = $this->getAvailableReleases($event);
+    $releases = $this->getAvailableReleases($updater);
 
     if (!$releases[$target_version]->isSecurityRelease()) {
       return [
