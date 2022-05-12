@@ -8,10 +8,17 @@ use Drupal\automatic_updates\CronUpdater;
 use Drupal\automatic_updates\Event\ReadinessCheckEvent;
 use Drupal\automatic_updates\ProjectInfo;
 use Drupal\automatic_updates\Updater;
+use Drupal\automatic_updates\Validator\Version\AllowedMinorUpdateValidator;
+use Drupal\automatic_updates\Validator\Version\DowngradeValidator;
+use Drupal\automatic_updates\Validator\Version\MajorVersionMatchValidator;
+use Drupal\automatic_updates\Validator\Version\MinorUpdateValidator;
+use Drupal\automatic_updates\Validator\Version\StableTargetVersionValidator;
+use Drupal\automatic_updates\Validator\Version\TargetSecurityReleaseValidator;
+use Drupal\automatic_updates\Validator\Version\TargetVersionInstallableValidator;
+use Drupal\automatic_updates\Validator\Version\TargetVersionPatchLevelValidator;
 use Drupal\automatic_updates\VersionParsingTrait;
 use Drupal\Core\Extension\ExtensionVersion;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
-use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\package_manager\Event\PreCreateEvent;
 use Drupal\package_manager\Event\StageEvent;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
@@ -92,234 +99,36 @@ final class VersionValidator implements EventSubscriberInterface {
     $installed_version = $this->getInstalledVersion();
     $target_version = $this->getTargetVersion($event);
 
-    $messages = array_merge(
-      $this->checkTargetVersionIsInstallable($event, $target_version),
-      $this->checkForDowngrade($installed_version, $target_version),
-      $this->checkForMajorVersionMatch($installed_version, $target_version),
-      $this->checkForAllowedMinorUpdate($installed_version, $target_version)
-    );
+    $validators = [
+      TargetVersionInstallableValidator::class,
+      DowngradeValidator::class,
+      MajorVersionMatchValidator::class,
+      AllowedMinorUpdateValidator::class,
+    ];
+
     if ($stage instanceof CronUpdater) {
       $mode = $stage->getMode();
 
       if ($mode !== CronUpdater::DISABLED) {
-        $messages = array_merge(
-          $messages,
-          $this->checkTargetVersionIsStable($target_version),
-          $this->checkForMinorUpdate($installed_version, $target_version),
-          $this->checkTargetVersionWithinPatchThreshold($installed_version, $target_version)
-        );
+        $validators[] = StableTargetVersionValidator::class;
+        $validators[] = MinorUpdateValidator::class;
+        $validators[] = TargetVersionPatchLevelValidator::class;
       }
       if ($mode === CronUpdater::SECURITY) {
-        $messages = array_merge(
-          $messages,
-          $this->checkTargetVersionIsSecurityRelease($event, $target_version)
-        );
+        $validators[] = TargetSecurityReleaseValidator::class;
       }
     }
 
-    $variables = [
-      '@installed_version' => $installed_version,
-      '@target_version' => $target_version,
-    ];
-
-    $map = function (TranslatableMarkup $message) use ($variables): TranslatableMarkup {
-      // @codingStandardsIgnoreLine
-      return new TranslatableMarkup($message->getUntranslatedString(), $message->getArguments() + $variables, $message->getOptions(), $this->getStringTranslation());
-    };
-    $messages = array_map($map, $messages);
+    $messages = [];
+    foreach ($validators as $validator) {
+      /** @var \Drupal\automatic_updates\Validator\Version\VersionValidatorBase $validator */
+      $validator = \Drupal::classResolver($validator);
+      $messages = array_merge($messages, $validator->validate($stage, $installed_version, $target_version));
+    }
 
     if ($messages) {
-      $event->addError($messages, $this->t('Drupal cannot be updated from the current version, @installed_version, to @target_version.', $variables));
+      $event->addError($messages, $this->t('Drupal cannot be automatically updated.'));
     }
-  }
-
-  /**
-   * Checks if the target version of Drupal is a security release.
-   *
-   * @param \Drupal\package_manager\Event\StageEvent $event
-   *   The event object.
-   * @param string $target_version
-   *   The target version of Drupal core.
-   *
-   * @return \Drupal\Core\StringTranslation\TranslatableMarkup[]
-   *   The error messages, if any.
-   */
-  private function checkTargetVersionIsSecurityRelease(StageEvent $event, string $target_version): array {
-    $releases = $this->getAvailableReleases($event);
-
-    if (!$releases[$target_version]->isSecurityRelease()) {
-      return [
-        $this->t('Drupal cannot be automatically updated during cron from its current version, @installed_version, to the recommended version, @target_version, because @target_version is not a security release.'),
-      ];
-    }
-    return [];
-  }
-
-  /**
-   * Checks if the target version is too far ahead to be automatically updated.
-   *
-   * @param string $installed_version
-   *   The installed version of Drupal.
-   * @param string $target_version
-   *   The target version of Drupal core.
-   *
-   * @return \Drupal\Core\StringTranslation\TranslatableMarkup[]
-   *   The error messages, if any.
-   */
-  private function checkTargetVersionWithinPatchThreshold(string $installed_version, string $target_version): array {
-    $from_version = ExtensionVersion::createFromVersionString($installed_version);
-
-    $supported_patch_version = $from_version->getMajorVersion() . '.' . $from_version->getMinorVersion() . '.' . (((int) static::getPatchVersion($installed_version)) + 1);
-    if ($target_version !== $supported_patch_version) {
-      return [
-        $this->t('Drupal cannot be automatically updated during cron from its current version, @installed_version, to the recommended version, @target_version, because Automatic Updates only supports 1 patch version update during cron.'),
-      ];
-    }
-    return [];
-  }
-
-  /**
-   * Checks if the target version of Drupal is a different minor version.
-   *
-   * @param string $installed_version
-   *   The installed version of Drupal.
-   * @param string $target_version
-   *   The target version of Drupal core.
-   *
-   * @return \Drupal\Core\StringTranslation\TranslatableMarkup[]
-   *   The error messages, if any.
-   */
-  private function checkForMinorUpdate(string $installed_version, string $target_version): array {
-    $installed_minor = ExtensionVersion::createFromVersionString($installed_version)
-      ->getMinorVersion();
-    $target_minor = ExtensionVersion::createFromVersionString($target_version)
-      ->getMinorVersion();
-
-    if ($installed_minor === $target_minor) {
-      return [];
-    }
-    return [
-      $this->t('Drupal cannot be automatically updated from its current version, @installed_version, to the recommended version, @target_version, because automatic updates from one minor version to another are not supported during cron.'),
-    ];
-  }
-
-  /**
-   * Checks if the target version of Drupal is a stable release.
-   *
-   * @param string $target_version
-   *   The target version of Drupal core.
-   *
-   * @return \Drupal\Core\StringTranslation\TranslatableMarkup[]
-   *   The error messages, if any.
-   */
-  private function checkTargetVersionIsStable(string $target_version): array {
-    $extra = ExtensionVersion::createFromVersionString($target_version)
-      ->getVersionExtra();
-
-    if ($extra) {
-      return [
-        $this->t('Drupal cannot be automatically updated during cron to the recommended version, @target_version, because Automatic Updates only supports updating to stable versions during cron.'),
-      ];
-    }
-    return [];
-  }
-
-  /**
-   * Checks if the target version of Drupal is a different minor version.
-   *
-   * @param string $installed_version
-   *   The installed version of Drupal.
-   * @param string $target_version
-   *   The target version of Drupal core.
-   *
-   * @return \Drupal\Core\StringTranslation\TranslatableMarkup[]
-   *   The error messages, if any.
-   */
-  private function checkForAllowedMinorUpdate(string $installed_version, string $target_version): array {
-    $installed_minor = ExtensionVersion::createFromVersionString($installed_version)
-      ->getMinorVersion();
-    $target_minor = ExtensionVersion::createFromVersionString($target_version)
-      ->getMinorVersion();
-
-    $minor_updates_allowed = \Drupal::config('automatic_updates.settings')
-      ->get('allow_core_minor_updates');
-
-    if ($installed_minor === $target_minor || $minor_updates_allowed) {
-      return [];
-    }
-
-    return [
-      $this->t('Drupal cannot be automatically updated from its current version, @installed_version, to the recommended version, @target_version, because automatic updates from one minor version to another are not supported.'),
-    ];
-  }
-
-  /**
-   * Checks if the target version of Drupal is a different major version.
-   *
-   * @param string $installed_version
-   *   The installed version of Drupal.
-   * @param string $target_version
-   *   The target version of Drupal core.
-   *
-   * @return \Drupal\Core\StringTranslation\TranslatableMarkup[]
-   *   The error messages, if any.
-   */
-  private function checkForMajorVersionMatch(string $installed_version, string $target_version): array {
-    $installed_major = ExtensionVersion::createFromVersionString($installed_version)
-      ->getMajorVersion();
-    $target_major = ExtensionVersion::createFromVersionString($target_version)
-      ->getMajorVersion();
-
-    if ($installed_major !== $target_major) {
-      return [
-        $this->t('Drupal cannot be automatically updated from its current version, @installed_version, to the recommended version, @target_version, because automatic updates from one major version to another are not supported.'),
-      ];
-    }
-    return [];
-  }
-
-  /**
-   * Checks if the target version of Drupal is lower than the installed version.
-   *
-   * @param string $installed_version
-   *   The installed version of Drupal.
-   * @param string|null $target_version
-   *   The target version of Drupal core, or NULL if not known.
-   *
-   * @return \Drupal\Core\StringTranslation\TranslatableMarkup[]
-   *   The error messages, if any.
-   */
-  private function checkForDowngrade(string $installed_version, ?string $target_version): array {
-    if ($target_version && Comparator::lessThan($target_version, $installed_version)) {
-      return [
-        $this->t('Update version @target_version is lower than @installed_version, downgrading is not supported.'),
-      ];
-    }
-    return [];
-  }
-
-  /**
-   * Checks if the target version of Drupal is a secure, supported release.
-   *
-   * @param \Drupal\package_manager\Event\StageEvent $event
-   *   The event object.
-   * @param string|null $target_version
-   *   The target version of Drupal, or NULL if it's not known.
-   *
-   * @return \Drupal\Core\StringTranslation\TranslatableMarkup[]
-   *   The error messages, if any.
-   */
-  private function checkTargetVersionIsInstallable(StageEvent $event, ?string $target_version): array {
-    // If the target version isn't in the list of installable releases, then it
-    // isn't secure and supported and we should flag an error.
-    $releases = $this->getAvailableReleases($event);
-    if (empty($releases) || !array_key_exists($target_version, $releases)) {
-      $message = $this->t('Cannot update Drupal core to @target_version because it is not in the list of installable releases.', [
-        '@target_version' => $target_version,
-      ]);
-      return [$message];
-    }
-    return [];
   }
 
   /**
