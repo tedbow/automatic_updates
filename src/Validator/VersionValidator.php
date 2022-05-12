@@ -2,22 +2,22 @@
 
 namespace Drupal\automatic_updates\Validator;
 
-use Composer\Semver\Comparator;
 use Composer\Semver\Semver;
 use Drupal\automatic_updates\CronUpdater;
 use Drupal\automatic_updates\Event\ReadinessCheckEvent;
 use Drupal\automatic_updates\ProjectInfo;
 use Drupal\automatic_updates\Updater;
 use Drupal\automatic_updates\Validator\Version\AllowedMinorUpdateValidator;
+use Drupal\automatic_updates\Validator\Version\DevVersionInstalledValidator;
 use Drupal\automatic_updates\Validator\Version\DowngradeValidator;
 use Drupal\automatic_updates\Validator\Version\MajorVersionMatchValidator;
 use Drupal\automatic_updates\Validator\Version\MinorUpdateValidator;
+use Drupal\automatic_updates\Validator\Version\StableInstalledVersionValidator;
 use Drupal\automatic_updates\Validator\Version\StableTargetVersionValidator;
 use Drupal\automatic_updates\Validator\Version\TargetSecurityReleaseValidator;
 use Drupal\automatic_updates\Validator\Version\TargetVersionInstallableValidator;
 use Drupal\automatic_updates\Validator\Version\TargetVersionPatchLevelValidator;
 use Drupal\automatic_updates\VersionParsingTrait;
-use Drupal\Core\Extension\ExtensionVersion;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\package_manager\Event\PreCreateEvent;
 use Drupal\package_manager\Event\StageEvent;
@@ -47,39 +47,23 @@ final class VersionValidator implements EventSubscriberInterface {
 
     $installed_version = $this->getInstalledVersion();
 
-    if ($this->isDevSnapshotInstalled($event, $installed_version)) {
-      return;
+    $validators = [
+      DevVersionInstalledValidator::class,
+    ];
+    if ($stage instanceof CronUpdater && $stage->getMode() !== CronUpdater::DISABLED) {
+      $validators[] = StableInstalledVersionValidator::class;
     }
-    if ($stage instanceof CronUpdater && $stage->getMode() !== CronUpdater::DISABLED && !$this->isInstalledVersionStable($event, $installed_version)) {
-      return;
-    }
-  }
 
-  /**
-   * Checks if the installed version of Drupal is a stable release.
-   *
-   * @param \Drupal\package_manager\Event\StageEvent $event
-   *   The event object.
-   * @param string $installed_version
-   *   The installed version of Drupal.
-   *
-   * @return bool
-   *   TRUE if the installed version of Drupal is a stable release; otherwise
-   *   FALSE.
-   */
-  private function isInstalledVersionStable(StageEvent $event, string $installed_version): bool {
-    $extra = ExtensionVersion::createFromVersionString($installed_version)
-      ->getVersionExtra();
-
-    if ($extra) {
-      $event->addError([
-        $this->t('Drupal cannot be automatically updated during cron from its current version, @from_version, because Automatic Updates only supports updating from stable versions during cron.', [
-          '@from_version' => $installed_version,
-        ]),
-      ]);
-      return FALSE;
+    $messages = [];
+    foreach ($validators as $validator) {
+      /** @var \Drupal\automatic_updates\Validator\Version\VersionValidatorBase $validator */
+      $validator = \Drupal::classResolver($validator);
+      $messages = array_merge($messages, $validator->validate($stage, $installed_version, $target_version));
     }
-    return TRUE;
+
+    if ($messages) {
+      $event->addError($messages, $this->t('Drupal cannot be automatically updated.'));
+    }
   }
 
   /**
@@ -110,6 +94,7 @@ final class VersionValidator implements EventSubscriberInterface {
       $mode = $stage->getMode();
 
       if ($mode !== CronUpdater::DISABLED) {
+        array_pop($validators);
         $validators[] = StableTargetVersionValidator::class;
         $validators[] = MinorUpdateValidator::class;
         $validators[] = TargetVersionPatchLevelValidator::class;
@@ -214,32 +199,6 @@ final class VersionValidator implements EventSubscriberInterface {
    */
   private function getInstalledVersion(): ?string {
     return (new ProjectInfo('drupal'))->getInstalledVersion();
-  }
-
-  /**
-   * Checks if the installed version of Drupal is a dev snapshot.
-   *
-   * @param \Drupal\package_manager\Event\StageEvent $event
-   *   The event object.
-   * @param string $installed_version
-   *   The installed version of Drupal.
-   *
-   * @return bool
-   *   TRUE if the installed version of Drupal is a dev snapshot, otherwise
-   *   FALSE.
-   */
-  private function isDevSnapshotInstalled(StageEvent $event, string $installed_version): bool {
-    $extra = ExtensionVersion::createFromVersionString($installed_version)
-      ->getVersionExtra();
-
-    if ($extra === 'dev') {
-      $message = $this->t('Drupal cannot be automatically updated from the installed version, @installed_version, because automatic updates from a dev version to any other version are not supported.', [
-        '@installed_version' => $installed_version,
-      ]);
-      $event->addError([$message]);
-      return TRUE;
-    }
-    return FALSE;
   }
 
   /**
