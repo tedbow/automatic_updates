@@ -56,6 +56,40 @@ final class VersionValidator implements EventSubscriberInterface {
     if ($this->isTargetVersionDowngrade($event)) {
       return;
     }
+    if ($this->isTargetMajorVersionDifferent($event)) {
+      return;
+    }
+  }
+
+  /**
+   * Checks if the target version of Drupal is a different major version.
+   *
+   * @param \Drupal\package_manager\Event\StageEvent $event
+   *   The event object.
+   *
+   * @return bool
+   *   TRUE if the target version of Drupal core is a different major version
+   *   than the installed version; otherwise FALSE.
+   */
+  private function isTargetMajorVersionDifferent(StageEvent $event): bool {
+    $installed_version = $this->getInstalledVersion();
+    $target_version = $this->getTargetVersion($event);
+
+    $installed_major = ExtensionVersion::createFromVersionString($installed_version)
+      ->getMajorVersion();
+    $target_major = ExtensionVersion::createFromVersionString($target_version)
+      ->getMajorVersion();
+
+    if ($installed_major !== $target_major) {
+      $event->addError([
+        $this->t('Drupal cannot be automatically updated from its current version, @from_version, to the recommended version, @to_version, because automatic updates from one major version to another are not supported.', [
+          '@from_version' => $installed_version,
+          '@to_version' => $target_version,
+        ]),
+      ]);
+      return TRUE;
+    }
+    return FALSE;
   }
 
   /**

@@ -175,11 +175,6 @@ class UpdateVersionValidator implements EventSubscriberInterface {
     // @todo Return multiple validation messages and summary in
     //   https://www.drupal.org/project/automatic_updates/issues/3272068.
     $to_version = ExtensionVersion::createFromVersionString($to_version_string);
-    if ($from_version->getMajorVersion() !== $to_version->getMajorVersion()) {
-      return ValidationResult::createError([
-        $this->t('Drupal cannot be automatically updated from its current version, @from_version, to the recommended version, @to_version, because automatic updates from one major version to another are not supported.', $variables),
-      ]);
-    }
     if ($from_version->getMinorVersion() !== $to_version->getMinorVersion()) {
       if (!$this->configFactory->get('automatic_updates.settings')->get('allow_core_minor_updates')) {
         return ValidationResult::createError([
