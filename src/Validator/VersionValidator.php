@@ -2,6 +2,7 @@
 
 namespace Drupal\automatic_updates\Validator;
 
+use Composer\Semver\Comparator;
 use Composer\Semver\Semver;
 use Drupal\automatic_updates\CronUpdater;
 use Drupal\automatic_updates\Event\ReadinessCheckEvent;
@@ -52,6 +53,35 @@ final class VersionValidator implements EventSubscriberInterface {
     if (!$this->isTargetVersionAcceptable($event)) {
       return;
     }
+    if ($this->isTargetVersionDowngrade($event)) {
+      return;
+    }
+  }
+
+  /**
+   * Checks if the target version of Drupal is lower than the installed version.
+   *
+   * @param \Drupal\package_manager\Event\StageEvent $event
+   *   The event object.
+   *
+   * @return bool
+   *   TRUE if the target version of Drupal core is lower than the installed
+   *   version; otherwise FALSE.
+   */
+  private function isTargetVersionDowngrade(StageEvent $event): bool {
+    $installed_version = $this->getInstalledVersion();
+    $target_version = $this->getTargetVersion($event);
+
+    if (Comparator::lessThan($target_version, $installed_version)) {
+      $event->addError([
+        $this->t('Update version @to_version is lower than @from_version, downgrading is not supported.', [
+          '@to_version' => $target_version,
+          '@from_version' => $installed_version,
+        ]),
+      ]);
+      return TRUE;
+    }
+    return FALSE;
   }
 
   /**

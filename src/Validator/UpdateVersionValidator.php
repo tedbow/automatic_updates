@@ -2,7 +2,6 @@
 
 namespace Drupal\automatic_updates\Validator;
 
-use Composer\Semver\Comparator;
 use Composer\Semver\Semver;
 use Drupal\automatic_updates\CronUpdater;
 use Drupal\automatic_updates\Event\ReadinessCheckEvent;
@@ -175,11 +174,6 @@ class UpdateVersionValidator implements EventSubscriberInterface {
 
     // @todo Return multiple validation messages and summary in
     //   https://www.drupal.org/project/automatic_updates/issues/3272068.
-    if (Comparator::lessThan($to_version_string, $from_version_string)) {
-      return ValidationResult::createError([
-        $this->t('Update version @to_version is lower than @from_version, downgrading is not supported.', $variables),
-      ]);
-    }
     $to_version = ExtensionVersion::createFromVersionString($to_version_string);
     if ($from_version->getMajorVersion() !== $to_version->getMajorVersion()) {
       return ValidationResult::createError([
