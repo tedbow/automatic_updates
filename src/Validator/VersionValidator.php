@@ -29,6 +29,17 @@ final class VersionValidator implements EventSubscriberInterface {
 
   use StringTranslationTrait;
 
+  protected function collectMessages(array $validators, ...$arguments): array {
+    $messages = [];
+
+    foreach ($validators as $validator) {
+      /** @var \Drupal\automatic_updates\Validator\Version\VersionValidatorBase $validator */
+      $validator = \Drupal::classResolver($validator);
+      $messages = array_merge($messages, $validator->validate(...$arguments));
+    }
+    return $messages;
+  }
+
   /**
    * Checks that the installed version of Drupal is updateable.
    *
@@ -43,8 +54,6 @@ final class VersionValidator implements EventSubscriberInterface {
       return;
     }
 
-    $installed_version = $this->getInstalledVersion();
-
     $validators = [
       DevVersionInstalledValidator::class,
     ];
@@ -52,13 +61,7 @@ final class VersionValidator implements EventSubscriberInterface {
       $validators[] = StableInstalledVersionValidator::class;
     }
 
-    $messages = [];
-    foreach ($validators as $validator) {
-      /** @var \Drupal\automatic_updates\Validator\Version\VersionValidatorBase $validator */
-      $validator = \Drupal::classResolver($validator);
-      $messages = array_merge($messages, $validator->validate($stage, $installed_version, $target_version));
-    }
-
+    $messages = $this->collectMessages($validators, $stage, $this->getInstalledVersion(), NULL);
     if ($messages) {
       $event->addError($messages, $this->t('Drupal cannot be automatically updated.'));
     }
@@ -77,9 +80,6 @@ final class VersionValidator implements EventSubscriberInterface {
     if (!$stage instanceof Updater) {
       return;
     }
-
-    $installed_version = $this->getInstalledVersion();
-    $target_version = $this->getTargetVersion($event);
 
     $validators = [
       TargetVersionInstallableValidator::class,
@@ -102,13 +102,7 @@ final class VersionValidator implements EventSubscriberInterface {
       }
     }
 
-    $messages = [];
-    foreach ($validators as $validator) {
-      /** @var \Drupal\automatic_updates\Validator\Version\VersionValidatorBase $validator */
-      $validator = \Drupal::classResolver($validator);
-      $messages = array_merge($messages, $validator->validate($stage, $installed_version, $target_version));
-    }
-
+    $messages = $this->collectMessages($validators, $stage, $this->getInstalledVersion(), $this->getTargetVersion($event));
     if ($messages) {
       $event->addError($messages, $this->t('Drupal cannot be automatically updated.'));
     }
