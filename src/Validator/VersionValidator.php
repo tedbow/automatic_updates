@@ -110,7 +110,37 @@ final class VersionValidator implements EventSubscriberInterface {
       if ($this->isTargetVersionTooFarAhead($event)) {
         return;
       }
+
+      if ($stage->getMode() === CronUpdater::SECURITY && !$this->isTargetVersionSecurityRelease($event)) {
+        return;
+      }
     }
+  }
+
+  /**
+   * Checks if the target version of Drupal is a security release.
+   *
+   * @param \Drupal\package_manager\Event\StageEvent $event
+   *   The event object.
+   *
+   * @return bool
+   *   TRUE if the target version of Drupal core is a security release;
+   *   otherwise FALSE.
+   */
+  private function isTargetVersionSecurityRelease(StageEvent $event): bool {
+    $target_version = $this->getTargetVersion($event);
+    $releases = $this->getAvailableReleases($event);
+
+    if (!$releases[$target_version]->isSecurityRelease()) {
+      $event->addError([
+        $this->t('Drupal cannot be automatically updated during cron from its current version, @from_version, to the recommended version, @to_version, because @to_version is not a security release.', [
+          '@from_version' => $this->getInstalledVersion(),
+          '@to_version' => $target_version,
+        ]),
+      ]);
+      return FALSE;
+    }
+    return TRUE;
   }
 
   /**
