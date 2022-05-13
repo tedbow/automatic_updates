@@ -85,7 +85,12 @@ final class VersionValidator implements EventSubscriberInterface {
       return;
     }
 
-    $messages = $this->validateVersion($stage, $this->getTargetVersion($event));
+    $target_version = $this->getTargetVersion($event);
+    if (empty($target_version)) {
+      return;
+    }
+
+    $messages = $this->validateVersion($stage, $target_version);
     if ($messages) {
       $summary = count($messages) > 1
         ? $this->t('Drupal cannot be automatically updated.')
