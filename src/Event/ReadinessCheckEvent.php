@@ -65,6 +65,12 @@ class ReadinessCheckEvent extends PreOperationStageEvent {
 
   /**
    * Adds warning information to the event.
+   *
+   * @param \Drupal\Core\StringTranslation\TranslatableMarkup[] $messages
+   *   The warning messages.
+   * @param \Drupal\Core\StringTranslation\TranslatableMarkup|null $summary
+   *   (optional) The summary of warning messages. Required if there is more
+   *   than one message.
    */
   public function addWarning(array $messages, ?TranslatableMarkup $summary = NULL): void {
     $this->results[] = ValidationResult::createWarning($messages, $summary);
