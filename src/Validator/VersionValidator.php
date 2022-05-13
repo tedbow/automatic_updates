@@ -7,16 +7,6 @@ use Drupal\automatic_updates\CronUpdater;
 use Drupal\automatic_updates\Event\ReadinessCheckEvent;
 use Drupal\automatic_updates\ProjectInfo;
 use Drupal\automatic_updates\Updater;
-use Drupal\automatic_updates\Validator\Version\AllowedMinorUpdateValidator;
-use Drupal\automatic_updates\Validator\Version\DevVersionInstalledValidator;
-use Drupal\automatic_updates\Validator\Version\DowngradeValidator;
-use Drupal\automatic_updates\Validator\Version\MajorVersionMatchValidator;
-use Drupal\automatic_updates\Validator\Version\MinorUpdateValidator;
-use Drupal\automatic_updates\Validator\Version\StableInstalledVersionValidator;
-use Drupal\automatic_updates\Validator\Version\StableTargetVersionValidator;
-use Drupal\automatic_updates\Validator\Version\TargetSecurityReleaseValidator;
-use Drupal\automatic_updates\Validator\Version\TargetVersionInstallableValidator;
-use Drupal\automatic_updates\Validator\Version\TargetVersionPatchLevelValidator;
 use Drupal\Core\DependencyInjection\ClassResolverInterface;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\package_manager\Event\PreCreateEvent;
@@ -63,11 +53,11 @@ final class VersionValidator implements EventSubscriberInterface {
 
   public function validateVersion(Updater $updater, string $target_version): array {
     $validators = [
-      DevVersionInstalledValidator::class,
-      TargetVersionInstallableValidator::class,
-      DowngradeValidator::class,
-      MajorVersionMatchValidator::class,
-      AllowedMinorUpdateValidator::class,
+      'DevVersionInstalledValidator',
+      'TargetVersionInstallableValidator',
+      'DowngradeValidator',
+      'MajorVersionMatchValidator',
+      'AllowedMinorUpdateValidator',
     ];
 
     if ($updater instanceof CronUpdater) {
@@ -75,15 +65,19 @@ final class VersionValidator implements EventSubscriberInterface {
 
       if ($mode !== CronUpdater::DISABLED) {
         array_pop($validators);
-        $validators[] = StableInstalledVersionValidator::class;
-        $validators[] = StableTargetVersionValidator::class;
-        $validators[] = MinorUpdateValidator::class;
-        $validators[] = TargetVersionPatchLevelValidator::class;
+        $validators[] = 'StableInstalledVersionValidator';
+        $validators[] = 'StableTargetVersionValidator';
+        $validators[] = 'MinorUpdateValidator';
+        $validators[] = 'TargetVersionPatchLevelValidator';
       }
       if ($mode === CronUpdater::SECURITY) {
-        $validators[] = TargetSecurityReleaseValidator::class;
+        $validators[] = 'TargetSecurityReleaseValidator';
       }
     }
+    $map = function (string $class): string {
+      return __NAMESPACE__ . "\Version\\$class";
+    };
+    $validators = array_map($map, $validators);
 
     return $this->collectMessages($validators, $updater, $this->getInstalledVersion(), $target_version);
   }
