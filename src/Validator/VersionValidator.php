@@ -7,6 +7,16 @@ use Drupal\automatic_updates\CronUpdater;
 use Drupal\automatic_updates\Event\ReadinessCheckEvent;
 use Drupal\automatic_updates\ProjectInfo;
 use Drupal\automatic_updates\Updater;
+use Drupal\automatic_updates\Validator\VersionPolicy\ForbidDowngrade;
+use Drupal\automatic_updates\Validator\VersionPolicy\ForbidMinorUpdates;
+use Drupal\automatic_updates\Validator\VersionPolicy\MajorVersionMatch;
+use Drupal\automatic_updates\Validator\VersionPolicy\MinorUpdatesEnabled;
+use Drupal\automatic_updates\Validator\VersionPolicy\StableReleaseInstalled;
+use Drupal\automatic_updates\Validator\VersionPolicy\TaggedReleaseInstalled;
+use Drupal\automatic_updates\Validator\VersionPolicy\TargetSecurityRelease;
+use Drupal\automatic_updates\Validator\VersionPolicy\TargetVersionInstallable;
+use Drupal\automatic_updates\Validator\VersionPolicy\TargetVersionPatchLevel;
+use Drupal\automatic_updates\Validator\VersionPolicy\TargetVersionStable;
 use Drupal\Core\DependencyInjection\ClassResolverInterface;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\package_manager\Event\PreCreateEvent;
@@ -53,16 +63,18 @@ final class VersionValidator implements EventSubscriberInterface {
    */
   public function validateVersion(Updater $updater, ?string $target_version): array {
     // Check that the installed version of Drupal isn't a dev snapshot.
-    $rules = ['TaggedReleaseInstalled'];
+    $rules = [
+      TaggedReleaseInstalled::class,
+    ];
 
     // If the target version is known, also check that:
     // - It's a known installable release.
     // - It's newer than the installed version.
     // - It's in the same major version as the installed version.
     if ($target_version) {
-      $rules[] = 'TargetVersionInstallable';
-      $rules[] = 'ForbidDowngrade';
-      $rules[] = 'MajorVersionMatch';
+      $rules[] = TargetVersionInstallable::class;
+      $rules[] = ForbidDowngrade::class;
+      $rules[] = MajorVersionMatch::class;
     }
 
     // If this is a cron update, we may need to do additional checks.
@@ -72,7 +84,7 @@ final class VersionValidator implements EventSubscriberInterface {
       // If cron updates are enabled, the installed version must be stable;
       // no alphas, betas, or RCs.
       if ($mode !== CronUpdater::DISABLED) {
-        $rules[] = 'StableReleaseInstalled';
+        $rules[] = StableReleaseInstalled::class;
 
         // If the target version is known, also check that:
         // - It's stable as well.
@@ -80,14 +92,14 @@ final class VersionValidator implements EventSubscriberInterface {
         // - It's not more than one patch release newer than the installed
         //   version.
         if ($target_version) {
-          $rules[] = 'TargetVersionStable';
-          $rules[] = 'ForbidMinorUpdates';
-          $rules[] = 'TargetVersionPatchLevel';
+          $rules[] = TargetVersionStable::class;
+          $rules[] = ForbidMinorUpdates::class;
+          $rules[] = TargetVersionPatchLevel::class;
 
           // If only security updates are allowed during cron, the target
           // version must be a security release.
           if ($mode === CronUpdater::SECURITY) {
-            $rules[] = 'TargetSecurityRelease';
+            $rules[] = TargetSecurityRelease::class;
           }
         }
       }
@@ -95,14 +107,8 @@ final class VersionValidator implements EventSubscriberInterface {
     // If this is not a cron update, and we know the target version, minor
     // version updates are allowed if configuration says so.
     elseif ($target_version) {
-      $rules[] = 'MinorUpdatesEnabled';
+      $rules[] = MinorUpdatesEnabled::class;
     }
-
-    // Convert the list of policy rules into fully qualified class names.
-    $map = function (string $class): string {
-      return __NAMESPACE__ . "\VersionPolicy\\$class";
-    };
-    $rules = array_map($map, $rules);
 
     // Invoke each rule, stopping when one returns error messages.
     // @todo Implement a better mechanism for looping through all validators and
@@ -132,13 +138,17 @@ final class VersionValidator implements EventSubscriberInterface {
     if (!$stage instanceof Updater) {
       return;
     }
+    $target_version = $this->getTargetVersion($event);
 
-    $messages = $this->validateVersion($stage, $this->getTargetVersion($event));
+    $messages = $this->validateVersion($stage, $target_version);
     if ($messages) {
-      $summary = count($messages) > 1
-        ? $this->t('Drupal cannot be automatically updated.')
-        : NULL;
-      $event->addError($messages, $summary);
+      if (count($messages) > 1) {
+        $summary = $this->t('Updating from Drupal @installed_version to @target_version is not allowed.', [
+          '@installed_version' => $this->getInstalledVersion(),
+          '@target_version' => $target_version,
+        ]);
+      }
+      $event->addError($messages, $summary ?? NULL);
     }
   }
 
