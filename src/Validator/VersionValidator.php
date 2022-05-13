@@ -30,14 +30,18 @@ final class VersionValidator implements EventSubscriberInterface {
   use StringTranslationTrait;
 
   protected function collectMessages(array $validators, ...$arguments): array {
-    $messages = [];
+    $all_messages = [];
 
     foreach ($validators as $validator) {
       /** @var \Drupal\automatic_updates\Validator\Version\VersionValidatorBase $validator */
       $validator = \Drupal::classResolver($validator);
-      $messages = array_merge($messages, $validator->validate(...$arguments));
+      $messages = $validator->validate(...$arguments);
+      if ($messages) {
+        $all_messages = array_merge($all_messages, $messages);
+        break;
+      }
     }
-    return $messages;
+    return $all_messages;
   }
 
   public function validateVersion(Updater $updater, string $target_version): array {
@@ -83,7 +87,10 @@ final class VersionValidator implements EventSubscriberInterface {
 
     $messages = $this->validateVersion($stage, $this->getTargetVersion($event));
     if ($messages) {
-      $event->addError($messages, $this->t('Drupal cannot be automatically updated.'));
+      $summary = count($messages) > 1
+        ? $this->t('Drupal cannot be automatically updated.')
+        : NULL;
+      $event->addError($messages, $summary);
     }
   }
 
