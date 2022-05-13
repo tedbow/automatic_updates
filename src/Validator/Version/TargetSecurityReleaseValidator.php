@@ -4,7 +4,7 @@ namespace Drupal\automatic_updates\Validator\Version;
 
 use Drupal\automatic_updates\Updater;
 
-class TargetSecurityReleaseValidator extends VersionValidatorBase {
+class TargetSecurityReleaseValidator extends PolicyRule {
 
   /**
    * {@inheritdoc}

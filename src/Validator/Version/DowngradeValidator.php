@@ -5,7 +5,7 @@ namespace Drupal\automatic_updates\Validator\Version;
 use Composer\Semver\Comparator;
 use Drupal\automatic_updates\Updater;
 
-class DowngradeValidator extends VersionValidatorBase {
+class DowngradeValidator extends PolicyRule {
 
   /**
    * {@inheritdoc}

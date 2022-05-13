@@ -6,7 +6,7 @@ use Drupal\automatic_updates\Updater;
 use Drupal\automatic_updates\VersionParsingTrait;
 use Drupal\Core\Extension\ExtensionVersion;
 
-class TargetVersionPatchLevelValidator extends VersionValidatorBase {
+class TargetVersionPatchLevelValidator extends PolicyRule {
 
   use VersionParsingTrait;
 

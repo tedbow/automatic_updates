@@ -5,7 +5,7 @@ namespace Drupal\automatic_updates\Validator\Version;
 use Drupal\automatic_updates\Updater;
 use Drupal\Core\Extension\ExtensionVersion;
 
-class AllowedMinorUpdateValidator extends VersionValidatorBase {
+class AllowedMinorUpdateValidator extends PolicyRule {
 
   /**
    * {@inheritdoc}
