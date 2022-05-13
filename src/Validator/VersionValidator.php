@@ -42,6 +42,7 @@ final class VersionValidator implements EventSubscriberInterface {
 
   public function validateVersion(Updater $updater, string $target_version): array {
     $validators = [
+      DevVersionInstalledValidator::class,
       TargetVersionInstallableValidator::class,
       DowngradeValidator::class,
       MajorVersionMatchValidator::class,
@@ -53,6 +54,7 @@ final class VersionValidator implements EventSubscriberInterface {
 
       if ($mode !== CronUpdater::DISABLED) {
         array_pop($validators);
+        $validators[] = StableInstalledVersionValidator::class;
         $validators[] = StableTargetVersionValidator::class;
         $validators[] = MinorUpdateValidator::class;
         $validators[] = TargetVersionPatchLevelValidator::class;
@@ -63,33 +65,6 @@ final class VersionValidator implements EventSubscriberInterface {
     }
 
     return $this->collectMessages($validators, $updater, $this->getInstalledVersion(), $target_version);
-  }
-
-  /**
-   * Checks that the installed version of Drupal is updateable.
-   *
-   * @param \Drupal\package_manager\Event\StageEvent $event
-   *   The event object.
-   */
-  public function checkInstalledVersion(StageEvent $event): void {
-    $stage = $event->getStage();
-
-    // Only do these checks for automatic updates.
-    if (!$stage instanceof Updater) {
-      return;
-    }
-
-    $validators = [
-      DevVersionInstalledValidator::class,
-    ];
-    if ($stage instanceof CronUpdater && $stage->getMode() !== CronUpdater::DISABLED) {
-      $validators[] = StableInstalledVersionValidator::class;
-    }
-
-    $messages = $this->collectMessages($validators, $stage, $this->getInstalledVersion(), NULL);
-    if ($messages) {
-      $event->addError($messages, $this->t('Drupal cannot be automatically updated.'));
-    }
   }
 
   /**
@@ -202,14 +177,8 @@ final class VersionValidator implements EventSubscriberInterface {
    */
   public static function getSubscribedEvents() {
     return [
-      ReadinessCheckEvent::class => [
-        ['checkInstalledVersion'],
-        ['checkTargetVersion'],
-      ],
-      PreCreateEvent::class => [
-        ['checkInstalledVersion'],
-        ['checkTargetVersion'],
-      ],
+      ReadinessCheckEvent::class => 'checkTargetVersion',
+      PreCreateEvent::class => 'checkTargetVersion',
     ];
   }
 
