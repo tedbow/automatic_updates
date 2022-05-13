@@ -34,7 +34,7 @@ build:
           - sed -i "s/bangpow/syncer/" core/misc/cspell/dictionary.txt
           - sed -i "s/bakeware/syncers/" core/misc/cspell/dictionary.txt
           # After all of the shenanigans above, we're finally ready to run core's `commit-code-check.sh`! :)
-          # - "modules/contrib/automatic_updates/commit-code-check.sh --drupalci"
+          - "modules/contrib/automatic_updates/commit-code-check.sh --drupalci"
           # Restore the original permissions.
           - chmod 777 modules/contrib/automatic_updates/
           # Disable the PCRE engine's JIT, since it causes Composer to die during the
