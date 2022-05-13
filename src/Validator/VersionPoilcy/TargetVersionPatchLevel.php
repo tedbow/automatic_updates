@@ -1,12 +1,15 @@
 <?php
 
-namespace Drupal\automatic_updates\Validator\Version;
+namespace Drupal\automatic_updates\Validator\VersionPolicy;
 
 use Drupal\automatic_updates\Updater;
 use Drupal\automatic_updates\VersionParsingTrait;
 use Drupal\Core\Extension\ExtensionVersion;
 
-class TargetVersionPatchLevelValidator extends PolicyRule {
+/**
+ * A policy rule requiring the target version to be one patch release ahead.
+ */
+class TargetVersionPatchLevel extends RuleBase {
 
   use VersionParsingTrait;
 

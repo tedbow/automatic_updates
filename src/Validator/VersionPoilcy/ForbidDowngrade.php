@@ -1,11 +1,14 @@
 <?php
 
-namespace Drupal\automatic_updates\Validator\Version;
+namespace Drupal\automatic_updates\Validator\VersionPolicy;
 
 use Composer\Semver\Comparator;
 use Drupal\automatic_updates\Updater;
 
-class DowngradeValidator extends PolicyRule {
+/**
+ * A policy rule that forbids downgrading.
+ */
+class ForbidDowngrade extends RuleBase {
 
   /**
    * {@inheritdoc}

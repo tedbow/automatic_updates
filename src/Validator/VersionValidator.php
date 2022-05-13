@@ -37,49 +37,77 @@ final class VersionValidator implements EventSubscriberInterface {
     $this->classResolver = $class_resolver;
   }
 
-  protected function collectMessages(array $validators, ...$arguments): array {
-    $all_messages = [];
-
-    foreach ($validators as $validator) {
-      $messages = $this->classResolver->getInstanceFromDefinition($validator)
-        ->validate(...$arguments);
-      if ($messages) {
-        $all_messages = array_merge($all_messages, $messages);
-        break;
-      }
-    }
-    return $all_messages;
-  }
-
+  /**
+   * Validates a target version of Drupal core.
+   *
+   * @param \Drupal\automatic_updates\Updater $updater
+   *   The updater which will perform the update.
+   * @param string $target_version
+   *   The target version of Drupal core.
+   *
+   * @return \Drupal\Core\StringTranslation\TranslatableMarkup[]
+   *   The error messages returned from the first policy rule which rejected
+   *   the given target version.
+   *
+   * @see \Drupal\automatic_updates\Validator\VersionPolicy\RuleBase::validate()
+   */
   public function validateVersion(Updater $updater, string $target_version): array {
-    $validators = [
-      'DevVersionInstalledValidator',
-      'TargetVersionInstallableValidator',
-      'DowngradeValidator',
-      'MajorVersionMatchValidator',
-      'AllowedMinorUpdateValidator',
+    // These rules always apply:
+    // - The installed version must be a tagged release, not a dev snapshot.
+    // - The target version must be a known installable release.
+    // - Downgrading is never allowed.
+    // - Updating across major versions is never allowed.
+    $rules = [
+      'TaggedReleaseInstalled',
+      'TargetVersionInstallable',
+      'ForbidDowngrade',
+      'MajorVersionMatch',
     ];
 
     if ($updater instanceof CronUpdater) {
       $mode = $updater->getMode();
 
+      // These rules always apply for cron updates:
+      // - The installed version must be stable (no alphas, betas, or RCs).
+      // - The target version must be stable too.
+      // - Updating across minor version is never allowed.
+      // - The target version must be no more than one patch release away from
+      //   the installed version.
       if ($mode !== CronUpdater::DISABLED) {
-        array_pop($validators);
-        $validators[] = 'StableInstalledVersionValidator';
-        $validators[] = 'StableTargetVersionValidator';
-        $validators[] = 'MinorUpdateValidator';
-        $validators[] = 'TargetVersionPatchLevelValidator';
+        $rules[] = 'StableReleaseInstalled';
+        $rules[] = 'TargetVersionStable';
+        $rules[] = 'ForbidMinorUpdates';
+        $rules[] = 'TargetVersionPatchLevel';
       }
+      // If only security updates are allowed during cron, then the target
+      // release must also be a security release.
       if ($mode === CronUpdater::SECURITY) {
-        $validators[] = 'TargetSecurityReleaseValidator';
+        $rules[] = 'TargetSecurityRelease';
       }
     }
-    $map = function (string $class): string {
-      return __NAMESPACE__ . "\Version\\$class";
-    };
-    $validators = array_map($map, $validators);
+    else {
+      $rules[] = 'MinorUpdatesEnabled';
+    }
 
-    return $this->collectMessages($validators, $updater, $this->getInstalledVersion(), $target_version);
+    // Convert the list of policy rules into fully qualified class names.
+    $map = function (string $class): string {
+      return __NAMESPACE__ . "\VersionPolicy\\$class";
+    };
+    $rules = array_map($map, $rules);
+
+    // Invoke each rule, stopping when one returns error messages.
+    // @todo Implement a better mechanism for looping through all validators and
+    //   collecting all messages.
+    foreach ($rules as $rule) {
+      $messages = $this->classResolver
+        ->getInstanceFromDefinition($rule)
+        ->validate($updater, $this->getInstalledVersion(), $target_version);
+
+      if ($messages) {
+        return $messages;
+      }
+    }
+    return [];
   }
 
   /**
@@ -96,6 +124,7 @@ final class VersionValidator implements EventSubscriberInterface {
       return;
     }
 
+    // If we can't figure out the target version of Drupal core, bail out.
     $target_version = $this->getTargetVersion($event);
     if (empty($target_version)) {
       return;
@@ -120,27 +149,27 @@ final class VersionValidator implements EventSubscriberInterface {
    *   The target version of Drupal core, or NULL if it could not be determined.
    */
   private function getTargetVersion(StageEvent $event): ?string {
+    $updater = $event->getStage();
+
     if ($event instanceof ReadinessCheckEvent) {
       $package_versions = $event->getPackageVersions();
     }
     else {
-      /** @var \Drupal\automatic_updates\Updater $stage */
-      $stage = $event->getStage();
-      $package_versions = $stage->getPackageVersions()['production'];
+      $package_versions = $updater->getPackageVersions()['production'];
     }
 
     if ($package_versions) {
-      $core_package_name = key($event->getStage()->getActiveComposer()->getCorePackages());
+      $core_package_name = key($updater->getStage()->getActiveComposer()->getCorePackages());
       return $package_versions[$core_package_name];
     }
-    return $this->getTargetVersionFromAvailableReleases($event);
+    return $this->getTargetVersionFromAvailableReleases($updater);
   }
 
   /**
    * Returns the target version of Drupal from the list of available releases.
    *
-   * @param \Drupal\package_manager\Event\StageEvent $event
-   *   The event object.
+   * @param \Drupal\automatic_updates\Updater $updater
+   *   The updater which will perform the update.
    *
    * @return string|null
    *   The target version of Drupal core, or NULL if it could not be determined.
@@ -149,10 +178,10 @@ final class VersionValidator implements EventSubscriberInterface {
    *   is fetched, sorted, and filtered through (i.e., must match the current
    *   minor). Maybe reference ProjectInfo::getInstallableReleases().
    */
-  private function getTargetVersionFromAvailableReleases(StageEvent $event): ?string {
+  private function getTargetVersionFromAvailableReleases(Updater $updater): ?string {
     $installed_version = $this->getInstalledVersion();
 
-    foreach ($this->getAvailableReleases($event) as $possible_release) {
+    foreach (self::getAvailableReleases($updater) as $possible_release) {
       $possible_version = $possible_release->getVersion();
       if (Semver::satisfies($possible_version, "~$installed_version")) {
         return $possible_version;
@@ -162,23 +191,28 @@ final class VersionValidator implements EventSubscriberInterface {
   }
 
   /**
-   * Returns the available releases of Drupal core.
+   * Returns the available releases of Drupal core for a given updater.
    *
-   * @param \Drupal\package_manager\Event\StageEvent $event
-   *   The event object.
+   * @param \Drupal\automatic_updates\Updater $updater
+   *   The updater which will perform the update.
    *
    * @return \Drupal\automatic_updates_9_3_shim\ProjectRelease[]
-   *   The available releases of Drupal core, keyed by version number.
+   *   The available releases of Drupal core, keyed by version number and in
+   *   descending order (i.e., newest first). Will be in ascending order (i.e.,
+   *   oldest first) if $updater is the cron updater.
    *
-   * @todo Expand this doc comment to explain what "installable" means (i.e.,
-   *   reference ProjectInfo::getInstallableReleases()), and how the returned
-   *   releases are sorted.
+   * @see \Drupal\automatic_updates\ProjectInfo::getInstallableReleases()
+   *
+   * @internal
+   *   This is an internal part of Automatic Updates' version policy for
+   *   Drupal core. It may be changed or removed at any time without warning.
+   *   External code should not call this method.
    */
-  private function getAvailableReleases(StageEvent $event): array {
+  public static function getAvailableReleases(Updater $updater): array {
     $project_info = new ProjectInfo('drupal');
     $available_releases = $project_info->getInstallableReleases() ?? [];
 
-    if ($event->getStage() instanceof CronUpdater) {
+    if ($updater instanceof CronUpdater) {
       $available_releases = array_reverse($available_releases);
     }
     return $available_releases;

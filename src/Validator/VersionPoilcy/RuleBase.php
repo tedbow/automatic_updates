@@ -1,9 +1,7 @@
 <?php
 
-namespace Drupal\automatic_updates\Validator\Version;
+namespace Drupal\automatic_updates\Validator\VersionPolicy;
 
-use Drupal\automatic_updates\CronUpdater;
-use Drupal\automatic_updates\ProjectInfo;
 use Drupal\automatic_updates\Updater;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
@@ -16,7 +14,7 @@ use Drupal\Core\StringTranslation\TranslatableMarkup;
  * there is any reason why the installed version cannot be updated to the given
  * target version.
  */
-abstract class PolicyRule {
+abstract class RuleBase {
 
   use StringTranslationTrait;
 
@@ -63,28 +61,5 @@ abstract class PolicyRule {
    *   target versions of Drupal core, respectively.
    */
   abstract protected function doValidation(Updater $updater, string $installed_version, ?string $target_version): array;
-
-  /**
-   * Returns the available releases of Drupal core for a given updater.
-   *
-   * @param \Drupal\automatic_updates\Updater $updater
-   *   The updater which will perform the update.
-   *
-   * @return \Drupal\automatic_updates_9_3_shim\ProjectRelease[]
-   *   The available releases of Drupal core, keyed by version number and in
-   *   descending order (i.e., newest first). Will be in ascending order (i.e.,
-   *   oldest first) if $updater is the cron updater.
-   *
-   * @see \Drupal\automatic_updates\ProjectInfo::getInstallableReleases()
-   */
-  protected function getAvailableReleases(Updater $updater): array {
-    $project_info = new ProjectInfo('drupal');
-    $available_releases = $project_info->getInstallableReleases() ?? [];
-
-    if ($updater instanceof CronUpdater) {
-      $available_releases = array_reverse($available_releases);
-    }
-    return $available_releases;
-  }
 
 }

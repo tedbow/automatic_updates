@@ -1,11 +1,14 @@
 <?php
 
-namespace Drupal\automatic_updates\Validator\Version;
+namespace Drupal\automatic_updates\Validator\VersionPolicy;
 
 use Drupal\automatic_updates\Updater;
 use Drupal\Core\Extension\ExtensionVersion;
 
-class DevVersionInstalledValidator extends PolicyRule {
+/**
+ * A policy rule that forbids updating from a dev snapshot.
+ */
+class TaggedReleaseInstalled extends RuleBase {
 
   /**
    * {@inheritdoc}

@@ -1,11 +1,14 @@
 <?php
 
-namespace Drupal\automatic_updates\Validator\Version;
+namespace Drupal\automatic_updates\Validator\VersionPolicy;
 
 use Drupal\automatic_updates\Updater;
 use Drupal\Core\Extension\ExtensionVersion;
 
-class StableInstalledVersionValidator extends PolicyRule {
+/**
+ * A policy rule that requiring the installed version to be stable.
+ */
+class StableReleaseInstalled extends RuleBase {
 
   /**
    * {@inheritdoc}

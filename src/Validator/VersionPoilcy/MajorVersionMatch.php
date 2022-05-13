@@ -1,11 +1,14 @@
 <?php
 
-namespace Drupal\automatic_updates\Validator\Version;
+namespace Drupal\automatic_updates\Validator\VersionPolicy;
 
 use Drupal\automatic_updates\Updater;
 use Drupal\Core\Extension\ExtensionVersion;
 
-class MajorVersionMatchValidator extends PolicyRule {
+/**
+ * A policy rule that requires updating within the same major version.
+ */
+class MajorVersionMatch extends RuleBase {
 
   /**
    * {@inheritdoc}
