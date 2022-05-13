@@ -7,6 +7,11 @@ use Drupal\Core\Extension\ExtensionVersion;
 
 /**
  * A policy rule requiring the target version to be a stable release.
+ *
+ * @internal
+ *   This is an internal part of Automatic Updates' version policy for
+ *   Drupal core. It may be changed or removed at any time without warning.
+ *   External code should not interact with this class.
  */
 class TargetVersionStable extends RuleBase {
 

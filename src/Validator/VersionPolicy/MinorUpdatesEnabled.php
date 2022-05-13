@@ -10,6 +10,11 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
  * A policy rule that allows minor updates if enabled in configuration.
+ *
+ * @internal
+ *   This is an internal part of Automatic Updates' version policy for
+ *   Drupal core. It may be changed or removed at any time without warning.
+ *   External code should not interact with this class.
  */
 class MinorUpdatesEnabled extends RuleBase implements ContainerInjectionInterface {
 

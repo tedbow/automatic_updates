@@ -7,6 +7,11 @@ use Drupal\Core\Extension\ExtensionVersion;
 
 /**
  * A policy rule that requires updating within the same major version.
+ *
+ * @internal
+ *   This is an internal part of Automatic Updates' version policy for
+ *   Drupal core. It may be changed or removed at any time without warning.
+ *   External code should not interact with this class.
  */
 class MajorVersionMatch extends RuleBase {
 

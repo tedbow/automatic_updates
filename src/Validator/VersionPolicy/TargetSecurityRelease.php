@@ -7,6 +7,11 @@ use Drupal\automatic_updates\Validator\VersionPolicyValidator;
 
 /**
  * A policy rule requiring the target version to be a security release.
+ *
+ * @internal
+ *   This is an internal part of Automatic Updates' version policy for
+ *   Drupal core. It may be changed or removed at any time without warning.
+ *   External code should not interact with this class.
  */
 class TargetSecurityRelease extends RuleBase {
 

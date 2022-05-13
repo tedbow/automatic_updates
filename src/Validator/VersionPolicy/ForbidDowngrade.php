@@ -7,6 +7,11 @@ use Drupal\automatic_updates\Updater;
 
 /**
  * A policy rule that forbids downgrading.
+ *
+ * @internal
+ *   This is an internal part of Automatic Updates' version policy for
+ *   Drupal core. It may be changed or removed at any time without warning.
+ *   External code should not interact with this class.
  */
 class ForbidDowngrade extends RuleBase {
 

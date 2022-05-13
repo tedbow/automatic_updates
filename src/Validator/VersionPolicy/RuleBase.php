@@ -13,6 +13,11 @@ use Drupal\Core\StringTranslation\TranslatableMarkup;
  * installed and (if known) target versions of Drupal core, and determine if
  * there is any reason why the installed version cannot be updated to the given
  * target version.
+ *
+ * @internal
+ *   This is an internal part of Automatic Updates' version policy for
+ *   Drupal core. It may be changed or removed at any time without warning.
+ *   External code should not interact with this class.
  */
 abstract class RuleBase {
 
