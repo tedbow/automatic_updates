@@ -34,84 +34,84 @@ class ReleaseChooserTest extends AutomaticUpdatesKernelTestBase {
   public function providerReleases(): array {
     return [
       'installed 9.8.0, no minor support' => [
-        'chooser' => 'automatic_updates.release_chooser',
+        'updater' => 'automatic_updates.updater',
         'minor_support' => FALSE,
         'installed_version' => '9.8.0',
         'current_minor' => '9.8.2',
         'next_minor' => NULL,
       ],
       'installed 9.8.0, minor support' => [
-        'chooser' => 'automatic_updates.release_chooser',
+        'updater' => 'automatic_updates.updater',
         'minor_support' => TRUE,
         'installed_version' => '9.8.0',
         'current_minor' => '9.8.2',
         'next_minor' => NULL,
       ],
       'installed 9.7.0, no minor support' => [
-        'chooser' => 'automatic_updates.release_chooser',
+        'updater' => 'automatic_updates.updater',
         'minor_support' => FALSE,
         'installed_version' => '9.7.0',
         'current_minor' => '9.7.1',
         'next_minor' => NULL,
       ],
       'installed 9.7.0, minor support' => [
-        'chooser' => 'automatic_updates.release_chooser',
+        'updater' => 'automatic_updates.updater',
         'minor_support' => TRUE,
         'installed_version' => '9.7.0',
         'current_minor' => '9.7.1',
         'next_minor' => '9.8.2',
       ],
       'installed 9.7.2, no minor support' => [
-        'chooser' => 'automatic_updates.release_chooser',
+        'updater' => 'automatic_updates.updater',
         'minor_support' => FALSE,
         'installed_version' => '9.7.2',
         'current_minor' => NULL,
         'next_minor' => NULL,
       ],
       'installed 9.7.2, minor support' => [
-        'chooser' => 'automatic_updates.release_chooser',
+        'updater' => 'automatic_updates.updater',
         'minor_support' => TRUE,
         'installed_version' => '9.7.2',
         'current_minor' => NULL,
         'next_minor' => '9.8.2',
       ],
       'cron, installed 9.8.0, no minor support' => [
-        'chooser' => 'automatic_updates.cron_release_chooser',
+        'updater' => 'automatic_updates.cron_updater',
         'minor_support' => FALSE,
         'installed_version' => '9.8.0',
         'current_minor' => '9.8.1',
         'next_minor' => NULL,
       ],
       'cron, installed 9.8.0, minor support' => [
-        'chooser' => 'automatic_updates.cron_release_chooser',
+        'updater' => 'automatic_updates.cron_updater',
         'minor_support' => TRUE,
         'installed_version' => '9.8.0',
         'current_minor' => '9.8.1',
         'next_minor' => NULL,
       ],
       'cron, installed 9.7.0, no minor support' => [
-        'chooser' => 'automatic_updates.cron_release_chooser',
+        'updater' => 'automatic_updates.cron_updater',
         'minor_support' => FALSE,
         'installed_version' => '9.7.0',
         'current_minor' => '9.7.1',
         'next_minor' => NULL,
       ],
       'cron, installed 9.7.0, minor support' => [
-        'chooser' => 'automatic_updates.cron_release_chooser',
+        'updater' => 'automatic_updates.cron_updater',
         'minor_support' => TRUE,
         'installed_version' => '9.7.0',
         'current_minor' => '9.7.1',
         'next_minor' => NULL,
       ],
       'cron, installed 9.7.2, no minor support' => [
-        'chooser' => 'automatic_updates.cron_release_chooser',
+        'updater' => 'automatic_updates.cron_updater',
         'minor_support' => FALSE,
         'installed_version' => '9.7.2',
         'current_minor' => NULL,
         'next_minor' => NULL,
       ],
       'cron, installed 9.7.2, minor support' => [
-        'chooser' => 'automatic_updates.cron_release_chooser',
+        'updater' => 'automatic_updates.cron_updater',
         'minor_support' => TRUE,
         'installed_version' => '9.7.2',
         'current_minor' => NULL,
@@ -123,8 +123,8 @@ class ReleaseChooserTest extends AutomaticUpdatesKernelTestBase {
   /**
    * Tests fetching the recommended release when an update is available.
    *
-   * @param string $chooser_service
-   *   The ID of release chooser service to use.
+   * @param string $updater_service
+   *   The ID of the updater service to use.
    * @param bool $minor_support
    *   Whether updates to the next minor will be allowed.
    * @param string $installed_version
@@ -140,13 +140,15 @@ class ReleaseChooserTest extends AutomaticUpdatesKernelTestBase {
    * @covers ::getLatestInInstalledMinor
    * @covers ::getLatestInNextMinor
    */
-  public function testReleases(string $chooser_service, bool $minor_support, string $installed_version, ?string $current_minor, ?string $next_minor): void {
+  public function testReleases(string $updater_service, bool $minor_support, string $installed_version, ?string $current_minor, ?string $next_minor): void {
     $this->setCoreVersion($installed_version);
     $this->config('automatic_updates.settings')->set('allow_core_minor_updates', $minor_support)->save();
     /** @var \Drupal\automatic_updates\ReleaseChooser $chooser */
-    $chooser = $this->container->get($chooser_service);
-    $this->assertReleaseVersion($current_minor, $chooser->getLatestInInstalledMinor());
-    $this->assertReleaseVersion($next_minor, $chooser->getLatestInNextMinor());
+    $chooser = $this->container->get('automatic_updates.release_chooser');
+    /** @var \Drupal\automatic_updates\Updater $updater */
+    $updater = $this->container->get($updater_service);
+    $this->assertReleaseVersion($current_minor, $chooser->getLatestInInstalledMinor($updater));
+    $this->assertReleaseVersion($next_minor, $chooser->getLatestInNextMinor($updater));
   }
 
   /**
