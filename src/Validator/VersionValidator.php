@@ -125,7 +125,7 @@ final class VersionValidator implements EventSubscriberInterface {
    * @param \Drupal\package_manager\Event\StageEvent $event
    *   The event object.
    */
-  public function checkTargetVersion(StageEvent $event): void {
+  public function checkVersion(StageEvent $event): void {
     $stage = $event->getStage();
 
     // Only do these checks for automatic updates.
@@ -237,8 +237,8 @@ final class VersionValidator implements EventSubscriberInterface {
    */
   public static function getSubscribedEvents() {
     return [
-      ReadinessCheckEvent::class => 'checkTargetVersion',
-      PreCreateEvent::class => 'checkTargetVersion',
+      ReadinessCheckEvent::class => 'checkVersion',
+      PreCreateEvent::class => 'checkVersion',
     ];
   }
 
