@@ -3,7 +3,7 @@
 namespace Drupal\automatic_updates\Validator\VersionPolicy;
 
 use Drupal\automatic_updates\Updater;
-use Drupal\automatic_updates\Validator\VersionValidator;
+use Drupal\automatic_updates\Validator\VersionPolicyValidator;
 
 /**
  * A policy rule requiring the target version to be a security release.
@@ -14,7 +14,7 @@ class TargetSecurityRelease extends RuleBase {
    * {@inheritdoc}
    */
   protected function doValidation(Updater $updater, string $installed_version, ?string $target_version): array {
-    $releases = VersionValidator::getAvailableReleases($updater);
+    $releases = VersionPolicyValidator::getAvailableReleases($updater);
 
     if (!$releases[$target_version]->isSecurityRelease()) {
       return [

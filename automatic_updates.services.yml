@@ -55,7 +55,7 @@ services:
   automatic_updates.release_chooser:
     class: Drupal\automatic_updates\ReleaseChooser
     arguments:
-      - '@automatic_updates.validator.version'
+      - '@automatic_updates.validator.version_policy'
   automatic_updates.composer_executable_validator:
     class: Drupal\automatic_updates\Validator\PackageManagerReadinessCheck
     arguments:
@@ -115,8 +115,8 @@ services:
     class: Drupal\automatic_updates\Validator\XdebugValidator
     tags:
       - { name: event_subscriber }
-  automatic_updates.validator.version:
-    class: Drupal\automatic_updates\Validator\VersionValidator
+  automatic_updates.validator.version_policy:
+    class: Drupal\automatic_updates\Validator\VersionPolicyValidator
     arguments:
       - '@class_resolver'
     tags:

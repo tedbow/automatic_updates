@@ -26,7 +26,7 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 /**
  * Validates the installed and target versions of Drupal before an update.
  */
-final class VersionValidator implements EventSubscriberInterface {
+final class VersionPolicyValidator implements EventSubscriberInterface {
 
   use StringTranslationTrait;
 
@@ -38,7 +38,7 @@ final class VersionValidator implements EventSubscriberInterface {
   private $classResolver;
 
   /**
-   * Constructs a VersionValidator object.
+   * Constructs a VersionPolicyValidator object.
    *
    * @param \Drupal\Core\DependencyInjection\ClassResolverInterface $class_resolver
    *   The class resolver service.
