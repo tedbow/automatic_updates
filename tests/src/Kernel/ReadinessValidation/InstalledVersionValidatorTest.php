@@ -28,10 +28,9 @@ class InstalledVersionValidatorTest extends AutomaticUpdatesKernelTestBase {
       ->set('cron', CronUpdater::DISABLED)
       ->save();
 
-    $messages = [
+    $result = ValidationResult::createError([
       'Drupal cannot be automatically updated from the installed version, 9.8.0-dev, because automatic updates from a dev version to any other version are not supported.',
-    ];
-    $result = ValidationResult::createError($messages, t('Drupal cannot be automatically updated.'));
+    ]);
     $this->assertCheckerResultsFromManager([$result], TRUE);
   }
 
