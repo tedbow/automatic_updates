@@ -42,8 +42,8 @@ final class VersionValidator implements EventSubscriberInterface {
    *
    * @param \Drupal\automatic_updates\Updater $updater
    *   The updater which will perform the update.
-   * @param string $target_version
-   *   The target version of Drupal core.
+   * @param string|null $target_version
+   *   The target version of Drupal core, or NULL if it is not known.
    *
    * @return \Drupal\Core\StringTranslation\TranslatableMarkup[]
    *   The error messages returned from the first policy rule which rejected
@@ -51,41 +51,50 @@ final class VersionValidator implements EventSubscriberInterface {
    *
    * @see \Drupal\automatic_updates\Validator\VersionPolicy\RuleBase::validate()
    */
-  public function validateVersion(Updater $updater, string $target_version): array {
-    // These rules always apply:
-    // - The installed version must be a tagged release, not a dev snapshot.
-    // - The target version must be a known installable release.
-    // - Downgrading is never allowed.
-    // - Updating across major versions is never allowed.
-    $rules = [
-      'TaggedReleaseInstalled',
-      'TargetVersionInstallable',
-      'ForbidDowngrade',
-      'MajorVersionMatch',
-    ];
+  public function validateVersion(Updater $updater, ?string $target_version): array {
+    // Check that the installed version of Drupal isn't a dev snapshot.
+    $rules = ['TaggedReleaseInstalled'];
 
+    // If the target version is known, also check that:
+    // - It's a known installable release.
+    // - It's newer than the installed version.
+    // - It's in the same major version as the installed version.
+    if ($target_version) {
+      $rules[] = 'TargetVersionInstallable';
+      $rules[] = 'ForbidDowngrade';
+      $rules[] = 'MajorVersionMatch';
+    }
+
+    // If this is a cron update, we may need to do additional checks.
     if ($updater instanceof CronUpdater) {
       $mode = $updater->getMode();
 
-      // These rules always apply for cron updates:
-      // - The installed version must be stable (no alphas, betas, or RCs).
-      // - The target version must be stable too.
-      // - Updating across minor version is never allowed.
-      // - The target version must be no more than one patch release away from
-      //   the installed version.
+      // If cron updates are enabled, the installed version must be stable;
+      // no alphas, betas, or RCs.
       if ($mode !== CronUpdater::DISABLED) {
         $rules[] = 'StableReleaseInstalled';
-        $rules[] = 'TargetVersionStable';
-        $rules[] = 'ForbidMinorUpdates';
-        $rules[] = 'TargetVersionPatchLevel';
-      }
-      // If only security updates are allowed during cron, then the target
-      // release must also be a security release.
-      if ($mode === CronUpdater::SECURITY) {
-        $rules[] = 'TargetSecurityRelease';
+
+        // If the target version is known, also check that:
+        // - It's stable as well.
+        // - It's in the same minor version as the installed version.
+        // - It's not more than one patch release newer than the installed
+        //   version.
+        if ($target_version) {
+          $rules[] = 'TargetVersionStable';
+          $rules[] = 'ForbidMinorUpdates';
+          $rules[] = 'TargetVersionPatchLevel';
+
+          // If only security updates are allowed during cron, the target
+          // version must be a security release.
+          if ($mode === CronUpdater::SECURITY) {
+            $rules[] = 'TargetSecurityRelease';
+          }
+        }
       }
     }
-    else {
+    // If this is not a cron update, and we know the target version, minor
+    // version updates are allowed if configuration says so.
+    elseif ($target_version) {
       $rules[] = 'MinorUpdatesEnabled';
     }
 
@@ -121,12 +130,6 @@ final class VersionValidator implements EventSubscriberInterface {
 
     // Only do these checks for automatic updates.
     if (!$stage instanceof Updater) {
-      return;
-    }
-
-    // If we can't figure out the target version of Drupal core, bail out.
-    $target_version = $this->getTargetVersion($event);
-    if (empty($target_version)) {
       return;
     }
 
