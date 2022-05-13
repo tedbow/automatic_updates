@@ -17,6 +17,7 @@ use Drupal\automatic_updates\Validator\Version\StableTargetVersionValidator;
 use Drupal\automatic_updates\Validator\Version\TargetSecurityReleaseValidator;
 use Drupal\automatic_updates\Validator\Version\TargetVersionInstallableValidator;
 use Drupal\automatic_updates\Validator\Version\TargetVersionPatchLevelValidator;
+use Drupal\Core\DependencyInjection\ClassResolverInterface;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\package_manager\Event\PreCreateEvent;
 use Drupal\package_manager\Event\StageEvent;
@@ -29,13 +30,29 @@ final class VersionValidator implements EventSubscriberInterface {
 
   use StringTranslationTrait;
 
+  /**
+   * The class resolver service.
+   *
+   * @var \Drupal\Core\DependencyInjection\ClassResolverInterface
+   */
+  private $classResolver;
+
+  /**
+   * Constructs a VersionValidator object.
+   *
+   * @param \Drupal\Core\DependencyInjection\ClassResolverInterface $class_resolver
+   *   The class resolver service.
+   */
+  public function __construct(ClassResolverInterface $class_resolver) {
+    $this->classResolver = $class_resolver;
+  }
+
   protected function collectMessages(array $validators, ...$arguments): array {
     $all_messages = [];
 
     foreach ($validators as $validator) {
-      /** @var \Drupal\automatic_updates\Validator\Version\VersionValidatorBase $validator */
-      $validator = \Drupal::classResolver($validator);
-      $messages = $validator->validate(...$arguments);
+      $messages = $this->classResolver->getInstanceFromDefinition($validator)
+        ->validate(...$arguments);
       if ($messages) {
         $all_messages = array_merge($all_messages, $messages);
         break;

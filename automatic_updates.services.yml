@@ -117,6 +117,8 @@ services:
       - { name: event_subscriber }
   automatic_updates.validator.version:
     class: Drupal\automatic_updates\Validator\VersionValidator
+    arguments:
+      - '@class_resolver'
     tags:
       - { name: event_subscriber }
   automatic_updates.config_subscriber:
