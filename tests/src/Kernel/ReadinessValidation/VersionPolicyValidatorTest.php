@@ -34,14 +34,24 @@ class VersionPolicyValidatorTest extends AutomaticUpdatesKernelTestBase {
    * @param string[] $release_metadata
    *   The paths of the XML release metadata files to use, keyed by project
    *   name.
+   * @param string $cron_setting
+   *   The setting for cron updates. Should be one of the constants from
+   *   \Drupal\automatic_updates\CronUpdater.
+   * @param \Drupal\package_manager\ValidationResult[] $expected_results
+   *   The expected validation results, if any.
    *
    * @dataProvider providerAttended
    *
    * @see parent::setReleaseMetadata()
    */
-  public function testAttended(string $installed_version, array $release_metadata): void {
+  public function testAttended(string $installed_version, array $release_metadata, string $cron_setting, array $expected_results): void {
     $this->setCoreVersion($installed_version);
     $this->setReleaseMetadata($release_metadata);
+    $this->config('automatic_updates.settings')
+      ->set('cron', $cron_setting)
+      ->save();
+
+    $this->assertCheckerResultsFromManager($expected_results, TRUE);
   }
 
   /**
@@ -62,14 +72,24 @@ class VersionPolicyValidatorTest extends AutomaticUpdatesKernelTestBase {
    * @param string[] $release_metadata
    *   The paths of the XML release metadata files to use, keyed by project
    *   name.
+   * @param string $cron_setting
+   *   The setting for cron updates. Should be one of the constants from
+   *   \Drupal\automatic_updates\CronUpdater.
+   * @param \Drupal\package_manager\ValidationResult[] $expected_results
+   *   The expected validation results, if any.
    *
    * @dataProvider providerUnattended
    *
    * @see parent::setReleaseMetadata()
    */
-  public function testUnattended(string $installed_version, array $release_metadata): void {
+  public function testUnattended(string $installed_version, array $release_metadata, string $cron_setting, array $expected_results): void {
     $this->setCoreVersion($installed_version);
     $this->setReleaseMetadata($release_metadata);
+    $this->config('automatic_updates.settings')
+      ->set('cron', $cron_setting)
+      ->save();
+
+    $this->assertCheckerResultsFromManager($expected_results, TRUE);
   }
 
 }
