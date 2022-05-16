@@ -29,9 +29,19 @@ class VersionPolicyValidatorTest extends AutomaticUpdatesKernelTestBase {
   /**
    * Tests version policy for attended updates.
    *
+   * @param string $installed_version
+   *   The installed version of Drupal core, as known to the update system.
+   * @param string[] $release_metadata
+   *   The paths of the XML release metadata files to use, keyed by project
+   *   name.
+   *
    * @dataProvider providerAttended
+   *
+   * @see parent::setReleaseMetadata()
    */
-  public function testAttended(): void {
+  public function testAttended(string $installed_version, array $release_metadata): void {
+    $this->setCoreVersion($installed_version);
+    $this->setReleaseMetadata($release_metadata);
   }
 
   /**
@@ -47,9 +57,19 @@ class VersionPolicyValidatorTest extends AutomaticUpdatesKernelTestBase {
   /**
    * Tests version policy for unattended updates.
    *
+   * @param string $installed_version
+   *   The installed version of Drupal core, as known to the update system.
+   * @param string[] $release_metadata
+   *   The paths of the XML release metadata files to use, keyed by project
+   *   name.
+   *
    * @dataProvider providerUnattended
+   *
+   * @see parent::setReleaseMetadata()
    */
-  public function testUnattended(): void {
+  public function testUnattended(string $installed_version, array $release_metadata): void {
+    $this->setCoreVersion($installed_version);
+    $this->setReleaseMetadata($release_metadata);
   }
 
 }
