@@ -175,7 +175,12 @@ final class VersionPolicyValidator implements EventSubscriberInterface {
       $core_package_name = key($updater->getActiveComposer()->getCorePackages());
       return $package_versions[$core_package_name];
     }
-    return $this->getTargetVersionFromAvailableReleases($updater);
+    elseif ($event instanceof ReadinessCheckEvent) {
+      return $this->getTargetVersionFromAvailableReleases($updater);
+    }
+    else {
+      return NULL;
+    }
   }
 
   /**
