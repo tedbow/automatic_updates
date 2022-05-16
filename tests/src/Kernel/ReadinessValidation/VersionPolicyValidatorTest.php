@@ -118,7 +118,8 @@ class VersionPolicyValidatorTest extends AutomaticUpdatesKernelTestBase {
 
     if ($expected_results) {
       $this->assertUpdateStagedTimes(0);
-      // @todo Check that the message was logged.
+      $e = new StageValidationException($expected_results);
+      $this->assertTrue($logger->hasRecordThatContains($e->getMessage(), RfcLogLevel::ERROR));
     }
     else {
       $this->assertUpdateStagedTimes(1);
