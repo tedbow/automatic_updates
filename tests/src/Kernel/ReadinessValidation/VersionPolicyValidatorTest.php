@@ -29,6 +29,31 @@ class VersionPolicyValidatorTest extends AutomaticUpdatesKernelTestBase {
     $metadata_dir = __DIR__ . '/../../../fixtures/release-history';
 
     return [
+      // Updating from a dev, alpha, beta, or RC release is not allowed during
+      // cron. The first three cases are a control group to prove that a
+      // legitimate patch-level update from a stable release never raises a
+      // readiness error. The next three cases prove that updating from a dev
+      // snapshot is never allowed, regardless of configuration. The subsequent
+      // cases prove that updating from an alpha, beta, or RC release won't
+      // raise a readiness error if unattended updates are disabled.
+      'stable release installed, cron disabled' => [
+        '9.8.0',
+        "$metadata_dir/drupal.9.8.1-security.xml",
+        CronUpdater::DISABLED,
+        [],
+      ],
+      'stable release installed, security only in cron' => [
+        '9.8.0',
+        "$metadata_dir/drupal.9.8.1-security.xml",
+        CronUpdater::SECURITY,
+        [],
+      ],
+      'stable release installed, all allowed in cron' => [
+        '9.8.0',
+        "$metadata_dir/drupal.9.8.1-security.xml",
+        CronUpdater::ALL,
+        [],
+      ],
       'dev snapshot installed, cron disabled' => [
         '9.8.0-dev',
         "$metadata_dir/drupal.9.8.1-security.xml",
@@ -58,24 +83,6 @@ class VersionPolicyValidatorTest extends AutomaticUpdatesKernelTestBase {
             'Drupal cannot be automatically updated from the installed version, 9.8.0-dev, because automatic updates from a dev version to any other version are not supported.',
           ]),
         ],
-      ],
-      'stable release installed, cron disabled' => [
-        '9.8.0',
-        "$metadata_dir/drupal.9.8.1-security.xml",
-        CronUpdater::DISABLED,
-        [],
-      ],
-      'stable release installed, security only in cron' => [
-        '9.8.0',
-        "$metadata_dir/drupal.9.8.1-security.xml",
-        CronUpdater::SECURITY,
-        [],
-      ],
-      'stable release installed, all allowed in cron' => [
-        '9.8.0',
-        "$metadata_dir/drupal.9.8.1-security.xml",
-        CronUpdater::ALL,
-        [],
       ],
       'alpha installed, cron disabled' => [
         '9.8.0-alpha1',
