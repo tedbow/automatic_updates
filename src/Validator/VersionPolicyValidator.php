@@ -110,9 +110,9 @@ final class VersionPolicyValidator implements EventSubscriberInterface {
       $rules[] = MinorUpdatesEnabled::class;
     }
 
-    // Invoke each rule, stopping when one returns error messages.
-    // @todo Implement a better mechanism for looping through all validators and
-    //   collecting all messages.
+    // Invoke each rule in the order that they were added to $rules, stopping
+    // when one returns error messages.
+    // @todo Collect and return all the error messages.
     foreach ($rules as $rule) {
       $messages = $this->classResolver
         ->getInstanceFromDefinition($rule)
