@@ -65,6 +65,96 @@ class VersionPolicyValidatorTest extends AutomaticUpdatesKernelTestBase {
         CronUpdater::DISABLED,
         [],
       ],
+      'stable release installed, security only in cron' => [
+        '9.8.0',
+        "$metadata_dir/drupal.9.8.1-security.xml",
+        CronUpdater::SECURITY,
+        [],
+      ],
+      'stable release installed, all allowed in cron' => [
+        '9.8.0',
+        "$metadata_dir/drupal.9.8.1-security.xml",
+        CronUpdater::ALL,
+        [],
+      ],
+      'alpha installed, cron disabled' => [
+        '9.8.0-alpha1',
+        "$metadata_dir/drupal.9.8.1-security.xml",
+        CronUpdater::DISABLED,
+        [],
+      ],
+      'alpha installed, security only in cron' => [
+        '9.8.0-alpha1',
+        "$metadata_dir/drupal.9.8.1-security.xml",
+        CronUpdater::SECURITY,
+        [
+          ValidationResult::createError([
+            'Drupal cannot be automatically updated during cron from its current version, 9.8.0-alpha1, because Automatic Updates only supports updating from stable versions during cron.',
+          ]),
+        ],
+      ],
+      'alpha installed, all allowed in cron' => [
+        '9.8.0-alpha1',
+        "$metadata_dir/drupal.9.8.1-security.xml",
+        CronUpdater::ALL,
+        [
+          ValidationResult::createError([
+            'Drupal cannot be automatically updated during cron from its current version, 9.8.0-alpha1, because Automatic Updates only supports updating from stable versions during cron.',
+          ]),
+        ],
+      ],
+      'beta installed, cron disabled' => [
+        '9.8.0-beta2',
+        "$metadata_dir/drupal.9.8.1-security.xml",
+        CronUpdater::DISABLED,
+        [],
+      ],
+      'beta installed, security only in cron' => [
+        '9.8.0-beta2',
+        "$metadata_dir/drupal.9.8.1-security.xml",
+        CronUpdater::SECURITY,
+        [
+          ValidationResult::createError([
+            'Drupal cannot be automatically updated during cron from its current version, 9.8.0-beta2, because Automatic Updates only supports updating from stable versions during cron.',
+          ]),
+        ],
+      ],
+      'beta installed, all allowed in cron' => [
+        '9.8.0-beta2',
+        "$metadata_dir/drupal.9.8.1-security.xml",
+        CronUpdater::ALL,
+        [
+          ValidationResult::createError([
+            'Drupal cannot be automatically updated during cron from its current version, 9.8.0-beta2, because Automatic Updates only supports updating from stable versions during cron.',
+          ]),
+        ],
+      ],
+      'rc installed, cron disabled' => [
+        '9.8.0-rc3',
+        "$metadata_dir/drupal.9.8.1-security.xml",
+        CronUpdater::DISABLED,
+        [],
+      ],
+      'rc installed, security only in cron' => [
+        '9.8.0-rc3',
+        "$metadata_dir/drupal.9.8.1-security.xml",
+        CronUpdater::SECURITY,
+        [
+          ValidationResult::createError([
+            'Drupal cannot be automatically updated during cron from its current version, 9.8.0-rc3, because Automatic Updates only supports updating from stable versions during cron.',
+          ]),
+        ],
+      ],
+      'rc installed, all allowed in cron' => [
+        '9.8.0-rc3',
+        "$metadata_dir/drupal.9.8.1-security.xml",
+        CronUpdater::ALL,
+        [
+          ValidationResult::createError([
+            'Drupal cannot be automatically updated during cron from its current version, 9.8.0-rc3, because Automatic Updates only supports updating from stable versions during cron.',
+          ]),
+        ],
+      ],
     ];
   }
 
