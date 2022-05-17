@@ -38,6 +38,12 @@ abstract class PreOperationStageEvent extends StageEvent {
 
   /**
    * Adds error information to the event.
+   *
+   * @param \Drupal\Core\StringTranslation\TranslatableMarkup[] $messages
+   *   The error messages.
+   * @param \Drupal\Core\StringTranslation\TranslatableMarkup|null $summary
+   *   (optional) The summary of error messages. Only required if there
+   *   is more than one message.
    */
   public function addError(array $messages, ?TranslatableMarkup $summary = NULL): void {
     $this->results[] = ValidationResult::createError($messages, $summary);

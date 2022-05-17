@@ -57,6 +57,7 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
       'access site in maintenance mode',
       'administer modules',
       'access site reports',
+      'view update notifications',
     ]);
     $this->drupalLogin($user);
     $this->checkForUpdates();
