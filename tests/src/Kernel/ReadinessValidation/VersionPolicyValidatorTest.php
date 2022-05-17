@@ -19,10 +19,79 @@ class VersionPolicyValidatorTest extends AutomaticUpdatesKernelTestBase {
    */
   protected static $modules = ['automatic_updates'];
 
+  /**
+   * Data provider for ::testReadinessCheck().
+   *
+   * @return array[]
+   *   Sets of arguments to pass to the test method.
+   */
   public function providerReadinessCheck(): array {
+    $metadata_dir = __DIR__ . '/../../../fixtures/release-history';
+
+    return [
+      'dev snapshot installed, cron disabled' => [
+        '9.8.0-dev',
+        "$metadata_dir/drupal.9.8.1-security.xml",
+        CronUpdater::DISABLED,
+        [
+          ValidationResult::createError([
+            'Drupal cannot be automatically updated from the installed version, 9.8.0-dev, because automatic updates from a dev version to any other version are not supported.',
+          ]),
+        ],
+      ],
+      'dev snapshot installed, security only in cron' => [
+        '9.8.0-dev',
+        "$metadata_dir/drupal.9.8.1-security.xml",
+        CronUpdater::SECURITY,
+        [
+          ValidationResult::createError([
+            'Drupal cannot be automatically updated from the installed version, 9.8.0-dev, because automatic updates from a dev version to any other version are not supported.',
+          ]),
+        ],
+      ],
+      'dev snapshot installed, all allowed in cron' => [
+        '9.8.0-dev',
+        "$metadata_dir/drupal.9.8.1-security.xml",
+        CronUpdater::ALL,
+        [
+          ValidationResult::createError([
+            'Drupal cannot be automatically updated from the installed version, 9.8.0-dev, because automatic updates from a dev version to any other version are not supported.',
+          ]),
+        ],
+      ],
+      'stable release installed, cron disabled' => [
+        '9.8.0',
+        "$metadata_dir/drupal.9.8.1-security.xml",
+        CronUpdater::DISABLED,
+        [],
+      ],
+    ];
   }
 
-  public function testReadinessCheck(): void {
+  /**
+   * Tests target version validation during readiness checks.
+   *
+   * @param string $installed_version
+   *   The installed version of Drupal core.
+   * @param string $release_metadata
+   *   The path of the core release metadata to serve to the update system.
+   * @param string $cron_mode
+   *   The mode for unattended updates. Can be either
+   *   \Drupal\automatic_updates\CronUpdater::SECURITY or
+   *   \Drupal\automatic_updates\CronUpdater::ALL.
+   * @param \Drupal\package_manager\ValidationResult[] $expected_results
+   *   The expected validation results.
+   *
+   * @dataProvider providerReadinessCheck
+   */
+  public function testReadinessCheck(string $installed_version, string $release_metadata, string $cron_mode, array $expected_results): void {
+    $this->setCoreVersion($installed_version);
+    $this->setReleaseMetadata(['drupal' => $release_metadata]);
+    $this->config('automatic_updates.settings')
+      ->set('cron', $cron_mode)
+      ->save();
+
+    $this->assertCheckerResultsFromManager($expected_results, TRUE);
   }
 
   /**
@@ -83,8 +152,8 @@ class VersionPolicyValidatorTest extends AutomaticUpdatesKernelTestBase {
           ]),
         ],
       ],
-      // These cases can only happen by explicitly supplying the updater with
-      // an invalid target version.
+      // The following cases can only happen by explicitly supplying the updater
+      // with an invalid target version.
       'attended downgrade, security only in cron' => [
         'automatic_updates.updater',
         '9.8.1',
