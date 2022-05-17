@@ -68,13 +68,13 @@ final class VersionPolicyValidator implements EventSubscriberInterface {
     ];
 
     // If the target version is known, also check that:
-    // - It's a known installable release.
     // - It's newer than the installed version.
     // - It's in the same major version as the installed version.
+    // - It's a known installable release.
     if ($target_version) {
-      $rules[] = TargetVersionInstallable::class;
       $rules[] = ForbidDowngrade::class;
       $rules[] = MajorVersionMatch::class;
+      $rules[] = TargetVersionInstallable::class;
     }
 
     // If this is a cron update, we may need to do additional checks.
