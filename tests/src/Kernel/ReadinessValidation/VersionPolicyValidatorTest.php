@@ -162,6 +162,32 @@ class VersionPolicyValidatorTest extends AutomaticUpdatesKernelTestBase {
           ]),
         ],
       ],
+      // These three cases prove that, if only security updates are allowed
+      // during cron, a readiness error is raised if the next available release
+      // is not a security release.
+      // @todo Replicate these cases, and expand them, in providerApi().
+      'update to normal release, cron disabled' => [
+        '9.8.1',
+        "$metadata_dir/drupal.9.8.2.xml",
+        CronUpdater::DISABLED,
+        [],
+      ],
+      'update to normal release, security only in cron' => [
+        '9.8.1',
+        "$metadata_dir/drupal.9.8.2.xml",
+        CronUpdater::SECURITY,
+        [
+          ValidationResult::createError([
+            'Drupal cannot be automatically updated during cron from its current version, 9.8.1, to the recommended version, 9.8.2, because 9.8.2 is not a security release.',
+          ]),
+        ],
+      ],
+      'update to normal release, all allowed in cron' => [
+        '9.8.1',
+        "$metadata_dir/drupal.9.8.2.xml",
+        CronUpdater::ALL,
+        [],
+      ],
     ];
   }
 
