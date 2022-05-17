@@ -165,7 +165,6 @@ class VersionPolicyValidatorTest extends AutomaticUpdatesKernelTestBase {
       // These three cases prove that, if only security updates are allowed
       // during cron, a readiness error is raised if the next available release
       // is not a security release.
-      // @todo Replicate these cases, and expand them, in providerApi().
       'update to normal release, cron disabled' => [
         '9.8.1',
         "$metadata_dir/drupal.9.8.2.xml",
@@ -420,6 +419,47 @@ class VersionPolicyValidatorTest extends AutomaticUpdatesKernelTestBase {
             'Cannot update Drupal core to 9.8.1 because it is not in the list of installable releases.',
           ]),
         ],
+      ],
+      // These two cases prove that an attended update to a normal non-security
+      // release is allowed regardless of how cron is configured...
+      'attended update to normal release, security only in cron' => [
+        'automatic_updates.updater',
+        '9.8.1',
+        "$metadata_dir/drupal.9.8.2.xml",
+        CronUpdater::SECURITY,
+        ['drupal' => '9.8.2'],
+        [],
+      ],
+      'attended update to normal release, all allowed in cron' => [
+        'automatic_updates.updater',
+        '9.8.1',
+        "$metadata_dir/drupal.9.8.2.xml",
+        CronUpdater::ALL,
+        ['drupal' => '9.8.2'],
+        [],
+      ],
+      // ...and these two cases prove that an unattended update to a normal
+      // non-security release is only allowed if cron is configured to allow
+      // all updates.
+      'unattended update to normal release, security only in cron' => [
+        'automatic_updates.cron_updater',
+        '9.8.1',
+        "$metadata_dir/drupal.9.8.2.xml",
+        CronUpdater::SECURITY,
+        ['drupal' => '9.8.2'],
+        [
+          ValidationResult::createError([
+            'Drupal cannot be automatically updated during cron from its current version, 9.8.1, to the recommended version, 9.8.2, because 9.8.2 is not a security release.',
+          ]),
+        ],
+      ],
+      'unattended update to normal release, all allowed in cron' => [
+        'automatic_updates.cron_updater',
+        '9.8.1',
+        "$metadata_dir/drupal.9.8.2.xml",
+        CronUpdater::ALL,
+        ['drupal' => '9.8.2'],
+        [],
       ],
     ];
   }
