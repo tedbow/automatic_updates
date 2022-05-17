@@ -38,6 +38,7 @@ class CronUpdaterTest extends AutomaticUpdatesKernelTestBase {
   protected static $modules = [
     'automatic_updates',
     'automatic_updates_test',
+    'user',
   ];
 
   /**
@@ -326,6 +327,19 @@ class CronUpdaterTest extends AutomaticUpdatesKernelTestBase {
       $this->assertFalse($logged_by_cron);
       $this->assertTrue($updater->isAvailable());
     }
+  }
+
+  /**
+   * Tests that the cron updater throws an exception if started while disabled.
+   */
+  public function testExceptionWhenDisabled(): void {
+    $this->config('automatic_updates.settings')
+      ->set('cron', CronUpdater::DISABLED)
+      ->save();
+
+    $this->expectExceptionMessage('Unattended updates are disabled.');
+    $this->container->get('automatic_updates.cron_updater')
+      ->begin(['drupal' => '9.8.1']);
   }
 
 }
