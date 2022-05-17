@@ -413,7 +413,12 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
     $possible_update_message = 'Possible database updates were detected in the following modules; you may be redirected to the database update page in order to complete the update process.';
     $assert_session->pageTextContains($possible_update_message);
     $assert_session->pageTextContains('System');
-    $assert_session->checkboxChecked('maintenance_mode');
+    if ($maintenance_mode_on === TRUE) {
+      $assert_session->fieldNotExists('maintenance_mode');
+    }
+    else {
+      $assert_session->checkboxChecked('maintenance_mode');
+    }
     $assert_session->pageTextNotContains($cached_message);
     $page->pressButton('Continue');
     $this->checkForMetaRefresh();

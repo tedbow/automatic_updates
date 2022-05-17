@@ -165,11 +165,14 @@ class UpdateReady extends FormBase {
       '#markup' => $this->t('Back up your database and site before you continue. <a href=":backup_url">Learn how</a>.', [':backup_url' => 'https://www.drupal.org/node/22281']),
       '#suffix' => '</strong>',
     ];
-    $form['maintenance_mode'] = [
-      '#title' => $this->t('Perform updates with site in maintenance mode (strongly recommended)'),
-      '#type' => 'checkbox',
-      '#default_value' => TRUE,
-    ];
+    if (!$this->state->get('system.maintenance_mode')) {
+      $form['maintenance_mode'] = [
+        '#title' => $this->t('Perform updates with site in maintenance mode (strongly recommended)'),
+        '#type' => 'checkbox',
+        '#default_value' => TRUE,
+      ];
+    }
+
     $form['actions']['submit'] = [
       '#type' => 'submit',
       '#value' => $this->t('Continue'),
@@ -204,6 +207,7 @@ class UpdateReady extends FormBase {
     if ($form_state->getValue('maintenance_mode')) {
       $this->state->set('system.maintenance_mode', TRUE);
     }
+
     $stage_id = $form_state->getValue('stage_id');
     $batch = (new BatchBuilder())
       ->setTitle($this->t('Apply updates'))
