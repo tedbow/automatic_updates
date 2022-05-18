@@ -30,80 +30,39 @@ class VersionPolicyValidatorTest extends AutomaticUpdatesKernelTestBase {
 
     return [
       // Updating from a dev, alpha, beta, or RC release is not allowed during
-      // cron. The first three cases are a control group to prove that a
-      // legitimate patch-level update from a stable release never raises a
-      // readiness error. The next three cases prove that updating from a dev
-      // snapshot is never allowed, regardless of configuration. The subsequent
-      // cases prove that updating from an alpha, beta, or RC release won't
-      // raise a readiness error if unattended updates are disabled.
-      'stable release installed, cron disabled' => [
+      // cron. The first case is a control to prove that a legitimate
+      // patch-level update from a stable release never raises a readiness
+      // error.
+      'stable release installed' => [
         '9.8.0',
         "$metadata_dir/drupal.9.8.1-security.xml",
-        CronUpdater::DISABLED,
+        [CronUpdater::DISABLED, CronUpdater::SECURITY, CronUpdater::ALL],
         [],
       ],
-      'stable release installed, security only in cron' => [
-        '9.8.0',
-        "$metadata_dir/drupal.9.8.1-security.xml",
-        CronUpdater::SECURITY,
-        [],
-      ],
-      'stable release installed, all allowed in cron' => [
-        '9.8.0',
-        "$metadata_dir/drupal.9.8.1-security.xml",
-        CronUpdater::ALL,
-        [],
-      ],
-      'dev snapshot installed, cron disabled' => [
+      // This case proves that updating from a dev snapshot is never allowed,
+      // regardless of configuration.
+      'dev snapshot installed' => [
         '9.8.0-dev',
         "$metadata_dir/drupal.9.8.1-security.xml",
-        CronUpdater::DISABLED,
+        [CronUpdater::DISABLED, CronUpdater::SECURITY, CronUpdater::ALL],
         [
           ValidationResult::createError([
             'Drupal cannot be automatically updated from the installed version, 9.8.0-dev, because automatic updates from a dev version to any other version are not supported.',
           ]),
         ],
       ],
-      'dev snapshot installed, security only in cron' => [
-        '9.8.0-dev',
-        "$metadata_dir/drupal.9.8.1-security.xml",
-        CronUpdater::SECURITY,
-        [
-          ValidationResult::createError([
-            'Drupal cannot be automatically updated from the installed version, 9.8.0-dev, because automatic updates from a dev version to any other version are not supported.',
-          ]),
-        ],
-      ],
-      'dev snapshot installed, all allowed in cron' => [
-        '9.8.0-dev',
-        "$metadata_dir/drupal.9.8.1-security.xml",
-        CronUpdater::ALL,
-        [
-          ValidationResult::createError([
-            'Drupal cannot be automatically updated from the installed version, 9.8.0-dev, because automatic updates from a dev version to any other version are not supported.',
-          ]),
-        ],
-      ],
+      // The next six cases prove that updating from an alpha, beta, or RC
+      // release raises a readiness error if unattended updates are enabled.
       'alpha installed, cron disabled' => [
         '9.8.0-alpha1',
         "$metadata_dir/drupal.9.8.1-security.xml",
-        CronUpdater::DISABLED,
+        [CronUpdater::DISABLED],
         [],
       ],
-      'alpha installed, security only in cron' => [
+      'alpha installed, cron enabled' => [
         '9.8.0-alpha1',
         "$metadata_dir/drupal.9.8.1-security.xml",
-        CronUpdater::SECURITY,
-        [
-          ValidationResult::createError([
-            'Drupal cannot be automatically updated during cron from its current version, 9.8.0-alpha1, because Automatic Updates only supports updating from stable versions during cron.',
-          ]),
-        ],
-      ],
-      'alpha installed, all allowed in cron' => [
-        '9.8.0-alpha1',
-        "$metadata_dir/drupal.9.8.1-security.xml",
-        CronUpdater::ALL,
+        [CronUpdater::SECURITY, CronUpdater::ALL],
         [
           ValidationResult::createError([
             'Drupal cannot be automatically updated during cron from its current version, 9.8.0-alpha1, because Automatic Updates only supports updating from stable versions during cron.',
@@ -113,23 +72,13 @@ class VersionPolicyValidatorTest extends AutomaticUpdatesKernelTestBase {
       'beta installed, cron disabled' => [
         '9.8.0-beta2',
         "$metadata_dir/drupal.9.8.1-security.xml",
-        CronUpdater::DISABLED,
+        [CronUpdater::DISABLED],
         [],
       ],
-      'beta installed, security only in cron' => [
+      'beta installed, cron enabled' => [
         '9.8.0-beta2',
         "$metadata_dir/drupal.9.8.1-security.xml",
-        CronUpdater::SECURITY,
-        [
-          ValidationResult::createError([
-            'Drupal cannot be automatically updated during cron from its current version, 9.8.0-beta2, because Automatic Updates only supports updating from stable versions during cron.',
-          ]),
-        ],
-      ],
-      'beta installed, all allowed in cron' => [
-        '9.8.0-beta2',
-        "$metadata_dir/drupal.9.8.1-security.xml",
-        CronUpdater::ALL,
+        [CronUpdater::SECURITY, CronUpdater::ALL],
         [
           ValidationResult::createError([
             'Drupal cannot be automatically updated during cron from its current version, 9.8.0-beta2, because Automatic Updates only supports updating from stable versions during cron.',
@@ -139,53 +88,37 @@ class VersionPolicyValidatorTest extends AutomaticUpdatesKernelTestBase {
       'rc installed, cron disabled' => [
         '9.8.0-rc3',
         "$metadata_dir/drupal.9.8.1-security.xml",
-        CronUpdater::DISABLED,
+        [CronUpdater::DISABLED],
         [],
       ],
-      'rc installed, security only in cron' => [
+      'rc installed, cron enabled' => [
         '9.8.0-rc3',
         "$metadata_dir/drupal.9.8.1-security.xml",
-        CronUpdater::SECURITY,
+        [CronUpdater::SECURITY, CronUpdater::ALL],
         [
           ValidationResult::createError([
             'Drupal cannot be automatically updated during cron from its current version, 9.8.0-rc3, because Automatic Updates only supports updating from stable versions during cron.',
           ]),
         ],
       ],
-      'rc installed, all allowed in cron' => [
-        '9.8.0-rc3',
-        "$metadata_dir/drupal.9.8.1-security.xml",
-        CronUpdater::ALL,
-        [
-          ValidationResult::createError([
-            'Drupal cannot be automatically updated during cron from its current version, 9.8.0-rc3, because Automatic Updates only supports updating from stable versions during cron.',
-          ]),
-        ],
-      ],
-      // These three cases prove that, if only security updates are allowed
+      // These two cases prove that, if only security updates are allowed
       // during cron, a readiness error is raised if the next available release
       // is not a security release.
-      'update to normal release, cron disabled' => [
+      'update to normal release allowed' => [
         '9.8.1',
         "$metadata_dir/drupal.9.8.2.xml",
-        CronUpdater::DISABLED,
+        [CronUpdater::DISABLED, CronUpdater::ALL],
         [],
       ],
       'update to normal release, security only in cron' => [
         '9.8.1',
         "$metadata_dir/drupal.9.8.2.xml",
-        CronUpdater::SECURITY,
+        [CronUpdater::SECURITY],
         [
           ValidationResult::createError([
             'Drupal cannot be automatically updated during cron from its current version, 9.8.1, to the recommended version, 9.8.2, because 9.8.2 is not a security release.',
           ]),
         ],
-      ],
-      'update to normal release, all allowed in cron' => [
-        '9.8.1',
-        "$metadata_dir/drupal.9.8.2.xml",
-        CronUpdater::ALL,
-        [],
       ],
     ];
   }
@@ -197,23 +130,27 @@ class VersionPolicyValidatorTest extends AutomaticUpdatesKernelTestBase {
    *   The installed version of Drupal core.
    * @param string $release_metadata
    *   The path of the core release metadata to serve to the update system.
-   * @param string $cron_mode
-   *   The mode for unattended updates. Can be either
-   *   \Drupal\automatic_updates\CronUpdater::SECURITY or
+   * @param string[] $cron_modes
+   *   The modes for unattended updates. Can contain any of
+   *   \Drupal\automatic_updates\CronUpdater::DISABLED,
+   *   \Drupal\automatic_updates\CronUpdater::SECURITY, and
    *   \Drupal\automatic_updates\CronUpdater::ALL.
    * @param \Drupal\package_manager\ValidationResult[] $expected_results
    *   The expected validation results.
    *
    * @dataProvider providerReadinessCheck
    */
-  public function testReadinessCheck(string $installed_version, string $release_metadata, string $cron_mode, array $expected_results): void {
+  public function testReadinessCheck(string $installed_version, string $release_metadata, array $cron_modes, array $expected_results): void {
     $this->setCoreVersion($installed_version);
     $this->setReleaseMetadata(['drupal' => $release_metadata]);
-    $this->config('automatic_updates.settings')
-      ->set('cron', $cron_mode)
-      ->save();
 
-    $this->assertCheckerResultsFromManager($expected_results, TRUE);
+    foreach ($cron_modes as $cron_mode) {
+      $this->config('automatic_updates.settings')
+        ->set('cron', $cron_mode)
+        ->save();
+
+      $this->assertCheckerResultsFromManager($expected_results, TRUE);
+    }
   }
 
   /**
