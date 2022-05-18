@@ -120,6 +120,9 @@ class VersionPolicyValidatorTest extends AutomaticUpdatesKernelTestBase {
           ]),
         ],
       ],
+      // @todo Test updating more than one patch release ahead, where you're on
+      //   9.8.0 and a 9.8.2 security release exists. It should only be allowed
+      //   if cron is disabled. This will need a new fixture.
     ];
   }
 
@@ -246,6 +249,44 @@ class VersionPolicyValidatorTest extends AutomaticUpdatesKernelTestBase {
         ['drupal' => '9.8.2'],
         [],
       ],
+      // These three cases prove that updating across minor versions of Drupal
+      // core is only allowed for attended updates when a specific configuration
+      // flag is set.
+      'unattended update to next minor' => [
+        ['automatic_updates.cron_updater'],
+        '9.7.9',
+        "$metadata_dir/drupal.9.8.2.xml",
+        [CronUpdater::SECURITY, CronUpdater::ALL],
+        ['drupal' => '9.8.2'],
+        [
+          ValidationResult::createError([
+            'Drupal cannot be automatically updated from its current version, 9.7.9, to the recommended version, 9.8.2, because automatic updates from one minor version to another are not supported during cron.',
+          ]),
+        ],
+      ],
+      'attended update to next minor not allowed' => [
+        ['automatic_updates.updater'],
+        '9.7.9',
+        "$metadata_dir/drupal.9.8.2.xml",
+        [CronUpdater::SECURITY, CronUpdater::ALL],
+        ['drupal' => '9.8.2'],
+        [
+          ValidationResult::createError([
+            'Drupal cannot be automatically updated from its current version, 9.7.9, to the recommended version, 9.8.2, because automatic updates from one minor version to another are not supported.',
+          ]),
+        ],
+      ],
+      'attended update to next minor allowed' => [
+        ['automatic_updates.updater'],
+        '9.7.9',
+        "$metadata_dir/drupal.9.8.2.xml",
+        [CronUpdater::SECURITY, CronUpdater::ALL],
+        ['drupal' => '9.8.2'],
+        [],
+        TRUE,
+      ],
+      // @todo Test updating to a non-stable release.
+      // @todo Test updating more than one patch release ahead.
     ];
   }
 
@@ -266,16 +307,20 @@ class VersionPolicyValidatorTest extends AutomaticUpdatesKernelTestBase {
    *   The desired project versions that should be passed to the updater.
    * @param \Drupal\package_manager\ValidationResult[] $expected_results
    *   The expected validation results.
+   * @param bool $allow_minor_updates
+   *   (optional) Whether to allow attended updates across minor versions.
+   *   Defaults to FALSE.
    *
    * @dataProvider providerApi
    */
-  public function testApi(array $updaters, string $installed_version, string $release_metadata, array $cron_modes, array $project_versions, array $expected_results): void {
+  public function testApi(array $updaters, string $installed_version, string $release_metadata, array $cron_modes, array $project_versions, array $expected_results, bool $allow_minor_updates = FALSE): void {
     $this->setCoreVersion($installed_version);
     $this->setReleaseMetadata(['drupal' => $release_metadata]);
 
     foreach ($cron_modes as $cron_mode) {
       $this->config('automatic_updates.settings')
         ->set('cron', $cron_mode)
+        ->set('allow_core_minor_updates', $allow_minor_updates)
         ->save();
 
       foreach ($updaters as $updater) {
