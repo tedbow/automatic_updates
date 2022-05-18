@@ -120,9 +120,6 @@ class VersionPolicyValidatorTest extends AutomaticUpdatesKernelTestBase {
           ]),
         ],
       ],
-      // @todo Test updating more than one patch release ahead, where you're on
-      //   9.8.0 and a 9.8.2 security release exists. It should only be allowed
-      //   if cron is disabled. This will need a new fixture.
     ];
   }
 
