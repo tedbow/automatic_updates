@@ -286,7 +286,6 @@ class VersionPolicyValidatorTest extends AutomaticUpdatesKernelTestBase {
         TRUE,
       ],
       // @todo Test updating to a non-stable release.
-      // @todo Test updating more than one patch release ahead.
     ];
   }
 

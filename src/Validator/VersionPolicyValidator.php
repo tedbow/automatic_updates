@@ -15,7 +15,6 @@ use Drupal\automatic_updates\Validator\VersionPolicy\StableReleaseInstalled;
 use Drupal\automatic_updates\Validator\VersionPolicy\TaggedReleaseInstalled;
 use Drupal\automatic_updates\Validator\VersionPolicy\TargetSecurityRelease;
 use Drupal\automatic_updates\Validator\VersionPolicy\TargetVersionInstallable;
-use Drupal\automatic_updates\Validator\VersionPolicy\TargetVersionPatchLevel;
 use Drupal\automatic_updates\Validator\VersionPolicy\TargetVersionStable;
 use Drupal\Core\DependencyInjection\ClassResolverInterface;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
@@ -94,7 +93,6 @@ final class VersionPolicyValidator implements EventSubscriberInterface {
         if ($target_version) {
           $rules[] = TargetVersionStable::class;
           $rules[] = ForbidMinorUpdates::class;
-          $rules[] = TargetVersionPatchLevel::class;
 
           // If only security updates are allowed during cron, the target
           // version must be a security release.
