@@ -282,7 +282,19 @@ class VersionPolicyValidatorTest extends AutomaticUpdatesKernelTestBase {
         [],
         TRUE,
       ],
-      // @todo Test updating to a non-stable release.
+      // Unattended updates to unstable versions are not allowed.
+      'unattended update to unstable version' => [
+        ['automatic_updates.cron_updater'],
+        '9.8.0',
+        "$metadata_dir/drupal.9.8.2-older-sec-release.xml",
+        [CronUpdater::SECURITY, CronUpdater::ALL],
+        ['drupal' => '9.8.1-beta1'],
+        [
+          ValidationResult::createError([
+            'Drupal cannot be automatically updated during cron to the recommended version, 9.8.1-beta1, because Automatic Updates only supports updating to stable versions during cron.',
+          ]),
+        ],
+      ],
     ];
   }
 
