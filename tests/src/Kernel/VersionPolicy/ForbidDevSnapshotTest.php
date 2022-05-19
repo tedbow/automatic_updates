@@ -2,15 +2,15 @@
 
 namespace Drupal\Tests\automatic_updates\Kernel\VersionPolicy;
 
-use Drupal\automatic_updates\Validator\VersionPolicy\TaggedReleaseInstalled;
+use Drupal\automatic_updates\Validator\VersionPolicy\ForbidDevSnapshot;
 use Drupal\Tests\automatic_updates\Kernel\AutomaticUpdatesKernelTestBase;
 
 /**
- * @covers \Drupal\automatic_updates\Validator\VersionPolicy\TaggedReleaseInstalled
+ * @covers \Drupal\automatic_updates\Validator\VersionPolicy\ForbidDevSnapshot
  *
  * @group automatic_updates
  */
-class TaggedReleaseInstalledTest extends AutomaticUpdatesKernelTestBase {
+class ForbidDevSnapshotTest extends AutomaticUpdatesKernelTestBase {
 
   /**
    * {@inheritdoc}
@@ -18,12 +18,12 @@ class TaggedReleaseInstalledTest extends AutomaticUpdatesKernelTestBase {
   protected static $modules = ['automatic_updates'];
 
   /**
-   * Data provider for ::testTaggedReleaseInstalled().
+   * Data provider for ::testForbidDevSnapshot().
    *
    * @return array[]
    *   Sets of arguments to pass to the test method.
    */
-  public function providerTaggedReleaseInstalled(): array {
+  public function providerForbidDevSnapshot(): array {
     return [
       'stable version installed, attended' => [
         'automatic_updates.updater',
@@ -88,11 +88,11 @@ class TaggedReleaseInstalledTest extends AutomaticUpdatesKernelTestBase {
    * @param string[] $expected_errors
    *   The expected error messages, if any.
    *
-   * @dataProvider providerTaggedReleaseInstalled
+   * @dataProvider providerForbidDevSnapshot
    */
-  public function testTaggedReleaseInstalled(string $updater, string $installed_version, array $expected_errors): void {
+  public function testForbidDevSnapshot(string $updater, string $installed_version, array $expected_errors): void {
     $updater = $this->container->get($updater);
-    $rule = new TaggedReleaseInstalled();
+    $rule = new ForbidDevSnapshot();
     $actual_errors = array_map('strval', $rule->validate($updater, $installed_version, '9.8.1'));
     $this->assertSame($expected_errors, $actual_errors);
   }

@@ -12,7 +12,7 @@ use Drupal\automatic_updates\Validator\VersionPolicy\ForbidMinorUpdates;
 use Drupal\automatic_updates\Validator\VersionPolicy\MajorVersionMatch;
 use Drupal\automatic_updates\Validator\VersionPolicy\MinorUpdatesEnabled;
 use Drupal\automatic_updates\Validator\VersionPolicy\StableReleaseInstalled;
-use Drupal\automatic_updates\Validator\VersionPolicy\TaggedReleaseInstalled;
+use Drupal\automatic_updates\Validator\VersionPolicy\ForbidDevSnapshot;
 use Drupal\automatic_updates\Validator\VersionPolicy\TargetSecurityRelease;
 use Drupal\automatic_updates\Validator\VersionPolicy\TargetVersionInstallable;
 use Drupal\automatic_updates\Validator\VersionPolicy\TargetVersionStable;
@@ -63,7 +63,7 @@ final class VersionPolicyValidator implements EventSubscriberInterface {
   public function validateVersion(Updater $updater, ?string $target_version): array {
     // Check that the installed version of Drupal isn't a dev snapshot.
     $rules = [
-      TaggedReleaseInstalled::class,
+      ForbidDevSnapshot::class,
     ];
 
     // If the target version is known, also check that:

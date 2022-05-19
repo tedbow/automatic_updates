@@ -13,7 +13,7 @@ use Drupal\Core\Extension\ExtensionVersion;
  *   Drupal core. It may be changed or removed at any time without warning.
  *   External code should not interact with this class.
  */
-class TaggedReleaseInstalled extends RuleBase {
+class ForbidDevSnapshot extends RuleBase {
 
   /**
    * {@inheritdoc}
