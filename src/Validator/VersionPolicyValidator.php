@@ -66,13 +66,13 @@ final class VersionPolicyValidator implements EventSubscriberInterface {
       ForbidDevSnapshot::class,
     ];
 
-    // If the target version is known, also check that:
-    // - It's newer than the installed version.
-    // - It's in the same major version as the installed version.
-    // - It's a known installable release.
+    // If the target version is known, it must conform to a few basic rules.
     if ($target_version) {
+      // The target version must be newer than the installed version...
       $rules[] = ForbidDowngrade::class;
+      // ...and in the same major version as the installed version...
       $rules[] = MajorVersionMatch::class;
+      // ...and it must be a known, secure, installable release.
       $rules[] = TargetVersionInstallable::class;
     }
 
@@ -80,18 +80,16 @@ final class VersionPolicyValidator implements EventSubscriberInterface {
     if ($updater instanceof CronUpdater) {
       $mode = $updater->getMode();
 
-      // If cron updates are enabled, the installed version must be stable;
-      // no alphas, betas, or RCs.
       if ($mode !== CronUpdater::DISABLED) {
+        // If cron updates are enabled, the installed version must be stable;
+        // no alphas, betas, or RCs.
         $rules[] = StableReleaseInstalled::class;
 
-        // If the target version is known, also check that:
-        // - It's stable as well.
-        // - It's in the same minor version as the installed version.
-        // - It's not more than one patch release newer than the installed
-        //   version.
+        // If the target version is known, more rules apply.
         if ($target_version) {
+          // The target version must be stable too...
           $rules[] = TargetVersionStable::class;
+          // ...and it must be in the same minor as the installed version.
           $rules[] = ForbidMinorUpdates::class;
 
           // If only security updates are allowed during cron, the target
@@ -108,13 +106,14 @@ final class VersionPolicyValidator implements EventSubscriberInterface {
       $rules[] = MinorUpdatesEnabled::class;
     }
 
+    $installed_version = $this->getInstalledVersion();
     // Invoke each rule in the order that they were added to $rules, stopping
     // when one returns error messages.
     // @todo Collect and return all the error messages.
     foreach ($rules as $rule) {
       $messages = $this->classResolver
         ->getInstanceFromDefinition($rule)
-        ->validate($updater, $this->getInstalledVersion(), $target_version);
+        ->validate($updater, $installed_version, $target_version);
 
       if ($messages) {
         return $messages;
