@@ -164,10 +164,10 @@ class VersionPolicyValidatorTest extends AutomaticUpdatesKernelTestBase {
 
     return [
       'valid target, dev snapshot installed' => [
-        ['automatic_updates.updater', 'automatic_updates.cron_updater'],
+        [CronUpdater::SECURITY, CronUpdater::ALL],
+        [CronUpdater::SECURITY, CronUpdater::ALL],
         '9.8.0-dev',
         "$metadata_dir/drupal.9.8.1-security.xml",
-        [CronUpdater::SECURITY, CronUpdater::ALL],
         ['drupal' => '9.8.1'],
         [
           $this->createValidationResult('9.8.0-dev', '9.8.1', [
@@ -178,10 +178,10 @@ class VersionPolicyValidatorTest extends AutomaticUpdatesKernelTestBase {
       // The following cases can only happen by explicitly supplying the updater
       // with an invalid target version.
       'downgrade' => [
-        ['automatic_updates.updater', 'automatic_updates.cron_updater'],
+        [CronUpdater::SECURITY, CronUpdater::ALL],
+        [CronUpdater::SECURITY, CronUpdater::ALL],
         '9.8.1',
         "$metadata_dir/drupal.9.8.2.xml",
-        [CronUpdater::SECURITY, CronUpdater::ALL],
         ['drupal' => '9.8.0'],
         [
           $this->createValidationResult('9.8.1', '9.8.0', [
@@ -190,10 +190,10 @@ class VersionPolicyValidatorTest extends AutomaticUpdatesKernelTestBase {
         ],
       ],
       'major version upgrade' => [
-        ['automatic_updates.updater', 'automatic_updates.cron_updater'],
+        [CronUpdater::SECURITY, CronUpdater::ALL],
+        [CronUpdater::SECURITY, CronUpdater::ALL],
         '8.9.1',
         "$metadata_dir/drupal.9.8.2.xml",
-        [CronUpdater::SECURITY, CronUpdater::ALL],
         ['drupal' => '9.8.2'],
         [
           $this->createValidationResult('8.9.1', '9.8.2', [
@@ -202,10 +202,10 @@ class VersionPolicyValidatorTest extends AutomaticUpdatesKernelTestBase {
         ],
       ],
       'unsupported target version' => [
-        ['automatic_updates.updater', 'automatic_updates.cron_updater'],
+        [CronUpdater::SECURITY, CronUpdater::ALL],
+        [CronUpdater::SECURITY, CronUpdater::ALL],
         '9.8.0',
         "$metadata_dir/drupal.9.8.2-unsupported_unpublished.xml",
-        [CronUpdater::SECURITY, CronUpdater::ALL],
         ['drupal' => '9.8.1'],
         [
           $this->createValidationResult('9.8.0', '9.8.1', [
@@ -216,10 +216,10 @@ class VersionPolicyValidatorTest extends AutomaticUpdatesKernelTestBase {
       // This case proves that an attended update to a normal non-security
       // release is allowed regardless of how cron is configured...
       'attended update to normal release' => [
-        ['automatic_updates.updater'],
+        [CronUpdater::SECURITY, CronUpdater::ALL],
+        [],
         '9.8.1',
         "$metadata_dir/drupal.9.8.2.xml",
-        [CronUpdater::SECURITY, CronUpdater::ALL],
         ['drupal' => '9.8.2'],
         [],
       ],
@@ -227,10 +227,10 @@ class VersionPolicyValidatorTest extends AutomaticUpdatesKernelTestBase {
       // non-security release is only allowed if cron is configured to allow
       // all updates.
       'unattended update to normal release, security only in cron' => [
-        ['automatic_updates.cron_updater'],
+        [],
+        [CronUpdater::SECURITY],
         '9.8.1',
         "$metadata_dir/drupal.9.8.2.xml",
-        [CronUpdater::SECURITY],
         ['drupal' => '9.8.2'],
         [
           $this->createValidationResult('9.8.1', '9.8.2', [
@@ -239,10 +239,10 @@ class VersionPolicyValidatorTest extends AutomaticUpdatesKernelTestBase {
         ],
       ],
       'unattended update to normal release, all allowed in cron' => [
-        ['automatic_updates.cron_updater'],
+        [],
+        [CronUpdater::ALL],
         '9.8.1',
         "$metadata_dir/drupal.9.8.2.xml",
-        [CronUpdater::ALL],
         ['drupal' => '9.8.2'],
         [],
       ],
@@ -250,10 +250,10 @@ class VersionPolicyValidatorTest extends AutomaticUpdatesKernelTestBase {
       // core is only allowed for attended updates when a specific configuration
       // flag is set.
       'unattended update to next minor' => [
-        ['automatic_updates.cron_updater'],
+        [],
+        [CronUpdater::SECURITY, CronUpdater::ALL],
         '9.7.9',
         "$metadata_dir/drupal.9.8.2.xml",
-        [CronUpdater::SECURITY, CronUpdater::ALL],
         ['drupal' => '9.8.2'],
         [
           $this->createValidationResult('9.7.9', '9.8.2', [
@@ -262,10 +262,10 @@ class VersionPolicyValidatorTest extends AutomaticUpdatesKernelTestBase {
         ],
       ],
       'attended update to next minor not allowed' => [
-        ['automatic_updates.updater'],
+        [CronUpdater::SECURITY, CronUpdater::ALL],
+        [],
         '9.7.9',
         "$metadata_dir/drupal.9.8.2.xml",
-        [CronUpdater::SECURITY, CronUpdater::ALL],
         ['drupal' => '9.8.2'],
         [
           $this->createValidationResult('9.7.9', '9.8.2', [
@@ -274,20 +274,20 @@ class VersionPolicyValidatorTest extends AutomaticUpdatesKernelTestBase {
         ],
       ],
       'attended update to next minor allowed' => [
-        ['automatic_updates.updater'],
+        [CronUpdater::SECURITY, CronUpdater::ALL],
+        [],
         '9.7.9',
         "$metadata_dir/drupal.9.8.2.xml",
-        [CronUpdater::SECURITY, CronUpdater::ALL],
         ['drupal' => '9.8.2'],
         [],
         TRUE,
       ],
       // Unattended updates to unstable versions are not allowed.
       'unattended update to unstable version' => [
-        ['automatic_updates.cron_updater'],
+        [CronUpdater::SECURITY, CronUpdater::ALL],
+        [],
         '9.8.0',
         "$metadata_dir/drupal.9.8.2-older-sec-release.xml",
-        [CronUpdater::SECURITY, CronUpdater::ALL],
         ['drupal' => '9.8.1-beta1'],
         [
           $this->createValidationResult('9.8.0', '9.8.1-beta1', [
@@ -321,17 +321,17 @@ class VersionPolicyValidatorTest extends AutomaticUpdatesKernelTestBase {
    *
    * @dataProvider providerApi
    */
-  public function testApi(array $updaters, string $installed_version, string $release_metadata, array $cron_modes, array $project_versions, array $expected_results, bool $allow_minor_updates = FALSE): void {
+  public function testApi(array $attended_cron_modes, array $unattended_cron_modes, string $installed_version, string $release_metadata, array $project_versions, array $expected_results, bool $allow_minor_updates = FALSE): void {
     $this->setCoreVersion($installed_version);
     $this->setReleaseMetadata(['drupal' => $release_metadata]);
 
-    foreach ($cron_modes as $cron_mode) {
-      $this->config('automatic_updates.settings')
-        ->set('cron', $cron_mode)
-        ->set('allow_core_minor_updates', $allow_minor_updates)
-        ->save();
-
-      foreach ($updaters as $updater) {
+    foreach (['automatic_updates.updater', 'automatic_updates.cron_updater'] as $updater) {
+      $cron_modes = $updater === 'automatic_updates.updater' ? $attended_cron_modes : $unattended_cron_modes;
+      foreach ($cron_modes as $cron_mode) {
+        $this->config('automatic_updates.settings')
+          ->set('cron', $cron_mode)
+          ->set('allow_core_minor_updates', $allow_minor_updates)
+          ->save();
         /** @var \Drupal\automatic_updates\Updater $updater */
         $updater = $this->container->get($updater);
 
