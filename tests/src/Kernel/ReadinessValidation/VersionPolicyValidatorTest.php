@@ -46,7 +46,7 @@ class VersionPolicyValidatorTest extends AutomaticUpdatesKernelTestBase {
         "$metadata_dir/drupal.9.8.1-security.xml",
         [CronUpdater::DISABLED, CronUpdater::SECURITY, CronUpdater::ALL],
         [
-          ValidationResult::createError([
+          $this->createValidationResult('9.8.0-dev', '9.8.1', [
             'Drupal cannot be automatically updated from the installed version, 9.8.0-dev, because automatic updates from a dev version to any other version are not supported.',
           ]),
         ],
@@ -64,7 +64,7 @@ class VersionPolicyValidatorTest extends AutomaticUpdatesKernelTestBase {
         "$metadata_dir/drupal.9.8.1-security.xml",
         [CronUpdater::SECURITY, CronUpdater::ALL],
         [
-          ValidationResult::createError([
+          $this->createValidationResult('9.8.0-alpha1', '9.8.1', [
             'Drupal cannot be automatically updated during cron from its current version, 9.8.0-alpha1, because Automatic Updates only supports updating from stable versions during cron.',
           ]),
         ],
@@ -80,7 +80,7 @@ class VersionPolicyValidatorTest extends AutomaticUpdatesKernelTestBase {
         "$metadata_dir/drupal.9.8.1-security.xml",
         [CronUpdater::SECURITY, CronUpdater::ALL],
         [
-          ValidationResult::createError([
+          $this->createValidationResult('9.8.0-beta2', '9.8.1', [
             'Drupal cannot be automatically updated during cron from its current version, 9.8.0-beta2, because Automatic Updates only supports updating from stable versions during cron.',
           ]),
         ],
@@ -96,7 +96,7 @@ class VersionPolicyValidatorTest extends AutomaticUpdatesKernelTestBase {
         "$metadata_dir/drupal.9.8.1-security.xml",
         [CronUpdater::SECURITY, CronUpdater::ALL],
         [
-          ValidationResult::createError([
+          $this->createValidationResult('9.8.0-rc3', '9.8.1', [
             'Drupal cannot be automatically updated during cron from its current version, 9.8.0-rc3, because Automatic Updates only supports updating from stable versions during cron.',
           ]),
         ],
@@ -115,7 +115,7 @@ class VersionPolicyValidatorTest extends AutomaticUpdatesKernelTestBase {
         "$metadata_dir/drupal.9.8.2.xml",
         [CronUpdater::SECURITY],
         [
-          ValidationResult::createError([
+          $this->createValidationResult('9.8.1', '9.8.2', [
             'Drupal cannot be automatically updated during cron from its current version, 9.8.1, to the recommended version, 9.8.2, because 9.8.2 is not a security release.',
           ]),
         ],
@@ -170,7 +170,7 @@ class VersionPolicyValidatorTest extends AutomaticUpdatesKernelTestBase {
         [CronUpdater::SECURITY, CronUpdater::ALL],
         ['drupal' => '9.8.1'],
         [
-          ValidationResult::createError([
+          $this->createValidationResult('9.8.0-dev', '9.8.1', [
             'Drupal cannot be automatically updated from the installed version, 9.8.0-dev, because automatic updates from a dev version to any other version are not supported.',
           ]),
         ],
@@ -184,7 +184,7 @@ class VersionPolicyValidatorTest extends AutomaticUpdatesKernelTestBase {
         [CronUpdater::SECURITY, CronUpdater::ALL],
         ['drupal' => '9.8.0'],
         [
-          ValidationResult::createError([
+          $this->createValidationResult('9.8.1', '9.8.0', [
             'Update version 9.8.0 is lower than 9.8.1, downgrading is not supported.',
           ]),
         ],
@@ -196,7 +196,7 @@ class VersionPolicyValidatorTest extends AutomaticUpdatesKernelTestBase {
         [CronUpdater::SECURITY, CronUpdater::ALL],
         ['drupal' => '9.8.2'],
         [
-          ValidationResult::createError([
+          $this->createValidationResult('8.9.1', '9.8.2', [
             'Drupal cannot be automatically updated from its current version, 8.9.1, to the recommended version, 9.8.2, because automatic updates from one major version to another are not supported.',
           ]),
         ],
@@ -208,7 +208,7 @@ class VersionPolicyValidatorTest extends AutomaticUpdatesKernelTestBase {
         [CronUpdater::SECURITY, CronUpdater::ALL],
         ['drupal' => '9.8.1'],
         [
-          ValidationResult::createError([
+          $this->createValidationResult('9.8.0', '9.8.1', [
             'Cannot update Drupal core to 9.8.1 because it is not in the list of installable releases.',
           ]),
         ],
@@ -233,7 +233,7 @@ class VersionPolicyValidatorTest extends AutomaticUpdatesKernelTestBase {
         [CronUpdater::SECURITY],
         ['drupal' => '9.8.2'],
         [
-          ValidationResult::createError([
+          $this->createValidationResult('9.8.1', '9.8.2', [
             'Drupal cannot be automatically updated during cron from its current version, 9.8.1, to the recommended version, 9.8.2, because 9.8.2 is not a security release.',
           ]),
         ],
@@ -256,7 +256,7 @@ class VersionPolicyValidatorTest extends AutomaticUpdatesKernelTestBase {
         [CronUpdater::SECURITY, CronUpdater::ALL],
         ['drupal' => '9.8.2'],
         [
-          ValidationResult::createError([
+          $this->createValidationResult('9.7.9', '9.8.2', [
             'Drupal cannot be automatically updated from its current version, 9.7.9, to the recommended version, 9.8.2, because automatic updates from one minor version to another are not supported during cron.',
           ]),
         ],
@@ -268,7 +268,7 @@ class VersionPolicyValidatorTest extends AutomaticUpdatesKernelTestBase {
         [CronUpdater::SECURITY, CronUpdater::ALL],
         ['drupal' => '9.8.2'],
         [
-          ValidationResult::createError([
+          $this->createValidationResult('9.7.9', '9.8.2', [
             'Drupal cannot be automatically updated from its current version, 9.7.9, to the recommended version, 9.8.2, because automatic updates from one minor version to another are not supported.',
           ]),
         ],
@@ -290,7 +290,7 @@ class VersionPolicyValidatorTest extends AutomaticUpdatesKernelTestBase {
         [CronUpdater::SECURITY, CronUpdater::ALL],
         ['drupal' => '9.8.1-beta1'],
         [
-          ValidationResult::createError([
+          $this->createValidationResult('9.8.0', '9.8.1-beta1', [
             'Drupal cannot be automatically updated during cron to the recommended version, 9.8.1-beta1, because Automatic Updates only supports updating to stable versions during cron.',
           ]),
         ],
@@ -347,6 +347,31 @@ class VersionPolicyValidatorTest extends AutomaticUpdatesKernelTestBase {
         }
       }
     }
+  }
+
+  /**
+   * Creates an expected validation result.
+   *
+   * Results returned from VersionPolicyValidator are always summarized in the
+   * same way, so this method ensures that expected validation results are
+   * summarized accordingly.
+   *
+   * @param string $installed_version
+   *   The installed version of Drupal core.
+   * @param string $target_version
+   *   The target version of Drupal core.
+   * @param string[] $messages
+   *   The error messages that the result should contain.
+   *
+   * @return \Drupal\package_manager\ValidationResult
+   *   A validation error object with the appropriate summary.
+   */
+  private function createValidationResult(string $installed_version, string $target_version, array $messages): ValidationResult {
+    $summary = t('Updating from Drupal @installed_version to @target_version is not allowed.', [
+      '@installed_version' => $installed_version,
+      '@target_version' => $target_version,
+    ]);
+    return ValidationResult::createError($messages, $summary);
   }
 
 }

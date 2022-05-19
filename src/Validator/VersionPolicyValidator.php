@@ -109,7 +109,7 @@ final class VersionPolicyValidator implements EventSubscriberInterface {
     $installed_version = $this->getInstalledVersion();
     // Invoke each rule in the order that they were added to $rules, stopping
     // when one returns error messages.
-    // @todo Collect and return all the error messages.
+    // @todo Return all the error messages in https://www.drupal.org/i/3281379.
     foreach ($rules as $rule) {
       $messages = $this->classResolver
         ->getInstanceFromDefinition($rule)
@@ -139,13 +139,11 @@ final class VersionPolicyValidator implements EventSubscriberInterface {
 
     $messages = $this->validateVersion($stage, $target_version);
     if ($messages) {
-      if (count($messages) > 1) {
-        $summary = $this->t('Updating from Drupal @installed_version to @target_version is not allowed.', [
-          '@installed_version' => $this->getInstalledVersion(),
-          '@target_version' => $target_version,
-        ]);
-      }
-      $event->addError($messages, $summary ?? NULL);
+      $summary = $this->t('Updating from Drupal @installed_version to @target_version is not allowed.', [
+        '@installed_version' => $this->getInstalledVersion(),
+        '@target_version' => $target_version,
+      ]);
+      $event->addError($messages, $summary);
     }
   }
 
@@ -157,6 +155,9 @@ final class VersionPolicyValidator implements EventSubscriberInterface {
    *
    * @return string|null
    *   The target version of Drupal core, or NULL if it could not be determined.
+   *
+   * @todo Throw an exception in certain (maybe all) situations if we cannot
+   *   figure out the target version in https://www.drupal.org/i/3280180.
    */
   private function getTargetVersion(StageEvent $event): ?string {
     $updater = $event->getStage();
