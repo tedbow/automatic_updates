@@ -12,6 +12,10 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
  * This class exists to facilitate re-use of Package Manager's stage validators
  * during update readiness checks, in addition to whatever events they normally
  * subscribe to.
+ *
+ * @internal
+ *   This class is an internal part of the module's update handling and
+ *   should not be used by external code.
  */
 class PackageManagerReadinessCheck implements EventSubscriberInterface {
 

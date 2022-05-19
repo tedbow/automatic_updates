@@ -13,6 +13,10 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 /**
  * Validates that the site can update from the installed version of Drupal.
+ *
+ * @internal
+ *   This class is an internal part of the module's update handling and
+ *   should not be used by external code.
  */
 class InstalledVersionValidator implements EventSubscriberInterface {
 

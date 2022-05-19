@@ -10,6 +10,10 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 /**
  * Validates that the target release of Drupal core is secure and supported.
+ *
+ * @internal
+ *   This class is an internal part of the module's update handling and
+ *   should not be used by external code.
  */
 class UpdateReleaseValidator implements EventSubscriberInterface {
 

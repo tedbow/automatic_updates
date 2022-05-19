@@ -8,6 +8,10 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 /**
  * Flags a warning if Xdebug is enabled.
+ *
+ * @internal
+ *   This class is an internal part of the module's update handling and
+ *   should not be used by external code.
  */
 class XdebugValidator implements EventSubscriberInterface {
 
