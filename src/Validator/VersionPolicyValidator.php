@@ -111,7 +111,7 @@ final class VersionPolicyValidator implements EventSubscriberInterface {
     }
 
     $installed_version = $this->getInstalledVersion();
-    $available_releases = static::getAvailableReleases($updater);
+    $available_releases = $this->getAvailableReleases($updater);
 
     // Invoke each rule in the order that they were added to $rules, stopping
     // when one returns error messages.
@@ -225,7 +225,7 @@ final class VersionPolicyValidator implements EventSubscriberInterface {
    *
    * @see \Drupal\automatic_updates\ProjectInfo::getInstallableReleases()
    */
-  private static function getAvailableReleases(Updater $updater): array {
+  private function getAvailableReleases(Updater $updater): array {
     $project_info = new ProjectInfo('drupal');
     $available_releases = $project_info->getInstallableReleases() ?? [];
 
