@@ -21,7 +21,7 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
  * @internal
  *   Form classes are internal.
  */
-class UpdateReady extends FormBase {
+final class UpdateReady extends FormBase {
 
   /**
    * The updater service.

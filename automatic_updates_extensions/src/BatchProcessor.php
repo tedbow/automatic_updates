@@ -8,8 +8,12 @@ use Symfony\Component\HttpFoundation\RedirectResponse;
 
 /**
  * A batch processor for updates.
+ *
+ * @internal
+ *   This class is an internal part of the module's update handling and
+ *   should not be used by external code.
  */
-class BatchProcessor {
+final class BatchProcessor {
 
   /**
    * The session key under which the stage ID is stored.

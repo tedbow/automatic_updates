@@ -16,8 +16,11 @@ use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 
 /**
  * A form for selecting extension updates.
+ *
+ * @internal
+ *   Form classes are internal.
  */
-class UpdaterForm extends FormBase {
+final class UpdaterForm extends FormBase {
 
   use ReadinessTrait;
 

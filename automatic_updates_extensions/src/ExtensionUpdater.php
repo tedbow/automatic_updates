@@ -10,6 +10,10 @@ use Drupal\package_manager\Stage;
 
 /**
  * Defines a service to perform updates for modules and themes.
+ *
+ * @internal
+ *   This class is an internal part of the module's update handling and
+ *   should not be used by external code.
  */
 class ExtensionUpdater extends Stage {
 
