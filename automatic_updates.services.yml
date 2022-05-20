@@ -29,7 +29,7 @@ services:
   automatic_updates.cron_updater:
     class: Drupal\automatic_updates\CronUpdater
     arguments:
-      - '@automatic_updates.cron_release_chooser'
+      - '@automatic_updates.release_chooser'
       - '@logger.factory'
       - '@config.factory'
       - '@package_manager.path_locator'
@@ -52,28 +52,10 @@ services:
       - '@string_translation'
     tags:
       - { name: event_subscriber }
-  automatic_updates.update_version_validator:
-    class: Drupal\automatic_updates\Validator\UpdateVersionValidator
-    arguments:
-      - '@string_translation'
-      - '@config.factory'
-    tags:
-      - { name: event_subscriber }
-  automatic_updates.cron_update_version_validator:
-    class: Drupal\automatic_updates\Validator\CronUpdateVersionValidator
-    arguments:
-      - '@string_translation'
-      - '@config.factory'
-    tags:
-      - { name: event_subscriber }
   automatic_updates.release_chooser:
     class: Drupal\automatic_updates\ReleaseChooser
     arguments:
-      - '@automatic_updates.update_version_validator'
-  automatic_updates.cron_release_chooser:
-    class: Drupal\automatic_updates\ReleaseChooser
-    arguments:
-      - '@automatic_updates.cron_update_version_validator'
+      - '@automatic_updates.validator.version_policy'
   automatic_updates.composer_executable_validator:
     class: Drupal\automatic_updates\Validator\PackageManagerReadinessCheck
     arguments:
@@ -133,12 +115,10 @@ services:
     class: Drupal\automatic_updates\Validator\XdebugValidator
     tags:
       - { name: event_subscriber }
-  automatic_updates.validator.installed_version:
-    class: Drupal\automatic_updates\Validator\InstalledVersionValidator
-    tags:
-      - { name: event_subscriber }
-  automatic_updates.validator.target_release:
-    class: Drupal\automatic_updates\Validator\UpdateReleaseValidator
+  automatic_updates.validator.version_policy:
+    class: Drupal\automatic_updates\Validator\VersionPolicyValidator
+    arguments:
+      - '@class_resolver'
     tags:
       - { name: event_subscriber }
   automatic_updates.config_subscriber:

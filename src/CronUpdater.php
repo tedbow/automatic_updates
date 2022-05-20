@@ -87,7 +87,7 @@ class CronUpdater extends Updater {
       return;
     }
 
-    $next_release = $this->releaseChooser->getLatestInInstalledMinor();
+    $next_release = $this->releaseChooser->getLatestInInstalledMinor($this);
     if ($next_release) {
       $this->performUpdate($next_release->getVersion(), $timeout);
     }

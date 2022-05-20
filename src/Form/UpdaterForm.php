@@ -139,9 +139,9 @@ class UpdaterForm extends FormBase {
       //   one release on the form. First, try to show the latest release in the
       //   currently installed minor. Failing that, try to show the latest
       //   release in the next minor.
-      $recommended_release = $this->releaseChooser->getLatestInInstalledMinor();
+      $recommended_release = $this->releaseChooser->getLatestInInstalledMinor($this->updater);
       if (!$recommended_release) {
-        $recommended_release = $this->releaseChooser->getLatestInNextMinor();
+        $recommended_release = $this->releaseChooser->getLatestInNextMinor($this->updater);
       }
     }
     catch (\RuntimeException $e) {

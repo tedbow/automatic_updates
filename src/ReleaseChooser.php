@@ -3,7 +3,7 @@
 namespace Drupal\automatic_updates;
 
 use Composer\Semver\Semver;
-use Drupal\automatic_updates\Validator\UpdateVersionValidator;
+use Drupal\automatic_updates\Validator\VersionPolicyValidator;
 use Drupal\automatic_updates_9_3_shim\ProjectRelease;
 use Drupal\Core\Extension\ExtensionVersion;
 
@@ -15,11 +15,11 @@ class ReleaseChooser {
   use VersionParsingTrait;
 
   /**
-   * The version validator service.
+   * The version policy validator service.
    *
-   * @var \Drupal\automatic_updates\Validator\UpdateVersionValidator
+   * @var \Drupal\automatic_updates\Validator\VersionPolicyValidator
    */
-  protected $versionValidator;
+  protected $versionPolicyValidator;
 
   /**
    * The project information fetcher.
@@ -31,25 +31,31 @@ class ReleaseChooser {
   /**
    * Constructs an ReleaseChooser object.
    *
-   * @param \Drupal\automatic_updates\Validator\UpdateVersionValidator $version_validator
+   * @param \Drupal\automatic_updates\Validator\VersionPolicyValidator $version_policy_validator
    *   The version validator.
    */
-  public function __construct(UpdateVersionValidator $version_validator) {
-    $this->versionValidator = $version_validator;
+  public function __construct(VersionPolicyValidator $version_policy_validator) {
+    $this->versionPolicyValidator = $version_policy_validator;
     $this->projectInfo = new ProjectInfo('drupal');
   }
 
   /**
    * Returns the releases that are installable.
    *
+   * @param \Drupal\automatic_updates\Updater $updater
+   *   The updater that will be used to install the releases.
+   *
    * @return \Drupal\automatic_updates_9_3_shim\ProjectRelease[]
-   *   The releases that are installable according to the version validator
-   *   service.
+   *   The releases that are installable by the given updtaer, according to the
+   *   version validator service.
    */
-  protected function getInstallableReleases(): array {
+  protected function getInstallableReleases(Updater $updater): array {
+    $filter = function (string $version) use ($updater): bool {
+      return empty($this->versionPolicyValidator->validateVersion($updater, $version));
+    };
     return array_filter(
       $this->projectInfo->getInstallableReleases(),
-      [$this->versionValidator, 'isValidVersion'],
+      $filter,
       ARRAY_FILTER_USE_KEY
     );
   }
@@ -57,6 +63,8 @@ class ReleaseChooser {
   /**
    * Gets the most recent release in the same minor as a specified version.
    *
+   * @param \Drupal\automatic_updates\Updater $updater
+   *   The updater that will be used to install the release.
    * @param string $version
    *   The full semantic version number, which must include a patch version.
    *
@@ -66,11 +74,11 @@ class ReleaseChooser {
    * @throws \InvalidArgumentException
    *   If the given semantic version number does not contain a patch version.
    */
-  protected function getMostRecentReleaseInMinor(string $version): ?ProjectRelease {
+  protected function getMostRecentReleaseInMinor(Updater $updater, string $version): ?ProjectRelease {
     if (static::getPatchVersion($version) === NULL) {
       throw new \InvalidArgumentException("The version number $version does not contain a patch version");
     }
-    $releases = $this->getInstallableReleases();
+    $releases = $this->getInstallableReleases($updater);
     foreach ($releases as $release) {
       // Checks if the release is in the same minor as the currently installed
       // version. For example, if the current version is 9.8.0 then the
@@ -99,12 +107,15 @@ class ReleaseChooser {
    * This will only return a release if it passes the ::isValidVersion() method
    * of the version validator service injected into this class.
    *
+   * @param \Drupal\automatic_updates\Updater $updater
+   *   The updater which will install the release.
+   *
    * @return \Drupal\automatic_updates_9_3_shim\ProjectRelease|null
    *   The latest release in the currently installed minor, if any, otherwise
    *   NULL.
    */
-  public function getLatestInInstalledMinor(): ?ProjectRelease {
-    return $this->getMostRecentReleaseInMinor($this->getInstalledVersion());
+  public function getLatestInInstalledMinor(Updater $updater): ?ProjectRelease {
+    return $this->getMostRecentReleaseInMinor($updater, $this->getInstalledVersion());
   }
 
   /**
@@ -113,13 +124,16 @@ class ReleaseChooser {
    * This will only return a release if it passes the ::isValidVersion() method
    * of the version validator service injected into this class.
    *
+   * @param \Drupal\automatic_updates\Updater $updater
+   *   The updater which will install the release.
+   *
    * @return \Drupal\automatic_updates_9_3_shim\ProjectRelease|null
    *   The latest release in the next minor, if any, otherwise NULL.
    */
-  public function getLatestInNextMinor(): ?ProjectRelease {
+  public function getLatestInNextMinor(Updater $updater): ?ProjectRelease {
     $installed_version = ExtensionVersion::createFromVersionString($this->getInstalledVersion());
     $next_minor = $installed_version->getMajorVersion() . '.' . (((int) $installed_version->getMinorVersion()) + 1) . '.0';
-    return $this->getMostRecentReleaseInMinor($next_minor);
+    return $this->getMostRecentReleaseInMinor($updater, $next_minor);
   }
 
 }
