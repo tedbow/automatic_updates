@@ -13,6 +13,7 @@ use Drupal\automatic_updates\Validator\VersionPolicy\MajorVersionMatch;
 use Drupal\automatic_updates\Validator\VersionPolicy\MinorUpdatesEnabled;
 use Drupal\automatic_updates\Validator\VersionPolicy\StableReleaseInstalled;
 use Drupal\automatic_updates\Validator\VersionPolicy\ForbidDevSnapshot;
+use Drupal\automatic_updates\Validator\VersionPolicy\SupportedBranchInstalled;
 use Drupal\automatic_updates\Validator\VersionPolicy\TargetSecurityRelease;
 use Drupal\automatic_updates\Validator\VersionPolicy\TargetVersionInstallable;
 use Drupal\automatic_updates\Validator\VersionPolicy\TargetVersionStable;
@@ -88,6 +89,8 @@ final class VersionPolicyValidator implements EventSubscriberInterface {
         // If cron updates are enabled, the installed version must be stable;
         // no alphas, betas, or RCs.
         $rules[] = StableReleaseInstalled::class;
+        // It must also be in a supported branch.
+        $rules[] = SupportedBranchInstalled::class;
 
         // If the target version is known, more rules apply.
         if ($target_version) {
