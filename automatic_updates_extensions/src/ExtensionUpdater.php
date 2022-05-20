@@ -3,6 +3,7 @@
 namespace Drupal\automatic_updates_extensions;
 
 use Drupal\automatic_updates\Exception\UpdateException;
+use Drupal\automatic_updates\LegacyVersionUtility;
 use Drupal\package_manager\Event\StageEvent;
 use Drupal\package_manager\Exception\StageValidationException;
 use Drupal\package_manager\Stage;

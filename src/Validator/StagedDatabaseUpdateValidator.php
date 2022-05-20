@@ -14,6 +14,10 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 /**
  * Validates that there are no database updates in a staged update.
+ *
+ * @internal
+ *   This class is an internal part of the module's update handling and
+ *   should not be used by external code.
  */
 class StagedDatabaseUpdateValidator implements EventSubscriberInterface {
 

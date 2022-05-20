@@ -6,5 +6,6 @@ services:
       - '@state'
       - '@router.no_access_checks'
       - '@user.permissions'
+      - '@plugin.manager.block'
     tags:
       - { name: event_subscriber }

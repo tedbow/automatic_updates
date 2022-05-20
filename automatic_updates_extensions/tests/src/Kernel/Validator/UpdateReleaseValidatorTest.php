@@ -2,7 +2,7 @@
 
 namespace Drupal\Tests\automatic_updates_extensions\Kernel\Valdiator;
 
-use Drupal\automatic_updates_extensions\LegacyVersionUtility;
+use Drupal\automatic_updates\LegacyVersionUtility;
 use Drupal\package_manager\Event\PreCreateEvent;
 use Drupal\package_manager\ValidationResult;
 use Drupal\Tests\automatic_updates_extensions\Kernel\AutomaticUpdatesExtensionsKernelTestBase;

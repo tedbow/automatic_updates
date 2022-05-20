@@ -4,7 +4,7 @@ namespace Drupal\automatic_updates_extensions\Validator;
 
 use Drupal\automatic_updates\ProjectInfo;
 use Drupal\automatic_updates_extensions\ExtensionUpdater;
-use Drupal\automatic_updates_extensions\LegacyVersionUtility;
+use Drupal\automatic_updates\LegacyVersionUtility;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\package_manager\Event\PreCreateEvent;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;

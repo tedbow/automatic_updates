@@ -34,4 +34,19 @@ trait VersionParsingTrait {
     return count($version_parts) === 3 ? $version_parts[2] : NULL;
   }
 
+  /**
+   * Returns the semantic major.minor numbers of a version string.
+   *
+   * @param string $version
+   *   The version string.
+   *
+   * @return string
+   *   The major.minor numbers of the version string. For example, if $version
+   *   is 8.9.1, '8.9' will be returned.
+   */
+  protected static function getMajorAndMinorVersion(string $version): string {
+    $version = ExtensionVersion::createFromVersionString($version);
+    return $version->getMajorVersion() . '.' . $version->getMinorVersion();
+  }
+
 }

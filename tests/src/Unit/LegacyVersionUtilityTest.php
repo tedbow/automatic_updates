@@ -1,14 +1,14 @@
 <?php
 
-namespace Drupal\Tests\automatic_updates_extensions\Unit;
+namespace Drupal\Tests\automatic_updates\Unit;
 
-use Drupal\automatic_updates_extensions\LegacyVersionUtility;
+use Drupal\automatic_updates\LegacyVersionUtility;
 use Drupal\Tests\UnitTestCase;
 
 /**
- * @coversDefaultClass \Drupal\automatic_updates_extensions\LegacyVersionUtility
+ * @coversDefaultClass \Drupal\automatic_updates\LegacyVersionUtility
  *
- * @group automatic_updates_extensions
+ * @group automatic_updates
  */
 class LegacyVersionUtilityTest extends UnitTestCase {
 

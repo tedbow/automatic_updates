@@ -87,10 +87,23 @@ class CronUpdater extends Updater {
       return;
     }
 
-    $next_release = $this->releaseChooser->getLatestInInstalledMinor();
+    $next_release = $this->releaseChooser->getLatestInInstalledMinor($this);
     if ($next_release) {
       $this->performUpdate($next_release->getVersion(), $timeout);
     }
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function begin(array $project_versions, ?int $timeout = 300): string {
+    // Prevent mischievous callers from starting an update even if unattended
+    // updates are disabled. To start an update programmatically, use
+    // \Drupal\automatic_updates\Updater::begin().
+    if ($this->getMode() === static::DISABLED) {
+      throw new \LogicException('Unattended updates are disabled.');
+    }
+    return parent::begin($project_versions, $timeout);
   }
 
   /**

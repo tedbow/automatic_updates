@@ -12,6 +12,7 @@ use Drupal\Core\Batch\BatchBuilder;
 use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Link;
+use Drupal\Core\Messenger\MessengerInterface;
 use Drupal\Core\State\StateInterface;
 use Drupal\Core\Url;
 use Drupal\package_manager\Exception\StageException;
@@ -137,17 +138,10 @@ class UpdaterForm extends FormBase {
       // @todo Until https://www.drupal.org/i/3264849 is fixed, we can only show
       //   one release on the form. First, try to show the latest release in the
       //   currently installed minor. Failing that, try to show the latest
-      //   release in the next minor. If neither of those are available, just
-      //   show the first available release.
-      $recommended_release = $this->releaseChooser->getLatestInInstalledMinor();
+      //   release in the next minor.
+      $recommended_release = $this->releaseChooser->getLatestInInstalledMinor($this->updater);
       if (!$recommended_release) {
-        $recommended_release = $this->releaseChooser->getLatestInNextMinor();
-        if (!$recommended_release) {
-          // @todo Do not list an update that can't be validated in
-          //   https://www.drupal.org/i/3271235.
-          $updates = $project_info->getInstallableReleases();
-          $recommended_release = array_pop($updates);
-        }
+        $recommended_release = $this->releaseChooser->getLatestInNextMinor($this->updater);
       }
     }
     catch (\RuntimeException $e) {
@@ -160,12 +154,20 @@ class UpdaterForm extends FormBase {
     // @todo Should we be using the Update module's library here, or our own?
     $form['#attached']['library'][] = 'update/drupal.update.admin';
 
-    // If we're already up-to-date, there's nothing else we need to do.
+    $project = $project_info->getProjectInfo();
     if ($recommended_release === NULL) {
-      // @todo Link to the Available Updates report if there are other updates
-      //   that are not supported by this module in
-      //   https://www.drupal.org/i/3271235.
-      $this->messenger()->addMessage('No update available');
+      if ($project['status'] === UpdateManagerInterface::CURRENT) {
+        $this->messenger()->addMessage($this->t('No update available'));
+      }
+      else {
+        $message = $this->t('Updates were found, but they must be performed manually. See <a href=":url">the list of available updates</a> for more information.', [
+          ':url' => Url::fromRoute('update.status')->toString(),
+        ]);
+        // If the current release is old, but otherwise secure and supported,
+        // this should be a regular status message. In any other case, urgent
+        // action is needed so flag it as an error.
+        $this->messenger()->addMessage($message, $project['status'] === UpdateManagerInterface::NOT_CURRENT ? MessengerInterface::TYPE_STATUS : MessengerInterface::TYPE_ERROR);
+      }
       return $form;
     }
 
@@ -176,7 +178,6 @@ class UpdaterForm extends FormBase {
       ],
     ];
 
-    $project = $project_info->getProjectInfo();
     if (empty($project['title']) || empty($project['link'])) {
       throw new \UnexpectedValueException('Expected project data to have a title and link.');
     }

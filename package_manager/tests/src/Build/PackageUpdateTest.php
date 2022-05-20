@@ -82,6 +82,16 @@ class PackageUpdateTest extends TemplateProjectTestBase {
       'updated_module.deleted_service exists' => 'exists',
       'value of updated_module.deleted_service' => 'Deleted service, should not exist after update',
       'updated_module.added_service exists' => 'not exists',
+      'updated_module_deleted_block block exists' => 'exists',
+      'updated_module_deleted_block block label' => 'Deleted block',
+      'updated_module_deleted_block block output' => 'Goodbye!',
+      'updated_module_updated_block block exists' => 'exists',
+      'updated_module_updated_block block label' => '1.0.0',
+      'updated_module_updated_block block output' => '1.0.0',
+      'updated_module_added_block block exists' => 'not exists',
+      // This block is not instantiated until the update is done.
+      'updated_module_ignored_block block exists' => 'exists',
+      'updated_module_ignored_block block label' => '1.0.0',
       'ChangedClass exists' => 'exists',
       'value of ChangedClass' => 'Before Update',
       'LoadedAndDeletedClass exists' => 'exists',
@@ -115,6 +125,23 @@ class PackageUpdateTest extends TemplateProjectTestBase {
       // the expected value.
       'updated_module.added_service exists' => 'exists',
       'value of updated_module.added_service' => 'New service, should not exist before update',
+      // A block removed from the updated module should not be defined anymore.
+      'updated_module_deleted_block block exists' => 'not exists',
+      // A block that was updated should have a changed definition, but an
+      // unchanged implementation.
+      'updated_module_updated_block block exists' => 'exists',
+      'updated_module_updated_block block label' => '1.1.0',
+      'updated_module_updated_block block output' => '1.0.0',
+      // A block added to the module should be defined.
+      'updated_module_added_block block exists' => 'exists',
+      'updated_module_added_block block label' => 'Added block',
+      'updated_module_added_block block output' => 'Hello!',
+      // A block whose definition and implementation were updated, but was NOT
+      // instantiated before the update, should have an updated definition and
+      // implementation.
+      'updated_module_ignored_block block exists' => 'exists',
+      'updated_module_ignored_block block label' => '1.1.0',
+      'updated_module_ignored_block block output' => 'I was ignored before the update.',
       // Existing class should be available.
       'ChangedClass exists' => 'exists',
       // Existing class will still use the pre-update version.

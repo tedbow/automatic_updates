@@ -15,6 +15,10 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 /**
  * Validates that cron runs frequently enough to perform automatic updates.
+ *
+ * @internal
+ *   This class is an internal part of the module's update handling and
+ *   should not be used by external code.
  */
 class CronFrequencyValidator implements EventSubscriberInterface {
 

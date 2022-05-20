@@ -94,5 +94,29 @@
       <term><name>Release type</name><value>Bug fixes</value></term>
     </terms>
   </release>
+    <release>
+        <name>AAA 7.0.0-dev</name>
+        <version>7.0.x-dev</version>
+        <status>published</status>
+        <release_link>http://example.com/aaa_automatic_updates_test-9-7-0-dev-release</release_link>
+        <download_link>http://example.com/aaa_automatic_updates_test-9-7-0-dev.tar.gz</download_link>
+        <date>1250424521</date>
+        <terms>
+            <term><name>Release type</name><value>New features</value></term>
+            <term><name>Release type</name><value>Bug fixes</value></term>
+        </terms>
+    </release>
+    <release>
+        <name>AAA 8.x-6.x-dev</name>
+        <version>8.x-6.x-dev</version>
+        <status>published</status>
+        <release_link>http://example.com/aaa_automatic_updates_test-9-8-0-dev-release</release_link>
+        <download_link>http://example.com/aaa_automatic_updates_test-9-8-0-dev.tar.gz</download_link>
+        <date>1250424521</date>
+        <terms>
+            <term><name>Release type</name><value>New features</value></term>
+            <term><name>Release type</name><value>Bug fixes</value></term>
+        </terms>
+    </release>
 </releases>
 </project>

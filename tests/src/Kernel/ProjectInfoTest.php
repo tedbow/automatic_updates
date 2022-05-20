@@ -92,7 +92,7 @@ class ProjectInfoTest extends AutomaticUpdatesKernelTestBase {
       'core, skip insecure releases and return secure releases' => [
         'drupal.9.8.2-older-sec-release.xml',
         '9.7.0-alpha1',
-        ['9.8.2', '9.8.1', '9.8.0-alpha1', '9.7.1'],
+        ['9.8.2', '9.8.1', '9.8.1-beta1', '9.8.0-alpha1', '9.7.1'],
       ],
       'contrib, semver and legacy' => [
         'aaa_automatic_updates_test.9.8.2.xml',
@@ -103,6 +103,16 @@ class ProjectInfoTest extends AutomaticUpdatesKernelTestBase {
         'aaa_automatic_updates_test.9.8.2.xml',
         '8.x-6.1',
         ['7.0.1', '7.0.0', '7.0.0-alpha1', '8.x-6.2'],
+      ],
+      'contrib, semver and legacy, on semantic dev' => [
+        'aaa_automatic_updates_test.9.8.2.xml',
+        '7.0.x-dev',
+        ['7.0.1', '7.0.0', '7.0.0-alpha1'],
+      ],
+      'contrib, semver and legacy, on legacy dev' => [
+        'aaa_automatic_updates_test.9.8.2.xml',
+        '8.x-6.x-dev',
+        ['7.0.1', '7.0.0', '7.0.0-alpha1', '8.x-6.2', '8.x-6.1', '8.x-6.0', '8.x-6.0-alpha1'],
       ],
     ];
   }

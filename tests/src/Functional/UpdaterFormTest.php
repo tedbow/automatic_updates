@@ -57,6 +57,7 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
       'access site in maintenance mode',
       'administer modules',
       'access site reports',
+      'view update notifications',
     ]);
     $this->drupalLogin($user);
     $this->checkForUpdates();
@@ -106,7 +107,6 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
     $this->drupalGet($update_form_url);
 
     $assert_session = $this->assertSession();
-    $assert_session->statusCodeEquals(200);
     $assert_session->pageTextContains('No update available');
     $assert_session->buttonNotExists('Update');
   }
@@ -239,7 +239,9 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
     $this->drupalGet($update_form_url);
 
     $assert_session = $this->assertSession();
-    $assert_session->pageTextContainsOnce('Drupal cannot be automatically updated from its current version, 9.7.1, to the recommended version, 9.8.1, because automatic updates from one minor version to another are not supported.');
+    $assert_session->pageTextContains('Updates were found, but they must be performed manually. See the list of available updates for more information.');
+    $this->clickLink('the list of available updates');
+    $assert_session->elementExists('css', 'table.update');
     $assert_session->buttonNotExists('Update');
   }
 
@@ -411,7 +413,12 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
     $possible_update_message = 'Possible database updates were detected in the following modules; you may be redirected to the database update page in order to complete the update process.';
     $assert_session->pageTextContains($possible_update_message);
     $assert_session->pageTextContains('System');
-    $assert_session->checkboxChecked('maintenance_mode');
+    if ($maintenance_mode_on === TRUE) {
+      $assert_session->fieldNotExists('maintenance_mode');
+    }
+    else {
+      $assert_session->checkboxChecked('maintenance_mode');
+    }
     $assert_session->pageTextNotContains($cached_message);
     $page->pressButton('Continue');
     $this->checkForMetaRefresh();
