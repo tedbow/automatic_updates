@@ -148,10 +148,19 @@ final class VersionPolicyValidator implements EventSubscriberInterface {
 
     $messages = $this->validateVersion($stage, $target_version);
     if ($messages) {
-      $summary = $this->t('Updating from Drupal @installed_version to @target_version is not allowed.', [
-        '@installed_version' => $this->getInstalledVersion(),
-        '@target_version' => $target_version,
-      ]);
+      $installed_version = $this->getInstalledVersion();
+
+      if ($target_version) {
+        $summary = $this->t('Updating from Drupal @installed_version to @target_version is not allowed.', [
+          '@installed_version' => $installed_version,
+          '@target_version' => $target_version,
+        ]);
+      }
+      else {
+        $summary = $this->t('Updating from Drupal @installed_version is not allowed.', [
+          '@installed_version' => $installed_version,
+        ]);
+      }
       $event->addError($messages, $summary);
     }
   }

@@ -137,7 +137,7 @@ class VersionPolicyValidatorTest extends AutomaticUpdatesKernelTestBase {
         "$metadata_dir/drupal.9.8.1-security.xml",
         [CronUpdater::SECURITY, CronUpdater::ALL],
         [
-          $this->createValidationResult('9.7.1', '', [
+          $this->createValidationResult('9.7.1', NULL, [
             'The currently installed version of Drupal core, 9.7.1, is not in a supported minor version. Your site will not be automatically updated during cron until it is updated to a supported minor version.',
             'See the <a href="/admin/reports/updates">available updates page</a> for available updates.',
           ]),
@@ -148,7 +148,7 @@ class VersionPolicyValidatorTest extends AutomaticUpdatesKernelTestBase {
         "$metadata_dir/drupal.9.8.1-security.xml",
         [CronUpdater::SECURITY, CronUpdater::ALL],
         [
-          $this->createValidationResult('9.7.1', '', [
+          $this->createValidationResult('9.7.1', NULL, [
             'The currently installed version of Drupal core, 9.7.1, is not in a supported minor version. Your site will not be automatically updated during cron until it is updated to a supported minor version.',
             'Use the <a href="/admin/modules/automatic-update">update form</a> to update to a supported version.',
           ]),
@@ -439,19 +439,26 @@ class VersionPolicyValidatorTest extends AutomaticUpdatesKernelTestBase {
    *
    * @param string $installed_version
    *   The installed version of Drupal core.
-   * @param string $target_version
-   *   The target version of Drupal core.
+   * @param string|null $target_version
+   *   The target version of Drupal core, or NULL if it's not known.
    * @param string[] $messages
    *   The error messages that the result should contain.
    *
    * @return \Drupal\package_manager\ValidationResult
    *   A validation error object with the appropriate summary.
    */
-  private function createValidationResult(string $installed_version, string $target_version, array $messages): ValidationResult {
-    $summary = t('Updating from Drupal @installed_version to @target_version is not allowed.', [
-      '@installed_version' => $installed_version,
-      '@target_version' => $target_version,
-    ]);
+  private function createValidationResult(string $installed_version, ?string $target_version, array $messages): ValidationResult {
+    if ($target_version) {
+      $summary = t('Updating from Drupal @installed_version to @target_version is not allowed.', [
+        '@installed_version' => $installed_version,
+        '@target_version' => $target_version,
+      ]);
+    }
+    else {
+      $summary = t('Updating from Drupal @installed_version is not allowed.', [
+        '@installed_version' => $installed_version,
+      ]);
+    }
     return ValidationResult::createError($messages, $summary);
   }
 
