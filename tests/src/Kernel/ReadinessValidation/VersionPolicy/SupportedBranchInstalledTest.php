@@ -15,7 +15,7 @@ class SupportedBranchInstalledTest extends AutomaticUpdatesKernelTestBase {
   /**
    * {@inheritdoc}
    */
-  protected static $modules = ['automatic_updates', 'update'];
+  protected static $modules = ['automatic_updates'];
 
   /**
    * Data provider for ::testSupportedBranchInstalled().

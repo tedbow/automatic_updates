@@ -282,6 +282,17 @@ class VersionPolicyValidatorTest extends AutomaticUpdatesKernelTestBase {
         [],
         TRUE,
       ],
+      // If attended updates across minor versions are allowed, it's okay to
+      // update from an unsupported minor version.
+      'attended update from unsupported minor allowed' => [
+        ['automatic_updates.updater'],
+        '9.7.9',
+        "$metadata_dir/drupal.9.8.1-security.xml",
+        [CronUpdater::SECURITY, CronUpdater::ALL],
+        ['drupal' => '9.8.1'],
+        [],
+        TRUE,
+      ],
       // Unattended updates to unstable versions are not allowed.
       'unattended update to unstable version' => [
         ['automatic_updates.cron_updater'],
@@ -294,6 +305,37 @@ class VersionPolicyValidatorTest extends AutomaticUpdatesKernelTestBase {
             'Drupal cannot be automatically updated during cron to the recommended version, 9.8.1-beta1, because Automatic Updates only supports updating to stable versions during cron.',
           ]),
         ],
+      ],
+      // Unattended updates from an unsupported minor are never allowed, but
+      // the messaging will vary depending on whether attended updates across
+      // minor versions are allowed.
+      'unattended update from unsupported minor, minor updates forbidden' => [
+        ['automatic_updates.cron_updater'],
+        '9.7.9',
+        "$metadata_dir/drupal.9.8.1-security.xml",
+        [CronUpdater::SECURITY, CronUpdater::ALL],
+        ['drupal' => '9.8.1'],
+        [
+          $this->createValidationResult('9.7.9', '9.8.1', [
+            'The currently installed version of Drupal core, 9.7.9, is not in a supported minor version. Your site will not be automatically updated during cron until it is updated to a supported minor version.',
+            'See the <a href="/admin/reports/updates">available updates page</a> for available updates.',
+          ]),
+        ],
+        FALSE,
+      ],
+      'unattended update from unsupported minor, minor updates allowed' => [
+        ['automatic_updates.cron_updater'],
+        '9.7.9',
+        "$metadata_dir/drupal.9.8.1-security.xml",
+        [CronUpdater::SECURITY, CronUpdater::ALL],
+        ['drupal' => '9.8.1'],
+        [
+          $this->createValidationResult('9.7.9', '9.8.1', [
+            'The currently installed version of Drupal core, 9.7.9, is not in a supported minor version. Your site will not be automatically updated during cron until it is updated to a supported minor version.',
+            'Use the <a href="/admin/modules/automatic-update">update form</a> to update to a supported version.',
+          ]),
+        ],
+        TRUE,
       ],
     ];
   }
