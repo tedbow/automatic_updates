@@ -120,6 +120,41 @@ class VersionPolicyValidatorTest extends AutomaticUpdatesKernelTestBase {
           ]),
         ],
       ],
+      // These three cases prove that updating from an unsupported minor version
+      // will raise a readiness error if unattended updates are enabled.
+      // Furthermore, if an error is raised, the messaging will vary depending
+      // on whether attended updates across minor versions are allowed. (Note
+      // that the target version will not be automatically detected because the
+      // release metadata used in these cases doesn't have any 9.7.x releases.)
+      'update from unsupported minor, cron disabled' => [
+        '9.7.1',
+        "$metadata_dir/drupal.9.8.1-security.xml",
+        [CronUpdater::DISABLED],
+        [],
+      ],
+      'update from unsupported minor, cron enabled, minor updates forbidden' => [
+        '9.7.1',
+        "$metadata_dir/drupal.9.8.1-security.xml",
+        [CronUpdater::SECURITY, CronUpdater::ALL],
+        [
+          $this->createValidationResult('9.7.1', NULL, [
+            'The currently installed version of Drupal core, 9.7.1, is not in a supported minor version. Your site will not be automatically updated during cron until it is updated to a supported minor version.',
+            'See the <a href="/admin/reports/updates">available updates page</a> for available updates.',
+          ]),
+        ],
+      ],
+      'update from unsupported minor, cron enabled, minor updates allowed' => [
+        '9.7.1',
+        "$metadata_dir/drupal.9.8.1-security.xml",
+        [CronUpdater::SECURITY, CronUpdater::ALL],
+        [
+          $this->createValidationResult('9.7.1', NULL, [
+            'The currently installed version of Drupal core, 9.7.1, is not in a supported minor version. Your site will not be automatically updated during cron until it is updated to a supported minor version.',
+            'Use the <a href="/admin/modules/automatic-update">update form</a> to update to a supported version.',
+          ]),
+        ],
+        TRUE,
+      ],
     ];
   }
 
@@ -137,16 +172,20 @@ class VersionPolicyValidatorTest extends AutomaticUpdatesKernelTestBase {
    *   \Drupal\automatic_updates\CronUpdater::ALL.
    * @param \Drupal\package_manager\ValidationResult[] $expected_results
    *   The expected validation results.
+   * @param bool $allow_minor_updates
+   *   (optional) Whether or not attended updates across minor updates are
+   *   allowed. Defaults to FALSE.
    *
    * @dataProvider providerReadinessCheck
    */
-  public function testReadinessCheck(string $installed_version, string $release_metadata, array $cron_modes, array $expected_results): void {
+  public function testReadinessCheck(string $installed_version, string $release_metadata, array $cron_modes, array $expected_results, bool $allow_minor_updates = FALSE): void {
     $this->setCoreVersion($installed_version);
     $this->setReleaseMetadata(['drupal' => $release_metadata]);
 
     foreach ($cron_modes as $cron_mode) {
       $this->config('automatic_updates.settings')
         ->set('cron', $cron_mode)
+        ->set('allow_core_minor_updates', $allow_minor_updates)
         ->save();
 
       $this->assertCheckerResultsFromManager($expected_results, TRUE);
@@ -282,6 +321,17 @@ class VersionPolicyValidatorTest extends AutomaticUpdatesKernelTestBase {
         [],
         TRUE,
       ],
+      // If attended updates across minor versions are allowed, it's okay to
+      // update from an unsupported minor version.
+      'attended update from unsupported minor allowed' => [
+        ['automatic_updates.updater'],
+        '9.7.9',
+        "$metadata_dir/drupal.9.8.1-security.xml",
+        [CronUpdater::SECURITY, CronUpdater::ALL],
+        ['drupal' => '9.8.1'],
+        [],
+        TRUE,
+      ],
       // Unattended updates to unstable versions are not allowed.
       'unattended update to unstable version' => [
         ['automatic_updates.cron_updater'],
@@ -294,6 +344,37 @@ class VersionPolicyValidatorTest extends AutomaticUpdatesKernelTestBase {
             'Drupal cannot be automatically updated during cron to the recommended version, 9.8.1-beta1, because Automatic Updates only supports updating to stable versions during cron.',
           ]),
         ],
+      ],
+      // Unattended updates from an unsupported minor are never allowed, but
+      // the messaging will vary depending on whether attended updates across
+      // minor versions are allowed.
+      'unattended update from unsupported minor, minor updates forbidden' => [
+        ['automatic_updates.cron_updater'],
+        '9.7.9',
+        "$metadata_dir/drupal.9.8.1-security.xml",
+        [CronUpdater::SECURITY, CronUpdater::ALL],
+        ['drupal' => '9.8.1'],
+        [
+          $this->createValidationResult('9.7.9', '9.8.1', [
+            'The currently installed version of Drupal core, 9.7.9, is not in a supported minor version. Your site will not be automatically updated during cron until it is updated to a supported minor version.',
+            'See the <a href="/admin/reports/updates">available updates page</a> for available updates.',
+          ]),
+        ],
+        FALSE,
+      ],
+      'unattended update from unsupported minor, minor updates allowed' => [
+        ['automatic_updates.cron_updater'],
+        '9.7.9',
+        "$metadata_dir/drupal.9.8.1-security.xml",
+        [CronUpdater::SECURITY, CronUpdater::ALL],
+        ['drupal' => '9.8.1'],
+        [
+          $this->createValidationResult('9.7.9', '9.8.1', [
+            'The currently installed version of Drupal core, 9.7.9, is not in a supported minor version. Your site will not be automatically updated during cron until it is updated to a supported minor version.',
+            'Use the <a href="/admin/modules/automatic-update">update form</a> to update to a supported version.',
+          ]),
+        ],
+        TRUE,
       ],
     ];
   }
@@ -358,19 +439,26 @@ class VersionPolicyValidatorTest extends AutomaticUpdatesKernelTestBase {
    *
    * @param string $installed_version
    *   The installed version of Drupal core.
-   * @param string $target_version
-   *   The target version of Drupal core.
+   * @param string|null $target_version
+   *   The target version of Drupal core, or NULL if it's not known.
    * @param string[] $messages
    *   The error messages that the result should contain.
    *
    * @return \Drupal\package_manager\ValidationResult
    *   A validation error object with the appropriate summary.
    */
-  private function createValidationResult(string $installed_version, string $target_version, array $messages): ValidationResult {
-    $summary = t('Updating from Drupal @installed_version to @target_version is not allowed.', [
-      '@installed_version' => $installed_version,
-      '@target_version' => $target_version,
-    ]);
+  private function createValidationResult(string $installed_version, ?string $target_version, array $messages): ValidationResult {
+    if ($target_version) {
+      $summary = t('Updating from Drupal @installed_version to @target_version is not allowed.', [
+        '@installed_version' => $installed_version,
+        '@target_version' => $target_version,
+      ]);
+    }
+    else {
+      $summary = t('Updating from Drupal @installed_version is not allowed.', [
+        '@installed_version' => $installed_version,
+      ]);
+    }
     return ValidationResult::createError($messages, $summary);
   }
 

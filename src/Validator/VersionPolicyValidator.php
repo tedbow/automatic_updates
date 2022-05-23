@@ -13,6 +13,7 @@ use Drupal\automatic_updates\Validator\VersionPolicy\MajorVersionMatch;
 use Drupal\automatic_updates\Validator\VersionPolicy\MinorUpdatesEnabled;
 use Drupal\automatic_updates\Validator\VersionPolicy\StableReleaseInstalled;
 use Drupal\automatic_updates\Validator\VersionPolicy\ForbidDevSnapshot;
+use Drupal\automatic_updates\Validator\VersionPolicy\SupportedBranchInstalled;
 use Drupal\automatic_updates\Validator\VersionPolicy\TargetSecurityRelease;
 use Drupal\automatic_updates\Validator\VersionPolicy\TargetVersionInstallable;
 use Drupal\automatic_updates\Validator\VersionPolicy\TargetVersionStable;
@@ -88,6 +89,8 @@ final class VersionPolicyValidator implements EventSubscriberInterface {
         // If cron updates are enabled, the installed version must be stable;
         // no alphas, betas, or RCs.
         $rules[] = StableReleaseInstalled::class;
+        // It must also be in a supported branch.
+        $rules[] = SupportedBranchInstalled::class;
 
         // If the target version is known, more rules apply.
         if ($target_version) {
@@ -145,10 +148,19 @@ final class VersionPolicyValidator implements EventSubscriberInterface {
 
     $messages = $this->validateVersion($stage, $target_version);
     if ($messages) {
-      $summary = $this->t('Updating from Drupal @installed_version to @target_version is not allowed.', [
-        '@installed_version' => $this->getInstalledVersion(),
-        '@target_version' => $target_version,
-      ]);
+      $installed_version = $this->getInstalledVersion();
+
+      if ($target_version) {
+        $summary = $this->t('Updating from Drupal @installed_version to @target_version is not allowed.', [
+          '@installed_version' => $installed_version,
+          '@target_version' => $target_version,
+        ]);
+      }
+      else {
+        $summary = $this->t('Updating from Drupal @installed_version is not allowed.', [
+          '@installed_version' => $installed_version,
+        ]);
+      }
       $event->addError($messages, $summary);
     }
   }
