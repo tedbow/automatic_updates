@@ -60,24 +60,21 @@ class SupportedBranchInstalled implements ContainerInjectionInterface {
    */
   public function validate(string $installed_version): array {
     $available_updates = update_get_available(TRUE);
-
-    $installed_minor = static::getMajorAndMinorVersion($installed_version);
-    [$installed_major] = explode('.', $installed_minor);
+    $installed_version_object = ExtensionVersion::createFromVersionString($installed_version);
     $in_supported_major = FALSE;
 
     $supported_branches = explode(',', $available_updates['drupal']['supported_branches']);
     foreach ($supported_branches as $supported_branch) {
+      $supported_branch_version = ExtensionVersion::createFromSupportBranch($supported_branch);
       // If the supported branch is the same as the installed minor version,
       // this rule is fulfilled.
-      if (rtrim($supported_branch, '.') === $installed_minor) {
+      if ($installed_version_object->getMajorVersion() === $supported_branch_version->getMajorVersion() && $installed_version_object->getMinorVersion() === $supported_branch_version->getMinorVersion()) {
         return [];
       }
       // Otherwise, see if this supported branch is in the same major version as
       // what's installed, since that will influence our messaging.
       elseif ($in_supported_major === FALSE) {
-        $supported_major = ExtensionVersion::createFromSupportBranch($supported_branch)
-          ->getMajorVersion();
-        $in_supported_major = $supported_major === $installed_major;
+        $in_supported_major = $supported_branch_version->getMajorVersion() === $installed_version_object->getMajorVersion();
       }
     }
 
