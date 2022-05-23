@@ -2,7 +2,6 @@
 
 namespace Drupal\automatic_updates\Validator\VersionPolicy;
 
-use Drupal\automatic_updates\ProjectInfo;
 use Drupal\automatic_updates\VersionParsingTrait;
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\DependencyInjection\ContainerInjectionInterface;
@@ -60,13 +59,13 @@ class SupportedBranchInstalled implements ContainerInjectionInterface {
    *   The error messages, if any.
    */
   public function validate(string $installed_version): array {
-    $project_data = (new ProjectInfo('drupal'))->getProjectInfo();
+    $available_updates = update_get_available(TRUE);
 
     $installed_minor = static::getMajorAndMinorVersion($installed_version);
     [$installed_major] = explode('.', $installed_minor);
     $in_supported_major = FALSE;
 
-    $supported_branches = explode(',', $project_data['supported_branches']);
+    $supported_branches = explode(',', $available_updates['drupal']['supported_branches']);
     foreach ($supported_branches as $supported_branch) {
       // If the supported branch is the same as the installed minor version,
       // this rule is fulfilled.
