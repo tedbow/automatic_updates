@@ -120,6 +120,41 @@ class VersionPolicyValidatorTest extends AutomaticUpdatesKernelTestBase {
           ]),
         ],
       ],
+      // These three cases prove that updating from an unsupported minor version
+      // will raise a readiness error if unattended updates are enabled.
+      // Furthermore, if an error is raised, the messaging will vary depending
+      // on whether attended updates across minor versions are allowed. (Note
+      // that the target version will not be automatically detected because the
+      // release metadata used in these cases doesn't have any 9.7.x releases.)
+      'update from unsupported minor, cron disabled' => [
+        '9.7.1',
+        "$metadata_dir/drupal.9.8.1-security.xml",
+        [CronUpdater::DISABLED],
+        [],
+      ],
+      'update from unsupported minor, cron enabled, minor updates forbidden' => [
+        '9.7.1',
+        "$metadata_dir/drupal.9.8.1-security.xml",
+        [CronUpdater::SECURITY, CronUpdater::ALL],
+        [
+          $this->createValidationResult('9.7.1', '', [
+            'The currently installed version of Drupal core, 9.7.1, is not in a supported minor version. Your site will not be automatically updated during cron until it is updated to a supported minor version.',
+            'See the <a href="/admin/reports/updates">available updates page</a> for available updates.',
+          ]),
+        ],
+      ],
+      'update from unsupported minor, cron enabled, minor updates allowed' => [
+        '9.7.1',
+        "$metadata_dir/drupal.9.8.1-security.xml",
+        [CronUpdater::SECURITY, CronUpdater::ALL],
+        [
+          $this->createValidationResult('9.7.1', '', [
+            'The currently installed version of Drupal core, 9.7.1, is not in a supported minor version. Your site will not be automatically updated during cron until it is updated to a supported minor version.',
+            'Use the <a href="/admin/modules/automatic-update">update form</a> to update to a supported version.',
+          ]),
+        ],
+        TRUE,
+      ],
     ];
   }
 
@@ -137,16 +172,20 @@ class VersionPolicyValidatorTest extends AutomaticUpdatesKernelTestBase {
    *   \Drupal\automatic_updates\CronUpdater::ALL.
    * @param \Drupal\package_manager\ValidationResult[] $expected_results
    *   The expected validation results.
+   * @param bool $allow_minor_updates
+   *   (optional) Whether or not attended updates across minor updates are
+   *   allowed. Defaults to FALSE.
    *
    * @dataProvider providerReadinessCheck
    */
-  public function testReadinessCheck(string $installed_version, string $release_metadata, array $cron_modes, array $expected_results): void {
+  public function testReadinessCheck(string $installed_version, string $release_metadata, array $cron_modes, array $expected_results, bool $allow_minor_updates = FALSE): void {
     $this->setCoreVersion($installed_version);
     $this->setReleaseMetadata(['drupal' => $release_metadata]);
 
     foreach ($cron_modes as $cron_mode) {
       $this->config('automatic_updates.settings')
         ->set('cron', $cron_mode)
+        ->set('allow_core_minor_updates', $allow_minor_updates)
         ->save();
 
       $this->assertCheckerResultsFromManager($expected_results, TRUE);
