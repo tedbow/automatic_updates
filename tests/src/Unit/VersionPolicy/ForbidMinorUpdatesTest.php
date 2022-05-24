@@ -41,32 +41,33 @@ class ForbidMinorUpdatesTest extends UnitTestCase {
       'target version in older minor' => [
         '9.8.0',
         '9.7.2',
-        ['Drupal cannot be automatically updated from its current version, 9.8.0, to the recommended version, 9.7.2, because automatic updates from one minor version to another are not supported during cron.'],
+        ['Drupal cannot be automatically updated from 9.8.0 to 9.7.2 because automatic updates from one minor version to another are not supported during cron.'],
       ],
+
       'target version in newer minor' => [
         '9.8.0',
         '9.9.2',
-        ['Drupal cannot be automatically updated from its current version, 9.8.0, to the recommended version, 9.9.2, because automatic updates from one minor version to another are not supported during cron.'],
+        ['Drupal cannot be automatically updated from 9.8.0 to 9.9.2 because automatic updates from one minor version to another are not supported during cron.'],
       ],
       'target version in older major' => [
         '9.8.0',
         '8.8.0',
-        ['Drupal cannot be automatically updated from its current version, 9.8.0, to the recommended version, 8.8.0, because automatic updates from one minor version to another are not supported during cron.'],
+        ['Drupal cannot be automatically updated from 9.8.0 to 8.8.0 because automatic updates from one minor version to another are not supported during cron.'],
       ],
       'target version in newer major' => [
         '9.8.0',
         '10.8.0',
-        ['Drupal cannot be automatically updated from its current version, 9.8.0, to the recommended version, 10.8.0, because automatic updates from one minor version to another are not supported during cron.'],
+        ['Drupal cannot be automatically updated from 9.8.0 to 10.8.0 because automatic updates from one minor version to another are not supported during cron.'],
       ],
       'target version in older major and minor' => [
         '9.8.0',
         '8.9.9',
-        ['Drupal cannot be automatically updated from its current version, 9.8.0, to the recommended version, 8.9.9, because automatic updates from one minor version to another are not supported during cron.'],
+        ['Drupal cannot be automatically updated from 9.8.0 to 8.9.9 because automatic updates from one minor version to another are not supported during cron.'],
       ],
       'target version in newer major and minor' => [
         '9.8.0',
         '10.9.2',
-        ['Drupal cannot be automatically updated from its current version, 9.8.0, to the recommended version, 10.9.2, because automatic updates from one minor version to another are not supported during cron.'],
+        ['Drupal cannot be automatically updated from 9.8.0 to 10.9.2 because automatic updates from one minor version to another are not supported during cron.'],
       ],
     ];
   }

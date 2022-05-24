@@ -36,7 +36,7 @@ class MajorVersionMatch {
 
     if ($installed_major !== $target_major) {
       return [
-        $this->t('Drupal cannot be automatically updated from its current version, @installed_version, to the recommended version, @target_version, because automatic updates from one major version to another are not supported.', [
+        $this->t('Drupal cannot be automatically updated from @installed_version to @target_version because automatic updates from one major version to another are not supported.', [
           '@installed_version' => $installed_version,
           '@target_version' => $target_version,
         ]),

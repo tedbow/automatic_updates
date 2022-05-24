@@ -35,7 +35,7 @@ class ForbidMinorUpdates {
 
     if ($installed_minor !== $target_minor) {
       return [
-        $this->t('Drupal cannot be automatically updated from its current version, @installed_version, to the recommended version, @target_version, because automatic updates from one minor version to another are not supported during cron.', [
+        $this->t('Drupal cannot be automatically updated from @installed_version to @target_version because automatic updates from one minor version to another are not supported during cron.', [
           '@installed_version' => $installed_version,
           '@target_version' => $target_version,
         ]),

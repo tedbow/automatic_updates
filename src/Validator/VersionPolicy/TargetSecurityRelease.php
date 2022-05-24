@@ -32,7 +32,7 @@ class TargetSecurityRelease {
   public function validate(string $installed_version, ?string $target_version, array $available_releases): array {
     if (!$available_releases[$target_version]->isSecurityRelease()) {
       return [
-        $this->t('Drupal cannot be automatically updated during cron from its current version, @installed_version, to the recommended version, @target_version, because @target_version is not a security release.', [
+        $this->t('Drupal cannot be automatically updated during cron from @installed_version to @target_version because @target_version is not a security release.', [
           '@installed_version' => $installed_version,
           '@target_version' => $target_version,
         ]),

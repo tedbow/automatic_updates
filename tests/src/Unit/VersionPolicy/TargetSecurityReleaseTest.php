@@ -45,7 +45,7 @@ class TargetSecurityReleaseTest extends UnitTestCase {
             'version' => '9.8.1',
           ]),
         ],
-        ['Drupal cannot be automatically updated during cron from its current version, 9.8.0, to the recommended version, 9.8.1, because 9.8.1 is not a security release.'],
+        ['Drupal cannot be automatically updated during cron from 9.8.0 to 9.8.1 because 9.8.1 is not a security release.'],
       ],
     ];
   }

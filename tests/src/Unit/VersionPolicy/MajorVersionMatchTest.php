@@ -51,12 +51,12 @@ class MajorVersionMatchTest extends UnitTestCase {
       'target version in newer major' => [
         '9.8.0',
         '10.0.0',
-        ['Drupal cannot be automatically updated from its current version, 9.8.0, to the recommended version, 10.0.0, because automatic updates from one major version to another are not supported.'],
+        ['Drupal cannot be automatically updated from 9.8.0 to 10.0.0 because automatic updates from one major version to another are not supported.'],
       ],
       'target version in older major' => [
         '9.8.0',
         '8.9.0',
-        ['Drupal cannot be automatically updated from its current version, 9.8.0, to the recommended version, 8.9.0, because automatic updates from one major version to another are not supported.'],
+        ['Drupal cannot be automatically updated from 9.8.0 to 8.9.0 because automatic updates from one major version to another are not supported.'],
       ],
     ];
   }

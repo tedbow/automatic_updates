@@ -29,19 +29,19 @@ class TargetVersionStableTest extends UnitTestCase {
       ],
       'dev target version' => [
         '9.9.0-dev',
-        ['Drupal cannot be automatically updated during cron to the recommended version, 9.9.0-dev, because Automatic Updates only supports updating to stable versions during cron.'],
+        ['Drupal cannot be automatically updated during cron to 9.9.0-dev, because Automatic Updates only supports updating to stable versions during cron.'],
       ],
       'alpha target version' => [
         '9.9.0-alpha3',
-        ['Drupal cannot be automatically updated during cron to the recommended version, 9.9.0-alpha3, because Automatic Updates only supports updating to stable versions during cron.'],
+        ['Drupal cannot be automatically updated during cron to 9.9.0-alpha3, because Automatic Updates only supports updating to stable versions during cron.'],
       ],
       'beta target version' => [
         '9.9.0-beta7',
-        ['Drupal cannot be automatically updated during cron to the recommended version, 9.9.0-beta7, because Automatic Updates only supports updating to stable versions during cron.'],
+        ['Drupal cannot be automatically updated during cron to 9.9.0-beta7, because Automatic Updates only supports updating to stable versions during cron.'],
       ],
       'release candidate target version' => [
         '9.9.0-rc2',
-        ['Drupal cannot be automatically updated during cron to the recommended version, 9.9.0-rc2, because Automatic Updates only supports updating to stable versions during cron.'],
+        ['Drupal cannot be automatically updated during cron to 9.9.0-rc2, because Automatic Updates only supports updating to stable versions during cron.'],
       ],
     ];
   }

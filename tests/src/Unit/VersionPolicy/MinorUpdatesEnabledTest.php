@@ -51,7 +51,7 @@ class MinorUpdatesEnabledTest extends UnitTestCase {
         FALSE,
         '9.8.0',
         '9.9.2',
-        ['Drupal cannot be automatically updated from its current version, 9.8.0, to the recommended version, 9.9.2, because automatic updates from one minor version to another are not supported.'],
+        ['Drupal cannot be automatically updated from 9.8.0 to 9.9.2 because automatic updates from one minor version to another are not supported.'],
       ],
       'target version in newer minor, minor updates allowed' => [
         TRUE,
@@ -75,7 +75,7 @@ class MinorUpdatesEnabledTest extends UnitTestCase {
         FALSE,
         '9.8.0',
         '9.7.2',
-        ['Drupal cannot be automatically updated from its current version, 9.8.0, to the recommended version, 9.7.2, because automatic updates from one minor version to another are not supported.'],
+        ['Drupal cannot be automatically updated from 9.8.0 to 9.7.2 because automatic updates from one minor version to another are not supported.'],
       ],
       'target version in older minor, minor updates allowed' => [
         TRUE,
@@ -87,25 +87,25 @@ class MinorUpdatesEnabledTest extends UnitTestCase {
         FALSE,
         '9.8.0',
         '8.8.0',
-        ['Drupal cannot be automatically updated from its current version, 9.8.0, to the recommended version, 8.8.0, because automatic updates from one minor version to another are not supported.'],
+        ['Drupal cannot be automatically updated from 9.8.0 to 8.8.0 because automatic updates from one minor version to another are not supported.'],
       ],
       'target version in older major, minor updates allowed' => [
         FALSE,
         '9.8.0',
         '8.8.0',
-        ['Drupal cannot be automatically updated from its current version, 9.8.0, to the recommended version, 8.8.0, because automatic updates from one minor version to another are not supported.'],
+        ['Drupal cannot be automatically updated from 9.8.0 to 8.8.0 because automatic updates from one minor version to another are not supported.'],
       ],
       'target version in newer major, minor updates forbidden' => [
         FALSE,
         '9.8.0',
         '10.8.0',
-        ['Drupal cannot be automatically updated from its current version, 9.8.0, to the recommended version, 10.8.0, because automatic updates from one minor version to another are not supported.'],
+        ['Drupal cannot be automatically updated from 9.8.0 to 10.8.0 because automatic updates from one minor version to another are not supported.'],
       ],
       'target version in newer major, minor updates allowed' => [
         FALSE,
         '9.8.0',
         '10.8.0',
-        ['Drupal cannot be automatically updated from its current version, 9.8.0, to the recommended version, 10.8.0, because automatic updates from one minor version to another are not supported.'],
+        ['Drupal cannot be automatically updated from 9.8.0 to 10.8.0 because automatic updates from one minor version to another are not supported.'],
       ],
     ];
   }
