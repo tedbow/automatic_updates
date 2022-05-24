@@ -131,6 +131,7 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
    */
   public function testSuccessfulUpdate(bool $maintenance_mode_on, string $project_name, string $installed_version, string $update_version): void {
     $this->updateProject = $project_name;
+    $this->setReleaseMetadata(__DIR__ . '/../../../../tests/fixtures/release-history/drupal.9.8.2.xml');
     $this->setReleaseMetadata(__DIR__ . "/../../fixtures/release-history/$project_name.1.1.xml");
     $this->setProjectInstalledVersion($installed_version);
     $this->checkForUpdates();

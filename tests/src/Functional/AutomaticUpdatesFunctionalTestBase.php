@@ -139,10 +139,10 @@ abstract class AutomaticUpdatesFunctionalTestBase extends BrowserTestBase {
       ->save();
 
     [$project] = explode('.', basename($file, '.xml'), 2);
+    $xml_map = $this->config('update_test.settings')->get('xml_map') ?? [];
+    $xml_map[$project] = $file;
     $this->config('update_test.settings')
-      ->set('xml_map', [
-        $project => $file,
-      ])
+      ->set('xml_map', $xml_map)
       ->save();
   }
 

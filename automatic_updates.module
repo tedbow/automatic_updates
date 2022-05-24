@@ -171,3 +171,58 @@ function automatic_updates_batch_alter(array &$batch): void {
     }
   }
 }
+
+/**
+ * Implements hook_preprocess_update_project_status().
+ */
+function automatic_updates_preprocess_update_project_status(array &$variables) {
+  $project = &$variables['project'];
+  if ($project['name'] !== 'drupal') {
+    return;
+  }
+  $updater = \Drupal::service('automatic_updates.updater');
+  /** @var \Drupal\automatic_updates\ReleaseChooser $recommender */
+  $recommender = \Drupal::service('automatic_updates.release_chooser');
+  try {
+    $supported_update_release = $recommender->getLatestInInstalledMinor($updater) ?? $recommender->getLatestInNextMinor($updater);
+  }
+  catch (RuntimeException $exception) {
+    // If for some reason we are not able to get the update recommendations
+    // do not alter the report.
+    watchdog_exception('automatic_updates', $exception);
+    return;
+  }
+  $variables['#attached']['library'][] = 'automatic_updates/update_status';
+
+  $status = &$variables['status'];
+  if ($supported_update_release && $status['label']) {
+    $status['label'] = [
+      '#markup' => t(
+        '@label <a href=":update-form">Update now</a>', [
+          '@label' => $status['label'],
+          ':update-form' => Url::fromRoute('automatic_updates.report_update')->toString(),
+        ]),
+    ];
+  }
+  // BEGIN: DELETE FROM CORE MERGE REQUEST
+  if (empty($variables['versions'])) {
+    return;
+  }
+  foreach ($variables['versions'] as &$themed_version) {
+    $version_info = &$themed_version['#version'];
+    if ($supported_update_release && $version_info['version'] === $supported_update_release->getVersion()) {
+      $version_info['download_link'] = Url::fromRoute('automatic_updates.report_update')->setAbsolute()->toString();
+    }
+    else {
+      // If this version will not be displayed as an option on this module's
+      // update form replace the link to download the archive file with the
+      // release notes link. The release notes page will provide Composer
+      // instructions. While this isn't a perfect solution the Update module twig
+      // templates do not check if 'download_link' is set, so we cannot unset it
+      // here.
+      $themed_version['#attributes']['class'][] = 'automatic-updates-unsupported-version';
+      $version_info['download_link'] = $version_info['release_link'];
+    }
+  }
+  // END: DELETE FROM CORE MERGE REQUEST
+}
