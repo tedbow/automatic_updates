@@ -3,6 +3,8 @@
 namespace Drupal\Tests\automatic_updates\Kernel\ReadinessValidation;
 
 use Drupal\automatic_updates\CronUpdater;
+use Drupal\package_manager\Event\PreCreateEvent;
+use Drupal\package_manager\Exception\StageException;
 use Drupal\package_manager\Exception\StageValidationException;
 use Drupal\package_manager\ValidationResult;
 use Drupal\Tests\automatic_updates\Kernel\AutomaticUpdatesKernelTestBase;
@@ -460,6 +462,68 @@ class VersionPolicyValidatorTest extends AutomaticUpdatesKernelTestBase {
       ]);
     }
     return ValidationResult::createError($messages, $summary);
+  }
+
+  /**
+   * Tests that an error is raised if there are no stored package versions.
+   *
+   * This is a contrived situation that should never happen in real life, but
+   * just in case it does, we need to be sure that it's an error condition.
+   */
+  public function testNoStagedPackageVersions(): void {
+    // Remove the stored package versions from the updater's metadata.
+    $listener = function (PreCreateEvent $event): void {
+      /** @var \Drupal\Tests\automatic_updates\Kernel\TestUpdater $updater */
+      $updater = $event->getStage();
+      $updater->setMetadata('packages', [
+        'production' => [],
+      ]);
+    };
+    $this->assertTargetVersionNotDiscoverable($listener);
+  }
+
+  /**
+   * Tests that an error is raised if no core packages are installed.
+   *
+   * This is a contrived situation that should never happen in real life, but
+   * just in case it does, we need to be sure that it's an error condition.
+   */
+  public function testNoCorePackagesInstalled(): void {
+    // Clear the list of packages in the active directory's installed.json.
+    $listener = function (PreCreateEvent $event): void {
+      // We should have staged package versions.
+      /** @var \Drupal\automatic_updates\Updater $updater */
+      $updater = $event->getStage();
+      $this->assertNotEmpty($updater->getPackageVersions());
+
+      $active_dir = $this->container->get('package_manager.path_locator')
+        ->getProjectRoot();
+      $installed = $active_dir . '/vendor/composer/installed.json';
+      $this->assertFileIsWritable($installed);
+      file_put_contents($installed, '{"packages": []}');
+    };
+    $this->assertTargetVersionNotDiscoverable($listener);
+  }
+
+  /**
+   * Asserts that an error is raised if the target version of Drupal is unknown.
+   *
+   * @param \Closure $listener
+   *   A pre-create event listener to run before all validators. This should put
+   *   the virtual project and/or updater into a state which will cause
+   *   \Drupal\automatic_updates\Validator\VersionPolicyValidator::getTargetVersion()
+   *   to throw an exception because the target version of Drupal core is not
+   *   known.
+   */
+  private function assertTargetVersionNotDiscoverable(\Closure $listener): void {
+    $this->createTestProject();
+    $this->container->get('event_dispatcher')
+      ->addListener(PreCreateEvent::class, $listener, PHP_INT_MAX);
+
+    $this->expectException(StageException::class);
+    $this->expectExceptionMessage('The target version of Drupal core could not be determined.');
+    $this->container->get('automatic_updates.updater')
+      ->begin(['drupal' => '9.8.1']);
   }
 
 }

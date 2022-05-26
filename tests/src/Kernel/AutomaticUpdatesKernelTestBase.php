@@ -152,6 +152,13 @@ class TestUpdater extends Updater {
 
   use TestStageTrait;
 
+  /**
+   * {@inheritdoc}
+   */
+  public function setMetadata(string $key, $data): void {
+    parent::setMetadata($key, $data);
+  }
+
 }
 
 /**

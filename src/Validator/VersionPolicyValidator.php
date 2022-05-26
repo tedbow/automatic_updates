@@ -172,10 +172,15 @@ final class VersionPolicyValidator implements EventSubscriberInterface {
    *   The event object.
    *
    * @return string|null
-   *   The target version of Drupal core, or NULL if it could not be determined.
+   *   The target version of Drupal core, or NULL if it could not be determined
+   *   during a readiness check.
    *
-   * @todo Throw an exception in certain (maybe all) situations if we cannot
-   *   figure out the target version in https://www.drupal.org/i/3280180.
+   * @throws \LogicException
+   *   Thrown if the target version cannot be determined due to unexpected
+   *   conditions. This can happen if, during a stage life cycle event (i.e.,
+   *   NOT a readiness check), the event or updater does not have a list of
+   *   desired package versions, or the list of package versions does not
+   *   include any Drupal core packages.
    */
   private function getTargetVersion(StageEvent $event): ?string {
     $updater = $event->getStage();
@@ -187,16 +192,24 @@ final class VersionPolicyValidator implements EventSubscriberInterface {
       $package_versions = $updater->getPackageVersions()['production'];
     }
 
+    $unknown_target = new \LogicException('The target version of Drupal core could not be determined.');
+
     if ($package_versions) {
       $core_package_name = key($updater->getActiveComposer()->getCorePackages());
-      return $package_versions[$core_package_name];
+
+      if ($core_package_name && array_key_exists($core_package_name, $package_versions)) {
+        return $package_versions[$core_package_name];
+      }
+      else {
+        throw $unknown_target;
+      }
     }
     elseif ($event instanceof ReadinessCheckEvent) {
+      // It's okay if this returns NULL; it means there's nothing to update to.
       return $this->getTargetVersionFromAvailableReleases($updater);
     }
-    else {
-      return NULL;
-    }
+    // If we got here, something has gone very wrong.
+    throw $unknown_target;
   }
 
   /**
