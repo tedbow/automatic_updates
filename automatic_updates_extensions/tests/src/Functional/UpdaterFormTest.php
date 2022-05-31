@@ -108,11 +108,11 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
    *   The expected project title.
    * @param string $expected_installed_version
    *   The expected installed version.
-   * @param string $expected_update_version
-   *   The expected update version.
+   * @param string $expected_target_version
+   *   The expected target version.
    */
-  private function assertTableShowsUpdates(string $expected_project_title, string $expected_installed_version, string $expected_update_version): void {
-    $this->assertUpdateTableRow($this->assertSession(), $expected_project_title, $expected_installed_version, $expected_update_version);
+  private function assertTableShowsUpdates(string $expected_project_title, string $expected_installed_version, string $expected_target_version): void {
+    $this->assertUpdateTableRow($this->assertSession(), $expected_project_title, $expected_installed_version, $expected_target_version);
   }
 
   /**
@@ -124,12 +124,12 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
    *   The project name.
    * @param string $installed_version
    *   The installed version.
-   * @param string $update_version
-   *   The update version.
+   * @param string $target_version
+   *   The target version.
    *
    * @dataProvider providerSuccessfulUpdate
    */
-  public function testSuccessfulUpdate(bool $maintenance_mode_on, string $project_name, string $installed_version, string $update_version): void {
+  public function testSuccessfulUpdate(bool $maintenance_mode_on, string $project_name, string $installed_version, string $target_version): void {
     $this->updateProject = $project_name;
     $this->setReleaseMetadata(__DIR__ . '/../../../../tests/fixtures/release-history/drupal.9.8.2.xml');
     $this->setReleaseMetadata(__DIR__ . "/../../fixtures/release-history/$project_name.1.1.xml");
@@ -145,7 +145,7 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
     $this->assertTableShowsUpdates(
       $project_name === 'semver_test' ? 'Semver Test' : 'AAA Update test',
       $installed_version,
-      $update_version
+      $target_version
     );
     $page->checkField('projects[' . $this->updateProject . ']');
     $page->pressButton('Update');

@@ -171,7 +171,7 @@ class UpdaterForm extends FormBase {
       return $form;
     }
 
-    $form['update_version'] = [
+    $form['target_version'] = [
       '#type' => 'value',
       '#value' => [
         'drupal' => $recommended_release->getVersion(),
@@ -301,7 +301,7 @@ class UpdaterForm extends FormBase {
       ->setInitMessage($this->t('Preparing to download updates'))
       ->addOperation(
         [BatchProcessor::class, 'begin'],
-        [$form_state->getValue('update_version')]
+        [$form_state->getValue('target_version')]
       )
       ->addOperation([BatchProcessor::class, 'stage'])
       ->setFinishCallback([BatchProcessor::class, 'finishStage'])

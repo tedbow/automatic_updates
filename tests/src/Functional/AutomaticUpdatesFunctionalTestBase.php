@@ -160,13 +160,13 @@ abstract class AutomaticUpdatesFunctionalTestBase extends BrowserTestBase {
   /**
    * Asserts that we are on the "update ready" form.
    *
-   * @param string $update_version
-   *   The version of Drupal core that we are updating to.
+   * @param string $target_version
+   *   The target version of Drupal core.
    */
-  protected function assertUpdateReady(string $update_version): void {
+  protected function assertUpdateReady(string $target_version): void {
     $assert_session = $this->assertSession();
     $assert_session->addressMatches('/\/admin\/automatic-update-ready\/[a-zA-Z0-9_\-]+$/');
-    $assert_session->pageTextContainsOnce('Drupal core will be updated to ' . $update_version);
+    $assert_session->pageTextContainsOnce('Drupal core will be updated to ' . $target_version);
   }
 
 }

@@ -109,13 +109,13 @@ class CronUpdater extends Updater {
   /**
    * Performs the update.
    *
-   * @param string $update_version
-   *   The version to which to update.
+   * @param string $target_version
+   *   The target version.
    * @param int|null $timeout
    *   How long to allow the operation to run before timing out, in seconds, or
    *   NULL to never time out.
    */
-  private function performUpdate(string $update_version, ?int $timeout): void {
+  private function performUpdate(string $target_version, ?int $timeout): void {
     $installed_version = (new ProjectInfo('drupal'))->getInstalledVersion();
     if (empty($installed_version)) {
       $this->logger->error('Unable to determine the current version of Drupal core.');
@@ -126,15 +126,15 @@ class CronUpdater extends Updater {
     // handle any exceptions or validation errors consistently, and destroy the
     // stage regardless of whether the update succeeds.
     try {
-      $this->begin(['drupal' => $update_version], $timeout);
+      $this->begin(['drupal' => $target_version], $timeout);
       $this->stage();
       $this->apply();
 
       $this->logger->info(
-        'Drupal core has been updated from %previous_version to %update_version',
+        'Drupal core has been updated from %previous_version to %target_version',
         [
           '%previous_version' => $installed_version,
-          '%update_version' => $update_version,
+          '%target_version' => $target_version,
         ]
       );
     }

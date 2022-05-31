@@ -21,14 +21,14 @@ class UpdateReleaseValidatorTest extends AutomaticUpdatesExtensionsKernelTestBas
    *   The project to update.
    * @param string $installed_version
    *   The installed version of the project.
-   * @param string $update_version
-   *   The version to update to.
+   * @param string $target_version
+   *   The target version.
    * @param bool $error_expected
    *   Whether an error is expected in the update.
    *
    * @dataProvider providerTestRelease
    */
-  public function testRelease(string $project, string $installed_version, string $update_version, bool $error_expected) {
+  public function testRelease(string $project, string $installed_version, string $target_version, bool $error_expected) {
     $this->enableModules([$project]);
     $module_info = ['version' => $installed_version, 'project' => $project];
     $this->config('update_test.settings')
@@ -41,7 +41,7 @@ class UpdateReleaseValidatorTest extends AutomaticUpdatesExtensionsKernelTestBas
     if ($error_expected) {
       $expected_results = [
         ValidationResult::createError(
-          ["Project $project to version " . LegacyVersionUtility::convertToSemanticVersion($update_version)],
+          ["Project $project to version " . LegacyVersionUtility::convertToSemanticVersion($target_version)],
           t('Cannot update because the following project version is not in the list of installable releases.')
         ),
       ];
@@ -50,7 +50,7 @@ class UpdateReleaseValidatorTest extends AutomaticUpdatesExtensionsKernelTestBas
       $expected_results = [];
     }
 
-    $this->assertUpdaterResults([$project => $update_version], $expected_results, PreCreateEvent::class);
+    $this->assertUpdaterResults([$project => $target_version], $expected_results, PreCreateEvent::class);
   }
 
   /**

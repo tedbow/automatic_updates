@@ -153,7 +153,7 @@ class UpdateReady extends FormBase {
       return $form;
     }
 
-    $form['update_version'] = [
+    $form['target_version'] = [
       '#type' => 'html_tag',
       '#tag' => 'p',
       '#value' => $this->t('Drupal core will be updated to %version', [
