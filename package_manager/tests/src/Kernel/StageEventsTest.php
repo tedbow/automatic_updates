@@ -160,4 +160,25 @@ class StageEventsTest extends PackageManagerKernelTestBase implements EventSubsc
     }
   }
 
+  /**
+   * Tests that pre- and post-require events have access to the package lists.
+   */
+  public function testPackageListsAvailableToRequireEvents(): void {
+    $listener = function (object $event): void {
+      $expected_runtime = ['drupal/core' => '9.8.2'];
+      $expected_dev = ['drupal/core-dev' => '9.8.2'];
+
+      /** @var \Drupal\package_manager\Event\PreRequireEvent|\Drupal\package_manager\Event\PostRequireEvent $event */
+      $this->assertSame($expected_runtime, $event->getRuntimePackages());
+      $this->assertSame($expected_dev, $event->getDevPackages());
+    };
+    /** @var \Symfony\Component\EventDispatcher\EventDispatcherInterface $event_dispatcher */
+    $event_dispatcher = $this->container->get('event_dispatcher');
+    $event_dispatcher->addListener(PreRequireEvent::class, $listener);
+    $event_dispatcher->addListener(PostRequireEvent::class, $listener);
+
+    $this->stage->create();
+    $this->stage->require(['drupal/core:9.8.2'], ['drupal/core-dev:9.8.2']);
+  }
+
 }

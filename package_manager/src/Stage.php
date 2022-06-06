@@ -301,7 +301,7 @@ class Stage {
   public function require(array $runtime, array $dev = []): void {
     $this->checkOwnership();
 
-    $this->dispatch(new PreRequireEvent($this));
+    $this->dispatch(new PreRequireEvent($this, $runtime, $dev));
     $dir = $this->getStageDirectory();
 
     // Change the runtime and dev requirements as needed, but don't update
@@ -321,7 +321,7 @@ class Stage {
       $this->stager->stage($command, $dir);
     }
 
-    $this->dispatch(new PostRequireEvent($this));
+    $this->dispatch(new PostRequireEvent($this, $runtime, $dev));
   }
 
   /**
