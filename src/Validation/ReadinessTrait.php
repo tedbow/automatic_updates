@@ -3,11 +3,17 @@
 namespace Drupal\automatic_updates\Validation;
 
 use Drupal\Core\Messenger\MessengerInterface;
+use Drupal\Core\Render\RendererInterface;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\system\SystemManager;
 
 /**
  * Common methods for working with readiness checkers.
+ *
+ * @internal
+ *   This class implements logic to output the messages from readiness checkers
+ *   on admin pages. It may be changed or removed at any time without warning
+ *   and should not be used by external code.
  */
 trait ReadinessTrait {
 
@@ -59,32 +65,34 @@ trait ReadinessTrait {
    *   The validation results.
    * @param \Drupal\Core\Messenger\MessengerInterface $messenger
    *   The messenger service.
+   * @param \Drupal\Core\Render\RendererInterface $renderer
+   *   The renderer service.
    */
-  protected function displayResults(array $results, MessengerInterface $messenger): void {
+  protected function displayResults(array $results, MessengerInterface $messenger, RendererInterface $renderer): void {
     $severity = $this->getOverallSeverity($results);
 
     if ($severity === SystemManager::REQUIREMENT_OK) {
       return;
     }
 
-    $message = $this->getFailureMessageForSeverity($severity);
+    // Format the results as a single item list prefixed by a preamble message.
+    $build = [
+      '#theme' => 'item_list__automatic_updates_validation_results',
+      '#prefix' => $this->getFailureMessageForSeverity($severity),
+    ];
+    foreach ($results as $result) {
+      $messages = $result->getMessages();
+      // @todo Find a way to show all the messages, not just the summary, if
+      //   we're on the updater form in https://drupal.org/i/3284346.
+      $build['#items'][] = count($messages) === 1 ? reset($messages) : $result->getSummary();
+    }
+    $message = $renderer->renderRoot($build);
+
     if ($severity === SystemManager::REQUIREMENT_ERROR) {
       $messenger->addError($message);
     }
     else {
       $messenger->addWarning($message);
-    }
-
-    foreach ($results as $result) {
-      $messages = $result->getMessages();
-      $message = count($messages) === 1 ? $messages[0] : $result->getSummary();
-
-      if ($result->getSeverity() === SystemManager::REQUIREMENT_ERROR) {
-        $messenger->addError($message);
-      }
-      else {
-        $messenger->addWarning($message);
-      }
     }
   }
 

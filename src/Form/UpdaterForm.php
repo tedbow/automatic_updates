@@ -13,6 +13,7 @@ use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Link;
 use Drupal\Core\Messenger\MessengerInterface;
+use Drupal\Core\Render\RendererInterface;
 use Drupal\Core\State\StateInterface;
 use Drupal\Core\Url;
 use Drupal\package_manager\Exception\StageException;
@@ -61,6 +62,13 @@ class UpdaterForm extends FormBase {
   protected $releaseChooser;
 
   /**
+   * The renderer service.
+   *
+   * @var \Drupal\Core\Render\RendererInterface
+   */
+  protected $renderer;
+
+  /**
    * Constructs a new UpdaterForm object.
    *
    * @param \Drupal\Core\State\StateInterface $state
@@ -71,12 +79,15 @@ class UpdaterForm extends FormBase {
    *   The event dispatcher service.
    * @param \Drupal\automatic_updates\ReleaseChooser $release_chooser
    *   The release chooser service.
+   * @param \Drupal\Core\Render\RendererInterface $renderer
+   *   The renderer service.
    */
-  public function __construct(StateInterface $state, Updater $updater, EventDispatcherInterface $event_dispatcher, ReleaseChooser $release_chooser) {
+  public function __construct(StateInterface $state, Updater $updater, EventDispatcherInterface $event_dispatcher, ReleaseChooser $release_chooser, RendererInterface $renderer) {
     $this->updater = $updater;
     $this->state = $state;
     $this->eventDispatcher = $event_dispatcher;
     $this->releaseChooser = $release_chooser;
+    $this->renderer = $renderer;
   }
 
   /**
@@ -94,7 +105,8 @@ class UpdaterForm extends FormBase {
       $container->get('state'),
       $container->get('automatic_updates.updater'),
       $container->get('event_dispatcher'),
-      $container->get('automatic_updates.release_chooser')
+      $container->get('automatic_updates.release_chooser'),
+      $container->get('renderer')
     );
   }
 
@@ -252,7 +264,7 @@ class UpdaterForm extends FormBase {
       $this->eventDispatcher->dispatch($event);
       $results = $event->getResults();
     }
-    $this->displayResults($results, $this->messenger());
+    $this->displayResults($results, $this->messenger(), $this->renderer);
 
     if ($stage_exists) {
       // If the form has been submitted, do not display this error message

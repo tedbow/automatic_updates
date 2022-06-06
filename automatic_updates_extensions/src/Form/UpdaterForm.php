@@ -9,6 +9,7 @@ use Drupal\automatic_updates_extensions\ExtensionUpdater;
 use Drupal\Core\Batch\BatchBuilder;
 use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
+use Drupal\Core\Render\RendererInterface;
 use Drupal\system\SystemManager;
 use Drupal\update\UpdateManagerInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
@@ -39,12 +40,20 @@ final class UpdaterForm extends FormBase {
   private $eventDispatcher;
 
   /**
+   * The renderer service.
+   *
+   * @var \Drupal\Core\Render\RendererInterface
+   */
+  private $renderer;
+
+  /**
    * {@inheritdoc}
    */
   public static function create(ContainerInterface $container) {
     return new static(
       $container->get('automatic_updates_extensions.updater'),
       $container->get('event_dispatcher'),
+      $container->get('renderer')
     );
   }
 
@@ -55,10 +64,13 @@ final class UpdaterForm extends FormBase {
    *   The extension updater service.
    * @param \Symfony\Component\EventDispatcher\EventDispatcherInterface $event_dispatcher
    *   The extension event dispatcher service.
+   * @param \Drupal\Core\Render\RendererInterface $renderer
+   *   The renderer service.
    */
-  public function __construct(ExtensionUpdater $extension_updater, EventDispatcherInterface $event_dispatcher) {
+  public function __construct(ExtensionUpdater $extension_updater, EventDispatcherInterface $event_dispatcher, RendererInterface $renderer) {
     $this->extensionUpdater = $extension_updater;
     $this->eventDispatcher = $event_dispatcher;
+    $this->renderer = $renderer;
   }
 
   /**
@@ -120,7 +132,7 @@ final class UpdaterForm extends FormBase {
       $this->eventDispatcher->dispatch($event);
       $results = $event->getResults();
     }
-    $this->displayResults($results, $this->messenger());
+    $this->displayResults($results, $this->messenger(), $this->renderer);
     $security_level = $this->getOverallSeverity($results);
 
     if ($update_projects && $security_level !== SystemManager::REQUIREMENT_ERROR) {

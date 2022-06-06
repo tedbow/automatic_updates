@@ -6,6 +6,7 @@ use Drupal\automatic_updates\CronUpdater;
 use Drupal\Core\DependencyInjection\ContainerInjectionInterface;
 use Drupal\Core\Messenger\MessengerInterface;
 use Drupal\Core\Messenger\MessengerTrait;
+use Drupal\Core\Render\RendererInterface;
 use Drupal\Core\Routing\AdminContext;
 use Drupal\Core\Routing\CurrentRouteMatch;
 use Drupal\Core\Routing\RedirectDestinationTrait;
@@ -66,6 +67,13 @@ final class AdminReadinessMessages implements ContainerInjectionInterface {
   protected $cronUpdater;
 
   /**
+   * The renderer service.
+   *
+   * @var \Drupal\Core\Render\RendererInterface
+   */
+  protected $renderer;
+
+  /**
    * Constructs a ReadinessRequirement object.
    *
    * @param \Drupal\automatic_updates\Validation\ReadinessValidationManager $readiness_checker_manager
@@ -82,8 +90,10 @@ final class AdminReadinessMessages implements ContainerInjectionInterface {
    *   The current route match.
    * @param \Drupal\automatic_updates\CronUpdater $cron_updater
    *   The cron updater service.
+   * @param \Drupal\Core\Render\RendererInterface $renderer
+   *   The renderer service.
    */
-  public function __construct(ReadinessValidationManager $readiness_checker_manager, MessengerInterface $messenger, AdminContext $admin_context, AccountProxyInterface $current_user, TranslationInterface $translation, CurrentRouteMatch $current_route_match, CronUpdater $cron_updater) {
+  public function __construct(ReadinessValidationManager $readiness_checker_manager, MessengerInterface $messenger, AdminContext $admin_context, AccountProxyInterface $current_user, TranslationInterface $translation, CurrentRouteMatch $current_route_match, CronUpdater $cron_updater, RendererInterface $renderer) {
     $this->readinessCheckerManager = $readiness_checker_manager;
     $this->setMessenger($messenger);
     $this->adminContext = $admin_context;
@@ -91,6 +101,7 @@ final class AdminReadinessMessages implements ContainerInjectionInterface {
     $this->setStringTranslation($translation);
     $this->currentRouteMatch = $current_route_match;
     $this->cronUpdater = $cron_updater;
+    $this->renderer = $renderer;
   }
 
   /**
@@ -104,7 +115,8 @@ final class AdminReadinessMessages implements ContainerInjectionInterface {
       $container->get('current_user'),
       $container->get('string_translation'),
       $container->get('current_route_match'),
-      $container->get('automatic_updates.cron_updater')
+      $container->get('automatic_updates.cron_updater'),
+      $container->get('renderer')
     );
   }
 
@@ -167,7 +179,7 @@ final class AdminReadinessMessages implements ContainerInjectionInterface {
     if (empty($results)) {
       return FALSE;
     }
-    $this->displayResults($results, $this->messenger());
+    $this->displayResults($results, $this->messenger(), $this->renderer);
     return TRUE;
   }
 
