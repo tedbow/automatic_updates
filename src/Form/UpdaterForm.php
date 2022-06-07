@@ -18,6 +18,7 @@ use Drupal\Core\State\StateInterface;
 use Drupal\Core\Url;
 use Drupal\package_manager\Exception\StageException;
 use Drupal\package_manager\Exception\StageOwnershipException;
+use Drupal\package_manager\ValidationResult;
 use Drupal\system\SystemManager;
 use Drupal\update\UpdateManagerInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
@@ -31,7 +32,9 @@ use Symfony\Component\EventDispatcher\EventDispatcherInterface;
  */
 class UpdaterForm extends FormBase {
 
-  use ReadinessTrait;
+  use ReadinessTrait {
+    formatResult as traitFormatResult;
+  }
 
   /**
    * The updater service.
@@ -320,6 +323,22 @@ class UpdaterForm extends FormBase {
       ->toArray();
 
     batch_set($batch);
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  protected function formatResult(ValidationResult $result) {
+    $messages = $result->getMessages();
+
+    if (count($messages) > 1) {
+      return [
+        '#theme' => 'item_list__automatic_updates_validation_results',
+        '#prefix' => $result->getSummary(),
+        '#items' => $messages,
+      ];
+    }
+    return $this->traitFormatResult($result);
   }
 
 }

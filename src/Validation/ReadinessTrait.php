@@ -5,6 +5,7 @@ namespace Drupal\automatic_updates\Validation;
 use Drupal\Core\Messenger\MessengerInterface;
 use Drupal\Core\Render\RendererInterface;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
+use Drupal\package_manager\ValidationResult;
 use Drupal\system\SystemManager;
 
 /**
@@ -79,13 +80,8 @@ trait ReadinessTrait {
     $build = [
       '#theme' => 'item_list__automatic_updates_validation_results',
       '#prefix' => $this->getFailureMessageForSeverity($severity),
+      '#items' => array_map([$this, 'formatResult'], $results),
     ];
-    foreach ($results as $result) {
-      $messages = $result->getMessages();
-      // @todo Find a way to show all the messages, not just the summary, if
-      //   we're on the updater form in https://drupal.org/i/3284346.
-      $build['#items'][] = count($messages) === 1 ? reset($messages) : $result->getSummary();
-    }
     $message = $renderer->renderRoot($build);
 
     if ($severity === SystemManager::REQUIREMENT_ERROR) {
@@ -94,6 +90,21 @@ trait ReadinessTrait {
     else {
       $messenger->addWarning($message);
     }
+  }
+
+  /**
+   * Formats a single validation result as an item in an item list.
+   *
+   * @param \Drupal\package_manager\ValidationResult $result
+   *   A validation result.
+   *
+   * @return \Drupal\Core\StringTranslation\TranslatableMarkup|array
+   *   The validation result, formatted for inclusion in a themed item list as
+   *   either a translated string, or a renderable array.
+   */
+  protected function formatResult(ValidationResult $result) {
+    $messages = $result->getMessages();
+    return count($messages) === 1 ? reset($messages) : $result->getSummary();
   }
 
 }

@@ -168,9 +168,10 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
     $this->setCoreVersion('9.8.0');
     $this->checkForUpdates();
 
-    // Set up a new fake error.
+    // Set up a new fake error. Use an error with multiple messages so we can
+    // ensure that they're all displayed, along with their summary.
     $this->createTestValidationResults();
-    $expected_results = $this->testResults['checker_1']['1 error'];
+    $expected_results = [$this->testResults['checker_1']['2 errors 2 warnings']['1:errors']];
     TestSubscriber1::setTestResult($expected_results, ReadinessCheckEvent::class);
 
     // If a validator raises an error during readiness checking, the form should
@@ -182,6 +183,8 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
     // during the form build, which means the new error should be cached and
     // displayed instead of the previously cached error.
     $assert_session->pageTextContainsOnce((string) $expected_results[0]->getMessages()[0]);
+    $assert_session->pageTextContainsOnce((string) $expected_results[0]->getMessages()[1]);
+    $assert_session->pageTextContainsOnce((string) $expected_results[0]->getSummary());
     $assert_session->pageTextContainsOnce(static::$errorsExplanation);
     $assert_session->pageTextNotContains(static::$warningsExplanation);
     $assert_session->pageTextNotContains($cached_message);
@@ -218,9 +221,9 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
     $this->assertUpdateStagedTimes(0);
     $assert_session->pageTextContainsOnce('An error has occurred.');
     $page->clickLink('the error page');
-    // Since there's only one message, we shouldn't see the summary.
-    $assert_session->pageTextNotContains($expected_results[0]->getSummary());
+    $assert_session->pageTextContainsOnce($expected_results[0]->getSummary());
     $assert_session->pageTextContainsOnce((string) $expected_results[0]->getMessages()[0]);
+    $assert_session->pageTextContainsOnce((string) $expected_results[0]->getMessages()[1]);
     $assert_session->pageTextNotContains($cached_message);
   }
 
