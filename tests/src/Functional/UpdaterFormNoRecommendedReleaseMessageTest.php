@@ -85,12 +85,17 @@ class UpdaterFormNoRecommendedReleaseMessageTest extends AutomaticUpdatesFunctio
     $this->drupalGet('/admin/reports/updates/automatic-update');
 
     $assert_session = $this->assertSession();
+    // BEGIN: DELETE FROM CORE MERGE REQUEST
+    // @todo Use \Drupal\Tests\WebAssert::statusMessageContains() when module
+    //   drops support for Drupal core 9.3.x.
+    // END: DELETE FROM CORE MERGE REQUEST
+    $message_selector = $expected_message_type === 'status' ? "//div[@role='contentinfo' and h2[text()='Status message']]" : "//div[@role='alert' and h2[text()='Error message']]";
     if ($updates_available) {
-      $assert_session->statusMessageContains('Updates were found, but they must be performed manually.', $expected_message_type);
+      $assert_session->elementTextContains('xpath', $message_selector, 'Updates were found, but they must be performed manually.');
       $assert_session->linkExists('the list of available updates');
     }
     else {
-      $assert_session->statusMessageContains('No update available', $expected_message_type);
+      $assert_session->elementTextContains('xpath', $message_selector, 'No update available');
     }
     $assert_session->buttonNotExists('Update');
   }

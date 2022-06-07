@@ -50,7 +50,7 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
     parent::setUp();
 
     $this->setReleaseMetadata(__DIR__ . '/../../fixtures/release-history/drupal.9.8.1-security.xml');
-    $user = $this->createUser([
+    $permissions = [
       'administer site configuration',
       'administer software updates',
       'access administration pages',
@@ -58,7 +58,15 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
       'administer modules',
       'access site reports',
       'view update notifications',
-    ]);
+    ];
+    // BEGIN: DELETE FROM CORE MERGE REQUEST
+    // Check for permission that was added in Drupal core 9.4.x.
+    $available_permissions = array_keys($this->container->get('user.permissions')->getPermissions());
+    if (!in_array('view update notifications', $available_permissions)) {
+      array_pop($permissions);
+    }
+    // END: DELETE FROM CORE MERGE REQUEST
+    $user = $this->createUser($permissions);
     $this->drupalLogin($user);
     $this->checkForUpdates();
   }
