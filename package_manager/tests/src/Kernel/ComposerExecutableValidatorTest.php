@@ -7,8 +7,8 @@ use Drupal\Core\Url;
 use Drupal\package_manager\Event\PreCreateEvent;
 use Drupal\package_manager\Validator\ComposerExecutableValidator;
 use Drupal\package_manager\ValidationResult;
-use PhpTuf\ComposerStager\Domain\Process\Runner\ComposerRunnerInterface;
-use PhpTuf\ComposerStager\Exception\IOException;
+use PhpTuf\ComposerStager\Domain\Exception\IOException;
+use PhpTuf\ComposerStager\Domain\Service\ProcessRunner\ComposerRunnerInterface;
 use Prophecy\Argument;
 
 /**
@@ -21,7 +21,7 @@ class ComposerExecutableValidatorTest extends PackageManagerKernelTestBase {
   /**
    * The mocked Composer runner.
    *
-   * @var \Prophecy\Prophecy\ObjectProphecy|\PhpTuf\ComposerStager\Domain\Process\Runner\ComposerRunnerInterface
+   * @var \Prophecy\Prophecy\ObjectProphecy|\PhpTuf\ComposerStager\Domain\Service\ProcessRunner\ComposerRunnerInterface
    */
   private $composerRunner;
 

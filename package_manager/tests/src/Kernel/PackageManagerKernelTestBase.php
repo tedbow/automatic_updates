@@ -16,6 +16,10 @@ use org\bovigo\vfs\vfsStream;
 use org\bovigo\vfs\vfsStreamDirectory;
 use org\bovigo\vfs\vfsStreamFile;
 use org\bovigo\vfs\visitor\vfsStreamAbstractVisitor;
+use PhpTuf\ComposerStager\Domain\Value\Path\PathInterface;
+use PhpTuf\ComposerStager\Infrastructure\Factory\Path\PathFactoryInterface;
+use PhpTuf\ComposerStager\Infrastructure\Value\Path\AbstractPath;
+use Symfony\Component\DependencyInjection\Definition;
 
 /**
  * Base class for kernel tests of Package Manager's functionality.
@@ -73,6 +77,13 @@ abstract class PackageManagerKernelTestBase extends KernelTestBase {
   public function register(ContainerBuilder $container) {
     parent::register($container);
 
+    // Ensure that Composer Stager uses the test path factory, which is aware
+    // of the virtual file system.
+    $definition = new Definition(TestPathFactory::class);
+    $class = $definition->getClass();
+    $container->setDefinition($class, $definition->setPublic(FALSE));
+    $container->setAlias(PathFactoryInterface::class, $class);
+
     foreach ($this->disableValidators as $service_id) {
       if ($container->hasDefinition($service_id)) {
         $container->getDefinition($service_id)->clearTag('event_subscriber');
@@ -96,7 +107,8 @@ abstract class PackageManagerKernelTestBase extends KernelTestBase {
       $this->container->get('file_system'),
       $this->container->get('event_dispatcher'),
       $this->container->get('tempstore.shared'),
-      $this->container->get('datetime.time')
+      $this->container->get('datetime.time'),
+      new TestPathFactory()
     );
   }
 
@@ -284,6 +296,38 @@ trait TestStageTrait {
   }
 
 }
+
+/**
+ * Defines a path value object that is aware of the virtual file system.
+ */
+class TestPath extends AbstractPath {
+
+  /**
+   * {@inheritdoc}
+   */
+  protected function doResolve(string $basePath): string {
+    if (str_starts_with($this->path, vfsStream::SCHEME . '://')) {
+      return $this->path;
+    }
+    return implode(DIRECTORY_SEPARATOR, [$basePath, $this->path]);
+  }
+
+}
+
+/**
+ * Defines a path factory that is aware of the virtual file system.
+ */
+class TestPathFactory implements PathFactoryInterface {
+
+  /**
+   * {@inheritdoc}
+   */
+  public static function create(string $path): PathInterface {
+    return new TestPath($path);
+  }
+
+}
+
 /**
  * Defines a stage specifically for testing purposes.
  */

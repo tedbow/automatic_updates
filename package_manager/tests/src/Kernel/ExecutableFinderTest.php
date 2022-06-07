@@ -4,7 +4,7 @@ namespace Drupal\Tests\package_manager\Kernel;
 
 use Drupal\Core\DependencyInjection\ContainerBuilder;
 use Drupal\package_manager\ExecutableFinder;
-use PhpTuf\ComposerStager\Infrastructure\Process\ExecutableFinderInterface;
+use PhpTuf\ComposerStager\Infrastructure\Service\Finder\ExecutableFinderInterface;
 use Symfony\Component\Process\ExecutableFinder as SymfonyExecutableFinder;
 
 /**

@@ -3,36 +3,35 @@
 namespace Drupal\package_manager;
 
 use Drupal\Core\Config\ConfigFactoryInterface;
-use PhpTuf\ComposerStager\Domain\FileSyncer\FileSyncerFactoryInterface;
-use PhpTuf\ComposerStager\Domain\FileSyncer\FileSyncerInterface;
-use PhpTuf\ComposerStager\Infrastructure\FileSyncer\FileSyncerFactory as StagerFileSyncerFactory;
-use PhpTuf\ComposerStager\Infrastructure\FileSyncer\PhpFileSyncer;
-use PhpTuf\ComposerStager\Infrastructure\FileSyncer\RsyncFileSyncer;
+use PhpTuf\ComposerStager\Domain\Service\FileSyncer\FileSyncerInterface;
+use PhpTuf\ComposerStager\Infrastructure\Factory\FileSyncer\FileSyncerFactory as StagerFileSyncerFactory;
+use PhpTuf\ComposerStager\Infrastructure\Service\FileSyncer\PhpFileSyncer;
+use PhpTuf\ComposerStager\Infrastructure\Service\FileSyncer\RsyncFileSyncer;
 use Symfony\Component\Process\ExecutableFinder;
 
 /**
  * A file syncer factory which creates a file syncer according to configuration.
  */
-class FileSyncerFactory implements FileSyncerFactoryInterface {
+class FileSyncerFactory {
 
   /**
    * The decorated file syncer factory.
    *
-   * @var \PhpTuf\ComposerStager\Domain\FileSyncer\FileSyncerFactoryInterface
+   * @var \PhpTuf\ComposerStager\Infrastructure\Factory\FileSyncer\FileSyncerFactory
    */
   protected $decorated;
 
   /**
    * The PHP file syncer service.
    *
-   * @var \PhpTuf\ComposerStager\Infrastructure\FileSyncer\PhpFileSyncer
+   * @var \PhpTuf\ComposerStager\Infrastructure\Service\FileSyncer\PhpFileSyncer
    */
   protected $phpFileSyncer;
 
   /**
    * The rsync file syncer service.
    *
-   * @var \PhpTuf\ComposerStager\Infrastructure\FileSyncer\RsyncFileSyncer
+   * @var \PhpTuf\ComposerStager\Infrastructure\Service\FileSyncer\RsyncFileSyncer
    */
   protected $rsyncFileSyncer;
 
@@ -48,9 +47,9 @@ class FileSyncerFactory implements FileSyncerFactoryInterface {
    *
    * @param \Symfony\Component\Process\ExecutableFinder $executable_finder
    *   The Symfony executable finder.
-   * @param \PhpTuf\ComposerStager\Infrastructure\FileSyncer\PhpFileSyncer $php_file_syncer
+   * @param \PhpTuf\ComposerStager\Infrastructure\Service\FileSyncer\PhpFileSyncer $php_file_syncer
    *   The PHP file syncer service.
-   * @param \PhpTuf\ComposerStager\Infrastructure\FileSyncer\RsyncFileSyncer $rsync_file_syncer
+   * @param \PhpTuf\ComposerStager\Infrastructure\Service\FileSyncer\RsyncFileSyncer $rsync_file_syncer
    *   The rsync file syncer service.
    * @param \Drupal\Core\Config\ConfigFactoryInterface $config_factory
    *   The config factory service.

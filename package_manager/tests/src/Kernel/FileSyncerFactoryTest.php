@@ -3,9 +3,9 @@
 namespace Drupal\Tests\package_manager\Kernel;
 
 use Drupal\KernelTests\KernelTestBase;
-use PhpTuf\ComposerStager\Domain\FileSyncer\FileSyncerInterface;
-use PhpTuf\ComposerStager\Infrastructure\FileSyncer\PhpFileSyncer;
-use PhpTuf\ComposerStager\Infrastructure\FileSyncer\RsyncFileSyncer;
+use PhpTuf\ComposerStager\Domain\Service\FileSyncer\FileSyncerInterface;
+use PhpTuf\ComposerStager\Infrastructure\Service\FileSyncer\PhpFileSyncer;
+use PhpTuf\ComposerStager\Infrastructure\Service\FileSyncer\RsyncFileSyncer;
 
 /**
  * @covers \Drupal\package_manager\FileSyncerFactory

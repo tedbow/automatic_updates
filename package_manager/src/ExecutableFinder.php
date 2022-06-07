@@ -3,8 +3,8 @@
 namespace Drupal\package_manager;
 
 use Drupal\Core\Config\ConfigFactoryInterface;
-use PhpTuf\ComposerStager\Infrastructure\Process\ExecutableFinderInterface;
-use PhpTuf\ComposerStager\Infrastructure\Process\ExecutableFinder as StagerExecutableFinder;
+use PhpTuf\ComposerStager\Infrastructure\Service\Finder\ExecutableFinder as StagerExecutableFinder;
+use PhpTuf\ComposerStager\Infrastructure\Service\Finder\ExecutableFinderInterface;
 use Symfony\Component\Process\ExecutableFinder as SymfonyExecutableFinder;
 
 /**
@@ -15,7 +15,7 @@ class ExecutableFinder implements ExecutableFinderInterface {
   /**
    * The decorated executable finder.
    *
-   * @var \PhpTuf\ComposerStager\Infrastructure\Process\ExecutableFinder
+   * @var \PhpTuf\ComposerStager\Infrastructure\Service\Finder\ExecutableFinder
    */
   private $decorated;
 

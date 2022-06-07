@@ -11,7 +11,7 @@ services:
       - '@file_system'
       - '@config.factory'
     public: false
-  PhpTuf\ComposerStager\Infrastructure\Filesystem\Filesystem:
+  PhpTuf\ComposerStager\Infrastructure\Service\Filesystem\Filesystem:
     autowire: true
     public: false
   Drupal\package_manager\ExecutableFinder:
@@ -19,47 +19,114 @@ services:
       $config_factory: '@config.factory'
     autowire: true
     public: false
-  PhpTuf\ComposerStager\Infrastructure\Process\ProcessFactoryInterface:
+  PhpTuf\ComposerStager\Infrastructure\Factory\Path\PathFactory:
+    autowire: true
+    public: false
+  PhpTuf\ComposerStager\Infrastructure\Factory\Process\ProcessFactoryInterface:
     alias: 'Drupal\package_manager\ProcessFactory'
-  PhpTuf\ComposerStager\Domain\Filesystem\FilesystemInterface:
-    alias: 'PhpTuf\ComposerStager\Infrastructure\Filesystem\Filesystem'
-  PhpTuf\ComposerStager\Infrastructure\Process\ExecutableFinderInterface:
+  PhpTuf\ComposerStager\Domain\Service\Filesystem\FilesystemInterface:
+    alias: 'PhpTuf\ComposerStager\Infrastructure\Service\Filesystem\Filesystem'
+  PhpTuf\ComposerStager\Infrastructure\Service\Finder\ExecutableFinderInterface:
     alias: 'Drupal\package_manager\ExecutableFinder'
+  PhpTuf\ComposerStager\Infrastructure\Factory\Path\PathFactoryInterface:
+    alias: 'PhpTuf\ComposerStager\Infrastructure\Factory\Path\PathFactory'
 
   # Executable runners for Composer Stager.
-  PhpTuf\ComposerStager\Infrastructure\Process\Runner\RsyncRunner:
+  PhpTuf\ComposerStager\Infrastructure\Service\ProcessRunner\RsyncRunner:
     autowire: true
     public: false
-  PhpTuf\ComposerStager\Infrastructure\Process\Runner\ComposerRunner:
+  PhpTuf\ComposerStager\Infrastructure\Service\ProcessRunner\ComposerRunner:
     autowire: true
     public: false
-  PhpTuf\ComposerStager\Domain\Process\Runner\RsyncRunnerInterface:
-    alias: 'PhpTuf\ComposerStager\Infrastructure\Process\Runner\RsyncRunner'
-  PhpTuf\ComposerStager\Domain\Process\Runner\ComposerRunnerInterface:
-    alias: 'PhpTuf\ComposerStager\Infrastructure\Process\Runner\ComposerRunner'
+  PhpTuf\ComposerStager\Domain\Service\ProcessRunner\RsyncRunnerInterface:
+    alias: 'PhpTuf\ComposerStager\Infrastructure\Service\ProcessRunner\RsyncRunner'
+  PhpTuf\ComposerStager\Domain\Service\ProcessRunner\ComposerRunnerInterface:
+    alias: 'PhpTuf\ComposerStager\Infrastructure\Service\ProcessRunner\ComposerRunner'
 
   # File syncers for Composer Stager.
-  PhpTuf\ComposerStager\Infrastructure\FileSyncer\RsyncFileSyncer:
+  PhpTuf\ComposerStager\Infrastructure\Service\FileSyncer\RsyncFileSyncer:
     autowire: true
-  PhpTuf\ComposerStager\Infrastructure\FileSyncer\PhpFileSyncer:
+  PhpTuf\ComposerStager\Infrastructure\Service\FileSyncer\PhpFileSyncer:
     autowire: true
   Drupal\package_manager\FileSyncerFactory:
     arguments:
       $config_factory: '@config.factory'
     autowire: true
     public: false
-  PhpTuf\ComposerStager\Domain\FileSyncer\FileSyncerInterface:
+  PhpTuf\ComposerStager\Domain\Service\FileSyncer\FileSyncerInterface:
     factory: ['@Drupal\package_manager\FileSyncerFactory', 'create']
+
+  # Composer Stager preconditions.
+  PhpTuf\ComposerStager\Infrastructure\Aggregate\PreconditionsTree\CommonPreconditions:
+    autowire: true
+    public: false
+  PhpTuf\ComposerStager\Infrastructure\Aggregate\PreconditionsTree\BeginnerPreconditions:
+    autowire: true
+    public: false
+  PhpTuf\ComposerStager\Infrastructure\Aggregate\PreconditionsTree\StagerPreconditions:
+    autowire: true
+    public: false
+  PhpTuf\ComposerStager\Infrastructure\Aggregate\PreconditionsTree\CommitterPreconditions:
+    autowire: true
+    public: false
+  PhpTuf\ComposerStager\Infrastructure\Aggregate\PreconditionsTree\StagingDirIsReady:
+    autowire: true
+    public: false
+  PhpTuf\ComposerStager\Infrastructure\Service\Precondition\ComposerIsAvailable:
+    autowire: true
+    public: false
+  PhpTuf\ComposerStager\Infrastructure\Service\Precondition\ActiveDirExists:
+    autowire: true
+    public: false
+  PhpTuf\ComposerStager\Infrastructure\Service\Precondition\ActiveDirIsWritable:
+    autowire: true
+    public: false
+  PhpTuf\ComposerStager\Infrastructure\Service\Precondition\ActiveAndStagingDirsAreDifferent:
+    autowire: true
+    public: false
+  PhpTuf\ComposerStager\Infrastructure\Service\Precondition\StagingDirExists:
+    autowire: true
+    public: false
+  PhpTuf\ComposerStager\Infrastructure\Service\Precondition\StagingDirIsWritable:
+    autowire: true
+    public: false
+  PhpTuf\ComposerStager\Infrastructure\Service\Precondition\StagingDirDoesNotExist:
+    autowire: true
+    public: false
+  PhpTuf\ComposerStager\Domain\Aggregate\PreconditionsTree\CommitterPreconditionsInterface:
+    alias: 'PhpTuf\ComposerStager\Infrastructure\Aggregate\PreconditionsTree\CommitterPreconditions'
+  PhpTuf\ComposerStager\Domain\Aggregate\PreconditionsTree\BeginnerPreconditionsInterface:
+    alias: 'PhpTuf\ComposerStager\Infrastructure\Aggregate\PreconditionsTree\BeginnerPreconditions'
+  PhpTuf\ComposerStager\Domain\Aggregate\PreconditionsTree\StagerPreconditionsInterface:
+    alias: 'PhpTuf\ComposerStager\Infrastructure\Aggregate\PreconditionsTree\StagerPreconditions'
+  PhpTuf\ComposerStager\Domain\Aggregate\PreconditionsTree\CommonPreconditionsInterface:
+    alias: 'PhpTuf\ComposerStager\Infrastructure\Aggregate\PreconditionsTree\CommonPreconditions'
+  PhpTuf\ComposerStager\Domain\Aggregate\PreconditionsTree\StagingDirIsReadyInterface:
+    alias: 'PhpTuf\ComposerStager\Infrastructure\Aggregate\PreconditionsTree\StagingDirIsReady'
+  PhpTuf\ComposerStager\Domain\Service\Precondition\ComposerIsAvailableInterface:
+    alias: 'PhpTuf\ComposerStager\Infrastructure\Service\Precondition\ComposerIsAvailable'
+  PhpTuf\ComposerStager\Domain\Service\Precondition\ActiveDirExistsInterface:
+    alias: 'PhpTuf\ComposerStager\Infrastructure\Service\Precondition\ActiveDirExists'
+  PhpTuf\ComposerStager\Domain\Service\Precondition\ActiveDirIsWritableInterface:
+    alias: 'PhpTuf\ComposerStager\Infrastructure\Service\Precondition\ActiveDirIsWritable'
+  PhpTuf\ComposerStager\Domain\Service\Precondition\ActiveAndStagingDirsAreDifferentInterface:
+    alias: 'PhpTuf\ComposerStager\Infrastructure\Service\Precondition\ActiveAndStagingDirsAreDifferent'
+  PhpTuf\ComposerStager\Domain\Service\Precondition\StagingDirExistsInterface:
+    alias: 'PhpTuf\ComposerStager\Infrastructure\Service\Precondition\StagingDirExists'
+  PhpTuf\ComposerStager\Domain\Service\Precondition\StagingDirIsWritableInterface:
+    alias: 'PhpTuf\ComposerStager\Infrastructure\Service\Precondition\StagingDirIsWritable'
+  PhpTuf\ComposerStager\Domain\Service\Precondition\StagingDirDoesNotExistInterface:
+    alias: 'PhpTuf\ComposerStager\Infrastructure\Service\Precondition\StagingDirDoesNotExist'
 
   # Services provided to Drupal by Package Manager.
   package_manager.beginner:
-    class: PhpTuf\ComposerStager\Domain\Beginner
+    class: PhpTuf\ComposerStager\Domain\Core\Beginner\Beginner
     autowire: true
   package_manager.stager:
-    class: PhpTuf\ComposerStager\Domain\Stager
+    class: PhpTuf\ComposerStager\Domain\Core\Stager\Stager
     autowire: true
   package_manager.committer:
-    class: PhpTuf\ComposerStager\Domain\Committer
+    class: PhpTuf\ComposerStager\Domain\Core\Committer\Committer
     autowire: true
   package_manager.path_locator:
     class: Drupal\package_manager\PathLocator
@@ -70,7 +137,7 @@ services:
   package_manager.validator.composer_executable:
     class: Drupal\package_manager\Validator\ComposerExecutableValidator
     arguments:
-      - '@PhpTuf\ComposerStager\Domain\Process\Runner\ComposerRunnerInterface'
+      - '@PhpTuf\ComposerStager\Domain\Service\ProcessRunner\ComposerRunnerInterface'
       - '@module_handler'
       - '@string_translation'
     tags:

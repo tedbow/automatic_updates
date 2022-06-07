@@ -4,8 +4,8 @@ namespace Drupal\package_manager;
 
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\File\FileSystemInterface;
-use PhpTuf\ComposerStager\Infrastructure\Process\ProcessFactory as StagerProcessFactory;
-use PhpTuf\ComposerStager\Infrastructure\Process\ProcessFactoryInterface;
+use PhpTuf\ComposerStager\Infrastructure\Factory\Process\ProcessFactoryInterface;
+use PhpTuf\ComposerStager\Infrastructure\Factory\Process\ProcessFactory as StagerProcessFactory;
 use Symfony\Component\Process\Process;
 
 /**
@@ -16,7 +16,7 @@ final class ProcessFactory implements ProcessFactoryInterface {
   /**
    * The decorated process factory.
    *
-   * @var \PhpTuf\ComposerStager\Infrastructure\Process\ProcessFactoryInterface
+   * @var \PhpTuf\ComposerStager\Infrastructure\Factory\Process\ProcessFactoryInterface
    */
   private $decorated;
 

@@ -11,7 +11,7 @@
 function package_manager_requirements(string $phase) {
   $requirements = [];
 
-  if (!class_exists('PhpTuf\ComposerStager\Domain\Beginner')) {
+  if (!class_exists('\PhpTuf\ComposerStager\Domain\Core\Beginner\Beginner')) {
     $requirements['package_manager_composer_dependencies'] = [
       'title' => 'Missing dependency',
       'description' => t('External dependencies for Package Manager are not available. Composer must be used to download the module with dependencies.'),

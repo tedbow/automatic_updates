@@ -2,8 +2,11 @@
 
 namespace Drupal\package_manager_bypass;
 
-use PhpTuf\ComposerStager\Domain\CommitterInterface;
-use PhpTuf\ComposerStager\Domain\Process\OutputCallbackInterface;
+use PhpTuf\ComposerStager\Domain\Core\Committer\CommitterInterface;
+use PhpTuf\ComposerStager\Domain\Service\ProcessOutputCallback\ProcessOutputCallbackInterface;
+use PhpTuf\ComposerStager\Domain\Service\ProcessRunner\ProcessRunnerInterface;
+use PhpTuf\ComposerStager\Domain\Value\Path\PathInterface;
+use PhpTuf\ComposerStager\Domain\Value\PathList\PathListInterface;
 
 /**
  * Defines an update committer which doesn't do any actual committing.
@@ -11,34 +14,10 @@ use PhpTuf\ComposerStager\Domain\Process\OutputCallbackInterface;
 class Committer extends InvocationRecorderBase implements CommitterInterface {
 
   /**
-   * The decorated committer service.
-   *
-   * @var \PhpTuf\ComposerStager\Domain\CommitterInterface
-   */
-  private $decorated;
-
-  /**
-   * Constructs a Committer object.
-   *
-   * @param \PhpTuf\ComposerStager\Domain\CommitterInterface $decorated
-   *   The decorated committer service.
-   */
-  public function __construct(CommitterInterface $decorated) {
-    $this->decorated = $decorated;
-  }
-
-  /**
    * {@inheritdoc}
    */
-  public function commit(string $stagingDir, string $activeDir, ?array $exclusions = [], ?OutputCallbackInterface $callback = NULL, ?int $timeout = 120): void {
+  public function commit(PathInterface $stagingDir, PathInterface $activeDir, ?PathListInterface $exclusions = NULL, ?ProcessOutputCallbackInterface $callback = NULL, ?int $timeout = ProcessRunnerInterface::DEFAULT_TIMEOUT): void {
     $this->saveInvocationArguments($stagingDir, $activeDir, $exclusions, $timeout);
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public function directoryExists(string $stagingDir): bool {
-    return $this->decorated->directoryExists($stagingDir);
   }
 
 }

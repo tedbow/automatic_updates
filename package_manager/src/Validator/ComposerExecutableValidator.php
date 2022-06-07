@@ -9,14 +9,14 @@ use Drupal\package_manager\Event\PreCreateEvent;
 use Drupal\package_manager\Event\PreOperationStageEvent;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\Core\StringTranslation\TranslationInterface;
-use PhpTuf\ComposerStager\Domain\Process\OutputCallbackInterface;
-use PhpTuf\ComposerStager\Domain\Process\Runner\ComposerRunnerInterface;
-use PhpTuf\ComposerStager\Exception\ExceptionInterface;
+use PhpTuf\ComposerStager\Domain\Exception\ExceptionInterface;
+use PhpTuf\ComposerStager\Domain\Service\ProcessOutputCallback\ProcessOutputCallbackInterface;
+use PhpTuf\ComposerStager\Domain\Service\ProcessRunner\ComposerRunnerInterface;
 
 /**
  * Validates the Composer executable is the correct version.
  */
-class ComposerExecutableValidator implements PreOperationStageValidatorInterface, OutputCallbackInterface {
+class ComposerExecutableValidator implements PreOperationStageValidatorInterface, ProcessOutputCallbackInterface {
 
   use StringTranslationTrait;
 
@@ -30,7 +30,7 @@ class ComposerExecutableValidator implements PreOperationStageValidatorInterface
   /**
    * The Composer runner.
    *
-   * @var \PhpTuf\ComposerStager\Domain\Process\Runner\ComposerRunnerInterface
+   * @var \PhpTuf\ComposerStager\Domain\Service\ProcessRunner\ComposerRunnerInterface
    */
   protected $composer;
 
@@ -51,7 +51,7 @@ class ComposerExecutableValidator implements PreOperationStageValidatorInterface
   /**
    * Constructs a ComposerExecutableValidator object.
    *
-   * @param \PhpTuf\ComposerStager\Domain\Process\Runner\ComposerRunnerInterface $composer
+   * @param \PhpTuf\ComposerStager\Domain\Service\ProcessRunner\ComposerRunnerInterface $composer
    *   The Composer runner.
    * @param \Drupal\Core\Extension\ModuleHandlerInterface $module_handler
    *   The module handler service.

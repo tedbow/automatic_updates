@@ -5,6 +5,7 @@ namespace Drupal\package_manager_test_api;
 use Drupal\Core\Controller\ControllerBase;
 use Drupal\package_manager\PathLocator;
 use Drupal\package_manager\Stage;
+use PhpTuf\ComposerStager\Infrastructure\Factory\Path\PathFactoryInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -54,7 +55,8 @@ class ApiController extends ControllerBase {
       $container->get('file_system'),
       $container->get('event_dispatcher'),
       $container->get('tempstore.shared'),
-      $container->get('datetime.time')
+      $container->get('datetime.time'),
+      $container->get(PathFactoryInterface::class)
     );
     return new static(
       $stage,

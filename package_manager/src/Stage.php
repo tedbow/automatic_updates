@@ -21,9 +21,11 @@ use Drupal\package_manager\Event\StageEvent;
 use Drupal\package_manager\Exception\StageException;
 use Drupal\package_manager\Exception\StageOwnershipException;
 use Drupal\package_manager\Exception\StageValidationException;
-use PhpTuf\ComposerStager\Domain\BeginnerInterface;
-use PhpTuf\ComposerStager\Domain\CommitterInterface;
-use PhpTuf\ComposerStager\Domain\StagerInterface;
+use PhpTuf\ComposerStager\Domain\Core\Beginner\BeginnerInterface;
+use PhpTuf\ComposerStager\Domain\Core\Committer\CommitterInterface;
+use PhpTuf\ComposerStager\Domain\Core\Stager\StagerInterface;
+use PhpTuf\ComposerStager\Infrastructure\Factory\Path\PathFactoryInterface;
+use PhpTuf\ComposerStager\Infrastructure\Value\PathList\PathList;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 
 /**
@@ -102,21 +104,21 @@ class Stage {
   /**
    * The beginner service.
    *
-   * @var \PhpTuf\ComposerStager\Domain\BeginnerInterface
+   * @var \PhpTuf\ComposerStager\Domain\Core\Beginner\BeginnerInterface
    */
   protected $beginner;
 
   /**
    * The stager service.
    *
-   * @var \PhpTuf\ComposerStager\Domain\StagerInterface
+   * @var \PhpTuf\ComposerStager\Domain\Core\Stager\StagerInterface
    */
   protected $stager;
 
   /**
    * The committer service.
    *
-   * @var \PhpTuf\ComposerStager\Domain\CommitterInterface
+   * @var \PhpTuf\ComposerStager\Domain\Core\Committer\CommitterInterface
    */
   protected $committer;
 
@@ -149,6 +151,13 @@ class Stage {
   protected $time;
 
   /**
+   * The path factory service.
+   *
+   * @var \PhpTuf\ComposerStager\Infrastructure\Factory\Path\PathFactoryInterface
+   */
+  protected $pathFactory;
+
+  /**
    * The lock info for the stage.
    *
    * Consists of a unique random string and the current class name.
@@ -164,11 +173,11 @@ class Stage {
    *   The config factory service.
    * @param \Drupal\package_manager\PathLocator $path_locator
    *   The path locator service.
-   * @param \PhpTuf\ComposerStager\Domain\BeginnerInterface $beginner
+   * @param \PhpTuf\ComposerStager\Domain\Core\Beginner\BeginnerInterface $beginner
    *   The beginner service.
-   * @param \PhpTuf\ComposerStager\Domain\StagerInterface $stager
+   * @param \PhpTuf\ComposerStager\Domain\Core\Stager\StagerInterface $stager
    *   The stager service.
-   * @param \PhpTuf\ComposerStager\Domain\CommitterInterface $committer
+   * @param \PhpTuf\ComposerStager\Domain\Core\Committer\CommitterInterface $committer
    *   The committer service.
    * @param \Drupal\Core\File\FileSystemInterface $file_system
    *   The file system service.
@@ -178,8 +187,10 @@ class Stage {
    *   The shared tempstore factory.
    * @param \Drupal\Component\Datetime\TimeInterface $time
    *   The time service.
+   * @param \PhpTuf\ComposerStager\Infrastructure\Factory\Path\PathFactoryInterface $path_factory
+   *   The path factory service.
    */
-  public function __construct(ConfigFactoryInterface $config_factory, PathLocator $path_locator, BeginnerInterface $beginner, StagerInterface $stager, CommitterInterface $committer, FileSystemInterface $file_system, EventDispatcherInterface $event_dispatcher, SharedTempStoreFactory $shared_tempstore, TimeInterface $time) {
+  public function __construct(ConfigFactoryInterface $config_factory, PathLocator $path_locator, BeginnerInterface $beginner, StagerInterface $stager, CommitterInterface $committer, FileSystemInterface $file_system, EventDispatcherInterface $event_dispatcher, SharedTempStoreFactory $shared_tempstore, TimeInterface $time, PathFactoryInterface $path_factory) {
     $this->configFactory = $config_factory;
     $this->pathLocator = $path_locator;
     $this->beginner = $beginner;
@@ -189,6 +200,7 @@ class Stage {
     $this->eventDispatcher = $event_dispatcher;
     $this->time = $time;
     $this->tempStore = $shared_tempstore->get('package_manager_stage');
+    $this->pathFactory = $path_factory;
   }
 
   /**
@@ -275,15 +287,15 @@ class Stage {
     $this->tempStore->set(static::TEMPSTORE_LOCK_KEY, [$id, static::class]);
     $this->claim($id);
 
-    $active_dir = $this->pathLocator->getProjectRoot();
-    $stage_dir = $this->getStageDirectory();
+    $active_dir = $this->pathFactory->create($this->pathLocator->getProjectRoot());
+    $stage_dir = $this->pathFactory->create($this->getStageDirectory());
 
     $event = new PreCreateEvent($this);
     // If an error occurs and we won't be able to create the stage, mark it as
     // available.
     $this->dispatch($event, [$this, 'markAsAvailable']);
 
-    $this->beginner->begin($active_dir, $stage_dir, $event->getExcludedPaths(), NULL, $timeout);
+    $this->beginner->begin($active_dir, $stage_dir, new PathList($event->getExcludedPaths()), NULL, $timeout);
     $this->dispatch(new PostCreateEvent($this));
     return $id;
   }
@@ -302,23 +314,24 @@ class Stage {
     $this->checkOwnership();
 
     $this->dispatch(new PreRequireEvent($this, $runtime, $dev));
-    $dir = $this->getStageDirectory();
+    $active_dir = $this->pathFactory->create($this->pathLocator->getProjectRoot());
+    $stage_dir = $this->pathFactory->create($this->getStageDirectory());
 
     // Change the runtime and dev requirements as needed, but don't update
     // the installed packages yet.
     if ($runtime) {
       $command = array_merge(['require', '--no-update'], $runtime);
-      $this->stager->stage($command, $dir);
+      $this->stager->stage($command, $active_dir, $stage_dir);
     }
     if ($dev) {
       $command = array_merge(['require', '--dev', '--no-update'], $dev);
-      $this->stager->stage($command, $dir);
+      $this->stager->stage($command, $active_dir, $stage_dir);
     }
 
     // If constraints were changed, update those packages.
     if ($runtime || $dev) {
       $command = array_merge(['update', '--with-all-dependencies'], $runtime, $dev);
-      $this->stager->stage($command, $dir);
+      $this->stager->stage($command, $active_dir, $stage_dir);
     }
 
     $this->dispatch(new PostRequireEvent($this, $runtime, $dev));
@@ -335,8 +348,8 @@ class Stage {
   public function apply(?int $timeout = 600): void {
     $this->checkOwnership();
 
-    $active_dir = $this->pathLocator->getProjectRoot();
-    $stage_dir = $this->getStageDirectory();
+    $active_dir = $this->pathFactory->create($this->pathLocator->getProjectRoot());
+    $stage_dir = $this->pathFactory->create($this->getStageDirectory());
 
     // If an error occurs while dispatching the events, ensure that ::destroy()
     // doesn't think we're in the middle of applying the staged changes to the
@@ -349,7 +362,7 @@ class Stage {
     $this->tempStore->set(self::TEMPSTORE_APPLY_TIME_KEY, $this->time->getRequestTime());
     $this->dispatch($event, $release_apply);
 
-    $this->committer->commit($stage_dir, $active_dir, $event->getExcludedPaths(), NULL, $timeout);
+    $this->committer->commit($stage_dir, $active_dir, new PathList($event->getExcludedPaths()), NULL, $timeout);
 
     // Rebuild the container and clear all caches, to ensure that new services
     // are picked up.
