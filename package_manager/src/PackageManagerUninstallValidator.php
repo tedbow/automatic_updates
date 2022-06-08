@@ -4,7 +4,6 @@ namespace Drupal\package_manager;
 
 use Drupal\Core\Extension\ModuleUninstallValidatorInterface;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
-use PhpTuf\ComposerStager\Infrastructure\Factory\Path\PathFactoryInterface;
 use Symfony\Component\DependencyInjection\ContainerAwareInterface;
 use Symfony\Component\DependencyInjection\ContainerAwareTrait;
 
@@ -29,8 +28,7 @@ class PackageManagerUninstallValidator implements ModuleUninstallValidatorInterf
       $this->container->get('file_system'),
       $this->container->get('event_dispatcher'),
       $this->container->get('tempstore.shared'),
-      $this->container->get('datetime.time'),
-      $this->container->get(PathFactoryInterface::class)
+      $this->container->get('datetime.time')
     );
     if ($stage->isAvailable() || !$stage->isApplying()) {
       return [];

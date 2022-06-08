@@ -107,8 +107,7 @@ abstract class PackageManagerKernelTestBase extends KernelTestBase {
       $this->container->get('file_system'),
       $this->container->get('event_dispatcher'),
       $this->container->get('tempstore.shared'),
-      $this->container->get('datetime.time'),
-      new TestPathFactory()
+      $this->container->get('datetime.time')
     );
   }
 
@@ -278,6 +277,7 @@ trait TestStageTrait {
     parent::__construct(...$arguments);
     $mirror = new \ReflectionClass(Stage::class);
     $this->tempStore->set($mirror->getConstant('TEMPSTORE_STAGING_ROOT_KEY'), PackageManagerKernelTestBase::$testStagingRoot);
+    $this->pathFactory = new TestPathFactory();
   }
 
   /**

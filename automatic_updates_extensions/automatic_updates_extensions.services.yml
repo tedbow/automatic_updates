@@ -11,7 +11,6 @@ services:
       - '@event_dispatcher'
       - '@tempstore.shared'
       - '@datetime.time'
-      - '@PhpTuf\ComposerStager\Infrastructure\Factory\Path\PathFactoryInterface'
   automatic_updates_extensions.validator.target_release:
     class: Drupal\automatic_updates_extensions\Validator\UpdateReleaseValidator
     tags:

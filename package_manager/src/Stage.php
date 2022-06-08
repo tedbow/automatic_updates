@@ -24,7 +24,7 @@ use Drupal\package_manager\Exception\StageValidationException;
 use PhpTuf\ComposerStager\Domain\Core\Beginner\BeginnerInterface;
 use PhpTuf\ComposerStager\Domain\Core\Committer\CommitterInterface;
 use PhpTuf\ComposerStager\Domain\Core\Stager\StagerInterface;
-use PhpTuf\ComposerStager\Infrastructure\Factory\Path\PathFactoryInterface;
+use PhpTuf\ComposerStager\Infrastructure\Factory\Path\PathFactory;
 use PhpTuf\ComposerStager\Infrastructure\Value\PathList\PathList;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 
@@ -187,10 +187,8 @@ class Stage {
    *   The shared tempstore factory.
    * @param \Drupal\Component\Datetime\TimeInterface $time
    *   The time service.
-   * @param \PhpTuf\ComposerStager\Infrastructure\Factory\Path\PathFactoryInterface $path_factory
-   *   The path factory service.
    */
-  public function __construct(ConfigFactoryInterface $config_factory, PathLocator $path_locator, BeginnerInterface $beginner, StagerInterface $stager, CommitterInterface $committer, FileSystemInterface $file_system, EventDispatcherInterface $event_dispatcher, SharedTempStoreFactory $shared_tempstore, TimeInterface $time, PathFactoryInterface $path_factory) {
+  public function __construct(ConfigFactoryInterface $config_factory, PathLocator $path_locator, BeginnerInterface $beginner, StagerInterface $stager, CommitterInterface $committer, FileSystemInterface $file_system, EventDispatcherInterface $event_dispatcher, SharedTempStoreFactory $shared_tempstore, TimeInterface $time) {
     $this->configFactory = $config_factory;
     $this->pathLocator = $path_locator;
     $this->beginner = $beginner;
@@ -200,7 +198,7 @@ class Stage {
     $this->eventDispatcher = $event_dispatcher;
     $this->time = $time;
     $this->tempStore = $shared_tempstore->get('package_manager_stage');
-    $this->pathFactory = $path_factory;
+    $this->pathFactory = new PathFactory();
   }
 
   /**
