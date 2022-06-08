@@ -74,8 +74,9 @@ final class ProcessFactory implements ProcessFactoryInterface {
     if ($this->isComposerCommand($command)) {
       $env['COMPOSER_HOME'] = $this->getComposerHomePath();
     }
-    // Ensure that the PHP interpreter is in the PATH.
-    $env['PATH'] = $this->getEnv('PATH') . ':' . static::getPhpDirectory();
+    // Ensure that the current PHP installation is the first place that will be
+    // searched when looking for the PHP interpreter.
+    $env['PATH'] = static::getPhpDirectory() . ':' . $this->getEnv('PATH');
     return $process->setEnv($env);
   }
 
