@@ -46,7 +46,7 @@ class StagedProjectsValidatorTest extends AutomaticUpdatesKernelTestBase {
   private function validate(array $expected_results): void {
     /** @var \Drupal\automatic_updates\Updater $updater */
     $updater = $this->container->get('automatic_updates.updater');
-    $updater->begin(['drupal' => '9.8.2']);
+    $updater->begin(['drupal' => '9.8.1']);
     $updater->stage();
 
     try {

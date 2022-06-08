@@ -35,7 +35,7 @@ class StagedDatabaseUpdateValidatorTest extends AutomaticUpdatesKernelTestBase {
 
     /** @var \Drupal\Tests\automatic_updates\Kernel\TestCronUpdater $updater */
     $updater = $this->container->get('automatic_updates.cron_updater');
-    $updater->begin(['drupal' => '9.8.2']);
+    $updater->begin(['drupal' => '9.8.1']);
     $updater->stage();
   }
 

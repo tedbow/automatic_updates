@@ -172,15 +172,13 @@ class CronUpdater extends Updater {
    *     can be done during cron.
    *   - \Drupal\automatic_updates\CronUpdater::ALL if all updates are allowed
    *     during cron.
-   *
-   * @todo Make this always return a string, with a sensible default, in
-   *   https://www.drupal.org/i/3276534.
    */
-  final public function getMode(): ?string {
+  final public function getMode(): string {
     if (self::$disabled) {
       return static::DISABLED;
     }
-    return $this->configFactory->get('automatic_updates.settings')->get('cron');
+    $mode = $this->configFactory->get('automatic_updates.settings')->get('cron');
+    return $mode ?: CronUpdater::SECURITY;
   }
 
 }

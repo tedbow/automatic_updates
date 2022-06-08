@@ -220,7 +220,8 @@ class ReadinessValidationManagerTest extends AutomaticUpdatesKernelTestBase {
    */
   public function testStoredResultsDeletedPostApply(): void {
     $this->enableModules(['automatic_updates']);
-    $this->setCoreVersion('9.8.1');
+    $this->setCoreVersion('9.8.0');
+    $this->setReleaseMetadata(['drupal' => __DIR__ . '/../../../fixtures/release-history/drupal.9.8.1-security.xml']);
 
     // The readiness checker should raise a warning, so that the update is not
     // blocked or aborted.
@@ -231,6 +232,7 @@ class ReadinessValidationManagerTest extends AutomaticUpdatesKernelTestBase {
     /** @var \Drupal\automatic_updates\Validation\ReadinessValidationManager $manager */
     $manager = $this->container->get('automatic_updates.readiness_validation_manager')
       ->run();
+    $this->assertValidationResultsEqual($results, $manager->getResults());
     TestSubscriber1::setTestResult(NULL, ReadinessCheckEvent::class);
     // Even though the checker no longer returns any results, the previous
     // results should be stored.
@@ -244,7 +246,7 @@ class ReadinessValidationManagerTest extends AutomaticUpdatesKernelTestBase {
 
     /** @var \Drupal\automatic_updates\Updater $updater */
     $updater = $this->container->get('automatic_updates.updater');
-    $updater->begin(['drupal' => '9.8.2']);
+    $updater->begin(['drupal' => '9.8.1']);
     $updater->stage();
     $updater->apply();
     $updater->destroy();

@@ -22,6 +22,15 @@ class CronFrequencyValidatorTest extends AutomaticUpdatesKernelTestBase {
   protected static $modules = ['automatic_updates'];
 
   /**
+   * {@inheritdoc}
+   */
+  protected function setUp(): void {
+    parent::setUp();
+    $this->setCoreVersion('9.8.0');
+    $this->setReleaseMetadata(['drupal' => __DIR__ . '/../../../fixtures/release-history/drupal.9.8.1-security.xml']);
+  }
+
+  /**
    * Tests that nothing is validated if updates are disabled during cron.
    */
   public function testNoValidationIfCronDisabled(): void {

@@ -79,14 +79,14 @@ class ReleaseChooserTest extends AutomaticUpdatesKernelTestBase {
         'updater' => 'automatic_updates.cron_updater',
         'minor_support' => FALSE,
         'installed_version' => '9.8.0',
-        'current_minor' => '9.8.2',
+        'current_minor' => '9.8.1',
         'next_minor' => NULL,
       ],
       'cron, installed 9.8.0, minor support' => [
         'updater' => 'automatic_updates.cron_updater',
         'minor_support' => TRUE,
         'installed_version' => '9.8.0',
-        'current_minor' => '9.8.2',
+        'current_minor' => '9.8.1',
         'next_minor' => NULL,
       ],
       'cron, installed 9.7.0, no minor support' => [
