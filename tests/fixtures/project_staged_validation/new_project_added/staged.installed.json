@@ -8,7 +8,12 @@
     {
       "name": "drupal/core",
       "version": "9.8.1",
-      "type": "drupal-core"
+      "type": "drupal-core",
+      "extra": {
+        "drupal-scaffold": {
+          "file-mapping": {}
+        }
+      }
     },
     {
       "name": "drupal/test_module",

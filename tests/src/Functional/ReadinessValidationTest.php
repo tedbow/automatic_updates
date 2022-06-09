@@ -402,10 +402,13 @@ class ReadinessValidationTest extends AutomaticUpdatesFunctionalTestBase {
       'package_manager_test_fixture',
     ]);
     // Because all actual staging operations are bypassed by
-    // package_manager_bypass (enabled by the parent class), disable this
-    // validator because it will complain if there's no actual Composer data to
-    // inspect.
-    $this->disableValidators(['automatic_updates.staged_projects_validator']);
+    // package_manager_bypass (enabled by the parent class), disable these
+    // validators because they will complain if there's no actual Composer data
+    // to inspect.
+    $this->disableValidators([
+      'automatic_updates.staged_projects_validator',
+      'automatic_updates.validator.scaffold_file_permissions',
+    ]);
 
     // The error should be persistently visible, even after the checker stops
     // flagging it.

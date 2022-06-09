@@ -43,9 +43,10 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
    */
   protected function setUp(): void {
     // In this test class, all actual staging operations are bypassed by
-    // package_manager_bypass, which means this validator will complain because
-    // there is no actual Composer data for it to inspect.
+    // package_manager_bypass, which means these validators will complain
+    // because there is no actual Composer data for them to inspect.
     $this->disableValidators[] = 'automatic_updates.staged_projects_validator';
+    $this->disableValidators[] = 'automatic_updates.validator.scaffold_file_permissions';
 
     parent::setUp();
 

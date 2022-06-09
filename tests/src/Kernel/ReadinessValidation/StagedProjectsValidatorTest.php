@@ -62,14 +62,22 @@ class StagedProjectsValidatorTest extends AutomaticUpdatesKernelTestBase {
    * Tests that exceptions are turned into validation errors.
    */
   public function testEventConsumesExceptionResults(): void {
+    /** @var \Symfony\Component\EventDispatcher\EventDispatcherInterface $event_dispatcher */
+    $event_dispatcher = $this->container->get('event_dispatcher');
+
     // Just before the staged changes are applied, delete the composer.json file
     // to trigger an error. This uses the highest possible priority to guarantee
     // it runs before any other subscribers.
     $listener = function (): void {
       unlink("$this->activeDir/composer.json");
     };
-    $this->container->get('event_dispatcher')
-      ->addListener(PreApplyEvent::class, $listener, PHP_INT_MAX);
+    $event_dispatcher->addListener(PreApplyEvent::class, $listener, PHP_INT_MAX);
+
+    // Disable the scaffold file permissions validator because it will try to
+    // read composer.json from the active directory, which won't exist thanks to
+    // the event listener we just added.
+    $validator = $this->container->get('automatic_updates.validator.scaffold_file_permissions');
+    $event_dispatcher->removeSubscriber($validator);
 
     $result = ValidationResult::createError([
       "Composer could not find the config file: $this->activeDir/composer.json\n",

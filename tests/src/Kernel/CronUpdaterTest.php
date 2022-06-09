@@ -57,6 +57,7 @@ class CronUpdaterTest extends AutomaticUpdatesKernelTestBase {
     // they attempt to compare the active and stage directories.
     $this->disableValidators[] = 'automatic_updates.validator.staged_database_updates';
     $this->disableValidators[] = 'automatic_updates.staged_projects_validator';
+    $this->disableValidators[] = 'automatic_updates.validator.scaffold_file_permissions';
     parent::setUp();
 
     $this->logger = new TestLogger();

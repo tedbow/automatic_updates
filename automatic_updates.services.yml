@@ -125,3 +125,9 @@ services:
     class: Drupal\automatic_updates\EventSubscriber\ConfigSubscriber
     tags:
       - { name: event_subscriber }
+  automatic_updates.validator.scaffold_file_permissions:
+    class: Drupal\automatic_updates\Validator\ScaffoldFilePermissionsValidator
+    arguments:
+      - '@package_manager.path_locator'
+    tags:
+      - { name: event_subscriber }

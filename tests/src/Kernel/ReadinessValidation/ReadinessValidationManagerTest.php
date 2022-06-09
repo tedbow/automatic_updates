@@ -238,11 +238,16 @@ class ReadinessValidationManagerTest extends AutomaticUpdatesKernelTestBase {
     // results should be stored.
     $this->assertValidationResultsEqual($results, $manager->getResults());
 
-    // Don't validate staged projects because actual staging operations are
-    // bypassed by package_manager_bypass, which will make this validator
-    // complain that there is no actual Composer data for it to inspect.
-    $validator = $this->container->get('automatic_updates.staged_projects_validator');
-    $this->container->get('event_dispatcher')->removeSubscriber($validator);
+    // Don't validate staged projects or scaffold file permissions because
+    // actual staging operations are bypassed by package_manager_bypass, which
+    // will make these validators complain that there is no actual Composer data
+    // for them to inspect.
+    $validators = array_map([$this->container, 'get'], [
+      'automatic_updates.staged_projects_validator',
+      'automatic_updates.validator.scaffold_file_permissions',
+    ]);
+    $event_dispatcher = $this->container->get('event_dispatcher');
+    array_walk($validators, [$event_dispatcher, 'removeSubscriber']);
 
     /** @var \Drupal\automatic_updates\Updater $updater */
     $updater = $this->container->get('automatic_updates.updater');

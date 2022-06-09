@@ -135,6 +135,11 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
    * @dataProvider providerSuccessfulUpdate
    */
   public function testSuccessfulUpdate(bool $maintenance_mode_on, string $project_name, string $installed_version, string $target_version): void {
+    // Disable the scaffold file permissions validator because it will try to
+    // read composer.json from the staging area, which won't exist because
+    // Package Manager is bypassed.
+    $this->disableValidators(['automatic_updates.validator.scaffold_file_permissions']);
+
     $this->updateProject = $project_name;
     $this->setReleaseMetadata(__DIR__ . '/../../../../tests/fixtures/release-history/drupal.9.8.2.xml');
     $this->setReleaseMetadata(__DIR__ . "/../../fixtures/release-history/$project_name.1.1.xml");

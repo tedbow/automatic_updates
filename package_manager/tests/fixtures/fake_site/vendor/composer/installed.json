@@ -2,7 +2,15 @@
   "packages": [
     {
       "name": "drupal/core",
-      "version": "9.8.0"
+      "version": "9.8.0",
+      "extra": {
+        "drupal-scaffold": {
+          "file-mapping": {
+            "[web-root]/sites/default/default.settings.php": "",
+            "[web-root]/sites/default/default.services.yml": ""
+          }
+        }
+      }
     }
   ]
 }
