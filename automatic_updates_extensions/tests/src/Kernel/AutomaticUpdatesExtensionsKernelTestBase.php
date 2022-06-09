@@ -3,6 +3,8 @@
 namespace Drupal\Tests\automatic_updates_extensions\Kernel;
 
 use Drupal\automatic_updates_extensions\ExtensionUpdater;
+
+use Drupal\Core\DependencyInjection\ContainerBuilder;
 use Drupal\package_manager\Exception\StageValidationException;
 use Drupal\Tests\automatic_updates\Kernel\AutomaticUpdatesKernelTestBase;
 use Drupal\Tests\package_manager\Kernel\TestStageTrait;
@@ -27,6 +29,43 @@ abstract class AutomaticUpdatesExtensionsKernelTestBase extends AutomaticUpdates
   ];
 
   /**
+   * {@inheritdoc}
+   */
+  public function register(ContainerBuilder $container) {
+    parent::register($container);
+
+    // Use the test-only implementations of the regular and cron updaters.
+    $overrides = [
+      'automatic_updates_extensions.updater' => TestExtensionUpdater::class,
+    ];
+    foreach ($overrides as $service_id => $class) {
+      if ($container->hasDefinition($service_id)) {
+        $container->getDefinition($service_id)->setClass($class);
+      }
+    }
+  }
+
+  /**
+   * Creates a stage object for testing purposes.
+   *
+   * @return \Drupal\automatic_updates_extensions\ExtensionUpdater
+   *   A stage object, with test-only modifications.
+   */
+  protected function createUpdater(): ExtensionUpdater {
+    return new TestExtensionUpdater(
+      $this->container->get('config.factory'),
+      $this->container->get('package_manager.path_locator'),
+      $this->container->get('package_manager.beginner'),
+      $this->container->get('package_manager.stager'),
+      $this->container->get('package_manager.committer'),
+      $this->container->get('file_system'),
+      $this->container->get('event_dispatcher'),
+      $this->container->get('tempstore.shared'),
+      $this->container->get('datetime.time')
+    );
+  }
+
+  /**
    * The client.
    *
    * @var \GuzzleHttp\Client
@@ -44,7 +83,7 @@ abstract class AutomaticUpdatesExtensionsKernelTestBase extends AutomaticUpdates
    *   (optional) The class of the event which should return the results. Must
    *   be passed if $expected_results is not empty.
    */
-  protected function assertUpdaterResults(array $project_versions, array $expected_results, string $event_class = NULL): void {
+  protected function assertUpdateResults(array $project_versions, array $expected_results, string $event_class = NULL): void {
     $updater = $this->createExtensionUpdater();
 
     try {
@@ -117,7 +156,7 @@ abstract class AutomaticUpdatesExtensionsKernelTestBase extends AutomaticUpdates
 }
 
 /**
- * Defines a updater specifically for testing purposes.
+ * A test-only version of the regular extension updater to override internals.
  */
 class TestExtensionUpdater extends ExtensionUpdater {
 

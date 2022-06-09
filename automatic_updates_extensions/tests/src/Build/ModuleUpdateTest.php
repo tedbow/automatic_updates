@@ -4,6 +4,7 @@ namespace Drupal\Tests\automatic_updates_extensions\Build;
 
 use Drupal\Tests\automatic_updates\Build\UpdateTestBase;
 use Drupal\Tests\automatic_updates_extensions\Traits\FormTestTrait;
+use Symfony\Component\Filesystem\Filesystem as SymfonyFilesystem;
 
 /**
  * Tests updating modules in a staging area.
@@ -22,11 +23,15 @@ class ModuleUpdateTest extends UpdateTestBase {
     $this->setReleaseMetadata([
       'drupal' => __DIR__ . '/../../../../tests/fixtures/release-history/drupal.9.8.1-security.xml',
       'alpha'  => __DIR__ . '/../../fixtures/release-history/alpha.1.1.0.xml',
+      'new_module' => __DIR__ . '/../../fixtures/release-history/new_module.1.1.0.xml',
     ]);
 
-    // Set 'version' and 'project' for the 'alpha' module to enable the Update
-    // to determine the update status.
-    $system_info = ['alpha' => ['version' => '1.0.0', 'project' => 'alpha']];
+    // Set 'version' and 'project' for the 'alpha' and 'new_module' module to
+    // enable the Update to determine the update status.
+    $system_info = [
+      'alpha' => ['version' => '1.0.0', 'project' => 'alpha'],
+      'new_module' => ['version' => '1.0.0', 'project' => 'new_module'],
+    ];
     $system_info = var_export($system_info, TRUE);
     $code = <<<END
 \$config['update_test.settings']['system_info'] = $system_info;
@@ -36,8 +41,13 @@ END;
     $this->addRepository('alpha', __DIR__ . '/../../../../package_manager/tests/fixtures/alpha/1.0.0');
     $this->runComposer('COMPOSER_MIRROR_PATH_REPOS=1 composer require drupal/alpha --update-with-all-dependencies', 'project');
     $this->assertModuleVersion('alpha', '1.0.0');
-
-    $this->installModules(['automatic_updates_extensions_test_api', 'alpha']);
+    $fs = new SymfonyFilesystem();
+    $fs->mirror(__DIR__ . '/../../fixtures/new_module', $this->getWorkspaceDirectory() . '/project/web/modules');
+    $this->installModules([
+      'automatic_updates_extensions_test_api',
+      'alpha',
+      'new_module',
+    ]);
 
     // Change both modules' upstream version.
     $this->addRepository('alpha', __DIR__ . '/../../../../package_manager/tests/fixtures/alpha/1.1.0');
@@ -48,7 +58,22 @@ END;
    */
   public function testApi(): void {
     $this->createTestProject('RecommendedProject');
-
+    // Use the API endpoint to create a stage and update the 'new_module' module
+    // to 1.1.0.
+    // @see \Drupal\automatic_updates_extensions_test_api\ApiController::run()
+    // There will be error in updating as this module is not installed
+    // via composer @see \Drupal\Tests\automatic_updates_extensions\Kernel\Validator\PackagesInstalledWithComposerValidatorTest.
+    $query = http_build_query([
+      'projects' => [
+        'new_module' => '1.1.0',
+      ],
+    ]);
+    $this->visit("/automatic-updates-extensions-test-api?$query");
+    $mink = $this->getMink();
+    $mink->assertSession()->statusCodeEquals(500);
+    $page_text = $mink->getSession()->getPage()->getText();
+    $this->assertStringContainsString('Automatic Updates can only update projects that were installed via Composer. The following packages are not installed through composer:', $page_text);
+    $this->assertStringContainsString('new_module', $page_text);
     // Use the API endpoint to create a stage and update the 'alpha' module to
     // 1.1.0. We ask the API to return the contents of the module's
     // composer.json file, so we can assert that they were updated to the
@@ -86,7 +111,17 @@ END;
 
     $this->visit('/admin/reports/updates');
     $page->clickLink('Update Extensions');
-    $this->assertUpdateTableRow($assert_session, 'Alpha', '1.0.0', '1.1.0');
+    $this->assertUpdateTableRow($assert_session, 'Alpha', '1.0.0', '1.1.0', 2);
+    $this->assertUpdateTableRow($assert_session, 'New module', '1.0.0', '1.1.0', 1);
+    $page->checkField('projects[new_module]');
+    $page->pressButton('Update');
+    $this->waitForBatchJob();
+    $page_text = $page->getText();
+    // There will be error in updating 'new_module' as it is not installed via
+    // composer @see \Drupal\Tests\automatic_updates_extensions\Kernel\Validator\PackagesInstalledWithComposerValidatorTest.
+    $this->assertStringContainsString('Automatic Updates can only update projects that were installed via Composer. The following packages are not installed through composer:', $page_text);
+    $this->assertStringContainsString('new_module', $page_text);
+    $page->clickLink('error page');
     $page->checkField('projects[alpha]');
     $page->pressButton('Update');
     $this->waitForBatchJob();

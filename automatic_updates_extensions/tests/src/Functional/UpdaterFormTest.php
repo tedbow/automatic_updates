@@ -62,6 +62,11 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
    * {@inheritdoc}
    */
   protected function setUp(): void {
+    // In this test class, some modules are added and this validator will
+    // complain because these are not installed via composer. This validator
+    // already has test coverage.
+    // @see \Drupal\Tests\automatic_updates_extensions\Build\ModuleUpdateTest
+    $this->disableValidators[] = 'automatic_updates_extensions.validator.packages_installed_with_composer';
     parent::setUp();
     $this->setReleaseMetadata(__DIR__ . '/../../fixtures/release-history/semver_test.1.1.xml');
     $user = $this->createUser([

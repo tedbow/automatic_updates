@@ -20,12 +20,14 @@ trait FormTestTrait {
    *   The expected installed version.
    * @param string $expected_target_version
    *   The expected target version.
+   * @param int $row
+   *   The row number.
    */
-  private function assertUpdateTableRow(WebAssert $assert, string $expected_project_title, string $expected_installed_version, string $expected_target_version): void {
-    $assert->elementTextContains('css', '.update-recommended td:nth-of-type(2)', $expected_project_title);
-    $assert->elementTextContains('css', '.update-recommended td:nth-of-type(3)', $expected_installed_version);
-    $assert->elementTextContains('css', '.update-recommended td:nth-of-type(4)', $expected_target_version);
-    $assert->elementsCount('css', '.update-recommended tbody tr', 1);
+  private function assertUpdateTableRow(WebAssert $assert, string $expected_project_title, string $expected_installed_version, string $expected_target_version, int $row = 1): void {
+    $row_selector = ".update-recommended tr:nth-of-type($row)";
+    $assert->elementTextContains('css', $row_selector . ' td:nth-of-type(2)', $expected_project_title);
+    $assert->elementTextContains('css', $row_selector . ' td:nth-of-type(3)', $expected_installed_version);
+    $assert->elementTextContains('css', $row_selector . ' td:nth-of-type(4)', $expected_target_version);
   }
 
 }
