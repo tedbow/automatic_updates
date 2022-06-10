@@ -1,0 +1,5 @@
+name: Automatic Updates Theme With Updates
+type: theme
+description: 'Empty theme with updates for tests.'
+package: Testing
+base theme: false

@@ -6,6 +6,7 @@ use Drupal\automatic_updates\CronUpdater;
 use Drupal\automatic_updates\Updater;
 use Drupal\Core\Extension\Extension;
 use Drupal\Core\Extension\ModuleExtensionList;
+use Drupal\Core\Extension\ThemeExtensionList;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\Core\StringTranslation\TranslationInterface;
 use Drupal\package_manager\Event\PreApplyEvent;
@@ -38,18 +39,28 @@ class StagedDatabaseUpdateValidator implements EventSubscriberInterface {
   protected $moduleList;
 
   /**
+   * The theme list service.
+   *
+   * @var \Drupal\Core\Extension\ThemeExtensionList
+   */
+  protected $themeList;
+
+  /**
    * Constructs a StagedDatabaseUpdateValidator object.
    *
    * @param \Drupal\package_manager\PathLocator $path_locator
    *   The path locator service.
    * @param \Drupal\Core\Extension\ModuleExtensionList $module_list
    *   The module list service.
+   * @param \Drupal\Core\Extension\ThemeExtensionList $theme_list
+   *   The theme list service.
    * @param \Drupal\Core\StringTranslation\TranslationInterface $translation
    *   The string translation service.
    */
-  public function __construct(PathLocator $path_locator, ModuleExtensionList $module_list, TranslationInterface $translation) {
+  public function __construct(PathLocator $path_locator, ModuleExtensionList $module_list, ThemeExtensionList $theme_list, TranslationInterface $translation) {
     $this->pathLocator = $path_locator;
     $this->moduleList = $module_list;
+    $this->themeList = $theme_list;
     $this->setStringTranslation($translation);
   }
 
@@ -65,19 +76,23 @@ class StagedDatabaseUpdateValidator implements EventSubscriberInterface {
       return;
     }
 
-    $invalid_modules = [];
+    $invalid_extensions = [];
     // Although \Drupal\automatic_updates\Validator\StagedProjectsValidator
     // should prevent non-core modules from being added, updated, or removed in
     // the staging area, we check all installed modules so as not to rely on the
     // presence of StagedProjectsValidator.
-    foreach ($this->moduleList->getAllInstalledInfo() as $name => $info) {
-      if ($this->hasStagedUpdates($stage, $this->moduleList->get($name))) {
-        $invalid_modules[] = $info['name'];
+    foreach ($this->moduleList->getAllInstalledInfo() as $module_name => $module_info) {
+      if ($this->hasStagedUpdates($stage, $this->moduleList->get($module_name))) {
+        $invalid_extensions[] = $module_info['name'];
       }
     }
-
-    if ($invalid_modules) {
-      $event->addError($invalid_modules, $this->t('The update cannot proceed because possible database updates have been detected in the following modules.'));
+    foreach ($this->themeList->getAllInstalledInfo() as $theme_name => $theme_info) {
+      if ($this->hasStagedUpdates($stage, $this->themeList->get($theme_name))) {
+        $invalid_extensions[] = $theme_info['name'];
+      }
+    }
+    if ($invalid_extensions) {
+      $event->addError($invalid_extensions, $this->t('The update cannot proceed because possible database updates have been detected in the following extensions.'));
     }
   }
 
@@ -126,18 +141,18 @@ class StagedDatabaseUpdateValidator implements EventSubscriberInterface {
    *
    * @param string $root_dir
    *   The root directory of the Drupal code base.
-   * @param \Drupal\Core\Extension\Extension $module
+   * @param \Drupal\Core\Extension\Extension $extension
    *   The module to check.
    *
    * @return string[]
    *   The hashes of the module's .install and .post_update.php files, in that
    *   order, if they exist. The array will be keyed by file extension.
    */
-  protected function getHashes(string $root_dir, Extension $module): array {
+  protected function getHashes(string $root_dir, Extension $extension): array {
     $path = implode(DIRECTORY_SEPARATOR, [
       $root_dir,
-      $module->getPath(),
-      $module->getName(),
+      $extension->getPath(),
+      $extension->getName(),
     ]);
     $hashes = [];
 

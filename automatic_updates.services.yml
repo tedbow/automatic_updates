@@ -108,6 +108,7 @@ services:
     arguments:
       - '@package_manager.path_locator'
       - '@extension.list.module'
+      - '@extension.list.theme'
       - '@string_translation'
     tags:
       - { name: event_subscriber }
