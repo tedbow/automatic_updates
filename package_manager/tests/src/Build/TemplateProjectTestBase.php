@@ -150,6 +150,9 @@ END;
     $workspace_dir = $this->getWorkspaceDirectory();
     $template_dir = "composer/Template/$template";
 
+    // Allow pre-release versions of dependencies.
+    $this->runComposer('composer config minimum-stability dev', $template_dir);
+
     // Remove the packages.drupal.org entry (and any other custom repository)
     // from the template's repositories section. We have no reliable way of
     // knowing the repositories' names in advance, so we get that information
