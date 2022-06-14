@@ -34,7 +34,7 @@ class TargetVersionStable {
 
     if ($extra) {
       return [
-        $this->t('Drupal cannot be automatically updated during cron to @target_version, because Automatic Updates only supports updating to stable versions during cron.', [
+        $this->t('Drupal cannot be automatically updated during cron to the recommended version, @target_version, because it is not a stable version.', [
           '@target_version' => $target_version,
         ]),
       ];

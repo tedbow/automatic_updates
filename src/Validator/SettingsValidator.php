@@ -39,7 +39,7 @@ class SettingsValidator implements EventSubscriberInterface {
   public function checkSettings(PreOperationStageEvent $event): void {
     if ($event->getStage() instanceof Updater && Settings::get('update_fetch_with_http_fallback')) {
       $event->addError([
-        $this->t('The <code>update_fetch_with_http_fallback</code> setting must be disabled for automatic updates.'),
+        $this->t('The <code>update_fetch_with_http_fallback</code> setting must be disabled.'),
       ]);
     }
   }

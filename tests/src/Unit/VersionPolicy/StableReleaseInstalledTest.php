@@ -29,15 +29,15 @@ class StableReleaseInstalledTest extends UnitTestCase {
       ],
       'alpha version installed' => [
         '9.8.0-alpha3',
-        ['Drupal cannot be automatically updated during cron from its current version, 9.8.0-alpha3, because Automatic Updates only supports updating from stable versions during cron.'],
+        ['Drupal cannot be automatically updated during cron from its current version, 9.8.0-alpha3, because it is not a stable version.'],
       ],
       'beta version installed' => [
         '9.8.0-beta7',
-        ['Drupal cannot be automatically updated during cron from its current version, 9.8.0-beta7, because Automatic Updates only supports updating from stable versions during cron.'],
+        ['Drupal cannot be automatically updated during cron from its current version, 9.8.0-beta7, because it is not a stable version.'],
       ],
       'release candidate installed' => [
         '9.8.0-rc2',
-        ['Drupal cannot be automatically updated during cron from its current version, 9.8.0-rc2, because Automatic Updates only supports updating from stable versions during cron.'],
+        ['Drupal cannot be automatically updated during cron from its current version, 9.8.0-rc2, because it is not a stable version.'],
       ],
     ];
   }

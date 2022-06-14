@@ -77,7 +77,7 @@ class VersionPolicyValidatorTest extends AutomaticUpdatesKernelTestBase {
         [CronUpdater::SECURITY, CronUpdater::ALL],
         [
           $this->createValidationResult('9.8.0-alpha1', '9.8.1', [
-            'Drupal cannot be automatically updated during cron from its current version, 9.8.0-alpha1, because Automatic Updates only supports updating from stable versions during cron.',
+            'Drupal cannot be automatically updated during cron from its current version, 9.8.0-alpha1, because it is not a stable version.',
           ]),
         ],
       ],
@@ -93,7 +93,7 @@ class VersionPolicyValidatorTest extends AutomaticUpdatesKernelTestBase {
         [CronUpdater::SECURITY, CronUpdater::ALL],
         [
           $this->createValidationResult('9.8.0-beta2', '9.8.1', [
-            'Drupal cannot be automatically updated during cron from its current version, 9.8.0-beta2, because Automatic Updates only supports updating from stable versions during cron.',
+            'Drupal cannot be automatically updated during cron from its current version, 9.8.0-beta2, because it is not a stable version.',
           ]),
         ],
       ],
@@ -109,7 +109,7 @@ class VersionPolicyValidatorTest extends AutomaticUpdatesKernelTestBase {
         [CronUpdater::SECURITY, CronUpdater::ALL],
         [
           $this->createValidationResult('9.8.0-rc3', '9.8.1', [
-            'Drupal cannot be automatically updated during cron from its current version, 9.8.0-rc3, because Automatic Updates only supports updating from stable versions during cron.',
+            'Drupal cannot be automatically updated during cron from its current version, 9.8.0-rc3, because it is not a stable version.',
           ]),
         ],
       ],
@@ -353,7 +353,7 @@ class VersionPolicyValidatorTest extends AutomaticUpdatesKernelTestBase {
         ['drupal' => '9.8.1-beta1'],
         [
           $this->createValidationResult('9.8.0', '9.8.1-beta1', [
-            'Drupal cannot be automatically updated during cron to 9.8.1-beta1, because Automatic Updates only supports updating to stable versions during cron.',
+            'Drupal cannot be automatically updated during cron to the recommended version, 9.8.1-beta1, because it is not a stable version.',
           ]),
         ],
       ],

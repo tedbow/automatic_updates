@@ -32,7 +32,7 @@ class StableReleaseInstalled {
 
     if ($extra) {
       return [
-        $this->t('Drupal cannot be automatically updated during cron from its current version, @installed_version, because Automatic Updates only supports updating from stable versions during cron.', [
+        $this->t('Drupal cannot be automatically updated during cron from its current version, @installed_version, because it is not a stable version.', [
           '@installed_version' => $installed_version,
         ]),
       ];

@@ -26,7 +26,7 @@ class XdebugValidator implements EventSubscriberInterface {
   public function checkForXdebug(ReadinessCheckEvent $event): void {
     if (extension_loaded('xdebug')) {
       $event->addWarning([
-        $this->t('Xdebug is enabled, which may cause timeout errors during automatic updates.'),
+        $this->t('Xdebug is enabled, which may cause timeout errors.'),
       ]);
     }
   }

@@ -25,9 +25,7 @@ class SettingsValidatorTest extends AutomaticUpdatesKernelTestBase {
    *   Sets of arguments to pass to the test method.
    */
   public function providerSettingsValidation(): array {
-    $result = ValidationResult::createError([
-      'The <code>update_fetch_with_http_fallback</code> setting must be disabled for automatic updates.',
-    ]);
+    $result = ValidationResult::createError(['The <code>update_fetch_with_http_fallback</code> setting must be disabled.']);
 
     return [
       'HTTP fallback enabled' => [TRUE, [$result]],
