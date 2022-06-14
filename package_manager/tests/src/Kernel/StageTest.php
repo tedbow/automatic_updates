@@ -30,6 +30,10 @@ class StageTest extends PackageManagerKernelTestBase {
    * {@inheritdoc}
    */
   protected function setUp(): void {
+    // Disable the symlink validator, since this test doesn't use a virtual
+    // project, but the running code base may have symlinks that don't affect
+    // the test.
+    $this->disableValidators[] = 'package_manager.validator.symlink';
     parent::setUp();
 
     $this->installConfig('system');

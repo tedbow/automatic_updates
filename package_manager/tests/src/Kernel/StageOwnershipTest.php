@@ -39,6 +39,9 @@ class StageOwnershipTest extends PackageManagerKernelTestBase {
     $this->installSchema('user', ['users_data']);
     $this->installEntitySchema('user');
     $this->registerPostUpdateFunctions();
+    // Use a virtual project so that the test isn't affected by symlinks or
+    // other unexpected things that might be present in the running code base.
+    $this->createTestProject();
   }
 
   /**

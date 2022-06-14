@@ -252,6 +252,15 @@ class CronUpdaterTest extends AutomaticUpdatesKernelTestBase {
     // Ensure that there is a security release to which we should update.
     $this->setReleaseMetadata(['drupal' => __DIR__ . "/../../fixtures/release-history/drupal.9.8.1-security.xml"]);
 
+    // Disable the symlink validators so that this test isn't affected by
+    // symlinks that might be present in the running code base.
+    $validators = [
+      'automatic_updates.validator.symlink',
+      'package_manager.validator.symlink',
+    ];
+    $validators = array_map([$this->container, 'get'], $validators);
+    array_walk($validators, [$this->container->get('event_dispatcher'), 'removeSubscriber']);
+
     // If the pre- or post-destroy events throw an exception, it will not be
     // caught by the cron updater, but it *will* be caught by the main cron
     // service, which will log it as a cron error that we'll want to check for.

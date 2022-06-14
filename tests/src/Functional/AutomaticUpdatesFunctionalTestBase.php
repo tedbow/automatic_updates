@@ -44,8 +44,12 @@ abstract class AutomaticUpdatesFunctionalTestBase extends BrowserTestBase {
     // if either the active and stage directories don't have a composer.lock
     // file, which is the case with some of our fixtures.
     'package_manager.validator.lock_file',
-    // Always disable the Xdebug validator to allow test to run with Xdebug on.
+    // Always allow tests to run with Xdebug on.
     'automatic_updates.validator.xdebug',
+    // Disable the symlink validator, since the running code base may contain
+    // symlinks that don't affect functional testing.
+    'automatic_updates.validator.symlink',
+    'package_manager.validator.symlink',
   ];
 
   /**

@@ -31,6 +31,9 @@ class ComposerExecutableValidatorTest extends PackageManagerKernelTestBase {
   protected function setUp(): void {
     $this->composerRunner = $this->prophesize(ComposerRunnerInterface::class);
     parent::setUp();
+    // Use a virtual project so that the test isn't affected by symlinks or
+    // other unexpected things that might be present in the running code base.
+    $this->createTestProject();
   }
 
   /**

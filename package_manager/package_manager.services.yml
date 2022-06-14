@@ -186,6 +186,12 @@ services:
       - '@string_translation'
     tags:
       - { name: event_subscriber }
+  package_manager.validator.symlink:
+    class: Drupal\package_manager\Validator\SymlinkValidator
+    arguments:
+      - '@package_manager.path_locator'
+    tags:
+      - { name: event_subscriber }
   package_manager.test_site_excluder:
     class: Drupal\package_manager\PathExcluder\TestSiteExcluder
     arguments:

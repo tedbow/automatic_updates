@@ -34,6 +34,9 @@ class ReadinessValidationManagerTest extends AutomaticUpdatesKernelTestBase {
     $this->installEntitySchema('user');
     $this->installSchema('user', ['users_data']);
     $this->createTestValidationResults();
+    // Use a virtual project so that the test isn't affected by symlinks or
+    // other unexpected things that might be present in the running code base.
+    $this->createTestProject();
   }
 
   /**

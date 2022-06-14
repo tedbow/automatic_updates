@@ -18,6 +18,16 @@ class PendingUpdatesValidatorTest extends PackageManagerKernelTestBase {
   protected static $modules = ['system'];
 
   /**
+   * {@inheritdoc}
+   */
+  protected function setUp(): void {
+    parent::setUp();
+    // Use a virtual project so that the test isn't affected by symlinks or
+    // other unexpected things that might be present in the running code base.
+    $this->createTestProject();
+  }
+
+  /**
    * Tests that no error is raised if there are no pending updates.
    */
   public function testNoPendingUpdates(): void {

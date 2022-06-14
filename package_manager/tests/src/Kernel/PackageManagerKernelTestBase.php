@@ -84,6 +84,20 @@ abstract class PackageManagerKernelTestBase extends KernelTestBase {
     $container->setDefinition($class, $definition->setPublic(FALSE));
     $container->setAlias(PathFactoryInterface::class, $class);
 
+    // When a virtual project is used, the path locator and disk space validator
+    // are replaced with mocks. When staged changes are applied, the container
+    // is rebuilt, which destroys the mocked services and can cause unexpected
+    // side effects. The 'persist' tag prevents the mocks from being destroyed
+    // during a container rebuild.
+    // @see ::createTestProject()
+    $persist = [
+      'package_manager.path_locator',
+      'package_manager.validator.disk_space',
+    ];
+    foreach ($persist as $service_id) {
+      $container->getDefinition($service_id)->addTag('persist');
+    }
+
     foreach ($this->disableValidators as $service_id) {
       if ($container->hasDefinition($service_id)) {
         $container->getDefinition($service_id)->clearTag('event_subscriber');
@@ -211,7 +225,8 @@ abstract class PackageManagerKernelTestBase extends KernelTestBase {
     // Since the path locator now points to a virtual file system, we need to
     // replace the disk space validator with a test-only version that bypasses
     // system calls, like disk_free_space() and stat(), which aren't supported
-    // by vfsStream.
+    // by vfsStream. This validator will persist through container rebuilds.
+    // @see ::register()
     $validator = new TestDiskSpaceValidator(
       $this->container->get('package_manager.path_locator'),
       $this->container->get('string_translation')
@@ -229,6 +244,8 @@ abstract class PackageManagerKernelTestBase extends KernelTestBase {
   /**
    * Mocks the path locator and injects it into the service container.
    *
+   * The mocked path locator will persist through container rebuilds.
+   *
    * @param string $project_root
    *   The project root.
    * @param string|null $vendor_dir
@@ -239,6 +256,8 @@ abstract class PackageManagerKernelTestBase extends KernelTestBase {
    *
    * @return \Drupal\package_manager\PathLocator
    *   The mocked path locator.
+   *
+   * @see ::register()
    */
   protected function mockPathLocator(string $project_root, string $vendor_dir = NULL, string $web_root = ''): PathLocator {
     if (empty($vendor_dir)) {

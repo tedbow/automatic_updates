@@ -92,6 +92,12 @@ services:
       - '@package_manager.validator.multisite'
     tags:
       - { name: event_subscriber }
+  automatic_updates.validator.symlink:
+    class: Drupal\automatic_updates\Validator\PackageManagerReadinessCheck
+    arguments:
+      - '@package_manager.validator.symlink'
+    tags:
+      - { name: event_subscriber }
   automatic_updates.cron_frequency_validator:
     class: Drupal\automatic_updates\Validator\CronFrequencyValidator
     arguments:
