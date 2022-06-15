@@ -7,6 +7,7 @@ use Drupal\automatic_updates_test\EventSubscriber\TestSubscriber1;
 use Drupal\Core\DependencyInjection\ContainerBuilder;
 use Drupal\Core\Form\FormState;
 use Drupal\Core\Logger\RfcLogLevel;
+use Drupal\Core\Test\AssertMailTrait;
 use Drupal\package_manager\Event\PostApplyEvent;
 use Drupal\package_manager\Event\PostCreateEvent;
 use Drupal\package_manager\Event\PostDestroyEvent;
@@ -30,6 +31,7 @@ use Symfony\Component\EventDispatcher\EventDispatcherInterface;
  */
 class CronUpdaterTest extends AutomaticUpdatesKernelTestBase {
 
+  use AssertMailTrait;
   use PackageManagerBypassTestTrait;
 
   /**
@@ -350,6 +352,28 @@ class CronUpdaterTest extends AutomaticUpdatesKernelTestBase {
     $this->expectExceptionMessage('Unattended updates are disabled.');
     $this->container->get('automatic_updates.cron_updater')
       ->begin(['drupal' => '9.8.1']);
+  }
+
+  /**
+   * Tests that user 1 is emailed when an unattended update succeeds.
+   */
+  public function testEmailOnSuccess(): void {
+    // Use a virtual project so that the test is unaffected by symlinks or other
+    // artifacts that might be in the running code base.
+    $this->createTestProject();
+
+    $this->config('update.settings')
+      ->set('notification.emails', [
+        'emissary@deep.space',
+      ])
+      ->save();
+
+    $this->container->get('cron')->run();
+
+    // Check that we actually sent a success email to the right person.
+    $this->assertMail('to', 'emissary@deep.space');
+    $this->assertMail('subject', "Drupal core was successfully updated");
+    $this->assertMailString('body', "Congratulations!\n\nDrupal core was automatically updated from 9.8.0 to 9.8.1.\n", 1);
   }
 
 }

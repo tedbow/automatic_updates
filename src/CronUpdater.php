@@ -2,7 +2,9 @@
 
 namespace Drupal\automatic_updates;
 
+use Drupal\Core\Language\LanguageManagerInterface;
 use Drupal\Core\Logger\LoggerChannelFactoryInterface;
+use Drupal\Core\Mail\MailManagerInterface;
 use Drupal\package_manager\Exception\StageValidationException;
 
 /**
@@ -59,19 +61,39 @@ class CronUpdater extends Updater {
   protected $releaseChooser;
 
   /**
+   * The mail manager service.
+   *
+   * @var \Drupal\Core\Mail\MailManagerInterface
+   */
+  protected $mailManager;
+
+  /**
+   * The language manager service.
+   *
+   * @var \Drupal\Core\Language\LanguageManagerInterface
+   */
+  protected $languageManager;
+
+  /**
    * Constructs a CronUpdater object.
    *
    * @param \Drupal\automatic_updates\ReleaseChooser $release_chooser
    *   The cron release chooser service.
    * @param \Drupal\Core\Logger\LoggerChannelFactoryInterface $logger_factory
    *   The logger channel factory.
+   * @param \Drupal\Core\Mail\MailManagerInterface $mail_manager
+   *   The mail manager service.
+   * @param \Drupal\Core\Language\LanguageManagerInterface $language_manager
+   *   The language manager service.
    * @param mixed ...$arguments
    *   Additional arguments to pass to the parent constructor.
    */
-  public function __construct(ReleaseChooser $release_chooser, LoggerChannelFactoryInterface $logger_factory, ...$arguments) {
+  public function __construct(ReleaseChooser $release_chooser, LoggerChannelFactoryInterface $logger_factory, MailManagerInterface $mail_manager, LanguageManagerInterface $language_manager, ...$arguments) {
     parent::__construct(...$arguments);
     $this->releaseChooser = $release_chooser;
     $this->logger = $logger_factory->get('automatic_updates');
+    $this->mailManager = $mail_manager;
+    $this->languageManager = $language_manager;
   }
 
   /**
@@ -137,6 +159,17 @@ class CronUpdater extends Updater {
           '%target_version' => $target_version,
         ]
       );
+
+      // Send notifications about the successful update.
+      $mail_params = [
+        'previous_version' => $installed_version,
+        'updated_version' => $target_version,
+      ];
+      $recipients = $this->configFactory->get('update.settings')
+        ->get('notification.emails');
+      foreach ($recipients as $recipient) {
+        $this->mailManager->mail('automatic_updates', 'cron_successful', $recipient, $this->languageManager->getDefaultLanguage()->getId(), $mail_params);
+      }
     }
     catch (\Throwable $e) {
       $this->logger->error($e->getMessage());

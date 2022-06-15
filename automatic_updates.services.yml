@@ -31,6 +31,8 @@ services:
     arguments:
       - '@automatic_updates.release_chooser'
       - '@logger.factory'
+      - '@plugin.manager.mail'
+      - '@language_manager'
       - '@config.factory'
       - '@package_manager.path_locator'
       - '@package_manager.beginner'
