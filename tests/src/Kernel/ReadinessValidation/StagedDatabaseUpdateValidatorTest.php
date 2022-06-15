@@ -2,9 +2,10 @@
 
 namespace Drupal\Tests\automatic_updates\Kernel\ReadinessValidation;
 
-use Drupal\package_manager\Exception\StageValidationException;
-use Drupal\package_manager\ValidationResult;
+use Drupal\Core\Logger\RfcLogLevel;
+use Drupal\package_manager\Event\PreApplyEvent;
 use Drupal\Tests\automatic_updates\Kernel\AutomaticUpdatesKernelTestBase;
+use Psr\Log\Test\TestLogger;
 
 /**
  * @covers \Drupal\automatic_updates\Validator\StagedDatabaseUpdateValidator
@@ -26,17 +27,23 @@ class StagedDatabaseUpdateValidatorTest extends AutomaticUpdatesKernelTestBase {
   private const SUFFIXES = ['install', 'post_update.php'];
 
   /**
+   * The test logger channel.
+   *
+   * @var \Psr\Log\Test\TestLogger
+   */
+  private $logger;
+
+  /**
    * {@inheritdoc}
    */
   protected function setUp(): void {
     parent::setUp();
-
     $this->createTestProject();
 
-    /** @var \Drupal\Tests\automatic_updates\Kernel\TestCronUpdater $updater */
-    $updater = $this->container->get('automatic_updates.cron_updater');
-    $updater->begin(['drupal' => '9.8.1']);
-    $updater->stage();
+    $this->logger = new TestLogger();
+    $this->container->get('logger.factory')
+      ->get('automatic_updates')
+      ->addLogger($this->logger);
   }
 
   /**
@@ -80,21 +87,27 @@ class StagedDatabaseUpdateValidatorTest extends AutomaticUpdatesKernelTestBase {
     $this->assertFalse($this->container->get('module_handler')->moduleExists('views'));
     $this->assertFalse($this->container->get('theme_handler')->themeExists('automatic_updates_theme_with_updates'));
 
-    // Create bogus staged versions of Views' and
-    // Automatic Updates Theme with Updates .install and .post_update.php files.
-    // Since these extensions are not installed, the changes should not raise
-    // any validation errors.
-    $updater = $this->container->get('automatic_updates.cron_updater');
-    $module_list = $this->container->get('extension.list.module')->getList();
-    $theme_list = $this->container->get('extension.list.theme')->getList();
-    $module_dir = $updater->getStageDirectory() . '/' . $module_list['views']->getPath();
-    $theme_dir = $updater->getStageDirectory() . '/' . $theme_list['automatic_updates_theme_with_updates']->getPath();
-    foreach (static::SUFFIXES as $suffix) {
-      file_put_contents("$module_dir/views.$suffix", $this->randomString());
-      file_put_contents("$theme_dir/automatic_updates_theme_with_updates.$suffix", $this->randomString());
-    }
+    $listener = function (PreApplyEvent $event): void {
+      // Create bogus staged versions of Views' and
+      // Automatic Updates Theme with Updates .install and .post_update.php
+      // files. Since these extensions are not installed, the changes should not
+      // raise any validation errors.
+      $dir = $event->getStage()->getStageDirectory();
+      $module_list = $this->container->get('extension.list.module')->getList();
+      $theme_list = $this->container->get('extension.list.theme')->getList();
+      $module_dir = $dir . '/' . $module_list['views']->getPath();
+      $theme_dir = $dir . '/' . $theme_list['automatic_updates_theme_with_updates']->getPath();
+      foreach (static::SUFFIXES as $suffix) {
+        file_put_contents("$module_dir/views.$suffix", $this->randomString());
+        file_put_contents("$theme_dir/automatic_updates_theme_with_updates.$suffix", $this->randomString());
+      }
+    };
+    $this->container->get('event_dispatcher')
+      ->addListener(PreApplyEvent::class, $listener, PHP_INT_MAX);
 
-    $updater->apply();
+    $this->container->get('cron')->run();
+    // There should not have been any errors.
+    $this->assertFalse($this->logger->hasRecords(RfcLogLevel::ERROR));
   }
 
   /**
@@ -124,73 +137,61 @@ class StagedDatabaseUpdateValidatorTest extends AutomaticUpdatesKernelTestBase {
    * @dataProvider providerFileChanged
    */
   public function testFileChanged(string $suffix, bool $delete): void {
-    /** @var \Drupal\automatic_updates\CronUpdater $updater */
-    $updater = $this->container->get('automatic_updates.cron_updater');
-    $theme_installer = $this->container->get('theme_installer');
-    $theme_installer->install(['automatic_updates_theme_with_updates']);
-    $theme = $this->container->get('theme_handler')
-      ->getTheme('automatic_updates_theme_with_updates');
-    $module_file = $updater->getStageDirectory() . "/core/modules/system/system.$suffix";
-    $theme_file = $updater->getStageDirectory() . "/{$theme->getPath()}/automatic_updates_theme_with_updates.$suffix";
-    if ($delete) {
-      unlink($module_file);
-      unlink($theme_file);
-    }
-    else {
-      file_put_contents($module_file, $this->randomString());
-      file_put_contents($theme_file, $this->randomString());
-    }
+    $listener = function (PreApplyEvent $event) use ($suffix, $delete): void {
+      $dir = $event->getStage()->getStageDirectory();
+      $theme_installer = $this->container->get('theme_installer');
+      $theme_installer->install(['automatic_updates_theme_with_updates']);
+      $theme = $this->container->get('theme_handler')
+        ->getTheme('automatic_updates_theme_with_updates');
+      $module_file = "$dir/core/modules/system/system.$suffix";
+      $theme_file = "$dir/{$theme->getPath()}/{$theme->getName()}.$suffix";
+      if ($delete) {
+        unlink($module_file);
+        unlink($theme_file);
+      }
+      else {
+        file_put_contents($module_file, $this->randomString());
+        file_put_contents($theme_file, $this->randomString());
+      }
+    };
+    $this->container->get('event_dispatcher')
+      ->addListener(PreApplyEvent::class, $listener, PHP_INT_MAX);
 
-    $expected_results = [
-      ValidationResult::createError(['System', 'Automatic Updates Theme With Updates'], t('The update cannot proceed because possible database updates have been detected in the following extensions.')),
-    ];
-
-    try {
-      $updater->apply();
-      $this->fail('Expected a validation error.');
-    }
-    catch (StageValidationException $e) {
-      $this->assertValidationResultsEqual($expected_results, $e->getResults());
-    }
+    $this->container->get('cron')->run();
+    $this->assertTrue($this->logger->hasRecordThatContains("The update cannot proceed because possible database updates have been detected in the following extensions.\nSystem\nAutomatic Updates Theme With Updates", RfcLogLevel::ERROR));
   }
 
   /**
    * Tests that an error is raised if install or post-update files are added.
    */
   public function testUpdatesAddedInStage(): void {
-    $module = $this->container->get('module_handler')
-      ->getModule('package_manager_bypass');
-    $theme_installer = $this->container->get('theme_installer');
-    $theme_installer->install(['automatic_updates_theme']);
-    $theme = $this->container->get('theme_handler')
-      ->getTheme('automatic_updates_theme');
+    $listener = function (PreApplyEvent $event): void {
+      $module = $this->container->get('module_handler')
+        ->getModule('package_manager_bypass');
+      $theme_installer = $this->container->get('theme_installer');
+      $theme_installer->install(['automatic_updates_theme']);
+      $theme = $this->container->get('theme_handler')
+        ->getTheme('automatic_updates_theme');
 
-    /** @var \Drupal\automatic_updates\CronUpdater $updater */
-    $updater = $this->container->get('automatic_updates.cron_updater');
+      $dir = $event->getStage()->getStageDirectory();
 
-    foreach (static::SUFFIXES as $suffix) {
-      $module_file = sprintf('%s/%s/%s.%s', $updater->getStageDirectory(), $module->getPath(), $module->getName(), $suffix);
-      $theme_file = sprintf('%s/%s/%s.%s', $updater->getStageDirectory(), $theme->getPath(), $theme->getName(), $suffix);
-      // The files we're creating shouldn't already exist in the staging area
-      // unless it's a file we actually ship, which is a scenario covered by
-      // ::testFileChanged().
-      $this->assertFileDoesNotExist($module_file);
-      $this->assertFileDoesNotExist($theme_file);
-      file_put_contents($module_file, $this->randomString());
-      file_put_contents($theme_file, $this->randomString());
-    }
+      foreach (static::SUFFIXES as $suffix) {
+        $module_file = sprintf('%s/%s/%s.%s', $dir, $module->getPath(), $module->getName(), $suffix);
+        $theme_file = sprintf('%s/%s/%s.%s', $dir, $theme->getPath(), $theme->getName(), $suffix);
+        // The files we're creating shouldn't already exist in the staging area
+        // unless it's a file we actually ship, which is a scenario covered by
+        // ::testFileChanged().
+        $this->assertFileDoesNotExist($module_file);
+        $this->assertFileDoesNotExist($theme_file);
+        file_put_contents($module_file, $this->randomString());
+        file_put_contents($theme_file, $this->randomString());
+      }
+    };
+    $this->container->get('event_dispatcher')
+      ->addListener(PreApplyEvent::class, $listener, PHP_INT_MAX);
 
-    $expected_results = [
-      ValidationResult::createError(['Package Manager Bypass', 'Automatic Updates Theme'], t('The update cannot proceed because possible database updates have been detected in the following extensions.')),
-    ];
-
-    try {
-      $updater->apply();
-      $this->fail('Expected a validation error.');
-    }
-    catch (StageValidationException $e) {
-      $this->assertValidationResultsEqual($expected_results, $e->getResults());
-    }
+    $this->container->get('cron')->run();
+    $this->assertTrue($this->logger->hasRecordThatContains("The update cannot proceed because possible database updates have been detected in the following extensions.\nPackage Manager Bypass\nAutomatic Updates Theme", RfcLogLevel::ERROR));
   }
 
 }

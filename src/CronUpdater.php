@@ -118,14 +118,15 @@ class CronUpdater extends Updater {
   /**
    * {@inheritdoc}
    */
-  public function begin(array $project_versions, ?int $timeout = 300): string {
-    // Prevent mischievous callers from starting an update even if unattended
-    // updates are disabled. To start an update programmatically, use
-    // \Drupal\automatic_updates\Updater::begin().
-    if ($this->getMode() === static::DISABLED) {
-      throw new \LogicException('Unattended updates are disabled.');
-    }
-    return parent::begin($project_versions, $timeout);
+  final public function begin(array $project_versions, ?int $timeout = 300): string {
+    // Unattended updates should never be started using this method. They should
+    // only be done by ::handleCron(), which has a strong opinion about which
+    // release to update to. Throwing an exception here is just to enforce this
+    // boundary. To update to a specific version of core, use
+    // \Drupal\automatic_updates\Updater::begin() (which is called in
+    // ::performUpdate() to start the update to the target version of core
+    // chosen by ::handleCron()).
+    throw new \BadMethodCallException(__METHOD__ . '() cannot be called directly.');
   }
 
   /**
@@ -148,7 +149,8 @@ class CronUpdater extends Updater {
     // handle any exceptions or validation errors consistently, and destroy the
     // stage regardless of whether the update succeeds.
     try {
-      $this->begin(['drupal' => $target_version], $timeout);
+      // @see ::begin()
+      parent::begin(['drupal' => $target_version], $timeout);
       $this->stage();
       $this->apply();
 

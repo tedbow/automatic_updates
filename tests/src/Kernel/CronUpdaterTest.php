@@ -342,14 +342,10 @@ class CronUpdaterTest extends AutomaticUpdatesKernelTestBase {
   }
 
   /**
-   * Tests that the cron updater throws an exception if started while disabled.
+   * Tests that CronUpdater::begin() unconditionally throws an exception.
    */
-  public function testExceptionWhenDisabled(): void {
-    $this->config('automatic_updates.settings')
-      ->set('cron', CronUpdater::DISABLED)
-      ->save();
-
-    $this->expectExceptionMessage('Unattended updates are disabled.');
+  public function testBeginThrowsException(): void {
+    $this->expectExceptionMessage(CronUpdater::class . '::begin() cannot be called directly.');
     $this->container->get('automatic_updates.cron_updater')
       ->begin(['drupal' => '9.8.1']);
   }
