@@ -384,7 +384,12 @@ END;
     // from being built correctly, among other deleterious effects. To prevent
     // such shenanigans, always remove drupal/automatic_updates from
     // drupal/core-recommended.
-    $this->runComposer('composer remove --no-update drupal/automatic_updates', 'composer/Metapackage/CoreRecommended');
+    $file = $this->getWorkspaceDirectory() . '/composer/Metapackage/CoreRecommended/composer.json';
+    $this->assertFileIsWritable($file);
+    $data = file_get_contents($file);
+    $data = json_decode($data, TRUE);
+    unset($data['require']['drupal/automatic_updates']);
+    file_put_contents($file, json_encode($data, JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT));
   }
 
   // END: DELETE FROM CORE MERGE REQUEST
