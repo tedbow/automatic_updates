@@ -31,6 +31,10 @@ class PackagesInstalledWithComposerValidatorTest extends AutomaticUpdatesExtensi
     // secure and supported. Therefore, we need to disable the update release
     // validator that validates updated projects are secure and supported.
     $this->disableValidators[] = 'automatic_updates_extensions.validator.target_release';
+    // In this test, we don't focus on validating that the updated projects are
+    // only themes or modules. Therefore, we need to disable the update packages
+    // type validator.
+    $this->disableValidators[] = 'automatic_updates_extensions.validator.packages_type';
     parent::setUp();
     $this->createTestProject();
     $this->activeDir = $this->container->get('package_manager.path_locator')

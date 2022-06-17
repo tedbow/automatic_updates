@@ -28,7 +28,11 @@ class ExtensionUpdaterTest extends AutomaticUpdatesKernelTestBase {
    * {@inheritdoc}
    */
   protected function setUp(): void {
+    // This test doesn't need to validate that the test projects used are in the
+    // codebase. Therefore, we need to disable the following validators that
+    // require real Drupal projects.
     $this->disableValidators[] = 'automatic_updates_extensions.validator.target_release';
+    $this->disableValidators[] = 'automatic_updates_extensions.validator.packages_type';
     parent::setUp();
     $this->installEntitySchema('user');
   }
