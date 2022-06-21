@@ -74,7 +74,7 @@ class ReleaseChooser {
    * @throws \InvalidArgumentException
    *   If the given semantic version number does not contain a patch version.
    */
-  public function getMostRecentReleaseInMinor(Updater $updater, string $version): ?ProjectRelease {
+  protected function getMostRecentReleaseInMinor(Updater $updater, string $version): ?ProjectRelease {
     if (static::getPatchVersion($version) === NULL) {
       throw new \InvalidArgumentException("The version number $version does not contain a patch version");
     }
