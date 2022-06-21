@@ -68,7 +68,7 @@ class AvailableUpdatesReportTest extends AutomaticUpdatesFunctionalTestBase {
 
     $assert->elementAttributeContains('named', ['link', 'Update now'], 'href', $form_url);
     // Releases that will available on the form should link to the form.
-    $this->assertVersionLink('9.8.2', 'http://example.com/drupal-9-8-2-release');
+    $this->assertVersionLink('9.8.2', $form_url);
     $this->assertVersionLink('9.7.1', $form_url);
     // Releases that will not be available in the form should link to the
     // project release page.
@@ -78,7 +78,7 @@ class AvailableUpdatesReportTest extends AutomaticUpdatesFunctionalTestBase {
     $this->checkForUpdates();
     $assert->pageTextContains('Update available Update now');
     $assert->elementAttributeContains('named', ['link', 'Update now'], 'href', $form_url);
-    $this->assertVersionLink('9.8.2', 'http://example.com/drupal-9-8-2-release');
+    $this->assertVersionLink('9.8.2', $form_url);
   }
 
   /**

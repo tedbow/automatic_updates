@@ -8,13 +8,15 @@ use Drupal\automatic_updates\ProjectInfo;
 use Drupal\automatic_updates\ReleaseChooser;
 use Drupal\automatic_updates\Updater;
 use Drupal\automatic_updates\Validation\ReadinessTrait;
+use Drupal\automatic_updates_9_3_shim\ProjectRelease;
 use Drupal\Core\Batch\BatchBuilder;
+use Drupal\Core\Extension\ExtensionVersion;
 use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
-use Drupal\Core\Link;
 use Drupal\Core\Messenger\MessengerInterface;
 use Drupal\Core\Render\RendererInterface;
 use Drupal\Core\State\StateInterface;
+use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\Core\Url;
 use Drupal\package_manager\Exception\StageException;
 use Drupal\package_manager\Exception\StageOwnershipException;
@@ -28,9 +30,9 @@ use Symfony\Component\EventDispatcher\EventDispatcherInterface;
  * Defines a form to update Drupal core.
  *
  * @internal
- *   Form classes are internal.
+ *   Form classes are internal and the form structure may change at any time.
  */
-class UpdaterForm extends FormBase {
+final class UpdaterForm extends FormBase {
 
   use ReadinessTrait {
     formatResult as traitFormatResult;
@@ -154,10 +156,8 @@ class UpdaterForm extends FormBase {
       //   one release on the form. First, try to show the latest release in the
       //   currently installed minor. Failing that, try to show the latest
       //   release in the next minor.
-      $recommended_release = $this->releaseChooser->getLatestInInstalledMinor($this->updater);
-      if (!$recommended_release) {
-        $recommended_release = $this->releaseChooser->getLatestInNextMinor($this->updater);
-      }
+      $installed_minor_release = $this->releaseChooser->getLatestInInstalledMinor($this->updater);
+      $next_minor_release = $this->releaseChooser->getLatestInNextMinor($this->updater);
     }
     catch (\RuntimeException $e) {
       $form['message'] = [
@@ -170,7 +170,7 @@ class UpdaterForm extends FormBase {
     $form['#attached']['library'][] = 'update/drupal.update.admin';
 
     $project = $project_info->getProjectInfo();
-    if ($recommended_release === NULL) {
+    if ($installed_minor_release === NULL && $next_minor_release === NULL) {
       if ($project['status'] === UpdateManagerInterface::CURRENT) {
         $this->messenger()->addMessage($this->t('No update available'));
       }
@@ -186,92 +186,91 @@ class UpdaterForm extends FormBase {
       return $form;
     }
 
-    $form['target_version'] = [
-      '#type' => 'value',
-      '#value' => [
-        'drupal' => $recommended_release->getVersion(),
-      ],
-    ];
-
     if (empty($project['title']) || empty($project['link'])) {
       throw new \UnexpectedValueException('Expected project data to have a title and link.');
     }
-    $title = Link::fromTextAndUrl($project['title'], Url::fromUri($project['link']))->toRenderable();
+
+    $form['title'] = [
+      '#type' => 'html_tag',
+      '#tag' => 'h2',
+      '#value' => $this->t(
+        'Update <a href=":url">Drupal core</a>',
+        [':url' => $project['link']],
+      ),
+    ];
+    $form['current'] = [
+      '#type' => 'html_tag',
+      '#tag' => 'p',
+      '#value' => $this->t(
+        'Currently installed: @version (@status)',
+        [
+          '@version' => $project_info->getInstalledVersion(),
+          '@status' => $this->getUpdateStatus($project['status']),
+        ]
+      ),
+    ];
 
     switch ($project['status']) {
       case UpdateManagerInterface::NOT_SECURE:
       case UpdateManagerInterface::REVOKED:
-        $title['#suffix'] = ' ' . $this->t('(Security update)');
+        $release_status = $this->t('Security update');
         $type = 'update-security';
         break;
 
-      case UpdateManagerInterface::NOT_SUPPORTED:
-        $title['#suffix'] = ' ' . $this->t('(Unsupported)');
-        $type = 'unsupported';
-        break;
-
       default:
-        $type = 'recommended';
-        break;
+        $release_status = $this->t('Available update');
+        $type = 'update-recommended';
     }
-
-    // Create an entry for this project.
-    $entry = [
-      'title' => [
-        'data' => $title,
-      ],
-      'installed_version' => $project_info->getInstalledVersion(),
-      'recommended_version' => [
-        'data' => [
-          // @todo Is an inline template the right tool here? Is there an Update
-          // module template we should use instead?
-          '#type' => 'inline_template',
-          '#template' => '{{ release_version }} (<a href="{{ release_link }}" title="{{ project_title }}">{{ release_notes }}</a>)',
-          '#context' => [
-            'release_version' => $recommended_release->getVersion(),
-            'release_link' => $recommended_release->getReleaseUrl(),
-            'project_title' => $this->t('Release notes for @project_title', ['@project_title' => $project['title']]),
-            'release_notes' => $this->t('Release notes'),
-          ],
-        ],
-      ],
-    ];
-
-    $form['projects'] = [
-      '#type' => 'table',
-      '#header' => [
-        'title' => [
-          'data' => $this->t('Name'),
-          'class' => ['update-project-name'],
-        ],
-        'installed_version' => $this->t('Installed version'),
-        'recommended_version' => [
-          'data' => $this->t('Recommended version'),
-        ],
-      ],
-      '#rows' => [
-        'drupal' => [
-          'class' => "update-$type",
-          'data' => $entry,
-        ],
-      ],
-    ];
-
-    $form['backup'] = [
-      '#markup' => $this->t('It\'s a good idea to <a href=":url">back up your database</a> before you begin.', [':url' => 'https://www.drupal.org/node/22281#s-backing-up-the-database']),
-    ];
-
     if ($form_state->getUserInput()) {
       $results = [];
     }
     else {
-      $event = new ReadinessCheckEvent($this->updater, [
-        'drupal' => $recommended_release->getVersion(),
-      ]);
+      $event = new ReadinessCheckEvent($this->updater);
       $this->eventDispatcher->dispatch($event);
       $results = $event->getResults();
     }
     $this->displayResults($results, $this->messenger(), $this->renderer);
+    $create_update_buttons = !$stage_exists && $this->getOverallSeverity($results) !== SystemManager::REQUIREMENT_ERROR;
+    if ($installed_minor_release) {
+      $installed_version = ExtensionVersion::createFromVersionString($project_info->getInstalledVersion());
+      $form['installed_minor'] = $this->createReleaseTable(
+        $installed_minor_release,
+        $release_status,
+        $this->t('Latest version of Drupal @major.@minor (currently installed):', [
+          '@major' => $installed_version->getMajorVersion(),
+          '@minor' => $installed_version->getMinorVersion(),
+        ]),
+        $type,
+        $create_update_buttons,
+        // Any update in the current minor should be the primary update.
+        TRUE,
+      );
+    }
+    if ($next_minor_release) {
+      // If there is no update in the current minor make the button for the next
+      // minor primary unless the project status is 'CURRENT' or 'NOT_CURRENT'.
+      // 'NOT_CURRENT' does not denote that installed version is not a valid
+      // only that there is newer version available.
+      $is_primary = !$installed_minor_release && !($project['status'] === UpdateManagerInterface::CURRENT || $project['status'] === UpdateManagerInterface::NOT_CURRENT);
+      $next_minor_version = ExtensionVersion::createFromVersionString($next_minor_release->getVersion());
+      // @todo Add documentation to explain what is different about a minor
+      //   update in https://www.drupal.org/i/3291730.
+      $form['next_minor'] = $this->createReleaseTable(
+        $next_minor_release,
+        $installed_minor_release ? $this->t('Minor update') : $release_status,
+        $this->t('Latest version of Drupal @major.@minor (next minor):', [
+          '@major' => $next_minor_version->getMajorVersion(),
+          '@minor' => $next_minor_version->getMinorVersion(),
+        ]),
+        $installed_minor_release ? 'update-optional' : $type,
+        $create_update_buttons,
+        $is_primary
+      );
+    }
+
+    $form['backup'] = [
+      '#markup' => $this->t('It\'s a good idea to <a href=":url">back up your database</a> before you begin.', [':url' => 'https://www.drupal.org/node/22281#s-backing-up-the-database']),
+    ];
 
     if ($stage_exists) {
       // If the form has been submitted, do not display this error message
@@ -284,13 +283,6 @@ class UpdaterForm extends FormBase {
         '#type' => 'submit',
         '#value' => $this->t('Delete existing update'),
         '#submit' => ['::deleteExistingUpdate'],
-      ];
-    }
-    // If there were no errors, allow the user to proceed with the update.
-    elseif ($this->getOverallSeverity($results) !== SystemManager::REQUIREMENT_ERROR) {
-      $form['actions']['submit'] = [
-        '#type' => 'submit',
-        '#value' => $this->t('Update'),
       ];
     }
     $form['actions']['#type'] = 'actions';
@@ -315,12 +307,13 @@ class UpdaterForm extends FormBase {
    * {@inheritdoc}
    */
   public function submitForm(array &$form, FormStateInterface $form_state) {
+    $button = $form_state->getTriggeringElement();
     $batch = (new BatchBuilder())
       ->setTitle($this->t('Downloading updates'))
       ->setInitMessage($this->t('Preparing to download updates'))
       ->addOperation(
         [BatchProcessor::class, 'begin'],
-        [$form_state->getValue('target_version')]
+        [['drupal' => $button['#target_version']]]
       )
       ->addOperation([BatchProcessor::class, 'stage'])
       ->setFinishCallback([BatchProcessor::class, 'finishStage'])
@@ -343,6 +336,118 @@ class UpdaterForm extends FormBase {
       ];
     }
     return $this->traitFormatResult($result);
+  }
+
+  /**
+   * Gets the update table for a specific release.
+   *
+   * @param \Drupal\automatic_updates_9_3_shim\ProjectRelease $release
+   *   The project release.
+   * @param string $release_description
+   *   The release description.
+   * @param \Drupal\Core\StringTranslation\TranslatableMarkup|null $caption
+   *   The table caption, if any.
+   * @param string $update_type
+   *   The update type.
+   * @param bool $create_update_button
+   *   Whether the update button should be created.
+   * @param bool $is_primary
+   *   Whether update button should be a primary button.
+   *
+   * @return array
+   *   The table render array.
+   */
+  private function createReleaseTable(ProjectRelease $release, string $release_description, ?TranslatableMarkup $caption, string $update_type, bool $create_update_button, bool $is_primary): array {
+    $release_section = ['#type' => 'container'];
+    $release_section['table'] = [
+      '#type' => 'table',
+      '#description' => $this->t('more'),
+      '#header' => [
+        'title' => [
+          'data' => $this->t('Update type'),
+          'class' => ['update-project-name'],
+        ],
+        'target_version' => [
+          'data' => $this->t('Version'),
+        ],
+      ],
+    ];
+    if ($caption) {
+      $release_section['table']['#caption'] = $caption;
+    }
+    $release_section['table'][$release->getVersion()] = [
+      'title' => [
+        '#type' => 'html_tag',
+        '#tag' => 'p',
+        '#value' => $release_description,
+      ],
+      'target_version' => [
+        'data' => [
+          // @todo Is an inline template the right tool here? Is there an Update
+          // module template we should use instead?
+          '#type' => 'inline_template',
+          '#template' => '{{ release_version }} (<a href="{{ release_link }}" title="{{ project_title }}">{{ release_notes }}</a>)',
+          '#context' => [
+            'release_version' => $release->getVersion(),
+            'release_link' => $release->getReleaseUrl(),
+            'project_title' => $this->t(
+              'Release notes for @project_title @version',
+              [
+                '@project_title' => 'Drupal core',
+                '@version' => $release->getVersion(),
+              ]
+            ),
+            'release_notes' => $this->t('Release notes'),
+          ],
+        ],
+      ],
+      '#attributes' => ['class' => ['update-' . $update_type]],
+    ];
+    if ($create_update_button) {
+      $release_section['submit'] = [
+        '#type' => 'submit',
+        '#value' => $this->t('Update to @version', ['@version' => $release->getVersion()]),
+        '#target_version' => $release->getVersion(),
+      ];
+      if ($is_primary) {
+        $release_section['submit']['#button_type'] = 'primary';
+      }
+    }
+    $release_section['#suffix'] = '<br />';
+    return $release_section;
+
+  }
+
+  /**
+   * Gets the human-readable project status.
+   *
+   * @param int $status
+   *   The project status, one of \Drupal\update\UpdateManagerInterface
+   *   constants.
+   *
+   * @return \Drupal\Core\StringTranslation\TranslatableMarkup
+   *   The human-readable status.
+   */
+  private function getUpdateStatus(int $status): TranslatableMarkup {
+    switch ($status) {
+      case UpdateManagerInterface::NOT_SECURE:
+        return $this->t('Security update required!');
+
+      case UpdateManagerInterface::REVOKED:
+        return $this->t('Revoked!');
+
+      case UpdateManagerInterface::NOT_SUPPORTED:
+        return $this->t('Not supported!');
+
+      case UpdateManagerInterface::NOT_CURRENT:
+        return $this->t('Update available');
+
+      case UpdateManagerInterface::CURRENT:
+        return $this->t('Up to date');
+
+      default:
+        return $this->t('Unknown status');
+    }
   }
 
 }

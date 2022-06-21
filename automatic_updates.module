@@ -197,10 +197,16 @@ function automatic_updates_preprocess_update_project_status(array &$variables) {
     return;
   }
   $updater = \Drupal::service('automatic_updates.updater');
+  $supported_target_versions = [];
   /** @var \Drupal\automatic_updates\ReleaseChooser $recommender */
   $recommender = \Drupal::service('automatic_updates.release_chooser');
   try {
-    $supported_update_release = $recommender->getLatestInInstalledMinor($updater) ?? $recommender->getLatestInNextMinor($updater);
+    if ($installed_minor_release = $recommender->getLatestInInstalledMinor($updater)) {
+      $supported_target_versions[] = $installed_minor_release->getVersion();
+    }
+    if ($next_minor_release = $recommender->getLatestInNextMinor($updater)) {
+      $supported_target_versions[] = $next_minor_release->getVersion();
+    }
   }
   catch (RuntimeException $exception) {
     // If for some reason we are not able to get the update recommendations
@@ -211,7 +217,7 @@ function automatic_updates_preprocess_update_project_status(array &$variables) {
   $variables['#attached']['library'][] = 'automatic_updates/update_status';
 
   $status = &$variables['status'];
-  if ($supported_update_release && $status['label']) {
+  if ($supported_target_versions && $status['label']) {
     $status['label'] = [
       '#markup' => t(
         '@label <a href=":update-form">Update now</a>', [
@@ -226,7 +232,7 @@ function automatic_updates_preprocess_update_project_status(array &$variables) {
   }
   foreach ($variables['versions'] as &$themed_version) {
     $version_info = &$themed_version['#version'];
-    if ($supported_update_release && $version_info['version'] === $supported_update_release->getVersion()) {
+    if ($supported_target_versions && in_array($version_info['version'], $supported_target_versions, TRUE)) {
       $version_info['download_link'] = Url::fromRoute('automatic_updates.report_update')->setAbsolute()->toString();
     }
     else {

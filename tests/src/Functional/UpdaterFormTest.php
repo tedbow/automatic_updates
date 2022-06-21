@@ -117,7 +117,7 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
 
     $assert_session = $this->assertSession();
     $assert_session->pageTextContains('No update available');
-    $assert_session->buttonNotExists('Update');
+    $this->assertNoUpdateButtons();
   }
 
   /**
@@ -131,6 +131,7 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
    * @dataProvider providerTableLooksCorrect
    */
   public function testTableLooksCorrect(string $access_page): void {
+    $page = $this->getSession()->getPage();
     $this->drupalPlaceBlock('local_tasks_block', ['primary' => TRUE]);
     $assert_session = $this->assertSession();
     $this->setCoreVersion('9.8.0');
@@ -148,17 +149,82 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
       $this->clickLink('Available updates');
     }
     $this->clickLink('Update');
-    $assert_session->pageTextNotContains('There is a security update available for your version of Drupal.');
-    $cells = $assert_session->elementExists('css', '#edit-projects .update-update-security')
-      ->findAll('css', 'td');
-    $this->assertCount(3, $cells);
-    $assert_session->elementExists('named', ['link', 'Drupal'], $cells[0]);
-    $this->assertSame('9.8.0', $cells[1]->getText());
-    $this->assertSame('9.8.1 (Release notes)', $cells[2]->getText());
-    $release_notes = $assert_session->elementExists('named', ['link', 'Release notes'], $cells[2]);
-    $this->assertSame('Release notes for Drupal', $release_notes->getAttribute('title'));
-    $assert_session->buttonExists('Update');
+
+    // Check the form when there is an updates in the next minor only.
+    $assert_session->pageTextContainsOnce('Currently installed: 9.8.0 (Security update required!)');
+    $this->checkReleaseTable('#edit-installed-minor', '.update-update-security', '9.8.1', TRUE, 'Latest version of Drupal 9.8 (currently installed):');
+    $assert_session->elementNotExists('css', '#edit-next-minor');
+
+    // Check the form when there is an updates in the next minor only.
+    $this->config('automatic_updates.settings')->set('allow_core_minor_updates', TRUE)->save();
+    $this->setCoreVersion('9.7.0');
+    $page->clickLink('Check manually');
+    $this->checkForMetaRefresh();
+    $this->checkReleaseTable('#edit-next-minor', '.update-update-recommended', '9.8.1', TRUE, 'Latest version of Drupal 9.8 (next minor):');
+    $assert_session->pageTextContainsOnce('Currently installed: 9.7.0 (Not supported!)');
+    $assert_session->elementNotExists('css', '#edit-installed-minor');
+
+    // Check the form when there are updates in the current and next minors but
+    // the site does not support minor updates.
+    $this->config('automatic_updates.settings')->set('allow_core_minor_updates', FALSE)->save();
+    $this->setReleaseMetadata(__DIR__ . '/../../fixtures/release-history/drupal.9.8.2.xml');
+    $page->clickLink('Check manually');
+    $this->checkForMetaRefresh();
+    $assert_session->pageTextContainsOnce('Currently installed: 9.7.0 (Update available)');
+    $this->checkReleaseTable('#edit-installed-minor', '.update-update-recommended', '9.7.1', TRUE, 'Latest version of Drupal 9.7 (currently installed):');
+    $assert_session->elementNotExists('css', '#edit-next-minor');
+
+    // Check that if minor updates are enabled the update in the next minor will
+    // be visible.
+    $this->config('automatic_updates.settings')->set('allow_core_minor_updates', TRUE)->save();
+    $this->getSession()->reload();
+    $this->checkReleaseTable('#edit-installed-minor', '.update-update-recommended', '9.7.1', TRUE, 'Latest version of Drupal 9.7 (currently installed):');
+    $this->checkReleaseTable('#edit-next-minor', '.update-update-optional', '9.8.2', FALSE, 'Latest version of Drupal 9.8 (next minor):');
+
+    $this->setCoreVersion('9.7.1');
+    $page->clickLink('Check manually');
+    $this->checkForMetaRefresh();
+    $assert_session->pageTextContainsOnce('Currently installed: 9.7.1 (Update available)');
+    $assert_session->elementNotExists('css', '#edit-installed-minor');
+    $this->checkReleaseTable('#edit-next-minor', '.update-update-recommended', '9.8.2', FALSE, 'Latest version of Drupal 9.8 (next minor):');
+
     $this->assertUpdateStagedTimes(0);
+  }
+
+  /**
+   * Checks the table for a release on the form.
+   *
+   * @param string $container_locator
+   *   The CSS locator for the element with contains the table.
+   * @param string $row_class
+   *   The row class for the update.
+   * @param string $version
+   *   The release version number.
+   * @param bool $is_primary
+   *   Whether update button should be a primary button.
+   * @param string|null $table_caption
+   *   The table caption or NULL if none expected.
+   */
+  private function checkReleaseTable(string $container_locator, string $row_class, string $version, bool $is_primary, ?string $table_caption = NULL): void {
+    $assert_session = $this->assertSession();
+    $assert_session->pageTextNotContains('There is a security update available for your version of Drupal.');
+    $assert_session->linkExists('Drupal core');
+    $container = $assert_session->elementExists('css', $container_locator);
+    if ($table_caption) {
+      $this->assertSame($table_caption, $assert_session->elementExists('css', 'caption', $container)->getText());
+    }
+    else {
+      $assert_session->elementNotExists('css', 'caption', $container);
+    }
+
+    $cells = $assert_session->elementExists('css', $row_class, $container)
+      ->findAll('css', 'td');
+    $this->assertCount(2, $cells);
+    $this->assertSame("$version (Release notes)", $cells[1]->getText());
+    $release_notes = $assert_session->elementExists('named', ['link', 'Release notes'], $cells[1]);
+    $this->assertSame("Release notes for Drupal core $version", $release_notes->getAttribute('title'));
+    $button = $assert_session->buttonExists("Update to $version", $container);
+    $this->assertSame($is_primary, $button->hasClass('button--primary'));
   }
 
   /**
@@ -186,7 +252,7 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
     // If a validator raises an error during readiness checking, the form should
     // not have a submit button.
     $this->drupalGet('/admin/modules/automatic-update');
-    $assert_session->buttonNotExists('Update');
+    $this->assertNoUpdateButtons();
     // Since this is an administrative page, the error message should be visible
     // thanks to automatic_updates_page_top(). The readiness checks were re-run
     // during the form build, which means the new error should be cached and
@@ -206,7 +272,7 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
     $assert_session->pageTextNotContains(static::$errorsExplanation);
     $assert_session->pageTextNotContains(static::$warningsExplanation);
     $assert_session->pageTextNotContains($cached_message);
-    $page->pressButton('Update');
+    $page->pressButton('Update to 9.8.1');
     $this->checkForMetaRefresh();
     $this->assertUpdateStagedTimes(0);
     $assert_session->pageTextContainsOnce('An error has occurred.');
@@ -225,7 +291,7 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
     // If a validator flags an error, but doesn't throw, the update should still
     // be halted.
     TestSubscriber1::setTestResult($expected_results, PreCreateEvent::class);
-    $page->pressButton('Update');
+    $page->pressButton('Update to 9.8.1');
     $this->checkForMetaRefresh();
     $this->assertUpdateStagedTimes(0);
     $assert_session->pageTextContainsOnce('An error has occurred.');
@@ -254,7 +320,7 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
     $assert_session->pageTextContains('Updates were found, but they must be performed manually. See the list of available updates for more information.');
     $this->clickLink('the list of available updates');
     $assert_session->elementExists('css', 'table.update');
-    $assert_session->buttonNotExists('Update');
+    $this->assertNoUpdateButtons();
   }
 
   /**
@@ -271,7 +337,7 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
 
     $this->drupalGet('/admin/modules/automatic-update');
     FixtureStager::setFixturePath(__DIR__ . '/../../fixtures/staged/9.8.1');
-    $page->pressButton('Update');
+    $page->pressButton('Update to 9.8.1');
     $this->checkForMetaRefresh();
     $this->assertUpdateStagedTimes(1);
 
@@ -290,7 +356,7 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
     $assert_session->pageTextContains($cancelled_message);
     $assert_session->pageTextNotContains($conflict_message);
     // Ensure we can start another update after deleting the existing one.
-    $page->pressButton('Update');
+    $page->pressButton('Update to 9.8.1');
     $this->checkForMetaRefresh();
 
     // Confirm we are on the confirmation page.
@@ -304,12 +370,12 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
     $this->drupalLogin($account);
     $this->drupalGet('/admin/reports/updates/automatic-update');
     $assert_session->pageTextContains($conflict_message);
-    $assert_session->buttonNotExists('Update');
+    $this->assertNoUpdateButtons();
     // We should be able to delete the previous update, then start a new one.
     $page->pressButton('Delete existing update');
     $assert_session->pageTextContains('Staged update deleted');
     $assert_session->pageTextNotContains($conflict_message);
-    $page->pressButton('Update');
+    $page->pressButton('Update to 9.8.1');
     $this->checkForMetaRefresh();
     $this->assertUpdateReady('9.8.1');
 
@@ -355,7 +421,7 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
     $this->createTestValidationResults();
     $results = $this->testResults['checker_1']['1 error'];
     TestSubscriber1::setTestResult($results, PreApplyEvent::class);
-    $page->pressButton('Update');
+    $page->pressButton('Update to 9.8.1');
     $this->checkForMetaRefresh();
     $this->assertUpdateReady('9.8.1');
     $page->pressButton('Continue');
@@ -409,7 +475,7 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
     $assert_session = $this->assertSession();
     $assert_session->pageTextContains(reset($messages));
     $assert_session->pageTextNotContains($cached_message);
-    $page->pressButton('Update');
+    $page->pressButton('Update to 9.8.1');
     $this->checkForMetaRefresh();
     $this->assertUpdateStagedTimes(1);
     $this->assertUpdateReady('9.8.1');
@@ -506,7 +572,7 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
     $this->drupalGet($update_form_url);
     FixtureStager::setFixturePath(__DIR__ . '/../../fixtures/staged/9.8.1');
     $assert_session->pageTextNotContains($cached_message);
-    $page->pressButton('Update');
+    $page->pressButton('Update to 9.8.1');
     $this->checkForMetaRefresh();
     $this->assertUpdateStagedTimes(1);
     $this->assertUpdateReady('9.8.1');
@@ -534,7 +600,7 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
     $page = $this->getSession()->getPage();
     $this->drupalGet('/admin/modules/automatic-update');
     FixtureStager::setFixturePath(__DIR__ . '/../../fixtures/staged/9.8.1');
-    $page->pressButton('Update');
+    $page->pressButton('Update to 9.8.1');
     $this->checkForMetaRefresh();
     $this->assertUpdateStagedTimes(1);
     $this->assertUpdateReady('9.8.1');
@@ -574,7 +640,7 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
     TestSubscriber1::setException($error, PostRequireEvent::class);
     $assert_session->pageTextNotContains(static::$errorsExplanation);
     $assert_session->pageTextNotContains(static::$warningsExplanation);
-    $page->pressButton('Update');
+    $page->pressButton('Update to 9.8.1');
     $this->checkForMetaRefresh();
     $this->assertUpdateStagedTimes(1);
     $assert_session->pageTextContainsOnce('An error has occurred.');
@@ -608,6 +674,13 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
     TestSubscriber1::setTestResult(NULL, ReadinessCheckEvent::class);
 
     return $message;
+  }
+
+  /**
+   * Asserts that no update buttons exist.
+   */
+  private function assertNoUpdateButtons(): void {
+    $this->assertSession()->elementNotExists('css', "input[value*='Update']");
   }
 
 }

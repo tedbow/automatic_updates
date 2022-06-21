@@ -109,7 +109,7 @@ class CoreUpdateTest extends UpdateTestBase {
     $session->reload();
 
     $assert_session->pageTextNotContains('There is a security update available for your version of Drupal.');
-    $page->pressButton('Update');
+    $page->pressButton('Update to 9.8.1');
     $this->waitForBatchJob();
     $assert_session->pageTextContains('Ready to update');
     $page->pressButton('Continue');
