@@ -151,13 +151,14 @@ final class UpdaterForm extends FormBase {
     ];
     $project_info = new ProjectInfo('drupal');
 
+    $installed_version = ExtensionVersion::createFromVersionString($project_info->getInstalledVersion());
     try {
       // @todo Until https://www.drupal.org/i/3264849 is fixed, we can only show
       //   one release on the form. First, try to show the latest release in the
       //   currently installed minor. Failing that, try to show the latest
       //   release in the next minor.
-      $installed_minor_release = $this->releaseChooser->getLatestInInstalledMinor($this->updater);
-      $next_minor_release = $this->releaseChooser->getLatestInNextMinor($this->updater);
+      $installed_minor_release = $this->releaseChooser->getMostRecentReleaseInMinor($this->updater, $project_info->getInstalledVersion());
+      $next_minor_release = $this->releaseChooser->getMostRecentReleaseInMinor($this->updater, $installed_version->getMajorVersion() . '.' . (((int) $installed_version->getMinorVersion()) + 1) . '.0');
     }
     catch (\RuntimeException $e) {
       $form['message'] = [
