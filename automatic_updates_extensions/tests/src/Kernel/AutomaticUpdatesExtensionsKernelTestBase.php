@@ -31,6 +31,19 @@ abstract class AutomaticUpdatesExtensionsKernelTestBase extends AutomaticUpdates
   /**
    * {@inheritdoc}
    */
+  protected function setUp(): void {
+    // Disable the Composer executable validator, since it may cause the tests
+    // to fail if a supported version of Composer is unavailable to the web
+    // server. This should be okay in most situations because, apart from the
+    // validator, only Composer Stager needs run Composer, and
+    // package_manager_bypass is disabling those operations.
+    $this->disableValidators[] = 'package_manager.validator.composer_executable';
+    parent::setUp();
+  }
+
+  /**
+   * {@inheritdoc}
+   */
   public function register(ContainerBuilder $container) {
     parent::register($container);
 

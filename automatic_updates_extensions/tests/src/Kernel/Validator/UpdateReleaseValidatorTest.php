@@ -1,6 +1,6 @@
 <?php
 
-namespace Drupal\Tests\automatic_updates_extensions\Kernel\Valdiator;
+namespace Drupal\Tests\automatic_updates_extensions\Kernel\Validator;
 
 use Drupal\automatic_updates\LegacyVersionUtility;
 use Drupal\package_manager\Event\PreCreateEvent;
@@ -20,6 +20,7 @@ class UpdateReleaseValidatorTest extends AutomaticUpdatesExtensionsKernelTestBas
   protected function setUp(): void {
     $this->disableValidators[] = 'automatic_updates_extensions.validator.packages_installed_with_composer';
     parent::setUp();
+    $this->createTestProject();
   }
 
   /**
@@ -58,7 +59,7 @@ class UpdateReleaseValidatorTest extends AutomaticUpdatesExtensionsKernelTestBas
       $expected_results = [];
     }
 
-    $this->assertUpdaterResults([$project => $target_version], $expected_results, PreCreateEvent::class);
+    $this->assertUpdateResults([$project => $target_version], $expected_results, PreCreateEvent::class);
   }
 
   /**
