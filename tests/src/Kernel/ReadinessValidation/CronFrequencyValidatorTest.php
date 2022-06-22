@@ -25,15 +25,15 @@ class CronFrequencyValidatorTest extends AutomaticUpdatesKernelTestBase {
    * {@inheritdoc}
    */
   protected function setUp(): void {
-    // Disable the symlink validator so that the test isn't affected by symlinks
-    // or other unexpected things that might be present in the running code
-    // base.
-    // @todo Make this test use a virtual project in
-    //   https://drupal.org/i/3285145.
-    $this->disableValidators[] = 'automatic_updates.validator.symlink';
-    $this->disableValidators[] = 'package_manager.validator.symlink';
     parent::setUp();
-    $this->setCoreVersion('9.8.0');
+    // Run with a virtual project so that the test isn't affected by any
+    // symbolic links or other artifacts that might be in the running code
+    // base.
+    $this->createTestProject();
+    // In this test, we do not want to do an update. We're just testing that
+    // cron is configured to run frequently enough to do automatic updates. So,
+    // pretend we're already on the latest secure version of core.
+    $this->setCoreVersion('9.8.1');
     $this->setReleaseMetadata(['drupal' => __DIR__ . '/../../../fixtures/release-history/drupal.9.8.1-security.xml']);
   }
 
