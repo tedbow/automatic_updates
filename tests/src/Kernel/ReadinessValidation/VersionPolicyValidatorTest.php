@@ -58,7 +58,7 @@ class VersionPolicyValidatorTest extends AutomaticUpdatesKernelTestBase {
         "$metadata_dir/drupal.9.8.1-security.xml",
         [CronUpdater::DISABLED, CronUpdater::SECURITY, CronUpdater::ALL],
         [
-          $this->createValidationResult('9.8.0-dev', '9.8.1', [
+          $this->createValidationResult('9.8.0-dev', NULL, [
             'Drupal cannot be automatically updated from the installed version, 9.8.0-dev, because automatic updates from a dev version to any other version are not supported.',
           ]),
         ],
@@ -76,7 +76,7 @@ class VersionPolicyValidatorTest extends AutomaticUpdatesKernelTestBase {
         "$metadata_dir/drupal.9.8.1-security.xml",
         [CronUpdater::SECURITY, CronUpdater::ALL],
         [
-          $this->createValidationResult('9.8.0-alpha1', '9.8.1', [
+          $this->createValidationResult('9.8.0-alpha1', NULL, [
             'Drupal cannot be automatically updated during cron from its current version, 9.8.0-alpha1, because it is not a stable version.',
           ]),
         ],
@@ -92,7 +92,7 @@ class VersionPolicyValidatorTest extends AutomaticUpdatesKernelTestBase {
         "$metadata_dir/drupal.9.8.1-security.xml",
         [CronUpdater::SECURITY, CronUpdater::ALL],
         [
-          $this->createValidationResult('9.8.0-beta2', '9.8.1', [
+          $this->createValidationResult('9.8.0-beta2', NULL, [
             'Drupal cannot be automatically updated during cron from its current version, 9.8.0-beta2, because it is not a stable version.',
           ]),
         ],
@@ -108,29 +108,22 @@ class VersionPolicyValidatorTest extends AutomaticUpdatesKernelTestBase {
         "$metadata_dir/drupal.9.8.1-security.xml",
         [CronUpdater::SECURITY, CronUpdater::ALL],
         [
-          $this->createValidationResult('9.8.0-rc3', '9.8.1', [
+          $this->createValidationResult('9.8.0-rc3', NULL, [
             'Drupal cannot be automatically updated during cron from its current version, 9.8.0-rc3, because it is not a stable version.',
           ]),
         ],
       ],
-      // These two cases prove that, if only security updates are allowed
-      // during cron, a readiness error is raised if the next available release
-      // is not a security release.
-      'update to normal release allowed' => [
+      // This case proves that, if a stable release is installed, there is no
+      // error generated when if the next available release is a normal (i.e.,
+      // non-security) release. If unattended updates are only enabled for
+      // security releases, the next available release will be ignored, and
+      // therefore generate no validation errors, because it's not a security
+      // release.
+      'update to normal release' => [
         '9.8.1',
         "$metadata_dir/drupal.9.8.2.xml",
-        [CronUpdater::DISABLED, CronUpdater::ALL],
+        [CronUpdater::DISABLED, CronUpdater::SECURITY, CronUpdater::ALL],
         [],
-      ],
-      'update to normal release, security only in cron' => [
-        '9.8.1',
-        "$metadata_dir/drupal.9.8.2.xml",
-        [CronUpdater::SECURITY],
-        [
-          $this->createValidationResult('9.8.1', '9.8.2', [
-            'Drupal cannot be automatically updated during cron from 9.8.1 to 9.8.2 because 9.8.2 is not a security release.',
-          ]),
-        ],
       ],
       // These three cases prove that updating from an unsupported minor version
       // will raise a readiness error if unattended updates are enabled.

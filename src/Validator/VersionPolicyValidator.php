@@ -2,7 +2,6 @@
 
 namespace Drupal\automatic_updates\Validator;
 
-use Composer\Semver\Semver;
 use Drupal\automatic_updates\CronUpdater;
 use Drupal\automatic_updates\Event\ReadinessCheckEvent;
 use Drupal\automatic_updates\ProjectInfo;
@@ -205,36 +204,16 @@ final class VersionPolicyValidator implements EventSubscriberInterface {
       }
     }
     elseif ($event instanceof ReadinessCheckEvent) {
-      // It's okay if this returns NULL; it means there's nothing to update to.
-      return $this->getTargetVersionFromAvailableReleases($updater);
+      if ($updater instanceof CronUpdater) {
+        $target_release = $updater->getTargetRelease();
+        if ($target_release) {
+          return $target_release->getVersion();
+        }
+      }
+      return NULL;
     }
     // If we got here, something has gone very wrong.
     throw $unknown_target;
-  }
-
-  /**
-   * Returns the target version of Drupal from the list of available releases.
-   *
-   * @param \Drupal\automatic_updates\Updater $updater
-   *   The updater which will perform the update.
-   *
-   * @return string|null
-   *   The target version of Drupal core, or NULL if it could not be determined.
-   *
-   * @todo Expand this doc comment to explain how the list of available releases
-   *   is fetched, sorted, and filtered through (i.e., must match the current
-   *   minor). Maybe reference ProjectInfo::getInstallableReleases().
-   */
-  private function getTargetVersionFromAvailableReleases(Updater $updater): ?string {
-    $installed_version = $this->getInstalledVersion();
-
-    foreach (self::getAvailableReleases($updater) as $possible_release) {
-      $possible_version = $possible_release->getVersion();
-      if (Semver::satisfies($possible_version, "~$installed_version")) {
-        return $possible_version;
-      }
-    }
-    return NULL;
   }
 
   /**

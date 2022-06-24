@@ -2,6 +2,7 @@
 
 namespace Drupal\automatic_updates;
 
+use Drupal\automatic_updates_9_3_shim\ProjectRelease;
 use Drupal\Core\Language\LanguageManagerInterface;
 use Drupal\Core\Logger\LoggerChannelFactoryInterface;
 use Drupal\Core\Mail\MailManagerInterface;
@@ -109,10 +110,21 @@ class CronUpdater extends Updater {
       return;
     }
 
-    $next_release = $this->releaseChooser->getLatestInInstalledMinor($this);
+    $next_release = $this->getTargetRelease();
     if ($next_release) {
       $this->performUpdate($next_release->getVersion(), $timeout);
     }
+  }
+
+  /**
+   * Returns the release of Drupal core to update to, if any.
+   *
+   * @return \Drupal\automatic_updates_9_3_shim\ProjectRelease|null
+   *   The release of Drupal core to which we will update, or NULL if there is
+   *   nothing to update to.
+   */
+  public function getTargetRelease(): ?ProjectRelease {
+    return $this->releaseChooser->getLatestInInstalledMinor($this);
   }
 
   /**
