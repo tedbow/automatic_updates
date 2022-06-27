@@ -456,6 +456,7 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
   public function testStagedDatabaseUpdates(bool $maintenance_mode_on): void {
     $this->setCoreVersion('9.8.0');
     $this->checkForUpdates();
+    $this->container->get('theme_installer')->install(['automatic_updates_theme_with_updates']);
     $cached_message = $this->setAndAssertCachedMessage();
 
     $state = $this->container->get('state');
@@ -488,9 +489,10 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
     // changes have been applied, we should be redirected to update.php, where
     // neither warning should be visible.
     $assert_session->pageTextNotContains(reset($messages));
-    $possible_update_message = 'Possible database updates were detected in the following modules; you may be redirected to the database update page in order to complete the update process.';
+    $possible_update_message = 'Possible database updates were detected in the following extensions; you may be redirected to the database update page in order to complete the update process.';
     $assert_session->pageTextContains($possible_update_message);
     $assert_session->pageTextContains('System');
+    $assert_session->pageTextContainsOnce('Automatic Updates Theme With Updates');
     if ($maintenance_mode_on === TRUE) {
       $assert_session->fieldNotExists('maintenance_mode');
     }

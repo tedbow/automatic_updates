@@ -3,7 +3,6 @@
 namespace Drupal\automatic_updates\Validator;
 
 use Drupal\automatic_updates\CronUpdater;
-use Drupal\automatic_updates\Updater;
 use Drupal\Core\Extension\Extension;
 use Drupal\Core\Extension\ModuleExtensionList;
 use Drupal\Core\Extension\ThemeExtensionList;
@@ -11,6 +10,7 @@ use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\Core\StringTranslation\TranslationInterface;
 use Drupal\package_manager\Event\PreApplyEvent;
 use Drupal\package_manager\PathLocator;
+use Drupal\package_manager\Stage;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 /**
@@ -76,21 +76,7 @@ class StagedDatabaseUpdateValidator implements EventSubscriberInterface {
       return;
     }
 
-    $invalid_extensions = [];
-    // Although \Drupal\automatic_updates\Validator\StagedProjectsValidator
-    // should prevent non-core modules from being added, updated, or removed in
-    // the staging area, we check all installed modules so as not to rely on the
-    // presence of StagedProjectsValidator.
-    foreach ($this->moduleList->getAllInstalledInfo() as $module_name => $module_info) {
-      if ($this->hasStagedUpdates($stage, $this->moduleList->get($module_name))) {
-        $invalid_extensions[] = $module_info['name'];
-      }
-    }
-    foreach ($this->themeList->getAllInstalledInfo() as $theme_name => $theme_info) {
-      if ($this->hasStagedUpdates($stage, $this->themeList->get($theme_name))) {
-        $invalid_extensions[] = $theme_info['name'];
-      }
-    }
+    $invalid_extensions = $this->getExtensionsWithDatabaseUpdates($stage);
     if ($invalid_extensions) {
       $event->addError($invalid_extensions, $this->t('The update cannot proceed because possible database updates have been detected in the following extensions.'));
     }
@@ -99,7 +85,7 @@ class StagedDatabaseUpdateValidator implements EventSubscriberInterface {
   /**
    * Determines if a staged extension has changed update functions.
    *
-   * @param \Drupal\automatic_updates\Updater $updater
+   * @param \Drupal\package_manager\Stage $stage
    *   The updater which is controlling the update process.
    * @param \Drupal\Core\Extension\Extension $extension
    *   The extension to check.
@@ -120,9 +106,9 @@ class StagedDatabaseUpdateValidator implements EventSubscriberInterface {
    *
    * @see https://www.drupal.org/project/automatic_updates/issues/3253828
    */
-  public function hasStagedUpdates(Updater $updater, Extension $extension): bool {
+  public function hasStagedUpdates(Stage $stage, Extension $extension): bool {
     $active_dir = $this->pathLocator->getProjectRoot();
-    $stage_dir = $updater->getStageDirectory();
+    $stage_dir = $stage->getStageDirectory();
 
     $web_root = $this->pathLocator->getWebRoot();
     if ($web_root) {
@@ -173,6 +159,33 @@ class StagedDatabaseUpdateValidator implements EventSubscriberInterface {
     return [
       PreApplyEvent::class => 'checkUpdateHooks',
     ];
+  }
+
+  /**
+   * Get extensions that have database updates.
+   *
+   * @param \Drupal\package_manager\Stage $stage
+   *   The stage.
+   *
+   * @return string[]
+   *   The names of the extensions that have possible database updates.
+   */
+  public function getExtensionsWithDatabaseUpdates(Stage $stage): array {
+    $invalid_extensions = [];
+    // Although \Drupal\automatic_updates\Validator\StagedProjectsValidator
+    // should prevent non-core modules from being added, updated, or removed in
+    // the staging area, we check all installed extensions so as not to rely on
+    // the presence of StagedProjectsValidator.
+    $lists = [$this->moduleList, $this->themeList];
+    foreach ($lists as $list) {
+      foreach ($list->getAllInstalledInfo() as $name => $info) {
+        if ($this->hasStagedUpdates($stage, $list->get($name))) {
+          $invalid_extensions[] = $info['name'];
+        }
+      }
+    }
+
+    return $invalid_extensions;
   }
 
 }

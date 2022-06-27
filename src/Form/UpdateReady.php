@@ -107,14 +107,14 @@ class UpdateReady extends FormBase {
 
     $messages = [];
 
-    // If there are any installed modules with database updates in the staging
-    // area, warn the user that they might be sent to update.php once the
-    // staged changes have been applied.
-    $pending_updates = $this->getModulesWithStagedDatabaseUpdates();
+    // If there are any installed extensions with database updates in the
+    // staging area, warn the user that they might be sent to update.php once
+    // the staged changes have been applied.
+    $pending_updates = $this->stagedDatabaseUpdateValidator->getExtensionsWithDatabaseUpdates($this->updater);
     if ($pending_updates) {
-      $messages[MessengerInterface::TYPE_WARNING][] = $this->t('Possible database updates were detected in the following modules; you may be redirected to the database update page in order to complete the update process.');
-      foreach ($pending_updates as $info) {
-        $messages[MessengerInterface::TYPE_WARNING][] = $info['name'];
+      $messages[MessengerInterface::TYPE_WARNING][] = $this->t('Possible database updates were detected in the following extensions; you may be redirected to the database update page in order to complete the update process.');
+      foreach ($pending_updates as $pending_update) {
+        $messages[MessengerInterface::TYPE_WARNING][] = $pending_update;
       }
     }
 
@@ -179,20 +179,6 @@ class UpdateReady extends FormBase {
     ];
 
     return $form;
-  }
-
-  /**
-   * Returns info for all installed modules that have staged database updates.
-   *
-   * @return array[]
-   *   The info arrays for the modules which have staged database updates, keyed
-   *   by module machine name.
-   */
-  protected function getModulesWithStagedDatabaseUpdates(): array {
-    $filter = function (string $name): bool {
-      return $this->stagedDatabaseUpdateValidator->hasStagedUpdates($this->updater, $this->moduleList->get($name));
-    };
-    return array_filter($this->moduleList->getAllInstalledInfo(), $filter, ARRAY_FILTER_USE_KEY);
   }
 
   /**
