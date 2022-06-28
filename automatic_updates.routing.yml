@@ -27,6 +27,12 @@ automatic_updates.finish:
   options:
     _maintenance_access: TRUE
     _automatic_updates_readiness_messages: skip
+automatic_updates.cron.post_apply:
+  path: '/automatic-update/cron/post-apply/{stage_id}/{installed_version}/{target_version}/{key}'
+  defaults:
+    _controller: 'automatic_updates.cron_updater:handlePostApply'
+  requirements:
+    _access_system_cron: 'TRUE'
 # Links to our updater form appear in three different sets of local tasks. To ensure the breadcrumbs and paths are
 # consistent with the other local tasks in each set, we need two separate routes to the same form.
 automatic_updates.report_update:

@@ -5,6 +5,9 @@ automatic_updates.settings:
     cron:
       type: string
       label: 'Enable automatic updates during cron'
+    cron_port:
+      type: integer
+      label: 'Port to use for finalization sub-request'
     allow_core_minor_updates:
       type: boolean
       label: 'Allow minor level Drupal core updates'

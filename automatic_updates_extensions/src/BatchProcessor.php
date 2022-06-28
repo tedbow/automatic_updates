@@ -124,6 +124,25 @@ final class BatchProcessor {
   }
 
   /**
+   * Calls the updater's postApply() method.
+   *
+   * @param string $stage_id
+   *   The stage ID.
+   * @param array $context
+   *   The current context of the batch job.
+   *
+   * @see \Drupal\automatic_updates\Updater::postApply()
+   */
+  public static function postApply(string $stage_id, array &$context): void {
+    try {
+      static::getUpdater()->claim($stage_id)->postApply();
+    }
+    catch (\Throwable $e) {
+      static::handleException($e, $context);
+    }
+  }
+
+  /**
    * Calls the updater's clean() method.
    *
    * @param string $stage_id

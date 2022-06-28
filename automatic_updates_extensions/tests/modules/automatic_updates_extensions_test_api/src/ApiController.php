@@ -74,6 +74,7 @@ class ApiController extends ControllerBase {
     $this->extensionUpdater->begin($request->get('projects', []));
     $this->extensionUpdater->stage();
     $this->extensionUpdater->apply();
+    $this->extensionUpdater->postApply();
     $this->extensionUpdater->destroy();
 
     $dir = $this->pathLocator->getProjectRoot();

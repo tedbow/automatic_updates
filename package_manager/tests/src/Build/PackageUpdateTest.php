@@ -100,10 +100,11 @@ class PackageUpdateTest extends TemplateProjectTestBase {
     $this->assertSame($expected_pre_apply_results, $results['pre']);
 
     $expected_post_apply_results = [
-      // Existing functions will still use the pre-update version.
-      'return value of existing global function' => 'pre-update-value',
-      // New functions that were added in .module files will not be available.
-      'new global function exists' => 'not exists',
+      // An existing functions will now return a new value.
+      'return value of existing global function' => 'post-update-value',
+      // New functions that were added in .module files will be available
+      // because the post-apply event is dispatched in a new request.
+      'new global function exists' => 'exists',
       // Definitions for existing routes should be updated.
       'path of changed route' => '/updated-module/changed/post',
       // Routes deleted from the updated module should not be available.
@@ -127,11 +128,11 @@ class PackageUpdateTest extends TemplateProjectTestBase {
       'value of updated_module.added_service' => 'New service, should not exist before update',
       // A block removed from the updated module should not be defined anymore.
       'updated_module_deleted_block block exists' => 'not exists',
-      // A block that was updated should have a changed definition, but an
-      // unchanged implementation.
+      // A block that was updated should have a changed definition and
+      // implementation.
       'updated_module_updated_block block exists' => 'exists',
       'updated_module_updated_block block label' => '1.1.0',
-      'updated_module_updated_block block output' => '1.0.0',
+      'updated_module_updated_block block output' => '1.1.0',
       // A block added to the module should be defined.
       'updated_module_added_block block exists' => 'exists',
       'updated_module_added_block block label' => 'Added block',
@@ -142,14 +143,13 @@ class PackageUpdateTest extends TemplateProjectTestBase {
       'updated_module_ignored_block block exists' => 'exists',
       'updated_module_ignored_block block label' => '1.1.0',
       'updated_module_ignored_block block output' => 'I was ignored before the update.',
-      // Existing class should be available.
+      // Existing class should still be available, and will be outputting its
+      // new value.
       'ChangedClass exists' => 'exists',
-      // Existing class will still use the pre-update version.
-      'value of ChangedClass' => 'Before Update',
-      // Classes loaded in pre-apply or before and deleted from the updated module should
-      // be available.
-      'LoadedAndDeletedClass exists' => 'exists',
-      'value of LoadedAndDeletedClass' => 'This class will be loaded and then deleted',
+      'value of ChangedClass' => 'After Update',
+      // Classes loaded in pre-apply, but deleted from the updated module,
+      // should be unavailable.
+      'LoadedAndDeletedClass exists' => 'not exists',
       // Classes not loaded before the apply operation and deleted from the updated module
       // should not be available.
       'DeletedClass exists' => 'not exists',

@@ -33,6 +33,7 @@ services:
       - '@logger.factory'
       - '@plugin.manager.mail'
       - '@language_manager'
+      - '@state'
       - '@config.factory'
       - '@package_manager.path_locator'
       - '@package_manager.beginner'

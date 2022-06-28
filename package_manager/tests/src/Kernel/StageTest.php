@@ -192,6 +192,15 @@ class StageTest extends PackageManagerKernelTestBase {
       $this->expectExceptionMessage('Cannot destroy the staging area while it is being applied to the active directory.');
     }
     $stage->apply();
+
+    // If the stage was successfully destroyed by the event handler (i.e., the
+    // stage has been applying for too long and is therefore considered stale),
+    // the postApply() method should fail because the stage is not claimed.
+    if ($stage->isAvailable()) {
+      $this->expectException('LogicException');
+      $this->expectExceptionMessage('Stage must be claimed before performing any operations on it.');
+    }
+    $stage->postApply();
   }
 
   /**

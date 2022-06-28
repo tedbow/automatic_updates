@@ -122,6 +122,34 @@ class BatchProcessor {
   public static function commit(string $stage_id, array &$context): void {
     try {
       static::getUpdater()->claim($stage_id)->apply();
+      // The batch system does not allow any single request to run for longer
+      // than a second, so this will force the next operation to be done in a
+      // new request. This helps keep the running code in as consistent a state
+      // as possible.
+      // @see \Drupal\package_manager\Stage::apply()
+      // @see \Drupal\package_manager\Stage::postApply()
+      // @todo See if there's a better way to ensure the post-apply tasks run
+      //   in a new request in https://www.drupal.org/i/3293150.
+      sleep(1);
+    }
+    catch (\Throwable $e) {
+      static::handleException($e, $context);
+    }
+  }
+
+  /**
+   * Calls the updater's postApply() method.
+   *
+   * @param string $stage_id
+   *   The stage ID.
+   * @param array $context
+   *   The current context of the batch job.
+   *
+   * @see \Drupal\automatic_updates\Updater::postApply()
+   */
+  public static function postApply(string $stage_id, array &$context): void {
+    try {
+      static::getUpdater()->claim($stage_id)->postApply();
     }
     catch (\Throwable $e) {
       static::handleException($e, $context);

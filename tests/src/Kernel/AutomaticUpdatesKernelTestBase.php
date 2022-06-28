@@ -5,6 +5,7 @@ namespace Drupal\Tests\automatic_updates\Kernel;
 use Drupal\automatic_updates\CronUpdater;
 use Drupal\automatic_updates\Updater;
 use Drupal\Core\DependencyInjection\ContainerBuilder;
+use Drupal\Core\Url;
 use Drupal\Tests\automatic_updates\Traits\ValidationTestTrait;
 use Drupal\Tests\package_manager\Kernel\PackageManagerKernelTestBase;
 use Drupal\Tests\package_manager\Kernel\TestStageTrait;
@@ -52,6 +53,11 @@ abstract class AutomaticUpdatesKernelTestBase extends PackageManagerKernelTestBa
     // disable the Automatic Updates validator which wraps it.
     if (in_array('package_manager.validator.file_system', $this->disableValidators, TRUE)) {
       $this->disableValidators[] = 'automatic_updates.validator.file_system_permissions';
+    }
+    // If Package Manager's symlink validator is disabled, also disable the
+    // Automatic Updates validator which wraps it.
+    if (in_array('package_manager.validator.symlink', $this->disableValidators, TRUE)) {
+      $this->disableValidators[] = 'automatic_updates.validator.symlink';
     }
     // Always disable the Xdebug validator to allow test to run with Xdebug on.
     $this->disableValidators[] = 'automatic_updates.validator.xdebug';
@@ -167,5 +173,15 @@ class TestUpdater extends Updater {
 class TestCronUpdater extends CronUpdater {
 
   use TestStageTrait;
+
+  /**
+   * {@inheritdoc}
+   */
+  protected function triggerPostApply(Url $url): void {
+    // Subrequests don't work in kernel tests, so just call the post-apply
+    // handler directly.
+    $parameters = $url->getRouteParameters();
+    $this->handlePostApply($parameters['stage_id'], $parameters['installed_version'], $parameters['target_version']);
+  }
 
 }

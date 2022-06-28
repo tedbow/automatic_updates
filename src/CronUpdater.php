@@ -6,7 +6,11 @@ use Drupal\automatic_updates_9_3_shim\ProjectRelease;
 use Drupal\Core\Language\LanguageManagerInterface;
 use Drupal\Core\Logger\LoggerChannelFactoryInterface;
 use Drupal\Core\Mail\MailManagerInterface;
+use Drupal\Core\State\StateInterface;
+use Drupal\Core\Url;
 use Drupal\package_manager\Exception\StageValidationException;
+use GuzzleHttp\Psr7\Uri as GuzzleUri;
+use Symfony\Component\HttpFoundation\Response;
 
 /**
  * Defines a service that updates via cron.
@@ -76,6 +80,13 @@ class CronUpdater extends Updater {
   protected $languageManager;
 
   /**
+   * The state service.
+   *
+   * @var \Drupal\Core\State\StateInterface
+   */
+  protected $state;
+
+  /**
    * Constructs a CronUpdater object.
    *
    * @param \Drupal\automatic_updates\ReleaseChooser $release_chooser
@@ -86,15 +97,18 @@ class CronUpdater extends Updater {
    *   The mail manager service.
    * @param \Drupal\Core\Language\LanguageManagerInterface $language_manager
    *   The language manager service.
+   * @param \Drupal\Core\State\StateInterface $state
+   *   The state service.
    * @param mixed ...$arguments
    *   Additional arguments to pass to the parent constructor.
    */
-  public function __construct(ReleaseChooser $release_chooser, LoggerChannelFactoryInterface $logger_factory, MailManagerInterface $mail_manager, LanguageManagerInterface $language_manager, ...$arguments) {
+  public function __construct(ReleaseChooser $release_chooser, LoggerChannelFactoryInterface $logger_factory, MailManagerInterface $mail_manager, LanguageManagerInterface $language_manager, StateInterface $state, ...$arguments) {
     parent::__construct(...$arguments);
     $this->releaseChooser = $release_chooser;
     $this->logger = $logger_factory->get('automatic_updates');
     $this->mailManager = $mail_manager;
     $this->languageManager = $language_manager;
+    $this->state = $state;
   }
 
   /**
@@ -162,9 +176,91 @@ class CronUpdater extends Updater {
     // stage regardless of whether the update succeeds.
     try {
       // @see ::begin()
-      parent::begin(['drupal' => $target_version], $timeout);
+      $stage_id = parent::begin(['drupal' => $target_version], $timeout);
       $this->stage();
       $this->apply();
+    }
+    catch (\Throwable $e) {
+      $this->logger->error($e->getMessage());
+
+      // If an error occurred during the pre-create event, the stage will be
+      // marked as available and we shouldn't try to destroy it, since the stage
+      // must be claimed in order to be destroyed.
+      if (!$this->isAvailable()) {
+        $this->destroy();
+      }
+      return;
+    }
+
+    // Perform a subrequest to run ::postApply(), which needs to be done in a
+    // separate request.
+    // @see parent::apply()
+    $url = Url::fromRoute('automatic_updates.cron.post_apply', [
+      'stage_id' => $stage_id,
+      'installed_version' => $installed_version,
+      'target_version' => $target_version,
+      'key' => $this->state->get('system.cron_key'),
+    ]);
+    $this->triggerPostApply($url);
+  }
+
+  /**
+   * Executes a subrequest to run post-apply tasks.
+   *
+   * @param \Drupal\Core\Url $url
+   *   The URL of the post-apply handler.
+   */
+  protected function triggerPostApply(Url $url): void {
+    $url = $url->setAbsolute()->toString();
+
+    // If we're using a single-threaded web server (e.g., the built-in PHP web
+    // server used in build tests), allow the post-apply request to be sent to
+    // an alternate port.
+    // @todo If using the built-in PHP web server, validate that this port is
+    //   set in https://www.drupal.org/i/3293146.
+    $port = $this->configFactory->get('automatic_updates.settings')
+      ->get('cron_port');
+    if ($port) {
+      $url = (string) (new GuzzleUri($url))->withPort($port);
+    }
+
+    // Use the bare cURL API to make the request, so that we're not relying on
+    // any third-party classes or other code which may have changed during the
+    // update.
+    $curl = curl_init($url);
+    curl_setopt($curl, CURLOPT_RETURNTRANSFER, TRUE);
+    $response = curl_exec($curl);
+    $status = curl_getinfo($curl, CURLINFO_RESPONSE_CODE);
+    if ($status !== 200) {
+      $this->logger->error('Post-apply tasks failed with output: %status %response', [
+        '%status' => $status,
+        '%response' => $response,
+      ]);
+    }
+    curl_close($curl);
+  }
+
+  /**
+   * Runs post-apply tasks.
+   *
+   * @param string $stage_id
+   *   The stage ID.
+   * @param string $installed_version
+   *   The version of Drupal core that started the update.
+   * @param string $target_version
+   *   The version of Drupal core to which we updated.
+   *
+   * @return \Symfony\Component\HttpFoundation\Response
+   *   An empty 200 response if the post-apply tasks succeeded.
+   */
+  public function handlePostApply(string $stage_id, string $installed_version, string $target_version): Response {
+    $this->claim($stage_id);
+
+    // Run post-apply tasks in their own try-catch block so that, if anything
+    // raises an exception, we'll log it and proceed to destroy the stage as
+    // soon as possible (which is also what we do in ::performUpdate()).
+    try {
+      $this->postApply();
 
       $this->logger->info(
         'Drupal core has been updated from %previous_version to %target_version',
@@ -189,13 +285,6 @@ class CronUpdater extends Updater {
       $this->logger->error($e->getMessage());
     }
 
-    // If an error occurred during the pre-create event, the stage will be
-    // marked as available and we shouldn't try to destroy it, since the stage
-    // must be claimed in order to be destroyed.
-    if ($this->isAvailable()) {
-      return;
-    }
-
     // If any pre-destroy event subscribers raise validation errors, ensure they
     // are formatted and logged. But if any pre- or post-destroy event
     // subscribers throw another exception, don't bother catching it, since it
@@ -206,6 +295,8 @@ class CronUpdater extends Updater {
     catch (StageValidationException $e) {
       $this->logger->error($e->getMessage());
     }
+
+    return new Response();
   }
 
   /**

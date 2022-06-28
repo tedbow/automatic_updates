@@ -257,6 +257,7 @@ class ReadinessValidationManagerTest extends AutomaticUpdatesKernelTestBase {
     $updater->begin(['drupal' => '9.8.1']);
     $updater->stage();
     $updater->apply();
+    $updater->postApply();
     $updater->destroy();
 
     // The readiness validation manager shouldn't have any stored results.

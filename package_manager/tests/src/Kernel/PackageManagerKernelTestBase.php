@@ -141,6 +141,7 @@ abstract class PackageManagerKernelTestBase extends KernelTestBase {
       $stage->create();
       $stage->require(['drupal/core:9.8.1']);
       $stage->apply();
+      $stage->postApply();
       $stage->destroy();
 
       // If we did not get an exception, ensure we didn't expect any results.

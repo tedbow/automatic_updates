@@ -60,6 +60,9 @@ class CronUpdaterTest extends AutomaticUpdatesKernelTestBase {
     $this->disableValidators[] = 'automatic_updates.validator.staged_database_updates';
     $this->disableValidators[] = 'automatic_updates.staged_projects_validator';
     $this->disableValidators[] = 'automatic_updates.validator.scaffold_file_permissions';
+    // Since staging operations are bypassed, ignore any symbolic links in the
+    // running code base.
+    $this->disableValidators[] = 'package_manager.validator.symlink';
     parent::setUp();
 
     $this->logger = new TestLogger();

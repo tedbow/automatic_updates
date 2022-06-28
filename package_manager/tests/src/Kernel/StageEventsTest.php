@@ -100,6 +100,7 @@ class StageEventsTest extends PackageManagerKernelTestBase implements EventSubsc
     $this->stage->create();
     $this->stage->require(['ext-json:*']);
     $this->stage->apply();
+    $this->stage->postApply();
     $this->stage->destroy();
 
     $this->assertSame($this->events, [
@@ -154,6 +155,7 @@ class StageEventsTest extends PackageManagerKernelTestBase implements EventSubsc
       $this->stage->create();
       $this->stage->require(['ext-json:*']);
       $this->stage->apply();
+      $this->stage->postApply();
       $this->stage->destroy();
 
       $this->fail('Expected \Drupal\package_manager\Exception\StageValidationException to be thrown.');

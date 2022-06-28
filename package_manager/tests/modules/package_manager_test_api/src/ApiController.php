@@ -3,10 +3,12 @@
 namespace Drupal\package_manager_test_api;
 
 use Drupal\Core\Controller\ControllerBase;
+use Drupal\Core\Url;
 use Drupal\package_manager\PathLocator;
 use Drupal\package_manager\Stage;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
 
 /**
@@ -63,10 +65,10 @@ class ApiController extends ControllerBase {
   }
 
   /**
-   * Runs a complete stage life cycle.
+   * Begins a stage life cycle.
    *
    * Creates a staging area, requires packages into it, applies changes to the
-   * active directory, and destroys the stage.
+   * active directory.
    *
    * @param \Symfony\Component\HttpFoundation\Request $request
    *   The request. The runtime and dev dependencies are expected to be in
@@ -75,18 +77,47 @@ class ApiController extends ControllerBase {
    *   contains an array of file paths, relative to the project root, whose
    *   contents should be returned in the response.
    *
-   * @return \Symfony\Component\HttpFoundation\JsonResponse
-   *   A JSON response containing an associative array of the contents of the
-   *   files listed in the 'files_to_return' request key. The array will be
-   *   keyed by path, relative to the project root.
+   * @return \Symfony\Component\HttpFoundation\RedirectResponse
+   *   A response that directs to the ::finish() method.
+   *
+   * @see ::finish()
    */
-  public function run(Request $request): JsonResponse {
-    $this->stage->create();
+  public function run(Request $request): RedirectResponse {
+    $id = $this->stage->create();
     $this->stage->require(
       $request->get('runtime', []),
       $request->get('dev', [])
     );
     $this->stage->apply();
+
+    $redirect_url = Url::fromRoute('package_manager_test_api.finish')
+      ->setRouteParameter('id', $id)
+      ->setOption('query', [
+        'files_to_return' => $request->get('files_to_return', []),
+      ])
+      ->setAbsolute()
+      ->toString();
+
+    return new RedirectResponse($redirect_url);
+  }
+
+  /**
+   * Performs post-apply tasks and destroys the stage.
+   *
+   * @param string $id
+   *   The stage ID.
+   * @param \Symfony\Component\HttpFoundation\Request $request
+   *   The request. There may be a 'files_to_return' key in either the query
+   *   string or request body which contains an array of file paths, relative to
+   *   the project root, whose contents should be returned in the response.
+   *
+   * @return \Symfony\Component\HttpFoundation\JsonResponse
+   *   A JSON response containing an associative array of the contents of the
+   *   files listed in the 'files_to_return' request key. The array will be
+   *   keyed by path, relative to the project root.
+   */
+  public function finish(string $id, Request $request): JsonResponse {
+    $this->stage->claim($id)->postApply();
     $this->stage->destroy();
 
     $dir = $this->pathLocator->getProjectRoot();

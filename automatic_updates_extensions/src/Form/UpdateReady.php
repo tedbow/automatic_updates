@@ -162,6 +162,7 @@ final class UpdateReady extends FormBase {
       ->setTitle($this->t('Apply updates'))
       ->setInitMessage($this->t('Preparing to apply updates'))
       ->addOperation([BatchProcessor::class, 'commit'], [$stage_id])
+      ->addOperation([BatchProcessor::class, 'postApply'], [$stage_id])
       ->addOperation([BatchProcessor::class, 'clean'], [$stage_id])
       ->setFinishCallback([BatchProcessor::class, 'finishCommit'])
       ->toArray();

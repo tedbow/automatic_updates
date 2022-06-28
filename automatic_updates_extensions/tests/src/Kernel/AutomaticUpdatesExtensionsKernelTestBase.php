@@ -103,6 +103,7 @@ abstract class AutomaticUpdatesExtensionsKernelTestBase extends AutomaticUpdates
       $updater->begin($project_versions);
       $updater->stage();
       $updater->apply();
+      $updater->postApply();
       $updater->destroy();
 
       // If we did not get an exception, ensure we didn't expect any results.

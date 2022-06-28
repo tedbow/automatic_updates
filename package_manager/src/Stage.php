@@ -338,6 +338,15 @@ class Stage {
   /**
    * Applies staged changes to the active directory.
    *
+   * After the staged changes are applied, the current request should be
+   * terminated as soon as possible. This is because the code loaded into the
+   * PHP runtime may no longer match the code that is physically present in the
+   * active code base, which means that the current request is running in an
+   * unreliable, inconsistent environment. In the next request,
+   * ::postApply() should be called as early as possible after Drupal is
+   * fully bootstrapped, to rebuild the service container, flush caches, and
+   * dispatch the post-apply event.
+   *
    * @param int|null $timeout
    *   (optional) How long to allow the file copying operation to run before
    *   timing out, in seconds, or NULL to never time out. Defaults to 600
@@ -352,15 +361,31 @@ class Stage {
     // If an error occurs while dispatching the events, ensure that ::destroy()
     // doesn't think we're in the middle of applying the staged changes to the
     // active directory.
-    $release_apply = function (): void {
-      $this->tempStore->delete(self::TEMPSTORE_APPLY_TIME_KEY);
-    };
-
     $event = new PreApplyEvent($this);
     $this->tempStore->set(self::TEMPSTORE_APPLY_TIME_KEY, $this->time->getRequestTime());
-    $this->dispatch($event, $release_apply);
+    $this->dispatch($event, $this->setNotApplying());
 
     $this->committer->commit($stage_dir, $active_dir, new PathList($event->getExcludedPaths()), NULL, $timeout);
+  }
+
+  /**
+   * Returns a closure that marks this stage as no longer being applied.
+   *
+   * @return \Closure
+   *   A closure that, when called, marks this stage as no longer in the process
+   *   of being applied to the active directory.
+   */
+  private function setNotApplying(): \Closure {
+    return function (): void {
+      $this->tempStore->delete(self::TEMPSTORE_APPLY_TIME_KEY);
+    };
+  }
+
+  /**
+   * Performs post-apply tasks.
+   */
+  public function postApply(): void {
+    $this->checkOwnership();
 
     // Rebuild the container and clear all caches, to ensure that new services
     // are picked up.
@@ -370,6 +395,7 @@ class Stage {
     // unlikely to call newly added code during the current request.
     $this->eventDispatcher = \Drupal::service('event_dispatcher');
 
+    $release_apply = $this->setNotApplying();
     $this->dispatch(new PostApplyEvent($this), $release_apply);
     $release_apply();
   }

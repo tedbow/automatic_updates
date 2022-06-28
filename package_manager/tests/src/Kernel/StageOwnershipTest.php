@@ -114,6 +114,7 @@ class StageOwnershipTest extends PackageManagerKernelTestBase {
         ['vendor/lib:0.0.1'],
       ],
       'apply' => [],
+      'postApply' => [],
       'destroy' => [],
     ];
     foreach ($callbacks as $method => $arguments) {
@@ -179,6 +180,7 @@ class StageOwnershipTest extends PackageManagerKernelTestBase {
         ['vendor/lib:0.0.1'],
       ],
       'apply' => [],
+      'postApply' => [],
       'destroy' => [],
     ];
     foreach ($callbacks as $method => $arguments) {

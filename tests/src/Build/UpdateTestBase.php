@@ -42,6 +42,19 @@ abstract class UpdateTestBase extends TemplateProjectTestBase {
       'automatic_updates_test_cron',
       'automatic_updates_test_release_history',
     ]);
+
+    // When checking for updates, we need to be able to make sub-requests, but
+    // the built-in PHP server is single-threaded. Therefore, open a second
+    // server instance on another port, which will serve the metadata about
+    // available updates.
+    $port = $this->findAvailablePort();
+    $this->metadataServer = $this->instantiateServer($port);
+
+    $code = <<<END
+\$config['automatic_updates.settings']['cron_port'] = $port;
+\$config['update.settings']['fetch']['url'] = 'http://localhost:$port/test-release-history';
+END;
+    $this->writeSettings($code);
   }
 
   /**
@@ -54,22 +67,7 @@ abstract class UpdateTestBase extends TemplateProjectTestBase {
    */
   protected function setReleaseMetadata(array $xml_map): void {
     $xml_map = var_export($xml_map, TRUE);
-    $code = <<<END
-\$config['update_test.settings']['xml_map'] = $xml_map;
-END;
-
-    // When checking for updates, we need to be able to make sub-requests, but
-    // the built-in PHP server is single-threaded. Therefore, if needed, open a
-    // second server instance on another port, which will serve the metadata
-    // about available updates.
-    if (empty($this->metadataServer)) {
-      $port = $this->findAvailablePort();
-      $this->metadataServer = $this->instantiateServer($port);
-      $code .= <<<END
-\$config['update.settings']['fetch']['url'] = 'http://localhost:$port/test-release-history';
-END;
-    }
-    $this->writeSettings($code);
+    $this->writeSettings("\$config['update_test.settings']['xml_map'] = $xml_map;");
   }
 
   /**

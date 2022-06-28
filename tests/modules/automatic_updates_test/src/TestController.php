@@ -32,6 +32,7 @@ class TestController extends ControllerBase {
       $updater->begin(['drupal' => $to_version]);
       $updater->stage();
       $updater->apply();
+      $updater->postApply();
       $updater->destroy();
 
       // The code base has been updated, but as far as the PHP runtime is
