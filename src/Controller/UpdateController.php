@@ -4,6 +4,7 @@ namespace Drupal\automatic_updates\Controller;
 
 use Drupal\automatic_updates\BatchProcessor;
 use Drupal\Core\Controller\ControllerBase;
+use Drupal\Core\Messenger\MessengerInterface;
 use Drupal\Core\State\StateInterface;
 use Drupal\Core\Url;
 use Drupal\package_manager\Validator\PendingUpdatesValidator;
@@ -74,6 +75,17 @@ class UpdateController extends ControllerBase {
       // previously not in maintenance mode.
       if (!$request->getSession()->remove(BatchProcessor::MAINTENANCE_MODE_SESSION_KEY)) {
         $this->state()->set('system.maintenance_mode', FALSE);
+        // @todo Remove once the core bug that shows the maintenance mode
+        //   message after the site is out of maintenance mode is fixed in
+        //   https://www.drupal.org/i/3279246.
+        $messages = $this->messenger()->messagesByType(MessengerInterface::TYPE_STATUS);
+        $messages = array_filter($messages, function (string $message) {
+          return !str_starts_with($message, (string) $this->t('Operating in maintenance mode.'));
+        });
+        $this->messenger()->deleteByType(MessengerInterface::TYPE_STATUS);
+        foreach ($messages as $message) {
+          $this->messenger()->addStatus($message);
+        }
       }
     }
     $this->messenger()->addStatus($message);

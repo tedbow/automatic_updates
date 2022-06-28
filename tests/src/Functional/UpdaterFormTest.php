@@ -579,7 +579,7 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
     $this->assertUpdateStagedTimes(1);
     $this->assertUpdateReady('9.8.1');
     // Confirm that the site was put into maintenance mode if needed.
-    $this->assertSame($state->get('system.maintenance_mode'), $maintenance_mode_on);
+    $this->assertMaintenanceMode($maintenance_mode_on);
     $page->pressButton('Continue');
     $this->checkForMetaRefresh();
     $assert_session->addressEquals('/admin/reports/updates');
@@ -589,7 +589,7 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
     $this->assertTrue($state->get(PreApplyEvent::class . '.system.maintenance_mode'));
     $assert_session->pageTextContainsOnce('Update complete!');
     // Confirm the site was returned to the original maintenance mode state.
-    $this->assertSame($state->get('system.maintenance_mode'), $maintenance_mode_on);
+    $this->assertMaintenanceMode($maintenance_mode_on);
   }
 
   /**
@@ -676,6 +676,25 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
     TestSubscriber1::setTestResult(NULL, ReadinessCheckEvent::class);
 
     return $message;
+  }
+
+  /**
+   * Asserts maintenance is the expected value and correct message appears.
+   *
+   * @param bool $expected_maintenance_mode
+   *   Whether maintenance mode is expected to be on or off.
+   */
+  private function assertMaintenanceMode(bool $expected_maintenance_mode): void {
+    $this->assertSame($this->container->get('state')
+      ->get('system.maintenance_mode'), $expected_maintenance_mode);
+    if ($expected_maintenance_mode) {
+      $this->assertSession()
+        ->pageTextContains('Operating in maintenance mode.');
+    }
+    else {
+      $this->assertSession()
+        ->pageTextNotContains('Operating in maintenance mode.');
+    }
   }
 
   /**
