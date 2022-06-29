@@ -1,22 +1,17 @@
 <?php
 
-namespace Drupal\automatic_updates\Validator;
+namespace Drupal\package_manager\Validator;
 
-use Drupal\automatic_updates\Event\ReadinessCheckEvent;
-use Drupal\automatic_updates\Updater;
 use Drupal\Core\Site\Settings;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\Core\StringTranslation\TranslationInterface;
 use Drupal\package_manager\Event\PreCreateEvent;
 use Drupal\package_manager\Event\PreOperationStageEvent;
-use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 /**
- * @internal
- *   This class is an internal part of the module's update handling and
- *   should not be used by external code.
+ * Checks that Drupal's settings are valid for Package Manager.
  */
-class SettingsValidator implements EventSubscriberInterface {
+class SettingsValidator implements PreOperationStageValidatorInterface {
 
   use StringTranslationTrait;
 
@@ -31,13 +26,10 @@ class SettingsValidator implements EventSubscriberInterface {
   }
 
   /**
-   * Validates site settings before an update starts.
-   *
-   * @param \Drupal\package_manager\Event\PreOperationStageEvent $event
-   *   The event object.
+   * {@inheritdoc}
    */
-  public function checkSettings(PreOperationStageEvent $event): void {
-    if ($event->getStage() instanceof Updater && Settings::get('update_fetch_with_http_fallback')) {
+  public function validateStagePreOperation(PreOperationStageEvent $event): void {
+    if (Settings::get('update_fetch_with_http_fallback')) {
       $event->addError([
         $this->t('The <code>update_fetch_with_http_fallback</code> setting must be disabled.'),
       ]);
@@ -49,8 +41,7 @@ class SettingsValidator implements EventSubscriberInterface {
    */
   public static function getSubscribedEvents() {
     return [
-      ReadinessCheckEvent::class => 'checkSettings',
-      PreCreateEvent::class => 'checkSettings',
+      PreCreateEvent::class => 'validateStagePreOperation',
     ];
   }
 

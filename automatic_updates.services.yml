@@ -49,12 +49,6 @@ services:
       - '@string_translation'
     tags:
       - { name: event_subscriber }
-  automatic_updates.validator.settings:
-    class: Drupal\automatic_updates\Validator\SettingsValidator
-    arguments:
-      - '@string_translation'
-    tags:
-      - { name: event_subscriber }
   automatic_updates.release_chooser:
     class: Drupal\automatic_updates\ReleaseChooser
     arguments:
@@ -63,6 +57,12 @@ services:
     class: Drupal\automatic_updates\Validator\PackageManagerReadinessCheck
     arguments:
       - '@package_manager.validator.composer_executable'
+    tags:
+      - { name: event_subscriber }
+  automatic_updates.settings_validator:
+    class: Drupal\automatic_updates\Validator\PackageManagerReadinessCheck
+    arguments:
+      - '@package_manager.validator.settings'
     tags:
       - { name: event_subscriber }
   automatic_updates.validator.composer_settings:

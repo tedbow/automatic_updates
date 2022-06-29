@@ -240,3 +240,9 @@ services:
     calls:
       - ['setContainer', ['@service_container']]
     lazy: true
+  package_manager.validator.settings:
+    class: Drupal\package_manager\Validator\SettingsValidator
+    arguments:
+      - '@string_translation'
+    tags:
+      - { name: event_subscriber }

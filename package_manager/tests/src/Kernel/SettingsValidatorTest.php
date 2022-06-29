@@ -1,22 +1,16 @@
 <?php
 
-namespace Drupal\Tests\automatic_updates\Kernel\ReadinessValidation;
+namespace Drupal\Tests\package_manager\Kernel;
 
 use Drupal\package_manager\Exception\StageValidationException;
 use Drupal\package_manager\ValidationResult;
-use Drupal\Tests\automatic_updates\Kernel\AutomaticUpdatesKernelTestBase;
 
 /**
- * @covers \Drupal\Tests\automatic_updates\Kernel\ReadinessValidation\SettingsValidatorTest
+ * @covers \Drupal\package_manager\Validator\SettingsValidator
  *
- * @group automatic_updates
+ * @group package_manager
  */
-class SettingsValidatorTest extends AutomaticUpdatesKernelTestBase {
-
-  /**
-   * {@inheritdoc}
-   */
-  protected static $modules = ['automatic_updates'];
+class SettingsValidatorTest extends PackageManagerKernelTestBase {
 
   /**
    * Data provider for ::testSettingsValidation().
@@ -50,11 +44,8 @@ class SettingsValidatorTest extends AutomaticUpdatesKernelTestBase {
 
     $this->setSetting('update_fetch_with_http_fallback', $setting);
 
-    $this->assertCheckerResultsFromManager($expected_results, TRUE);
     try {
-      $this->container->get('automatic_updates.updater')->begin([
-        'drupal' => '9.8.1',
-      ]);
+      $this->createStage()->create();
       // If there was no exception, ensure we're not expecting any errors.
       $this->assertSame([], $expected_results);
     }
