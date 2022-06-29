@@ -38,7 +38,6 @@ class StagedDatabaseUpdateValidatorTest extends AutomaticUpdatesKernelTestBase {
    */
   protected function setUp(): void {
     parent::setUp();
-    $this->createTestProject();
 
     $this->logger = new TestLogger();
     $this->container->get('logger.factory')
@@ -49,8 +48,8 @@ class StagedDatabaseUpdateValidatorTest extends AutomaticUpdatesKernelTestBase {
   /**
    * {@inheritdoc}
    */
-  protected function createTestProject(): void {
-    parent::createTestProject();
+  protected function createVirtualProject(): void {
+    parent::createVirtualProject();
 
     $drupal_root = $this->getDrupalRoot();
     $virtual_active_dir = $this->container->get('package_manager.path_locator')

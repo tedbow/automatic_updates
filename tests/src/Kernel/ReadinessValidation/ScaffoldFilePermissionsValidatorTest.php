@@ -31,7 +31,6 @@ class ScaffoldFilePermissionsValidatorTest extends AutomaticUpdatesKernelTestBas
   protected function setUp(): void {
     parent::setUp();
 
-    $this->createTestProject();
     $this->activeDir = $this->container->get('package_manager.path_locator')
       ->getProjectRoot();
   }
@@ -299,7 +298,7 @@ class ScaffoldFilePermissionsValidatorTest extends AutomaticUpdatesKernelTestBas
 
     // Simulate updating Drupal core. This will copy the active directory into
     // the (virtual) staging area.
-    // @see ::createTestProject()
+    // @see ::createVirtualProject()
     // @see \Drupal\package_manager_test_fixture\EventSubscriber\FixtureStager::copyFilesFromFixture()
     $updater = $this->container->get('automatic_updates.updater');
     $updater->begin(['drupal' => '9.8.1']);

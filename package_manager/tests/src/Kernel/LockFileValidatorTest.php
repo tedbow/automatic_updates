@@ -28,7 +28,6 @@ class LockFileValidatorTest extends PackageManagerKernelTestBase {
    */
   protected function setUp(): void {
     parent::setUp();
-    $this->createTestProject();
     $this->activeDir = $this->container->get('package_manager.path_locator')
       ->getProjectRoot();
   }

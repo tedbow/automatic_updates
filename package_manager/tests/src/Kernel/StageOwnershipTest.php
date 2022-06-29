@@ -39,9 +39,6 @@ class StageOwnershipTest extends PackageManagerKernelTestBase {
     $this->installSchema('user', ['users_data']);
     $this->installEntitySchema('user');
     $this->registerPostUpdateFunctions();
-    // Use a virtual project so that the test isn't affected by symlinks or
-    // other unexpected things that might be present in the running code base.
-    $this->createTestProject();
   }
 
   /**
@@ -242,7 +239,6 @@ class StageOwnershipTest extends PackageManagerKernelTestBase {
     ]);
     // Ensure we have an up-to-date container.
     $this->container = $this->container->get('kernel')->getContainer();
-    $this->createTestProject();
 
     $logger_channel = $this->container->get('logger.channel.file');
     $arguments = [

@@ -2,10 +2,10 @@
 
 namespace Drupal\package_manager\Validator;
 
+use Drupal\Core\StringTranslation\TranslationInterface;
 use Drupal\package_manager\Event\PreCreateEvent;
 use Drupal\package_manager\Event\PreOperationStageEvent;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
-use Drupal\Core\StringTranslation\TranslationInterface;
 use Drupal\package_manager\PathLocator;
 
 /**
@@ -23,25 +23,15 @@ class WritableFileSystemValidator implements PreOperationStageValidatorInterface
   protected $pathLocator;
 
   /**
-   * The Drupal root.
-   *
-   * @var string
-   */
-  protected $appRoot;
-
-  /**
    * Constructs a WritableFileSystemValidator object.
    *
    * @param \Drupal\package_manager\PathLocator $path_locator
    *   The path locator service.
-   * @param string $app_root
-   *   The Drupal root.
    * @param \Drupal\Core\StringTranslation\TranslationInterface $translation
    *   The translation service.
    */
-  public function __construct(PathLocator $path_locator, string $app_root, TranslationInterface $translation) {
+  public function __construct(PathLocator $path_locator, TranslationInterface $translation) {
     $this->pathLocator = $path_locator;
-    $this->appRoot = $app_root;
     $this->setStringTranslation($translation);
   }
 
@@ -56,9 +46,14 @@ class WritableFileSystemValidator implements PreOperationStageValidatorInterface
   public function validateStagePreOperation(PreOperationStageEvent $event): void {
     $messages = [];
 
-    if (!is_writable($this->appRoot)) {
+    $drupal_root = $this->pathLocator->getProjectRoot();
+    $web_root = $this->pathLocator->getWebRoot();
+    if ($web_root) {
+      $drupal_root .= DIRECTORY_SEPARATOR . $web_root;
+    }
+    if (!is_writable($drupal_root)) {
       $messages[] = $this->t('The Drupal directory "@dir" is not writable.', [
-        '@dir' => $this->appRoot,
+        '@dir' => $drupal_root,
       ]);
     }
 

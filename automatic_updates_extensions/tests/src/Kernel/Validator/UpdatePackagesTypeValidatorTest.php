@@ -25,7 +25,6 @@ class UpdatePackagesTypeValidatorTest extends AutomaticUpdatesExtensionsKernelTe
     $this->disableValidators[] = 'automatic_updates_extensions.validator.target_release';
     $this->disableValidators[] = 'automatic_updates_extensions.validator.packages_installed_with_composer';
     parent::setUp();
-    $this->createTestProject();
   }
 
   /**

@@ -67,6 +67,10 @@ class StageTest extends PackageManagerKernelTestBase {
     $site_id = $this->config('system.site')->get('uuid');
     $this->assertNotEmpty($site_id);
 
+    // Even though we're using a virtual project, we want to test what happens
+    // when we aren't.
+    static::$testStagingRoot = NULL;
+
     $stage = $this->createStage();
     $id = $stage->create();
     // If the file_temp_path setting is empty, the stage directory should be

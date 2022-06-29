@@ -20,7 +20,7 @@ class DiskSpaceValidatorTest extends PackageManagerKernelTestBase {
    *   Sets of arguments to pass to the test method.
    */
   public function providerDiskSpaceValidation(): array {
-    // These will be defined by ::createTestProject().
+    // These are defined by ::createVirtualProject().
     $root = 'vfs://root/active';
     $vendor = "$root/vendor";
 
@@ -143,8 +143,6 @@ class DiskSpaceValidatorTest extends PackageManagerKernelTestBase {
    * @dataProvider providerDiskSpaceValidation
    */
   public function testDiskSpaceValidation(bool $shared_disk, array $free_space, array $expected_results): void {
-    $this->createTestProject();
-
     /** @var \Drupal\Tests\package_manager\Kernel\TestDiskSpaceValidator $validator */
     $validator = $this->container->get('package_manager.validator.disk_space');
     $validator->sharedDisk = $shared_disk;

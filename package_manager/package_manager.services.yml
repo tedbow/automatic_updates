@@ -179,7 +179,6 @@ services:
     class: Drupal\package_manager\Validator\WritableFileSystemValidator
     arguments:
       - '@package_manager.path_locator'
-      - '%app.root%'
       - '@string_translation'
     tags:
       - { name: event_subscriber }

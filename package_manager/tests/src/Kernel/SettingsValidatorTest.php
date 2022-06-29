@@ -38,10 +38,6 @@ class SettingsValidatorTest extends PackageManagerKernelTestBase {
    * @dataProvider providerSettingsValidation
    */
   public function testSettingsValidation(bool $setting, array $expected_results): void {
-    // Use a virtual project so that the test isn't affected by symlinks or
-    // other unexpected things that might be present in the running code base.
-    $this->createTestProject();
-
     $this->setSetting('update_fetch_with_http_fallback', $setting);
 
     try {

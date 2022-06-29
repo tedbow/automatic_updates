@@ -32,7 +32,6 @@ class VendorHardeningExcluderTest extends PackageManagerKernelTestBase {
     // Ensure we have an up-to-date container.
     $this->container = $this->container->get('kernel')->getContainer();
 
-    $this->createTestProject();
     $active_dir = $this->container->get('package_manager.path_locator')
       ->getProjectRoot();
 

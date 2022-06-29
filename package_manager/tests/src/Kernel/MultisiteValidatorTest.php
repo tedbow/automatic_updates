@@ -46,8 +46,6 @@ class MultisiteValidatorTest extends PackageManagerKernelTestBase {
    * @dataProvider providerMultisite
    */
   public function testMultisite(bool $is_multisite, array $expected_results = []): void {
-    $this->createTestProject();
-
     // If we should simulate a multisite, ensure there is a sites.php in the
     // test project.
     // @see \Drupal\package_manager\Validator\MultisiteValidator::isMultisite()

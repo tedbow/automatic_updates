@@ -20,7 +20,6 @@ class UpdateReleaseValidatorTest extends AutomaticUpdatesExtensionsKernelTestBas
   protected function setUp(): void {
     $this->disableValidators[] = 'automatic_updates_extensions.validator.packages_installed_with_composer';
     parent::setUp();
-    $this->createTestProject();
   }
 
   /**

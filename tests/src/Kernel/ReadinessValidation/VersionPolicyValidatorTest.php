@@ -22,16 +22,6 @@ class VersionPolicyValidatorTest extends AutomaticUpdatesKernelTestBase {
   protected static $modules = ['automatic_updates'];
 
   /**
-   * {@inheritdoc}
-   */
-  protected function setUp(): void {
-    parent::setUp();
-    // Use a virtual project so that the test isn't affected by symlinks or
-    // other unexpected things that might be present in the running code base.
-    $this->createTestProject();
-  }
-
-  /**
    * Data provider for ::testReadinessCheck().
    *
    * @return array[]
@@ -413,7 +403,6 @@ class VersionPolicyValidatorTest extends AutomaticUpdatesKernelTestBase {
    *   known.
    */
   private function assertTargetVersionNotDiscoverable(\Closure $listener): void {
-    $this->createTestProject();
     $this->container->get('event_dispatcher')
       ->addListener(PreCreateEvent::class, $listener, PHP_INT_MAX);
 

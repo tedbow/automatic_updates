@@ -26,10 +26,6 @@ class CronFrequencyValidatorTest extends AutomaticUpdatesKernelTestBase {
    */
   protected function setUp(): void {
     parent::setUp();
-    // Run with a virtual project so that the test isn't affected by any
-    // symbolic links or other artifacts that might be in the running code
-    // base.
-    $this->createTestProject();
     // In this test, we do not want to do an update. We're just testing that
     // cron is configured to run frequently enough to do automatic updates. So,
     // pretend we're already on the latest secure version of core.

@@ -36,7 +36,6 @@ class PackagesInstalledWithComposerValidatorTest extends AutomaticUpdatesExtensi
     // type validator.
     $this->disableValidators[] = 'automatic_updates_extensions.validator.packages_type';
     parent::setUp();
-    $this->createTestProject();
     $this->activeDir = $this->container->get('package_manager.path_locator')
       ->getProjectRoot();
   }

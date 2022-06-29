@@ -61,7 +61,6 @@ class SqliteDatabaseExcluderTest extends PackageManagerKernelTestBase {
     // Ensure we have an up-to-date container.
     $this->container = $this->container->get('kernel')->getContainer();
 
-    $this->createTestProject();
     $active_dir = $this->container->get('package_manager.path_locator')
       ->getProjectRoot();
 
@@ -99,8 +98,6 @@ class SqliteDatabaseExcluderTest extends PackageManagerKernelTestBase {
    *   Sets of arguments to pass to the test method.
    */
   public function providerPathProcessing(): array {
-    $drupal_root = $this->getDrupalRoot();
-
     return [
       'relative path, in site directory' => [
         'sites/example.com/db.sqlite',
@@ -119,7 +116,7 @@ class SqliteDatabaseExcluderTest extends PackageManagerKernelTestBase {
         ],
       ],
       'absolute path, in site directory' => [
-        $drupal_root . '/sites/example.com/db.sqlite',
+        '/sites/example.com/db.sqlite',
         [
           'sites/example.com/db.sqlite',
           'sites/example.com/db.sqlite-shm',
@@ -127,7 +124,7 @@ class SqliteDatabaseExcluderTest extends PackageManagerKernelTestBase {
         ],
       ],
       'absolute path, at root' => [
-        $drupal_root . '/db.sqlite',
+        '/db.sqlite',
         [
           'db.sqlite',
           'db.sqlite-shm',
@@ -146,13 +143,19 @@ class SqliteDatabaseExcluderTest extends PackageManagerKernelTestBase {
    *
    * @param string $database_path
    *   The path of the SQLite database, as set in the database connection
-   *   options.
+   *   options. If it begins with a slash, it will be prefixed with the path of
+   *   the active directory.
    * @param string[] $expected_exclusions
    *   The database paths which should be flagged for exclusion.
    *
    * @dataProvider providerPathProcessing
    */
   public function testPathProcessing(string $database_path, array $expected_exclusions): void {
+    // If the database path should be treated as absolute, prefix it with the
+    // path of the active directory.
+    if (str_starts_with($database_path, '/')) {
+      $database_path = $this->container->get('package_manager.path_locator')->getProjectRoot() . $database_path;
+    }
     $this->mockDatabase([
       'database' => $database_path,
     ]);

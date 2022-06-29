@@ -53,15 +53,7 @@ abstract class PackageManagerKernelTestBase extends KernelTestBase {
    *
    * @var string[]
    */
-  protected $disableValidators = [
-    // Disable the filesystem permissions validator, since we cannot guarantee
-    // that the current code base will be writable in all testing situations.
-    // We test this validator functionally in Automatic Updates' build tests,
-    // since those do give us control over the filesystem permissions.
-    // @see \Drupal\Tests\automatic_updates\Build\CoreUpdateTest::assertReadOnlyFileSystemError()
-    // @see \Drupal\Tests\package_manager\Kernel\WritableFileSystemValidatorTest
-    'package_manager.validator.file_system',
-  ];
+  protected $disableValidators = [];
 
   /**
    * {@inheritdoc}
@@ -69,6 +61,8 @@ abstract class PackageManagerKernelTestBase extends KernelTestBase {
   protected function setUp(): void {
     parent::setUp();
     $this->installConfig('package_manager');
+
+    $this->createVirtualProject();
   }
 
   /**
@@ -89,7 +83,7 @@ abstract class PackageManagerKernelTestBase extends KernelTestBase {
     // is rebuilt, which destroys the mocked services and can cause unexpected
     // side effects. The 'persist' tag prevents the mocks from being destroyed
     // during a container rebuild.
-    // @see ::createTestProject()
+    // @see ::createVirtualProject()
     $persist = [
       'package_manager.path_locator',
       'package_manager.validator.disk_space',
@@ -181,7 +175,7 @@ abstract class PackageManagerKernelTestBase extends KernelTestBase {
    * and 'stage', which is the root directory used to stage changes. The path
    * locator service will also be mocked so that it points to the test project.
    */
-  protected function createTestProject(): void {
+  protected function createVirtualProject(): void {
     // Create the active directory and copy its contents from a fixture.
     $active_dir = vfsStream::newDirectory('active');
     $this->vfsRoot->addChild($active_dir);

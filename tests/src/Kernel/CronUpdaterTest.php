@@ -357,10 +357,6 @@ class CronUpdaterTest extends AutomaticUpdatesKernelTestBase {
    * Tests that user 1 is emailed when an unattended update succeeds.
    */
   public function testEmailOnSuccess(): void {
-    // Use a virtual project so that the test is unaffected by symlinks or other
-    // artifacts that might be in the running code base.
-    $this->createTestProject();
-
     $this->config('update.settings')
       ->set('notification.emails', [
         'emissary@deep.space',

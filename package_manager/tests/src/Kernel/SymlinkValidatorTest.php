@@ -17,14 +17,6 @@ class SymlinkValidatorTest extends PackageManagerKernelTestBase {
   /**
    * {@inheritdoc}
    */
-  protected function setUp(): void {
-    parent::setUp();
-    $this->createTestProject();
-  }
-
-  /**
-   * {@inheritdoc}
-   */
   public function register(ContainerBuilder $container) {
     parent::register($container);
 
@@ -66,7 +58,7 @@ class SymlinkValidatorTest extends PackageManagerKernelTestBase {
     $stage->create();
     // Simulate updating a package. This will copy the active directory into
     // the (virtual) staging area.
-    // @see ::createTestProject()
+    // @see ::createVirtualProject()
     // @see \Drupal\package_manager_test_fixture\EventSubscriber\FixtureStager::copyFilesFromFixture()
     $stage->require(['composer/semver:^3']);
 
@@ -99,7 +91,7 @@ class SymlinkValidatorTest extends PackageManagerKernelTestBase {
     $stage->create();
     // Simulate updating a package. This will copy the active directory into
     // the (virtual) staging area.
-    // @see ::createTestProject()
+    // @see ::createVirtualProject()
     // @see \Drupal\package_manager_test_fixture\EventSubscriber\FixtureStager::copyFilesFromFixture()
     $stage->require(['composer/semver:^3']);
 
