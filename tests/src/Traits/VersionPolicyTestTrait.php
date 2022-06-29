@@ -18,7 +18,7 @@ trait VersionPolicyTestTrait {
    *   The target version of Drupal, or NULL if it's not known.
    * @param string[] $expected_errors
    *   The expected error messages, if any.
-   * @param \Drupal\automatic_updates_9_3_shim\ProjectRelease[] $available_releases
+   * @param \Drupal\update\ProjectRelease[] $available_releases
    *   (optional) The available releases of Drupal core, keyed by version.
    *   Defaults to an empty array.
    */

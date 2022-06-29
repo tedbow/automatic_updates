@@ -12,7 +12,7 @@
   },
   "require": {
     "ext-json": "*",
-    "drupal/core": "^9.2",
+    "drupal/core": "^9.3",
     "php-tuf/composer-stager": "^1@beta",
     "composer/composer": "^2.2.12 || ^2.3.5",
     "composer-runtime-api": "^2.0.9"

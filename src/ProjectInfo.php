@@ -3,7 +3,7 @@
 namespace Drupal\automatic_updates;
 
 use Composer\Semver\Comparator;
-use Drupal\automatic_updates_9_3_shim\ProjectRelease;
+use Drupal\update\ProjectRelease;
 use Drupal\Core\Extension\ExtensionVersion;
 use Drupal\update\UpdateManagerInterface;
 
@@ -35,7 +35,7 @@ class ProjectInfo {
   /**
    * Determines if a release can be installed.
    *
-   * @param \Drupal\automatic_updates_9_3_shim\ProjectRelease $release
+   * @param \Drupal\update\ProjectRelease $release
    *   The project release.
    * @param string[] $support_branches
    *   The supported branches.
@@ -80,7 +80,7 @@ class ProjectInfo {
   /**
    * Gets all project releases to which the site can update.
    *
-   * @return \Drupal\automatic_updates_9_3_shim\ProjectRelease[]|null
+   * @return \Drupal\update\ProjectRelease[]|null
    *   If the project information is available, an array of releases that can be
    *   installed, keyed by version number; otherwise NULL. The releases are in
    *   descending order by version number (i.e., higher versions are listed

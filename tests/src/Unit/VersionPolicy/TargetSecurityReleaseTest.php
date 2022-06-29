@@ -3,7 +3,7 @@
 namespace Drupal\Tests\automatic_updates\Unit\VersionPolicy;
 
 use Drupal\automatic_updates\Validator\VersionPolicy\TargetSecurityRelease;
-use Drupal\automatic_updates_9_3_shim\ProjectRelease;
+use Drupal\update\ProjectRelease;
 use Drupal\Tests\automatic_updates\Traits\VersionPolicyTestTrait;
 use Drupal\Tests\UnitTestCase;
 
@@ -53,7 +53,7 @@ class TargetSecurityReleaseTest extends UnitTestCase {
   /**
    * Tests that the target version must be a security release.
    *
-   * @param \Drupal\automatic_updates_9_3_shim\ProjectRelease[] $available_releases
+   * @param \Drupal\update\ProjectRelease[] $available_releases
    *   The available releases of Drupal core, keyed by version.
    * @param string[] $expected_errors
    *   The expected error messages, if any.

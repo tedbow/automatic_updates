@@ -2,13 +2,13 @@
 
 namespace Drupal\automatic_updates;
 
-use Drupal\automatic_updates_9_3_shim\ProjectRelease;
 use Drupal\Core\Language\LanguageManagerInterface;
 use Drupal\Core\Logger\LoggerChannelFactoryInterface;
 use Drupal\Core\Mail\MailManagerInterface;
 use Drupal\Core\State\StateInterface;
 use Drupal\Core\Url;
 use Drupal\package_manager\Exception\StageValidationException;
+use Drupal\update\ProjectRelease;
 use GuzzleHttp\Psr7\Uri as GuzzleUri;
 use Symfony\Component\HttpFoundation\Response;
 
@@ -133,7 +133,7 @@ class CronUpdater extends Updater {
   /**
    * Returns the release of Drupal core to update to, if any.
    *
-   * @return \Drupal\automatic_updates_9_3_shim\ProjectRelease|null
+   * @return \Drupal\update\ProjectRelease|null
    *   The release of Drupal core to which we will update, or NULL if there is
    *   nothing to update to.
    */

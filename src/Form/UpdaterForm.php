@@ -8,7 +8,7 @@ use Drupal\automatic_updates\ProjectInfo;
 use Drupal\automatic_updates\ReleaseChooser;
 use Drupal\automatic_updates\Updater;
 use Drupal\automatic_updates\Validation\ReadinessTrait;
-use Drupal\automatic_updates_9_3_shim\ProjectRelease;
+use Drupal\update\ProjectRelease;
 use Drupal\Core\Batch\BatchBuilder;
 use Drupal\Core\Extension\ExtensionVersion;
 use Drupal\Core\Form\FormBase;
@@ -341,7 +341,7 @@ final class UpdaterForm extends FormBase {
   /**
    * Gets the update table for a specific release.
    *
-   * @param \Drupal\automatic_updates_9_3_shim\ProjectRelease $release
+   * @param \Drupal\update\ProjectRelease $release
    *   The project release.
    * @param string $release_description
    *   The release description.

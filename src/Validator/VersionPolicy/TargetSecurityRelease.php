@@ -23,7 +23,7 @@ class TargetSecurityRelease {
    *   The installed version of Drupal.
    * @param string|null $target_version
    *   The target version of Drupal, or NULL if not known.
-   * @param \Drupal\automatic_updates_9_3_shim\ProjectRelease[] $available_releases
+   * @param \Drupal\update\ProjectRelease[] $available_releases
    *   The available releases of Drupal core.
    *
    * @return \Drupal\Core\StringTranslation\TranslatableMarkup[]

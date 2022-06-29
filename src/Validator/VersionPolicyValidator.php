@@ -222,7 +222,7 @@ final class VersionPolicyValidator implements EventSubscriberInterface {
    * @param \Drupal\automatic_updates\Updater $updater
    *   The updater which will perform the update.
    *
-   * @return \Drupal\automatic_updates_9_3_shim\ProjectRelease[]
+   * @return \Drupal\update\ProjectRelease[]
    *   The available releases of Drupal core, keyed by version number and in
    *   descending order (i.e., newest first). Will be in ascending order (i.e.,
    *   oldest first) if $updater is the cron updater.

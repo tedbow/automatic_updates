@@ -4,7 +4,7 @@ namespace Drupal\automatic_updates;
 
 use Composer\Semver\Semver;
 use Drupal\automatic_updates\Validator\VersionPolicyValidator;
-use Drupal\automatic_updates_9_3_shim\ProjectRelease;
+use Drupal\update\ProjectRelease;
 use Drupal\Core\Extension\ExtensionVersion;
 
 /**
@@ -45,7 +45,7 @@ class ReleaseChooser {
    * @param \Drupal\automatic_updates\Updater $updater
    *   The updater that will be used to install the releases.
    *
-   * @return \Drupal\automatic_updates_9_3_shim\ProjectRelease[]
+   * @return \Drupal\update\ProjectRelease[]
    *   The releases that are installable by the given updtaer, according to the
    *   version validator service.
    */
@@ -68,7 +68,7 @@ class ReleaseChooser {
    * @param string $version
    *   The full semantic version number, which must include a patch version.
    *
-   * @return \Drupal\automatic_updates_9_3_shim\ProjectRelease|null
+   * @return \Drupal\update\ProjectRelease|null
    *   The most recent release in the minor if available, otherwise NULL.
    *
    * @throws \InvalidArgumentException
@@ -110,7 +110,7 @@ class ReleaseChooser {
    * @param \Drupal\automatic_updates\Updater $updater
    *   The updater which will install the release.
    *
-   * @return \Drupal\automatic_updates_9_3_shim\ProjectRelease|null
+   * @return \Drupal\update\ProjectRelease|null
    *   The latest release in the currently installed minor, if any, otherwise
    *   NULL.
    */
@@ -127,7 +127,7 @@ class ReleaseChooser {
    * @param \Drupal\automatic_updates\Updater $updater
    *   The updater which will install the release.
    *
-   * @return \Drupal\automatic_updates_9_3_shim\ProjectRelease|null
+   * @return \Drupal\update\ProjectRelease|null
    *   The latest release in the next minor, if any, otherwise NULL.
    */
   public function getLatestInNextMinor(Updater $updater): ?ProjectRelease {

@@ -1,7 +1,7 @@
 name: 'Automatic Updates Extensions'
 type: module
 description: 'Allows updates to themes and modules'
-core_version_requirement: ^9.2
+core_version_requirement: ^9.3
 hidden: true
 lifecycle: experimental
 dependencies:

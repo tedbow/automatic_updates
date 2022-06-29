@@ -2,7 +2,7 @@
 
 namespace Drupal\Tests\automatic_updates\Kernel;
 
-use Drupal\automatic_updates_9_3_shim\ProjectRelease;
+use Drupal\update\ProjectRelease;
 
 /**
  * @coversDefaultClass \Drupal\automatic_updates\ReleaseChooser
@@ -156,7 +156,7 @@ class ReleaseChooserTest extends AutomaticUpdatesKernelTestBase {
    *
    * @param string|null $version
    *   The version to check, or NULL if no version expected.
-   * @param \Drupal\automatic_updates_9_3_shim\ProjectRelease|null $release
+   * @param \Drupal\update\ProjectRelease|null $release
    *   The release to check, or NULL if no release is expected.
    */
   private function assertReleaseVersion(?string $version, ?ProjectRelease $release) {
