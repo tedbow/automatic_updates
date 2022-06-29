@@ -9,6 +9,7 @@ use Drupal\automatic_updates_extensions\ExtensionUpdater;
 use Drupal\Core\Batch\BatchBuilder;
 use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
+use Drupal\Core\State\StateInterface;
 use Drupal\Core\Messenger\MessengerInterface;
 use Drupal\Core\Render\RendererInterface;
 use Drupal\Core\Url;
@@ -42,6 +43,13 @@ final class UpdaterForm extends FormBase {
   private $eventDispatcher;
 
   /**
+   * The state service.
+   *
+   * @var \Drupal\Core\State\StateInterface
+   */
+  private $state;
+
+  /**
    * The renderer service.
    *
    * @var \Drupal\Core\Render\RendererInterface
@@ -55,7 +63,8 @@ final class UpdaterForm extends FormBase {
     return new static(
       $container->get('automatic_updates_extensions.updater'),
       $container->get('event_dispatcher'),
-      $container->get('renderer')
+      $container->get('renderer'),
+      $container->get('state')
     );
   }
 
@@ -68,11 +77,14 @@ final class UpdaterForm extends FormBase {
    *   The extension event dispatcher service.
    * @param \Drupal\Core\Render\RendererInterface $renderer
    *   The renderer service.
+   * @param \Drupal\Core\State\StateInterface $state
+   *   The state service.
    */
-  public function __construct(ExtensionUpdater $extension_updater, EventDispatcherInterface $event_dispatcher, RendererInterface $renderer) {
+  public function __construct(ExtensionUpdater $extension_updater, EventDispatcherInterface $event_dispatcher, RendererInterface $renderer, StateInterface $state) {
     $this->extensionUpdater = $extension_updater;
     $this->eventDispatcher = $event_dispatcher;
     $this->renderer = $renderer;
+    $this->state = $state;
   }
 
   /**
@@ -141,6 +153,10 @@ final class UpdaterForm extends FormBase {
       $form['actions'] = $this->actions($form_state);
     }
 
+    $form['last_check'] = [
+      '#theme' => 'update_last_check',
+      '#last' => $this->state->get('update.last_check', 0),
+    ];
     return $form;
   }
 

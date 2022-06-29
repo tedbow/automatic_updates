@@ -234,13 +234,12 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
     $user = $this->createUser(['administer site configuration']);
     $this->drupalLogin($user);
     $this->setProjectInstalledVersion(['semver_test' => '8.1.0']);
-    $this->checkForUpdates();
     $this->drupalGet('admin/reports/updates/automatic-update-extensions');
     $assert->pageTextContains('Access Denied');
     $assert->pageTextNotContains('Automatic Updates Form');
-    $user = $this->createUser(['administer software updates']);
+    $user = $this->createUser(['administer software updates', 'administer site configuration']);
     $this->drupalLogin($user);
-    $this->drupalGet('admin/reports/updates/automatic-update-extensions');
+    $this->checkForUpdates();
     $this->assertTableShowsUpdates('Semver Test', '8.1.0', '8.1.1');
     $assert->pageTextContains('Automatic Updates Form');
     $assert->buttonExists('Update');
@@ -260,6 +259,15 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
     $this->checkForUpdates();
     $this->drupalGet('admin/reports/updates/automatic-update-extensions');
     $this->assertNoUpdates();
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  protected function checkForUpdates(): void {
+    $this->drupalGet('/admin/modules/automatic-update-extensions');
+    $this->clickLink('Check manually');
+    $this->checkForMetaRefresh();
   }
 
   /**
