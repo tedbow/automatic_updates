@@ -22,6 +22,9 @@ services:
   PhpTuf\ComposerStager\Infrastructure\Factory\Path\PathFactory:
     autowire: true
     public: false
+  PhpTuf\ComposerStager\Infrastructure\Service\Finder\RecursiveFileFinder:
+    autowire: true
+    public: false
   PhpTuf\ComposerStager\Infrastructure\Factory\Process\ProcessFactoryInterface:
     alias: 'Drupal\package_manager\ProcessFactory'
   PhpTuf\ComposerStager\Domain\Service\Filesystem\FilesystemInterface:
@@ -30,6 +33,8 @@ services:
     alias: 'Drupal\package_manager\ExecutableFinder'
   PhpTuf\ComposerStager\Infrastructure\Factory\Path\PathFactoryInterface:
     alias: 'PhpTuf\ComposerStager\Infrastructure\Factory\Path\PathFactory'
+  PhpTuf\ComposerStager\Infrastructure\Service\Finder\RecursiveFileFinderInterface:
+    alias: 'PhpTuf\ComposerStager\Infrastructure\Service\Finder\RecursiveFileFinder'
 
   # Executable runners for Composer Stager.
   PhpTuf\ComposerStager\Infrastructure\Service\ProcessRunner\RsyncRunner:
@@ -93,6 +98,9 @@ services:
   PhpTuf\ComposerStager\Infrastructure\Service\Precondition\StagingDirDoesNotExist:
     autowire: true
     public: false
+  PhpTuf\ComposerStager\Infrastructure\Service\Precondition\CodeBaseContainsNoSymlinks:
+    autowire: true
+    public: false
   PhpTuf\ComposerStager\Domain\Aggregate\PreconditionsTree\CommitterPreconditionsInterface:
     alias: 'PhpTuf\ComposerStager\Infrastructure\Aggregate\PreconditionsTree\CommitterPreconditions'
   PhpTuf\ComposerStager\Domain\Aggregate\PreconditionsTree\BeginnerPreconditionsInterface:
@@ -117,6 +125,8 @@ services:
     alias: 'PhpTuf\ComposerStager\Infrastructure\Service\Precondition\StagingDirIsWritable'
   PhpTuf\ComposerStager\Domain\Service\Precondition\StagingDirDoesNotExistInterface:
     alias: 'PhpTuf\ComposerStager\Infrastructure\Service\Precondition\StagingDirDoesNotExist'
+  PhpTuf\ComposerStager\Domain\Service\Precondition\CodebaseContainsNoSymlinksInterface:
+    alias: 'PhpTuf\ComposerStager\Infrastructure\Service\Precondition\CodeBaseContainsNoSymlinks'
 
   # Services provided to Drupal by Package Manager.
   package_manager.beginner:
