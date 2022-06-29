@@ -2,6 +2,7 @@
 
 namespace Drupal\automatic_updates_extensions\Form;
 
+use Drupal\automatic_updates\Validator\StagedDatabaseUpdateValidator;
 use Drupal\automatic_updates_extensions\BatchProcessor;
 use Drupal\automatic_updates\BatchProcessor as AutoUpdatesBatchProcessor;
 use Drupal\automatic_updates_extensions\ExtensionUpdater;
@@ -45,6 +46,13 @@ final class UpdateReady extends FormBase {
   protected $moduleList;
 
   /**
+   * The staged database update validator service.
+   *
+   * @var \Drupal\automatic_updates\Validator\StagedDatabaseUpdateValidator
+   */
+  protected $stagedDatabaseUpdateValidator;
+
+  /**
    * Constructs a new UpdateReady object.
    *
    * @param \Drupal\automatic_updates_extensions\ExtensionUpdater $updater
@@ -55,12 +63,15 @@ final class UpdateReady extends FormBase {
    *   The state service.
    * @param \Drupal\Core\Extension\ModuleExtensionList $module_list
    *   The module list service.
+   * @param \Drupal\automatic_updates\Validator\StagedDatabaseUpdateValidator $staged_database_update_validator
+   *   The staged database update validator service.
    */
-  public function __construct(ExtensionUpdater $updater, MessengerInterface $messenger, StateInterface $state, ModuleExtensionList $module_list) {
+  public function __construct(ExtensionUpdater $updater, MessengerInterface $messenger, StateInterface $state, ModuleExtensionList $module_list, StagedDatabaseUpdateValidator $staged_database_update_validator) {
     $this->updater = $updater;
     $this->setMessenger($messenger);
     $this->state = $state;
     $this->moduleList = $module_list;
+    $this->stagedDatabaseUpdateValidator = $staged_database_update_validator;
   }
 
   /**
@@ -79,6 +90,7 @@ final class UpdateReady extends FormBase {
       $container->get('messenger'),
       $container->get('state'),
       $container->get('extension.list.module'),
+      $container->get('automatic_updates.validator.staged_database_updates')
     );
   }
 
@@ -96,11 +108,16 @@ final class UpdateReady extends FormBase {
 
     $messages = [];
 
-    // @todo Add logic to warn about possible new database updates. Determine if
-    //   \Drupal\automatic_updates\Validator\StagedDatabaseUpdateValidator
-    //   should be duplicated or changed so that it can work with other stages.
-    // @see \Drupal\automatic_updates\Validator\StagedDatabaseUpdateValidator
-    // @see \Drupal\automatic_updates\Form\UpdateReady::buildForm()
+    // If there are any installed extension with database updates in the staging
+    // area, warn the user that they might be sent to update.php once the staged
+    // changes have been applied.
+    $pending_updates = $this->stagedDatabaseUpdateValidator->getExtensionsWithDatabaseUpdates($this->updater);
+    if ($pending_updates) {
+      $messages[MessengerInterface::TYPE_WARNING][] = $this->t('Possible database updates were detected in the following extensions; you may be redirected to the database update page in order to complete the update process.');
+      foreach ($pending_updates as $pending_update) {
+        $messages[MessengerInterface::TYPE_WARNING][] = $pending_update;
+      }
+    }
 
     // Don't set any messages if the form has been submitted, because we don't
     // want them to be set during form submit.

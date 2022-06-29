@@ -145,6 +145,7 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
     // Package Manager is bypassed.
     $this->disableValidators(['automatic_updates.validator.scaffold_file_permissions']);
 
+    $this->container->get('theme_installer')->install(['automatic_updates_theme_with_updates']);
     $this->updateProject = $project_name;
     $this->setReleaseMetadata(__DIR__ . '/../../../../tests/fixtures/release-history/drupal.9.8.2.xml');
     $this->setReleaseMetadata(__DIR__ . "/../../fixtures/release-history/$project_name.1.1.xml");
@@ -168,9 +169,15 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
     $this->assertUpdateStagedTimes(1);
     // Confirm that the site was put into maintenance mode if needed.
     $this->assertSame($state->get('system.maintenance_mode'), $maintenance_mode_on);
+    $assert_session = $this->assertSession();
+    $possible_update_message = 'Possible database updates were detected in the following extensions; you may be redirected to the database update page in order to complete the update process.';
+    $assert_session->pageTextContains($possible_update_message);
+    $assert_session->pageTextContainsOnce('System');
+    $assert_session->pageTextContainsOnce('Automatic Updates Theme With Updates');
+
     $page->pressButton('Continue');
     $this->checkForMetaRefresh();
-    $assert_session = $this->assertSession();
+
     $assert_session->addressEquals('/admin/reports/updates');
     // Confirm that the site was in maintenance before the update was applied.
     // @see \Drupal\package_manager_test_validation\EventSubscriber\TestSubscriber::handleEvent()
