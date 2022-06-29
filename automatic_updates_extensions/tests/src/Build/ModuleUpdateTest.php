@@ -110,18 +110,14 @@ END;
     $assert_session = $mink->assertSession();
 
     $this->visit('/admin/reports/updates');
+    // Confirm that 'New Module' project, which is not installed via Composer,
+    // has a 1.1.0 update release on the 'Available Updates' page.
+    $this->assertReportProjectUpdateVersion('New Module', '1.1.0');
     $page->clickLink('Update Extensions');
-    $this->assertUpdateTableRow($assert_session, 'Alpha', '1.0.0', '1.1.0', 2);
-    $this->assertUpdateTableRow($assert_session, 'New module', '1.0.0', '1.1.0', 1);
-    $page->checkField('projects[new_module]');
-    $page->pressButton('Update');
-    $this->waitForBatchJob();
-    $page_text = $page->getText();
-    // There will be error in updating 'new_module' as it is not installed via
-    // composer @see \Drupal\Tests\automatic_updates_extensions\Kernel\Validator\PackagesInstalledWithComposerValidatorTest.
-    $this->assertStringContainsString('Automatic Updates can only update projects that were installed via Composer. The following packages are not installed through composer:', $page_text);
-    $this->assertStringContainsString('new_module', $page_text);
-    $page->clickLink('error page');
+    $this->assertUpdateTableRow($assert_session, 'Alpha', '1.0.0', '1.1.0', 1);
+    // Confirm that a 'New Module' project does not appear on the form.
+    $assert_session->pageTextContains('Other updates were found, but they must be performed manually.');
+    $assert_session->fieldNotExists('projects[new_module]');
     $page->checkField('projects[alpha]');
     $page->pressButton('Update');
     $this->waitForBatchJob();
@@ -130,6 +126,24 @@ END;
     $this->waitForBatchJob();
     $assert_session->pageTextContains('Update complete!');
     $this->assertModuleVersion('alpha', '1.1.0');
+  }
+
+  /**
+   * Assert a project version is on the Available Updates page.
+   *
+   * @param string $project_title
+   *   The project title.
+   * @param string $expected_version
+   *   The expected version.
+   */
+  protected function assertReportProjectUpdateVersion(string $project_title, string $expected_version): void {
+    $mink = $this->getMink();
+    $session = $mink->getSession();
+    $title_element = $session->getPage()
+      ->find('css', ".project-update__title:contains(\"$project_title\")");
+    $this->assertNotNull($title_element, "Title element found for $project_title");
+    $version_element = $title_element->getParent()->find('css', '.project-update__version-details');
+    $this->assertStringContainsString($expected_version, $version_element->getText());
   }
 
   /**

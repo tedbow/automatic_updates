@@ -33,17 +33,11 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
   protected static $modules = [
     'automatic_updates_test',
     'automatic_updates_extensions',
+    'automatic_updates_extensions_test',
     'block',
     'semver_test',
     'aaa_update_test',
   ];
-
-  /**
-   * Project to test updates.
-   *
-   * @var string
-   */
-  protected $updateProject = 'semver_test';
 
   /**
    * Data provider for testSuccessfulUpdate().
@@ -68,12 +62,14 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
     // @see \Drupal\Tests\automatic_updates_extensions\Build\ModuleUpdateTest
     $this->disableValidators[] = 'automatic_updates_extensions.validator.packages_installed_with_composer';
     parent::setUp();
-    $this->setReleaseMetadata(__DIR__ . '/../../fixtures/release-history/semver_test.1.1.xml');
     $user = $this->createUser([
       'administer site configuration',
       'administer software updates',
       'access site in maintenance mode',
     ]);
+    // We need this fixture as only projects installed via composer will show up
+    // on the form.
+    $this->container->get('state')->set('automatic_updates_extensions_test.active_path', __DIR__ . '/../../fixtures/active_composer/two_projects');
     $this->drupalLogin($user);
     $this->drupalPlaceBlock('local_tasks_block', ['primary' => TRUE]);
   }
@@ -84,22 +80,22 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
    * @todo This is copied from core. We need to file a core issue so we do not
    *    have to copy this.
    */
-  protected function setProjectInstalledVersion($version) {
+  protected function setProjectInstalledVersion($project_versions) {
     $this->config('update.settings')
       ->set('fetch.url', $this->baseUrl . '/test-release-history')
       ->save();
-    $system_info = [
-      $this->updateProject => [
-        'project' => $this->updateProject,
+    $system_info = [];
+    foreach ($project_versions as $project_name => $version) {
+      $system_info[$project_name] = [
+        'project' => $project_name,
         'version' => $version,
         'hidden' => FALSE,
-      ],
-      // Ensure Drupal core on the same version for all test runs.
-      'drupal' => [
-        'project' => 'drupal',
-        'version' => '8.0.0',
-        'hidden' => FALSE,
-      ],
+      ];
+    }
+    $system_info['drupal'] = [
+      'project' => 'drupal',
+      'version' => '8.0.0',
+      'hidden' => FALSE,
     ];
     $this->config('update_test.settings')
       ->set('system_info', $system_info)
@@ -118,6 +114,15 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
    */
   private function assertTableShowsUpdates(string $expected_project_title, string $expected_installed_version, string $expected_target_version): void {
     $this->assertUpdateTableRow($this->assertSession(), $expected_project_title, $expected_installed_version, $expected_target_version);
+  }
+
+  /**
+   * Asserts the form shows no updates.
+   */
+  private function assertNoUpdates(): void {
+    $assert = $this->assertSession();
+    $assert->buttonNotExists('Update');
+    $assert->pageTextContains('There are no available updates.');
   }
 
   /**
@@ -143,7 +148,7 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
     $this->updateProject = $project_name;
     $this->setReleaseMetadata(__DIR__ . '/../../../../tests/fixtures/release-history/drupal.9.8.2.xml');
     $this->setReleaseMetadata(__DIR__ . "/../../fixtures/release-history/$project_name.1.1.xml");
-    $this->setProjectInstalledVersion($installed_version);
+    $this->setProjectInstalledVersion([$project_name => $installed_version]);
     $this->checkForUpdates();
     $state = $this->container->get('state');
     $state->set('system.maintenance_mode', $maintenance_mode_on);
@@ -176,13 +181,52 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
   }
 
   /**
+   * Tests the form when modules requiring an update not installed via composer.
+   */
+  public function testNonComposerProjects(): void {
+    $this->setReleaseMetadata(__DIR__ . '/../../fixtures/release-history/aaa_update_test.1.1.xml');
+    $this->setReleaseMetadata(__DIR__ . '/../../fixtures/release-history/semver_test.1.1.xml');
+    $this->config('update.settings')
+      ->set('fetch.url', $this->baseUrl . '/test-release-history')
+      ->save();
+    $this->setProjectInstalledVersion(
+      [
+        'aaa_update_test' => '8.x-2.x',
+        'semver_test' => '8.1.0',
+      ]
+    );
+
+    // One module not installed through composer.
+    $this->container->get('state')->set('automatic_updates_extensions_test.active_path', __DIR__ . '/../../fixtures/active_composer/one_project');
+    $assert = $this->assertSession();
+    $user = $this->createUser(
+      [
+        'administer site configuration',
+        'administer software updates',
+      ]
+    );
+    $this->drupalLogin($user);
+    $this->checkForUpdates();
+    $this->drupalGet('admin/reports/updates/automatic-update-extensions');
+    $assert->pageTextContains('Other updates were found, but they must be performed manually. See the list of available updates for more information.');
+    $this->assertTableShowsUpdates('Semver Test', '8.1.0', '8.1.1');
+
+    // Both of the modules not installed through composer.
+    $this->container->get('state')->set('automatic_updates_extensions_test.active_path', __DIR__ . '/../../fixtures/active_composer/no_project');
+    $this->getSession()->reload();
+    $assert->pageTextContains('Updates were found, but they must be performed manually. See the list of available updates for more information.');
+    $this->assertNoUpdates();
+  }
+
+  /**
    * Tests the form when a module requires an update.
    */
   public function testHasUpdate(): void {
+    $this->setReleaseMetadata(__DIR__ . '/../../fixtures/release-history/semver_test.1.1.xml');
     $assert = $this->assertSession();
     $user = $this->createUser(['administer site configuration']);
     $this->drupalLogin($user);
-    $this->setProjectInstalledVersion('8.1.0');
+    $this->setProjectInstalledVersion(['semver_test' => '8.1.0']);
     $this->checkForUpdates();
     $this->drupalGet('admin/reports/updates/automatic-update-extensions');
     $assert->pageTextContains('Access Denied');
@@ -199,30 +243,30 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
    * Tests the form when there are no available updates.
    */
   public function testNoUpdate(): void {
-    $assert = $this->assertSession();
+    $this->setReleaseMetadata(__DIR__ . '/../../fixtures/release-history/semver_test.1.1.xml');
     $user = $this->createUser([
       'administer site configuration',
       'administer software updates',
     ]);
     $this->drupalLogin($user);
-    $this->setProjectInstalledVersion('8.1.1');
+    $this->setProjectInstalledVersion(['semver_test' => '8.1.1']);
     $this->checkForUpdates();
     $this->drupalGet('admin/reports/updates/automatic-update-extensions');
-    $assert->pageTextContains('There are no available updates.');
-    $assert->buttonNotExists('Update');
+    $this->assertNoUpdates();
   }
 
   /**
    * Test the form for errors.
    */
   public function testErrors(): void {
+    $this->setReleaseMetadata(__DIR__ . '/../../fixtures/release-history/semver_test.1.1.xml');
     $assert = $this->assertSession();
     $user = $this->createUser([
       'administer site configuration',
       'administer software updates',
     ]);
     $this->drupalLogin($user);
-    $this->setProjectInstalledVersion('8.1.0');
+    $this->setProjectInstalledVersion(['semver_test' => '8.1.0']);
     $this->checkForUpdates();
     $this->drupalGet('admin/reports/updates/automatic-update-extensions');
     $this->assertTableShowsUpdates('Semver Test', '8.1.0', '8.1.1');
@@ -240,8 +284,9 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
    * Test the form for warning messages.
    */
   public function testWarnings(): void {
+    $this->setReleaseMetadata(__DIR__ . '/../../fixtures/release-history/semver_test.1.1.xml');
     $assert = $this->assertSession();
-    $this->setProjectInstalledVersion('8.1.0');
+    $this->setProjectInstalledVersion(['semver_test' => '8.1.0']);
     $this->checkForUpdates();
     $message = t("Warning! Updating this module may cause an error.");
     $warning = ValidationResult::createWarning([$message]);

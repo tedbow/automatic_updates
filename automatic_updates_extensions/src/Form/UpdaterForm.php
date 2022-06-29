@@ -9,7 +9,9 @@ use Drupal\automatic_updates_extensions\ExtensionUpdater;
 use Drupal\Core\Batch\BatchBuilder;
 use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
+use Drupal\Core\Messenger\MessengerInterface;
 use Drupal\Core\Render\RendererInterface;
+use Drupal\Core\Url;
 use Drupal\system\SystemManager;
 use Drupal\update\UpdateManagerInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
@@ -220,14 +222,51 @@ final class UpdaterForm extends FormBase {
 
     $project_data = update_calculate_project_data($available_updates);
     $outdated_modules = [];
+    $installed_packages = array_keys($this->extensionUpdater->getActiveComposer()->getInstalledPackages());
+    $non_supported_update_statuses = [];
     foreach ($project_data as $project_name => $project_info) {
       if ($project_info['project_type'] === 'module' || $project_info['project_type'] === 'module-disabled') {
         if ($project_info['status'] !== UpdateManagerInterface::CURRENT) {
+          if (!in_array("drupal/$project_name", $installed_packages, TRUE)) {
+            $non_supported_update_statuses[] = $project_info['status'];
+            continue;
+          }
           if (!empty($project_info['recommended'])) {
             $outdated_modules[$project_name] = $project_info;
           }
+          else {
+            $non_supported_update_statuses[] = $project_info['status'];
+          }
         }
       }
+    }
+    if ($non_supported_update_statuses) {
+      $message_status = array_intersect([UpdateManagerInterface::NOT_SECURE, UpdateManagerInterface::NOT_SUPPORTED, UpdateManagerInterface::REVOKED], $non_supported_update_statuses) ?
+        MessengerInterface::TYPE_ERROR :
+        MessengerInterface::TYPE_STATUS;
+      if ($outdated_modules) {
+        $this->messenger()->addMessage(
+          $this->t(
+            'Other updates were found, but they must be performed manually. See <a href=":url">the list of available updates</a> for more information.',
+            [
+              ':url' => Url::fromRoute('update.status')->toString(),
+            ]
+          ),
+          $message_status
+        );
+      }
+      else {
+        $this->messenger()->addMessage(
+          $this->t(
+            'Updates were found, but they must be performed manually. See <a href=":url">the list of available updates</a> for more information.',
+            [
+              ':url' => Url::fromRoute('update.status')->toString(),
+            ]
+          ),
+          $message_status
+        );
+      }
+
     }
     return $outdated_modules;
   }

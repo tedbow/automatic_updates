@@ -1,0 +1,7 @@
+{
+  "extra": {
+    "_readme": [
+      "This fixture simulates a active directory in which, according to Composer, semver_test is installed."
+    ]
+  }
+}

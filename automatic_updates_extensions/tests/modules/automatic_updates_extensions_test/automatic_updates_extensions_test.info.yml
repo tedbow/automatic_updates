@@ -1,0 +1,6 @@
+name: 'Automatic Updates Extensions Test'
+description: 'Automatic Updates Extensions Test module'
+type: module
+package: Testing
+dependencies:
+  - automatic_updates:automatic_updates_extensions
