@@ -51,7 +51,7 @@ class ExtensionUpdater extends Stage {
     $this->tempStore->set(static::TEMPSTORE_METADATA_KEY, [
       'packages' => $package_versions,
     ]);
-    return parent::create();
+    return $this->create();
   }
 
   /**

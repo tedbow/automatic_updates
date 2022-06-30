@@ -17,56 +17,59 @@ use Drupal\Tests\automatic_updates_extensions\Kernel\AutomaticUpdatesExtensionsK
 class PackagesInstalledWithComposerValidatorTest extends AutomaticUpdatesExtensionsKernelTestBase {
 
   /**
-   * The active directory in the virtual file system.
-   *
-   * @var string
-   */
-  private $activeDir;
-
-  /**
    * {@inheritdoc}
    */
   protected function setUp(): void {
-    // In this test, we don't focus on validating that the updated projects are
-    // secure and supported. Therefore, we need to disable the update release
-    // validator that validates updated projects are secure and supported.
+    // In this test, we don't care whether the updated projects are secure and
+    // supported.
     $this->disableValidators[] = 'automatic_updates_extensions.validator.target_release';
-    // In this test, we don't focus on validating that the updated projects are
-    // only themes or modules. Therefore, we need to disable the update packages
-    // type validator.
+    // We also don't care if the updated projects are themes and modules only.
     $this->disableValidators[] = 'automatic_updates_extensions.validator.packages_type';
     parent::setUp();
-    $this->activeDir = $this->container->get('package_manager.path_locator')
+
+    $active_dir = $this->container->get('package_manager.path_locator')
       ->getProjectRoot();
+
+    $installed = __DIR__ . '/../../../fixtures/packages_installed_with_composer_validator/active.installed.json';
+    $this->assertFileIsReadable($installed);
+    copy($installed, $active_dir . '/vendor/composer/installed.json');
   }
 
   /**
    * Data provider for testPreCreateException().
    *
-   * @return array
+   * @return array[]
    *   Test cases for testPreCreateException().
    */
   public function providerPreCreateException(): array {
+    $summary = t('Automatic Updates can only update projects that were installed via Composer. The following packages are not installed through composer:');
+
     return [
-      'module not installed via composer' => [
+      'module not installed via Composer' => [
         [
           'new_module' => '9.8.0',
         ],
-        [ValidationResult::createError(['new_module'], t('Automatic Updates can only update projects that were installed via Composer. The following packages are not installed through composer:'))],
+        [
+          ValidationResult::createError(['new_module'], $summary),
+        ],
       ],
-      'theme not installed via composer' => [
+      'theme not installed via Composer' => [
         [
           'new_theme' => '9.8.0',
         ],
-        [ValidationResult::createError(['new_theme'], t('Automatic Updates can only update projects that were installed via Composer. The following packages are not installed through composer:'))],
+        [
+          ValidationResult::createError(['new_theme'], $summary),
+        ],
       ],
-      'profile not installed via composer' => [
+      'profile not installed via Composer' => [
         [
           'new_profile' => '9.8.0',
         ],
-        [ValidationResult::createError(['new_profile'], t('Automatic Updates can only update projects that were installed via Composer. The following packages are not installed through composer:'))],
+        [
+          ValidationResult::createError(['new_profile'], $summary),
+        ],
       ],
-      'module_theme_profile_dependency_not_installed_via_composer' => [
+      'module, theme, profile, and library not installed via Composer' => [
         [
           'new_module' => '9.8.0',
           'new_theme' => '9.8.0',
@@ -74,12 +77,10 @@ class PackagesInstalledWithComposerValidatorTest extends AutomaticUpdatesExtensi
           'new_dependency' => '9.8.0',
         ],
         [
-          ValidationResult::createError(
-            ['new_module', 'new_theme', 'new_profile', 'new_dependency'],
-            t('Automatic Updates can only update projects that were installed via Composer. The following packages are not installed through composer:')),
+          ValidationResult::createError(['new_module', 'new_theme', 'new_profile', 'new_dependency'], $summary),
         ],
       ],
-      'module_theme_profile_installed_via_composer' => [
+      'module, theme, and profile installed via Composer' => [
         [
           'existing_module' => '9.8.1',
           'existing_theme' => '9.8.1',
@@ -87,18 +88,20 @@ class PackagesInstalledWithComposerValidatorTest extends AutomaticUpdatesExtensi
         ],
         [],
       ],
-      'existing module installed and new module not installed via composer' => [
+      'existing module installed and new module not installed via Composer' => [
         [
           'existing_module' => '9.8.1',
           'new_module' => '9.8.0',
         ],
-        [ValidationResult::createError(['new_module'], t('Automatic Updates can only update projects that were installed via Composer. The following packages are not installed through composer:'))],
+        [
+          ValidationResult::createError(['new_module'], $summary),
+        ],
       ],
     ];
   }
 
   /**
-   * Tests the packages installed with composer during pre-create.
+   * Tests the packages installed with Composer during pre-create.
    *
    * @param array $projects
    *   The projects to install.
@@ -108,11 +111,6 @@ class PackagesInstalledWithComposerValidatorTest extends AutomaticUpdatesExtensi
    * @dataProvider providerPreCreateException
    */
   public function testPreCreateException(array $projects, array $expected_results): void {
-    // Path of `active.installed.json` file. It will be used as the virtual
-    // project's active `vendor/composer/installed.json` file.
-    $active_installed = __DIR__ . '/../../../fixtures/packages_installed_with_composer_validator/active.installed.json';
-    $this->assertFileIsReadable($active_installed);
-    copy($active_installed, "$this->activeDir/vendor/composer/installed.json");
     $this->assertUpdateResults($projects, $expected_results, PreCreateEvent::class);
   }
 
@@ -123,32 +121,38 @@ class PackagesInstalledWithComposerValidatorTest extends AutomaticUpdatesExtensi
    *   Test cases for testPreApplyException().
    */
   public function providerPreApplyException(): array {
+    $summary = t('Automatic Updates can only update projects that were installed via Composer. The following packages are not installed through composer:');
     $fixtures_folder = __DIR__ . '/../../../fixtures/packages_installed_with_composer_validator';
+
     return [
-      'module not installed via composer' => [
+      'module not installed via Composer' => [
         "$fixtures_folder/module_not_installed.staged.installed.json",
-        [ValidationResult::createError(['new_module'], t('Automatic Updates can only update projects that were installed via Composer. The following packages are not installed through composer:'))],
+        [
+          ValidationResult::createError(['new_module'], $summary),
+        ],
       ],
-      'theme not installed via composer' => [
+      'theme not installed via Composer' => [
         "$fixtures_folder/theme_not_installed.staged.installed.json",
-        [ValidationResult::createError(['new_theme'], t('Automatic Updates can only update projects that were installed via Composer. The following packages are not installed through composer:'))],
+        [
+          ValidationResult::createError(['new_theme'], $summary),
+        ],
       ],
-      'profile not installed via composer' => [
+      'profile not installed via Composer' => [
         "$fixtures_folder/profile_not_installed.staged.installed.json",
-        [ValidationResult::createError(['new_profile'], t('Automatic Updates can only update projects that were installed via Composer. The following packages are not installed through composer:'))],
+        [
+          ValidationResult::createError(['new_profile'], $summary),
+        ],
       ],
-      // Dependency drupal/new_dependency of type 'drupal-library' will not show
-      // up in the error because it is not one of the covered types
-      // ('drupal-module', 'drupal-theme' or 'drupal-profile'). Module
-      // new_module1 will also not show up as it's name doesn't start with
-      // 'drupal/'.
+      // The `drupal/new_dependency` package won't show up in the error because
+      // its type is `drupal-library`, and the validator only considers the
+      // `drupal-module`, `drupal-theme`, and `drupal-profile` package types.
+      // The `not-drupal/new_module1` package won't show up either, even though
+      // its type is `drupal-module`, because it doesn't start with `drupal/`.
       // @see \Drupal\automatic_updates_extensions\Validator\PackagesInstalledWithComposerValidator
-      'module_theme_profile_dependency_not_installed_via_composer' => [
+      'module, theme, and profile not installed via Composer' => [
         "$fixtures_folder/module_theme_profile_dependency_not_installed.staged.installed.json",
         [
-          ValidationResult::createError(
-            ['new_module', 'new_theme', 'new_profile'],
-            t('Automatic Updates can only update projects that were installed via Composer. The following packages are not installed through composer:')),
+          ValidationResult::createError(['new_module', 'new_theme', 'new_profile'], $summary),
         ],
       ],
     ];
@@ -166,18 +170,14 @@ class PackagesInstalledWithComposerValidatorTest extends AutomaticUpdatesExtensi
    * @dataProvider providerPreApplyException
    */
   public function testPreApplyException(string $staged_installed, array $expected_results): void {
-    // Path of `active.installed.json` file. It will be used as the virtual
-    // project's active `vendor/composer/installed.json` file.
-    $active_installed = __DIR__ . '/../../../fixtures/packages_installed_with_composer_validator/active.installed.json';
-    $this->assertFileIsReadable($active_installed);
     $this->assertFileIsReadable($staged_installed);
-    copy($active_installed, "$this->activeDir/vendor/composer/installed.json");
+
     $listener = function (PreApplyEvent $event) use ($staged_installed): void {
       $stage_dir = $event->getStage()->getStageDirectory();
       copy($staged_installed, $stage_dir . "/vendor/composer/installed.json");
     };
     $this->container->get('event_dispatcher')->addListener(PreApplyEvent::class, $listener, 1000);
-    $this->assertUpdateResults([], $expected_results, PreApplyEvent::class);
+    $this->assertUpdateResults(['my_module' => '9.8.1'], $expected_results, PreApplyEvent::class);
   }
 
 }

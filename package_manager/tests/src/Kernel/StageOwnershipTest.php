@@ -8,6 +8,7 @@ use Drupal\package_manager\Event\PostDestroyEvent;
 use Drupal\package_manager\Event\PreCreateEvent;
 use Drupal\package_manager\Exception\StageException;
 use Drupal\package_manager\Exception\StageOwnershipException;
+use Drupal\package_manager_bypass\Stager;
 use Drupal\package_manager_test_validation\EventSubscriber\TestSubscriber;
 use Drupal\Tests\user\Traits\UserCreationTrait;
 use Psr\Log\Test\TestLogger;
@@ -180,6 +181,12 @@ class StageOwnershipTest extends PackageManagerKernelTestBase {
       'postApply' => [],
       'destroy' => [],
     ];
+    // Since we deliberately don't call create() on the stages we create as
+    // we loop through the life cycle methods, ensure that the active directory
+    // is mirrored into the staging area when a package is required.
+    $active_dir = $this->container->get('package_manager.path_locator')
+      ->getProjectRoot();
+    Stager::setFixturePath($active_dir);
     foreach ($callbacks as $method => $arguments) {
       // Create a new stage instance for each method.
       $this->createStage()->claim($stage_id)->$method(...$arguments);

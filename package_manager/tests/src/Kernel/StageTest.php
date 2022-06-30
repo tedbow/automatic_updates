@@ -11,6 +11,7 @@ use Drupal\package_manager\Event\PostApplyEvent;
 use Drupal\package_manager\Event\PreApplyEvent;
 use Drupal\package_manager\Event\StageEvent;
 use Drupal\package_manager\Exception\StageException;
+use Drupal\package_manager_bypass\Beginner;
 
 /**
  * @coversDefaultClass \Drupal\package_manager\Stage
@@ -30,10 +31,6 @@ class StageTest extends PackageManagerKernelTestBase {
    * {@inheritdoc}
    */
   protected function setUp(): void {
-    // Disable the symlink validator, since this test doesn't use a virtual
-    // project, but the running code base may have symlinks that don't affect
-    // the test.
-    $this->disableValidators[] = 'package_manager.validator.symlink';
     parent::setUp();
 
     $this->installConfig('system');
@@ -70,6 +67,9 @@ class StageTest extends PackageManagerKernelTestBase {
     // Even though we're using a virtual project, we want to test what happens
     // when we aren't.
     static::$testStagingRoot = NULL;
+    // Don't mirror the active directory from the virtual project into the
+    // real file system.
+    Beginner::setFixturePath(NULL);
 
     $stage = $this->createStage();
     $id = $stage->create();
@@ -191,6 +191,7 @@ class StageTest extends PackageManagerKernelTestBase {
 
     $stage = $this->createStage();
     $stage->create();
+    $stage->require(['ext-json:*']);
     if ($expect_exception) {
       $this->expectException(StageException::class);
       $this->expectExceptionMessage('Cannot destroy the staging area while it is being applied to the active directory.');
@@ -230,6 +231,7 @@ class StageTest extends PackageManagerKernelTestBase {
 
     $stage = $this->createStage();
     $stage->create();
+    $stage->require(['ext-json:*']);
     $stage->apply();
   }
 
@@ -239,6 +241,7 @@ class StageTest extends PackageManagerKernelTestBase {
   public function testTimeouts(): void {
     $stage = $this->createStage();
     $stage->create(420);
+    $stage->require(['ext-json:*']);
     $stage->apply();
 
     $timeouts = [

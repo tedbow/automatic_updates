@@ -7,7 +7,7 @@ use Drupal\package_manager\Event\PreCreateEvent;
 use Drupal\package_manager\Event\PreRequireEvent;
 use Drupal\package_manager\Validator\LockFileValidator;
 use Drupal\package_manager\ValidationResult;
-use Drupal\package_manager_test_fixture\EventSubscriber\FixtureStager;
+use Drupal\package_manager_bypass\Stager;
 
 /**
  * @coversDefaultClass \Drupal\package_manager\Validator\LockFileValidator
@@ -123,10 +123,8 @@ class LockFileValidatorTest extends PackageManagerKernelTestBase {
    * Tests validation when the staged and active lock files are identical.
    */
   public function testApplyWithNoChange(): void {
-    // Ensure the lock file is not changed when the active directory is copied
-    // into the virtual staging area.
-    // @see \Drupal\package_manager_test_fixture\EventSubscriber\FixtureStager
-    FixtureStager::setFixturePath($this->activeDir, FALSE);
+    // Leave the staged lock file alone.
+    Stager::setLockFileShouldChange(FALSE);
 
     $result = ValidationResult::createError([
       'There are no pending Composer operations.',

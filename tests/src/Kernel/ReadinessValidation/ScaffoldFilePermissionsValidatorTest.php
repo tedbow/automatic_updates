@@ -296,10 +296,6 @@ class ScaffoldFilePermissionsValidatorTest extends AutomaticUpdatesKernelTestBas
     touch($this->activeDir . '/sites/default/deleted.txt');
     touch($this->activeDir . '/foo.txt');
 
-    // Simulate updating Drupal core. This will copy the active directory into
-    // the (virtual) staging area.
-    // @see ::createVirtualProject()
-    // @see \Drupal\package_manager_test_fixture\EventSubscriber\FixtureStager::copyFilesFromFixture()
     $updater = $this->container->get('automatic_updates.updater');
     $updater->begin(['drupal' => '9.8.1']);
     $updater->stage();

@@ -11,13 +11,14 @@ use PhpTuf\ComposerStager\Domain\Value\PathList\PathListInterface;
 /**
  * Defines an update beginner which doesn't do anything.
  */
-class Beginner extends InvocationRecorderBase implements BeginnerInterface {
+class Beginner extends BypassedStagerServiceBase implements BeginnerInterface {
 
   /**
    * {@inheritdoc}
    */
   public function begin(PathInterface $activeDir, PathInterface $stagingDir, ?PathListInterface $exclusions = NULL, ?ProcessOutputCallbackInterface $callback = NULL, ?int $timeout = ProcessRunnerInterface::DEFAULT_TIMEOUT): void {
     $this->saveInvocationArguments($activeDir, $stagingDir, $exclusions, $timeout);
+    $this->copyFixtureFilesTo($stagingDir);
   }
 
 }

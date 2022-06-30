@@ -56,10 +56,6 @@ class SymlinkValidatorTest extends PackageManagerKernelTestBase {
 
     $stage = $this->createStage();
     $stage->create();
-    // Simulate updating a package. This will copy the active directory into
-    // the (virtual) staging area.
-    // @see ::createVirtualProject()
-    // @see \Drupal\package_manager_test_fixture\EventSubscriber\FixtureStager::copyFilesFromFixture()
     $stage->require(['composer/semver:^3']);
 
     // @see \Drupal\Tests\package_manager\Kernel\TestSymlinkValidator::isLink()
@@ -89,10 +85,6 @@ class SymlinkValidatorTest extends PackageManagerKernelTestBase {
 
     $stage = $this->createStage();
     $stage->create();
-    // Simulate updating a package. This will copy the active directory into
-    // the (virtual) staging area.
-    // @see ::createVirtualProject()
-    // @see \Drupal\package_manager_test_fixture\EventSubscriber\FixtureStager::copyFilesFromFixture()
     $stage->require(['composer/semver:^3']);
 
     $active_dir = $this->container->get('package_manager.path_locator')

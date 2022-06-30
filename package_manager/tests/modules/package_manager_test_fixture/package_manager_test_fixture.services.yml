@@ -1,8 +1,0 @@
-services:
-  package_manager_test_fixture.stager:
-    class: Drupal\package_manager_test_fixture\EventSubscriber\FixtureStager
-    arguments:
-      - '@state'
-      - '@Symfony\Component\Filesystem\Filesystem'
-    tags:
-      - { name: event_subscriber }

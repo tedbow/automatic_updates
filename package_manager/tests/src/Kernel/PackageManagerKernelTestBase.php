@@ -10,7 +10,7 @@ use Drupal\package_manager\Exception\StageException;
 use Drupal\package_manager\Exception\StageValidationException;
 use Drupal\package_manager\PathLocator;
 use Drupal\package_manager\Stage;
-use Drupal\package_manager_test_fixture\EventSubscriber\FixtureStager;
+use Drupal\package_manager_bypass\Beginner;
 use Drupal\Tests\package_manager\Traits\ValidationTestTrait;
 use org\bovigo\vfs\vfsStream;
 use org\bovigo\vfs\vfsStreamDirectory;
@@ -34,7 +34,6 @@ abstract class PackageManagerKernelTestBase extends KernelTestBase {
   protected static $modules = [
     'package_manager',
     'package_manager_bypass',
-    'package_manager_test_fixture',
   ];
 
   /**
@@ -213,9 +212,8 @@ abstract class PackageManagerKernelTestBase extends KernelTestBase {
     $active_dir = $active_dir->url();
     $path_locator = $this->mockPathLocator($active_dir);
 
-    // Ensure that the active directory is copied into the virtual staging area,
-    // even if Package Manager's operations are bypassed.
-    FixtureStager::setFixturePath($active_dir);
+    // Ensure the active directory will be copied into the virtual staging area.
+    Beginner::setFixturePath($active_dir);
 
     // Since the path locator now points to a virtual file system, we need to
     // replace the disk space validator with a test-only version that bypasses
@@ -289,9 +287,21 @@ trait TestStageTrait {
    */
   public function __construct(...$arguments) {
     parent::__construct(...$arguments);
-    $mirror = new \ReflectionClass(Stage::class);
-    $this->tempStore->set($mirror->getConstant('TEMPSTORE_STAGING_ROOT_KEY'), PackageManagerKernelTestBase::$testStagingRoot);
     $this->pathFactory = new TestPathFactory();
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function create(?int $timeout = 300): string {
+    // Ensure that tests which need to successively create multiple stages are
+    // always using the same staging root, since the stored value may be deleted
+    // if the stage encounters an error during pre-create.
+    // @see \Drupal\package_manager\Stage::markAsAvailable()
+    $constant = new \ReflectionClassConstant(Stage::class, 'TEMPSTORE_STAGING_ROOT_KEY');
+    $this->tempStore->set($constant->getValue(), PackageManagerKernelTestBase::$testStagingRoot);
+
+    return parent::create($timeout);
   }
 
   /**
