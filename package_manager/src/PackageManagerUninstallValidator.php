@@ -9,8 +9,13 @@ use Symfony\Component\DependencyInjection\ContainerAwareTrait;
 
 /**
  * Prevents any module from being uninstalled if update is in process.
+ *
+ * @internal
+ *   This is an internal part of Package Manager and may be changed or removed
+ *   at any time without warning. External code should not interact with this
+ *   class.
  */
-class PackageManagerUninstallValidator implements ModuleUninstallValidatorInterface, ContainerAwareInterface {
+final class PackageManagerUninstallValidator implements ModuleUninstallValidatorInterface, ContainerAwareInterface {
 
   use ContainerAwareTrait;
   use StringTranslationTrait;

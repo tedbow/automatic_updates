@@ -10,7 +10,7 @@ use Drupal\Core\Extension\ExtensionVersion;
 /**
  * Defines a class to choose a release of Drupal core to update to.
  */
-class ReleaseChooser {
+final class ReleaseChooser {
 
   use VersionParsingTrait;
 

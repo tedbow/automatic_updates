@@ -10,6 +10,11 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 /**
  * Excludes site configuration files from staging areas.
+ *
+ * @internal
+ *   This is an internal part of Package Manager and may be changed or removed
+ *   at any time without warning. External code should not interact with this
+ *   class.
  */
 class SiteConfigurationExcluder implements EventSubscriberInterface {
 

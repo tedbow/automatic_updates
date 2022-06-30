@@ -9,8 +9,13 @@ use Symfony\Component\DependencyInjection\Reference;
 
 /**
  * Defines dynamic container services for Package Manager.
+ *
+ * @internal
+ *   This is an internal part of Package Manager and may be changed or removed
+ *   at any time without warning. External code should not interact with this
+ *   class.
  */
-class PackageManagerServiceProvider extends ServiceProviderBase {
+final class PackageManagerServiceProvider extends ServiceProviderBase {
 
   /**
    * {@inheritdoc}

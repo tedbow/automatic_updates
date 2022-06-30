@@ -10,6 +10,11 @@ use Symfony\Component\Process\Process;
 
 /**
  * Defines a process factory which sets the COMPOSER_HOME environment variable.
+ *
+ * @internal
+ *   This is an internal part of Package Manager and may be changed or removed
+ *   at any time without warning. External code should not interact with this
+ *   class.
  */
 final class ProcessFactory implements ProcessFactoryInterface {
 

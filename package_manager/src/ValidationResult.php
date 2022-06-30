@@ -8,7 +8,7 @@ use Drupal\system\SystemManager;
 /**
  * A value object to contain the results of a validation.
  */
-class ValidationResult {
+final class ValidationResult {
 
   /**
    * A succinct summary of the results.

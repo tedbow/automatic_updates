@@ -11,8 +11,13 @@ use Drupal\Core\Url;
 
 /**
  * Validates that there are no pending database updates.
+ *
+ * @internal
+ *   This is an internal part of Package Manager and may be changed or removed
+ *   at any time without warning. External code should not interact with this
+ *   class.
  */
-class PendingUpdatesValidator implements PreOperationStageValidatorInterface {
+final class PendingUpdatesValidator implements PreOperationStageValidatorInterface {
 
   use StringTranslationTrait;
 

@@ -10,10 +10,11 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
  * Flags a warning if Xdebug is enabled.
  *
  * @internal
- *   This class is an internal part of the module's update handling and
- *   should not be used by external code.
+ *   This is an internal part of Automatic Updates and may be changed or removed
+ *   at any time without warning. External code should not interact with this
+ *   class.
  */
-class XdebugValidator implements EventSubscriberInterface {
+final class XdebugValidator implements EventSubscriberInterface {
 
   use StringTranslationTrait;
 

@@ -9,8 +9,13 @@ use Symfony\Component\Process\ExecutableFinder as SymfonyExecutableFinder;
 
 /**
  * An executable finder which looks for executable paths in configuration.
+ *
+ * @internal
+ *   This is an internal part of Package Manager and may be changed or removed
+ *   at any time without warning. External code should not interact with this
+ *   class.
  */
-class ExecutableFinder implements ExecutableFinderInterface {
+final class ExecutableFinder implements ExecutableFinderInterface {
 
   /**
    * The decorated executable finder.

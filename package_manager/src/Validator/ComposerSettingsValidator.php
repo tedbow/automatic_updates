@@ -9,8 +9,13 @@ use Drupal\package_manager\Event\PreOperationStageEvent;
 
 /**
  * Validates certain Composer settings.
+ *
+ * @internal
+ *   This is an internal part of Package Manager and may be changed or removed
+ *   at any time without warning. External code should not interact with this
+ *   class.
  */
-class ComposerSettingsValidator implements PreOperationStageValidatorInterface {
+final class ComposerSettingsValidator implements PreOperationStageValidatorInterface {
 
   use StringTranslationTrait;
 

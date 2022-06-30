@@ -26,8 +26,9 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
  * Validates the installed and target versions of Drupal before an update.
  *
  * @internal
- *   This class is an internal part of the module's update handling and should
- *   not be used by external code.
+ *   This is an internal part of Automatic Updates and may be changed or removed
+ *   at any time without warning. External code should not interact with this
+ *   class.
  */
 final class VersionPolicyValidator implements EventSubscriberInterface {
 

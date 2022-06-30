@@ -15,8 +15,13 @@ use PhpTuf\ComposerStager\Domain\Service\ProcessRunner\ComposerRunnerInterface;
 
 /**
  * Validates the Composer executable is the correct version.
+ *
+ * @internal
+ *   This is an internal part of Package Manager and may be changed or removed
+ *   at any time without warning. External code should not interact with this
+ *   class.
  */
-class ComposerExecutableValidator implements PreOperationStageValidatorInterface, ProcessOutputCallbackInterface {
+final class ComposerExecutableValidator implements PreOperationStageValidatorInterface, ProcessOutputCallbackInterface {
 
   use StringTranslationTrait;
 

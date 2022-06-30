@@ -12,7 +12,7 @@ use Drupal\system\SystemManager;
  * Common methods for working with readiness checkers.
  *
  * @internal
- *   This class implements logic to output the messages from readiness checkers
+ *   This trait implements logic to output the messages from readiness checkers
  *   on admin pages. It may be changed or removed at any time without warning
  *   and should not be used by external code.
  */

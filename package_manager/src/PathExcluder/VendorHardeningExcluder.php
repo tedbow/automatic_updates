@@ -10,8 +10,13 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 /**
  * Excludes vendor hardening files from staging operations.
+ *
+ * @internal
+ *   This is an internal part of Package Manager and may be changed or removed
+ *   at any time without warning. External code should not interact with this
+ *   class.
  */
-class VendorHardeningExcluder implements EventSubscriberInterface {
+final class VendorHardeningExcluder implements EventSubscriberInterface {
 
   use PathExclusionsTrait;
 

@@ -16,7 +16,7 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
  *   Drupal core. It may be changed or removed at any time without warning.
  *   External code should not interact with this class.
  */
-class MinorUpdatesEnabled implements ContainerInjectionInterface {
+final class MinorUpdatesEnabled implements ContainerInjectionInterface {
 
   use StringTranslationTrait;
   use VersionParsingTrait;

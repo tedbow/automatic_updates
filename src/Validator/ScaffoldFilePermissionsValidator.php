@@ -13,8 +13,13 @@ use Drupal\package_manager\Validator\PreOperationStageValidatorInterface;
 
 /**
  * Validates that scaffold files have appropriate permissions.
+ *
+ * @internal
+ *   This is an internal part of Automatic Updates and may be changed or removed
+ *   at any time without warning. External code should not interact with this
+ *   class.
  */
-class ScaffoldFilePermissionsValidator implements PreOperationStageValidatorInterface {
+final class ScaffoldFilePermissionsValidator implements PreOperationStageValidatorInterface {
 
   use StringTranslationTrait;
 

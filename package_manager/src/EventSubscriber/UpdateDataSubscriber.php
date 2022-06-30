@@ -8,8 +8,13 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 /**
  * Clears stale update data once staged changes have been applied.
+ *
+ * @internal
+ *   This is an internal part of Package Manager and may be changed or removed
+ *   at any time without warning. External code should not interact with this
+ *   class.
  */
-class UpdateDataSubscriber implements EventSubscriberInterface {
+final class UpdateDataSubscriber implements EventSubscriberInterface {
 
   /**
    * The update manager service.

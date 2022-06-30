@@ -10,8 +10,13 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 /**
  * Excludes 'sites/simpletest' from staging operations.
+ *
+ * @internal
+ *   This is an internal part of Package Manager and may be changed or removed
+ *   at any time without warning. External code should not interact with this
+ *   class.
  */
-class TestSiteExcluder implements EventSubscriberInterface {
+final class TestSiteExcluder implements EventSubscriberInterface {
 
   use PathExclusionsTrait;
 

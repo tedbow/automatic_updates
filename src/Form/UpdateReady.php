@@ -19,9 +19,9 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
  * Defines a form to commit staged updates.
  *
  * @internal
- *   Form classes are internal.
+ *   Form classes are internal and the form structure may change at any time.
  */
-class UpdateReady extends FormBase {
+final class UpdateReady extends FormBase {
 
   /**
    * The updater service.

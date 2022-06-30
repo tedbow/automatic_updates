@@ -14,8 +14,13 @@ use Drupal\package_manager\PathLocator;
 
 /**
  * Checks that the active lock file is unchanged during stage operations.
+ *
+ * @internal
+ *   This is an internal part of Package Manager and may be changed or removed
+ *   at any time without warning. External code should not interact with this
+ *   class.
  */
-class LockFileValidator implements PreOperationStageValidatorInterface {
+final class LockFileValidator implements PreOperationStageValidatorInterface {
 
   use StringTranslationTrait;
 

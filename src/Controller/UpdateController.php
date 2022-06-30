@@ -18,7 +18,7 @@ use Symfony\Component\HttpFoundation\Request;
  * @internal
  *   Controller classes are internal.
  */
-class UpdateController extends ControllerBase {
+final class UpdateController extends ControllerBase {
 
   /**
    * The pending updates validator.

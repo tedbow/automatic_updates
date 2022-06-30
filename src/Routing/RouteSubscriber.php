@@ -9,8 +9,11 @@ use Symfony\Component\Routing\RouteCollection;
  * Modifies route definitions.
  *
  * @internal
+ *   This is an internal part of Automatic Updates and may be changed or removed
+ *   at any time without warning. External code should not interact with this
+ *   class.
  */
-class RouteSubscriber extends RouteSubscriberBase {
+final class RouteSubscriber extends RouteSubscriberBase {
 
   /**
    * {@inheritdoc}

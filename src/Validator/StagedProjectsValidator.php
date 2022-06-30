@@ -13,8 +13,9 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
  * Validates the staged Drupal projects.
  *
  * @internal
- *   This class is an internal part of the module's update handling and
- *   should not be used by external code.
+ *   This is an internal part of Automatic Updates and may be changed or removed
+ *   at any time without warning. External code should not interact with this
+ *   class.
  */
 final class StagedProjectsValidator implements EventSubscriberInterface {
 

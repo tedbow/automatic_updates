@@ -11,9 +11,11 @@ use Drupal\update\UpdateManagerInterface;
  * Defines a class for retrieving project information from Update module.
  *
  * @internal
- *   External code should use the Update API directly.
+ *   This is an internal part of Automatic Updates and may be changed or removed
+ *   at any time without warning. External code should use the Update API
+ *   directly.
  */
-class ProjectInfo {
+final class ProjectInfo {
 
   /**
    * The project name.

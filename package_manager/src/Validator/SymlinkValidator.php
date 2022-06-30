@@ -14,6 +14,11 @@ use Symfony\Component\Finder\Finder;
  *
  * @todo Remove this when Composer Stager's PHP file copier handles symlinks
  *   without issues.
+ *
+ * @internal
+ *   This is an internal part of Package Manager and may be changed or removed
+ *   at any time without warning. External code should not interact with this
+ *   class.
  */
 class SymlinkValidator implements PreOperationStageValidatorInterface {
 

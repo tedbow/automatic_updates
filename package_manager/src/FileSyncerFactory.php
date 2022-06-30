@@ -11,8 +11,13 @@ use Symfony\Component\Process\ExecutableFinder;
 
 /**
  * A file syncer factory which creates a file syncer according to configuration.
+ *
+ * @internal
+ *   This is an internal part of Package Manager and may be changed or removed
+ *   at any time without warning. External code should not interact with this
+ *   class.
  */
-class FileSyncerFactory {
+final class FileSyncerFactory {
 
   /**
    * The decorated file syncer factory.

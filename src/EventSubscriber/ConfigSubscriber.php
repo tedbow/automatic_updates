@@ -11,8 +11,13 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
  *
  * @todo Move this functionality into ReadinessValidationManager when
  *   https://www.drupal.org/i/3275317#comment-14482995 is resolved.
+ *
+ * @internal
+ *   This is an internal part of Automatic Updates and may be changed or removed
+ *   at any time without warning. External code should not interact with this
+ *   class.
  */
-class ConfigSubscriber implements EventSubscriberInterface {
+final class ConfigSubscriber implements EventSubscriberInterface {
 
   /**
    * {@inheritdoc}

@@ -16,7 +16,7 @@ use Symfony\Component\HttpFoundation\RedirectResponse;
  * @internal
  *   Controller classes are internal.
  */
-class ReadinessCheckerController extends ControllerBase {
+final class ReadinessCheckerController extends ControllerBase {
 
   use ReadinessTrait;
 

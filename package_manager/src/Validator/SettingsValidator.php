@@ -10,8 +10,13 @@ use Drupal\package_manager\Event\PreOperationStageEvent;
 
 /**
  * Checks that Drupal's settings are valid for Package Manager.
+ *
+ * @internal
+ *   This is an internal part of Package Manager and may be changed or removed
+ *   at any time without warning. External code should not interact with this
+ *   class.
  */
-class SettingsValidator implements PreOperationStageValidatorInterface {
+final class SettingsValidator implements PreOperationStageValidatorInterface {
 
   use StringTranslationTrait;
 

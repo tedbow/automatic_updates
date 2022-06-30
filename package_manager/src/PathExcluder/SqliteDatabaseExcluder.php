@@ -11,6 +11,11 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 /**
  * Excludes SQLite database files from staging operations.
+ *
+ * @internal
+ *   This is an internal part of Package Manager and may be changed or removed
+ *   at any time without warning. External code should not interact with this
+ *   class.
  */
 class SqliteDatabaseExcluder implements EventSubscriberInterface {
 

@@ -13,7 +13,7 @@ use Drupal\Core\StringTranslation\StringTranslationTrait;
  *   Drupal core. It may be changed or removed at any time without warning.
  *   External code should not interact with this class.
  */
-class MajorVersionMatch {
+final class MajorVersionMatch {
 
   use StringTranslationTrait;
 

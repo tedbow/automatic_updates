@@ -14,7 +14,7 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 /**
  * Defines a manager to run readiness validation.
  */
-class ReadinessValidationManager implements EventSubscriberInterface {
+final class ReadinessValidationManager implements EventSubscriberInterface {
 
   /**
    * The key/value expirable storage.
@@ -43,7 +43,6 @@ class ReadinessValidationManager implements EventSubscriberInterface {
    * @var int
    */
   protected $resultsTimeToLive;
-
 
   /**
    * The updater service.

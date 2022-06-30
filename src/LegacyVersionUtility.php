@@ -8,8 +8,8 @@ use Drupal\Core\Extension\ExtensionVersion;
  * A utility class for dealing with legacy version numbers.
  *
  * @internal
- *    This is an internal utility class that could change in any release and
- *    should not be used by external code.
+ *   This is an internal utility class that could be changed or removed in any
+ *   release and should not be used by external code.
  */
 final class LegacyVersionUtility {
 

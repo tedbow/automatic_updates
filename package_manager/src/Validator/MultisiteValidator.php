@@ -10,8 +10,13 @@ use Drupal\package_manager\PathLocator;
 
 /**
  * Checks that the current site is not part of a multisite.
+ *
+ * @internal
+ *   This is an internal part of Package Manager and may be changed or removed
+ *   at any time without warning. External code should not interact with this
+ *   class.
  */
-class MultisiteValidator implements PreOperationStageValidatorInterface {
+final class MultisiteValidator implements PreOperationStageValidatorInterface {
 
   use StringTranslationTrait;
 

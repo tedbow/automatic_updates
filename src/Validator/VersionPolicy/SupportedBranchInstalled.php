@@ -17,7 +17,7 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
  *   Drupal core. It may be changed or removed at any time without warning.
  *   External code should not interact with this class.
  */
-class SupportedBranchInstalled implements ContainerInjectionInterface {
+final class SupportedBranchInstalled implements ContainerInjectionInterface {
 
   use StringTranslationTrait;
 
