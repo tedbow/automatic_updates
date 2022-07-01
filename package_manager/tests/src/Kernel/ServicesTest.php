@@ -3,6 +3,10 @@
 namespace Drupal\Tests\package_manager\Kernel;
 
 use Drupal\KernelTests\KernelTestBase;
+use Drupal\package_manager\ExecutableFinder;
+use Drupal\package_manager\ProcessFactory;
+use PhpTuf\ComposerStager\Infrastructure\Factory\Process\ProcessFactoryInterface;
+use PhpTuf\ComposerStager\Infrastructure\Service\Finder\ExecutableFinderInterface;
 
 /**
  * Tests that Package Manager services are wired correctly.
@@ -27,6 +31,16 @@ class ServicesTest extends KernelTestBase {
     ];
     foreach ($services as $service) {
       $this->assertIsObject($this->container->get($service));
+    }
+
+    // Ensure that any overridden Composer Stager services were overridden
+    // correctly.
+    $overrides = [
+      ExecutableFinderInterface::class => ExecutableFinder::class,
+      ProcessFactoryInterface::class => ProcessFactory::class,
+    ];
+    foreach ($overrides as $interface => $expected_class) {
+      $this->assertInstanceOf($expected_class, $this->container->get($interface));
     }
   }
 
