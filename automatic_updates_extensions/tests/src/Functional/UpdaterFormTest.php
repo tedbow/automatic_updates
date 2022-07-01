@@ -47,8 +47,8 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
    */
   public function providerSuccessfulUpdate() {
     return [
-      'maintiance_mode_on, semver' => [TRUE, 'semver_test', '8.1.0', '8.1.1'],
-      'maintiance_mode_off, legacy' => [FALSE, 'aaa_update_test', '8.x-2.0', '8.x-2.1'],
+      'maintenance mode on, semver' => [TRUE, 'semver_test', '8.1.0', '8.1.1'],
+      'maintenance mode off, legacy' => [FALSE, 'aaa_update_test', '8.x-2.0', '8.x-2.1'],
     ];
   }
 
@@ -140,10 +140,13 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
    * @dataProvider providerSuccessfulUpdate
    */
   public function testSuccessfulUpdate(bool $maintenance_mode_on, string $project_name, string $installed_version, string $target_version): void {
-    // Disable the scaffold file permissions validator because it will try to
-    // read composer.json from the staging area, which won't exist because
-    // Package Manager is bypassed.
-    $this->disableValidators(['automatic_updates.validator.scaffold_file_permissions']);
+    // Disable the scaffold file permissions and target release validators
+    // because they will try to read composer.json from the staging area,
+    // which won't exist because Package Manager is bypassed.
+    $this->disableValidators([
+      'automatic_updates.validator.scaffold_file_permissions',
+      'automatic_updates_extensions.validator.target_release',
+    ]);
 
     $this->container->get('theme_installer')->install(['automatic_updates_theme_with_updates']);
     $this->updateProject = $project_name;

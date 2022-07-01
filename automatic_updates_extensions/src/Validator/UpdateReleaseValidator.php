@@ -6,6 +6,7 @@ use Drupal\automatic_updates\ProjectInfo;
 use Drupal\automatic_updates_extensions\ExtensionUpdater;
 use Drupal\automatic_updates\LegacyVersionUtility;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
+use Drupal\package_manager\Event\PreApplyEvent;
 use Drupal\package_manager\Event\PreCreateEvent;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
@@ -19,6 +20,83 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 final class UpdateReleaseValidator implements EventSubscriberInterface {
 
   use StringTranslationTrait;
+
+  /**
+   * Checks if the given version of a project is supported.
+   *
+   * Checks if the given version of the given project is in the core update
+   * system's list of known, secure, installable releases of that project.
+   * considered a supported release by verifying if the project is found in the
+   * core update system's list of known, secure, and installable releases.
+   *
+   * @param string $name
+   *   The name of the project.
+   * @param string $semantic_version
+   *   A semantic version number for the project.
+   *
+   * @return bool
+   *   TRUE if the given version of the project is supported, otherwise FALSE.
+   *   given version is not supported will return FALSE.
+   */
+  protected function isSupportedRelease(string $name, string $semantic_version): bool {
+    $supported_releases = (new ProjectInfo($name))->getInstallableReleases();
+    if (!$supported_releases) {
+      return FALSE;
+    }
+
+    // If this version is found in the list of installable releases, it is
+    // secured and supported.
+    if (array_key_exists($semantic_version, $supported_releases)) {
+      return TRUE;
+    }
+    // If the semantic version number wasn't in the list of
+    // installable releases, convert it to a legacy version number and see
+    // if the version number is in the list.
+    $legacy_version = LegacyVersionUtility::convertToLegacyVersion($semantic_version);
+    if ($legacy_version && array_key_exists($legacy_version, $supported_releases)) {
+      return TRUE;
+    }
+    // Neither the semantic version nor the legacy version are in the list
+    // of installable releases, so the release isn't supported.
+    return FALSE;
+  }
+
+  /**
+   * Checks that the packages are secure and supported.
+   *
+   * @param \Drupal\package_manager\Event\PreApplyEvent $event
+   *   The event object.
+   */
+  public function checkStagedReleases(PreApplyEvent $event): void {
+    $messages = [];
+
+    // Get packages that were installed and also updated in the staging area.
+    $active = $event->getStage()->getActiveComposer();
+    $staged = $event->getStage()->getStageComposer();
+    $updated_packages = $staged->getPackagesWithDifferentVersionsIn($active);
+    foreach ($updated_packages as $staged_package) {
+      if (!in_array($staged_package->getType(),
+        ['drupal-module', 'drupal-theme'], TRUE)) {
+        continue;
+      }
+      [, $project_name] = explode('/', $staged_package->getName());
+      $semantic_version = $staged_package->getPrettyVersion();
+      if (!$this->isSupportedRelease($project_name, $semantic_version)) {
+        $messages[] = $this->t('Project @project_name to version @version', [
+          '@project_name' => $project_name,
+          '@version' => $semantic_version,
+        ]);
+      }
+    }
+    if ($messages) {
+      $summary = $this->formatPlural(
+        count($messages),
+        'Cannot update because the following project version is not in the list of installable releases.',
+        'Cannot update because the following project versions are not in the list of installable releases.'
+      );
+      $event->addError($messages, $summary);
+    }
+  }
 
   /**
    * Checks that the update projects are secure and supported.
@@ -41,33 +119,12 @@ final class UpdateReleaseValidator implements EventSubscriberInterface {
         $project_name = $package_parts[1];
         // If the version isn't in the list of installable releases, then it
         // isn't secure and supported and the user should receive an error.
-        $releases = (new ProjectInfo($project_name))->getInstallableReleases();
-        $is_missing_version = FALSE;
-        if (empty($releases)) {
-          $is_missing_version = TRUE;
-        }
-        elseif (!array_key_exists($sematic_version, $releases)) {
-          $legacy_version = LegacyVersionUtility::convertToLegacyVersion($sematic_version);
-          if ($legacy_version) {
-            if (!array_key_exists($legacy_version, $releases)) {
-              // If we cannot find the version using semantic or legacy then the
-              // version is missing.
-              $is_missing_version = TRUE;
-            }
-          }
-          else {
-            // If we cannot convert the semantic version into a legacy version
-            // then the version is missing.
-            $is_missing_version = TRUE;
-          }
-        }
-        if ($is_missing_version) {
+        if (!$this->isSupportedRelease($project_name, $sematic_version)) {
           $messages[] = $this->t('Project @project_name to version @version', [
             '@project_name' => $project_name,
             '@version' => $sematic_version,
           ]);
         }
-
       }
     }
     if ($messages) {
@@ -86,6 +143,7 @@ final class UpdateReleaseValidator implements EventSubscriberInterface {
   public static function getSubscribedEvents() {
     return [
       PreCreateEvent::class => 'checkRelease',
+      PreApplyEvent::class => 'checkStagedReleases',
     ];
   }
 

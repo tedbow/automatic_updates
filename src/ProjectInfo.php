@@ -86,7 +86,8 @@ final class ProjectInfo {
    *   If the project information is available, an array of releases that can be
    *   installed, keyed by version number; otherwise NULL. The releases are in
    *   descending order by version number (i.e., higher versions are listed
-   *   first).
+   *   first). The currently installed version of the project, and any older
+   *   versions, are not considered installable releases.
    *
    * @throws \RuntimeException
    *   Thrown if there are no available releases.
