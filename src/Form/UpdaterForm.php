@@ -119,8 +119,6 @@ final class UpdaterForm extends FormBase {
    * {@inheritdoc}
    */
   public function buildForm(array $form, FormStateInterface $form_state) {
-    $this->messenger()->addWarning($this->t('This is an experimental Automatic Updater using Composer. Use at your own risk.'));
-
     if ($this->updater->isAvailable()) {
       $stage_exists = FALSE;
     }

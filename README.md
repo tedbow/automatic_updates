@@ -1,11 +1,5 @@
 Automatic Updates
 ---------------
-🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥
-
-Warning the 8.x-2.x version of this module is still in development and should only be used development and testing.
-
-🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥
-
 ### Automatic Updates Initiative
 
 - Follow and read up on

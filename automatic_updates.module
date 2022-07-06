@@ -45,7 +45,7 @@ function automatic_updates_mail(string $key, array &$message, array $params): vo
       '@previous_version' => $params['previous_version'],
       '@updated_version' => $params['updated_version'],
     ]);
-    $message['body'][] = t('This e-mail was sent by the Automatic Updates module, which is an experimental module. Furthermore, unattended updates are not yet fully supported.');
+    $message['body'][] = t('This e-mail was sent by the Automatic Updates module. Unattended updates are not yet fully supported.');
     $message['body'][] = t('If you are using this feature in production, it is strongly recommended for you to visit your site and ensure that everything still looks good.');
   }
 }
