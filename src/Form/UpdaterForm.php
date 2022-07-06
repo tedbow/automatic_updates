@@ -166,9 +166,6 @@ final class UpdaterForm extends FormBase {
       return $form;
     }
 
-    // @todo Should we be using the Update module's library here, or our own?
-    $form['#attached']['library'][] = 'update/drupal.update.admin';
-
     $project = $project_info->getProjectInfo();
     if ($installed_minor_release === NULL && $next_minor_release === NULL) {
       if ($project['status'] === UpdateManagerInterface::CURRENT) {
