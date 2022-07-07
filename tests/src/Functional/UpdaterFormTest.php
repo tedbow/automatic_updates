@@ -9,6 +9,7 @@ use Drupal\package_manager\Event\PreApplyEvent;
 use Drupal\package_manager\Event\PreCreateEvent;
 use Drupal\package_manager\ValidationResult;
 use Drupal\automatic_updates_test\EventSubscriber\TestSubscriber1;
+use Drupal\package_manager_bypass\Beginner;
 use Drupal\package_manager_bypass\Stager;
 use Drupal\Tests\automatic_updates\Traits\ValidationTestTrait;
 use Drupal\Tests\package_manager\Traits\PackageManagerBypassTestTrait;
@@ -335,6 +336,7 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
     $this->checkForUpdates();
 
     $this->drupalGet('/admin/modules/automatic-update');
+    Beginner::setFixturePath(__DIR__ . '/../../fixtures/fake-site');
     Stager::setFixturePath(__DIR__ . '/../../fixtures/staged/9.8.1');
     $page->pressButton('Update to 9.8.1');
     $this->checkForMetaRefresh();
@@ -470,6 +472,7 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
 
     $page = $this->getSession()->getPage();
     $this->drupalGet('/admin/modules/automatic-update');
+    Beginner::setFixturePath(__DIR__ . '/../../fixtures/fake-site');
     Stager::setFixturePath(__DIR__ . '/../../fixtures/staged/9.8.1');
     // The warning should be visible.
     $assert_session = $this->assertSession();
@@ -571,6 +574,7 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
     $cached_message = $this->setAndAssertCachedMessage();
 
     $this->drupalGet($update_form_url);
+    Beginner::setFixturePath(__DIR__ . '/../../fixtures/fake-site');
     Stager::setFixturePath(__DIR__ . '/../../fixtures/staged/9.8.1');
     $assert_session->pageTextNotContains($cached_message);
     $page->pressButton('Update to 9.8.1');
@@ -600,6 +604,7 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
 
     $page = $this->getSession()->getPage();
     $this->drupalGet('/admin/modules/automatic-update');
+    Beginner::setFixturePath(__DIR__ . '/../../fixtures/fake-site');
     Stager::setFixturePath(__DIR__ . '/../../fixtures/staged/9.8.1');
     $page->pressButton('Update to 9.8.1');
     $this->checkForMetaRefresh();
@@ -635,6 +640,8 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
     $page = $session->getPage();
     $this->setCoreVersion('9.8.0');
     $this->checkForUpdates();
+
+    Beginner::setFixturePath(__DIR__ . '/../../fixtures/fake-site');
 
     $this->drupalGet('/admin/modules/automatic-update');
     $error = new \Exception('Some Exception');

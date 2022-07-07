@@ -156,3 +156,7 @@ services:
       - '@string_translation'
     tags:
       - { name: event_subscriber }
+  package_manager.validator.patches:
+    class: Drupal\package_manager\Validator\ComposerPatchesValidator
+    tags:
+      - { name: event_subscriber }

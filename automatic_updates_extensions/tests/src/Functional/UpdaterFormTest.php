@@ -6,6 +6,7 @@ use Drupal\automatic_updates\Event\ReadinessCheckEvent;
 use Drupal\automatic_updates_test\EventSubscriber\TestSubscriber1;
 use Drupal\package_manager\Event\PreApplyEvent;
 use Drupal\package_manager\ValidationResult;
+use Drupal\package_manager_bypass\Beginner;
 use Drupal\Tests\automatic_updates\Functional\AutomaticUpdatesFunctionalTestBase;
 use Drupal\Tests\automatic_updates\Traits\ValidationTestTrait;
 use Drupal\Tests\automatic_updates_extensions\Traits\FormTestTrait;
@@ -140,14 +141,6 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
    * @dataProvider providerSuccessfulUpdate
    */
   public function testSuccessfulUpdate(bool $maintenance_mode_on, string $project_name, string $installed_version, string $target_version): void {
-    // Disable the scaffold file permissions and target release validators
-    // because they will try to read composer.json from the staging area,
-    // which won't exist because Package Manager is bypassed.
-    $this->disableValidators([
-      'automatic_updates.validator.scaffold_file_permissions',
-      'automatic_updates_extensions.validator.target_release',
-    ]);
-
     $this->container->get('theme_installer')->install(['automatic_updates_theme_with_updates']);
     $this->updateProject = $project_name;
     $this->setReleaseMetadata(__DIR__ . '/../../../../tests/fixtures/release-history/drupal.9.8.2.xml');
@@ -156,6 +149,8 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
     $this->checkForUpdates();
     $state = $this->container->get('state');
     $state->set('system.maintenance_mode', $maintenance_mode_on);
+
+    Beginner::setFixturePath(__DIR__ . '/../../fixtures/fake-site');
 
     $page = $this->getSession()->getPage();
     // Navigate to the automatic updates form.
