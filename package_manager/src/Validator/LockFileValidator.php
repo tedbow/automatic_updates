@@ -118,7 +118,7 @@ final class LockFileValidator implements PreOperationStageValidatorInterface {
 
     // If we have both hashes, ensure they match.
     if ($active_hash && $stored_hash && !hash_equals($stored_hash, $active_hash)) {
-      $error = $this->t('Stored lock file hash does not match the active lock file.');
+      $error = $this->t('Unexpected changes were detected in composer.lock, which indicates that other Composer operations were performed since this Package Manager operation started. This can put the code base into an unreliable state and therefore is not allowed.');
     }
 
     // Don't allow staged changes to be applied if the staged lock file has no

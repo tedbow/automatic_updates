@@ -73,7 +73,7 @@ class LockFileValidatorTest extends PackageManagerKernelTestBase {
       file_put_contents($this->activeDir . '/composer.lock', 'changed');
     });
     $result = ValidationResult::createError([
-      'Stored lock file hash does not match the active lock file.',
+      'Unexpected changes were detected in composer.lock, which indicates that other Composer operations were performed since this Package Manager operation started. This can put the code base into an unreliable state and therefore is not allowed.',
     ]);
     $this->assertResults([$result], $event_class);
   }
