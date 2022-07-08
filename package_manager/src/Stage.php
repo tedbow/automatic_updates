@@ -18,12 +18,15 @@ use Drupal\package_manager\Event\PreDestroyEvent;
 use Drupal\package_manager\Event\PreOperationStageEvent;
 use Drupal\package_manager\Event\PreRequireEvent;
 use Drupal\package_manager\Event\StageEvent;
+use Drupal\package_manager\Exception\ApplyFailedException;
 use Drupal\package_manager\Exception\StageException;
 use Drupal\package_manager\Exception\StageOwnershipException;
 use Drupal\package_manager\Exception\StageValidationException;
 use PhpTuf\ComposerStager\Domain\Core\Beginner\BeginnerInterface;
 use PhpTuf\ComposerStager\Domain\Core\Committer\CommitterInterface;
 use PhpTuf\ComposerStager\Domain\Core\Stager\StagerInterface;
+use PhpTuf\ComposerStager\Domain\Exception\InvalidArgumentException;
+use PhpTuf\ComposerStager\Domain\Exception\PreconditionException;
 use PhpTuf\ComposerStager\Infrastructure\Factory\Path\PathFactory;
 use PhpTuf\ComposerStager\Infrastructure\Value\PathList\PathList;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
@@ -351,6 +354,10 @@ class Stage {
    *   (optional) How long to allow the file copying operation to run before
    *   timing out, in seconds, or NULL to never time out. Defaults to 600
    *   seconds.
+   *
+   * @throws \Drupal\package_manager\Exception\ApplyFailedException
+   *   Thrown if there is an error calling Composer Stager, which may indicate
+   *   a failed commit operation.
    */
   public function apply(?int $timeout = 600): void {
     $this->checkOwnership();
@@ -365,7 +372,22 @@ class Stage {
     $this->tempStore->set(self::TEMPSTORE_APPLY_TIME_KEY, $this->time->getRequestTime());
     $this->dispatch($event, $this->setNotApplying());
 
-    $this->committer->commit($stage_dir, $active_dir, new PathList($event->getExcludedPaths()), NULL, $timeout);
+    try {
+      $this->committer->commit($stage_dir, $active_dir, new PathList($event->getExcludedPaths()), NULL, $timeout);
+    }
+    // @todo When this module requires PHP 8 consolidate the next 2 catch blocks
+    //   into 1.
+    catch (InvalidArgumentException $e) {
+      throw new StageException($e->getMessage(), $e->getCode(), $e);
+    }
+    catch (PreconditionException $e) {
+      throw new StageException($e->getMessage(), $e->getCode(), $e);
+    }
+    catch (\Throwable $throwable) {
+      // If the throwable is any other type the commit operation may have
+      // failed.
+      throw new ApplyFailedException($throwable->getMessage(), $throwable->getCode(), $throwable);
+    }
   }
 
   /**

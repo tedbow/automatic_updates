@@ -4,6 +4,7 @@ namespace Drupal\automatic_updates;
 
 use Drupal\automatic_updates\Exception\UpdateException;
 use Drupal\package_manager\Event\StageEvent;
+use Drupal\package_manager\Exception\ApplyFailedException;
 use Drupal\package_manager\Exception\StageValidationException;
 use Drupal\package_manager\Stage;
 
@@ -101,6 +102,18 @@ class Updater extends Stage {
     }
     catch (StageValidationException $e) {
       throw new UpdateException($e->getResults(), $e->getMessage() ?: "Unable to complete the update because of errors.", $e->getCode(), $e);
+    }
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function apply(?int $timeout = 600): void {
+    try {
+      parent::apply($timeout);
+    }
+    catch (ApplyFailedException $exception) {
+      throw new UpdateException([], 'The update operation failed to apply. The update may have been partially applied. It is recommended that the site be restored from a code backup.', $exception->getCode(), $exception);
     }
   }
 

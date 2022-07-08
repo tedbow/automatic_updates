@@ -10,8 +10,13 @@ use Drupal\Core\Site\Settings;
 use Drupal\package_manager\Event\PostApplyEvent;
 use Drupal\package_manager\Event\PreApplyEvent;
 use Drupal\package_manager\Event\StageEvent;
+use Drupal\package_manager\Exception\ApplyFailedException;
 use Drupal\package_manager\Exception\StageException;
+use Drupal\package_manager_bypass\Committer;
+use PhpTuf\ComposerStager\Domain\Exception\InvalidArgumentException;
+use PhpTuf\ComposerStager\Domain\Exception\PreconditionException;
 use Drupal\package_manager_bypass\Beginner;
+use PhpTuf\ComposerStager\Domain\Service\Precondition\PreconditionInterface;
 
 /**
  * @coversDefaultClass \Drupal\package_manager\Stage
@@ -258,6 +263,62 @@ class StageTest extends PackageManagerKernelTestBase {
       $this->assertCount(1, $invocations);
       $this->assertSame($expected_timeout, end($invocations[0]));
     }
+  }
+
+  /**
+   * Data provider for testCommitException().
+   *
+   * @return \string[][]
+   *   The test cases.
+   */
+  public function providerCommitException(): array {
+    return [
+      'RuntimeException to ApplyFailedException' => [
+        'RuntimeException',
+        ApplyFailedException::class,
+      ],
+      'InvalidArgumentException' => [
+        InvalidArgumentException::class,
+        StageException::class,
+      ],
+      'PreconditionException' => [
+        PreconditionException::class,
+        StageException::class,
+      ],
+      'Exception' => [
+        'Exception',
+        ApplyFailedException::class,
+      ],
+    ];
+  }
+
+  /**
+   * Tests exception handling during calls to Composer Stager commit.
+   *
+   * @param string $thrown_class
+   *   The throwable class that should be thrown by Composer Stager.
+   * @param string|null $expected_class
+   *   The expected exception class, if different from $thrown_class.
+   *
+   * @dataProvider providerCommitException
+   */
+  public function testCommitException(string $thrown_class, string $expected_class = NULL): void {
+    $stage = $this->createStage();
+    $stage->create();
+    $thrown_message = 'A very bad thing happened';
+    // PreconditionException requires a preconditions object.
+    if ($thrown_class === PreconditionException::class) {
+      $throwable = new PreconditionException($this->prophesize(PreconditionInterface::class)->reveal(), $thrown_message, 123);
+    }
+    else {
+      $throwable = new $thrown_class($thrown_message, 123);
+    }
+    Committer::setException($throwable);
+    $this->expectException($expected_class);
+    $this->expectExceptionMessage($thrown_message);
+    $this->expectExceptionCode(123);
+    $stage->require(['drupal/core' => '9.8.1']);
+    $stage->apply();
   }
 
 }

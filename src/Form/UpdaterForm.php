@@ -264,7 +264,7 @@ final class UpdaterForm extends FormBase {
     }
 
     $form['backup'] = [
-      '#markup' => $this->t('It\'s a good idea to <a href=":url">back up your database</a> before you begin.', [':url' => 'https://www.drupal.org/node/22281#s-backing-up-the-database']),
+      '#markup' => $this->t('It\'s a good idea to <a href=":url">back up your database and site code</a> before you begin.', [':url' => 'https://www.drupal.org/node/22281']),
     ];
 
     if ($stage_exists) {

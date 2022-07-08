@@ -18,6 +18,9 @@ class Committer extends BypassedStagerServiceBase implements CommitterInterface 
    */
   public function commit(PathInterface $stagingDir, PathInterface $activeDir, ?PathListInterface $exclusions = NULL, ?ProcessOutputCallbackInterface $callback = NULL, ?int $timeout = ProcessRunnerInterface::DEFAULT_TIMEOUT): void {
     $this->saveInvocationArguments($stagingDir, $activeDir, $exclusions, $timeout);
+    if ($exception = $this->state->get(static::class . '-exception')) {
+      throw $exception;
+    }
     $this->copyFixtureFilesTo($activeDir);
   }
 
@@ -29,6 +32,16 @@ class Committer extends BypassedStagerServiceBase implements CommitterInterface 
     // copy fixture files to the active directory, but when we do, go ahead and
     // remove this entire method.
     throw new \BadMethodCallException('This is not implemented yet.');
+  }
+
+  /**
+   * Sets an exception to be thrown during ::commit().
+   *
+   * @param \Throwable $exception
+   *   The throwable.
+   */
+  public static function setException(\Throwable $exception): void {
+    \Drupal::state()->set(static::class . '-exception', $exception);
   }
 
 }

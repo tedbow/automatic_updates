@@ -2,7 +2,11 @@
 
 namespace Drupal\Tests\automatic_updates\Kernel;
 
+use Drupal\automatic_updates\Exception\UpdateException;
+use Drupal\package_manager\Exception\StageException;
+use Drupal\package_manager_bypass\Committer;
 use Drupal\Tests\user\Traits\UserCreationTrait;
+use PhpTuf\ComposerStager\Domain\Exception\InvalidArgumentException;
 
 /**
  * @coversDefaultClass \Drupal\automatic_updates\Updater
@@ -137,6 +141,56 @@ class UpdaterTest extends AutomaticUpdatesKernelTestBase {
       'not drupal and drupal' => [['drupal' => '9.8.0', 'not_drupal' => '1.2.3']],
       'empty' => [[]],
     ];
+  }
+
+  /**
+   * Data provider for testCommitException().
+   *
+   * @return \string[][]
+   *   The test cases.
+   */
+  public function providerCommitException(): array {
+    return [
+      'RuntimeException' => [
+        'RuntimeException',
+        UpdateException::class,
+      ],
+      'InvalidArgumentException' => [
+        InvalidArgumentException::class,
+        StageException::class,
+      ],
+      'Exception' => [
+        'Exception',
+        UpdateException::class,
+      ],
+    ];
+  }
+
+  /**
+   * Tests exception handling during calls to Composer Stager commit.
+   *
+   * @param string $thrown_class
+   *   The throwable class that should be thrown by Composer Stager.
+   * @param string|null $expected_class
+   *   The expected exception class.
+   *
+   * @dataProvider providerCommitException
+   */
+  public function testCommitException(string $thrown_class, string $expected_class = NULL): void {
+    $updater = $this->container->get('automatic_updates.updater');
+    $updater->begin([
+      'drupal' => '9.8.1',
+    ]);
+    $updater->stage();
+    $thrown_message = 'A very bad thing happened';
+    Committer::setException(new $thrown_class($thrown_message, 123));
+    $this->expectException($expected_class);
+    $expected_message = $expected_class === UpdateException::class ?
+      'The update operation failed to apply. The update may have been partially applied. It is recommended that the site be restored from a code backup.'
+      : $thrown_message;
+    $this->expectExceptionMessage($expected_message);
+    $this->expectExceptionCode(123);
+    $updater->apply();
   }
 
 }
