@@ -2,7 +2,6 @@
 
 namespace Drupal\Tests\automatic_updates\Functional;
 
-use Drupal\package_manager_bypass\Beginner;
 use Drupal\package_manager_bypass\Stager;
 
 /**
@@ -53,7 +52,6 @@ class UpdateLockTest extends AutomaticUpdatesFunctionalTestBase {
     // We should be able to get partway through an update without issue.
     $this->drupalLogin($user_1);
     $this->drupalGet('/admin/modules/automatic-update');
-    Beginner::setFixturePath(__DIR__ . '/../../fixtures/fake-site');
     Stager::setFixturePath(__DIR__ . '/../../fixtures/staged/9.8.1');
     $page->pressButton('Update');
     $this->checkForMetaRefresh();

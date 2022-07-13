@@ -3,6 +3,7 @@
 namespace Drupal\Tests\automatic_updates\Functional;
 
 use Drupal\Core\Site\Settings;
+use Drupal\package_manager_bypass\Beginner;
 use Drupal\Tests\BrowserTestBase;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
@@ -40,10 +41,6 @@ abstract class AutomaticUpdatesFunctionalTestBase extends BrowserTestBase {
     // package_manager_bypass is disabling those operations.
     'automatic_updates.composer_executable_validator',
     'package_manager.validator.composer_executable',
-    // Disable the lock file validator, because it may cause the tests to fail
-    // if either the active and stage directories don't have a composer.lock
-    // file, which is the case with some of our fixtures.
-    'package_manager.validator.lock_file',
     // Always allow tests to run with Xdebug on.
     'automatic_updates.validator.xdebug',
     // Disable the symlink validator, since the running code base may contain
@@ -58,6 +55,7 @@ abstract class AutomaticUpdatesFunctionalTestBase extends BrowserTestBase {
   protected function setUp() {
     parent::setUp();
     $this->disableValidators($this->disableValidators);
+    Beginner::setFixturePath(__DIR__ . '/../../fixtures/fake-site');
   }
 
   /**
