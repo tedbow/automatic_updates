@@ -42,11 +42,6 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
    * {@inheritdoc}
    */
   protected function setUp(): void {
-    // In this test class, all actual staging operations are bypassed by
-    // package_manager_bypass, which means these validators will complain
-    // because there is no actual Composer data for them to inspect.
-    $this->disableValidators[] = 'automatic_updates.staged_projects_validator';
-
     parent::setUp();
 
     $this->setReleaseMetadata(__DIR__ . '/../../fixtures/release-history/drupal.9.8.1-security.xml');
@@ -62,7 +57,7 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
     // BEGIN: DELETE FROM CORE MERGE REQUEST
     // Check for permission that was added in Drupal core 9.4.x.
     $available_permissions = array_keys($this->container->get('user.permissions')->getPermissions());
-    if (!in_array('view update notifications', $available_permissions)) {
+    if (!in_array('view update notifications', $available_permissions, TRUE)) {
       array_pop($permissions);
     }
     // END: DELETE FROM CORE MERGE REQUEST

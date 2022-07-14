@@ -27,13 +27,6 @@ abstract class AutomaticUpdatesFunctionalTestBase extends BrowserTestBase {
    * @var string[]
    */
   protected $disableValidators = [
-    // Disable the filesystem permissions validators, since we cannot guarantee
-    // that the current code base will be writable in all testing situations. We
-    // test these validators in our build tests, since those do give us control
-    // over the filesystem permissions.
-    // @see \Drupal\Tests\automatic_updates\Build\CoreUpdateTest::assertReadOnlyFileSystemError()
-    'automatic_updates.validator.file_system_permissions',
-    'package_manager.validator.file_system',
     // Disable the Composer executable validator, since it may cause the tests
     // to fail if a supported version of Composer is unavailable to the web
     // server. This should be okay in most situations because, apart from the
@@ -43,10 +36,6 @@ abstract class AutomaticUpdatesFunctionalTestBase extends BrowserTestBase {
     'package_manager.validator.composer_executable',
     // Always allow tests to run with Xdebug on.
     'automatic_updates.validator.xdebug',
-    // Disable the symlink validator, since the running code base may contain
-    // symlinks that don't affect functional testing.
-    'automatic_updates.validator.symlink',
-    'package_manager.validator.symlink',
   ];
 
   /**
@@ -55,7 +44,17 @@ abstract class AutomaticUpdatesFunctionalTestBase extends BrowserTestBase {
   protected function setUp() {
     parent::setUp();
     $this->disableValidators($this->disableValidators);
-    Beginner::setFixturePath(__DIR__ . '/../../fixtures/fake-site');
+
+    $fixture_dir = __DIR__ . '/../../fixtures/fake-site';
+    // We cannot guarantee that the fixture directory will be writable in all
+    // testing situations, so to keep things consistent, fail the test if it
+    // isn't. Our build tests examine file system permissions more extensively.
+    // @see \Drupal\Tests\automatic_updates\Build\CoreUpdateTest::assertReadOnlyFileSystemError()
+    $this->assertDirectoryIsWritable($fixture_dir);
+
+    Beginner::setFixturePath($fixture_dir);
+    $this->container->get('package_manager.path_locator')
+      ->setPaths($fixture_dir, $fixture_dir . '/vendor', '');
   }
 
   /**

@@ -30,6 +30,10 @@ class PackageManagerBypassServiceProvider extends ServiceProviderBase {
     foreach ($services as $id => $class) {
       $container->getDefinition($id)->setClass($class)->setArguments($arguments);
     }
+
+    $container->getDefinition('package_manager.path_locator')
+      ->setClass(PathLocator::class)
+      ->addArgument($arguments[0]);
   }
 
 }

@@ -4,6 +4,7 @@ namespace Drupal\Tests\automatic_updates_extensions\Functional;
 
 use Drupal\automatic_updates\Event\ReadinessCheckEvent;
 use Drupal\automatic_updates_test\EventSubscriber\TestSubscriber1;
+use Drupal\automatic_updates_test\StagedDatabaseUpdateValidator;
 use Drupal\package_manager\Event\PreApplyEvent;
 use Drupal\package_manager\ValidationResult;
 use Drupal\package_manager_bypass\Beginner;
@@ -151,6 +152,7 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
     $state->set('system.maintenance_mode', $maintenance_mode_on);
 
     Beginner::setFixturePath(__DIR__ . '/../../fixtures/fake-site');
+    StagedDatabaseUpdateValidator::setExtensionsWithUpdates(['system', 'automatic_updates_theme_with_updates']);
 
     $page = $this->getSession()->getPage();
     // Navigate to the automatic updates form.

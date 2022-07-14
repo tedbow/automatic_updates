@@ -29,11 +29,6 @@ class AvailableUpdatesReportTest extends AutomaticUpdatesFunctionalTestBase {
    * {@inheritdoc}
    */
   protected function setUp(): void {
-    // In this test class, all actual staging operations are bypassed by
-    // package_manager_bypass, which means this validator will complain because
-    // there is no actual Composer data for it to inspect.
-    $this->disableValidators[] = 'automatic_updates.staged_projects_validator';
-
     parent::setUp();
     $user = $this->createUser([
       'administer site configuration',

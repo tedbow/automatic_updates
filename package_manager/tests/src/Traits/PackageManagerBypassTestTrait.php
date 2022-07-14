@@ -20,10 +20,12 @@ trait PackageManagerBypassTestTrait {
 
     /** @var \Drupal\package_manager_bypass\BypassedStagerServiceBase $stager */
     $stager = $this->container->get('package_manager.stager');
-    // If an update was attempted, then there will be two calls to the stager:
-    // one to change the constraints in composer.json, and another to actually
-    // update the installed dependencies.
-    $this->assertCount($attempted_times * 2, $stager->getInvocationArguments());
+    // If an update was attempted, then there will be at least two calls to the
+    // stager: one to change the runtime constraints in composer.json, and
+    // another to actually update the installed dependencies. If any dev
+    // packages (like `drupal/core-dev`) are installed, there may also be an
+    // additional call to change the dev constraints.
+    $this->assertGreaterThanOrEqual($attempted_times * 2, count($stager->getInvocationArguments()));
 
     /** @var \Drupal\package_manager_bypass\BypassedStagerServiceBase $committer */
     $committer = $this->container->get('package_manager.committer');
