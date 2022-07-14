@@ -11,6 +11,7 @@ use Drupal\package_manager\Event\PreCreateEvent;
 use Drupal\package_manager\ValidationResult;
 use Drupal\automatic_updates_test\EventSubscriber\TestSubscriber1;
 use Drupal\package_manager_bypass\Stager;
+use Drupal\system\SystemManager;
 use Drupal\Tests\automatic_updates\Traits\ValidationTestTrait;
 use Drupal\Tests\package_manager\Traits\PackageManagerBypassTestTrait;
 
@@ -239,8 +240,7 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
 
     // Set up a new fake error. Use an error with multiple messages so we can
     // ensure that they're all displayed, along with their summary.
-    $this->createTestValidationResults();
-    $expected_results = [$this->testResults['checker_1']['2 errors 2 warnings']['1:errors']];
+    $expected_results = [$this->createValidationResult(SystemManager::REQUIREMENT_ERROR, 2)];
     TestSubscriber1::setTestResult($expected_results, ReadinessCheckEvent::class);
 
     // If a validator raises an error during readiness checking, the form should
@@ -412,8 +412,7 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
 
     // If a legitimate error is raised during pre-apply, we should be able to
     // delete the staged update right away.
-    $this->createTestValidationResults();
-    $results = $this->testResults['checker_1']['1 error'];
+    $results = [$this->createValidationResult(SystemManager::REQUIREMENT_ERROR)];
     TestSubscriber1::setTestResult($results, PreApplyEvent::class);
     $page->pressButton('Update to 9.8.1');
     $this->checkForMetaRefresh();
@@ -458,8 +457,7 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
 
     // Flag a warning, which will not block the update but should be displayed
     // on the updater form.
-    $this->createTestValidationResults();
-    $expected_results = $this->testResults['checker_1']['1 warning'];
+    $expected_results = [$this->createValidationResult(SystemManager::REQUIREMENT_WARNING)];
     TestSubscriber1::setTestResult($expected_results, ReadinessCheckEvent::class);
     $messages = reset($expected_results)->getMessages();
 

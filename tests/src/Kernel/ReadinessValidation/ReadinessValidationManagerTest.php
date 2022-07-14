@@ -33,7 +33,6 @@ class ReadinessValidationManagerTest extends AutomaticUpdatesKernelTestBase {
     $this->setCoreVersion('9.8.2');
     $this->installEntitySchema('user');
     $this->installSchema('user', ['users_data']);
-    $this->createTestValidationResults();
   }
 
   /**
@@ -42,14 +41,11 @@ class ReadinessValidationManagerTest extends AutomaticUpdatesKernelTestBase {
   public function testGetResults(): void {
     $this->enableModules(['automatic_updates', 'automatic_updates_test2']);
     $this->assertCheckerResultsFromManager([], TRUE);
-
-    $expected_results = [
-      array_pop($this->testResults['checker_1']),
-      array_pop($this->testResults['checker_2']),
-    ];
-    TestSubscriber1::setTestResult($expected_results[0], ReadinessCheckEvent::class);
-    TestSubscriber2::setTestResult($expected_results[1], ReadinessCheckEvent::class);
-    $expected_results_all = array_merge($expected_results[0], $expected_results[1]);
+    $checker_1_expected = [$this->createValidationResult(SystemManager::REQUIREMENT_ERROR)];
+    $checker_2_expected = [$this->createValidationResult(SystemManager::REQUIREMENT_ERROR)];
+    TestSubscriber1::setTestResult($checker_1_expected, ReadinessCheckEvent::class);
+    TestSubscriber2::setTestResult($checker_2_expected, ReadinessCheckEvent::class);
+    $expected_results_all = array_merge($checker_1_expected, $checker_2_expected);
     $this->assertCheckerResultsFromManager($expected_results_all, TRUE);
 
     // Define a constant flag that will cause the readiness checker
@@ -65,25 +61,29 @@ class ReadinessValidationManagerTest extends AutomaticUpdatesKernelTestBase {
     $expected_results_all_reversed = array_reverse($expected_results_all);
     $this->assertCheckerResultsFromManager($expected_results_all_reversed, TRUE);
 
-    $expected_results = [
-      $this->testResults['checker_1']['2 errors 2 warnings'],
-      $this->testResults['checker_2']['2 errors 2 warnings'],
+    $checker_1_expected = [
+      'checker 1 errors' => $this->createValidationResult(SystemManager::REQUIREMENT_ERROR),
+      'checker 1 warnings' => $this->createValidationResult(SystemManager::REQUIREMENT_WARNING),
     ];
-    TestSubscriber1::setTestResult($expected_results[0], ReadinessCheckEvent::class);
-    TestSubscriber2::setTestResult($expected_results[1], ReadinessCheckEvent::class);
-    $expected_results_all = array_merge($expected_results[1], $expected_results[0]);
+    $checker_2_expected = [
+      'checker 2 errors' => $this->createValidationResult(SystemManager::REQUIREMENT_ERROR),
+      'checker 2 warnings' => $this->createValidationResult(SystemManager::REQUIREMENT_WARNING),
+    ];
+    TestSubscriber1::setTestResult($checker_1_expected, ReadinessCheckEvent::class);
+    TestSubscriber2::setTestResult($checker_2_expected, ReadinessCheckEvent::class);
+    $expected_results_all = array_merge($checker_2_expected, $checker_1_expected);
     $this->assertCheckerResultsFromManager($expected_results_all, TRUE);
 
     // Confirm that filtering by severity works.
     $warnings_only_results = [
-      $expected_results[1]['2:warnings'],
-      $expected_results[0]['1:warnings'],
+      $checker_2_expected['checker 2 warnings'],
+      $checker_1_expected['checker 1 warnings'],
     ];
     $this->assertCheckerResultsFromManager($warnings_only_results, FALSE, SystemManager::REQUIREMENT_WARNING);
 
     $errors_only_results = [
-      $expected_results[1]['2:errors'],
-      $expected_results[0]['1:errors'],
+      $checker_2_expected['checker 2 errors'],
+      $checker_1_expected['checker 1 errors'],
     ];
     $this->assertCheckerResultsFromManager($errors_only_results, FALSE, SystemManager::REQUIREMENT_ERROR);
   }
@@ -92,34 +92,30 @@ class ReadinessValidationManagerTest extends AutomaticUpdatesKernelTestBase {
    * Tests that the manager is run after modules are installed.
    */
   public function testRunOnInstall(): void {
-    $expected_results = [array_pop($this->testResults['checker_1'])];
-    TestSubscriber1::setTestResult($expected_results[0], ReadinessCheckEvent::class);
+    $checker_1_results = [$this->createValidationResult(SystemManager::REQUIREMENT_ERROR)];
+    TestSubscriber1::setTestResult($checker_1_results, ReadinessCheckEvent::class);
     // Confirm that messages from an existing module are displayed when
     // 'automatic_updates' is installed.
     $this->container->get('module_installer')->install(['automatic_updates']);
-    $this->assertCheckerResultsFromManager($expected_results[0]);
+    $this->assertCheckerResultsFromManager($checker_1_results);
 
     // Confirm that the checkers are run when a module that provides a readiness
     // checker is installed.
-    $expected_results = [
-      array_pop($this->testResults['checker_1']),
-      array_pop($this->testResults['checker_2']),
-    ];
-    TestSubscriber1::setTestResult($expected_results[0], ReadinessCheckEvent::class);
-    TestSubscriber2::setTestResult($expected_results[1], ReadinessCheckEvent::class);
+    $checker_1_results = [$this->createValidationResult(SystemManager::REQUIREMENT_ERROR)];
+    $checker_2_results = [$this->createValidationResult(SystemManager::REQUIREMENT_ERROR)];
+    TestSubscriber1::setTestResult($checker_1_results, ReadinessCheckEvent::class);
+    TestSubscriber2::setTestResult($checker_2_results, ReadinessCheckEvent::class);
     $this->container->get('module_installer')->install(['automatic_updates_test2']);
-    $expected_results_all = array_merge($expected_results[0], $expected_results[1]);
+    $expected_results_all = array_merge($checker_1_results, $checker_2_results);
     $this->assertCheckerResultsFromManager($expected_results_all);
 
     // Confirm that the checkers are run when a module that does not provide a
     // readiness checker is installed.
-    $expected_results = [
-      array_pop($this->testResults['checker_1']),
-      array_pop($this->testResults['checker_2']),
-    ];
-    TestSubscriber1::setTestResult($expected_results[0], ReadinessCheckEvent::class);
-    TestSubscriber2::setTestResult($expected_results[1], ReadinessCheckEvent::class);
-    $expected_results_all = array_merge($expected_results[0], $expected_results[1]);
+    $checker_1_results = [$this->createValidationResult(SystemManager::REQUIREMENT_ERROR)];
+    $checker_2_results = [$this->createValidationResult(SystemManager::REQUIREMENT_ERROR)];
+    TestSubscriber1::setTestResult($checker_1_results, ReadinessCheckEvent::class);
+    TestSubscriber2::setTestResult($checker_2_results, ReadinessCheckEvent::class);
+    $expected_results_all = array_merge($checker_1_results, $checker_2_results);
     $this->container->get('module_installer')->install(['help']);
     $this->assertCheckerResultsFromManager($expected_results_all);
   }
@@ -128,36 +124,31 @@ class ReadinessValidationManagerTest extends AutomaticUpdatesKernelTestBase {
    * Tests that the manager is run after modules are uninstalled.
    */
   public function testRunOnUninstall(): void {
-    $expected_results = [
-      array_pop($this->testResults['checker_1']),
-      array_pop($this->testResults['checker_2']),
-    ];
-    TestSubscriber1::setTestResult($expected_results[0], ReadinessCheckEvent::class);
-    TestSubscriber2::setTestResult($expected_results[1], ReadinessCheckEvent::class);
+    $checker_1_results = [$this->createValidationResult(SystemManager::REQUIREMENT_ERROR)];
+    $checker_2_results = [$this->createValidationResult(SystemManager::REQUIREMENT_ERROR)];
+    TestSubscriber1::setTestResult($checker_1_results, ReadinessCheckEvent::class);
+    TestSubscriber2::setTestResult($checker_2_results, ReadinessCheckEvent::class);
     // Confirm that messages from existing modules are displayed when
     // 'automatic_updates' is installed.
     $this->container->get('module_installer')->install(['automatic_updates', 'automatic_updates_test2', 'help']);
-    $expected_results_all = array_merge($expected_results[0], $expected_results[1]);
+    $expected_results_all = array_merge($checker_1_results, $checker_2_results);
     $this->assertCheckerResultsFromManager($expected_results_all);
 
     // Confirm that the checkers are run when a module that provides a readiness
     // checker is uninstalled.
-    $expected_results = [
-      array_pop($this->testResults['checker_1']),
-    ];
-    TestSubscriber1::setTestResult($expected_results[0], ReadinessCheckEvent::class);
-    TestSubscriber2::setTestResult(array_pop($this->testResults['checker_2']), ReadinessCheckEvent::class);
+    $checker_1_results = [$this->createValidationResult(SystemManager::REQUIREMENT_ERROR)];
+    $checker_2_results = [$this->createValidationResult(SystemManager::REQUIREMENT_ERROR)];
+    TestSubscriber1::setTestResult($checker_1_results, ReadinessCheckEvent::class);
+    TestSubscriber2::setTestResult($checker_2_results, ReadinessCheckEvent::class);
     $this->container->get('module_installer')->uninstall(['automatic_updates_test2']);
-    $this->assertCheckerResultsFromManager($expected_results[0]);
+    $this->assertCheckerResultsFromManager($checker_1_results);
 
     // Confirm that the checkers are run when a module that does not provide a
     // readiness checker is uninstalled.
-    $expected_results = [
-      array_pop($this->testResults['checker_1']),
-    ];
-    TestSubscriber1::setTestResult($expected_results[0], ReadinessCheckEvent::class);
+    $checker_1_results = [$this->createValidationResult(SystemManager::REQUIREMENT_ERROR)];
+    TestSubscriber1::setTestResult($checker_1_results, ReadinessCheckEvent::class);
     $this->container->get('module_installer')->uninstall(['help']);
-    $this->assertCheckerResultsFromManager($expected_results[0]);
+    $this->assertCheckerResultsFromManager($checker_1_results);
   }
 
   /**
@@ -165,12 +156,12 @@ class ReadinessValidationManagerTest extends AutomaticUpdatesKernelTestBase {
    * @covers ::clearStoredResults
    */
   public function testRunIfNeeded(): void {
-    $expected_results = array_pop($this->testResults['checker_1']);
+    $expected_results = [$this->createValidationResult(SystemManager::REQUIREMENT_ERROR)];
     TestSubscriber1::setTestResult($expected_results, ReadinessCheckEvent::class);
     $this->container->get('module_installer')->install(['automatic_updates', 'automatic_updates_test2']);
     $this->assertCheckerResultsFromManager($expected_results);
 
-    $unexpected_results = array_pop($this->testResults['checker_1']);
+    $unexpected_results = [$this->createValidationResult(SystemManager::REQUIREMENT_ERROR)];
     TestSubscriber1::setTestResult($unexpected_results, ReadinessCheckEvent::class);
     $manager = $this->container->get('automatic_updates.readiness_validation_manager');
     // Confirm that the new results will not be returned because the checkers
@@ -186,7 +177,7 @@ class ReadinessValidationManagerTest extends AutomaticUpdatesKernelTestBase {
     $this->assertCheckerResultsFromManager($expected_results);
 
     // Confirm that the results are the same after rebuilding the container.
-    $unexpected_results = array_pop($this->testResults['checker_1']);
+    $unexpected_results = [$this->createValidationResult(SystemManager::REQUIREMENT_ERROR)];
     TestSubscriber1::setTestResult($unexpected_results, ReadinessCheckEvent::class);
     /** @var \Drupal\Core\DrupalKernel $kernel */
     $kernel = $this->container->get('kernel');
@@ -225,7 +216,7 @@ class ReadinessValidationManagerTest extends AutomaticUpdatesKernelTestBase {
 
     // The readiness checker should raise a warning, so that the update is not
     // blocked or aborted.
-    $results = $this->testResults['checker_1']['1 warning'];
+    $results = [$this->createValidationResult(SystemManager::REQUIREMENT_WARNING)];
     TestSubscriber1::setTestResult($results, ReadinessCheckEvent::class);
 
     // Ensure that the validation manager collects the warning.
@@ -267,7 +258,7 @@ class ReadinessValidationManagerTest extends AutomaticUpdatesKernelTestBase {
   public function testStoredResultsClearedOnConfigChanges(): void {
     $this->enableModules(['automatic_updates']);
 
-    $results = $this->testResults['checker_1']['1 error'];
+    $results = [$this->createValidationResult(SystemManager::REQUIREMENT_ERROR)];
     TestSubscriber1::setTestResult($results, ReadinessCheckEvent::class);
     $this->assertCheckerResultsFromManager($results, TRUE);
     // The results should be stored.

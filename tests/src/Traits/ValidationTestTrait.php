@@ -3,7 +3,7 @@
 namespace Drupal\Tests\automatic_updates\Traits;
 
 use Drupal\package_manager\ValidationResult;
-
+use Drupal\system\SystemManager;
 use Drupal\Tests\package_manager\Traits\ValidationTestTrait as PackageManagerValidationTestTrait;
 
 /**
@@ -28,67 +28,34 @@ trait ValidationTestTrait {
   protected static $warningsExplanation = 'Your site does not pass some readiness checks for automatic updates. Depending on the nature of the failures, it might affect the eligibility for automatic updates.';
 
   /**
-   * Test validation results.
+   * Creates a unique validation test result.
    *
-   * @var \Drupal\package_manager\ValidationResult[][][]
+   * @param int $severity
+   *   The severity. Should be one of the SystemManager::REQUIREMENT_*
+   *   constants.
+   * @param int $message_count
+   *   (optional) The number of messages. Defaults to 1.
+   *
+   * @return \Drupal\package_manager\ValidationResult
+   *   The validation test result.
    */
-  protected $testResults;
+  protected function createValidationResult(int $severity, int $message_count = 1): ValidationResult {
+    $this->assertNotEmpty($message_count);
+    $messages = [];
+    $random = $this->randomMachineName(64);
+    for ($i = 0; $i < $message_count; $i++) {
+      $messages[] = "Message $i $random";
+    }
+    $summary = t('Summary @random', ['@random' => $random]);
+    switch ($severity) {
+      case SystemManager::REQUIREMENT_ERROR:
+        return ValidationResult::createError($messages, $summary);
 
-  /**
-   * Creates ValidationResult objects to be used in tests.
-   */
-  protected function createTestValidationResults(): void {
-    // Set up various validation results for the test checkers.
-    foreach ([1, 2] as $listener_number) {
-      // Set test validation results.
-      $this->testResults["checker_$listener_number"]['1 error'] = [
-        ValidationResult::createError(
-          [t("$listener_number:OMG 🚒. Your server is on 🔥!")],
-          t("$listener_number:Summary: 🔥")
-        ),
-      ];
-      $this->testResults["checker_$listener_number"]['1 error 1 warning'] = [
-        "$listener_number:error" => ValidationResult::createError(
-          [t("$listener_number:OMG 🔌. Some one unplugged the server! How is this site even running?")],
-          t("$listener_number:Summary: 🔥")
-        ),
-        "$listener_number:warning" => ValidationResult::createWarning(
-          [t("$listener_number:It looks like it going to rain and your server is outside.")],
-          t("$listener_number:Warnings summary not displayed because only 1 warning message.")
-        ),
-      ];
-      $this->testResults["checker_$listener_number"]['2 errors 2 warnings'] = [
-        "$listener_number:errors" => ValidationResult::createError(
-          [
-            t("$listener_number:😬Your server is in a cloud, a literal cloud!☁️."),
-            t("$listener_number:😂PHP only has 32k memory."),
-          ],
-          t("$listener_number:Errors summary displayed because more than 1 error message")
-        ),
-        "$listener_number:warnings" => ValidationResult::createWarning(
-          [
-            t("$listener_number:Your server is a smart fridge. Will this work?"),
-            t("$listener_number:Your server case is duct tape!"),
-          ],
-          t("$listener_number:Warnings summary displayed because more than 1 warning message.")
-        ),
+      case SystemManager::REQUIREMENT_WARNING:
+        return ValidationResult::createWarning($messages, $summary);
 
-      ];
-      $this->testResults["checker_$listener_number"]['2 warnings'] = [
-        ValidationResult::createWarning(
-          [
-            t("$listener_number:The universe could collapse in on itself in the next second, in which case automatic updates will not run."),
-            t("$listener_number:An asteroid could hit your server farm, which would also stop automatic updates from running."),
-          ],
-          t("$listener_number:Warnings summary displayed because more than 1 warning message.")
-        ),
-      ];
-      $this->testResults["checker_$listener_number"]['1 warning'] = [
-        ValidationResult::createWarning(
-          [t("$listener_number:This is your one and only warning. You have been warned.")],
-          t("$listener_number:No need for this summary with only 1 warning.")
-        ),
-      ];
+      default:
+        throw new \InvalidArgumentException("$severity is an invalid value for \$severity; it must be SystemManager::REQUIREMENT_ERROR or SystemManager::REQUIREMENT_WARNING.");
     }
   }
 

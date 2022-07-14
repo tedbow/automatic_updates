@@ -67,7 +67,6 @@ class ReadinessValidationTest extends AutomaticUpdatesFunctionalTestBase {
       'access administration pages',
       'access site in maintenance mode',
     ]);
-    $this->createTestValidationResults();
     $this->drupalLogin($this->reportViewerUser);
   }
 
@@ -116,7 +115,7 @@ class ReadinessValidationTest extends AutomaticUpdatesFunctionalTestBase {
     $this->drupalGet('admin/reports/status');
     $this->assertNoErrors(TRUE);
     /** @var \Drupal\package_manager\ValidationResult[] $expected_results */
-    $expected_results = $this->testResults['checker_1']['1 error'];
+    $expected_results = [$this->createValidationResult(SystemManager::REQUIREMENT_ERROR)];
     TestSubscriber1::setTestResult($expected_results, ReadinessCheckEvent::class);
 
     // Run the readiness checks.
@@ -137,29 +136,35 @@ class ReadinessValidationTest extends AutomaticUpdatesFunctionalTestBase {
     $this->drupalGet('admin/reports/status');
     $this->assertErrors($expected_results);
 
-    $expected_results = $this->testResults['checker_1']['1 error 1 warning'];
+    $expected_results = [
+      'error' => $this->createValidationResult(SystemManager::REQUIREMENT_ERROR),
+      'warning' => $this->createValidationResult(SystemManager::REQUIREMENT_WARNING),
+    ];
     TestSubscriber1::setTestResult($expected_results, ReadinessCheckEvent::class);
     $key_value->delete('readiness_validation_last_run');
     // Confirm a new message is displayed if the stored messages are deleted.
     $this->drupalGet('admin/reports/status');
     // Confirm that on the status page if there is only 1 warning or error the
     // the summaries will not be displayed.
-    $this->assertErrors([$expected_results['1:error']]);
-    $this->assertWarnings([$expected_results['1:warning']]);
-    $assert->pageTextNotContains($expected_results['1:error']->getSummary());
-    $assert->pageTextNotContains($expected_results['1:warning']->getSummary());
+    $this->assertErrors([$expected_results['error']]);
+    $this->assertWarnings([$expected_results['warning']]);
+    $assert->pageTextNotContains($expected_results['error']->getSummary());
+    $assert->pageTextNotContains($expected_results['warning']->getSummary());
 
     $key_value->delete('readiness_validation_last_run');
-    $expected_results = $this->testResults['checker_1']['2 errors 2 warnings'];
+    $expected_results = [
+      'error' => $this->createValidationResult(SystemManager::REQUIREMENT_ERROR, 2),
+      'warning' => $this->createValidationResult(SystemManager::REQUIREMENT_WARNING, 2),
+    ];
     TestSubscriber1::setTestResult($expected_results, ReadinessCheckEvent::class);
     $this->drupalGet('admin/reports/status');
     // Confirm that both messages and summaries will be displayed on status
     // report when there multiple messages.
-    $this->assertErrors([$expected_results['1:errors']]);
-    $this->assertWarnings([$expected_results['1:warnings']]);
+    $this->assertErrors([$expected_results['error']]);
+    $this->assertWarnings([$expected_results['warning']]);
 
     $key_value->delete('readiness_validation_last_run');
-    $expected_results = $this->testResults['checker_1']['2 warnings'];
+    $expected_results = [$this->createValidationResult(SystemManager::REQUIREMENT_WARNING, 2)];
     TestSubscriber1::setTestResult($expected_results, ReadinessCheckEvent::class);
     $this->drupalGet('admin/reports/status');
     $assert->pageTextContainsOnce('Update readiness checks');
@@ -168,7 +173,7 @@ class ReadinessValidationTest extends AutomaticUpdatesFunctionalTestBase {
     $this->assertWarnings($expected_results);
 
     $key_value->delete('readiness_validation_last_run');
-    $expected_results = $this->testResults['checker_1']['1 warning'];
+    $expected_results = [$this->createValidationResult(SystemManager::REQUIREMENT_WARNING)];
     TestSubscriber1::setTestResult($expected_results, ReadinessCheckEvent::class);
     $this->drupalGet('admin/reports/status');
     $assert->pageTextContainsOnce('Update readiness checks');
@@ -197,7 +202,7 @@ class ReadinessValidationTest extends AutomaticUpdatesFunctionalTestBase {
 
     // Confirm a user without the permission to run readiness checks does not
     // have a link to run the checks when the checks need to be run again.
-    $expected_results = $this->testResults['checker_1']['1 error'];
+    $expected_results = [$this->createValidationResult(SystemManager::REQUIREMENT_ERROR)];
     TestSubscriber1::setTestResult($expected_results, ReadinessCheckEvent::class);
     // @todo Change this to use ::delayRequestTime() to simulate running cron
     //   after a 24 wait instead of directly deleting 'readiness_validation_last_run'
@@ -220,7 +225,10 @@ class ReadinessValidationTest extends AutomaticUpdatesFunctionalTestBase {
     $assert->addressEquals('admin/structure');
     $assert->pageTextContainsOnce($expected_results[0]->getMessages()[0]);
 
-    $expected_results = $this->testResults['checker_1']['1 error 1 warning'];
+    $expected_results = [
+      '1 error' => $this->createValidationResult(SystemManager::REQUIREMENT_ERROR),
+      '1 warning' => $this->createValidationResult(SystemManager::REQUIREMENT_WARNING),
+    ];
     TestSubscriber1::setTestResult($expected_results, ReadinessCheckEvent::class);
     // Confirm a new message is displayed if the cron is run after an hour.
     $this->delayRequestTime();
@@ -229,25 +237,28 @@ class ReadinessValidationTest extends AutomaticUpdatesFunctionalTestBase {
     $assert->pageTextContainsOnce(static::$errorsExplanation);
     // Confirm on admin pages that a single error will be displayed instead of a
     // summary.
-    $this->assertSame(SystemManager::REQUIREMENT_ERROR, $expected_results['1:error']->getSeverity());
-    $assert->pageTextContainsOnce($expected_results['1:error']->getMessages()[0]);
-    $assert->pageTextNotContains($expected_results['1:error']->getSummary());
+    $this->assertSame(SystemManager::REQUIREMENT_ERROR, $expected_results['1 error']->getSeverity());
+    $assert->pageTextContainsOnce($expected_results['1 error']->getMessages()[0]);
+    $assert->pageTextNotContains($expected_results['1 error']->getSummary());
     // Warnings are not displayed on admin pages if there are any errors.
-    $this->assertSame(SystemManager::REQUIREMENT_WARNING, $expected_results['1:warning']->getSeverity());
-    $assert->pageTextNotContains($expected_results['1:warning']->getMessages()[0]);
-    $assert->pageTextNotContains($expected_results['1:warning']->getSummary());
+    $this->assertSame(SystemManager::REQUIREMENT_WARNING, $expected_results['1 warning']->getSeverity());
+    $assert->pageTextNotContains($expected_results['1 warning']->getMessages()[0]);
+    $assert->pageTextNotContains($expected_results['1 warning']->getSummary());
 
     // Confirm that if cron runs less than hour after it previously ran it will
     // not run the checkers again.
-    $unexpected_results = $this->testResults['checker_1']['2 errors 2 warnings'];
+    $unexpected_results = [
+      '2 errors' => $this->createValidationResult(SystemManager::REQUIREMENT_ERROR, 2),
+      '2 warnings' => $this->createValidationResult(SystemManager::REQUIREMENT_WARNING, 2),
+    ];
     TestSubscriber1::setTestResult($unexpected_results, ReadinessCheckEvent::class);
     $this->delayRequestTime(30);
     $this->cronRun();
     $this->drupalGet('admin/structure');
-    $assert->pageTextNotContains($unexpected_results['1:errors']->getSummary());
-    $assert->pageTextContainsOnce($expected_results['1:error']->getMessages()[0]);
-    $assert->pageTextNotContains($unexpected_results['1:warnings']->getSummary());
-    $assert->pageTextNotContains($expected_results['1:warning']->getMessages()[0]);
+    $assert->pageTextNotContains($unexpected_results['2 errors']->getSummary());
+    $assert->pageTextContainsOnce($expected_results['1 error']->getMessages()[0]);
+    $assert->pageTextNotContains($unexpected_results['2 warnings']->getSummary());
+    $assert->pageTextNotContains($expected_results['1 warning']->getMessages()[0]);
 
     // Confirm that is if cron is run over an hour after the checkers were
     // previously run the checkers will be run again.
@@ -257,18 +268,18 @@ class ReadinessValidationTest extends AutomaticUpdatesFunctionalTestBase {
     $this->drupalGet('admin/structure');
     // Confirm on admin pages only the error summary will be displayed if there
     // is more than 1 error.
-    $this->assertSame(SystemManager::REQUIREMENT_ERROR, $expected_results['1:errors']->getSeverity());
-    $assert->pageTextNotContains($expected_results['1:errors']->getMessages()[0]);
-    $assert->pageTextNotContains($expected_results['1:errors']->getMessages()[1]);
-    $assert->pageTextContainsOnce($expected_results['1:errors']->getSummary());
+    $this->assertSame(SystemManager::REQUIREMENT_ERROR, $expected_results['2 errors']->getSeverity());
+    $assert->pageTextNotContains($expected_results['2 errors']->getMessages()[0]);
+    $assert->pageTextNotContains($expected_results['2 errors']->getMessages()[1]);
+    $assert->pageTextContainsOnce($expected_results['2 errors']->getSummary());
     $assert->pageTextContainsOnce(static::$errorsExplanation);
     // Warnings are not displayed on admin pages if there are any errors.
-    $this->assertSame(SystemManager::REQUIREMENT_WARNING, $expected_results['1:warnings']->getSeverity());
-    $assert->pageTextNotContains($expected_results['1:warnings']->getMessages()[0]);
-    $assert->pageTextNotContains($expected_results['1:warnings']->getMessages()[1]);
-    $assert->pageTextNotContains($expected_results['1:warnings']->getSummary());
+    $this->assertSame(SystemManager::REQUIREMENT_WARNING, $expected_results['2 warnings']->getSeverity());
+    $assert->pageTextNotContains($expected_results['2 warnings']->getMessages()[0]);
+    $assert->pageTextNotContains($expected_results['2 warnings']->getMessages()[1]);
+    $assert->pageTextNotContains($expected_results['2 warnings']->getSummary());
 
-    $expected_results = $this->testResults['checker_1']['2 warnings'];
+    $expected_results = [$this->createValidationResult(SystemManager::REQUIREMENT_WARNING, 2)];
     TestSubscriber1::setTestResult($expected_results, ReadinessCheckEvent::class);
     $this->delayRequestTime();
     $this->cronRun();
@@ -282,7 +293,7 @@ class ReadinessValidationTest extends AutomaticUpdatesFunctionalTestBase {
     $assert->pageTextContainsOnce(static::$warningsExplanation);
     $assert->pageTextContainsOnce($expected_results[0]->getSummary());
 
-    $expected_results = $this->testResults['checker_1']['1 warning'];
+    $expected_results = [$this->createValidationResult(SystemManager::REQUIREMENT_WARNING)];
     TestSubscriber1::setTestResult($expected_results, ReadinessCheckEvent::class);
     $this->delayRequestTime();
     $this->cronRun();
@@ -321,7 +332,7 @@ class ReadinessValidationTest extends AutomaticUpdatesFunctionalTestBase {
     $this->drupalGet('admin/reports/status');
     $this->assertNoErrors(TRUE);
 
-    $expected_results = $this->testResults['checker_1']['1 error'];
+    $expected_results = [$this->createValidationResult(SystemManager::REQUIREMENT_ERROR)];
     TestSubscriber2::setTestResult($expected_results, ReadinessCheckEvent::class);
     $this->container->get('module_installer')->install(['automatic_updates_test2']);
     $this->drupalGet('admin/structure');
@@ -330,7 +341,10 @@ class ReadinessValidationTest extends AutomaticUpdatesFunctionalTestBase {
     // Confirm that installing a module runs the checkers, even if the new
     // module does not provide any validators.
     $previous_results = $expected_results;
-    $expected_results = $this->testResults['checker_1']['2 errors 2 warnings'];
+    $expected_results = [
+      '2 errors' => $this->createValidationResult(SystemManager::REQUIREMENT_ERROR, 2),
+      '2 warnings' => $this->createValidationResult(SystemManager::REQUIREMENT_WARNING, 2),
+    ];
     TestSubscriber2::setTestResult($expected_results, ReadinessCheckEvent::class);
     $this->container->get('module_installer')->install(['help']);
     // Check for messages on 'admin/structure' instead of the status report,
@@ -338,8 +352,8 @@ class ReadinessValidationTest extends AutomaticUpdatesFunctionalTestBase {
     $this->drupalGet('admin/structure');
     // Confirm that new checker messages are displayed.
     $assert->pageTextNotContains($previous_results[0]->getMessages()[0]);
-    $assert->pageTextNotContains($expected_results['1:errors']->getMessages()[0]);
-    $assert->pageTextContainsOnce($expected_results['1:errors']->getSummary());
+    $assert->pageTextNotContains($expected_results['2 errors']->getMessages()[0]);
+    $assert->pageTextContainsOnce($expected_results['2 errors']->getSummary());
   }
 
   /**
@@ -349,9 +363,9 @@ class ReadinessValidationTest extends AutomaticUpdatesFunctionalTestBase {
     $assert = $this->assertSession();
     $this->drupalLogin($this->checkerRunnerUser);
 
-    $expected_results_1 = $this->testResults['checker_1']['1 error'];
+    $expected_results_1 = [$this->createValidationResult(SystemManager::REQUIREMENT_ERROR)];
     TestSubscriber1::setTestResult($expected_results_1, ReadinessCheckEvent::class);
-    $expected_results_2 = $this->testResults['checker_2']['1 error'];
+    $expected_results_2 = [$this->createValidationResult(SystemManager::REQUIREMENT_ERROR)];
     TestSubscriber2::setTestResult($expected_results_2, ReadinessCheckEvent::class);
     $this->container->get('module_installer')->install([
       'automatic_updates',
@@ -392,7 +406,7 @@ class ReadinessValidationTest extends AutomaticUpdatesFunctionalTestBase {
     $this->setCoreVersion('9.8.0');
 
     // Flag a validation error, which will be displayed in the messages area.
-    $results = $this->testResults['checker_1']['1 error'];
+    $results = [$this->createValidationResult(SystemManager::REQUIREMENT_ERROR)];
     TestSubscriber1::setTestResult($results, ReadinessCheckEvent::class);
     $message = $results[0]->getMessages()[0];
 
