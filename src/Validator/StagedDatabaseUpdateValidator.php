@@ -21,7 +21,7 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
  *   at any time without warning. External code should not interact with this
  *   class.
  */
-final class StagedDatabaseUpdateValidator implements EventSubscriberInterface {
+class StagedDatabaseUpdateValidator implements EventSubscriberInterface {
 
   use StringTranslationTrait;
 

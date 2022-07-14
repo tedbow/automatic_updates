@@ -4,6 +4,7 @@ namespace Drupal\Tests\automatic_updates\Functional;
 
 use Drupal\automatic_updates\Event\ReadinessCheckEvent;
 use Drupal\automatic_updates_test\Datetime\TestTime;
+use Drupal\automatic_updates_test\StagedDatabaseUpdateValidator;
 use Drupal\package_manager\Event\PostRequireEvent;
 use Drupal\package_manager\Event\PreApplyEvent;
 use Drupal\package_manager\Event\PreCreateEvent;
@@ -466,6 +467,8 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
     $expected_results = $this->testResults['checker_1']['1 warning'];
     TestSubscriber1::setTestResult($expected_results, ReadinessCheckEvent::class);
     $messages = reset($expected_results)->getMessages();
+
+    StagedDatabaseUpdateValidator::setExtensionsWithUpdates(['system', 'automatic_updates_theme_with_updates']);
 
     $page = $this->getSession()->getPage();
     $this->drupalGet('/admin/modules/automatic-update');
