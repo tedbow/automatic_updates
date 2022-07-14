@@ -88,43 +88,43 @@ class ComposerExecutableValidatorTest extends PackageManagerKernelTestBase {
     };
 
     return [
-      [
+      'Minimum version' => [
         ComposerExecutableValidator::MINIMUM_COMPOSER_VERSION,
         [],
       ],
-      [
+      '2.1.6' => [
         '2.1.6',
         [$unsupported_version('2.1.6')],
       ],
-      [
+      '1.10.22' => [
         '1.10.22',
         [$unsupported_version('1.10.22')],
       ],
-      [
+      '1.7.3' => [
         '1.7.3',
         [$unsupported_version('1.7.3')],
       ],
-      [
+      '2.0.0-alpha3' => [
         '2.0.0-alpha3',
         [$unsupported_version('2.0.0-alpha3')],
       ],
-      [
+      '2.1.0-RC1' => [
         '2.1.0-RC1',
         [$unsupported_version('2.1.0-RC1')],
       ],
-      [
+      '1.0.0-RC' => [
         '1.0.0-RC',
         [$unsupported_version('1.0.0-RC')],
       ],
-      [
+      '1.0.0-beta1' => [
         '1.0.0-beta1',
         [$unsupported_version('1.0.0-beta1')],
       ],
-      [
+      '1.9-dev' => [
         '1.9-dev',
         [$invalid_version],
       ],
-      [
+      'Invalid version' => [
         '@package_version@',
         [$invalid_version],
       ],
