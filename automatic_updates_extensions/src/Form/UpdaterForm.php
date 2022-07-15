@@ -136,6 +136,8 @@ final class UpdaterForm extends FormBase {
       '#options' => $options,
       '#empty' => $this->t('There are no available updates.'),
       '#attributes' => ['class' => ['update-recommended']],
+      '#required' => TRUE,
+      '#required_error' => t('Please select one or more projects.'),
     ];
 
     if ($form_state->getUserInput()) {

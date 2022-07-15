@@ -163,13 +163,18 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
       $installed_version,
       $target_version
     );
+    // Submit without selecting a project.
+    $page->pressButton('Update');
+    $assert_session = $this->assertSession();
+    $assert_session->pageTextContains('Please select one or more projects.');
+
+    // Submit with a project selected.
     $page->checkField('projects[' . $this->updateProject . ']');
     $page->pressButton('Update');
     $this->checkForMetaRefresh();
     $this->assertUpdateStagedTimes(1);
     // Confirm that the site was put into maintenance mode if needed.
     $this->assertSame($state->get('system.maintenance_mode'), $maintenance_mode_on);
-    $assert_session = $this->assertSession();
     $possible_update_message = 'Possible database updates were detected in the following extensions; you may be redirected to the database update page in order to complete the update process.';
     $assert_session->pageTextContains($possible_update_message);
     $assert_session->pageTextContainsOnce('System');
