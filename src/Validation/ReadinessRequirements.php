@@ -73,7 +73,7 @@ final class ReadinessRequirements implements ContainerInjectionInterface {
    *   Requirements arrays as specified by hook_requirements().
    */
   public function getRequirements(): array {
-    $results = $this->readinessCheckerManager->runIfNoStoredResults()->getResults();
+    $results = $this->readinessCheckerManager->run()->getResults();
     $requirements = [];
     if (empty($results)) {
       $requirements['automatic_updates_readiness'] = [

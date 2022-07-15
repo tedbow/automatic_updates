@@ -76,9 +76,9 @@ class ReadinessValidationTest extends AutomaticUpdatesFunctionalTestBase {
   public function testReadinessChecksStatusReport(): void {
     $assert = $this->assertSession();
 
-    // Ensure automated_cron is disabled before installing automatic_updates. This
-    // ensures we are testing that automatic_updates runs the checkers when the
-    // module itself is installed and they weren't run on cron.
+    // Ensure automated_cron is disabled before installing automatic_updates.
+    // This ensures we are testing that automatic_updates runs the checkers when
+    // the module itself is installed and they weren't run on cron.
     $this->assertFalse($this->container->get('module_handler')->moduleExists('automated_cron'));
     $this->container->get('module_installer')->install(['automatic_updates', 'automatic_updates_test']);
 
@@ -141,41 +141,37 @@ class ReadinessValidationTest extends AutomaticUpdatesFunctionalTestBase {
       'warning' => $this->createValidationResult(SystemManager::REQUIREMENT_WARNING),
     ];
     TestSubscriber1::setTestResult($expected_results, ReadinessCheckEvent::class);
-    $key_value->delete('readiness_validation_last_run');
-    // Confirm a new message is displayed if the stored messages are deleted.
-    $this->drupalGet('admin/reports/status');
+    // Confirm a new message is displayed if the page is reloaded.
+    $this->getSession()->reload();
     // Confirm that on the status page if there is only 1 warning or error the
-    // the summaries will not be displayed.
+    // summaries will not be displayed.
     $this->assertErrors([$expected_results['error']]);
     $this->assertWarnings([$expected_results['warning']]);
     $assert->pageTextNotContains($expected_results['error']->getSummary());
     $assert->pageTextNotContains($expected_results['warning']->getSummary());
 
-    $key_value->delete('readiness_validation_last_run');
     $expected_results = [
       'error' => $this->createValidationResult(SystemManager::REQUIREMENT_ERROR, 2),
       'warning' => $this->createValidationResult(SystemManager::REQUIREMENT_WARNING, 2),
     ];
     TestSubscriber1::setTestResult($expected_results, ReadinessCheckEvent::class);
-    $this->drupalGet('admin/reports/status');
+    $this->getSession()->reload();
     // Confirm that both messages and summaries will be displayed on status
     // report when there multiple messages.
     $this->assertErrors([$expected_results['error']]);
     $this->assertWarnings([$expected_results['warning']]);
 
-    $key_value->delete('readiness_validation_last_run');
     $expected_results = [$this->createValidationResult(SystemManager::REQUIREMENT_WARNING, 2)];
     TestSubscriber1::setTestResult($expected_results, ReadinessCheckEvent::class);
-    $this->drupalGet('admin/reports/status');
+    $this->getSession()->reload();
     $assert->pageTextContainsOnce('Update readiness checks');
     // Confirm that warnings will display on the status report if there are no
     // errors.
     $this->assertWarnings($expected_results);
 
-    $key_value->delete('readiness_validation_last_run');
     $expected_results = [$this->createValidationResult(SystemManager::REQUIREMENT_WARNING)];
     TestSubscriber1::setTestResult($expected_results, ReadinessCheckEvent::class);
-    $this->drupalGet('admin/reports/status');
+    $this->getSession()->reload();
     $assert->pageTextContainsOnce('Update readiness checks');
     $this->assertWarnings($expected_results);
   }
