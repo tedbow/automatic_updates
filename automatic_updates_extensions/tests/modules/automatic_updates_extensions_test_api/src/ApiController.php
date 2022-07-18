@@ -32,13 +32,13 @@ class ApiController extends ControllerBase {
   /**
    * Constructs an ApiController object.
    *
-   * @param \Drupal\automatic_updates_extensions\ExtensionUpdater $extensionUpdater
+   * @param \Drupal\automatic_updates_extensions\ExtensionUpdater $extension_updater
    *   The updater.
    * @param \Drupal\package_manager\PathLocator $path_locator
    *   The path locator service.
    */
-  public function __construct(ExtensionUpdater $extensionUpdater, PathLocator $path_locator) {
-    $this->extensionUpdater = $extensionUpdater;
+  public function __construct(ExtensionUpdater $extension_updater, PathLocator $path_locator) {
+    $this->extensionUpdater = $extension_updater;
     $this->pathLocator = $path_locator;
   }
 

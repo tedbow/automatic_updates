@@ -62,10 +62,10 @@ abstract class BypassedStagerServiceBase {
    *   The path to which the fixture files should be mirrored.
    */
   protected function copyFixtureFilesTo(PathInterface $destination): void {
-    $fixturePath = $this->state->get(static::class . ' fixture');
+    $fixture_path = $this->state->get(static::class . ' fixture');
 
-    if ($fixturePath && is_dir($fixturePath)) {
-      $this->fileSystem->mirror($fixturePath, $destination->resolve(), NULL, [
+    if ($fixture_path && is_dir($fixture_path)) {
+      $this->fileSystem->mirror($fixture_path, $destination->resolve(), NULL, [
         'override' => TRUE,
         'delete' => TRUE,
       ]);
