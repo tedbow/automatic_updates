@@ -53,15 +53,12 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
       'access site in maintenance mode',
       'administer modules',
       'access site reports',
-      'view update notifications',
     ];
-    // BEGIN: DELETE FROM CORE MERGE REQUEST
     // Check for permission that was added in Drupal core 9.4.x.
     $available_permissions = array_keys($this->container->get('user.permissions')->getPermissions());
-    if (!in_array('view update notifications', $available_permissions, TRUE)) {
-      array_pop($permissions);
+    if (in_array('view update notifications', $available_permissions, TRUE)) {
+      array_push($permissions, 'view update notifications');
     }
-    // END: DELETE FROM CORE MERGE REQUEST
     $user = $this->createUser($permissions);
     $this->drupalLogin($user);
     $this->checkForUpdates();
