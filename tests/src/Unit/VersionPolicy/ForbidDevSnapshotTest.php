@@ -16,10 +16,10 @@ class ForbidDevSnapshotTest extends UnitTestCase {
   use VersionPolicyTestTrait;
 
   /**
-   * Data provider for ::testForbidDevSnapshot().
+   * Data provider for testForbidDevSnapshot().
    *
    * @return array[]
-   *   Sets of arguments to pass to the test method.
+   *   The test cases.
    */
   public function providerForbidDevSnapshot(): array {
     return [

@@ -66,10 +66,10 @@ class ComposerExecutableValidatorTest extends PackageManagerKernelTestBase {
   }
 
   /**
-   * Data provider for ::testComposerVersionValidation().
+   * Data provider for testComposerVersionValidation().
    *
    * @return array[]
-   *   Sets of arguments to pass to the test method.
+   *   The test cases.
    */
   public function providerComposerVersionValidation(): array {
     // Invalid or undetectable Composer versions will always produce the same

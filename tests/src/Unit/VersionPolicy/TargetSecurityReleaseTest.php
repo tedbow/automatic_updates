@@ -17,10 +17,10 @@ class TargetSecurityReleaseTest extends UnitTestCase {
   use VersionPolicyTestTrait;
 
   /**
-   * Data provider for ::testTargetSecurityRelease().
+   * Data provider for testTargetSecurityRelease().
    *
    * @return array[]
-   *   Sets of arguments to pass to the test method.
+   *   The test cases.
    */
   public function providerTargetSecurityRelease(): array {
     return [

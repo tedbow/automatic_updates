@@ -13,10 +13,10 @@ use Drupal\package_manager\ValidationResult;
 class MultisiteValidatorTest extends PackageManagerKernelTestBase {
 
   /**
-   * Data provider for ::testMultisite().
+   * Data provider for testMultisite().
    *
    * @return array[]
-   *   Sets of arguments to pass to the test method.
+   *   The test cases.
    */
   public function providerMultisite(): array {
     return [

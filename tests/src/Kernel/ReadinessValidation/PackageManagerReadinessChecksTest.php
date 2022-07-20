@@ -38,10 +38,10 @@ class PackageManagerReadinessChecksTest extends AutomaticUpdatesKernelTestBase {
   ];
 
   /**
-   * Data provider for ::testValidatorInvoked().
+   * Data provider for testValidatorInvoked().
    *
    * @return string[][]
-   *   Sets of arguments to pass to the test method.
+   *   The test cases.
    */
   public function providerValidatorInvoked(): array {
     return [

@@ -16,10 +16,10 @@ class TargetVersionStableTest extends UnitTestCase {
   use VersionPolicyTestTrait;
 
   /**
-   * Data provider for ::testTargetVersionStable().
+   * Data provider for testTargetVersionStable().
    *
    * @return array[]
-   *   Sets of arguments to pass to the test method.
+   *   The test cases.
    */
   public function providerTargetVersionStable(): array {
     return [

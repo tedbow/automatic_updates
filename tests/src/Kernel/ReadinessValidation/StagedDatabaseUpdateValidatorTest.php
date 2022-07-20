@@ -110,10 +110,10 @@ class StagedDatabaseUpdateValidatorTest extends AutomaticUpdatesKernelTestBase {
   }
 
   /**
-   * Data provider for ::testFileChanged().
+   * Data provider for testFileChanged().
    *
    * @return array[]
-   *   Sets of arguments to pass to the test method.
+   *   The test cases.
    */
   public function providerFileChanged(): array {
     $scenarios = [];

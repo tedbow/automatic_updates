@@ -126,7 +126,7 @@ class StagedProjectsValidatorTest extends AutomaticUpdatesKernelTestBase {
    * Data provider for testErrors().
    *
    * @return \string[][]
-   *   Test cases for testErrors().
+   *   The test cases.
    */
   public function providerErrors(): array {
     $fixtures_folder = __DIR__ . '/../../../fixtures/project_staged_validation';

@@ -18,10 +18,10 @@ class SupportedBranchInstalledTest extends AutomaticUpdatesKernelTestBase {
   protected static $modules = ['automatic_updates'];
 
   /**
-   * Data provider for ::testSupportedBranchInstalled().
+   * Data provider for testSupportedBranchInstalled().
    *
    * @return array[]
-   *   Sets of arguments to pass to the test method.
+   *   The test cases.
    */
   public function providerSupportedBranchInstalled(): array {
     return [

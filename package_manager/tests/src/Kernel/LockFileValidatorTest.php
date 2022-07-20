@@ -136,7 +136,7 @@ class LockFileValidatorTest extends PackageManagerKernelTestBase {
    * Data provider for test methods that validate the staging area.
    *
    * @return array[]
-   *   Sets of arguments to pass to the test method.
+   *   The test cases.
    */
   public function providerValidateStageEvents(): array {
     return [

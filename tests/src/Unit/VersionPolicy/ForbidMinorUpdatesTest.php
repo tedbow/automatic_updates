@@ -16,10 +16,10 @@ class ForbidMinorUpdatesTest extends UnitTestCase {
   use VersionPolicyTestTrait;
 
   /**
-   * Data provider for ::testMinorUpdateForbidden().
+   * Data provider for testMinorUpdateForbidden().
    *
    * @return array[]
-   *   Sets of arguments to pass to the test method.
+   *   The test cases.
    */
   public function providerMinorUpdateForbidden(): array {
     return [

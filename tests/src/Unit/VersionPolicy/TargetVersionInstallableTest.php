@@ -17,10 +17,10 @@ class TargetVersionInstallableTest extends UnitTestCase {
   use VersionPolicyTestTrait;
 
   /**
-   * Data provider for ::testTargetVersionInstallable().
+   * Data provider for testTargetVersionInstallable().
    *
    * @return array[]
-   *   Sets of arguments to pass to the test method.
+   *   The test cases.
    */
   public function providerTargetVersionInstallable(): array {
     return [

@@ -66,10 +66,10 @@ class ScaffoldFilePermissionsValidatorTest extends AutomaticUpdatesKernelTestBas
   }
 
   /**
-   * Data provider for ::testPermissionsBeforeStart().
+   * Data provider for testPermissionsBeforeStart().
    *
    * @return array[]
-   *   Sets of arguments to pass to the test method.
+   *   The test cases.
    */
   public function providerPermissionsBeforeStart(): array {
     return [
@@ -127,10 +127,10 @@ class ScaffoldFilePermissionsValidatorTest extends AutomaticUpdatesKernelTestBas
   }
 
   /**
-   * Data provider for ::testScaffoldFilesChanged().
+   * Data provider for testScaffoldFilesChanged().
    *
    * @return array[]
-   *   Sets of arguments to pass to the test method.
+   *   The test cases.
    */
   public function providerScaffoldFilesChanged(): array {
     // The summary is always replaced by ::assertValidationResultsEqual(), so

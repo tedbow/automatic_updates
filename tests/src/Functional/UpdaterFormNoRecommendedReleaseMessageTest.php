@@ -36,10 +36,10 @@ class UpdaterFormNoRecommendedReleaseMessageTest extends AutomaticUpdatesFunctio
   }
 
   /**
-   * Data provider for ::testMessages().
+   * Data provider for testMessages().
    *
    * @return array[]
-   *   Sets of arguments to pass to the test method.
+   *   The test cases.
    */
   public function providerMessages(): array {
     return [

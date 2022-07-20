@@ -20,10 +20,10 @@ use Drupal\package_manager\ValidationResult;
 class WritableFileSystemValidatorTest extends PackageManagerKernelTestBase {
 
   /**
-   * Data provider for ::testWritable().
+   * Data provider for testWritable().
    *
    * @return array[]
-   *   Sets of arguments to pass to the test method.
+   *   The test cases.
    */
   public function providerWritable(): array {
     // The root and vendor paths are defined by ::createVirtualProject().

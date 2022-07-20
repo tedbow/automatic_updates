@@ -20,10 +20,10 @@ class FileSyncerFactoryTest extends KernelTestBase {
   protected static $modules = ['package_manager'];
 
   /**
-   * Data provider for ::testFactory().
+   * Data provider for testFactory().
    *
    * @return mixed[][]
-   *   Sets of arguments to pass to the test method.
+   *   The test cases.
    */
   public function providerFactory(): array {
     return [

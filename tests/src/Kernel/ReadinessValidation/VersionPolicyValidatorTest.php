@@ -22,10 +22,10 @@ class VersionPolicyValidatorTest extends AutomaticUpdatesKernelTestBase {
   protected static $modules = ['automatic_updates'];
 
   /**
-   * Data provider for ::testReadinessCheck().
+   * Data provider for testReadinessCheck().
    *
    * @return array[]
-   *   Sets of arguments to pass to the test method.
+   *   The test cases.
    */
   public function providerReadinessCheck(): array {
     $metadata_dir = __DIR__ . '/../../../fixtures/release-history';
@@ -188,10 +188,10 @@ class VersionPolicyValidatorTest extends AutomaticUpdatesKernelTestBase {
   }
 
   /**
-   * Data provider for ::testApi().
+   * Data provider for testApi().
    *
    * @return array[]
-   *   Sets of arguments to pass to the test method.
+   *   The test cases.
    */
   public function providerApi(): array {
     $metadata_dir = __DIR__ . '/../../../fixtures/release-history';

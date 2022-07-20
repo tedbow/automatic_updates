@@ -16,10 +16,10 @@ class StableReleaseInstalledTest extends UnitTestCase {
   use VersionPolicyTestTrait;
 
   /**
-   * Data provider for ::testStableReleaseInstalled().
+   * Data provider for testStableReleaseInstalled().
    *
    * @return array[]
-   *   Sets of arguments to pass to the test method.
+   *   The test cases.
    */
   public function providerStableReleaseInstalled(): array {
     return [

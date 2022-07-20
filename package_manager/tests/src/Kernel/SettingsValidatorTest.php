@@ -13,10 +13,10 @@ use Drupal\package_manager\ValidationResult;
 class SettingsValidatorTest extends PackageManagerKernelTestBase {
 
   /**
-   * Data provider for ::testSettingsValidation().
+   * Data provider for testSettingsValidation().
    *
    * @return array[]
-   *   Sets of arguments to pass to the test method.
+   *   The test cases.
    */
   public function providerSettingsValidation(): array {
     $result = ValidationResult::createError(['The <code>update_fetch_with_http_fallback</code> setting must be disabled.']);

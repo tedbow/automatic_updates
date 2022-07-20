@@ -39,7 +39,7 @@ class PackagesInstalledWithComposerValidatorTest extends AutomaticUpdatesExtensi
    * Data provider for testPreCreateException().
    *
    * @return array[]
-   *   Test cases for testPreCreateException().
+   *   The test cases.
    */
   public function providerPreCreateException(): array {
     $summary = t('Automatic Updates can only update projects that were installed via Composer. The following packages are not installed through composer:');
@@ -118,7 +118,7 @@ class PackagesInstalledWithComposerValidatorTest extends AutomaticUpdatesExtensi
    * Data provider for testPreApplyException().
    *
    * @return array
-   *   Test cases for testPreApplyException().
+   *   The test cases.
    */
   public function providerPreApplyException(): array {
     $summary = t('Automatic Updates can only update projects that were installed via Composer. The following packages are not installed through composer:');

@@ -105,10 +105,10 @@ class StageTest extends PackageManagerKernelTestBase {
   }
 
   /**
-   * Data provider for ::testDestroyDuringApply().
+   * Data provider for testDestroyDuringApply().
    *
    * @return array[]
-   *   Sets of arguments to pass to the test method.
+   *   The test cases.
    */
   public function providerDestroyDuringApply(): array {
     return [

@@ -14,10 +14,10 @@ use Drupal\Component\Utility\Bytes;
 class DiskSpaceValidatorTest extends PackageManagerKernelTestBase {
 
   /**
-   * Data provider for ::testDiskSpaceValidation().
+   * Data provider for testDiskSpaceValidation().
    *
    * @return mixed[][]
-   *   Sets of arguments to pass to the test method.
+   *   The test cases.
    */
   public function providerDiskSpaceValidation(): array {
     // These are defined by ::createVirtualProject().

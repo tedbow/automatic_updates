@@ -30,10 +30,10 @@ class ComposerUtilityTest extends KernelTestBase {
   }
 
   /**
-   * Data provider for ::testCorePackagesFromLockFile().
+   * Data provider for testCorePackagesFromLockFile().
    *
    * @return array[]
-   *   Sets of arguments to pass to the test method.
+   *   The test cases.
    */
   public function providerCorePackagesFromLockFile(): array {
     $fixtures_dir = __DIR__ . '/../../fixtures';

@@ -58,7 +58,7 @@ class ValidationResultTest extends UnitTestCase {
    * Data provider for testCreateWarningResult().
    *
    * @return mixed[]
-   *   Test cases for testCreateWarningResult().
+   *   The test cases.
    */
   public function providerValidConstructorArguments(): array {
     return [

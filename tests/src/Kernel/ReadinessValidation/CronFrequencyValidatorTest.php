@@ -70,10 +70,10 @@ class CronFrequencyValidatorTest extends AutomaticUpdatesKernelTestBase {
   }
 
   /**
-   * Data provider for ::testLastCronRunValidation().
+   * Data provider for testLastCronRunValidation().
    *
    * @return array[]
-   *   Sets of arguments to pass to the test method.
+   *   The test cases.
    */
   public function providerLastCronRunValidation(): array {
     $error = ValidationResult::createError([
@@ -116,10 +116,10 @@ class CronFrequencyValidatorTest extends AutomaticUpdatesKernelTestBase {
   }
 
   /**
-   * Data provider for ::testAutomatedCronValidation().
+   * Data provider for testAutomatedCronValidation().
    *
    * @return array[]
-   *   Sets of arguments to pass to the test method.
+   *   The test cases.
    */
   public function providerAutomatedCronValidation(): array {
     return [

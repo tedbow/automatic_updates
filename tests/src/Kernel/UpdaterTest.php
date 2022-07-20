@@ -133,7 +133,7 @@ class UpdaterTest extends AutomaticUpdatesKernelTestBase {
    * Data provider for testInvalidProjectVersions().
    *
    * @return array
-   *   The test cases for testInvalidProjectVersions().
+   *   The test cases.
    */
   public function providerInvalidProjectVersions(): array {
     return [

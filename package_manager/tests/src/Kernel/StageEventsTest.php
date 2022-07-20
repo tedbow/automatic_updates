@@ -113,10 +113,10 @@ class StageEventsTest extends PackageManagerKernelTestBase implements EventSubsc
   }
 
   /**
-   * Data provider for ::testValidationResults().
+   * Data provider for testValidationResults().
    *
    * @return string[][]
-   *   Sets of arguments to pass to the test method.
+   *   The test cases.
    */
   public function providerValidationResults(): array {
     return [

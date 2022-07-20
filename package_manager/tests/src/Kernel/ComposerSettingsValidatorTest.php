@@ -14,10 +14,10 @@ use Drupal\package_manager\ValidationResult;
 class ComposerSettingsValidatorTest extends PackageManagerKernelTestBase {
 
   /**
-   * Data provider for ::testSecureHttpValidation().
+   * Data provider for testSecureHttpValidation().
    *
    * @return array[]
-   *   Sets of arguments to pass to the test method.
+   *   The test cases.
    */
   public function providerSecureHttpValidation(): array {
     $error = ValidationResult::createError([

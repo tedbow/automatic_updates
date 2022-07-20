@@ -16,10 +16,10 @@ class ForbidDowngradeTest extends UnitTestCase {
   use VersionPolicyTestTrait;
 
   /**
-   * Data provider for ::testDowngradeForbidden().
+   * Data provider for testDowngradeForbidden().
    *
    * @return array[]
-   *   Sets of arguments to pass to the test method.
+   *   The test cases.
    */
   public function providerDowngradeForbidden(): array {
     return [

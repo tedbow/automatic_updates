@@ -76,10 +76,10 @@ class CronUpdaterTest extends AutomaticUpdatesKernelTestBase {
   }
 
   /**
-   * Data provider for ::testUpdaterCalled().
+   * Data provider for testUpdaterCalled().
    *
    * @return array[]
-   *   Sets of arguments to pass to the test method.
+   *   The test cases.
    */
   public function providerUpdaterCalled(): array {
     $fixture_dir = __DIR__ . '/../../fixtures/release-history';
@@ -171,10 +171,10 @@ class CronUpdaterTest extends AutomaticUpdatesKernelTestBase {
   }
 
   /**
-   * Data provider for ::testStageDestroyedOnError().
+   * Data provider for testStageDestroyedOnError().
    *
    * @return array[]
-   *   Sets of arguments to pass to the test method.
+   *   The test cases.
    */
   public function providerStageDestroyedOnError(): array {
     return [

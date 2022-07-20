@@ -16,10 +16,10 @@ class MinorUpdatesEnabledTest extends UnitTestCase {
   use VersionPolicyTestTrait;
 
   /**
-   * Data provider for ::testMinorUpdatesEnabled().
+   * Data provider for testMinorUpdatesEnabled().
    *
    * @return array[]
-   *   Sets of arguments to pass to the test method.
+   *   The test cases.
    */
   public function providerMinorUpdatesEnabled(): array {
     return [

@@ -68,7 +68,7 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
    * Data provider for URLs to the update form.
    *
    * @return string[][]
-   *   Test case parameters.
+   *   The test cases.
    */
   public function providerUpdateFormReferringUrl(): array {
     return [
@@ -81,7 +81,7 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
    * Data provider for testTableLooksCorrect().
    *
    * @return string[][]
-   *   Test case parameters.
+   *   The test cases.
    */
   public function providerTableLooksCorrect(): array {
     return [
@@ -520,7 +520,7 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
    * Data provider for testSuccessfulUpdate().
    *
    * @return string[][]
-   *   Test case parameters.
+   *   The test cases.
    */
   public function providerSuccessfulUpdate(): array {
     return [

@@ -25,7 +25,7 @@ class StageValidationExceptionTest extends PackageManagerKernelTestBase {
    * Data provider for testErrors().
    *
    * @return array[]
-   *   The test cases for testErrors().
+   *   The test cases.
    */
   public function providerResultsAsText(): array {
     $messages = ['Blam!', 'Kapow!'];

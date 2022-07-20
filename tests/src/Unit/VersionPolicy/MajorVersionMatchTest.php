@@ -16,10 +16,10 @@ class MajorVersionMatchTest extends UnitTestCase {
   use VersionPolicyTestTrait;
 
   /**
-   * Data provider for ::testMajorVersionMatch().
+   * Data provider for testMajorVersionMatch().
    *
    * @return array[]
-   *   Sets of arguments to pass to the test method.
+   *   The test cases.
    */
   public function providerMajorVersionMatch(): array {
     return [

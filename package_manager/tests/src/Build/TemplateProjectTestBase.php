@@ -26,7 +26,7 @@ abstract class TemplateProjectTestBase extends QuickStartTestBase {
    * Data provider for tests which use all of the core project templates.
    *
    * @return array[]
-   *   Sets of arguments to pass to the test method.
+   *   The test cases.
    */
   public function providerTemplate(): array {
     return [
