@@ -152,7 +152,8 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
     $this->setCoreVersion('9.7.0');
     $page->clickLink('Check manually');
     $this->checkForMetaRefresh();
-    $this->checkReleaseTable('#edit-next-minor', '.update-update-recommended', '9.8.1', TRUE, 'Latest version of Drupal 9.8 (next minor):');
+    $this->checkReleaseTable('#edit-next-minor', '.update-update-recommended', '9.8.1', TRUE, 'Latest version of Drupal 9.8 (next minor) (Release notes):');
+    $this->assertReleaseNotesLink(9, 8);
     $assert_session->pageTextContainsOnce('Currently installed: 9.7.0 (Not supported!)');
     $assert_session->elementNotExists('css', '#edit-installed-minor');
 
@@ -171,14 +172,16 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
     $this->config('automatic_updates.settings')->set('allow_core_minor_updates', TRUE)->save();
     $this->getSession()->reload();
     $this->checkReleaseTable('#edit-installed-minor', '.update-update-recommended', '9.7.1', TRUE, 'Latest version of Drupal 9.7 (currently installed):');
-    $this->checkReleaseTable('#edit-next-minor', '.update-update-optional', '9.8.2', FALSE, 'Latest version of Drupal 9.8 (next minor):');
+    $this->checkReleaseTable('#edit-next-minor', '.update-update-optional', '9.8.2', FALSE, 'Latest version of Drupal 9.8 (next minor) (Release notes):');
+    $this->assertReleaseNotesLink(9, 8);
 
     $this->setCoreVersion('9.7.1');
     $page->clickLink('Check manually');
     $this->checkForMetaRefresh();
     $assert_session->pageTextContainsOnce('Currently installed: 9.7.1 (Update available)');
     $assert_session->elementNotExists('css', '#edit-installed-minor');
-    $this->checkReleaseTable('#edit-next-minor', '.update-update-recommended', '9.8.2', FALSE, 'Latest version of Drupal 9.8 (next minor):');
+    $this->checkReleaseTable('#edit-next-minor', '.update-update-recommended', '9.8.2', FALSE, 'Latest version of Drupal 9.8 (next minor) (Release notes):');
+    $this->assertReleaseNotesLink(9, 8);
 
     $this->assertUpdateStagedTimes(0);
   }
@@ -693,6 +696,21 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
    */
   private function assertNoUpdateButtons(): void {
     $this->assertSession()->elementNotExists('css', "input[value*='Update']");
+  }
+
+  /**
+   * Asserts that the release notes link for a given minor version is correct.
+   *
+   * @param int $major
+   *   Major version of next minor release.
+   * @param int $minor
+   *   Minor version of next minor release.
+   */
+  private function assertReleaseNotesLink(int $major, int $minor): void {
+    $assert_session = $this->assertSession();
+    $row = $assert_session->elementExists('css', '#edit-next-minor');
+    $link_href = $assert_session->elementExists('named', ['link', 'Release notes'], $row)->getAttribute('href');
+    $this->assertSame('http://example.com/drupal-' . $major . '-' . $minor . '-0-release', $link_href);
   }
 
 }

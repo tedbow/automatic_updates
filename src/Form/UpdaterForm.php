@@ -248,14 +248,29 @@ final class UpdaterForm extends FormBase {
       // only that there is newer version available.
       $is_primary = !$installed_minor_release && !($project['status'] === UpdateManagerInterface::CURRENT || $project['status'] === UpdateManagerInterface::NOT_CURRENT);
       $next_minor_version = ExtensionVersion::createFromVersionString($next_minor_release->getVersion());
-      // @todo Add documentation to explain what is different about a minor
-      //   update in https://www.drupal.org/i/3291730.
+
+      // Since updating to another minor version of Drupal is more disruptive
+      // than updating within the currently installed minor version, ensure we
+      // display a link to the release notes for the first (x.y.0) release of
+      // the next minor version, which will inform site owners of any potential
+      // pitfalls or major changes. We should always be able to get release info
+      // for it; if we can't, that's an error condition.
+      $first_release_version = $next_minor_version->getMajorVersion() . '.' . $next_minor_version->getMinorVersion() . '.0';
+      $available_updates = update_get_available(TRUE);
+      if (isset($available_updates['drupal']['releases'][$first_release_version])) {
+        $next_minor_first_release = ProjectRelease::createFromArray($available_updates['drupal']['releases'][$first_release_version]);
+      }
+      else {
+        throw new \LogicException("Release information for Drupal $first_release_version is not available.");
+      }
+
       $form['next_minor'] = $this->createReleaseTable(
         $next_minor_release,
         $installed_minor_release ? $this->t('Minor update') : $release_status,
-        $this->t('Latest version of Drupal @major.@minor (next minor):', [
+        $this->t('Latest version of Drupal @major.@minor (next minor) (<a href=":url">Release notes</a>):', [
           '@major' => $next_minor_version->getMajorVersion(),
           '@minor' => $next_minor_version->getMinorVersion(),
+          ':url' => $next_minor_first_release->getReleaseUrl(),
         ]),
         $installed_minor_release ? 'update-optional' : $type,
         $create_update_buttons,
