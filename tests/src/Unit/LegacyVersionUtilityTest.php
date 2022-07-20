@@ -22,7 +22,7 @@ class LegacyVersionUtilityTest extends UnitTestCase {
    *
    * @dataProvider providerConvertToSemanticVersion
    */
-  public function testConvertToSemanticVersion(string $version_number, string $expected) {
+  public function testConvertToSemanticVersion(string $version_number, string $expected): void {
     $this->assertSame($expected, LegacyVersionUtility::convertToSemanticVersion($version_number));
   }
 
@@ -32,7 +32,7 @@ class LegacyVersionUtilityTest extends UnitTestCase {
    * @return string[][]
    *   The test cases.
    */
-  public function providerConvertToSemanticVersion() {
+  public function providerConvertToSemanticVersion(): array {
     return [
       '8.x-1.2' => ['8.x-1.2', '1.2.0'],
       '8.x-1.2-alpha1' => ['8.x-1.2-alpha1', '1.2.0-alpha1'],
@@ -51,7 +51,7 @@ class LegacyVersionUtilityTest extends UnitTestCase {
    *
    * @dataProvider providerConvertToLegacyVersion
    */
-  public function testConvertToLegacyVersion(string $version_number, ?string $expected) {
+  public function testConvertToLegacyVersion(string $version_number, ?string $expected): void {
     $this->assertSame($expected, LegacyVersionUtility::convertToLegacyVersion($version_number));
   }
 
@@ -61,7 +61,7 @@ class LegacyVersionUtilityTest extends UnitTestCase {
    * @return array[]
    *   The test cases.
    */
-  public function providerConvertToLegacyVersion() {
+  public function providerConvertToLegacyVersion(): array {
     return [
       '1.2.0' => ['1.2.0', '8.x-1.2'],
       '1.2.0-alpha1' => ['1.2.0-alpha1', '8.x-1.2-alpha1'],

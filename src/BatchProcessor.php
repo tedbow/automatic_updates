@@ -264,7 +264,7 @@ final class BatchProcessor {
    * @see \Drupal\update\Form\UpdateReady::submitForm()
    * @see automatic_updates_batch_alter()
    */
-  public static function dbUpdateBatchFinished(bool $success, array $results, array $operations) {
+  public static function dbUpdateBatchFinished(bool $success, array $results, array $operations): void {
     DbUpdateController::batchFinished($success, $results, $operations);
     // Now that the update is done, we can put the site back online if it was
     // previously not in maintenance mode.

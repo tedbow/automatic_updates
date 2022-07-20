@@ -25,7 +25,7 @@ class StagedDatabaseUpdateValidator extends BaseValidator {
    * @param \Drupal\Core\State\StateInterface $state
    *   The state service.
    */
-  public function setState(StateInterface $state) {
+  public function setState(StateInterface $state): void {
     $this->state = $state;
   }
 

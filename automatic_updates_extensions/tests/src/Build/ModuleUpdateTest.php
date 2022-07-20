@@ -101,7 +101,7 @@ END;
   /**
    * Tests updating a module in a staging area via the UI.
    */
-  public function testUi() {
+  public function testUi(): void {
     $this->createTestProject('RecommendedProject');
 
     $mink = $this->getMink();
@@ -154,7 +154,7 @@ END;
    * @param string $version
    *   The expected version.
    */
-  private function assertModuleVersion(string $module_name, string $version) {
+  private function assertModuleVersion(string $module_name, string $version): void {
     $web_root = $this->getWebRoot();
     $composer_json = file_get_contents("$web_root/modules/contrib/$module_name/composer.json");
     $data = json_decode($composer_json, TRUE);

@@ -14,7 +14,7 @@ class AutomaticUpdatesTestDisableValidatorsServiceProvider extends ServiceProvid
   /**
    * {@inheritdoc}
    */
-  public function alter(ContainerBuilder $container) {
+  public function alter(ContainerBuilder $container): void {
     parent::alter($container);
 
     $validators = Settings::get('automatic_updates_test_disable_validators', []);

@@ -112,7 +112,7 @@ class TestSubscriber implements EventSubscriberInterface {
    * @return string
    *   The state key under which to store the results for the given event.
    */
-  protected static function getStateKey(string $event) {
+  protected static function getStateKey(string $event): string {
     $parts = explode('\\', $event);
     return static::STATE_KEY . array_pop($parts);
   }

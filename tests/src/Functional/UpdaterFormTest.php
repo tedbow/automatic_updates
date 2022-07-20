@@ -427,7 +427,7 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
    * @return bool[][]
    *   The test cases.
    */
-  public function providerStagedDatabaseUpdates() {
+  public function providerStagedDatabaseUpdates(): array {
     return [
       'maintenance mode on' => [TRUE],
       'maintenance mode off' => [FALSE],

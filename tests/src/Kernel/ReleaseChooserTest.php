@@ -159,7 +159,7 @@ class ReleaseChooserTest extends AutomaticUpdatesKernelTestBase {
    * @param \Drupal\update\ProjectRelease|null $release
    *   The release to check, or NULL if no release is expected.
    */
-  private function assertReleaseVersion(?string $version, ?ProjectRelease $release) {
+  private function assertReleaseVersion(?string $version, ?ProjectRelease $release): void {
     if (is_null($version)) {
       $this->assertNull($release);
     }

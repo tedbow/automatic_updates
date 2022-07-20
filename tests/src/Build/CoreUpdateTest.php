@@ -14,7 +14,7 @@ class CoreUpdateTest extends UpdateTestBase {
   /**
    * {@inheritdoc}
    */
-  public function copyCodebase(\Iterator $iterator = NULL, $working_dir = NULL) {
+  public function copyCodebase(\Iterator $iterator = NULL, $working_dir = NULL): void {
     parent::copyCodebase($iterator, $working_dir);
 
     // Ensure that we will install Drupal 9.8.0 (a fake version that should

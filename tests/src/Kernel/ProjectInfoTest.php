@@ -23,7 +23,7 @@ class ProjectInfoTest extends AutomaticUpdatesKernelTestBase {
    *
    * @dataProvider providerGetInstallableReleases
    */
-  public function testGetInstallableReleases(string $fixture, string $installed_version, array $expected_versions) {
+  public function testGetInstallableReleases(string $fixture, string $installed_version, array $expected_versions): void {
     [$project] = explode('.', $fixture);
     $fixtures_directory = __DIR__ . '/../../fixtures/release-history/';
     if ($project === 'drupal') {
@@ -60,7 +60,7 @@ class ProjectInfoTest extends AutomaticUpdatesKernelTestBase {
    * @return array[]
    *   The test cases.
    */
-  public function providerGetInstallableReleases() {
+  public function providerGetInstallableReleases(): array {
     return [
       'core, no updates' => [
         'drupal.9.8.2.xml',
@@ -122,7 +122,7 @@ class ProjectInfoTest extends AutomaticUpdatesKernelTestBase {
    *
    * @covers ::getInstallableReleases()
    */
-  public function testNotPublishedProject() {
+  public function testNotPublishedProject(): void {
     $this->setReleaseMetadata(['drupal' => __DIR__ . '/../../fixtures/release-history/drupal.9.8.2_unknown_status.xml']);
     $project_info = new ProjectInfo('drupal');
     $this->expectException('RuntimeException');

@@ -47,7 +47,7 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
    * @return array[]
    *   The test cases.
    */
-  public function providerSuccessfulUpdate() {
+  public function providerSuccessfulUpdate(): array {
     return [
       'maintenance mode on, semver' => [TRUE, 'semver_test', '8.1.0', '8.1.1'],
       'maintenance mode off, legacy' => [FALSE, 'aaa_update_test', '8.x-2.0', '8.x-2.1'],
@@ -82,7 +82,7 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
    * @todo This is copied from core. We need to file a core issue so we do not
    *    have to copy this.
    */
-  protected function setProjectInstalledVersion($project_versions) {
+  protected function setProjectInstalledVersion($project_versions): void {
     $this->config('update.settings')
       ->set('fetch.url', $this->baseUrl . '/test-release-history')
       ->save();

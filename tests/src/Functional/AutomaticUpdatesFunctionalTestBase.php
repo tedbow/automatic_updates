@@ -41,7 +41,7 @@ abstract class AutomaticUpdatesFunctionalTestBase extends BrowserTestBase {
   /**
    * {@inheritdoc}
    */
-  protected function setUp() {
+  protected function setUp(): void {
     parent::setUp();
     $this->disableValidators($this->disableValidators);
 
@@ -60,7 +60,7 @@ abstract class AutomaticUpdatesFunctionalTestBase extends BrowserTestBase {
   /**
    * {@inheritdoc}
    */
-  protected function installModulesFromClassProperty(ContainerInterface $container) {
+  protected function installModulesFromClassProperty(ContainerInterface $container): void {
     $container->get('module_installer')->install([
       'automatic_updates_test_release_history',
     ]);
