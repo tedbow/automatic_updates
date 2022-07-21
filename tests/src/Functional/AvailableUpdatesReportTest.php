@@ -86,8 +86,13 @@ class AvailableUpdatesReportTest extends AutomaticUpdatesFunctionalTestBase {
   private function assertVersionLink(string $version, string $url): void {
     $assert = $this->assertSession();
     $row = $assert->elementExists('css', "table.update .project-update__version:contains(\"$version\")");
-    $link = $assert->elementExists('named', ['link', 'Download'], $row);
-    $this->assertStringEndsWith($url, $link->getAttribute('href'));
+    // In Drupal 9.5 and later, the "Download" link does not exist. We can drop
+    // this assertion (and likely this entire method) when Drupal 9.5 is the
+    // minimum supported version of core.
+    $link = $row->findLink('Download');
+    if ($link) {
+      $this->assertStringEndsWith($url, $link->getAttribute('href'));
+    }
   }
 
 }
