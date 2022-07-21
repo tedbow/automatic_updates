@@ -8,7 +8,6 @@ use Drupal\package_manager\Event\StageEvent;
 use Drupal\package_manager\Validator\DiskSpaceValidator;
 use Drupal\package_manager\Exception\StageException;
 use Drupal\package_manager\Exception\StageValidationException;
-use Drupal\package_manager\PathLocator;
 use Drupal\package_manager\Stage;
 use Drupal\package_manager_bypass\Beginner;
 use Drupal\Tests\package_manager\Traits\ValidationTestTrait;
@@ -77,19 +76,14 @@ abstract class PackageManagerKernelTestBase extends KernelTestBase {
     $container->setDefinition($class, $definition->setPublic(FALSE));
     $container->setAlias(PathFactoryInterface::class, $class);
 
-    // When a virtual project is used, the path locator and disk space validator
-    // are replaced with mocks. When staged changes are applied, the container
-    // is rebuilt, which destroys the mocked services and can cause unexpected
-    // side effects. The 'persist' tag prevents the mocks from being destroyed
-    // during a container rebuild.
+    // When a virtual project is used, the disk space validator is replaced with
+    // a mock. When staged changes are applied, the container is rebuilt, which
+    // destroys the mocked service and can cause unexpected side effects. The
+    // 'persist' tag prevents the mock from being destroyed during a container
+    // rebuild.
     // @see ::createVirtualProject()
-    $persist = [
-      'package_manager.path_locator',
-      'package_manager.validator.disk_space',
-    ];
-    foreach ($persist as $service_id) {
-      $container->getDefinition($service_id)->addTag('persist');
-    }
+    $container->getDefinition('package_manager.validator.disk_space')
+      ->addTag('persist');
 
     foreach ($this->disableValidators as $service_id) {
       if ($container->hasDefinition($service_id)) {
@@ -173,12 +167,18 @@ abstract class PackageManagerKernelTestBase extends KernelTestBase {
    * 'active', which is the active directory containing a fake Drupal code base,
    * and 'stage', which is the root directory used to stage changes. The path
    * locator service will also be mocked so that it points to the test project.
+   *
+   * @param string|null $source_dir
+   *   (optional) The path of a directory which should be copied into the
+   *   virtual file system and used as the active directory.
    */
-  protected function createVirtualProject(): void {
+  protected function createVirtualProject(?string $source_dir = NULL): void {
+    $source_dir = $source_dir ?? __DIR__ . '/../../fixtures/fake_site';
+
     // Create the active directory and copy its contents from a fixture.
     $active_dir = vfsStream::newDirectory('active');
     $this->vfsRoot->addChild($active_dir);
-    vfsStream::copyFromFileSystem(__DIR__ . '/../../fixtures/fake_site', $active_dir);
+    vfsStream::copyFromFileSystem($source_dir, $active_dir);
 
     // Because we can't commit physical `.git` directories into the fixture, use
     // a visitor to traverse the virtual file system and rename all `_git`
@@ -209,8 +209,13 @@ abstract class PackageManagerKernelTestBase extends KernelTestBase {
     $this->vfsRoot->addChild($stage_dir);
     static::$testStagingRoot = $stage_dir->url();
 
+    // Ensure the path locator points to the virtual active directory. We assume
+    // that is its own web root and that the vendor directory is at its top
+    // level.
     $active_dir = $active_dir->url();
-    $path_locator = $this->mockPathLocator($active_dir);
+    /** @var \Drupal\package_manager_bypass\PathLocator $path_locator */
+    $path_locator = $this->container->get('package_manager.path_locator');
+    $path_locator->setPaths($active_dir, $active_dir . '/vendor', '');
 
     // Ensure the active directory will be copied into the virtual staging area.
     Beginner::setFixturePath($active_dir);
@@ -221,7 +226,7 @@ abstract class PackageManagerKernelTestBase extends KernelTestBase {
     // by vfsStream. This validator will persist through container rebuilds.
     // @see ::register()
     $validator = new TestDiskSpaceValidator(
-      $this->container->get('package_manager.path_locator'),
+      $path_locator,
       $this->container->get('string_translation')
     );
     // By default, the validator should report that the root, vendor, and
@@ -232,40 +237,6 @@ abstract class PackageManagerKernelTestBase extends KernelTestBase {
       $validator->temporaryDirectory() => PHP_INT_MAX,
     ];
     $this->container->set('package_manager.validator.disk_space', $validator);
-  }
-
-  /**
-   * Mocks the path locator and injects it into the service container.
-   *
-   * The mocked path locator will persist through container rebuilds.
-   *
-   * @param string $project_root
-   *   The project root.
-   * @param string|null $vendor_dir
-   *   (optional) The vendor directory. Defaults to `$project_root/vendor`.
-   * @param string $web_root
-   *   (optional) The web root, relative to the project root. Defaults to ''
-   *   (i.e., same as the project root).
-   *
-   * @return \Drupal\package_manager\PathLocator
-   *   The mocked path locator.
-   *
-   * @see ::register()
-   */
-  protected function mockPathLocator(string $project_root, string $vendor_dir = NULL, string $web_root = ''): PathLocator {
-    if (empty($vendor_dir)) {
-      $vendor_dir = $project_root . '/vendor';
-    }
-    $path_locator = $this->prophesize(PathLocator::class);
-    $path_locator->getProjectRoot()->willReturn($project_root);
-    $path_locator->getVendorDirectory()->willReturn($vendor_dir);
-    $path_locator->getWebRoot()->willReturn($web_root);
-
-    // We don't need the prophet anymore.
-    $path_locator = $path_locator->reveal();
-    $this->container->set('package_manager.path_locator', $path_locator);
-
-    return $path_locator;
   }
 
 }

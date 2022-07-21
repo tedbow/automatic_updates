@@ -48,8 +48,8 @@ class StagedDatabaseUpdateValidatorTest extends AutomaticUpdatesKernelTestBase {
   /**
    * {@inheritdoc}
    */
-  protected function createVirtualProject(): void {
-    parent::createVirtualProject();
+  protected function createVirtualProject(?string $source_dir = NULL): void {
+    parent::createVirtualProject($source_dir);
 
     $drupal_root = $this->getDrupalRoot();
     $virtual_active_dir = $this->container->get('package_manager.path_locator')

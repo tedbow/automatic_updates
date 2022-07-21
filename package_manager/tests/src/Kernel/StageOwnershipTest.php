@@ -239,14 +239,6 @@ class StageOwnershipTest extends PackageManagerKernelTestBase {
    * Tests that the stage is available if ::destroy() has a file system error.
    */
   public function testStageDestroyedWithFileSystemError(): void {
-    // Enable the Composer Stager library, since we will actually want to create
-    // the stage directory.
-    $this->container->get('module_installer')->uninstall([
-      'package_manager_bypass',
-    ]);
-    // Ensure we have an up-to-date container.
-    $this->container = $this->container->get('kernel')->getContainer();
-
     $logger_channel = $this->container->get('logger.channel.file');
     $arguments = [
       $this->container->get('stream_wrapper_manager'),

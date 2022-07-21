@@ -40,9 +40,9 @@ class SiteConfigurationExcluderTest extends PackageManagerKernelTestBase {
   public function testExcludedPaths(): void {
     // In this test, we want to perform the actual staging operations so that we
     // can be sure that files are staged as expected.
-    $this->disableModules(['package_manager_bypass']);
+    $this->setSetting('package_manager_bypass_composer_stager', FALSE);
     // Ensure we have an up-to-date container.
-    $this->container = $this->container->get('kernel')->getContainer();
+    $this->container = $this->container->get('kernel')->rebuildContainer();
 
     $active_dir = $this->container->get('package_manager.path_locator')
       ->getProjectRoot();

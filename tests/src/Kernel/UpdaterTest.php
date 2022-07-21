@@ -50,8 +50,7 @@ class UpdaterTest extends AutomaticUpdatesKernelTestBase {
     // Point to a fake site which requires Drupal core via a distribution. The
     // lock file should be scanned to determine the core packages, which should
     // result in drupal/core-recommended being updated.
-    $fixture_dir = __DIR__ . '/../../fixtures/fake-site';
-    $locator = $this->mockPathLocator($fixture_dir, $fixture_dir);
+    $this->createVirtualProject(__DIR__ . '/../../fixtures/fake-site');
 
     $id = $this->container->get('automatic_updates.updater')->begin([
       'drupal' => '9.8.1',
@@ -61,8 +60,7 @@ class UpdaterTest extends AutomaticUpdatesKernelTestBase {
     $kernel = $this->container->get('kernel');
     $kernel->rebuildContainer();
     $this->container = $kernel->getContainer();
-    // Keep using the mocked path locator and current user.
-    $this->container->set('package_manager.path_locator', $locator);
+    // Keep using the user account we created.
     $this->setCurrentUser($user);
 
     /** @var \Drupal\automatic_updates\Updater $updater */

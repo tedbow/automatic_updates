@@ -4,6 +4,7 @@ namespace Drupal\package_manager_bypass;
 
 use Drupal\Core\DependencyInjection\ContainerBuilder;
 use Drupal\Core\DependencyInjection\ServiceProviderBase;
+use Drupal\Core\Site\Settings;
 use Symfony\Component\DependencyInjection\Reference;
 use Symfony\Component\Filesystem\Filesystem;
 
@@ -18,17 +19,19 @@ class PackageManagerBypassServiceProvider extends ServiceProviderBase {
   public function alter(ContainerBuilder $container) {
     parent::alter($container);
 
-    $services = [
-      'package_manager.beginner' => Beginner::class,
-      'package_manager.stager' => Stager::class,
-      'package_manager.committer' => Committer::class,
-    ];
     $arguments = [
       new Reference('state'),
       new Reference(Filesystem::class),
     ];
-    foreach ($services as $id => $class) {
-      $container->getDefinition($id)->setClass($class)->setArguments($arguments);
+    if (Settings::get('package_manager_bypass_composer_stager', TRUE)) {
+      $services = [
+        'package_manager.beginner' => Beginner::class,
+        'package_manager.stager' => Stager::class,
+        'package_manager.committer' => Committer::class,
+      ];
+      foreach ($services as $id => $class) {
+        $container->getDefinition($id)->setClass($class)->setArguments($arguments);
+      }
     }
 
     $container->getDefinition('package_manager.path_locator')

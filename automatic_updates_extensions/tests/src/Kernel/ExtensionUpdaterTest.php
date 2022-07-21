@@ -46,8 +46,7 @@ class ExtensionUpdaterTest extends AutomaticUpdatesKernelTestBase {
     $user = $this->createUser([], NULL, TRUE, ['uid' => 2]);
     $this->setCurrentUser($user);
 
-    $fixture_dir = __DIR__ . '/../../fixtures/fake-site';
-    $locator = $this->mockPathLocator($fixture_dir, $fixture_dir);
+    $this->createVirtualProject(__DIR__ . '/../../fixtures/fake-site');
 
     $id = $this->container->get('automatic_updates_extensions.updater')->begin([
       'my_module' => '9.8.1',
@@ -60,8 +59,7 @@ class ExtensionUpdaterTest extends AutomaticUpdatesKernelTestBase {
     $kernel = $this->container->get('kernel');
     $kernel->rebuildContainer();
     $this->container = $kernel->getContainer();
-    // Keep using the mocked path locator and current user.
-    $this->container->set('package_manager.path_locator', $locator);
+    // Keep using the user account we created.
     $this->setCurrentUser($user);
 
     $extension_updater = $this->container->get('automatic_updates_extensions.updater');
