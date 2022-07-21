@@ -9,6 +9,11 @@ Automatic Updates
 - Drupal multi-site installations are not supported.
 - Automatic Updates does not support version control such as Git. It is the responsibility of site administrators to commit any updates to version control if needed.
 
+### Updating contributed modules and themes
+Automatic Updates includes a sub-module, Automatic Updates Extensions, which supports updating contributed modules and themes.
+
+⚠️ ☢️️ **Automatic Updates Extensions is still experimental and under heavy development.** We encourage you to test it in your local development environment, or another low-stakes testing situation, but it is emphatically NOT ready for use in a production environment. ☢️ ⚠️
+
 ### Automatic Updates Initiative
 
 - Follow and read up on
