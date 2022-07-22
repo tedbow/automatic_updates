@@ -114,4 +114,13 @@ class ExtensionUpdaterTest extends AutomaticUpdatesKernelTestBase {
     }
   }
 
+  /**
+   * Tests that an exception is thrown when calling begin() with no projects.
+   */
+  public function testNoProjectsInBegin(): void {
+    $this->expectException('InvalidArgumentException');
+    $this->expectExceptionMessage('No projects to begin the update');
+    $this->container->get('automatic_updates_extensions.updater')->begin([]);
+  }
+
 }

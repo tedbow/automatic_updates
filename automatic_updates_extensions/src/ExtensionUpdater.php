@@ -27,9 +27,12 @@ class ExtensionUpdater extends Stage {
    *   The unique ID of the stage.
    *
    * @throws \InvalidArgumentException
-   *   Thrown if no project version for Drupal core is provided.
+   *   Thrown if no project version is provided.
    */
   public function begin(array $project_versions): string {
+    if (empty($project_versions)) {
+      throw new \InvalidArgumentException("No projects to begin the update");
+    }
     $composer = $this->getActiveComposer();
     $package_versions = [
       'production' => [],
