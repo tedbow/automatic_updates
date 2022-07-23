@@ -364,7 +364,7 @@ final class UpdaterForm extends FormBase {
    * @param bool $is_primary
    *   Whether update button should be a primary button.
    *
-   * @return array
+   * @return string[][]
    *   The table render array.
    */
   private function createReleaseTable(ProjectRelease $release, string $release_description, ?TranslatableMarkup $caption, string $update_type, bool $create_update_button, bool $is_primary): array {

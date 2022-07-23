@@ -18,7 +18,7 @@ class ForbidDowngradeTest extends UnitTestCase {
   /**
    * Data provider for testDowngradeForbidden().
    *
-   * @return array[]
+   * @return mixed[][]
    *   The test cases.
    */
   public function providerDowngradeForbidden(): array {

@@ -68,7 +68,7 @@ class ComposerExecutableValidatorTest extends PackageManagerKernelTestBase {
   /**
    * Data provider for testComposerVersionValidation().
    *
-   * @return array[]
+   * @return mixed[][]
    *   The test cases.
    */
   public function providerComposerVersionValidation(): array {

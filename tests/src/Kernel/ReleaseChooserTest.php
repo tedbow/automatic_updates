@@ -28,7 +28,7 @@ class ReleaseChooserTest extends AutomaticUpdatesKernelTestBase {
   /**
    * Data provider for testReleases().
    *
-   * @return array[]
+   * @return mixed[][]
    *   The test cases.
    */
   public function providerReleases(): array {

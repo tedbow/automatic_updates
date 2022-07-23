@@ -68,7 +68,7 @@ class DiskSpaceValidator implements PreOperationStageValidatorInterface {
    * @param string $path
    *   The path to check.
    *
-   * @return array
+   * @return mixed[]
    *   The statistics for the path.
    *
    * @throws \RuntimeException

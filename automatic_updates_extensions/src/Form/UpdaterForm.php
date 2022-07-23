@@ -228,7 +228,7 @@ final class UpdaterForm extends FormBase {
   /**
    * Gets the modules that require updates.
    *
-   * @return array
+   * @return mixed[]
    *   Modules that require updates.
    */
   private function getRecommendedModuleUpdates(): array {

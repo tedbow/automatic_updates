@@ -16,7 +16,7 @@ class ComposerSettingsValidatorTest extends PackageManagerKernelTestBase {
   /**
    * Data provider for testSecureHttpValidation().
    *
-   * @return array[]
+   * @return mixed[][]
    *   The test cases.
    */
   public function providerSecureHttpValidation(): array {

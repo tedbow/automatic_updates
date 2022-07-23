@@ -18,7 +18,7 @@ class ForbidDevSnapshotTest extends UnitTestCase {
   /**
    * Data provider for testForbidDevSnapshot().
    *
-   * @return array[]
+   * @return mixed[][]
    *   The test cases.
    */
   public function providerForbidDevSnapshot(): array {

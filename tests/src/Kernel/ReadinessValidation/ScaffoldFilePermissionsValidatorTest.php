@@ -68,7 +68,7 @@ class ScaffoldFilePermissionsValidatorTest extends AutomaticUpdatesKernelTestBas
   /**
    * Data provider for testPermissionsBeforeStart().
    *
-   * @return array[]
+   * @return mixed[][]
    *   The test cases.
    */
   public function providerPermissionsBeforeStart(): array {
@@ -129,7 +129,7 @@ class ScaffoldFilePermissionsValidatorTest extends AutomaticUpdatesKernelTestBas
   /**
    * Data provider for testScaffoldFilesChanged().
    *
-   * @return array[]
+   * @return mixed[][]
    *   The test cases.
    */
   public function providerScaffoldFilesChanged(): array {

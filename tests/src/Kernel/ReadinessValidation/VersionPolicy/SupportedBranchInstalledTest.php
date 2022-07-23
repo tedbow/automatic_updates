@@ -20,7 +20,7 @@ class SupportedBranchInstalledTest extends AutomaticUpdatesKernelTestBase {
   /**
    * Data provider for testSupportedBranchInstalled().
    *
-   * @return array[]
+   * @return mixed[][]
    *   The test cases.
    */
   public function providerSupportedBranchInstalled(): array {

@@ -18,7 +18,7 @@ class ForbidMinorUpdatesTest extends UnitTestCase {
   /**
    * Data provider for testMinorUpdateForbidden().
    *
-   * @return array[]
+   * @return mixed[][]
    *   The test cases.
    */
   public function providerMinorUpdateForbidden(): array {

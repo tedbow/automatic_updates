@@ -38,7 +38,7 @@ class PackagesInstalledWithComposerValidatorTest extends AutomaticUpdatesExtensi
   /**
    * Data provider for testPreCreateException().
    *
-   * @return array[]
+   * @return mixed[][]
    *   The test cases.
    */
   public function providerPreCreateException(): array {
@@ -117,7 +117,7 @@ class PackagesInstalledWithComposerValidatorTest extends AutomaticUpdatesExtensi
   /**
    * Data provider for testPreApplyException().
    *
-   * @return array
+   * @return mixed[][]
    *   The test cases.
    */
   public function providerPreApplyException(): array {

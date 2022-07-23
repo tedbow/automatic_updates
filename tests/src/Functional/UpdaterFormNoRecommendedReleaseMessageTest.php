@@ -38,7 +38,7 @@ class UpdaterFormNoRecommendedReleaseMessageTest extends AutomaticUpdatesFunctio
   /**
    * Data provider for testMessages().
    *
-   * @return array[]
+   * @return mixed[][]
    *   The test cases.
    */
   public function providerMessages(): array {

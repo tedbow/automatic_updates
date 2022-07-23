@@ -30,7 +30,7 @@ class UpdatePackagesTypeValidatorTest extends AutomaticUpdatesExtensionsKernelTe
   /**
    * Data provider for testUpdatePackagesAreOnlyThemesOrModules().
    *
-   * @return array
+   * @return mixed[][]
    *   The test cases.
    */
   public function providerUpdatePackagesAreOnlyThemesOrModules(): array {

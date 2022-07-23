@@ -24,7 +24,7 @@ class VersionPolicyValidatorTest extends AutomaticUpdatesKernelTestBase {
   /**
    * Data provider for testReadinessCheck().
    *
-   * @return array[]
+   * @return mixed[][]
    *   The test cases.
    */
   public function providerReadinessCheck(): array {
@@ -190,7 +190,7 @@ class VersionPolicyValidatorTest extends AutomaticUpdatesKernelTestBase {
   /**
    * Data provider for testApi().
    *
-   * @return array[]
+   * @return mixed[][]
    *   The test cases.
    */
   public function providerApi(): array {

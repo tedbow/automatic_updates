@@ -57,7 +57,7 @@ class ProjectInfoTest extends AutomaticUpdatesKernelTestBase {
   /**
    * Data provider for testGetInstallableReleases().
    *
-   * @return array[]
+   * @return mixed[][]
    *   The test cases.
    */
   public function providerGetInstallableReleases(): array {

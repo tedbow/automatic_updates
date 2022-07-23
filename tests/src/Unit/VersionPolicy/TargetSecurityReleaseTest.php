@@ -19,7 +19,7 @@ class TargetSecurityReleaseTest extends UnitTestCase {
   /**
    * Data provider for testTargetSecurityRelease().
    *
-   * @return array[]
+   * @return mixed[][]
    *   The test cases.
    */
   public function providerTargetSecurityRelease(): array {

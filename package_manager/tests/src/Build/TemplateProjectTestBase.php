@@ -25,7 +25,7 @@ abstract class TemplateProjectTestBase extends QuickStartTestBase {
   /**
    * Data provider for tests which use all of the core project templates.
    *
-   * @return array[]
+   * @return string[][]
    *   The test cases.
    */
   public function providerTemplate(): array {
@@ -230,7 +230,7 @@ END;
   /**
    * Creates a Composer repository for all installed third-party dependencies.
    *
-   * @return array
+   * @return string[][]
    *   The data that should be written to the repository file.
    */
   protected function createVendorRepository(): array {
@@ -275,7 +275,7 @@ END;
   /**
    * Returns all package information from the lock file.
    *
-   * @return array[]
+   * @return mixed[][]
    *   All package data from the lock file.
    */
   private function getPackagesFromLockFile(): array {

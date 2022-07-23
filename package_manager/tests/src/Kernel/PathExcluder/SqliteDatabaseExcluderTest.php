@@ -94,7 +94,7 @@ class SqliteDatabaseExcluderTest extends PackageManagerKernelTestBase {
   /**
    * Data provider for testPathProcessing().
    *
-   * @return array[]
+   * @return string[][]
    *   The test cases.
    */
   public function providerPathProcessing(): array {

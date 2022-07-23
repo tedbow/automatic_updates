@@ -72,7 +72,7 @@ class CronFrequencyValidatorTest extends AutomaticUpdatesKernelTestBase {
   /**
    * Data provider for testLastCronRunValidation().
    *
-   * @return array[]
+   * @return mixed[][]
    *   The test cases.
    */
   public function providerLastCronRunValidation(): array {
@@ -118,7 +118,7 @@ class CronFrequencyValidatorTest extends AutomaticUpdatesKernelTestBase {
   /**
    * Data provider for testAutomatedCronValidation().
    *
-   * @return array[]
+   * @return mixed[][]
    *   The test cases.
    */
   public function providerAutomatedCronValidation(): array {

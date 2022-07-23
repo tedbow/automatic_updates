@@ -24,7 +24,7 @@ class StageValidationExceptionTest extends PackageManagerKernelTestBase {
   /**
    * Data provider for testErrors().
    *
-   * @return array[]
+   * @return string[][]
    *   The test cases.
    */
   public function providerResultsAsText(): array {

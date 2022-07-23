@@ -58,7 +58,7 @@ class LegacyVersionUtilityTest extends UnitTestCase {
   /**
    * Data provider for testConvertToLegacyVersion()
    *
-   * @return array[]
+   * @return mixed[][]
    *   The test cases.
    */
   public function providerConvertToLegacyVersion(): array {

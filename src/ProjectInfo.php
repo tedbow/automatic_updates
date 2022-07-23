@@ -67,7 +67,7 @@ final class ProjectInfo {
   /**
    * Returns up-to-date project information.
    *
-   * @return array|null
+   * @return mixed[]|null
    *   The retrieved project information.
    *
    * @throws \RuntimeException

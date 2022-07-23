@@ -18,7 +18,7 @@ class MinorUpdatesEnabledTest extends UnitTestCase {
   /**
    * Data provider for testMinorUpdatesEnabled().
    *
-   * @return array[]
+   * @return mixed[][]
    *   The test cases.
    */
   public function providerMinorUpdatesEnabled(): array {

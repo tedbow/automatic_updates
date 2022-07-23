@@ -26,7 +26,7 @@ class UpdateReleaseValidatorTest extends AutomaticUpdatesExtensionsKernelTestBas
   /**
    * Data provider for testPreCreateException().
    *
-   * @return array[]
+   * @return mixed[][]
    *   The test cases.
    */
   public function providerTestPreCreateException(): array {
@@ -83,7 +83,7 @@ class UpdateReleaseValidatorTest extends AutomaticUpdatesExtensionsKernelTestBas
   /**
    * Data provider for testPreApplyException().
    *
-   * @return array[]
+   * @return mixed[][]
    *   The test cases.
    */
   public function providerTestPreApplyException(): array {

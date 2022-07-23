@@ -112,7 +112,7 @@ class StagedDatabaseUpdateValidatorTest extends AutomaticUpdatesKernelTestBase {
   /**
    * Data provider for testFileChanged().
    *
-   * @return array[]
+   * @return mixed[]
    *   The test cases.
    */
   public function providerFileChanged(): array {

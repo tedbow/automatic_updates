@@ -75,7 +75,7 @@ abstract class BypassedStagerServiceBase {
   /**
    * Returns the arguments from every invocation of the main class method.
    *
-   * @return array[]
+   * @return mixed[]
    *   The arguments from every invocation of the main class method.
    */
   public function getInvocationArguments(): array {

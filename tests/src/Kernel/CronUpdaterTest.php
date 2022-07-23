@@ -78,7 +78,7 @@ class CronUpdaterTest extends AutomaticUpdatesKernelTestBase {
   /**
    * Data provider for testUpdaterCalled().
    *
-   * @return array[]
+   * @return mixed[][]
    *   The test cases.
    */
   public function providerUpdaterCalled(): array {
@@ -173,7 +173,7 @@ class CronUpdaterTest extends AutomaticUpdatesKernelTestBase {
   /**
    * Data provider for testStageDestroyedOnError().
    *
-   * @return array[]
+   * @return string[][]
    *   The test cases.
    */
   public function providerStageDestroyedOnError(): array {

@@ -130,7 +130,7 @@ class UpdaterTest extends AutomaticUpdatesKernelTestBase {
   /**
    * Data provider for testInvalidProjectVersions().
    *
-   * @return array
+   * @return mixed[][]
    *   The test cases.
    */
   public function providerInvalidProjectVersions(): array {
@@ -144,7 +144,7 @@ class UpdaterTest extends AutomaticUpdatesKernelTestBase {
   /**
    * Data provider for testCommitException().
    *
-   * @return \string[][]
+   * @return string[][]
    *   The test cases.
    */
   public function providerCommitException(): array {

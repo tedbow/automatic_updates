@@ -69,7 +69,7 @@ final class ReadinessRequirements implements ContainerInjectionInterface {
   /**
    * Gets requirements arrays as specified in hook_requirements().
    *
-   * @return array[]
+   * @return mixed[]
    *   Requirements arrays as specified by hook_requirements().
    */
   public function getRequirements(): array {

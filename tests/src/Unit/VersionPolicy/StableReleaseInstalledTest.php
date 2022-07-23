@@ -18,7 +18,7 @@ class StableReleaseInstalledTest extends UnitTestCase {
   /**
    * Data provider for testStableReleaseInstalled().
    *
-   * @return array[]
+   * @return mixed[][]
    *   The test cases.
    */
   public function providerStableReleaseInstalled(): array {

@@ -32,7 +32,7 @@ class ComposerUtilityTest extends KernelTestBase {
   /**
    * Data provider for testCorePackagesFromLockFile().
    *
-   * @return array[]
+   * @return string[][]
    *   The test cases.
    */
   public function providerCorePackagesFromLockFile(): array {

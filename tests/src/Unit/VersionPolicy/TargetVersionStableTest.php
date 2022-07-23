@@ -18,7 +18,7 @@ class TargetVersionStableTest extends UnitTestCase {
   /**
    * Data provider for testTargetVersionStable().
    *
-   * @return array[]
+   * @return mixed[][]
    *   The test cases.
    */
   public function providerTargetVersionStable(): array {

@@ -22,7 +22,7 @@ class WritableFileSystemValidatorTest extends PackageManagerKernelTestBase {
   /**
    * Data provider for testWritable().
    *
-   * @return array[]
+   * @return mixed[][]
    *   The test cases.
    */
   public function providerWritable(): array {

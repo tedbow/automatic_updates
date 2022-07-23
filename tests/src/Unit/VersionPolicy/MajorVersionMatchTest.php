@@ -18,7 +18,7 @@ class MajorVersionMatchTest extends UnitTestCase {
   /**
    * Data provider for testMajorVersionMatch().
    *
-   * @return array[]
+   * @return mixed[][]
    *   The test cases.
    */
   public function providerMajorVersionMatch(): array {
