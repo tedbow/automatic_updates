@@ -36,51 +36,16 @@ class PackagesInstalledWithComposerValidator implements EventSubscriberInterface
    */
   public function checkPackagesInstalledWithComposer(PreOperationStageEvent $event): void {
     $stage = $event->getStage();
-    if ($stage instanceof ExtensionUpdater) {
-      $active_composer = $stage->getActiveComposer();
-      $installed_packages = $active_composer->getInstalledPackages();
-      $missing_packages = [];
-      if ($event instanceof PreCreateEvent) {
-        $package_versions = $stage->getPackageVersions();
-        foreach (['production', 'dev'] as $package_type) {
-          $missing_packages = array_merge($missing_packages, array_diff_key($package_versions[$package_type], $installed_packages));
-        }
-      }
-      else {
-        $missing_packages = $stage->getStageComposer()
-          ->getPackagesNotIn($active_composer);
-        // For new dependency added in the stage will are only concerned with
-        // ones that are Drupal projects that have Update XML from Drupal.org
-        // Since the Update module does allow use to check any of these projects
-        // if they don't exist in the active code base. Other types of projects
-        // even if they are in the 'drupal/' namespace they would not have
-        // Update XML on Drupal.org so it doesn't matter if they are in the
-        // active codebase or not.
-        $types = [
-          'drupal-module',
-          'drupal-theme',
-          'drupal-profile',
-        ];
-        $filter = function (PackageInterface $package) use ($types): bool {
-          return in_array($package->getType(), $types);
-        };
-        $missing_packages = array_filter($missing_packages, $filter);
-        // Saving only the packages whose name starts with drupal/.
-        $missing_packages = array_filter($missing_packages, function (string $key) {
-          return strpos($key, 'drupal/') === 0;
-        }, ARRAY_FILTER_USE_KEY);
-      }
-      if ($missing_packages) {
-        $missing_projects = [];
-        foreach ($missing_packages as $package => $version) {
-          // Removing drupal/ from package name for better user presentation.
-          $project = str_replace('drupal/', '', $package);
-          $missing_projects[] = $project;
-        }
-        if ($missing_projects) {
-          $event->addError($missing_projects, $this->t('Automatic Updates can only update projects that were installed via Composer. The following packages are not installed through composer:'));
-        }
-      }
+
+    if (!$stage instanceof ExtensionUpdater) {
+      return;
+    }
+
+    $missing_packages = $this->getPackagesNotInstalledWithComposer($event);
+    if ($missing_packages) {
+      // Removing drupal/ from package names for better user presentation.
+      $missing_projects = str_replace('drupal/', '', array_keys($missing_packages));
+      $event->addError($missing_projects, $this->t('Automatic Updates can only update projects that were installed via Composer. The following packages are not installed through composer:'));
     }
   }
 
@@ -92,6 +57,57 @@ class PackagesInstalledWithComposerValidator implements EventSubscriberInterface
       PreCreateEvent::class => 'checkPackagesInstalledWithComposer',
       PreApplyEvent::class => 'checkPackagesInstalledWithComposer',
     ];
+  }
+
+  /**
+   * Gets the packages which aren't installed via composer.
+   *
+   * @param \Drupal\package_manager\Event\PreOperationStageEvent $event
+   *   The event object.
+   *
+   * @return \Composer\Package\PackageInterface[]
+   *   Packages not installed via composer.
+   */
+  protected function getPackagesNotInstalledWithComposer(PreOperationStageEvent $event): array {
+    $stage = $event->getStage();
+    $active_composer = $stage->getActiveComposer();
+    $installed_packages = $active_composer->getInstalledPackages();
+
+    $missing_packages = [];
+    // During pre-create there is no stage directory, so missing packages can be
+    // found using package versions that will be required during the update,
+    // while during pre-apply there is stage directory which will be used to
+    // find missing packages.
+    if ($event instanceof PreCreateEvent) {
+      $package_versions = $stage->getPackageVersions();
+      foreach (['production', 'dev'] as $package_group) {
+        $missing_packages = array_merge($missing_packages, array_diff_key($package_versions[$package_group], $installed_packages));
+      }
+    }
+    else {
+      $missing_packages = $stage->getStageComposer()->getPackagesNotIn($active_composer);
+
+      // The core update system can only fetch release information for modules,
+      // themes, or profiles that are in the active code base (whether they're
+      // installed or not). If a package is not one of those types, ignore it
+      // even if its vendor namespace is `drupal`.
+      $types = [
+        'drupal-module',
+        'drupal-theme',
+        'drupal-profile',
+      ];
+      $filter = function (PackageInterface $package) use ($types): bool {
+        return in_array($package->getType(), $types, TRUE);
+      };
+      $missing_packages = array_filter($missing_packages, $filter);
+
+      // The core update system can only fetch release information for drupal
+      // projects, so saving only the packages whose name starts with drupal/.
+      $missing_packages = array_filter($missing_packages, function (string $key) {
+        return str_starts_with($key, 'drupal/');
+      }, ARRAY_FILTER_USE_KEY);
+    }
+    return $missing_packages;
   }
 
 }
