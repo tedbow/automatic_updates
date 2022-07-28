@@ -232,6 +232,9 @@ final class UpdaterForm extends FormBase {
    *   Modules that require updates.
    */
   private function getRecommendedModuleUpdates(): array {
+    $supported_project_types = [
+      "module", "module-disabled", "theme", "theme-disabled",
+    ];
     $available_updates = update_get_available(TRUE);
     if (empty($available_updates)) {
       $this->messenger()->addError('There was a problem getting update information. Try again later.');
@@ -243,7 +246,7 @@ final class UpdaterForm extends FormBase {
     $installed_packages = array_keys($this->extensionUpdater->getActiveComposer()->getInstalledPackages());
     $non_supported_update_statuses = [];
     foreach ($project_data as $project_name => $project_info) {
-      if ($project_info['project_type'] === 'module' || $project_info['project_type'] === 'module-disabled') {
+      if (in_array($project_info['project_type'], $supported_project_types, TRUE)) {
         if ($project_info['status'] !== UpdateManagerInterface::CURRENT) {
           if (!in_array("drupal/$project_name", $installed_packages, TRUE)) {
             $non_supported_update_statuses[] = $project_info['status'];

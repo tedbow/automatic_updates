@@ -1,0 +1,11 @@
+name: Test theme
+type: theme
+package: Testing
+description: 'A test theme.'
+core_version_requirement: ^8 || ^9
+base theme: false
+regions:
+  header: 'Header'
+  content: 'Content'
+  sidebar_first: 'Sidebar first'
+  footer: 'Footer'

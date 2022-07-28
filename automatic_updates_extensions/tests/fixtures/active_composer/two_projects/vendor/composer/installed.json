@@ -19,6 +19,11 @@
       "name": "drupal/aaa_update_test",
       "version": "9.8.1",
       "type": "drupal-module"
+    },
+    {
+      "name": "drupal/test_theme",
+      "version": "9.8.1",
+      "type": "drupal-theme"
     }
   ]
 }

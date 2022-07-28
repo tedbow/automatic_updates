@@ -49,8 +49,15 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
    */
   public function providerSuccessfulUpdate(): array {
     return [
-      'maintenance mode on, semver' => [TRUE, 'semver_test', '8.1.0', '8.1.1'],
-      'maintenance mode off, legacy' => [FALSE, 'aaa_update_test', '8.x-2.0', '8.x-2.1'],
+      'maintenance mode on, semver module' => [
+        TRUE, 'semver_test', 'Semver Test', '8.1.0', '8.1.1',
+      ],
+      'maintenance mode off, legacy module' => [
+        FALSE, 'aaa_update_test', 'AAA Update test', '8.x-2.0', '8.x-2.1',
+      ],
+      'maintenance mode off, legacy theme' => [
+        FALSE, 'test_theme', 'Test theme', '8.x-2.0', '8.x-2.1',
+      ],
     ];
   }
 
@@ -134,6 +141,8 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
    *   Whether maintenance should be on at the beginning of the update.
    * @param string $project_name
    *   The project name.
+   * @param string $project_title
+   *   The project title.
    * @param string $installed_version
    *   The installed version.
    * @param string $target_version
@@ -141,9 +150,13 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
    *
    * @dataProvider providerSuccessfulUpdate
    */
-  public function testSuccessfulUpdate(bool $maintenance_mode_on, string $project_name, string $installed_version, string $target_version): void {
+  public function testSuccessfulUpdate(bool $maintenance_mode_on, string $project_name, string $project_title, string $installed_version, string $target_version): void {
     $this->container->get('theme_installer')->install(['automatic_updates_theme_with_updates']);
     $this->updateProject = $project_name;
+    // By default, the Update module only checks for updates of installed modules
+    // and themes. The two modules we're testing here (semver_test and aaa_update_test)
+    // are already installed by static::$modules.
+    $this->container->get('theme_installer')->install(['test_theme']);
     $this->setReleaseMetadata(__DIR__ . '/../../../../tests/fixtures/release-history/drupal.9.8.2.xml');
     $this->setReleaseMetadata(__DIR__ . "/../../fixtures/release-history/$project_name.1.1.xml");
     $this->setProjectInstalledVersion([$project_name => $installed_version]);
@@ -159,7 +172,7 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
     $this->drupalGet('/admin/reports/updates');
     $this->clickLink('Update Extensions');
     $this->assertTableShowsUpdates(
-      $project_name === 'semver_test' ? 'Semver Test' : 'AAA Update test',
+      $project_title,
       $installed_version,
       $target_version
     );
