@@ -35,7 +35,6 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
   protected static $modules = [
     'automatic_updates_test',
     'automatic_updates_extensions',
-    'automatic_updates_extensions_test',
     'block',
     'semver_test',
     'aaa_update_test',
@@ -78,7 +77,10 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
     ]);
     // We need this fixture as only projects installed via composer will show up
     // on the form.
-    $this->container->get('state')->set('automatic_updates_extensions_test.active_path', __DIR__ . '/../../fixtures/active_composer/two_projects');
+    $fixture_dir = __DIR__ . '/../../fixtures/two_projects';
+    Beginner::setFixturePath($fixture_dir);
+    $this->container->get('package_manager.path_locator')
+      ->setPaths($fixture_dir, $fixture_dir . '/vendor', '');
     $this->drupalLogin($user);
     $this->drupalPlaceBlock('local_tasks_block', ['primary' => TRUE]);
   }
@@ -163,8 +165,6 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
     $this->checkForUpdates();
     $state = $this->container->get('state');
     $state->set('system.maintenance_mode', $maintenance_mode_on);
-
-    Beginner::setFixturePath(__DIR__ . '/../../fixtures/fake-site');
     StagedDatabaseUpdateValidator::setExtensionsWithUpdates(['system', 'automatic_updates_theme_with_updates']);
 
     $page = $this->getSession()->getPage();
@@ -216,13 +216,16 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
       ->save();
     $this->setProjectInstalledVersion(
       [
-        'aaa_update_test' => '8.x-2.x',
+        'aaa_update_test' => '8.x-2.0',
         'semver_test' => '8.1.0',
       ]
     );
 
     // One module not installed through composer.
-    $this->container->get('state')->set('automatic_updates_extensions_test.active_path', __DIR__ . '/../../fixtures/active_composer/one_project');
+    $fixture_dir = __DIR__ . '/../../fixtures/one_project';
+    Beginner::setFixturePath($fixture_dir);
+    $this->container->get('package_manager.path_locator')
+      ->setPaths($fixture_dir, $fixture_dir . '/vendor', '');
     $assert = $this->assertSession();
     $user = $this->createUser(
       [
@@ -237,7 +240,10 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
     $this->assertTableShowsUpdates('Semver Test', '8.1.0', '8.1.1');
 
     // Both of the modules not installed through composer.
-    $this->container->get('state')->set('automatic_updates_extensions_test.active_path', __DIR__ . '/../../fixtures/active_composer/no_project');
+    $fixture_dir = __DIR__ . '/../../fixtures/no_project';
+    Beginner::setFixturePath($fixture_dir);
+    $this->container->get('package_manager.path_locator')
+      ->setPaths($fixture_dir, $fixture_dir . '/vendor', '');
     $this->getSession()->reload();
     $assert->pageTextContains('Updates were found, but they must be performed manually. See the list of available updates for more information.');
     $this->assertNoUpdates();

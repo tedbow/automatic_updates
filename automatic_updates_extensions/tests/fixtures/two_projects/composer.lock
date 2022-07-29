@@ -1,0 +1,19 @@
+{
+    "packages": [
+        {
+            "name": "drupal/core-recommended",
+            "version": "9.8.0",
+            "require": {
+                "drupal/core": "9.8.0"
+            }
+        },
+        {
+            "name": "drupal/semver_test",
+            "version": "9.8.1"
+        },
+        {
+            "name": "drupal/aaa_update_test",
+            "version": "9.8.1"
+        }
+    ]
+}
