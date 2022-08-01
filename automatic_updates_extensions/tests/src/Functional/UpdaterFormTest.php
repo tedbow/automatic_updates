@@ -176,9 +176,11 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
       $installed_version,
       $target_version
     );
+    $assert_session = $this->assertSession();
+    $this->assertUpdatesCount(1);
+
     // Submit without selecting a project.
     $page->pressButton('Update');
-    $assert_session = $this->assertSession();
     $assert_session->pageTextContains('Please select one or more projects.');
 
     // Submit with a project selected.
@@ -238,6 +240,7 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
     $this->drupalGet('admin/reports/updates/automatic-update-extensions');
     $assert->pageTextContains('Other updates were found, but they must be performed manually. See the list of available updates for more information.');
     $this->assertTableShowsUpdates('Semver Test', '8.1.0', '8.1.1');
+    $this->assertUpdatesCount(1);
 
     // Both of the modules not installed through composer.
     $fixture_dir = __DIR__ . '/../../fixtures/no_project';
@@ -265,6 +268,7 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
     $this->drupalLogin($user);
     $this->checkForUpdates();
     $this->assertTableShowsUpdates('Semver Test', '8.1.0', '8.1.1');
+    $this->assertUpdatesCount(1);
     $assert->pageTextContains('Automatic Updates Form');
     $assert->buttonExists('Update');
   }
@@ -309,6 +313,7 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
     $this->checkForUpdates();
     $this->drupalGet('admin/reports/updates/automatic-update-extensions');
     $this->assertTableShowsUpdates('Semver Test', '8.1.0', '8.1.1');
+    $this->assertUpdatesCount(1);
     $message = t("You've not experienced Shakespeare until you have read him in the original Klingon.");
     $error = ValidationResult::createError([$message]);
     TestSubscriber1::setTestResult([$error], ReadinessCheckEvent::class);
@@ -334,6 +339,7 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
     $this->drupalGet('/admin/reports/updates');
     $this->clickLink('Update Extensions');
     $this->assertTableShowsUpdates('Semver Test', '8.1.0', '8.1.1');
+    $this->assertUpdatesCount(1);
     $assert->pageTextContains(static::$warningsExplanation);
     $assert->pageTextNotContains(static::$errorsExplanation);
     $assert->buttonExists('Update');
