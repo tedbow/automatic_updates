@@ -82,6 +82,12 @@ class SystemChangeRecorder implements EventSubscriberInterface {
    *   The stage event.
    */
   public function recordSystemState(StageEvent $event): void {
+    // The rest of this method is strongly coupled to updated_module, so if it
+    // isn't installed, bail out now.
+    if (!\Drupal::moduleHandler()->moduleExists('updated_module')) {
+      return;
+    }
+
     $results = [];
 
     // Call a function in a loaded file to ensure it doesn't get reloaded after
