@@ -4,6 +4,11 @@ services:
     tags:
       - { name: event_subscriber }
     arguments: ['@state']
+  automatic_updates_test.request.time:
+    class: Drupal\automatic_updates_test\EventSubscriber\RequestTimeRecorder
+    tags:
+      - { name: event_subscriber }
+    arguments: ['@state', '@datetime.time']
   automatic_updates_test.time:
     class: Drupal\automatic_updates_test\Datetime\TestTime
     decorates: datetime.time
