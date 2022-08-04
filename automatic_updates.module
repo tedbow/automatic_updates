@@ -38,15 +38,20 @@ function automatic_updates_help($route_name, RouteMatchInterface $route_match) {
  * Implements hook_mail().
  */
 function automatic_updates_mail(string $key, array &$message, array $params): void {
+  // Explicitly pass the language code to all translated strings.
+  $options = [
+    'langcode' => $message['langcode'],
+  ];
+
   if ($key === 'cron_successful') {
-    $message['subject'] = t("Drupal core was successfully updated");
-    $message['body'][] = t('Congratulations!');
+    $message['subject'] = t("Drupal core was successfully updated", [], $options);
+    $message['body'][] = t('Congratulations!', [], $options);
     $message['body'][] = t('Drupal core was automatically updated from @previous_version to @updated_version.', [
       '@previous_version' => $params['previous_version'],
       '@updated_version' => $params['updated_version'],
-    ]);
-    $message['body'][] = t('This e-mail was sent by the Automatic Updates module. Unattended updates are not yet fully supported.');
-    $message['body'][] = t('If you are using this feature in production, it is strongly recommended for you to visit your site and ensure that everything still looks good.');
+    ], $options);
+    $message['body'][] = t('This e-mail was sent by the Automatic Updates module. Unattended updates are not yet fully supported.', [], $options);
+    $message['body'][] = t('If you are using this feature in production, it is strongly recommended for you to visit your site and ensure that everything still looks good.', [], $options);
   }
 }
 

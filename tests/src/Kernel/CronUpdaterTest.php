@@ -19,6 +19,7 @@ use Drupal\package_manager\Event\PreCreateEvent;
 use Drupal\package_manager\Exception\StageValidationException;
 use Drupal\package_manager\ValidationResult;
 use Drupal\Tests\package_manager\Traits\PackageManagerBypassTestTrait;
+use Drupal\Tests\user\Traits\UserCreationTrait;
 use Drupal\update\UpdateSettingsForm;
 use Psr\Log\Test\TestLogger;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
@@ -33,6 +34,7 @@ class CronUpdaterTest extends AutomaticUpdatesKernelTestBase {
 
   use AssertMailTrait;
   use PackageManagerBypassTestTrait;
+  use UserCreationTrait;
 
   /**
    * {@inheritdoc}
@@ -60,6 +62,8 @@ class CronUpdaterTest extends AutomaticUpdatesKernelTestBase {
     $this->container->get('logger.factory')
       ->get('automatic_updates')
       ->addLogger($this->logger);
+    $this->installEntitySchema('user');
+    $this->installSchema('user', ['users_data']);
   }
 
   /**
@@ -348,18 +352,48 @@ class CronUpdaterTest extends AutomaticUpdatesKernelTestBase {
    * Tests that user 1 is emailed when an unattended update succeeds.
    */
   public function testEmailOnSuccess(): void {
+    $default_language = $this->container->get('language_manager')
+      ->getDefaultLanguage()
+      ->getId();
+    $this->assertNotSame('fr', $default_language);
+
+    $account = $this->createUser([], NULL, FALSE, [
+      'preferred_langcode' => 'fr',
+    ]);
+
+    $recipients = [
+      'emissary@deep.space',
+      $account->getEmail(),
+    ];
+    $languages = [
+      $default_language,
+      $account->getPreferredLangcode(),
+    ];
+
     $this->config('update.settings')
-      ->set('notification.emails', [
-        'emissary@deep.space',
-      ])
+      ->set('notification.emails', $recipients)
       ->save();
 
     $this->container->get('cron')->run();
 
-    // Check that we actually sent a success email to the right person.
-    $this->assertMail('to', 'emissary@deep.space');
-    $this->assertMail('subject', "Drupal core was successfully updated");
-    $this->assertMailString('body', "Congratulations!\n\nDrupal core was automatically updated from 9.8.0 to 9.8.1.\n", 1);
+    // Ensure we sent a success message to all recipients.
+    $sent_messages = $this->getMails([
+      'subject' => "Drupal core was successfully updated",
+    ]);
+    $this->assertSame(count($recipients), count($sent_messages));
+    // Ensure the messages had the correct body text, and were sent to the right
+    // people.
+    foreach ($sent_messages as $i => $message) {
+      $this->assertSame($message['to'], $recipients[$i]);
+      $this->assertStringStartsWith("Congratulations!\n\nDrupal core was automatically updated from 9.8.0 to 9.8.1.\n", $message['body']);
+      // The message, and every line in it, should have been sent in the
+      // expected language.
+      $langcode = $message['langcode'];
+      $this->assertSame($langcode, $languages[$i]);
+      // @see automatic_updates_test_mail_alter()
+      $this->assertArrayHasKey('line_langcodes', $message);
+      $this->assertSame([$langcode], $message['line_langcodes']);
+    }
   }
 
 }

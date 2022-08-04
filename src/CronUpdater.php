@@ -278,7 +278,7 @@ class CronUpdater extends Updater {
       $recipients = $this->configFactory->get('update.settings')
         ->get('notification.emails');
       foreach ($recipients as $recipient) {
-        $this->mailManager->mail('automatic_updates', 'cron_successful', $recipient, $this->languageManager->getDefaultLanguage()->getId(), $mail_params);
+        $this->mailManager->mail('automatic_updates', 'cron_successful', $recipient, $this->getEmailLangcode($recipient), $mail_params);
       }
     }
     catch (\Throwable $e) {
@@ -297,6 +297,23 @@ class CronUpdater extends Updater {
     }
 
     return new Response();
+  }
+
+  /**
+   * Retrieves preferred language to send email.
+   *
+   * @param string $recipient
+   *   The email address of the recipient.
+   *
+   * @return string
+   *   The preferred language of the recipient.
+   */
+  protected function getEmailLangcode(string $recipient): string {
+    $user = user_load_by_mail($recipient);
+    if ($user) {
+      return $user->getPreferredLangcode();
+    }
+    return $this->languageManager->getDefaultLanguage()->getId();
   }
 
   /**
