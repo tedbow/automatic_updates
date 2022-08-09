@@ -237,7 +237,7 @@ END;
     $packages = [];
     $drupal_root = $this->getDrupalRoot();
 
-    foreach ($this->getPackagesFromLockFile() as $package) {
+    foreach ($this->getInstalledPackages() as $package) {
       $name = $package['name'];
       $path = "$drupal_root/vendor/$name";
 
@@ -273,23 +273,19 @@ END;
   }
 
   /**
-   * Returns all package information from the lock file.
+   * Returns all package information from the `installed.json` file.
    *
    * @return mixed[][]
-   *   All package data from the lock file.
+   *   All package data from the `installed.json` file.
    */
-  private function getPackagesFromLockFile(): array {
-    $lock = $this->getDrupalRoot() . '/composer.lock';
-    $this->assertFileExists($lock);
+  private function getInstalledPackages(): array {
+    $installed = $this->getDrupalRoot() . '/vendor/composer/installed.json';
+    $this->assertFileExists($installed);
 
-    $lock = file_get_contents($lock);
-    $lock = json_decode($lock, TRUE, JSON_THROW_ON_ERROR);
+    $installed = file_get_contents($installed);
+    $installed = json_decode($installed, TRUE, JSON_THROW_ON_ERROR);
 
-    $lock += [
-      'packages' => [],
-      'packages-dev' => [],
-    ];
-    return array_merge($lock['packages'], $lock['packages-dev']);
+    return $installed['packages'];
   }
 
   /**

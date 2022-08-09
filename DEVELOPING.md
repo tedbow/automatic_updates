@@ -11,7 +11,6 @@ For development and running the module's tests, Automatic Updates assumes you ar
 ```
 git clone https://git.drupalcode.org/project/drupal.git --branch 9.5.x auto-updates-dev
 cd auto-updates-dev
-composer config platform.php 7.4.0
 composer install
 ```
 Replace `9.5.x` with the desired development branch of Drupal core. Be sure to point your web server to the `auto-updates-dev` directory, so you can access this code base in a browser.
@@ -25,7 +24,7 @@ git clone --branch '8.x-2.x' https://git.drupalcode.org/project/automatic_update
 ### Step 3: Install dependencies
 From the Drupal repository root:
 ```
-composer require php-tuf/composer-stager "symfony/config:^4.4 || ^6.1"
+composer require php-tuf/composer-stager "symfony/config:^4.4 || ^6.1" --ignore-platform-req php
 git reset --hard
 ```
 Note: If you switch to a different branch of Drupal core and delete the `vendor` directory, you will need to do this step again after running `composer install`.
