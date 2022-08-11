@@ -3,10 +3,8 @@
 namespace Drupal\Tests\package_manager\Kernel;
 
 use Drupal\Component\Datetime\Time;
-use Drupal\Component\FileSystem\FileSystem;
 use Drupal\Core\DependencyInjection\ContainerBuilder;
 use Drupal\Core\Extension\ModuleUninstallValidatorException;
-use Drupal\Core\Site\Settings;
 use Drupal\package_manager\Event\PostApplyEvent;
 use Drupal\package_manager\Event\PreApplyEvent;
 use Drupal\package_manager\Event\StageEvent;
@@ -30,24 +28,6 @@ class StageTest extends PackageManagerKernelTestBase {
   /**
    * {@inheritdoc}
    */
-  protected static $modules = ['system'];
-
-  /**
-   * {@inheritdoc}
-   */
-  protected function setUp(): void {
-    parent::setUp();
-
-    $this->installConfig('system');
-    $this->config('system.site')->set('uuid', $this->randomMachineName())->save();
-    // Ensure that the core update system thinks that System's post-update
-    // functions have run.
-    $this->registerPostUpdateFunctions();
-  }
-
-  /**
-   * {@inheritdoc}
-   */
   public function register(ContainerBuilder $container) {
     parent::register($container);
 
@@ -62,37 +42,33 @@ class StageTest extends PackageManagerKernelTestBase {
 
   /**
    * @covers ::getStageDirectory
-   * @covers ::getStagingRoot
    */
   public function testGetStageDirectory(): void {
-    // Ensure that a site ID was generated in ::setUp().
-    $site_id = $this->config('system.site')->get('uuid');
-    $this->assertNotEmpty($site_id);
-
-    // Even though we're using a virtual project, we want to test what happens
-    // when we aren't.
-    static::$testStagingRoot = NULL;
     // Don't mirror the active directory from the virtual project into the
     // real file system.
     Beginner::setFixturePath(NULL);
 
+    /** @var \Drupal\package_manager_bypass\PathLocator $path_locator */
+    $path_locator = $this->container->get('package_manager.path_locator');
+
     $stage = $this->createStage();
     $id = $stage->create();
-    // If the file_temp_path setting is empty, the stage directory should be
-    // created in the OS's temporary directory.
-    $this->assertEmpty(Settings::get('file_temp_path'));
-    $expected_dir = FileSystem::getOsTemporaryDirectory() . "/.package_manager$site_id/$id";
-    $this->assertSame($expected_dir, $stage->getStageDirectory());
-    // If the file_temp_path setting is changed, the existing stage shouldn't be
+    $stage_dir = $stage->getStageDirectory();
+    $this->assertStringStartsWith($path_locator->getStagingRoot() . '/', $stage_dir);
+    $this->assertStringEndsWith("/$id", $stage_dir);
+    // If the staging root is changed, the existing stage shouldn't be
     // affected...
-    $this->setSetting('file_temp_path', '/junk/drawer');
-    $this->assertSame($expected_dir, $stage->getStageDirectory());
+    $active_dir = $path_locator->getProjectRoot();
+    $path_locator->setPaths($active_dir, "$active_dir/vendor", '', '/junk/drawer');
+    $this->assertSame($stage_dir, $stage->getStageDirectory());
     $stage->destroy();
     // ...but a new stage should be.
     $stage = $this->createStage();
     $another_id = $stage->create();
     $this->assertNotSame($id, $another_id);
-    $this->assertSame("/junk/drawer/.package_manager$site_id/$another_id", $stage->getStageDirectory());
+    $stage_dir = $stage->getStageDirectory();
+    $this->assertStringStartsWith('/junk/drawer/', $stage_dir);
+    $this->assertStringEndsWith("/$another_id", $stage_dir);
   }
 
   /**

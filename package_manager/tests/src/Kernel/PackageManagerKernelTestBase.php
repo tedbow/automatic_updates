@@ -36,17 +36,6 @@ abstract class PackageManagerKernelTestBase extends KernelTestBase {
   ];
 
   /**
-   * The test staging root.
-   *
-   * This value must be set before creating a test stage instance.
-   *
-   * @var string
-   *
-   * @see \Drupal\Tests\package_manager\Kernel\TestStageTrait::__construct()
-   */
-  public static $testStagingRoot;
-
-  /**
    * The service IDs of any validators to disable.
    *
    * @var string[]
@@ -207,7 +196,6 @@ abstract class PackageManagerKernelTestBase extends KernelTestBase {
     // Create a staging root directory alongside the active directory.
     $stage_dir = vfsStream::newDirectory('stage');
     $this->vfsRoot->addChild($stage_dir);
-    static::$testStagingRoot = $stage_dir->url();
 
     // Ensure the path locator points to the virtual active directory. We assume
     // that is its own web root and that the vendor directory is at its top
@@ -215,7 +203,7 @@ abstract class PackageManagerKernelTestBase extends KernelTestBase {
     $active_dir = $active_dir->url();
     /** @var \Drupal\package_manager_bypass\PathLocator $path_locator */
     $path_locator = $this->container->get('package_manager.path_locator');
-    $path_locator->setPaths($active_dir, $active_dir . '/vendor', '', NULL);
+    $path_locator->setPaths($active_dir, $active_dir . '/vendor', '', $stage_dir->url());
 
     // Ensure the active directory will be copied into the virtual staging area.
     Beginner::setFixturePath($active_dir);
@@ -247,32 +235,11 @@ abstract class PackageManagerKernelTestBase extends KernelTestBase {
 trait TestStageTrait {
 
   /**
-   * The directory where staging areas will be created.
-   *
-   * @var string
-   */
-  public static $stagingRoot;
-
-  /**
    * {@inheritdoc}
    */
   public function __construct(...$arguments) {
     parent::__construct(...$arguments);
     $this->pathFactory = new TestPathFactory();
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public function create(?int $timeout = 300): string {
-    // Ensure that tests which need to successively create multiple stages are
-    // always using the same staging root, since the stored value may be deleted
-    // if the stage encounters an error during pre-create.
-    // @see \Drupal\package_manager\Stage::markAsAvailable()
-    $constant = new \ReflectionClassConstant(Stage::class, 'TEMPSTORE_STAGING_ROOT_KEY');
-    $this->tempStore->set($constant->getValue(), PackageManagerKernelTestBase::$testStagingRoot);
-
-    return parent::create($timeout);
   }
 
   /**
