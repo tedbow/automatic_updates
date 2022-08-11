@@ -54,7 +54,7 @@ abstract class AutomaticUpdatesFunctionalTestBase extends BrowserTestBase {
 
     Beginner::setFixturePath($fixture_dir);
     $this->container->get('package_manager.path_locator')
-      ->setPaths($fixture_dir, $fixture_dir . '/vendor', '');
+      ->setPaths($fixture_dir, $fixture_dir . '/vendor', '', NULL);
   }
 
   /**

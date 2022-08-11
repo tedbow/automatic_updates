@@ -215,7 +215,7 @@ abstract class PackageManagerKernelTestBase extends KernelTestBase {
     $active_dir = $active_dir->url();
     /** @var \Drupal\package_manager_bypass\PathLocator $path_locator */
     $path_locator = $this->container->get('package_manager.path_locator');
-    $path_locator->setPaths($active_dir, $active_dir . '/vendor', '');
+    $path_locator->setPaths($active_dir, $active_dir . '/vendor', '', NULL);
 
     // Ensure the active directory will be copied into the virtual staging area.
     Beginner::setFixturePath($active_dir);

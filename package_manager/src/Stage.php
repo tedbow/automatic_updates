@@ -625,8 +625,7 @@ class Stage {
     // cycle.
     $dir = $this->tempStore->get(self::TEMPSTORE_STAGING_ROOT_KEY);
     if (empty($dir)) {
-      $site_id = $this->configFactory->get('system.site')->get('uuid');
-      $dir = $this->fileSystem->getTempDirectory() . DIRECTORY_SEPARATOR . '.package_manager' . $site_id;
+      $dir = $this->pathLocator->getStagingRoot();
       $this->tempStore->set(self::TEMPSTORE_STAGING_ROOT_KEY, $dir);
     }
     return $dir;

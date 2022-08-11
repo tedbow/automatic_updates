@@ -3,6 +3,8 @@
 namespace Drupal\package_manager;
 
 use Composer\Autoload\ClassLoader;
+use Drupal\Core\Config\ConfigFactoryInterface;
+use Drupal\Core\File\FileSystemInterface;
 
 /**
  * Computes file system paths that are needed to stage code changes.
@@ -17,13 +19,41 @@ class PathLocator {
   protected $appRoot;
 
   /**
+   * The config factory service.
+   *
+   * @var \Drupal\Core\Config\ConfigFactoryInterface
+   */
+  protected $configFactory;
+
+  /**
+   * The file system service.
+   *
+   * @var \Drupal\Core\File\FileSystemInterface
+   */
+  protected $fileSystem;
+
+  /**
    * Constructs a PathLocator object.
    *
    * @param string $app_root
    *   The absolute path of the running Drupal code base.
+   * @param \Drupal\Core\Config\ConfigFactoryInterface $config_factory
+   *   The config factory service.
+   * @param \Drupal\Core\File\FileSystemInterface $file_system
+   *   The file system service.
    */
-  public function __construct(string $app_root) {
+  public function __construct(string $app_root, ConfigFactoryInterface $config_factory = NULL, FileSystemInterface $file_system = NULL) {
     $this->appRoot = $app_root;
+    if (empty($config_factory)) {
+      @trigger_error('Calling ' . __METHOD__ . '() without the $config_factory argument is deprecated in automatic_updates:2.0.1 and will be required before automatic_updates:3.0.0. See https://www.drupal.org/node/3300008.', E_USER_DEPRECATED);
+      $config_factory = \Drupal::configFactory();
+    }
+    $this->configFactory = $config_factory;
+    if (empty($file_system)) {
+      @trigger_error('Calling ' . __METHOD__ . '() without the $file_system argument is deprecated in automatic_updates:2.0.1 and will be required before automatic_updates:3.0.0. See https://www.drupal.org/node/3300008.', E_USER_DEPRECATED);
+      $file_system = \Drupal::service('file_system');
+    }
+    $this->fileSystem = $file_system;
   }
 
   /**
@@ -82,6 +112,21 @@ class PathLocator {
   public function getWebRoot(): string {
     $web_root = str_replace($this->getProjectRoot(), '', $this->appRoot);
     return trim($web_root, DIRECTORY_SEPARATOR);
+  }
+
+  /**
+   * Returns the directory where staging areas will be created.
+   *
+   * The staging root may be affected by site settings, so stages may wish to
+   * cache the value returned by this method, to ensure that they use the same
+   * staging root throughout their life cycle.
+   *
+   * @return string
+   *   The absolute path of the directory where staging areas should be created.
+   */
+  public function getStagingRoot(): string {
+    $site_id = $this->configFactory->get('system.site')->get('uuid');
+    return $this->fileSystem->getTempDirectory() . DIRECTORY_SEPARATOR . '.package_manager' . $site_id;
   }
 
 }

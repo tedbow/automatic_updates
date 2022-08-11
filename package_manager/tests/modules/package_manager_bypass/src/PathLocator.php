@@ -20,13 +20,13 @@ class PathLocator extends BasePathLocator {
   /**
    * Constructs a PathLocator object.
    *
-   * @param string $app_root
-   *   The Drupal application root.
    * @param \Drupal\Core\State\StateInterface $state
    *   The state service.
+   * @param mixed ...$arguments
+   *   Additional arguments to pass to the parent constructor.
    */
-  public function __construct(string $app_root, StateInterface $state) {
-    parent::__construct($app_root);
+  public function __construct(StateInterface $state, ...$arguments) {
+    parent::__construct(...$arguments);
     $this->state = $state;
   }
 
@@ -52,6 +52,13 @@ class PathLocator extends BasePathLocator {
   }
 
   /**
+   * {@inheritdoc}
+   */
+  public function getStagingRoot(): string {
+    return $this->state->get(static::class . ' stage', parent::getStagingRoot());
+  }
+
+  /**
    * Sets the paths to return.
    *
    * @param string|null $project_root
@@ -61,11 +68,15 @@ class PathLocator extends BasePathLocator {
    * @param string|null $web_root
    *   The web root, relative to the project root, or NULL to defer to the
    *   parent class.
+   * @param string|null $staging_root
+   *   The absolute path of the staging root, or NULL to defer to the parent
+   *   class.
    */
-  public function setPaths(?string $project_root, ?string $vendor_dir, ?string $web_root): void {
+  public function setPaths(?string $project_root, ?string $vendor_dir, ?string $web_root, ?string $staging_root): void {
     $this->state->set(static::class . ' root', $project_root);
     $this->state->set(static::class . ' vendor', $vendor_dir);
     $this->state->set(static::class . ' web', $web_root);
+    $this->state->set(static::class . ' stage', $staging_root);
   }
 
 }

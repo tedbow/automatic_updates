@@ -19,8 +19,9 @@ class PackageManagerBypassServiceProvider extends ServiceProviderBase {
   public function alter(ContainerBuilder $container) {
     parent::alter($container);
 
+    $state = new Reference('state');
     $arguments = [
-      new Reference('state'),
+      $state,
       new Reference(Filesystem::class),
     ];
     if (Settings::get('package_manager_bypass_composer_stager', TRUE)) {
@@ -34,9 +35,11 @@ class PackageManagerBypassServiceProvider extends ServiceProviderBase {
       }
     }
 
-    $container->getDefinition('package_manager.path_locator')
-      ->setClass(PathLocator::class)
-      ->addArgument($arguments[0]);
+    $definition = $container->getDefinition('package_manager.path_locator')
+      ->setClass(PathLocator::class);
+    $arguments = $definition->getArguments();
+    array_unshift($arguments, $state);
+    $definition->setArguments($arguments);
   }
 
 }

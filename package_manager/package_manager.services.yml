@@ -43,6 +43,8 @@ services:
     class: Drupal\package_manager\PathLocator
     arguments:
       - '%app.root%'
+      - '@config.factory'
+      - '@file_system'
 
   # Validators.
   package_manager.validator.composer_executable:
