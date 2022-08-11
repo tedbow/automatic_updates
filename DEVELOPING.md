@@ -1,30 +1,82 @@
-### Prerequisites
+# Local development environment setup
+
+## Quick setup
+
+A simple setup is enough for most users to start contributing to Automatic Updates. For advanced needs, see [Customizing your setup](#customizing-your-setup) and [Alternative setup options](#alternative-setup-options).
+
+Assuming you meet the [system requirements](#system-requirements), simply run the following command <sup>[[1]](#footnote-1), [[2]](#footnote-2)</sup> from the directory you would like to install your development environment under <sup>[[3]](#footnote-3)</sup>. It will prompt for confirmation before beginning.
+
+```shell
+/bin/bash -c "$(curl -fsSL https://git.drupalcode.org/project/automatic_updates/-/raw/8.x-2.x/scripts/setup_local_dev.sh)"
+```
+
+That's it. The success message will display next steps.
+
+## Details and options
+
+---
+
+* [System requirements](#system-requirements)
+* [Caveats](#caveats)
+* [Customizing your setup](#customizing-your-setup)
+* [Alternative setup options](#alternative-setup-options)
+* [Maintaining your environment](#maintaining-your-environment)
+
+---
+
+### System requirements
+* A *nix-based operating system, such as Linux or macOS.
 * PHP 7.4 or later.
 * Composer 2 or later. (Automatic Updates is not compatible with Composer 1.)
 * Git must be installed.
 
 ### Caveats
-* Symbolic links are not currently supported by Package Manager. If the Drupal core checkout contains any symbolic links, tests will not work. By default, there shouldn't be any, but some may exist in certain situations (for example, if Drush or Drupal core's JavaScript dependencies have been installed). To scan for symbolic links, run `find . -type l` from the Drupal core repository root.
+* Symbolic links are not currently supported by Package Manager. If the Drupal core checkout created during setup below contains any, tests will not work. By default, there shouldn't be any, but some may exist in certain situations (for example, if Drush or Drupal core's JavaScript dependencies have been installed).<br>
+  <br>
+  To scan for symbolic links, run `find . -type l` from the Drupal core repository root. If you find any, try to identify their source and eliminate it (for example, by removing a Composer library that places them).
 
-### Step 1: Set up Drupal core
-For development and running the module's tests, Automatic Updates assumes you are working from a Git clone of Drupal core. To set one up:
-```
-git clone https://git.drupalcode.org/project/drupal.git --branch 9.5.x auto-updates-dev
-cd auto-updates-dev
-composer install
-```
-Replace `9.5.x` with the desired development branch of Drupal core. Be sure to point your web server to the `auto-updates-dev` directory, so you can access this code base in a browser.
+### Customizing your setup
+Several details of your setup can be customed via environment variables. Set these before running [the installation command above](#local-development-environment-setup).
 
-### Step 2: Clone Automatic Updates
-Clone Automatic Updates' main development branch (8.x-2.x):
-```
-git clone --branch '8.x-2.x' https://git.drupalcode.org/project/automatic_updates.git ./modules/automatic_updates
+```shell
+DRUPAL_CORE_BRANCH="9.5.x" # The branch of Drupal core that will be installed.
+AUTOMATIC_UPDATES_BRANCH="8.x-2.x" # The branch of the Automatic Updates module that will be installed.
+SITE_DIRECTORY="auto-updates-dev" # The path to the directory where the dev environment will be installed.
 ```
 
-### Step 3: Install dependencies
-From the Drupal repository root:
+### Alternative setup options
+You can download the setup script first to review its contents or modify it before running it:
+
+```shell
+curl --output setup_local_dev.sh https://git.drupalcode.org/project/automatic_updates/-/raw/8.x-2.x/scripts/setup_local_dev.sh
+
+./scripts/setup_local_dev.sh
 ```
-composer require php-tuf/composer-stager "symfony/config:^4.4 || ^6.1" --ignore-platform-req php
-git reset --hard
+
+You can clone the whole repository:
+
+```shell
+git clone https://git.drupalcode.org/project/automatic_updates.git
+cd automatic_updates
+
+./scripts/setup_local_dev.sh
 ```
-Note: If you switch to a different branch of Drupal core and delete the `vendor` directory, you will need to do this step again after running `composer install`.
+
+To set up your environment manually, use the setup script as a reference.
+
+### Maintaining your environment
+
+* If you want to switch to a different branch of Drupal core during development or if you delete the `vendor` directory, you may will need to do this step again after running `composer install`.
+* _DO NOT_ delete the `automatic_updates` module or the `modules` directory it is in or you will lose any code changes forever. As appropriate, commit them and push them to a remote first--unless you don't care about keeping them. (Don't forget branches other than the one you have checked out.)
+
+---
+
+<a name="footnote-1"><sup>1</sup></a> When running a script downloaded from the Web, it is always wise to read its contents first. Ours ([`setup_local_dev.sh`](https://git.drupalcode.org/project/automatic_updates/-/raw/8.x-2.x/scripts/setup_local_dev.sh)) is documented with code comments to help with that. For a more cautious approach, see [Alternative setup options](#alternative-setup-options) above.
+
+<a name="footnote-2"><sup>2</sup></a> Curl options explained:
+[`-f, --fail`](https://curl.se/docs/manpage.html#-f),
+[`-s, --silent`](https://curl.se/docs/manpage.html#-s),
+[`-S, --show-error`](https://curl.se/docs/manpage.html#-S),
+[`-L, --location`](https://curl.se/docs/manpage.html#-L).
+
+<a name="footnote-3"><sup>3</sup></a> For example, run it in `~/Projects` to create your environment at `~/Projects/auto-updates-dev` or `/var/www` to create it at `/var/www/auto-updates-dev`. See [Customizing your setup](#customizing-your-setup) to override this behavior.
