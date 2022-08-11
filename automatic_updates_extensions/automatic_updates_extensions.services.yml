@@ -11,6 +11,7 @@ services:
       - '@event_dispatcher'
       - '@tempstore.shared'
       - '@datetime.time'
+      - '@PhpTuf\ComposerStager\Infrastructure\Factory\Path\PathFactoryInterface'
   automatic_updates_extensions.validator.packages_installed_with_composer:
     class: Drupal\automatic_updates_extensions\Validator\PackagesInstalledWithComposerValidator
     arguments:

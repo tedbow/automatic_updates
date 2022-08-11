@@ -97,7 +97,8 @@ abstract class PackageManagerKernelTestBase extends KernelTestBase {
       $this->container->get('file_system'),
       $this->container->get('event_dispatcher'),
       $this->container->get('tempstore.shared'),
-      $this->container->get('datetime.time')
+      $this->container->get('datetime.time'),
+      new TestPathFactory()
     );
   }
 
@@ -233,14 +234,6 @@ abstract class PackageManagerKernelTestBase extends KernelTestBase {
  * Common functions for test stages.
  */
 trait TestStageTrait {
-
-  /**
-   * {@inheritdoc}
-   */
-  public function __construct(...$arguments) {
-    parent::__construct(...$arguments);
-    $this->pathFactory = new TestPathFactory();
-  }
 
   /**
    * {@inheritdoc}

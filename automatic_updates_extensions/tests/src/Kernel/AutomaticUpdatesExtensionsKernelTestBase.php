@@ -7,6 +7,7 @@ use Drupal\automatic_updates_extensions\ExtensionUpdater;
 use Drupal\Core\DependencyInjection\ContainerBuilder;
 use Drupal\package_manager\Exception\StageValidationException;
 use Drupal\Tests\automatic_updates\Kernel\AutomaticUpdatesKernelTestBase;
+use Drupal\Tests\package_manager\Kernel\TestPathFactory;
 use Drupal\Tests\package_manager\Kernel\TestStageTrait;
 use GuzzleHttp\Client;
 use GuzzleHttp\Handler\MockHandler;
@@ -74,7 +75,8 @@ abstract class AutomaticUpdatesExtensionsKernelTestBase extends AutomaticUpdates
       $this->container->get('file_system'),
       $this->container->get('event_dispatcher'),
       $this->container->get('tempstore.shared'),
-      $this->container->get('datetime.time')
+      $this->container->get('datetime.time'),
+      new TestPathFactory()
     );
   }
 
@@ -163,7 +165,8 @@ abstract class AutomaticUpdatesExtensionsKernelTestBase extends AutomaticUpdates
       $this->container->get('file_system'),
       $this->container->get('event_dispatcher'),
       $this->container->get('tempstore.shared'),
-      $this->container->get('datetime.time')
+      $this->container->get('datetime.time'),
+      new TestPathFactory()
     );
   }
 

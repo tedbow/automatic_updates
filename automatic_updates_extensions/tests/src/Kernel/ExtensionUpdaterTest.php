@@ -3,7 +3,6 @@
 namespace Drupal\Tests\automatic_updates_extensions\Kernel;
 
 use Drupal\Tests\automatic_updates\Kernel\AutomaticUpdatesKernelTestBase;
-use Drupal\Tests\package_manager\Kernel\TestPathFactory;
 use Drupal\Tests\user\Traits\UserCreationTrait;
 
 /**
@@ -49,14 +48,7 @@ class ExtensionUpdaterTest extends AutomaticUpdatesKernelTestBase {
 
     $this->createVirtualProject(__DIR__ . '/../../fixtures/fake-site');
 
-    /** @var \Drupal\automatic_updates_extensions\ExtensionUpdater $updater */
-    $updater = $this->container->get('automatic_updates_extensions.updater');
-    // @todo Remove this hack in https://www.drupal.org/i/3303174.
-    $property = new \ReflectionProperty($updater, 'pathFactory');
-    $property->setAccessible(TRUE);
-    $property->setValue($updater, new TestPathFactory());
-
-    $id = $updater->begin([
+    $id = $this->container->get('automatic_updates_extensions.updater')->begin([
       'my_module' => '9.8.1',
       // Use a legacy version number to ensure they are converted to semantic
       // version numbers which will work with the drupal.org Composer facade.
