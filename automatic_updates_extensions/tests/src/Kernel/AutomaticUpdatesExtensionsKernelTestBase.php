@@ -60,27 +60,6 @@ abstract class AutomaticUpdatesExtensionsKernelTestBase extends AutomaticUpdates
   }
 
   /**
-   * Creates a stage object for testing purposes.
-   *
-   * @return \Drupal\automatic_updates_extensions\ExtensionUpdater
-   *   A stage object, with test-only modifications.
-   */
-  protected function createUpdater(): ExtensionUpdater {
-    return new TestExtensionUpdater(
-      $this->container->get('config.factory'),
-      $this->container->get('package_manager.path_locator'),
-      $this->container->get('package_manager.beginner'),
-      $this->container->get('package_manager.stager'),
-      $this->container->get('package_manager.committer'),
-      $this->container->get('file_system'),
-      $this->container->get('event_dispatcher'),
-      $this->container->get('tempstore.shared'),
-      $this->container->get('datetime.time'),
-      new TestPathFactory()
-    );
-  }
-
-  /**
    * The client.
    *
    * @var \GuzzleHttp\Client
