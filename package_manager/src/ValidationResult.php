@@ -43,6 +43,9 @@ final class ValidationResult {
    *   The errors summary.
    */
   private function __construct(int $severity, array $messages, ?TranslatableMarkup $summary = NULL) {
+    if (empty($messages)) {
+      throw new \InvalidArgumentException('At least one message is required.');
+    }
     if (count($messages) > 1 && !$summary) {
       throw new \InvalidArgumentException('If more than one message is provided, a summary is required.');
     }

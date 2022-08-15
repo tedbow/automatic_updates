@@ -38,20 +38,53 @@ class ValidationResultTest extends UnitTestCase {
 
   /**
    * @covers ::createWarning
+   *
+   * @param string[] $messages
+   *   The warning messages of the validation result.
+   * @param string $expected_exception_message
+   *   The expected exception message.
+   *
+   * @dataProvider providerCreateExceptions
    */
-  public function testCreateWarningResultException(): void {
+  public function testCreateWarningResultException(array $messages, string $expected_exception_message): void {
     $this->expectException(\InvalidArgumentException::class);
-    $this->expectExceptionMessage('If more than one message is provided, a summary is required.');
-    ValidationResult::createWarning(['Something is wrong', 'Something else is also wrong'], NULL);
+    $this->expectExceptionMessage($expected_exception_message);
+    ValidationResult::createWarning($messages, NULL);
   }
 
   /**
    * @covers ::createError
+   *
+   * @param string[] $messages
+   *   The error messages of the validation result.
+   * @param string $expected_exception_message
+   *   The expected exception message.
+   *
+   * @dataProvider providerCreateExceptions
    */
-  public function testCreateErrorResultException(): void {
+  public function testCreateErrorResultException(array $messages, string $expected_exception_message): void {
     $this->expectException(\InvalidArgumentException::class);
-    $this->expectExceptionMessage('If more than one message is provided, a summary is required.');
-    ValidationResult::createError(['Something is wrong', 'Something else is also wrong'], NULL);
+    $this->expectExceptionMessage($expected_exception_message);
+    ValidationResult::createError($messages, NULL);
+  }
+
+  /**
+   * Data provider for test methods that test create exceptions.
+   *
+   * @return array[]
+   *   The test cases.
+   */
+  public function providerCreateExceptions(): array {
+    return [
+      '2 messages, no summary' => [
+        ['Something is wrong', 'Something else is also wrong'],
+        'If more than one message is provided, a summary is required.',
+      ],
+      'no messages' => [
+        [],
+        'At least one message is required.',
+      ],
+    ];
   }
 
   /**
