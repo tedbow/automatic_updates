@@ -45,12 +45,12 @@ class PathLocator {
   public function __construct(string $app_root, ConfigFactoryInterface $config_factory = NULL, FileSystemInterface $file_system = NULL) {
     $this->appRoot = $app_root;
     if (empty($config_factory)) {
-      @trigger_error('Calling ' . __METHOD__ . '() without the $config_factory argument is deprecated in automatic_updates:2.0.1 and will be required before automatic_updates:3.0.0. See https://www.drupal.org/node/3300008.', E_USER_DEPRECATED);
+      @trigger_error('Calling ' . __METHOD__ . '() without the $config_factory argument is deprecated in automatic_updates:8.x-2.1 and will be required before automatic_updates:3.0.0. See https://www.drupal.org/node/3300008.', E_USER_DEPRECATED);
       $config_factory = \Drupal::configFactory();
     }
     $this->configFactory = $config_factory;
     if (empty($file_system)) {
-      @trigger_error('Calling ' . __METHOD__ . '() without the $file_system argument is deprecated in automatic_updates:2.0.1 and will be required before automatic_updates:3.0.0. See https://www.drupal.org/node/3300008.', E_USER_DEPRECATED);
+      @trigger_error('Calling ' . __METHOD__ . '() without the $file_system argument is deprecated in automatic_updates:8.x-2.1 and will be required before automatic_updates:3.0.0. See https://www.drupal.org/node/3300008.', E_USER_DEPRECATED);
       $file_system = \Drupal::service('file_system');
     }
     $this->fileSystem = $file_system;

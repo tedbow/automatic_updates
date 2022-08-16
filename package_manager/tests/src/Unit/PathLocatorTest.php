@@ -45,10 +45,10 @@ class PathLocatorTest extends UnitTestCase {
     $container->set('file_system', $this->createMock(FileSystemInterface::class));
     \Drupal::setContainer($container);
 
-    $this->expectDeprecation('Calling ' . PathLocator::class . '::__construct() without the $config_factory argument is deprecated in automatic_updates:2.0.1 and will be required before automatic_updates:3.0.0. See https://www.drupal.org/node/3300008.');
+    $this->expectDeprecation('Calling ' . PathLocator::class . '::__construct() without the $config_factory argument is deprecated in automatic_updates:8.x-2.1 and will be required before automatic_updates:3.0.0. See https://www.drupal.org/node/3300008.');
     new PathLocator('/path/to/drupal', NULL, $container->get('file_system'));
 
-    $this->expectDeprecation('Calling ' . PathLocator::class . '::__construct() without the $file_system argument is deprecated in automatic_updates:2.0.1 and will be required before automatic_updates:3.0.0. See https://www.drupal.org/node/3300008.');
+    $this->expectDeprecation('Calling ' . PathLocator::class . '::__construct() without the $file_system argument is deprecated in automatic_updates:8.x-2.1 and will be required before automatic_updates:3.0.0. See https://www.drupal.org/node/3300008.');
     new PathLocator('/path/to/drupal', $container->get('config.factory'));
   }
 
