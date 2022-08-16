@@ -8,6 +8,7 @@ use Composer\IO\NullIO;
 use Composer\Package\PackageInterface;
 use Composer\Semver\Comparator;
 use Drupal\Component\Serialization\Json;
+use Drupal\Component\Serialization\Yaml;
 
 /**
  * Defines a utility object to get information from Composer's API.
@@ -188,6 +189,114 @@ class ComposerUtility {
       return Comparator::notEqualTo($package->getVersion(), $theirs[$name]->getVersion());
     };
     return array_filter($packages, $filter, ARRAY_FILTER_USE_BOTH);
+  }
+
+  /**
+   * Returns installed package data from Composer's `installed.php`.
+   *
+   * @return array
+   *   The installed package data as represented in Composer's `installed.php`,
+   *   keyed by package name.
+   */
+  private function getInstalledPackagesData(): array {
+    $installed_php = implode(DIRECTORY_SEPARATOR, [
+      // Composer returns the absolute path to the vendor directory by default.
+      $this->getComposer()->getConfig()->get('vendor-dir'),
+      'composer',
+      'installed.php',
+    ]);
+    $data = include $installed_php;
+    return $data['versions'];
+  }
+
+  /**
+   * Returns the Drupal project name for a given Composer package.
+   *
+   * @param string $package_name
+   *   The name of the package.
+   *
+   * @return string|null
+   *   The name of the Drupal project installed by the package, or NULL if:
+   *   - The package is not installed.
+   *   - The package is not of a supported type (one of `drupal-module`,
+   *     `drupal-theme`, or `drupal-profile`).
+   *   - The package name does not begin with `drupal/`.
+   *   - The project name could not otherwise be determined.
+   */
+  public function getProjectForPackage(string $package_name): ?string {
+    $data = $this->getInstalledPackagesData();
+
+    if (array_key_exists($package_name, $data)) {
+      $package = $data[$package_name];
+
+      $supported_package_types = [
+        'drupal-module',
+        'drupal-theme',
+        'drupal-profile',
+      ];
+      // Only consider packages which are packaged by drupal.org and will be
+      // known to the core Update module.
+      if (str_starts_with($package_name, 'drupal/') && in_array($package['type'], $supported_package_types, TRUE)) {
+        return $this->scanForProjectName($package['install_path']);
+      }
+    }
+    return NULL;
+  }
+
+  /**
+   * Returns the package name for a given Drupal project.
+   *
+   * @param string $project_name
+   *   The name of the project.
+   *
+   * @return string|null
+   *   The name of the Composer package which installs the project, or NULL if
+   *   it could not be determined.
+   */
+  public function getPackageForProject(string $project_name): ?string {
+    $installed = $this->getInstalledPackagesData();
+
+    // If we're lucky, the package name is the project name, prefixed with
+    // `drupal/`.
+    if (array_key_exists("drupal/$project_name", $installed)) {
+      return "drupal/$project_name";
+    }
+
+    $installed = array_keys($installed);
+    foreach ($installed as $package_name) {
+      if ($this->getProjectForPackage($package_name) === $project_name) {
+        return $package_name;
+      }
+    }
+    return NULL;
+  }
+
+  /**
+   * Scans a given path to determine the Drupal project name.
+   *
+   * The path will be scanned for `.info.yml` files containing a `project` key.
+   *
+   * @param string $path
+   *   The path to scan.
+   *
+   * @return string|null
+   *   The name of the project, as declared in the first found `.info.yml` which
+   *   contains a `project` key, or NULL if none was found.
+   */
+  private function scanForProjectName(string $path): ?string {
+    $iterator = new \RecursiveDirectoryIterator($path);
+    $iterator = new \RecursiveIteratorIterator($iterator);
+    $iterator = new \RegexIterator($iterator, '/.+\.info\.yml$/', \RecursiveRegexIterator::GET_MATCH);
+
+    foreach ($iterator as $match) {
+      $info = file_get_contents($match[0]);
+      $info = Yaml::decode($info);
+
+      if (is_string($info['project']) && !empty($info['project'])) {
+        return $info['project'];
+      }
+    }
+    return NULL;
   }
 
 }

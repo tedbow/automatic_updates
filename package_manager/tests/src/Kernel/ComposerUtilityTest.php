@@ -5,6 +5,9 @@ namespace Drupal\Tests\package_manager\Kernel;
 use Drupal\KernelTests\KernelTestBase;
 use Drupal\package_manager\ComposerUtility;
 use org\bovigo\vfs\vfsStream;
+use org\bovigo\vfs\vfsStreamDirectory;
+use org\bovigo\vfs\vfsStreamFile;
+use org\bovigo\vfs\visitor\vfsStreamAbstractVisitor;
 
 /**
  * @coversDefaultClass \Drupal\package_manager\ComposerUtility
@@ -17,6 +20,45 @@ class ComposerUtilityTest extends KernelTestBase {
    * {@inheritdoc}
    */
   protected static $modules = ['package_manager'];
+
+  /**
+   * {@inheritdoc}
+   */
+  protected function setUp(): void {
+    parent::setUp();
+
+    $fixture = vfsStream::newDirectory('fixture');
+    vfsStream::copyFromFileSystem(__DIR__ . '/../../fixtures/project_package_conversion', $fixture);
+    $this->vfsRoot->addChild($fixture);
+
+    // Strip the `.hide` suffix from all `.info.yml.hide` files. Drupal's coding
+    // standards don't allow info files to have the `project` key, but we need
+    // it to be present for testing.
+    vfsStream::inspect(new class () extends vfsStreamAbstractVisitor {
+
+      /**
+       * {@inheritdoc}
+       */
+      public function visitFile(vfsStreamFile $file) {
+        $name = $file->getName();
+
+        if (str_ends_with($name, '.info.yml.hide')) {
+          $new_name = basename($name, '.hide');
+          $file->rename($new_name);
+        }
+      }
+
+      /**
+       * {@inheritdoc}
+       */
+      public function visitDirectory(vfsStreamDirectory $dir) {
+        foreach ($dir->getChildren() as $child) {
+          $this->visit($child);
+        }
+      }
+
+    });
+  }
 
   /**
    * Tests that ComposerUtility disables automatic creation of .htaccess files.
@@ -89,6 +131,102 @@ class ComposerUtilityTest extends KernelTestBase {
 
     $updated = $active->getPackagesWithDifferentVersionsIn($staged);
     $this->assertSame(['drupal/updated'], array_keys($updated));
+  }
+
+  /**
+   * @covers ::getProjectForPackage
+   *
+   * @param string $package
+   *   The package name.
+   * @param string|null $expected_project
+   *   The expected project if any, otherwise NULL.
+   *
+   * @dataProvider providerGetProjectForPackage
+   */
+  public function testGetProjectForPackage(string $package, ?string $expected_project): void {
+    $dir = $this->vfsRoot->getChild('fixture')->url();
+    $this->assertSame($expected_project, ComposerUtility::createForDirectory($dir)->getProjectForPackage($package));
+  }
+
+  /**
+   * Data provider for ::testGetProjectForPackage().
+   *
+   * @return mixed[][]
+   *   The test cases.
+   */
+  public function providerGetProjectForPackage(): array {
+    return [
+      'package and project match' => [
+        'drupal/package_project_match',
+        'package_project_match',
+      ],
+      'package and project do not match' => [
+        'drupal/not_match_package',
+        'not_match_project',
+      ],
+      'vendor is not drupal' => [
+        'non_drupal/other_project',
+        NULL,
+      ],
+      'missing package' => [
+        'drupal/missing',
+        NULL,
+      ],
+      'nested_no_match' => [
+        'drupal/nested_no_match_package',
+        'nested_no_match_project',
+      ],
+      'unsupported package type' => [
+        'drupal/custom_module',
+        NULL,
+      ],
+    ];
+  }
+
+  /**
+   * @covers ::getPackageForProject
+   *
+   * @param string $project
+   *   The project name.
+   * @param string|null $expected_package
+   *   The expected package if any, otherwise NULL.
+   *
+   * @dataProvider providerGetPackageForProject
+   */
+  public function testGetPackageForProject(string $project, ?string $expected_package): void {
+    $dir = $this->vfsRoot->getChild('fixture')->url();
+    $this->assertSame($expected_package, ComposerUtility::createForDirectory($dir)->getPackageForProject($project));
+  }
+
+  /**
+   * Data provider for ::testGetPackageForProject().
+   *
+   * @return mixed[][]
+   *   The test cases.
+   */
+  public function providerGetPackageForProject(): array {
+    return [
+      'package and project match' => [
+        'package_project_match',
+        'drupal/package_project_match',
+      ],
+      'package and project do not match' => [
+        'not_match_project',
+        'drupal/not_match_package',
+      ],
+      'vendor is not drupal' => [
+        'other_project',
+        NULL,
+      ],
+      'missing package' => [
+        'missing',
+        NULL,
+      ],
+      'nested_no_match' => [
+        'nested_no_match_project',
+        'drupal/nested_no_match_package',
+      ],
+    ];
   }
 
 }
