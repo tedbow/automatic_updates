@@ -7,7 +7,6 @@ use Composer\Factory;
 use Composer\IO\NullIO;
 use Composer\Package\PackageInterface;
 use Composer\Semver\Comparator;
-use Drupal\Component\Serialization\Json;
 use Drupal\Component\Serialization\Yaml;
 
 /**
@@ -98,11 +97,11 @@ class ComposerUtility {
    */
   protected static function getCorePackageList(): array {
     if (self::$corePackages === NULL) {
-      $file = __DIR__ . '/../core_packages.json';
+      $file = __DIR__ . '/../core_packages.yml';
       assert(file_exists($file), "$file does not exist.");
 
       $core_packages = file_get_contents($file);
-      $core_packages = Json::decode($core_packages);
+      $core_packages = Yaml::decode($core_packages);
 
       assert(is_array($core_packages), "$file did not contain a list of core packages.");
       self::$corePackages = $core_packages;

@@ -3,6 +3,7 @@
 namespace Drupal\Tests\package_manager\Kernel;
 
 use Drupal\Component\Serialization\Json;
+use Drupal\Component\Serialization\Yaml;
 use Drupal\KernelTests\KernelTestBase;
 use Symfony\Component\Finder\Finder;
 
@@ -44,8 +45,8 @@ class CorePackageManifestTest extends KernelTestBase {
     sort($packages);
 
     // Ensure that the packages we detected matches the hard-coded list we ship.
-    $manifest = file_get_contents(__DIR__ . '/../../../core_packages.json');
-    $manifest = Json::decode($manifest);
+    $manifest = file_get_contents(__DIR__ . '/../../../core_packages.yml');
+    $manifest = Yaml::decode($manifest);
     $this->assertSame($packages, $manifest);
   }
 
