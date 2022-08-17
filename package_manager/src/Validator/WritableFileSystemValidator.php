@@ -67,6 +67,23 @@ class WritableFileSystemValidator implements PreOperationStageValidatorInterface
       $messages[] = $this->t('The vendor directory "@dir" is not writable.', ['@dir' => $dir]);
     }
 
+    // Ensure the staging root is writable. If it doesn't exist, ensure we will
+    // be able to create it.
+    $dir = $this->pathLocator->getStagingRoot();
+    if (!file_exists($dir)) {
+      $dir = dirname($dir);
+      if (!is_writable($dir)) {
+        $messages[] = $this->t('The staging root directory will not able to be created at "@dir".', [
+          '@dir' => $dir,
+        ]);
+      }
+    }
+    elseif (!is_writable($dir)) {
+      $messages[] = $this->t('The staging root directory "@dir" is not writable.', [
+        '@dir' => $dir,
+      ]);
+    }
+
     if ($messages) {
       $event->addError($messages, $this->t('The file system is not writable.'));
     }

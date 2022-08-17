@@ -4,6 +4,7 @@ namespace Drupal\Tests\package_manager\Kernel;
 
 use Drupal\package_manager\Event\PreCreateEvent;
 use Drupal\package_manager\ValidationResult;
+use Symfony\Component\Filesystem\Filesystem;
 
 /**
  * Unit tests the file system permissions validator.
@@ -83,6 +84,65 @@ class WritableFileSystemValidatorTest extends PackageManagerKernelTestBase {
     $this->assertTrue(chmod($path_locator->getVendorDirectory(), $vendor_permissions));
     $this->assertTrue(chmod($path_locator->getProjectRoot(), $root_permissions));
 
+    $this->assertResults($expected_results, PreCreateEvent::class);
+  }
+
+  /**
+   * Data provider for ::testStagingRootPermissions().
+   *
+   * @return mixed[][]
+   *   The test cases.
+   */
+  public function providerStagingRootPermissions(): array {
+    $writable_permission = 0777;
+    $non_writable_permission = 0444;
+    $summary = t('The file system is not writable.');
+    return [
+      'writable staging root exists' => [
+        $writable_permission,
+        [],
+        FALSE,
+      ],
+      'write-protected staging root exists' => [
+        $non_writable_permission,
+        [
+          ValidationResult::createError(['The staging root directory "vfs://root/stage" is not writable.'], $summary),
+        ],
+        FALSE,
+      ],
+      'staging root does not exist, parent directory not writable' => [
+        $non_writable_permission,
+        [
+          ValidationResult::createError(['The staging root directory will not able to be created at "vfs://root".'], $summary),
+        ],
+        TRUE,
+      ],
+    ];
+  }
+
+  /**
+   * Tests that the staging root's permissions are validated.
+   *
+   * @param int $permissions
+   *   The file permissions to apply to the staging root, or its parent
+   *   directory, depending on the value of $delete_staging_root.
+   * @param array $expected_results
+   *   The expected validation results.
+   * @param bool $delete_staging_root
+   *   Whether the staging root directory will exist at all.
+   *
+   * @dataProvider providerStagingRootPermissions
+   */
+  public function testStagingRootPermissions(int $permissions, array $expected_results, bool $delete_staging_root): void {
+    $dir = $this->container->get('package_manager.path_locator')
+      ->getStagingRoot();
+
+    if ($delete_staging_root) {
+      $fs = new Filesystem();
+      $fs->remove($dir);
+      $dir = dirname($dir);
+    }
+    $this->assertTrue(chmod($dir, $permissions));
     $this->assertResults($expected_results, PreCreateEvent::class);
   }
 

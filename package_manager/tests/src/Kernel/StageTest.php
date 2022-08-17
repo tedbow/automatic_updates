@@ -44,6 +44,12 @@ class StageTest extends PackageManagerKernelTestBase {
    * @covers ::getStageDirectory
    */
   public function testGetStageDirectory(): void {
+    // In this test, we're working with paths that (probably) don't exist in
+    // the file system at all, so we don't want to validate that the file system
+    // is writable when creating stages.
+    $validator = $this->container->get('package_manager.validator.file_system');
+    $this->container->get('event_dispatcher')->removeSubscriber($validator);
+
     // Don't mirror the active directory from the virtual project into the
     // real file system.
     Beginner::setFixturePath(NULL);
