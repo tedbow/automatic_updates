@@ -36,7 +36,7 @@ That's it. The success message will display next steps.
   To scan for symbolic links, run `find . -type l` from the Drupal core repository root. If you find any, try to identify their source and eliminate it (for example, by removing a Composer library that places them).
 
 ### Customizing your setup
-Several details of your setup can be customed via environment variables. Set these before running [the installation command above](#local-development-environment-setup).
+Several details of your setup can be customized via environment variables. Set these before running [the installation command above](#local-development-environment-setup).
 
 ```shell
 DRUPAL_CORE_BRANCH="9.5.x" # The branch of Drupal core that will be installed.

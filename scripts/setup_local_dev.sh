@@ -19,10 +19,10 @@ DRUPAL_CORE_BRANCH=${DRUPAL_CORE_BRANCH:="9.5.x"}
 AUTOMATIC_UPDATES_BRANCH=${AUTOMATIC_UPDATES_BRANCH:="8.x-2.x"}
 SITE_DIRECTORY=${SITE_DIRECTORY:="auto-updates-dev"}
 
-# GNU realpath can't be dependend upon to always be available. Simulate it.
+# GNU realpath can't be depended upon to always be available. Simulate it.
 # https://stackoverflow.com/questions/3572030/bash-script-absolute-path-with-os-x
 safe_realpath() {
-    [[ $1 = /* ]] && echo "$1" || echo "$PWD/${1#./}"
+  [[ $1 = /* ]] && echo "$1" || echo "$PWD/${1#./}"
 }
 
 SITE_DIRECTORY_REALPATH=$(safe_realpath "$SITE_DIRECTORY")
@@ -37,7 +37,7 @@ $(printf "\e[1;41m         \e[0m") If you destroy it, any changes to the Automat
 $(printf "\e[1;41m         \e[0m") Consider moving the directory to another location as a backup instead.
 $(printf "\e[1;41m         \e[0m")
 $(printf "\e[1;41m         \e[0m") Otherwise, if you know what you're doing and still want to continue, make sure any changes you want to
-$(printf "\e[1;41m         \e[0m") keep have been committted and pushed to an appropriate remote. Then delete the directory and try again:
+$(printf "\e[1;41m         \e[0m") keep have been committed and pushed to an appropriate remote. Then delete the directory and try again:
 $(printf "\e[1;41m         \e[0m")
 $(printf "\e[1;41m         \e[0m") rm -rf "$SITE_DIRECTORY_REALPATH"
 
@@ -54,7 +54,7 @@ WARNING
 read -p "Do you want to continue? [yN] " -n 1 -r
 echo
 if [[ ! $REPLY =~ ^[Yy]$ ]]; then
-  # Exit from a shell or function but not an interactive shell.
+  # Exit from a function or non-interactive shell but not an interactive one.
   [[ "$0" = "$BASH_SOURCE" ]] && exit 1 || return 1
 fi
 echo
@@ -67,9 +67,20 @@ git clone \
 
 cd "$SITE_DIRECTORY" || exit 1
 
-# Exclude third-party dependencies from Git.
-echo "modules
-vendor" | tee -a .git/info/exclude
+# Prevent site config and external dependencies from getting committed to the
+# Drupal core clone--which would never be desirable, even for Core contribution.
+echo "
+# PhpStorm config
+.idea
+# Custom and contributed Drupal extensions
+modules
+profiles
+themes
+# Drupal site configuration
+sites
+# Composer libraries
+vendor
+" | tee -a .git/info/exclude
 
 # Clone the Automatic Updates repo into place. (It will still be
 # `composer require`d below to bring in its dependencies.)
@@ -85,6 +96,11 @@ composer config \
   repositories.automatic_updates \
   path \
   modules/automatic_updates
+
+# Prevent Composer from symlinking path repositories by setting their "symlink"
+# option to FALSE in composer.json.
+JSON=$(sed 's/"type": "path"/"type": "path", "options": {"symlink": false}/g' composer.json)
+echo "$JSON" > composer.json
 
 # Require the module using the checked out dev branch, ignoring the PHP version
 # requirement.
