@@ -190,10 +190,15 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
     $this->assertUpdateStagedTimes(1);
     // Confirm that the site was put into maintenance mode if needed.
     $this->assertSame($state->get('system.maintenance_mode'), $maintenance_mode_on);
-    $possible_update_message = 'Possible database updates were detected in the following extensions; you may be redirected to the database update page in order to complete the update process.';
-    $assert_session->pageTextContains($possible_update_message);
-    $assert_session->pageTextContainsOnce('System');
-    $assert_session->pageTextContainsOnce('Automatic Updates Theme With Updates');
+
+    // Ensure that a list of pending database updates is visible, along with a
+    // short explanation, in the warning messages.
+    $warning_messages = $assert_session->elementExists('xpath', '//div[@data-drupal-messages]//div[@aria-label="Warning message"]');
+    $this->assertStringContainsString('Possible database updates were detected in the following extensions; you may be redirected to the database update page in order to complete the update process.', $warning_messages->getText());
+    $pending_updates = $warning_messages->findAll('css', 'ul.item-list__automatic-updates-extensions__pending-database-updates li');
+    $this->assertCount(2, $pending_updates);
+    $this->assertSame('Automatic Updates Theme With Updates', $pending_updates[0]->getText());
+    $this->assertSame('System', $pending_updates[1]->getText());
 
     $page->pressButton('Continue');
     $this->checkForMetaRefresh();

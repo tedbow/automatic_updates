@@ -10,6 +10,7 @@ use Drupal\Core\Batch\BatchBuilder;
 use Drupal\Core\Extension\ModuleExtensionList;
 use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
+use Drupal\Core\Render\RendererInterface;
 use Drupal\Core\Messenger\MessengerInterface;
 use Drupal\Core\State\StateInterface;
 use Drupal\package_manager\Exception\StageException;
@@ -53,6 +54,13 @@ final class UpdateReady extends FormBase {
   protected $stagedDatabaseUpdateValidator;
 
   /**
+   * The renderer service.
+   *
+   * @var \Drupal\Core\Render\RendererInterface
+   */
+  protected $renderer;
+
+  /**
    * Constructs a new UpdateReady object.
    *
    * @param \Drupal\automatic_updates_extensions\ExtensionUpdater $updater
@@ -65,13 +73,16 @@ final class UpdateReady extends FormBase {
    *   The module list service.
    * @param \Drupal\automatic_updates\Validator\StagedDatabaseUpdateValidator $staged_database_update_validator
    *   The staged database update validator service.
+   * @param \Drupal\Core\Render\RendererInterface $renderer
+   *   The renderer service.
    */
-  public function __construct(ExtensionUpdater $updater, MessengerInterface $messenger, StateInterface $state, ModuleExtensionList $module_list, StagedDatabaseUpdateValidator $staged_database_update_validator) {
+  public function __construct(ExtensionUpdater $updater, MessengerInterface $messenger, StateInterface $state, ModuleExtensionList $module_list, StagedDatabaseUpdateValidator $staged_database_update_validator, RendererInterface $renderer) {
     $this->updater = $updater;
     $this->setMessenger($messenger);
     $this->state = $state;
     $this->moduleList = $module_list;
     $this->stagedDatabaseUpdateValidator = $staged_database_update_validator;
+    $this->renderer = $renderer;
   }
 
   /**
@@ -90,7 +101,8 @@ final class UpdateReady extends FormBase {
       $container->get('messenger'),
       $container->get('state'),
       $container->get('extension.list.module'),
-      $container->get('automatic_updates.validator.staged_database_updates')
+      $container->get('automatic_updates.validator.staged_database_updates'),
+      $container->get('renderer')
     );
   }
 
@@ -113,10 +125,16 @@ final class UpdateReady extends FormBase {
     // changes have been applied.
     $pending_updates = $this->stagedDatabaseUpdateValidator->getExtensionsWithDatabaseUpdates($this->updater);
     if ($pending_updates) {
-      $messages[MessengerInterface::TYPE_WARNING][] = $this->t('Possible database updates were detected in the following extensions; you may be redirected to the database update page in order to complete the update process.');
-      foreach ($pending_updates as $pending_update) {
-        $messages[MessengerInterface::TYPE_WARNING][] = $pending_update;
-      }
+      natcasesort($pending_updates);
+      $message_item_list = [
+        '#theme' => 'item_list',
+        '#prefix' => '<p>' . $this->t('Possible database updates were detected in the following extensions; you may be redirected to the database update page in order to complete the update process.') . '</p>',
+        '#items' => $pending_updates,
+        '#context' => [
+          'list_style' => 'automatic-updates-extensions__pending-database-updates',
+        ],
+      ];
+      $messages[MessengerInterface::TYPE_WARNING][] = $this->renderer->renderRoot($message_item_list);
     }
 
     // Don't set any messages if the form has been submitted, because we don't
