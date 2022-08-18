@@ -8,6 +8,7 @@ use Drupal\automatic_updates_test\StagedDatabaseUpdateValidator;
 use Drupal\package_manager\Event\PreApplyEvent;
 use Drupal\package_manager\ValidationResult;
 use Drupal\package_manager_bypass\Beginner;
+use Drupal\package_manager_bypass\Stager;
 use Drupal\Tests\automatic_updates\Functional\AutomaticUpdatesFunctionalTestBase;
 use Drupal\Tests\automatic_updates\Traits\ValidationTestTrait;
 use Drupal\Tests\automatic_updates_extensions\Traits\FormTestTrait;
@@ -122,9 +123,11 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
    *   The expected installed version.
    * @param string $expected_target_version
    *   The expected target version.
+   * @param int $row
+   *   The row number.
    */
-  private function assertTableShowsUpdates(string $expected_project_title, string $expected_installed_version, string $expected_target_version): void {
-    $this->assertUpdateTableRow($this->assertSession(), $expected_project_title, $expected_installed_version, $expected_target_version);
+  private function assertTableShowsUpdates(string $expected_project_title, string $expected_installed_version, string $expected_target_version, int $row = 1): void {
+    $this->assertUpdateTableRow($this->assertSession(), $expected_project_title, $expected_installed_version, $expected_target_version, $row);
   }
 
   /**
@@ -154,13 +157,13 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
    */
   public function testSuccessfulUpdate(bool $maintenance_mode_on, string $project_name, string $project_title, string $installed_version, string $target_version): void {
     $this->container->get('theme_installer')->install(['automatic_updates_theme_with_updates']);
-    $this->updateProject = $project_name;
     // By default, the Update module only checks for updates of installed modules
     // and themes. The two modules we're testing here (semver_test and aaa_update_test)
     // are already installed by static::$modules.
     $this->container->get('theme_installer')->install(['test_theme']);
+    Stager::setFixturePath(__DIR__ . '/../../fixtures/stage_composer/' . $project_name);
     $this->setReleaseMetadata(__DIR__ . '/../../../../tests/fixtures/release-history/drupal.9.8.2.xml');
-    $this->setReleaseMetadata(__DIR__ . "/../../fixtures/release-history/$project_name.1.1.xml");
+    $this->setReleaseMetadata(__DIR__ . '/../../fixtures/release-history/' . $project_name . '.1.1.xml');
     $this->setProjectInstalledVersion([$project_name => $installed_version]);
     $this->checkForUpdates();
     $state = $this->container->get('state');
@@ -184,13 +187,14 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
     $assert_session->pageTextContains('Please select one or more projects.');
 
     // Submit with a project selected.
-    $page->checkField('projects[' . $this->updateProject . ']');
+    $page->checkField('projects[' . $project_name . ']');
     $page->pressButton('Update');
     $this->checkForMetaRefresh();
     $this->assertUpdateStagedTimes(1);
     // Confirm that the site was put into maintenance mode if needed.
     $this->assertSame($state->get('system.maintenance_mode'), $maintenance_mode_on);
 
+    $assert_session->pageTextNotContains('The following dependencies will also be updated:');
     // Ensure that a list of pending database updates is visible, along with a
     // short explanation, in the warning messages.
     $warning_messages = $assert_session->elementExists('xpath', '//div[@data-drupal-messages]//div[@aria-label="Warning message"]');
@@ -210,6 +214,79 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
     $assert_session->pageTextContainsOnce('Update complete!');
     // Confirm the site was returned to the original maintenance mode state.
     $this->assertSame($state->get('system.maintenance_mode'), $maintenance_mode_on);
+  }
+
+  /**
+   * Data provider for testDisplayUpdates().
+   *
+   * @return array[]
+   *   The test cases.
+   */
+  public function providerDisplayUpdates(): array {
+    return [
+      'with unrequested updates' => [TRUE],
+      'without unrequested updates' => [FALSE],
+    ];
+  }
+
+  /**
+   * Tests the form displays the correct projects which will be updated.
+   *
+   * @param bool $unrequested_updates
+   *   Whether unrequested updates are present during update.
+   *
+   * @dataProvider providerDisplayUpdates
+   */
+  public function testDisplayUpdates(bool $unrequested_updates): void {
+    $this->container->get('theme_installer')->install(['automatic_updates_theme_with_updates']);
+    $this->setReleaseMetadata(__DIR__ . '/../../../../tests/fixtures/release-history/drupal.9.8.2.xml');
+    $this->setReleaseMetadata(__DIR__ . "/../../fixtures/release-history/semver_test.1.1.xml");
+    $this->setReleaseMetadata(__DIR__ . "/../../fixtures/release-history/aaa_update_test.1.1.xml");
+    Stager::setFixturePath(__DIR__ . '/../../fixtures/stage_composer/two_projects');
+    $this->setProjectInstalledVersion([
+      'semver_test' => '8.1.0',
+      'aaa_update_test' => '8.x-2.0',
+    ]);
+    $this->checkForUpdates();
+    $state = $this->container->get('state');
+    $page = $this->getSession()->getPage();
+
+    // Navigate to the automatic updates form.
+    $this->drupalGet('/admin/reports/updates');
+    $this->clickLink('Update Extensions');
+    $this->assertTableShowsUpdates(
+      'AAA Update test',
+      '8.x-2.0',
+      '8.x-2.1',
+    );
+    $this->assertTableShowsUpdates(
+      'Semver Test',
+      '8.1.0',
+      '8.1.1',
+      2
+    );
+    // User will choose both the projects to update and there will be no
+    // unrequested updates.
+    if ($unrequested_updates === FALSE) {
+      $page->checkField('projects[aaa_update_test]');
+    }
+    $page->checkField('projects[semver_test]');
+    $page->pressButton('Update');
+    $this->checkForMetaRefresh();
+    $this->assertUpdateStagedTimes(1);
+    $assert_session = $this->assertSession();
+    // Both projects will be shown as requested updates if there are no
+    // unrequested updates, otherwise one project which user chose will be shown
+    // as requested update and other one will be shown as unrequested update.
+    if ($unrequested_updates === FALSE) {
+      $assert_session->pageTextNotContains('The following dependencies will also be updated:');
+    }
+    else {
+      $assert_session->pageTextContains('The following dependencies will also be updated:');
+    }
+    $assert_session->pageTextContains('The following projects will be updated:');
+    $assert_session->pageTextContains('Semver Test from 8.1.0 to 8.1.1');
+    $assert_session->pageTextContains('AAA Update test from 2.0.0 to 2.1.0');
   }
 
   /**

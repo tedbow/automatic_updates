@@ -8,15 +8,13 @@
             }
         },
         {
-            "name": "drupal/semver_test",
-            "version": "9.8.1"
-        },
+            "name": "drupal/my_module",
+            "version": "9.8.0"
+        }
+    ],
+    "packages-dev": [
         {
-            "name": "drupal/aaa_update_test",
-            "version": "9.8.1"
-        },
-        {
-            "name": "drupal/test_theme",
+            "name": "drupal/my_dev_module",
             "version": "9.8.1"
         }
     ]

@@ -2,6 +2,7 @@
 
 namespace Drupal\automatic_updates_extensions\Form;
 
+use Drupal\automatic_updates\ProjectInfo;
 use Drupal\automatic_updates\Validator\StagedDatabaseUpdateValidator;
 use Drupal\automatic_updates_extensions\BatchProcessor;
 use Drupal\automatic_updates\BatchProcessor as AutoUpdatesBatchProcessor;
@@ -13,6 +14,7 @@ use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Render\RendererInterface;
 use Drupal\Core\Messenger\MessengerInterface;
 use Drupal\Core\State\StateInterface;
+use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\package_manager\Exception\StageException;
 use Drupal\package_manager\Exception\StageOwnershipException;
 use Symfony\Component\DependencyInjection\ContainerInterface;
@@ -159,9 +161,7 @@ final class UpdateReady extends FormBase {
       '#type' => 'value',
       '#value' => $stage_id,
     ];
-
-    // @todo Display the project versions that will be update including any
-    //   dependencies that are Drupal projects.
+    $form['package_updates'] = $this->showUpdates();
     $form['backup'] = [
       '#prefix' => '<strong>',
       '#markup' => $this->t('Back up your database and site before you continue. <a href=":backup_url">Learn how</a>.', [':backup_url' => 'https://www.drupal.org/node/22281']),
@@ -217,6 +217,114 @@ final class UpdateReady extends FormBase {
     catch (StageException $e) {
       $this->messenger()->addError($e->getMessage());
     }
+  }
+
+  /**
+   * Displays all projects that will be updated.
+   *
+   * @return mixed[][]
+   *   A render array displaying packages that will be updated.
+   */
+  private function showUpdates(): array {
+    // Get packages that were updated in the staging area.
+    $active = $this->updater->getActiveComposer();
+    $staged = $this->updater->getStageComposer();
+    $updated_packages = $staged->getPackagesWithDifferentVersionsIn($active);
+
+    // Build a list of package names that were updated by user request.
+    $updated_by_request = [];
+    foreach ($this->updater->getPackageVersions() as $group) {
+      $updated_by_request = array_merge($updated_by_request, array_keys($group));
+    }
+
+    $installed_packages = $active->getInstalledPackages();
+    $updated_by_request_info = [];
+    $updated_project_info = [];
+    $supported_package_types = ['drupal-module', 'drupal-theme'];
+
+    // Compile an array of relevant information about the packages that will be
+    // updated.
+    foreach ($updated_packages as $name => $updated_package) {
+      // Ignore anything that isn't a module or a theme.
+      if (!in_array($updated_package->getType(), $supported_package_types, TRUE)) {
+        continue;
+      }
+      $updated_project_info[$name] = [
+        'title' => $this->getProjectTitle($updated_package->getName()),
+        'installed_version' => $installed_packages[$name]->getPrettyVersion(),
+        'updated_version' => $updated_package->getPrettyVersion(),
+      ];
+    }
+
+    foreach (array_keys($updated_packages) as $name) {
+      // Sort the updated packages into two groups: the ones that were updated
+      // at the request of the user, and the ones that got updated anyway
+      // (probably due to Composer's dependency resolution).
+      if (in_array($name, $updated_by_request, TRUE)) {
+        $updated_by_request_info[$name] = $updated_project_info[$name];
+        unset($updated_project_info[$name]);
+      }
+    }
+    $output = [];
+    if ($updated_by_request_info) {
+      // Create the list of messages for the packages updated by request.
+      $output['requested'] = $this->getUpdatedPackagesItemList($updated_by_request_info, $this->t('The following projects will be updated:'));
+    }
+
+    if ($updated_project_info) {
+      // Create the list of messages for packages that were updated
+      // incidentally.
+      $output['dependencies'] = $this->getUpdatedPackagesItemList($updated_project_info, $this->t('The following dependencies will also be updated:'));
+    }
+    return $output;
+  }
+
+  /**
+   * Gets the human-readable project title for a Composer package.
+   *
+   * @param string $package_name
+   *   Package name.
+   *
+   * @return string
+   *   The human-readable title of the project.
+   */
+  private function getProjectTitle(string $package_name): string {
+    $project_name = str_replace('drupal/', '', $package_name);
+    $project_info = new ProjectInfo($project_name);
+    $project_data = $project_info->getProjectInfo();
+    if ($project_data) {
+      return $project_data['title'];
+    }
+    else {
+      return $project_name;
+    }
+  }
+
+  /**
+   * Generates an item list of packages that will be updated.
+   *
+   * @param array[] $updated_packages
+   *   An array of packages that will be updated, each sub-array containing the
+   *   project title, installed version, and target version.
+   * @param \Drupal\Core\StringTranslation\TranslatableMarkup $item_list_title
+   *   The title of the generated item list.
+   *
+   * @return array
+   *   A render array for the generated item list.
+   */
+  private function getUpdatedPackagesItemList(array $updated_packages, TranslatableMarkup $item_list_title): array {
+    $create_message_for_project = function (array $project): TranslatableMarkup {
+      return $this->t('@title from @from_version to @to_version', [
+        '@title' => $project['title'],
+        '@from_version' => $project['installed_version'],
+        '@to_version' => $project['updated_version'],
+      ]);
+    };
+    return [
+      '#theme' => 'item_list',
+      '#prefix' => '<p>' . $item_list_title . '</p>',
+      '#items' => array_map($create_message_for_project, $updated_packages),
+    ];
   }
 
 }
