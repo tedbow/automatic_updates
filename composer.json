@@ -17,7 +17,8 @@
     "composer/composer": "^2.2.12 || ^2.3.5",
     "composer-runtime-api": "^2.1",
     "symfony/config": "^4.4 || ^6.1",
-    "php": ">=7.4.0"
+    "php": ">=7.4.0",
+    "symfony/finder": "^4.4 || ^6.1"
   },
   "config": {
     "platform": {
