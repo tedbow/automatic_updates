@@ -3,7 +3,6 @@
 namespace Drupal\automatic_updates_extensions\Validator;
 
 use Drupal\automatic_updates_extensions\ExtensionUpdater;
-use Drupal\Core\Extension\Extension;
 use Drupal\Core\Extension\ModuleExtensionList;
 use Drupal\Core\Extension\ThemeExtensionList;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
@@ -57,29 +56,39 @@ class UpdatePackagesTypeValidator implements EventSubscriberInterface {
    */
   public function checkPackagesAreOnlyThemesOrModules(PreCreateEvent $event): void {
     $stage = $event->getStage();
-    if ($stage instanceof ExtensionUpdater) {
-      $package_versions = $stage->getPackageVersions();
-      $invalid_projects = [];
-      $extension_list = array_merge($this->themeList->getList(), $this->moduleList->getList());
-      $project_info = new ProjectInfo();
-      $all_projects = array_map(
-        function (Extension $extension) use ($project_info): string {
-          return $project_info->getProjectName($extension);
-        },
-        $extension_list
-      );
-      foreach (['production', 'dev'] as $package_type) {
-        foreach ($package_versions[$package_type] as $package => $version) {
-          $update_project = str_replace('drupal/', '', $package);
-          if ($update_project === 'drupal' || !in_array($update_project, $all_projects)) {
-            $invalid_projects[] = $update_project;
-          }
+    if (!$stage instanceof ExtensionUpdater) {
+      return;
+    }
+
+    $invalid_projects = [];
+    $all_projects = $this->getInstalledProjectNames();
+
+    foreach ($stage->getPackageVersions() as $group) {
+      foreach (array_keys($group) as $package) {
+        // @todo Use
+        //   \Drupal\package_manager\ComposerUtility::getProjectForPackage() to
+        //   determine the project name in https://www.drupal.org/i/3304142.
+        $update_project = str_replace('drupal/', '', $package);
+        if ($update_project === 'drupal' || !in_array($update_project, $all_projects, TRUE)) {
+          $invalid_projects[] = $update_project;
         }
       }
-      if ($invalid_projects) {
-        $event->addError($invalid_projects, $this->t('Only Drupal Modules or Drupal Themes can be updated, therefore the following projects cannot be updated:'));
-      }
     }
+    if ($invalid_projects) {
+      $event->addError($invalid_projects, $this->t('The following projects cannot be updated because they are not Drupal modules or themes:'));
+    }
+  }
+
+  /**
+   * Returns a list of all available modules and themes' project names.
+   *
+   * @return string[]
+   *   The project names of all available modules and themes.
+   */
+  private function getInstalledProjectNames(): array {
+    $extension_list = array_merge($this->themeList->getList(), $this->moduleList->getList());
+    $map = \Closure::fromCallable([new ProjectInfo(), 'getProjectName']);
+    return array_map($map, $extension_list);
   }
 
   /**

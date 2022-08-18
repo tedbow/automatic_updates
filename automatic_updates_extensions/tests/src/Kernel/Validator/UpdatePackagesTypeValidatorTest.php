@@ -34,12 +34,16 @@ class UpdatePackagesTypeValidatorTest extends AutomaticUpdatesExtensionsKernelTe
    *   The test cases.
    */
   public function providerUpdatePackagesAreOnlyThemesOrModules(): array {
+    $summary = t('The following projects cannot be updated because they are not Drupal modules or themes:');
+
     return [
       'non existing project updated' => [
         [
           'non_existing_project' => '9.8.1',
         ],
-        [ValidationResult::createError(['non_existing_project'], t('Only Drupal Modules or Drupal Themes can be updated, therefore the following projects cannot be updated:'))],
+        [
+          ValidationResult::createError(['non_existing_project'], $summary),
+        ],
       ],
       'non existing project, test module and test theme updated' => [
         [
@@ -47,13 +51,17 @@ class UpdatePackagesTypeValidatorTest extends AutomaticUpdatesExtensionsKernelTe
           'test_module_project' => '9.8.1',
           'test_theme_project' => '9.8.1',
         ],
-        [ValidationResult::createError(['non_existing_project'], t('Only Drupal Modules or Drupal Themes can be updated, therefore the following projects cannot be updated:'))],
+        [
+          ValidationResult::createError(['non_existing_project'], $summary),
+        ],
       ],
       'drupal updated' => [
         [
           'drupal' => '9.8.1',
         ],
-        [ValidationResult::createError(['drupal'], t('Only Drupal Modules or Drupal Themes can be updated, therefore the following projects cannot be updated:'))],
+        [
+          ValidationResult::createError(['drupal'], $summary),
+        ],
       ],
     ];
   }
@@ -69,13 +77,13 @@ class UpdatePackagesTypeValidatorTest extends AutomaticUpdatesExtensionsKernelTe
    * @dataProvider providerUpdatePackagesAreOnlyThemesOrModules
    */
   public function testUpdatePackagesAreOnlyThemesOrModules(array $projects, array $expected_results): void {
-    $module_info = ['project' => 'test_module_project'];
     $this->config('update_test.settings')
-      ->set("system_info.aaa_automatic_updates_test", $module_info)
-      ->save();
-    $theme_info = ['project' => 'test_theme_project'];
-    $this->config('update_test.settings')
-      ->set("system_info.automatic_updates_theme", $theme_info)
+      ->set("system_info.aaa_automatic_updates_test", [
+        'project' => 'test_module_project',
+      ])
+      ->set("system_info.automatic_updates_theme", [
+        'project' => 'test_theme_project',
+      ])
       ->save();
     $this->assertUpdateResults($projects, $expected_results, PreCreateEvent::class);
   }
