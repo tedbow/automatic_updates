@@ -73,6 +73,7 @@ echo "
 # PhpStorm config
 .idea
 # Custom and contributed Drupal extensions
+libraries
 modules
 profiles
 themes
@@ -89,9 +90,10 @@ git clone \
   https://git.drupalcode.org/project/automatic_updates.git \
   modules/automatic_updates
 
-# Tell Composer to look for the package in the local clone. This is used rather
-# than the upstream repository so that the composer.json of the code under test
-# is exercised.
+# Tell Composer to look for the package in the local clone. This is done rather
+# than MERELY cloning the module so that the composer.json of the code under
+# development is actually exercised and dependencies don't have to be added
+# manually.
 composer config \
   repositories.automatic_updates \
   path \
@@ -102,10 +104,12 @@ composer config \
 JSON=$(sed 's/"type": "path"/"type": "path", "options": {"symlink": false}/g' composer.json)
 echo "$JSON" > composer.json
 
+# Update the Composer platform PHP requirement.
+composer config platform.php 7.4.0
+
 # Require the module using the checked out dev branch, ignoring the PHP version
 # requirement.
 composer require \
-  --ignore-platform-req=php \
   --no-ansi \
   drupal/automatic_updates:dev-"$AUTOMATIC_UPDATES_BRANCH"
 
