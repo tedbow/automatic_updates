@@ -43,7 +43,6 @@ build:
           # to work correctly, and disabling it is a known workaround.
           # @see pcre.ini
           - sudo cp modules/contrib/automatic_updates/pcre.ini /usr/local/etc/php/conf.d
-          - composer self-update 2.3.5
         halt-on-fail: true
       # run_tests task is executed several times in order of performance speeds.
       # halt-on-fail can be set on the run_tests tasks in order to fail fast.
