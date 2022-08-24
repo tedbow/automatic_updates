@@ -227,6 +227,11 @@ class CronUpdater extends Updater {
     // Use the bare cURL API to make the request, so that we're not relying on
     // any third-party classes or other code which may have changed during the
     // update.
+    // @todo Should we use guzzle here instead of curl directly?
+    //       Firewall problems with the server calling itself?
+    //       Lets look at how we could this without another web requests.
+    //       8.x-1.x I think got around this by executign console command to run
+    //       DB updates. Could we do something similar run postApply?
     $curl = curl_init($url);
     curl_setopt($curl, CURLOPT_RETURNTRANSFER, TRUE);
     $response = curl_exec($curl);

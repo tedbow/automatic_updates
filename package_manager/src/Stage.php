@@ -418,6 +418,8 @@ class Stage {
     // Refresh the event dispatcher so that new or changed event subscribers
     // will be called. The other services we depend on are either stateless or
     // unlikely to call newly added code during the current request.
+    // @todo can we use DI to get the dispatcher now that is always in a new
+    //   request.
     $this->eventDispatcher = \Drupal::service('event_dispatcher');
 
     $release_apply = $this->setNotApplying();
