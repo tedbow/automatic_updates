@@ -17,7 +17,8 @@
 # @see https://www.serverlab.ca/tutorials/linux/administration-linux/how-to-set-environment-variables-in-linux/
 DRUPAL_CORE_BRANCH=${DRUPAL_CORE_BRANCH:="9.5.x"}
 AUTOMATIC_UPDATES_BRANCH=${AUTOMATIC_UPDATES_BRANCH:="8.x-2.x"}
-SITE_DIRECTORY=${SITE_DIRECTORY:="auto-updates-dev"}
+SITE_DIRECTORY=${SITE_DIRECTORY:="auto_updates_dev"}
+SITE_HOST=${SITE_HOST:="$SITE_DIRECTORY.test"}
 
 # GNU realpath can't be depended upon to always be available. Simulate it.
 # https://stackoverflow.com/questions/3572030/bash-script-absolute-path-with-os-x
@@ -83,12 +84,28 @@ sites
 vendor
 " | tee -a .git/info/exclude
 
+# Set trusted_host_patterns configuration.
+TRUSTED_HOST_PATTERN="${SITE_HOST//\./\\.}"
+  echo "
+\$settings['trusted_host_patterns'] = [
+  '^$TRUSTED_HOST_PATTERN\$',
+];" \
+  | tee -a sites/default/default.settings.php
+
+# Set path to Composer configuration, if possible.
+COMPOSER_PATH=$(which composer);
+if test ! -z "$COMPOSER_PATH"; then
+  echo "
+\$config['package_manager.settings']['executables']['composer'] = '$COMPOSER_PATH';
+" | tee -a sites/default/default.settings.php
+fi
+
 # Clone the Automatic Updates repo into place. (It will still be
 # `composer require`d below to bring in its dependencies.)
 git clone \
   --branch "$AUTOMATIC_UPDATES_BRANCH" -- \
   https://git.drupalcode.org/project/automatic_updates.git \
-  modules/automatic_updates
+  modules/contrib/automatic_updates
 
 # Tell Composer to look for the package in the local clone. This is done rather
 # than MERELY cloning the module so that the composer.json of the code under
@@ -97,7 +114,7 @@ git clone \
 composer config \
   repositories.automatic_updates \
   path \
-  modules/automatic_updates
+  modules/contrib/automatic_updates
 
 # Prevent Composer from symlinking path repositories by setting their "symlink"
 # option to FALSE in composer.json.
@@ -139,11 +156,12 @@ $(printf "\e[0m")
      instructions are provided for this step yet.)
 
          Web root: $SITE_DIRECTORY_REALPATH
+         Site URL: http://$SITE_HOST
 
    - Make and commit code changes to the module repository below. Changes made
      anywhere else will not be captured.
 
-         Module repo: $SITE_DIRECTORY_REALPATH/modules/automatic_updates
+         Module repo: $SITE_DIRECTORY_REALPATH/modules/contrib/automatic_updates
 
   For information on creating issue forks and merge requests see
   https://www.drupal.org/docs/develop/git/using-git-to-contribute-to-drupal/creating-issue-forks-and-merge-requests
