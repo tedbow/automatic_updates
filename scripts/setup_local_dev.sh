@@ -16,6 +16,7 @@
 # your terminal session) to override their default values.
 # @see https://www.serverlab.ca/tutorials/linux/administration-linux/how-to-set-environment-variables-in-linux/
 DRUPAL_CORE_BRANCH=${DRUPAL_CORE_BRANCH:="9.5.x"}
+DRUPAL_CORE_SHALLOW_CLONE=${DRUPAL_CORE_SHALLOW_CLONE:="TRUE"}
 AUTOMATIC_UPDATES_BRANCH=${AUTOMATIC_UPDATES_BRANCH:="8.x-2.x"}
 SITE_DIRECTORY=${SITE_DIRECTORY:="auto_updates_dev"}
 SITE_HOST=${SITE_HOST:="$SITE_DIRECTORY.test"}
@@ -49,7 +50,7 @@ fi
 # Prompt for confirmation.
 cat << WARNING
 You are about to create an Automatic Updates development environment at "$SITE_DIRECTORY". This will download
-as much as 400 MB of data and take approximately one minute to complete, depending on your Internet connection.
+as much as 100 MB of data and may take several minutes to complete, depending on your Internet connection.
 
 WARNING
 read -p "Do you want to continue? [yN] " -n 1 -r
@@ -61,9 +62,13 @@ fi
 echo
 
 # Clone Drupal core.
+if [[ "$DRUPAL_CORE_SHALLOW_CLONE" == "TRUE" ]]; then
+  DRUPAL_CORE_CLONE_DEPTH="--depth 1"
+fi
 git clone \
   https://git.drupalcode.org/project/drupal.git \
   --branch "$DRUPAL_CORE_BRANCH" \
+  $DRUPAL_CORE_CLONE_DEPTH \
   "$SITE_DIRECTORY"
 
 cd "$SITE_DIRECTORY" || exit 1
