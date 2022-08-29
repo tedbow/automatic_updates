@@ -4,6 +4,7 @@ namespace Drupal\automatic_updates\Validator;
 
 use Drupal\automatic_updates\CronUpdater;
 use Drupal\automatic_updates\Event\ReadinessCheckEvent;
+use Drupal\automatic_updates\Updater;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\package_manager\Event\PreCreateEvent;
 use Drupal\package_manager\Event\PreOperationStageEvent;
@@ -28,6 +29,11 @@ final class XdebugValidator implements EventSubscriberInterface {
    *   The event object.
    */
   public function checkForXdebug(PreOperationStageEvent $event): void {
+    // We only want to do this check if the stage belongs to Automatic Updates.
+    if (!($event->getStage() instanceof Updater)) {
+      return;
+    }
+
     if (function_exists('xdebug_break')) {
       $messages = [
         $this->t('Xdebug is enabled, which may cause timeout errors.'),
