@@ -104,6 +104,12 @@ services:
       - '@package_manager.path_locator'
     tags:
       - { name: event_subscriber }
+  package_manager.validator.duplicate_info_file:
+    class: Drupal\package_manager\Validator\DuplicateInfoFileValidator
+    arguments:
+      - '@package_manager.path_locator'
+    tags:
+      - { name: event_subscriber }
   package_manager.test_site_excluder:
     class: Drupal\package_manager\PathExcluder\TestSiteExcluder
     arguments:
