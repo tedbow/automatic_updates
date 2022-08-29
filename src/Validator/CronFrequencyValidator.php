@@ -119,6 +119,10 @@ class CronFrequencyValidator implements EventSubscriberInterface {
    *   The event object.
    */
   public function checkCronFrequency(ReadinessCheckEvent $event): void {
+    // We only want to do this check if the stage belongs to Automatic Updates.
+    if (!$event->getStage() instanceof CronUpdater) {
+      return;
+    }
     // If automatic updates are disabled during cron, there's nothing we need
     // to validate.
     if ($this->cronUpdater->getMode() === CronUpdater::DISABLED) {

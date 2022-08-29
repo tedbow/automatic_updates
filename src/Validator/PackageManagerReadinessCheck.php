@@ -3,6 +3,7 @@
 namespace Drupal\automatic_updates\Validator;
 
 use Drupal\automatic_updates\Event\ReadinessCheckEvent;
+use Drupal\automatic_updates\Updater;
 use Drupal\package_manager\Validator\PreOperationStageValidatorInterface;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
@@ -44,6 +45,10 @@ final class PackageManagerReadinessCheck implements EventSubscriberInterface {
    *   The event object.
    */
   public function validate(ReadinessCheckEvent $event): void {
+    // We only want to do this check if the stage belongs to Automatic Updates.
+    if (!$event->getStage() instanceof Updater) {
+      return;
+    }
     $this->validator->validateStagePreOperation($event);
   }
 

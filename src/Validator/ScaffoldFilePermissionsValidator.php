@@ -3,6 +3,7 @@
 namespace Drupal\automatic_updates\Validator;
 
 use Drupal\automatic_updates\Event\ReadinessCheckEvent;
+use Drupal\automatic_updates\Updater;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\package_manager\ComposerUtility;
 use Drupal\package_manager\Event\PreApplyEvent;
@@ -44,6 +45,10 @@ final class ScaffoldFilePermissionsValidator implements PreOperationStageValidat
    * {@inheritdoc}
    */
   public function validateStagePreOperation(PreOperationStageEvent $event): void {
+    // We only want to do this check if the stage belongs to Automatic Updates.
+    if (!$event->getStage() instanceof Updater) {
+      return;
+    }
     $paths = [];
 
     // Figure out the absolute path of `sites/default`.
