@@ -135,6 +135,10 @@ class TestSubscriber implements EventSubscriberInterface {
     elseif ($results === 'exit') {
       exit();
     }
+    elseif (is_string($results)) {
+      \Drupal::messenger()->addStatus($results);
+      return;
+    }
     /** @var \Drupal\package_manager\ValidationResult $result */
     foreach ($results as $result) {
       if ($result->getSeverity() === SystemManager::REQUIREMENT_ERROR) {
@@ -162,6 +166,20 @@ class TestSubscriber implements EventSubscriberInterface {
       PreDestroyEvent::class => ['handleEvent', $priority],
       PostDestroyEvent::class => ['handleEvent', $priority],
     ];
+  }
+
+  /**
+   * Sets a status message that will be sent to the messenger for an event.
+   *
+   * @param string $message
+   *   Message text.
+   * @param string $event
+   *   The event class.
+   */
+  public static function setMessage(string $message, string $event): void {
+    $key = static::getStateKey($event);
+    $state = \Drupal::state();
+    $state->set($key, $message);
   }
 
 }

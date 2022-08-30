@@ -7,6 +7,7 @@ use Drupal\automatic_updates_test\Datetime\TestTime;
 use Drupal\automatic_updates_test\StagedDatabaseUpdateValidator;
 use Drupal\package_manager\Event\PostRequireEvent;
 use Drupal\package_manager\Event\PreApplyEvent;
+use Drupal\package_manager\Event\PostApplyEvent;
 use Drupal\package_manager\Event\PreCreateEvent;
 use Drupal\package_manager\ValidationResult;
 use Drupal\automatic_updates_test\EventSubscriber\TestSubscriber1;
@@ -599,6 +600,48 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
     $this->assertNotEmpty($pre_apply_time);
     $this->assertNotEmpty($post_apply_time);
     $this->assertNotSame($pre_apply_time, $post_apply_time);
+  }
+
+  /**
+   * Data provider for testUpdateCompleteMessage().
+   *
+   * @return string[][]
+   *   The test cases.
+   */
+  public function providerUpdateCompleteMessage(): array {
+    return [
+      'maintenance mode off' => [FALSE],
+      'maintenance mode on' => [TRUE],
+    ];
+  }
+
+  /**
+   * Tests the update complete message is displayed when another message exist.
+   *
+   * @param bool $maintenance_mode_on
+   *   Whether maintenance should be on at the beginning of the update.
+   *
+   * @dataProvider providerUpdateCompleteMessage
+   */
+  public function testUpdateCompleteMessage(bool $maintenance_mode_on): void {
+    $assert_session = $this->assertSession();
+    $this->setCoreVersion('9.8.0');
+    $this->checkForUpdates();
+    $state = $this->container->get('state');
+    $state->set('system.maintenance_mode', $maintenance_mode_on);
+    $page = $this->getSession()->getPage();
+
+    $this->drupalGet('/admin/modules/automatic-update');
+    Stager::setFixturePath(__DIR__ . '/../../fixtures/staged/9.8.1');
+    $page->pressButton('Update to 9.8.1');
+    $this->checkForMetaRefresh();
+    // Confirm that the site was put into maintenance mode if needed.
+    $custom_message = 'custom status message.';
+    TestSubscriber1::setMessage($custom_message, PostApplyEvent::class);
+    $page->pressButton('Continue');
+    $this->checkForMetaRefresh();
+    $assert_session->pageTextContainsOnce($custom_message);
+    $assert_session->pageTextContainsOnce('Update complete!');
   }
 
   /**

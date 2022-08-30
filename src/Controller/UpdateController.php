@@ -78,13 +78,13 @@ final class UpdateController extends ControllerBase {
         // @todo Remove once the core bug that shows the maintenance mode
         //   message after the site is out of maintenance mode is fixed in
         //   https://www.drupal.org/i/3279246.
-        $messages = $this->messenger()->messagesByType(MessengerInterface::TYPE_STATUS);
-        $messages = array_filter($messages, function (string $message) {
+        $status_messages = $this->messenger()->messagesByType(MessengerInterface::TYPE_STATUS);
+        $status_messages = array_filter($status_messages, function (string $message) {
           return !str_starts_with($message, (string) $this->t('Operating in maintenance mode.'));
         });
         $this->messenger()->deleteByType(MessengerInterface::TYPE_STATUS);
-        foreach ($messages as $message) {
-          $this->messenger()->addStatus($message);
+        foreach ($status_messages as $status_message) {
+          $this->messenger()->addStatus($status_message);
         }
       }
     }
