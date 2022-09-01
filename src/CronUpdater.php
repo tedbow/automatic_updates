@@ -8,6 +8,7 @@ use Drupal\Core\Mail\MailManagerInterface;
 use Drupal\Core\State\StateInterface;
 use Drupal\Core\Url;
 use Drupal\package_manager\Exception\StageValidationException;
+use Drupal\package_manager\ProjectInfo;
 use Drupal\update\ProjectRelease;
 use GuzzleHttp\Psr7\Uri as GuzzleUri;
 use Symfony\Component\HttpFoundation\Response;

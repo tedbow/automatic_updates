@@ -2,7 +2,7 @@
 
 namespace Drupal\automatic_updates_extensions\Form;
 
-use Drupal\automatic_updates\ProjectInfo;
+use Drupal\package_manager\ProjectInfo;
 use Drupal\automatic_updates\Validator\StagedDatabaseUpdateValidator;
 use Drupal\automatic_updates_extensions\BatchProcessor;
 use Drupal\automatic_updates\BatchProcessor as AutoUpdatesBatchProcessor;

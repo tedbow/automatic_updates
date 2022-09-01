@@ -4,7 +4,7 @@ namespace Drupal\automatic_updates\Validator;
 
 use Drupal\automatic_updates\CronUpdater;
 use Drupal\automatic_updates\Event\ReadinessCheckEvent;
-use Drupal\automatic_updates\ProjectInfo;
+use Drupal\package_manager\ProjectInfo;
 use Drupal\automatic_updates\Updater;
 use Drupal\automatic_updates\Validator\VersionPolicy\ForbidDowngrade;
 use Drupal\automatic_updates\Validator\VersionPolicy\ForbidMinorUpdates;
@@ -228,7 +228,7 @@ final class VersionPolicyValidator implements EventSubscriberInterface {
    *   descending order (i.e., newest first). Will be in ascending order (i.e.,
    *   oldest first) if $updater is the cron updater.
    *
-   * @see \Drupal\automatic_updates\ProjectInfo::getInstallableReleases()
+   * @see \Drupal\package_manager\ProjectInfo::getInstallableReleases()
    */
   private function getAvailableReleases(Updater $updater): array {
     $project_info = new ProjectInfo('drupal');

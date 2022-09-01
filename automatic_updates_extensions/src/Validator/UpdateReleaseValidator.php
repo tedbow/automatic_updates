@@ -2,9 +2,9 @@
 
 namespace Drupal\automatic_updates_extensions\Validator;
 
-use Drupal\automatic_updates\ProjectInfo;
+use Drupal\package_manager\ProjectInfo;
 use Drupal\automatic_updates_extensions\ExtensionUpdater;
-use Drupal\automatic_updates\LegacyVersionUtility;
+use Drupal\package_manager\LegacyVersionUtility;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\package_manager\Event\PreApplyEvent;
 use Drupal\package_manager\Event\PreCreateEvent;

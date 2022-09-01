@@ -4,7 +4,7 @@ namespace Drupal\automatic_updates\Form;
 
 use Drupal\automatic_updates\BatchProcessor;
 use Drupal\automatic_updates\Event\ReadinessCheckEvent;
-use Drupal\automatic_updates\ProjectInfo;
+use Drupal\package_manager\ProjectInfo;
 use Drupal\automatic_updates\ReleaseChooser;
 use Drupal\automatic_updates\Updater;
 use Drupal\automatic_updates\Validation\ReadinessTrait;

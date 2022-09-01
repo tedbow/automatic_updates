@@ -16,7 +16,7 @@ use Psr\Log\Test\TestLogger;
 /**
  * Tests that ownership of the stage is enforced.
  *
- * @group package_manger
+ * @group package_manager
  */
 class StageOwnershipTest extends PackageManagerKernelTestBase {
 
@@ -39,7 +39,6 @@ class StageOwnershipTest extends PackageManagerKernelTestBase {
     $this->installSchema('system', ['sequences']);
     $this->installSchema('user', ['users_data']);
     $this->installEntitySchema('user');
-    $this->registerPostUpdateFunctions();
   }
 
   /**

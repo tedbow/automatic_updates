@@ -2,11 +2,11 @@
 
 namespace Drupal\Tests\automatic_updates\Unit;
 
-use Drupal\automatic_updates\LegacyVersionUtility;
+use Drupal\package_manager\LegacyVersionUtility;
 use Drupal\Tests\UnitTestCase;
 
 /**
- * @coversDefaultClass \Drupal\automatic_updates\LegacyVersionUtility
+ * @coversDefaultClass \Drupal\package_manager\LegacyVersionUtility
  *
  * @group automatic_updates
  */

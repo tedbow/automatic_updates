@@ -1,6 +1,6 @@
 <?php
 
-namespace Drupal\automatic_updates;
+namespace Drupal\package_manager;
 
 use Composer\Semver\Comparator;
 use Drupal\update\ProjectRelease;

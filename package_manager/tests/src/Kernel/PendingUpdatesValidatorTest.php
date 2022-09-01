@@ -21,7 +21,6 @@ class PendingUpdatesValidatorTest extends PackageManagerKernelTestBase {
    * Tests that no error is raised if there are no pending updates.
    */
   public function testNoPendingUpdates(): void {
-    $this->registerPostUpdateFunctions();
     $this->assertResults([], PreCreateEvent::class);
   }
 
@@ -31,10 +30,6 @@ class PendingUpdatesValidatorTest extends PackageManagerKernelTestBase {
    * @depends testNoPendingUpdates
    */
   public function testPendingUpdateHook(): void {
-    // Register the System module's post-update functions, so that any detected
-    // pending updates are guaranteed to be schema updates.
-    $this->registerPostUpdateFunctions();
-
     // Set the installed schema version of Package Manager to its default value
     // and import an empty update hook which is numbered much higher than will
     // ever exist in the real world.
@@ -54,6 +49,7 @@ class PendingUpdatesValidatorTest extends PackageManagerKernelTestBase {
    * Tests that an error is raised if there are pending post-updates.
    */
   public function testPendingPostUpdate(): void {
+    $this->registerPostUpdateFunctions();
     // The System module's post-update functions have not been registered, so
     // the update registry will think they're pending.
     $result = ValidationResult::createError([

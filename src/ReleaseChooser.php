@@ -4,6 +4,7 @@ namespace Drupal\automatic_updates;
 
 use Composer\Semver\Semver;
 use Drupal\automatic_updates\Validator\VersionPolicyValidator;
+use Drupal\package_manager\ProjectInfo;
 use Drupal\update\ProjectRelease;
 use Drupal\Core\Extension\ExtensionVersion;
 
@@ -24,7 +25,7 @@ final class ReleaseChooser {
   /**
    * The project information fetcher.
    *
-   * @var \Drupal\automatic_updates\ProjectInfo
+   * @var \Drupal\package_manager\ProjectInfo
    */
   protected $projectInfo;
 

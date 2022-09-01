@@ -2,7 +2,7 @@
 
 namespace Drupal\Tests\automatic_updates_extensions\Kernel\Validator;
 
-use Drupal\automatic_updates\LegacyVersionUtility;
+use Drupal\package_manager\LegacyVersionUtility;
 use Drupal\package_manager\Event\PreApplyEvent;
 use Drupal\package_manager\Event\PreCreateEvent;
 use Drupal\package_manager\ValidationResult;
@@ -129,7 +129,7 @@ class UpdateReleaseValidatorTest extends AutomaticUpdatesExtensionsKernelTestBas
     $this->assertFileIsReadable($active_installed);
     $this->assertFileIsReadable($staged_installed);
     $this->setReleaseMetadata([
-      'aaa_automatic_updates_test' => __DIR__ . "/../../../../../tests/fixtures/release-history/aaa_automatic_updates_test.9.8.2.xml",
+      'aaa_automatic_updates_test' => __DIR__ . "/../../../../../package_manager/tests/fixtures/release-history/aaa_automatic_updates_test.9.8.2.xml",
       $project => __DIR__ . "/../../../fixtures/release-history/$project.1.1.xml",
       'drupal' => __DIR__ . '/../../../../../tests/fixtures/release-history/drupal.9.8.2.xml',
     ]);

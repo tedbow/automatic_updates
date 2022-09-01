@@ -1,15 +1,16 @@
 <?php
 
-namespace Drupal\Tests\automatic_updates\Kernel;
+namespace Drupal\Tests\package_manger\Kernel;
 
-use Drupal\automatic_updates\ProjectInfo;
+use Drupal\package_manager\ProjectInfo;
+use Drupal\Tests\package_manager\Kernel\PackageManagerKernelTestBase;
 
 /**
- * @coversDefaultClass \Drupal\automatic_updates\ProjectInfo
+ * @coversDefaultClass \Drupal\package_manager\ProjectInfo
  *
  * @group automatic_updates
  */
-class ProjectInfoTest extends AutomaticUpdatesKernelTestBase {
+class ProjectInfoTest extends PackageManagerKernelTestBase {
 
   /**
    * @covers ::getInstallableReleases()

@@ -11,6 +11,11 @@ use Drupal\package_manager\Exception\StageValidationException;
 use Drupal\package_manager\Stage;
 use Drupal\package_manager_bypass\Beginner;
 use Drupal\Tests\package_manager\Traits\ValidationTestTrait;
+use GuzzleHttp\Client;
+use GuzzleHttp\Handler\MockHandler;
+use GuzzleHttp\HandlerStack;
+use GuzzleHttp\Psr7\Response;
+use GuzzleHttp\Psr7\Utils;
 use org\bovigo\vfs\vfsStream;
 use org\bovigo\vfs\vfsStreamDirectory;
 use org\bovigo\vfs\vfsStreamFile;
@@ -18,6 +23,7 @@ use org\bovigo\vfs\visitor\vfsStreamAbstractVisitor;
 use PhpTuf\ComposerStager\Domain\Value\Path\PathInterface;
 use PhpTuf\ComposerStager\Infrastructure\Factory\Path\PathFactoryInterface;
 use PhpTuf\ComposerStager\Infrastructure\Value\Path\AbstractPath;
+use Psr\Http\Message\RequestInterface;
 use Symfony\Component\DependencyInjection\Definition;
 
 /**
@@ -28,11 +34,27 @@ abstract class PackageManagerKernelTestBase extends KernelTestBase {
   use ValidationTestTrait;
 
   /**
+   * The mocked HTTP client that returns metadata about available updates.
+   *
+   * We need to preserve this as a class property so that we can re-inject it
+   * into the container when a rebuild is triggered by module installation.
+   *
+   * @var \GuzzleHttp\Client
+   *
+   * @see ::register()
+   */
+  private $client;
+
+
+  /**
    * {@inheritdoc}
    */
   protected static $modules = [
     'package_manager',
     'package_manager_bypass',
+    'system',
+    'update',
+    'update_test',
   ];
 
   /**
@@ -50,6 +72,14 @@ abstract class PackageManagerKernelTestBase extends KernelTestBase {
     $this->installConfig('package_manager');
 
     $this->createVirtualProject();
+
+    // The Update module's default configuration must be installed for our
+    // fake release metadata to be fetched.
+    $this->installConfig('update');
+
+    // Make the update system think that all of System's post-update functions
+    // have run.
+    $this->registerPostUpdateFunctions();
   }
 
   /**
@@ -57,6 +87,12 @@ abstract class PackageManagerKernelTestBase extends KernelTestBase {
    */
   public function register(ContainerBuilder $container) {
     parent::register($container);
+
+    // If we previously set up a mock HTTP client in ::setReleaseMetadata(),
+    // re-inject it into the container.
+    if ($this->client) {
+      $container->set('http_client', $this->client);
+    }
 
     // Ensure that Composer Stager uses the test path factory, which is aware
     // of the virtual file system.
@@ -226,6 +262,46 @@ abstract class PackageManagerKernelTestBase extends KernelTestBase {
       $validator->temporaryDirectory() => PHP_INT_MAX,
     ];
     $this->container->set('package_manager.validator.disk_space', $validator);
+  }
+
+  /**
+   * Sets the current (running) version of core, as known to the Update module.
+   *
+   * @param string $version
+   *   The current version of core.
+   */
+  protected function setCoreVersion(string $version): void {
+    $this->config('update_test.settings')
+      ->set('system_info.#all.version', $version)
+      ->save();
+  }
+
+  /**
+   * Sets the release metadata file to use when fetching available updates.
+   *
+   * @param string[] $files
+   *   The paths of the XML metadata files to use, keyed by project name.
+   */
+  protected function setReleaseMetadata(array $files): void {
+    $responses = [];
+
+    foreach ($files as $project => $file) {
+      $metadata = Utils::tryFopen($file, 'r');
+      $responses["/release-history/$project/current"] = new Response(200, [], Utils::streamFor($metadata));
+    }
+    $callable = function (RequestInterface $request) use ($responses): Response {
+      return $responses[$request->getUri()->getPath()] ?? new Response(404);
+    };
+
+    // The mock handler's queue consist of same callable as many times as the
+    // number of requests we expect to be made for update XML because it will
+    // retrieve one item off the queue for each request.
+    // @see \GuzzleHttp\Handler\MockHandler::__invoke()
+    $handler = new MockHandler(array_fill(0, 100, $callable));
+    $this->client = new Client([
+      'handler' => HandlerStack::create($handler),
+    ]);
+    $this->container->set('http_client', $this->client);
   }
 
 }

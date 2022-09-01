@@ -1,6 +1,6 @@
 <?php
 
-namespace Drupal\automatic_updates;
+namespace Drupal\package_manager;
 
 use Drupal\Core\Extension\ExtensionVersion;
 

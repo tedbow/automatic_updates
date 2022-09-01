@@ -9,12 +9,6 @@ use Drupal\Core\Url;
 use Drupal\Tests\automatic_updates\Traits\ValidationTestTrait;
 use Drupal\Tests\package_manager\Kernel\PackageManagerKernelTestBase;
 use Drupal\Tests\package_manager\Kernel\TestStageTrait;
-use GuzzleHttp\Client;
-use GuzzleHttp\Handler\MockHandler;
-use GuzzleHttp\HandlerStack;
-use GuzzleHttp\Psr7\Response;
-use GuzzleHttp\Psr7\Utils;
-use Psr\Http\Message\RequestInterface;
 
 /**
  * Base class for kernel tests of the Automatic Updates module.
@@ -28,22 +22,7 @@ abstract class AutomaticUpdatesKernelTestBase extends PackageManagerKernelTestBa
    */
   protected static $modules = [
     'automatic_updates_test_cron',
-    'system',
-    'update',
-    'update_test',
   ];
-
-  /**
-   * The mocked HTTP client that returns metadata about available updates.
-   *
-   * We need to preserve this as a class property so that we can re-inject it
-   * into the container when a rebuild is triggered by module installation.
-   *
-   * @var \GuzzleHttp\Client
-   *
-   * @see ::register()
-   */
-  private $client;
 
   /**
    * {@inheritdoc}
@@ -63,14 +42,6 @@ abstract class AutomaticUpdatesKernelTestBase extends PackageManagerKernelTestBa
     $this->disableValidators[] = 'automatic_updates.validator.xdebug';
     parent::setUp();
 
-    // The Update module's default configuration must be installed for our
-    // fake release metadata to be fetched.
-    $this->installConfig('update');
-
-    // Make the update system think that all of System's post-update functions
-    // have run.
-    $this->registerPostUpdateFunctions();
-
     // By default, pretend we're running Drupal core 9.8.0 and a non-security
     // update to 9.8.1 is available.
     $this->setCoreVersion('9.8.0');
@@ -86,28 +57,10 @@ abstract class AutomaticUpdatesKernelTestBase extends PackageManagerKernelTestBa
   }
 
   /**
-   * Sets the current (running) version of core, as known to the Update module.
-   *
-   * @param string $version
-   *   The current version of core.
-   */
-  protected function setCoreVersion(string $version): void {
-    $this->config('update_test.settings')
-      ->set('system_info.#all.version', $version)
-      ->save();
-  }
-
-  /**
    * {@inheritdoc}
    */
   public function register(ContainerBuilder $container) {
     parent::register($container);
-
-    // If we previously set up a mock HTTP client in ::setReleaseMetadata(),
-    // re-inject it into the container.
-    if ($this->client) {
-      $container->set('http_client', $this->client);
-    }
 
     // Use the test-only implementations of the regular and cron updaters.
     $overrides = [
@@ -119,34 +72,6 @@ abstract class AutomaticUpdatesKernelTestBase extends PackageManagerKernelTestBa
         $container->getDefinition($service_id)->setClass($class);
       }
     }
-  }
-
-  /**
-   * Sets the release metadata file to use when fetching available updates.
-   *
-   * @param string[] $files
-   *   The paths of the XML metadata files to use, keyed by project name.
-   */
-  protected function setReleaseMetadata(array $files): void {
-    $responses = [];
-
-    foreach ($files as $project => $file) {
-      $metadata = Utils::tryFopen($file, 'r');
-      $responses["/release-history/$project/current"] = new Response(200, [], Utils::streamFor($metadata));
-    }
-    $callable = function (RequestInterface $request) use ($responses): Response {
-      return $responses[$request->getUri()->getPath()] ?? new Response(404);
-    };
-
-    // The mock handler's queue consist of same callable as many times as the
-    // number of requests we expect to be made for update XML because it will
-    // retrieve one item off the queue for each request.
-    // @see \GuzzleHttp\Handler\MockHandler::__invoke()
-    $handler = new MockHandler(array_fill(0, count($responses), $callable));
-    $this->client = new Client([
-      'handler' => HandlerStack::create($handler),
-    ]);
-    $this->container->set('http_client', $this->client);
   }
 
 }

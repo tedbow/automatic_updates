@@ -7,7 +7,7 @@
  * @todo Move into automatic_updates when TUF integration is stable.
  */
 
-use Drupal\automatic_updates\ProjectInfo;
+use Drupal\package_manager\ProjectInfo;
 use Drupal\automatic_updates\CronUpdater;
 use Drupal\Core\Extension\ExtensionVersion;
 use Drupal\Core\Form\FormStateInterface;
