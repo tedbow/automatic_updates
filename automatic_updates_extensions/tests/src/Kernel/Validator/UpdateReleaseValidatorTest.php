@@ -60,7 +60,7 @@ class UpdateReleaseValidatorTest extends AutomaticUpdatesExtensionsKernelTestBas
       ->set("system_info.$project", $module_info)
       ->save();
 
-    $this->setReleaseMetadataForProjects([
+    $this->setReleaseMetadata([
       $project => __DIR__ . "/../../../fixtures/release-history/$project.1.1.xml",
       'drupal' => __DIR__ . '/../../../../../tests/fixtures/release-history/drupal.9.8.2.xml',
     ]);
@@ -128,7 +128,7 @@ class UpdateReleaseValidatorTest extends AutomaticUpdatesExtensionsKernelTestBas
     $active_installed = __DIR__ . '/../../../fixtures/update_release_validator/active.installed.json';
     $this->assertFileIsReadable($active_installed);
     $this->assertFileIsReadable($staged_installed);
-    $this->setReleaseMetadataForProjects([
+    $this->setReleaseMetadata([
       'aaa_automatic_updates_test' => __DIR__ . "/../../../../../tests/fixtures/release-history/aaa_automatic_updates_test.9.8.2.xml",
       $project => __DIR__ . "/../../../fixtures/release-history/$project.1.1.xml",
       'drupal' => __DIR__ . '/../../../../../tests/fixtures/release-history/drupal.9.8.2.xml',

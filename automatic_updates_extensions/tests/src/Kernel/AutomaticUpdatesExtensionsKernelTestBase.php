@@ -9,12 +9,6 @@ use Drupal\package_manager\Exception\StageValidationException;
 use Drupal\Tests\automatic_updates\Kernel\AutomaticUpdatesKernelTestBase;
 use Drupal\Tests\package_manager\Kernel\TestPathFactory;
 use Drupal\Tests\package_manager\Kernel\TestStageTrait;
-use GuzzleHttp\Client;
-use GuzzleHttp\Handler\MockHandler;
-use GuzzleHttp\HandlerStack;
-use GuzzleHttp\Psr7\Response;
-use GuzzleHttp\Psr7\Utils;
-use Psr\Http\Message\RequestInterface;
 
 /**
  * Base class for kernel tests of the Automatic Updates Extensions module.
@@ -60,13 +54,6 @@ abstract class AutomaticUpdatesExtensionsKernelTestBase extends AutomaticUpdates
   }
 
   /**
-   * The client.
-   *
-   * @var \GuzzleHttp\Client
-   */
-  protected $client;
-
-  /**
    * Asserts validation results are returned from a stage life cycle event.
    *
    * @param string[] $project_versions
@@ -98,34 +85,6 @@ abstract class AutomaticUpdatesExtensionsKernelTestBase extends AutomaticUpdates
       $this->assertNotEmpty($event_class);
       $this->assertInstanceOf($event_class, $e->event);
     }
-  }
-
-  /**
-   * Sets the release metadata file to use when fetching available updates.
-   *
-   * @param string[] $files
-   *   The paths of the XML metadata files to use, keyed by project name.
-   */
-  protected function setReleaseMetadataForProjects(array $files): void {
-    $responses = [];
-
-    foreach ($files as $project => $file) {
-      $metadata = Utils::tryFopen($file, 'r');
-      $responses["/release-history/$project/current"] = new Response(200, [], Utils::streamFor($metadata));
-    }
-    $callable = function (RequestInterface $request) use ($responses): Response {
-      return $responses[$request->getUri()->getPath()] ?? new Response(404);
-    };
-
-    // The mock handler's queue consist of same callable as many times as the
-    // number of requests we expect to be made for update XML because it will
-    // retrieve one item off the queue for each request.
-    // @see \GuzzleHttp\Handler\MockHandler::__invoke()
-    $handler = new MockHandler(array_fill(0, count($responses), $callable));
-    $this->client = new Client([
-      'handler' => HandlerStack::create($handler),
-    ]);
-    $this->container->set('http_client', $this->client);
   }
 
   /**
