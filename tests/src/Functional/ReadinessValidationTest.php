@@ -8,7 +8,6 @@ use Drupal\automatic_updates_test\Datetime\TestTime;
 use Drupal\automatic_updates_test\EventSubscriber\TestSubscriber1;
 use Drupal\automatic_updates_test2\EventSubscriber\TestSubscriber2;
 use Drupal\Core\Url;
-use Drupal\package_manager_bypass\Beginner;
 use Drupal\system\SystemManager;
 use Drupal\Tests\automatic_updates\Traits\ValidationTestTrait;
 use Drupal\Tests\Traits\Core\CronRunTrait;
@@ -424,7 +423,7 @@ class ReadinessValidationTest extends AutomaticUpdatesFunctionalTestBase {
     // readiness check (without storing the results), and the checker is no
     // longer raising an error.
     $this->drupalGet('/admin/modules/automatic-update');
-    Beginner::setFixturePath(__DIR__ . '/../../fixtures/staged/9.8.1');
+    $this->useFixtureDirectoryAsActive(__DIR__ . '/../../fixtures/staged/9.8.1');
     $assert_session->buttonExists('Update');
     // Ensure that the previous results are still displayed on another admin
     // page, to confirm that the updater form is not discarding the previous

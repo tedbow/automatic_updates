@@ -6,6 +6,7 @@ use Drupal\Core\Site\Settings;
 use Drupal\package_manager_bypass\Beginner;
 use Drupal\Tests\BrowserTestBase;
 use Symfony\Component\DependencyInjection\ContainerInterface;
+use Symfony\Component\Filesystem\Filesystem;
 
 /**
  * Base class for functional tests of the Automatic Updates module.
@@ -44,17 +45,7 @@ abstract class AutomaticUpdatesFunctionalTestBase extends BrowserTestBase {
   protected function setUp(): void {
     parent::setUp();
     $this->disableValidators($this->disableValidators);
-
-    $fixture_dir = __DIR__ . '/../../fixtures/fake-site';
-    // We cannot guarantee that the fixture directory will be writable in all
-    // testing situations, so to keep things consistent, fail the test if it
-    // isn't. Our build tests examine file system permissions more extensively.
-    // @see \Drupal\Tests\automatic_updates\Build\CoreUpdateTest::assertReadOnlyFileSystemError()
-    $this->assertDirectoryIsWritable($fixture_dir);
-
-    Beginner::setFixturePath($fixture_dir);
-    $this->container->get('package_manager.path_locator')
-      ->setPaths($fixture_dir, $fixture_dir . '/vendor', '', NULL);
+    $this->useFixtureDirectoryAsActive(__DIR__ . '/../../fixtures/fake-site');
   }
 
   /**
@@ -168,6 +159,38 @@ abstract class AutomaticUpdatesFunctionalTestBase extends BrowserTestBase {
     $assert_session = $this->assertSession();
     $assert_session->addressMatches('/\/admin\/automatic-update-ready\/[a-zA-Z0-9_\-]+$/');
     $assert_session->pageTextContainsOnce('Drupal core will be updated to ' . $target_version);
+  }
+
+  /**
+   * Copies a fixture directory to a temporary directory.
+   *
+   * @param string $fixture_directory
+   *   The fixture directory.
+   *
+   * @return string
+   *   The temporary directory.
+   */
+  protected function copyFixtureToTempDirectory(string $fixture_directory): string {
+    $temp_directory = $this->root . DIRECTORY_SEPARATOR . $this->siteDirectory . DIRECTORY_SEPARATOR . $this->randomMachineName(20);
+    (new Filesystem())->mirror($fixture_directory, $temp_directory);
+    $this->assertDirectoryIsWritable($temp_directory);
+    return $temp_directory;
+  }
+
+  /**
+   * Sets a fixture directory to use as the active directory.
+   *
+   * @param string $fixture_directory
+   *   The fixture directory.
+   */
+  protected function useFixtureDirectoryAsActive(string $fixture_directory): void {
+    // Create a temporary directory from our fixture directory that will be
+    // unique for each test run. This will enable changing files in the
+    // directory and not affect other tests.
+    $active_dir = $this->copyFixtureToTempDirectory($fixture_directory);
+    Beginner::setFixturePath($active_dir);
+    $this->container->get('package_manager.path_locator')
+      ->setPaths($active_dir, $active_dir . '/vendor', '', NULL);
   }
 
 }

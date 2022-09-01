@@ -7,7 +7,6 @@ use Drupal\automatic_updates_test\EventSubscriber\TestSubscriber1;
 use Drupal\automatic_updates_test\StagedDatabaseUpdateValidator;
 use Drupal\package_manager\Event\PreApplyEvent;
 use Drupal\package_manager\ValidationResult;
-use Drupal\package_manager_bypass\Beginner;
 use Drupal\package_manager_bypass\Stager;
 use Drupal\Tests\automatic_updates\Functional\AutomaticUpdatesFunctionalTestBase;
 use Drupal\Tests\automatic_updates\Traits\ValidationTestTrait;
@@ -78,10 +77,7 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
     ]);
     // We need this fixture as only projects installed via composer will show up
     // on the form.
-    $fixture_dir = __DIR__ . '/../../fixtures/two_projects';
-    Beginner::setFixturePath($fixture_dir);
-    $this->container->get('package_manager.path_locator')
-      ->setPaths($fixture_dir, $fixture_dir . '/vendor', '', NULL);
+    $this->useFixtureDirectoryAsActive(__DIR__ . '/../../fixtures/two_projects');
     $this->drupalLogin($user);
     $this->drupalPlaceBlock('local_tasks_block', ['primary' => TRUE]);
   }
@@ -306,10 +302,7 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
     );
 
     // One module not installed through composer.
-    $fixture_dir = __DIR__ . '/../../fixtures/one_project';
-    Beginner::setFixturePath($fixture_dir);
-    $this->container->get('package_manager.path_locator')
-      ->setPaths($fixture_dir, $fixture_dir . '/vendor', '', NULL);
+    $this->useFixtureDirectoryAsActive(__DIR__ . '/../../fixtures/one_project');
     $assert = $this->assertSession();
     $user = $this->createUser(
       [
@@ -325,10 +318,7 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
     $this->assertUpdatesCount(1);
 
     // Both of the modules not installed through composer.
-    $fixture_dir = __DIR__ . '/../../fixtures/no_project';
-    Beginner::setFixturePath($fixture_dir);
-    $this->container->get('package_manager.path_locator')
-      ->setPaths($fixture_dir, $fixture_dir . '/vendor', '', NULL);
+    $this->useFixtureDirectoryAsActive(__DIR__ . '/../../fixtures/no_project');
     $this->getSession()->reload();
     $assert->pageTextContains('Updates were found, but they must be performed manually. See the list of available updates for more information.');
     $this->assertNoUpdates();
