@@ -100,19 +100,7 @@ class StagedProjectsValidatorTest extends AutomaticUpdatesKernelTestBase {
    * @dataProvider providerErrors
    */
   public function testErrors(string $fixtures_dir, ?string $expected_summary, array $expected_messages): void {
-    $this->assertFileIsReadable("$fixtures_dir/active.installed.json");
-    $this->assertFileIsReadable("$fixtures_dir/staged.installed.json");
-
-    copy("$fixtures_dir/active.installed.json", "$this->activeDir/vendor/composer/installed.json");
-
-    // Before any other pre-apply listener runs, replaced the staged
-    // `vendor/composer/installed.json` with the fixture's
-    // `staged.installed.json`.
-    $listener = function (PreApplyEvent $event) use ($fixtures_dir): void {
-      copy("$fixtures_dir/staged.installed.json", $event->getStage()->getStageDirectory() . "/vendor/composer/installed.json");
-    };
-    $this->container->get('event_dispatcher')
-      ->addListener(PreApplyEvent::class, $listener, PHP_INT_MAX);
+    $this->useComposerFixturesFiles($fixtures_dir);
 
     $expected_results = [];
     if ($expected_messages) {

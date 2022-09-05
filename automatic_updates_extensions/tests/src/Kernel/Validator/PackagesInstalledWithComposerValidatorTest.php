@@ -26,13 +26,6 @@ class PackagesInstalledWithComposerValidatorTest extends AutomaticUpdatesExtensi
     // We also don't care if the updated projects are themes and modules only.
     $this->disableValidators[] = 'automatic_updates_extensions.validator.packages_type';
     parent::setUp();
-
-    $active_dir = $this->container->get('package_manager.path_locator')
-      ->getProjectRoot();
-
-    $installed = __DIR__ . '/../../../fixtures/packages_installed_with_composer_validator/active.installed.json';
-    $this->assertFileIsReadable($installed);
-    copy($installed, $active_dir . '/vendor/composer/installed.json');
   }
 
   /**
@@ -111,6 +104,7 @@ class PackagesInstalledWithComposerValidatorTest extends AutomaticUpdatesExtensi
    * @dataProvider providerPreCreateException
    */
   public function testPreCreateException(array $projects, array $expected_results): void {
+    $this->useComposerFixturesFiles(__DIR__ . '/../../../fixtures/packages_installed_with_composer_validator/active');
     $this->assertUpdateResults($projects, $expected_results, PreCreateEvent::class);
   }
 
@@ -126,19 +120,19 @@ class PackagesInstalledWithComposerValidatorTest extends AutomaticUpdatesExtensi
 
     return [
       'module not installed via Composer' => [
-        "$fixtures_folder/module_not_installed.staged.installed.json",
+        "$fixtures_folder/module_not_installed_stage",
         [
           ValidationResult::createError(['new_module'], $summary),
         ],
       ],
       'theme not installed via Composer' => [
-        "$fixtures_folder/theme_not_installed.staged.installed.json",
+        "$fixtures_folder/theme_not_installed_stage",
         [
           ValidationResult::createError(['new_theme'], $summary),
         ],
       ],
       'profile not installed via Composer' => [
-        "$fixtures_folder/profile_not_installed.staged.installed.json",
+        "$fixtures_folder/profile_not_installed_stage",
         [
           ValidationResult::createError(['new_profile'], $summary),
         ],
@@ -150,7 +144,7 @@ class PackagesInstalledWithComposerValidatorTest extends AutomaticUpdatesExtensi
       // its type is `drupal-module`, because it doesn't start with `drupal/`.
       // @see \Drupal\automatic_updates_extensions\Validator\PackagesInstalledWithComposerValidator
       'module, theme, and profile not installed via Composer' => [
-        "$fixtures_folder/module_theme_profile_dependency_not_installed.staged.installed.json",
+        "$fixtures_folder/module_theme_profile_dependency_not_installed_stage",
         [
           ValidationResult::createError(['new_module', 'new_theme', 'new_profile'], $summary),
         ],
@@ -161,22 +155,17 @@ class PackagesInstalledWithComposerValidatorTest extends AutomaticUpdatesExtensi
   /**
    * Tests the packages installed with composer during pre-apply.
    *
-   * @param string $staged_installed
-   *   Path of `staged.installed.json` file. It will be used as the virtual
-   *   project's staged `vendor/composer/installed.json` file.
+   * @param string $stage_dir
+   *   Path of fixture stage directory. It will be used as the virtual project's
+   *   stage directory.
    * @param array $expected_results
    *   The expected validation results.
    *
    * @dataProvider providerPreApplyException
    */
-  public function testPreApplyException(string $staged_installed, array $expected_results): void {
-    $this->assertFileIsReadable($staged_installed);
-
-    $listener = function (PreApplyEvent $event) use ($staged_installed): void {
-      $stage_dir = $event->getStage()->getStageDirectory();
-      copy($staged_installed, $stage_dir . "/vendor/composer/installed.json");
-    };
-    $this->container->get('event_dispatcher')->addListener(PreApplyEvent::class, $listener, 1000);
+  public function testPreApplyException(string $stage_dir, array $expected_results): void {
+    $active_dir = __DIR__ . '/../../../fixtures/packages_installed_with_composer_validator/active';
+    $this->useComposerFixturesFiles($active_dir, $stage_dir);
     $this->assertUpdateResults(['my_module' => '9.8.1'], $expected_results, PreApplyEvent::class);
   }
 

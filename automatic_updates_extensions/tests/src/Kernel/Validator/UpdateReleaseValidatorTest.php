@@ -89,10 +89,10 @@ class UpdateReleaseValidatorTest extends AutomaticUpdatesExtensionsKernelTestBas
   public function providerTestPreApplyException(): array {
     $fixtures_folder = __DIR__ . '/../../../fixtures/update_release_validator';
     return [
-      'semver, supported update' => ['semver_test', '8.1.0', '8.1.1', "$fixtures_folder/semver_supported_update.staged.installed.json", FALSE],
-      'semver, update to unsupported branch' => ['semver_test', '8.1.0', '8.2.0', "$fixtures_folder/semver_unsupported_update.staged.installed.json", TRUE],
-      'legacy, supported update' => ['aaa_update_test', '8.x-2.0', '8.x-2.1', "$fixtures_folder/legacy_supported_update.staged.installed.json", FALSE],
-      'legacy, update to unsupported branch' => ['aaa_update_test', '8.x-2.0', '8.x-3.0', "$fixtures_folder/legacy_unsupported_update.staged.installed.json", TRUE],
+      'semver, supported update' => ['semver_test', '8.1.0', '8.1.1', "$fixtures_folder/semver_supported_update_stage", FALSE],
+      'semver, update to unsupported branch' => ['semver_test', '8.1.0', '8.2.0', "$fixtures_folder/semver_unsupported_update_stage", TRUE],
+      'legacy, supported update' => ['aaa_update_test', '8.x-2.0', '8.x-2.1', "$fixtures_folder/legacy_supported_update_stage", FALSE],
+      'legacy, update to unsupported branch' => ['aaa_update_test', '8.x-2.0', '8.x-3.0', "$fixtures_folder/legacy_unsupported_update_stage", TRUE],
     ];
   }
 
@@ -105,15 +105,15 @@ class UpdateReleaseValidatorTest extends AutomaticUpdatesExtensionsKernelTestBas
    *   The installed version of the project.
    * @param string $target_version
    *   The target version.
-   * @param string $staged_installed
-   *   Path of `staged.installed.json` file. It will be used as the virtual
-   *   project's staged `vendor/composer/installed.json` file.
+   * @param string $stage_dir
+   *   Path of fixture stage directory. It will be used as the virtual project's
+   *   stage directory.
    * @param bool $error_expected
    *   Whether an error is expected in the update.
    *
    * @dataProvider providerTestPreApplyException
    */
-  public function testPreApplyException(string $project, string $installed_version, string $target_version, string $staged_installed, bool $error_expected): void {
+  public function testPreApplyException(string $project, string $installed_version, string $target_version, string $stage_dir, bool $error_expected): void {
     $this->enableModules(['aaa_automatic_updates_test', $project]);
 
     $module_info = ['version' => $installed_version, 'project' => $project];
@@ -125,25 +125,13 @@ class UpdateReleaseValidatorTest extends AutomaticUpdatesExtensionsKernelTestBas
 
     // Path of `active.installed.json` file. It will be used as the virtual
     // project's active `vendor/composer/installed.json` file.
-    $active_installed = __DIR__ . '/../../../fixtures/update_release_validator/active.installed.json';
-    $this->assertFileIsReadable($active_installed);
-    $this->assertFileIsReadable($staged_installed);
     $this->setReleaseMetadata([
       'aaa_automatic_updates_test' => __DIR__ . "/../../../../../package_manager/tests/fixtures/release-history/aaa_automatic_updates_test.9.8.2.xml",
       $project => __DIR__ . "/../../../fixtures/release-history/$project.1.1.xml",
       'drupal' => __DIR__ . '/../../../../../tests/fixtures/release-history/drupal.9.8.2.xml',
     ]);
-
-    // Copying `active.installed.json` and 'staged.installed.json' to the
-    // virtual project's  active and staged directories respectively.
-    $active_dir = $this->container->get('package_manager.path_locator')->getProjectRoot();
-    copy($active_installed, "$active_dir/vendor/composer/installed.json");
-    $listener = function (PreApplyEvent $event) use ($staged_installed): void {
-      $stage_dir = $event->getStage()->getStageDirectory();
-      copy($staged_installed, $stage_dir . "/vendor/composer/installed.json");
-    };
-    $this->container->get('event_dispatcher')->addListener(PreApplyEvent::class, $listener, 1000);
-
+    $active_dir = __DIR__ . '/../../../fixtures/update_release_validator/active';
+    $this->useComposerFixturesFiles($active_dir, $stage_dir);
     if ($error_expected) {
       $expected_results = [
         ValidationResult::createError(

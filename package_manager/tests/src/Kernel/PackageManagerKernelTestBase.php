@@ -4,6 +4,7 @@ namespace Drupal\Tests\package_manager\Kernel;
 
 use Drupal\Core\DependencyInjection\ContainerBuilder;
 use Drupal\KernelTests\KernelTestBase;
+use Drupal\package_manager\Event\PreApplyEvent;
 use Drupal\package_manager\Event\StageEvent;
 use Drupal\package_manager\Validator\DiskSpaceValidator;
 use Drupal\package_manager\Exception\StageException;
@@ -262,6 +263,39 @@ abstract class PackageManagerKernelTestBase extends KernelTestBase {
       $validator->temporaryDirectory() => PHP_INT_MAX,
     ];
     $this->container->set('package_manager.validator.disk_space', $validator);
+  }
+
+  /**
+   * Copies composer fixture files to active and stage directories.
+   *
+   * @param string $active_fixture_dir
+   *   Path to fixture active directory from which the files will be copied.
+   * @param string|null $stage_fixture_dir
+   *   (optional) Path to fixture staged directory from which the files will be
+   *    copied. If not provided $active_dir_to_set will be used as the fixture
+   *    staged directory also.
+   */
+  protected function useComposerFixturesFiles(string $active_fixture_dir, string $stage_fixture_dir = NULL) {
+    $this->assertFileIsReadable("$active_fixture_dir/active.installed.json");
+    $active_dir = $this->container->get('package_manager.path_locator')
+      ->getProjectRoot();
+    copy("$active_fixture_dir/active.installed.json", "$active_dir/vendor/composer/installed.json");
+
+    // Before any other pre-apply listener runs, replaced the staged
+    // `vendor/composer/installed.json` with the fixture's
+    // `staged.installed.json`.
+    if ($stage_fixture_dir === NULL) {
+      $stage_fixture_dir = $active_fixture_dir;
+    }
+    if (!file_exists("$stage_fixture_dir/staged.installed.json")) {
+      return;
+    }
+    $this->assertFileIsReadable("$stage_fixture_dir/staged.installed.json");
+    $listener = function (PreApplyEvent $event) use ($stage_fixture_dir): void {
+      copy("$stage_fixture_dir/staged.installed.json", $event->getStage()->getStageDirectory() . "/vendor/composer/installed.json");
+    };
+    $this->container->get('event_dispatcher')
+      ->addListener(PreApplyEvent::class, $listener, PHP_INT_MAX);
   }
 
   /**
