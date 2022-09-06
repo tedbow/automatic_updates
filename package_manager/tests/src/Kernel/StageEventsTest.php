@@ -13,7 +13,7 @@ use Drupal\package_manager\Event\PreDestroyEvent;
 use Drupal\package_manager\Event\PreOperationStageEvent;
 use Drupal\package_manager\Event\PreRequireEvent;
 use Drupal\package_manager\Event\StageEvent;
-use Drupal\package_manager\Exception\StageValidationException;
+use Drupal\package_manager\ValidationResult;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 /**
@@ -136,30 +136,21 @@ class StageEventsTest extends PackageManagerKernelTestBase implements EventSubsc
    * @dataProvider providerValidationResults
    */
   public function testValidationResults(string $event_class): void {
+    $error_messages = ['Burn, baby, burn'];
     // Set up an event listener which will only flag an error for the event
     // class under test.
-    $handler = function (StageEvent $event) use ($event_class): void {
+    $handler = function (StageEvent $event) use ($event_class, $error_messages): void {
       if (get_class($event) === $event_class) {
         if ($event instanceof PreOperationStageEvent) {
-          $event->addError(['Burn, baby, burn']);
+          $event->addError($error_messages);
         }
       }
     };
     $this->container->get('event_dispatcher')
       ->addListener($event_class, $handler);
 
-    try {
-      $this->stage->create();
-      $this->stage->require(['ext-json:*']);
-      $this->stage->apply();
-      $this->stage->postApply();
-      $this->stage->destroy();
-
-      $this->fail('Expected \Drupal\package_manager\Exception\StageValidationException to be thrown.');
-    }
-    catch (StageValidationException $e) {
-      $this->assertCount(1, $e->getResults());
-    }
+    $result = ValidationResult::createError($error_messages);
+    $this->assertResults([$result], $event_class);
   }
 
   /**

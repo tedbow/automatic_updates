@@ -3,7 +3,7 @@
 namespace Drupal\Tests\package_manager\Kernel;
 
 use Drupal\Component\Serialization\Json;
-use Drupal\package_manager\Exception\StageValidationException;
+use Drupal\package_manager\Event\PreCreateEvent;
 use Drupal\package_manager\ValidationResult;
 
 /**
@@ -62,14 +62,7 @@ class ComposerSettingsValidatorTest extends PackageManagerKernelTestBase {
     $active_dir = $this->container->get('package_manager.path_locator')
       ->getProjectRoot();
     file_put_contents("$active_dir/composer.json", $contents);
-
-    try {
-      $this->createStage()->create();
-      $this->assertSame([], $expected_results);
-    }
-    catch (StageValidationException $e) {
-      $this->assertValidationResultsEqual($expected_results, $e->getResults());
-    }
+    $this->assertResults($expected_results, PreCreateEvent::class);
   }
 
 }

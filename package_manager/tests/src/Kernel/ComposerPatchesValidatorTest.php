@@ -3,7 +3,7 @@
 namespace Drupal\Tests\package_manager\Kernel;
 
 use Composer\Json\JsonFile;
-use Drupal\package_manager\Exception\StageValidationException;
+use Drupal\package_manager\Event\PreCreateEvent;
 use Drupal\package_manager\ValidationResult;
 
 /**
@@ -35,13 +35,7 @@ class ComposerPatchesValidatorTest extends PackageManagerKernelTestBase {
     $error = ValidationResult::createError([
       'The <code>cweagans/composer-patches</code> plugin is installed, but the <code>composer-exit-on-patch-failure</code> key is not set to <code>true</code> in the <code>extra</code> section of composer.json.',
     ]);
-    try {
-      $this->createStage()->create();
-      $this->fail('Expected a validation error.');
-    }
-    catch (StageValidationException $e) {
-      $this->assertValidationResultsEqual([$error], $e->getResults());
-    }
+    $this->assertResults([$error], PreCreateEvent::class);
   }
 
 }

@@ -3,6 +3,7 @@
 namespace Drupal\Tests\package_manager\Kernel;
 
 use Drupal\Core\DependencyInjection\ContainerBuilder;
+use Drupal\package_manager\Event\PreCreateEvent;
 use Drupal\package_manager\Exception\StageValidationException;
 use Drupal\package_manager\ValidationResult;
 use Drupal\package_manager\Validator\SymlinkValidator;
@@ -36,14 +37,7 @@ class SymlinkValidatorTest extends PackageManagerKernelTestBase {
       ->getProjectRoot();
     // @see \Drupal\Tests\package_manager\Kernel\TestSymlinkValidator::isLink()
     touch($active_dir . '/modules/a_link');
-
-    try {
-      $this->createStage()->create();
-      $this->fail('Expected a validation error.');
-    }
-    catch (StageValidationException $e) {
-      $this->assertValidationResultsEqual([$result], $e->getResults());
-    }
+    $this->assertResults([$result], PreCreateEvent::class);
   }
 
   /**

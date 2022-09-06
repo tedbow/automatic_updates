@@ -2,7 +2,7 @@
 
 namespace Drupal\Tests\package_manager\Kernel;
 
-use Drupal\package_manager\Exception\StageValidationException;
+use Drupal\package_manager\Event\PreCreateEvent;
 use Drupal\package_manager\ValidationResult;
 
 /**
@@ -39,15 +39,7 @@ class SettingsValidatorTest extends PackageManagerKernelTestBase {
    */
   public function testSettingsValidation(bool $setting, array $expected_results): void {
     $this->setSetting('update_fetch_with_http_fallback', $setting);
-
-    try {
-      $this->createStage()->create();
-      // If there was no exception, ensure we're not expecting any errors.
-      $this->assertSame([], $expected_results);
-    }
-    catch (StageValidationException $e) {
-      $this->assertValidationResultsEqual($expected_results, $e->getResults());
-    }
+    $this->assertResults($expected_results, PreCreateEvent::class);
   }
 
 }
