@@ -17,7 +17,7 @@ class FileSyncerFactoryTest extends KernelTestBase {
   /**
    * {@inheritdoc}
    */
-  protected static $modules = ['package_manager'];
+  protected static $modules = ['package_manager', 'update'];
 
   /**
    * Data provider for testFactory().

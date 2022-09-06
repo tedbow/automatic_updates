@@ -74,9 +74,12 @@ final class ProjectInfo {
    *   If data about available updates cannot be retrieved.
    */
   public function getProjectInfo(): ?array {
-    $available_updates = update_get_available(TRUE);
+    $available_updates = $this->getAvailableProjects();
     $project_data = update_calculate_project_data($available_updates);
-    return $project_data[$this->name] ?? NULL;
+    if (!isset($project_data[$this->name])) {
+      return $available_updates[$this->name] ?? NULL;
+    }
+    return $project_data[$this->name];
   }
 
   /**
@@ -99,31 +102,39 @@ final class ProjectInfo {
     if (!$project) {
       return NULL;
     }
-    $available_updates = update_get_available()[$this->name];
+    $available_updates = $this->getAvailableProjects()[$this->name];
     if ($available_updates['project_status'] !== 'published') {
       throw new \RuntimeException("The project '{$this->name}' can not be updated because its status is " . $available_updates['project_status']);
     }
-
-    // If we're already up-to-date, there's nothing else we need to do.
-    if ($project['status'] === UpdateManagerInterface::CURRENT) {
-      return [];
-    }
-
-    if (empty($available_updates['releases'])) {
-      // If project is not current we should always have at least one release.
-      throw new \RuntimeException('There was a problem getting update information. Try again later.');
-    }
     $installed_version = $this->getInstalledVersion();
+
+    if ($installed_version) {
+      // If the project is installed, and we're already up-to-date, there's
+      // nothing else we need to do.
+      if ($project['status'] === UpdateManagerInterface::CURRENT) {
+        return [];
+      }
+
+      if (empty($available_updates['releases'])) {
+        // If project is installed but not current we should always have at
+        // least one release.
+        throw new \RuntimeException('There was a problem getting update information. Try again later.');
+      }
+    }
+
     $support_branches = explode(',', $available_updates['supported_branches']);
     $installable_releases = [];
     foreach ($available_updates['releases'] as $release_info) {
       $release = ProjectRelease::createFromArray($release_info);
       $version = $release->getVersion();
-      $semantic_version = LegacyVersionUtility::convertToSemanticVersion($version);
-      $semantic_installed_version = LegacyVersionUtility::convertToSemanticVersion($installed_version);
-      if (Comparator::lessThanOrEqualTo($semantic_version, $semantic_installed_version)) {
-        // Stop searching for releases as soon as we find the installed version.
-        break;
+      if ($installed_version) {
+        $semantic_version = LegacyVersionUtility::convertToSemanticVersion($version);
+        $semantic_installed_version = LegacyVersionUtility::convertToSemanticVersion($installed_version);
+        if (Comparator::lessThanOrEqualTo($semantic_version, $semantic_installed_version)) {
+          // If the project is installed stop searching for releases as soon as
+          // we find the installed version.
+          break;
+        }
       }
       if ($this->isInstallable($release, $support_branches)) {
         $installable_releases[$version] = $release;
@@ -141,12 +152,37 @@ final class ProjectInfo {
    */
   public function getInstalledVersion(): ?string {
     if ($project_data = $this->getProjectInfo()) {
-      if (empty($project_data['existing_version'])) {
-        throw new \UnexpectedValueException("Project '{$this->name}' does not have 'existing_version' set");
-      }
-      return $project_data['existing_version'];
+      return $project_data['existing_version'] ?? NULL;
     }
     return NULL;
+  }
+
+  /**
+   * Gets the available projects.
+   *
+   * @return array
+   *   The available projects keyed by project machine name in the format
+   *   returned by update_get_available(). If the project specified in ::name is
+   *   not returned from update_get_available() this project will be explicitly
+   *   fetched and added the return value of this function.
+   *
+   * @see \update_get_available()
+   */
+  private function getAvailableProjects(): array {
+    $available_projects = update_get_available(TRUE);
+    // update_get_available() will only returns projects that are in the active
+    // codebase. If the project specified by ::name is not returned in
+    // $available_projects, it means it is not in the active codebase, therefore
+    // we will retrieve the project information from Package Manager's own
+    // update processor service.
+    if (!isset($available_projects[$this->name])) {
+      /** @var \Drupal\package_manager\PackageManagerUpdateProcessor $update_processor */
+      $update_processor = \Drupal::service('package_manager.update_processor');
+      if ($project_data = $update_processor->getProjectData($this->name)) {
+        $available_projects[$this->name] = $project_data;
+      }
+    }
+    return $available_projects;
   }
 
 }

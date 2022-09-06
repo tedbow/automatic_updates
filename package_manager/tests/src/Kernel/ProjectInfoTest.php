@@ -1,9 +1,8 @@
 <?php
 
-namespace Drupal\Tests\package_manger\Kernel;
+namespace Drupal\Tests\package_manager\Kernel;
 
 use Drupal\package_manager\ProjectInfo;
-use Drupal\Tests\package_manager\Kernel\PackageManagerKernelTestBase;
 
 /**
  * @coversDefaultClass \Drupal\package_manager\ProjectInfo
@@ -116,6 +115,52 @@ class ProjectInfoTest extends PackageManagerKernelTestBase {
         ['7.0.1', '7.0.0', '7.0.0-alpha1', '8.x-6.2', '8.x-6.1', '8.x-6.0', '8.x-6.0-alpha1'],
       ],
     ];
+  }
+
+  /**
+   * Tests a project that is not in the codebase.
+   */
+  public function testNewProject(): void {
+    $fixtures_directory = __DIR__ . '/../../fixtures/release-history/';
+    $metadata_fixtures['drupal'] = $fixtures_directory . 'drupal.9.8.2.xml';
+    $metadata_fixtures['aaa_automatic_updates_test'] = $fixtures_directory . 'aaa_automatic_updates_test.9.8.2.xml';
+    $this->setReleaseMetadata($metadata_fixtures);
+    $available = update_get_available(TRUE);
+    $this->assertSame(['drupal'], array_keys($available));
+    $this->setReleaseMetadata($metadata_fixtures);
+    $state = $this->container->get('state');
+    // Set the state that the update module uses to store last checked time
+    // ensure our calls do not affect it.
+    $state->set('update.last_check', 123);
+    $project_info = new ProjectInfo('aaa_automatic_updates_test');
+    $project_data = $project_info->getProjectInfo();
+    // Ensure the project information is correct.
+    $this->assertSame('AAA', $project_data['title']);
+    $all_releases = [
+      '7.0.1',
+      '7.0.0',
+      '7.0.0-alpha1',
+      '8.x-6.2',
+      '8.x-6.1',
+      '8.x-6.0',
+      '8.x-6.0-alpha1',
+      '7.0.x-dev',
+      '8.x-6.x-dev',
+    ];
+    $uninstallable_releases = ['7.0.x-dev', '8.x-6.x-dev'];
+    $installable_releases = array_values(array_diff($all_releases, $uninstallable_releases));
+    $this->assertSame(
+      $all_releases,
+      array_keys($project_data['releases'])
+    );
+    $this->assertSame(
+      $installable_releases,
+      array_keys($project_info->getInstallableReleases())
+    );
+    $this->assertNull($project_info->getInstalledVersion());
+    // Ensure we have not changed the state the update module uses to store
+    // the last checked time.
+    $this->assertSame(123, $state->get('update.last_check'));
   }
 
   /**

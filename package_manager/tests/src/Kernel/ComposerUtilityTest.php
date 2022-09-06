@@ -19,7 +19,7 @@ class ComposerUtilityTest extends KernelTestBase {
   /**
    * {@inheritdoc}
    */
-  protected static $modules = ['package_manager'];
+  protected static $modules = ['package_manager', 'update'];
 
   /**
    * {@inheritdoc}

@@ -18,7 +18,7 @@ class ServicesTest extends KernelTestBase {
   /**
    * {@inheritdoc}
    */
-  protected static $modules = ['package_manager'];
+  protected static $modules = ['package_manager', 'update'];
 
   /**
    * Tests that Package Manager's public services can be instantiated.
