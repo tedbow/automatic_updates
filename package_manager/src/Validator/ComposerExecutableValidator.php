@@ -9,6 +9,7 @@ use Drupal\package_manager\Event\PreCreateEvent;
 use Drupal\package_manager\Event\PreOperationStageEvent;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\Core\StringTranslation\TranslationInterface;
+use Drupal\package_manager\Event\StatusCheckEvent;
 use PhpTuf\ComposerStager\Domain\Exception\ExceptionInterface;
 use PhpTuf\ComposerStager\Domain\Service\ProcessOutputCallback\ProcessOutputCallbackInterface;
 use PhpTuf\ComposerStager\Domain\Service\ProcessRunner\ComposerRunnerInterface;
@@ -126,6 +127,7 @@ final class ComposerExecutableValidator implements PreOperationStageValidatorInt
   public static function getSubscribedEvents() {
     return [
       PreCreateEvent::class => 'validateStagePreOperation',
+      StatusCheckEvent::class => 'validateStagePreOperation',
     ];
   }
 

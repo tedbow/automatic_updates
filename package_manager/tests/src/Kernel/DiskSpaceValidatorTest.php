@@ -148,6 +148,7 @@ class DiskSpaceValidatorTest extends PackageManagerKernelTestBase {
     $validator->sharedDisk = $shared_disk;
     $validator->freeSpace = array_map([Bytes::class, 'toNumber'], $free_space);
 
+    $this->assertStatusCheckResults($expected_results);
     $this->assertResults($expected_results, PreCreateEvent::class);
   }
 

@@ -6,6 +6,7 @@ use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\Core\StringTranslation\TranslationInterface;
 use Drupal\package_manager\Event\PreCreateEvent;
 use Drupal\package_manager\Event\PreOperationStageEvent;
+use Drupal\package_manager\Event\StatusCheckEvent;
 use Drupal\package_manager\PathLocator;
 
 /**
@@ -73,6 +74,7 @@ final class MultisiteValidator implements PreOperationStageValidatorInterface {
   public static function getSubscribedEvents() {
     return [
       PreCreateEvent::class => 'validateStagePreOperation',
+      StatusCheckEvent::class => 'validateStagePreOperation',
     ];
   }
 

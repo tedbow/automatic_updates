@@ -21,6 +21,7 @@ class PendingUpdatesValidatorTest extends PackageManagerKernelTestBase {
    * Tests that no error is raised if there are no pending updates.
    */
   public function testNoPendingUpdates(): void {
+    $this->assertStatusCheckResults([]);
     $this->assertResults([], PreCreateEvent::class);
   }
 
@@ -42,6 +43,7 @@ class PendingUpdatesValidatorTest extends PackageManagerKernelTestBase {
     $result = ValidationResult::createError([
       'Some modules have database schema updates to install. You should run the <a href="/update.php">database update script</a> immediately.',
     ]);
+    $this->assertStatusCheckResults([$result]);
     $this->assertResults([$result], PreCreateEvent::class);
   }
 
@@ -55,6 +57,7 @@ class PendingUpdatesValidatorTest extends PackageManagerKernelTestBase {
     $result = ValidationResult::createError([
       'Some modules have database schema updates to install. You should run the <a href="/update.php">database update script</a> immediately.',
     ]);
+    $this->assertStatusCheckResults([$result]);
     $this->assertResults([$result], PreCreateEvent::class);
   }
 

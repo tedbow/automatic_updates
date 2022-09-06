@@ -62,6 +62,7 @@ class ComposerSettingsValidatorTest extends PackageManagerKernelTestBase {
     $active_dir = $this->container->get('package_manager.path_locator')
       ->getProjectRoot();
     file_put_contents("$active_dir/composer.json", $contents);
+    $this->assertStatusCheckResults($expected_results);
     $this->assertResults($expected_results, PreCreateEvent::class);
   }
 

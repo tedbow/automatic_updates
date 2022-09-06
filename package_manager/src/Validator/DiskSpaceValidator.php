@@ -8,6 +8,7 @@ use Drupal\Component\FileSystem\FileSystem;
 use Drupal\Component\Utility\Bytes;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\Core\StringTranslation\TranslationInterface;
+use Drupal\package_manager\Event\StatusCheckEvent;
 use Drupal\package_manager\PathLocator;
 
 /**
@@ -165,6 +166,7 @@ class DiskSpaceValidator implements PreOperationStageValidatorInterface {
   public static function getSubscribedEvents() {
     return [
       PreCreateEvent::class => 'validateStagePreOperation',
+      StatusCheckEvent::class => 'validateStagePreOperation',
     ];
   }
 

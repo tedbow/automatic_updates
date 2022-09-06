@@ -6,6 +6,7 @@ use Drupal\Core\StringTranslation\TranslationInterface;
 use Drupal\package_manager\Event\PreCreateEvent;
 use Drupal\package_manager\Event\PreOperationStageEvent;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
+use Drupal\package_manager\Event\StatusCheckEvent;
 use Drupal\package_manager\PathLocator;
 
 /**
@@ -95,6 +96,7 @@ class WritableFileSystemValidator implements PreOperationStageValidatorInterface
   public static function getSubscribedEvents() {
     return [
       PreCreateEvent::class => 'validateStagePreOperation',
+      StatusCheckEvent::class => 'validateStagePreOperation',
     ];
   }
 

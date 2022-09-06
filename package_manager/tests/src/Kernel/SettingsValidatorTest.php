@@ -39,6 +39,7 @@ class SettingsValidatorTest extends PackageManagerKernelTestBase {
    */
   public function testSettingsValidation(bool $setting, array $expected_results): void {
     $this->setSetting('update_fetch_with_http_fallback', $setting);
+    $this->assertStatusCheckResults($expected_results);
     $this->assertResults($expected_results, PreCreateEvent::class);
   }
 

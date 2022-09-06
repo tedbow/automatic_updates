@@ -84,6 +84,7 @@ class WritableFileSystemValidatorTest extends PackageManagerKernelTestBase {
     $this->assertTrue(chmod($path_locator->getVendorDirectory(), $vendor_permissions));
     $this->assertTrue(chmod($path_locator->getProjectRoot(), $root_permissions));
 
+    $this->assertStatusCheckResults($expected_results);
     $this->assertResults($expected_results, PreCreateEvent::class);
   }
 
@@ -143,6 +144,7 @@ class WritableFileSystemValidatorTest extends PackageManagerKernelTestBase {
       $dir = dirname($dir);
     }
     $this->assertTrue(chmod($dir, $permissions));
+    $this->assertStatusCheckResults($expected_results);
     $this->assertResults($expected_results, PreCreateEvent::class);
   }
 

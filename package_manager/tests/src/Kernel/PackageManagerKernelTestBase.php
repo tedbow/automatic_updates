@@ -6,6 +6,7 @@ use Drupal\Core\DependencyInjection\ContainerBuilder;
 use Drupal\KernelTests\KernelTestBase;
 use Drupal\package_manager\Event\PreApplyEvent;
 use Drupal\package_manager\Event\StageEvent;
+use Drupal\package_manager\Event\StatusCheckEvent;
 use Drupal\package_manager\Validator\DiskSpaceValidator;
 use Drupal\package_manager\Exception\StageException;
 use Drupal\package_manager\Exception\StageValidationException;
@@ -169,6 +170,18 @@ abstract class PackageManagerKernelTestBase extends KernelTestBase {
       $this->assertNotEmpty($event_class);
       $this->assertInstanceOf($event_class, $e->event);
     }
+  }
+
+  /**
+   * Asserts validation results are returned from the status check event.
+   *
+   * @param \Drupal\package_manager\ValidationResult[] $expected_results
+   *   The expected validation results.
+   */
+  protected function assertStatusCheckResults(array $expected_results): void {
+    $event = new StatusCheckEvent($this->createStage());
+    $this->container->get('event_dispatcher')->dispatch($event);
+    $this->assertValidationResultsEqual($expected_results, $event->getResults());
   }
 
   /**

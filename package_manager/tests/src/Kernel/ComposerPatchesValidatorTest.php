@@ -16,7 +16,7 @@ class ComposerPatchesValidatorTest extends PackageManagerKernelTestBase {
   /**
    * Tests that the patcher configuration is validated during pre-create.
    */
-  public function testPreCreate(): void {
+  public function testError(): void {
     // Simulate an active directory where the patcher is installed, but there's
     // no composer-exit-on-patch-failure flag.
     $dir = $this->container->get('package_manager.path_locator')
@@ -35,6 +35,7 @@ class ComposerPatchesValidatorTest extends PackageManagerKernelTestBase {
     $error = ValidationResult::createError([
       'The <code>cweagans/composer-patches</code> plugin is installed, but the <code>composer-exit-on-patch-failure</code> key is not set to <code>true</code> in the <code>extra</code> section of composer.json.',
     ]);
+    $this->assertStatusCheckResults([$error]);
     $this->assertResults([$error], PreCreateEvent::class);
   }
 

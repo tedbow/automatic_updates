@@ -59,6 +59,7 @@ class ComposerExecutableValidatorTest extends PackageManagerKernelTestBase {
     $error = ValidationResult::createError([
       $exception->getMessage(),
     ]);
+    $this->assertStatusCheckResults([$error]);
     $this->assertResults([$error], PreCreateEvent::class);
 
     $this->enableModules(['help']);
@@ -160,6 +161,7 @@ class ComposerExecutableValidatorTest extends PackageManagerKernelTestBase {
 
     // If the validator can't find a recognized, supported version of Composer,
     // it should produce errors.
+    $this->assertStatusCheckResults($expected_results);
     $this->assertResults($expected_results, PreCreateEvent::class);
 
     $this->enableModules(['help']);
@@ -189,6 +191,7 @@ class ComposerExecutableValidatorTest extends PackageManagerKernelTestBase {
       $messages = array_map($map, $result->getMessages());
       $expected_results[$index] = ValidationResult::createError($messages);
     }
+    $this->assertStatusCheckResults($expected_results);
     $this->assertResults($expected_results, $event_class);
   }
 

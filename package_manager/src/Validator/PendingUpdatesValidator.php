@@ -8,6 +8,7 @@ use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\Core\StringTranslation\TranslationInterface;
 use Drupal\Core\Update\UpdateRegistry;
 use Drupal\Core\Url;
+use Drupal\package_manager\Event\StatusCheckEvent;
 
 /**
  * Validates that there are no pending database updates.
@@ -87,6 +88,7 @@ final class PendingUpdatesValidator implements PreOperationStageValidatorInterfa
   public static function getSubscribedEvents() {
     return [
       PreCreateEvent::class => 'validateStagePreOperation',
+      StatusCheckEvent::class => 'validateStagePreOperation',
     ];
   }
 

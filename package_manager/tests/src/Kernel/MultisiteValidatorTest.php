@@ -54,6 +54,7 @@ class MultisiteValidatorTest extends PackageManagerKernelTestBase {
         ->getProjectRoot();
       touch($project_root . '/sites/sites.php');
     }
+    $this->assertStatusCheckResults($expected_results);
     $this->assertResults($expected_results, PreCreateEvent::class);
   }
 

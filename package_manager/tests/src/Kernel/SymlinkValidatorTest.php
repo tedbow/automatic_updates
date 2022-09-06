@@ -37,6 +37,7 @@ class SymlinkValidatorTest extends PackageManagerKernelTestBase {
       ->getProjectRoot();
     // @see \Drupal\Tests\package_manager\Kernel\TestSymlinkValidator::isLink()
     touch($active_dir . '/modules/a_link');
+    $this->assertStatusCheckResults([$result]);
     $this->assertResults([$result], PreCreateEvent::class);
   }
 
