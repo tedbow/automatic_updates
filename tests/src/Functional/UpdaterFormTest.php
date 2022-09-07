@@ -188,6 +188,21 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
   }
 
   /**
+   * Tests readiness checks are displayed when there is no update available.
+   */
+  public function testReadinessCheckFailureWhenNoUpdate() {
+    $assert_session = $this->assertSession();
+    $this->setCoreVersion('9.8.1');
+    $message = "You've not experienced Shakespeare until you have read him in the original Klingon.";
+    $result = ValidationResult::createError([$message]);
+    TestSubscriber1::setTestResult([$result], ReadinessCheckEvent::class);
+    $this->checkForUpdates();
+    $this->drupalGet('/admin/reports/updates/automatic-update');
+    $assert_session->pageTextContains('No update available');
+    $assert_session->pageTextContains($message);
+  }
+
+  /**
    * Checks the table for a release on the form.
    *
    * @param string $container_locator

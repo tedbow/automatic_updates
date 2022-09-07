@@ -164,6 +164,15 @@ final class UpdaterForm extends FormBase {
       return $form;
     }
 
+    if ($form_state->getUserInput()) {
+      $results = [];
+    }
+    else {
+      $event = new ReadinessCheckEvent($this->updater);
+      $this->eventDispatcher->dispatch($event);
+      $results = $event->getResults();
+    }
+    $this->displayResults($results, $this->messenger(), $this->renderer);
     $project = $project_info->getProjectInfo();
     if ($installed_minor_release === NULL && $next_minor_release === NULL) {
       if ($project['status'] === UpdateManagerInterface::CURRENT) {
@@ -216,15 +225,6 @@ final class UpdaterForm extends FormBase {
         $release_status = $this->t('Available update');
         $type = 'update-recommended';
     }
-    if ($form_state->getUserInput()) {
-      $results = [];
-    }
-    else {
-      $event = new ReadinessCheckEvent($this->updater);
-      $this->eventDispatcher->dispatch($event);
-      $results = $event->getResults();
-    }
-    $this->displayResults($results, $this->messenger(), $this->renderer);
     $create_update_buttons = !$stage_exists && $this->getOverallSeverity($results) !== SystemManager::REQUIREMENT_ERROR;
     if ($installed_minor_release) {
       $installed_version = ExtensionVersion::createFromVersionString($project_info->getInstalledVersion());
