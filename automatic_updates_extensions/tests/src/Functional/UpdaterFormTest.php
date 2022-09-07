@@ -153,11 +153,11 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
    */
   public function testSuccessfulUpdate(bool $maintenance_mode_on, string $project_name, string $project_title, string $installed_version, string $target_version): void {
     $this->container->get('theme_installer')->install(['automatic_updates_theme_with_updates']);
-    // By default, the Update module only checks for updates of installed modules
-    // and themes. The two modules we're testing here (semver_test and aaa_update_test)
-    // are already installed by static::$modules.
+    // By default, the Update module only checks for updates of installed
+    // modules and themes. The two modules we're testing here (semver_test and
+    // aaa_update_test) are already installed by static::$modules.
     $this->container->get('theme_installer')->install(['test_theme']);
-    Stager::setFixturePath(__DIR__ . '/../../fixtures/stage_composer/' . $project_name);
+    $this->useFixtureDirectoryAsStaged(__DIR__ . '/../../fixtures/stage_composer/' . $project_name);
     $this->setReleaseMetadata(__DIR__ . '/../../../../tests/fixtures/release-history/drupal.9.8.2.xml');
     $this->setReleaseMetadata(__DIR__ . '/../../fixtures/release-history/' . $project_name . '.1.1.xml');
     $this->setProjectInstalledVersion([$project_name => $installed_version]);
@@ -202,7 +202,6 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
 
     $page->pressButton('Continue');
     $this->checkForMetaRefresh();
-
     $assert_session->addressEquals('/admin/reports/updates');
     // Confirm that the site was in maintenance before the update was applied.
     // @see \Drupal\package_manager_test_validation\EventSubscriber\TestSubscriber::handleEvent()

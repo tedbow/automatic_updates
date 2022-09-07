@@ -3,6 +3,7 @@
 namespace Drupal\Tests\automatic_updates_extensions\Kernel;
 
 use Drupal\Tests\automatic_updates\Kernel\AutomaticUpdatesKernelTestBase;
+use Drupal\Tests\package_manager\Traits\InfoYmlConverterTrait;
 use Drupal\Tests\user\Traits\UserCreationTrait;
 
 /**
@@ -13,6 +14,7 @@ use Drupal\Tests\user\Traits\UserCreationTrait;
 class ExtensionUpdaterTest extends AutomaticUpdatesKernelTestBase {
 
   use UserCreationTrait;
+  use InfoYmlConverterTrait;
 
   /**
    * {@inheritdoc}
@@ -32,28 +34,28 @@ class ExtensionUpdaterTest extends AutomaticUpdatesKernelTestBase {
     // codebase. Therefore, we need to disable the following validators that
     // require real Drupal projects.
     $this->disableValidators[] = 'automatic_updates_extensions.validator.target_release';
-    $this->disableValidators[] = 'automatic_updates_extensions.validator.packages_type';
     parent::setUp();
     $this->installEntitySchema('user');
-  }
-
-  /**
-   * Tests that correct versions are staged after calling ::begin().
-   */
-  public function testCorrectVersionsStaged(): void {
 
     // Create a user who will own the stage even after the container is rebuilt.
     $user = $this->createUser([], NULL, TRUE, ['uid' => 2]);
     $this->setCurrentUser($user);
 
     $this->createVirtualProject(__DIR__ . '/../../fixtures/fake-site');
+    $this->renameVfsInfoYmlFiles();
+  }
 
+  /**
+   * Tests that correct versions are staged after calling ::begin().
+   */
+  public function testCorrectVersionsStaged(): void {
     $id = $this->container->get('automatic_updates_extensions.updater')->begin([
       'my_module' => '9.8.1',
       // Use a legacy version number to ensure they are converted to semantic
       // version numbers which will work with the drupal.org Composer facade.
       'my_dev_module' => '8.x-1.2-alpha1',
     ]);
+    $user = $this->container->get('current_user')->getAccount();
     // Rebuild the container to ensure the package versions are persisted.
     /** @var \Drupal\Core\DrupalKernel $kernel */
     $kernel = $this->container->get('kernel');
@@ -121,6 +123,17 @@ class ExtensionUpdaterTest extends AutomaticUpdatesKernelTestBase {
     $this->expectException('InvalidArgumentException');
     $this->expectExceptionMessage('No projects to begin the update');
     $this->container->get('automatic_updates_extensions.updater')->begin([]);
+  }
+
+  /**
+   * Tests exception if a Drupal project unknown to composer sent to ::begin().
+   */
+  public function testUnknownDrupalProject(): void {
+    $this->expectException('InvalidArgumentException');
+    $this->expectExceptionMessage("The project my_module_unknown is not a Drupal project known to Composer and cannot be updated.");
+    $this->container->get('automatic_updates_extensions.updater')->begin([
+      'my_module_unknown' => '9.8.1',
+    ]);
   }
 
 }

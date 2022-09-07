@@ -4,11 +4,16 @@ namespace Drupal\Tests\automatic_updates\Build;
 
 use Drupal\Component\Utility\Html;
 use Drupal\Tests\package_manager\Build\TemplateProjectTestBase;
+use Drupal\Tests\RandomGeneratorTrait;
+use Symfony\Component\Filesystem\Filesystem;
+use Symfony\Component\Finder\Iterator\RecursiveDirectoryIterator;
 
 /**
  * Base class for tests that perform in-place updates.
  */
 abstract class UpdateTestBase extends TemplateProjectTestBase {
+
+  use RandomGeneratorTrait;
 
   /**
    * A secondary server instance, to serve XML metadata about available updates.
@@ -97,6 +102,42 @@ END;
         $url = Html::decodeEntities($match['url']);
         $this->visit($url);
         $this->waitForBatchJob();
+      }
+    }
+  }
+
+  /**
+   * Copies a fixture directory to a temporary directory and returns its path.
+   *
+   * @param string $fixture_directory
+   *   The fixture directory.
+   *
+   * @return string
+   *   The temporary directory.
+   */
+  protected function copyFixtureToTempDirectory(string $fixture_directory): string {
+    $temp_directory = $this->getWorkspaceDirectory() . '/fixtures_temp_' . $this->randomMachineName(20);
+    (new Filesystem())->mirror($fixture_directory, $temp_directory);
+    $this->assertDirectoryIsWritable($temp_directory);
+    $this->renameInfoYmlFiles($temp_directory);
+    return $temp_directory;
+  }
+
+  /**
+   * Renames all files that end with .info.yml.hide.
+   *
+   * @param string $dir
+   *   The directory to be iterated through.
+   */
+  protected function renameInfoYmlFiles(string $dir) {
+    // Construct the iterator.
+    $it = new RecursiveDirectoryIterator($dir, \RecursiveIteratorIterator::SELF_FIRST);
+
+    // Loop through files and rename them.
+    foreach (new \RecursiveIteratorIterator($it) as $file) {
+      if ($file->getExtension() == 'hide') {
+        rename($file->getPathname(), $dir . DIRECTORY_SEPARATOR .
+            $file->getRelativePath() . DIRECTORY_SEPARATOR . str_replace(".hide", "", $file->getFilename()));
       }
     }
   }

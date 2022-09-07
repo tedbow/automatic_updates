@@ -4,10 +4,8 @@ namespace Drupal\Tests\package_manager\Kernel;
 
 use Drupal\KernelTests\KernelTestBase;
 use Drupal\package_manager\ComposerUtility;
+use Drupal\Tests\package_manager\Traits\InfoYmlConverterTrait;
 use org\bovigo\vfs\vfsStream;
-use org\bovigo\vfs\vfsStreamDirectory;
-use org\bovigo\vfs\vfsStreamFile;
-use org\bovigo\vfs\visitor\vfsStreamAbstractVisitor;
 
 /**
  * @coversDefaultClass \Drupal\package_manager\ComposerUtility
@@ -15,6 +13,8 @@ use org\bovigo\vfs\visitor\vfsStreamAbstractVisitor;
  * @group package_manager
  */
 class ComposerUtilityTest extends KernelTestBase {
+
+  use InfoYmlConverterTrait;
 
   /**
    * {@inheritdoc}
@@ -30,34 +30,7 @@ class ComposerUtilityTest extends KernelTestBase {
     $fixture = vfsStream::newDirectory('fixture');
     vfsStream::copyFromFileSystem(__DIR__ . '/../../fixtures/project_package_conversion', $fixture);
     $this->vfsRoot->addChild($fixture);
-
-    // Strip the `.hide` suffix from all `.info.yml.hide` files. Drupal's coding
-    // standards don't allow info files to have the `project` key, but we need
-    // it to be present for testing.
-    vfsStream::inspect(new class () extends vfsStreamAbstractVisitor {
-
-      /**
-       * {@inheritdoc}
-       */
-      public function visitFile(vfsStreamFile $file) {
-        $name = $file->getName();
-
-        if (str_ends_with($name, '.info.yml.hide')) {
-          $new_name = basename($name, '.hide');
-          $file->rename($new_name);
-        }
-      }
-
-      /**
-       * {@inheritdoc}
-       */
-      public function visitDirectory(vfsStreamDirectory $dir) {
-        foreach ($dir->getChildren() as $child) {
-          $this->visit($child);
-        }
-      }
-
-    });
+    $this->renameVfsInfoYmlFiles();
   }
 
   /**

@@ -3,17 +3,19 @@
 namespace Drupal\Tests\automatic_updates_extensions\Kernel;
 
 use Drupal\automatic_updates_extensions\ExtensionUpdater;
-
 use Drupal\Core\DependencyInjection\ContainerBuilder;
 use Drupal\package_manager\Exception\StageValidationException;
 use Drupal\Tests\automatic_updates\Kernel\AutomaticUpdatesKernelTestBase;
 use Drupal\Tests\package_manager\Kernel\TestPathFactory;
 use Drupal\Tests\package_manager\Kernel\TestStageTrait;
+use Drupal\Tests\package_manager\Traits\InfoYmlConverterTrait;
 
 /**
  * Base class for kernel tests of the Automatic Updates Extensions module.
  */
 abstract class AutomaticUpdatesExtensionsKernelTestBase extends AutomaticUpdatesKernelTestBase {
+
+  use InfoYmlConverterTrait;
 
   /**
    * {@inheritdoc}
@@ -34,6 +36,18 @@ abstract class AutomaticUpdatesExtensionsKernelTestBase extends AutomaticUpdates
     // package_manager_bypass is disabling those operations.
     $this->disableValidators[] = 'package_manager.validator.composer_executable';
     parent::setUp();
+  }
+
+  /**
+   * Create Virtual Project.
+   *
+   * @param string|null $source_dir
+   *   Source directory.
+   */
+  protected function createVirtualProject(?string $source_dir = NULL): void {
+    $source_dir = $source_dir ?? __DIR__ . '/../../fixtures/fake-site';
+    parent::createVirtualProject($source_dir);
+    $this->renameVfsInfoYmlFiles();
   }
 
   /**

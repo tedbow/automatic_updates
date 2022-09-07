@@ -37,12 +37,11 @@ class ModuleUpdateTest extends UpdateTestBase {
 \$config['update_test.settings']['system_info'] = $system_info;
 END;
     $this->writeSettings($code);
-
-    $this->addRepository('alpha', __DIR__ . '/../../../../package_manager/tests/fixtures/alpha/1.0.0');
+    $this->addRepository('alpha', $this->copyFixtureToTempDirectory(__DIR__ . '/../../../../package_manager/tests/fixtures/alpha/1.0.0'));
     $this->runComposer('COMPOSER_MIRROR_PATH_REPOS=1 composer require drupal/alpha --update-with-all-dependencies', 'project');
     $this->assertModuleVersion('alpha', '1.0.0');
     $fs = new SymfonyFilesystem();
-    $fs->mirror(__DIR__ . '/../../fixtures/new_module', $this->getWorkspaceDirectory() . '/project/web/modules');
+    $fs->mirror($this->copyFixtureToTempDirectory(__DIR__ . '/../../fixtures/new_module'), $this->getWorkspaceDirectory() . '/project/web/modules');
     $this->installModules([
       'automatic_updates_extensions_test_api',
       'alpha',
@@ -50,7 +49,7 @@ END;
     ]);
 
     // Change both modules' upstream version.
-    $this->addRepository('alpha', __DIR__ . '/../../../../package_manager/tests/fixtures/alpha/1.1.0');
+    $this->addRepository('alpha', $this->copyFixtureToTempDirectory(__DIR__ . '/../../../../package_manager/tests/fixtures/alpha/1.1.0'));
   }
 
   /**
@@ -72,7 +71,7 @@ END;
     $mink = $this->getMink();
     $mink->assertSession()->statusCodeEquals(500);
     $page_text = $mink->getSession()->getPage()->getText();
-    $this->assertStringContainsString('Automatic Updates can only update projects that were installed via Composer. The following packages are not installed through composer:', $page_text);
+    $this->assertStringContainsString('The project new_module is not a Drupal project known to Composer and cannot be updated.', $page_text);
     $this->assertStringContainsString('new_module', $page_text);
     // Use the API endpoint to create a stage and update the 'alpha' module to
     // 1.1.0. We ask the API to return the contents of the module's

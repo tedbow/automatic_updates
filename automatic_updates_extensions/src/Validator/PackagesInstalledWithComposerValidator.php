@@ -7,12 +7,12 @@ use Drupal\automatic_updates_extensions\ExtensionUpdater;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\Core\StringTranslation\TranslationInterface;
 use Drupal\package_manager\Event\PreApplyEvent;
-use Drupal\package_manager\Event\PreCreateEvent;
-use Drupal\package_manager\Event\PreOperationStageEvent;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 /**
  * Validates packages are installed via Composer.
+ *
+ * @todo Remove this validator completely in https://www.drupal.org/i/3303900.
  */
 class PackagesInstalledWithComposerValidator implements EventSubscriberInterface {
 
@@ -31,10 +31,10 @@ class PackagesInstalledWithComposerValidator implements EventSubscriberInterface
   /**
    * Validates that packages are installed with composer or not.
    *
-   * @param \Drupal\package_manager\Event\PreOperationStageEvent $event
+   * @param \Drupal\package_manager\Event\PreApplyEvent $event
    *   The event object.
    */
-  public function checkPackagesInstalledWithComposer(PreOperationStageEvent $event): void {
+  public function checkPackagesInstalledWithComposer(PreApplyEvent $event): void {
     $stage = $event->getStage();
 
     if (!$stage instanceof ExtensionUpdater) {
@@ -54,7 +54,6 @@ class PackagesInstalledWithComposerValidator implements EventSubscriberInterface
    */
   public static function getSubscribedEvents() {
     return [
-      PreCreateEvent::class => 'checkPackagesInstalledWithComposer',
       PreApplyEvent::class => 'checkPackagesInstalledWithComposer',
     ];
   }
@@ -62,51 +61,37 @@ class PackagesInstalledWithComposerValidator implements EventSubscriberInterface
   /**
    * Gets the packages which aren't installed via composer.
    *
-   * @param \Drupal\package_manager\Event\PreOperationStageEvent $event
+   * @param \Drupal\package_manager\Event\PreApplyEvent $event
    *   The event object.
    *
    * @return \Composer\Package\PackageInterface[]
    *   Packages not installed via composer.
    */
-  protected function getPackagesNotInstalledWithComposer(PreOperationStageEvent $event): array {
+  protected function getPackagesNotInstalledWithComposer(PreApplyEvent $event): array {
     $stage = $event->getStage();
     $active_composer = $stage->getActiveComposer();
-    $installed_packages = $active_composer->getInstalledPackages();
 
-    $missing_packages = [];
-    // During pre-create there is no stage directory, so missing packages can be
-    // found using package versions that will be required during the update,
-    // while during pre-apply there is stage directory which will be used to
-    // find missing packages.
-    if ($event instanceof PreCreateEvent) {
-      $package_versions = $stage->getPackageVersions();
-      foreach (['production', 'dev'] as $package_group) {
-        $missing_packages = array_merge($missing_packages, array_diff_key($package_versions[$package_group], $installed_packages));
-      }
-    }
-    else {
-      $missing_packages = $stage->getStageComposer()->getPackagesNotIn($active_composer);
+    $missing_packages = $stage->getStageComposer()->getPackagesNotIn($active_composer);
 
-      // The core update system can only fetch release information for modules,
-      // themes, or profiles that are in the active code base (whether they're
-      // installed or not). If a package is not one of those types, ignore it
-      // even if its vendor namespace is `drupal`.
-      $types = [
-        'drupal-module',
-        'drupal-theme',
-        'drupal-profile',
-      ];
-      $filter = function (PackageInterface $package) use ($types): bool {
-        return in_array($package->getType(), $types, TRUE);
-      };
-      $missing_packages = array_filter($missing_packages, $filter);
+    // The core update system can only fetch release information for modules,
+    // themes, or profiles that are in the active code base (whether they're
+    // installed or not). If a package is not one of those types, ignore it
+    // even if its vendor namespace is `drupal`.
+    $types = [
+      'drupal-module',
+      'drupal-theme',
+      'drupal-profile',
+    ];
+    $filter = function (PackageInterface $package) use ($types): bool {
+      return in_array($package->getType(), $types, TRUE);
+    };
+    $missing_packages = array_filter($missing_packages, $filter);
 
-      // The core update system can only fetch release information for drupal
-      // projects, so saving only the packages whose name starts with drupal/.
-      $missing_packages = array_filter($missing_packages, function (string $key) {
-        return str_starts_with($key, 'drupal/');
-      }, ARRAY_FILTER_USE_KEY);
-    }
+    // The core update system can only fetch release information for drupal
+    // projects, so saving only the packages whose name starts with drupal/.
+    $missing_packages = array_filter($missing_packages, function (string $key) {
+      return str_starts_with($key, 'drupal/');
+    }, ARRAY_FILTER_USE_KEY);
     return $missing_packages;
   }
 

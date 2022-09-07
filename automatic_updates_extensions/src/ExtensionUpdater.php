@@ -43,7 +43,10 @@ class ExtensionUpdater extends Stage {
       ->getPackage()
       ->getDevRequires();
     foreach ($project_versions as $project_name => $version) {
-      $package = "drupal/$project_name";
+      $package = $composer->getPackageForProject($project_name);
+      if (empty($package)) {
+        throw new \InvalidArgumentException("The project $project_name is not a Drupal project known to Composer and cannot be updated.");
+      }
       $group = array_key_exists($package, $require_dev) ? 'dev' : 'production';
       $package_versions[$group][$package] = LegacyVersionUtility::convertToSemanticVersion($version);
     }

@@ -4,9 +4,11 @@ namespace Drupal\Tests\automatic_updates\Functional;
 
 use Drupal\Core\Site\Settings;
 use Drupal\package_manager_bypass\Beginner;
+use Drupal\package_manager_bypass\Stager;
 use Drupal\Tests\BrowserTestBase;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\Filesystem\Filesystem;
+use Symfony\Component\Finder\Iterator\RecursiveDirectoryIterator;
 
 /**
  * Base class for functional tests of the Automatic Updates module.
@@ -191,6 +193,43 @@ abstract class AutomaticUpdatesFunctionalTestBase extends BrowserTestBase {
     Beginner::setFixturePath($active_dir);
     $this->container->get('package_manager.path_locator')
       ->setPaths($active_dir, $active_dir . '/vendor', '', NULL);
+
+    $this->renameInfoYmlFiles($active_dir);
+  }
+
+  /**
+   * Sets a fixture directory to use as the staged directory.
+   *
+   * @param string $fixture_directory
+   *   The fixture directory.
+   */
+  protected function useFixtureDirectoryAsStaged(string $fixture_directory): void {
+    // Create a temporary directory from our fixture directory that will be
+    // unique for each test run. This will enable changing files in the
+    // directory and not affect other tests.
+    $staged_dir = $this->copyFixtureToTempDirectory($fixture_directory);
+    Stager::setFixturePath($staged_dir);
+
+    $this->renameInfoYmlFiles($staged_dir);
+  }
+
+  /**
+   * Renames all files that end with .info.yml.hide.
+   *
+   * @param string $dir
+   *   The directory to be iterated through.
+   */
+  protected function renameInfoYmlFiles(string $dir) {
+    // Construct the iterator.
+    $it = new RecursiveDirectoryIterator($dir, \RecursiveIteratorIterator::SELF_FIRST);
+
+    // Loop through files and rename them.
+    foreach (new \RecursiveIteratorIterator($it) as $file) {
+      if ($file->getExtension() == 'hide') {
+        rename($file->getPathname(), $dir . DIRECTORY_SEPARATOR . $file->getRelativePath() . DIRECTORY_SEPARATOR . str_replace(".hide", "", $file->getFilename()));
+      }
+    }
+
   }
 
 }

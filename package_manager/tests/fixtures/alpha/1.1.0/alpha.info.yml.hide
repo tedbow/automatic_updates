@@ -1,3 +1,4 @@
-name: 'New module'
+name: Alpha
 type: module
 core_version_requirement: ^9
+project: alpha

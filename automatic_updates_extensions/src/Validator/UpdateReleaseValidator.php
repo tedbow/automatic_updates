@@ -16,6 +16,8 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
  * @internal
  *   This class is an internal part of the module's update handling and
  *   should not be used by external code.
+ *
+ * @todo Remove this validator completely in https://www.drupal.org/i/3307369.
  */
 final class UpdateReleaseValidator implements EventSubscriberInterface {
 
@@ -79,7 +81,7 @@ final class UpdateReleaseValidator implements EventSubscriberInterface {
         ['drupal-module', 'drupal-theme'], TRUE)) {
         continue;
       }
-      [, $project_name] = explode('/', $staged_package->getName());
+      $project_name = $staged->getProjectForPackage($staged_package->getName());
       $semantic_version = $staged_package->getPrettyVersion();
       if (!$this->isSupportedRelease($project_name, $semantic_version)) {
         $messages[] = $this->t('Project @project_name to version @version', [
@@ -115,8 +117,7 @@ final class UpdateReleaseValidator implements EventSubscriberInterface {
     $messages = [];
     foreach (['production', 'dev'] as $package_type) {
       foreach ($all_versions[$package_type] as $package_name => $sematic_version) {
-        $package_parts = explode('/', $package_name);
-        $project_name = $package_parts[1];
+        $project_name = $stage->getActiveComposer()->getProjectForPackage($package_name);
         // If the version isn't in the list of installable releases, then it
         // isn't secure and supported and the user should receive an error.
         if (!$this->isSupportedRelease($project_name, $sematic_version)) {
