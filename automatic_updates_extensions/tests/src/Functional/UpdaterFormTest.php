@@ -38,6 +38,7 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
     'block',
     'semver_test',
     'aaa_update_test',
+    'automatic_updates_extensions_test',
   ];
 
   /**
@@ -414,6 +415,21 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
     $assert->pageTextContains(static::$warningsExplanation);
     $assert->pageTextNotContains(static::$errorsExplanation);
     $assert->buttonExists('Update');
+  }
+
+  /**
+   * Tests the form when an uninstallable module requires an update.
+   */
+  public function testUninstallableRelease(): void {
+    $this->container->get('state')->set('testUninstallableRelease', TRUE);
+    $this->setReleaseMetadata(__DIR__ . '/../../fixtures/release-history/semver_test.1.1.xml');
+    $assert = $this->assertSession();
+    $this->setProjectInstalledVersion(['semver_test' => '8.1.0']);
+    $user = $this->createUser(['administer software updates', 'administer site configuration']);
+    $this->drupalLogin($user);
+    $this->drupalGet('admin/reports/updates/automatic-update-extensions');
+    $this->checkForUpdates();
+    $this->assertNoUpdates();
   }
 
 }

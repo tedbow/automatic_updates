@@ -1,0 +1,6 @@
+name: 'Automatic Updates Extensions Tests'
+description: 'Provides functional tests for recommended versions'
+type: module
+package: Testing
+dependencies:
+  - automatic_updates:automatic_updates_extensions

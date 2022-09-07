@@ -13,6 +13,7 @@ use Drupal\Core\State\StateInterface;
 use Drupal\Core\Messenger\MessengerInterface;
 use Drupal\Core\Render\RendererInterface;
 use Drupal\Core\Url;
+use Drupal\package_manager\ProjectInfo;
 use Drupal\system\SystemManager;
 use Drupal\update\UpdateManagerInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
@@ -241,22 +242,24 @@ final class UpdaterForm extends FormBase {
       return [];
     }
 
-    $project_data = update_calculate_project_data($available_updates);
+    $all_projects_data = update_calculate_project_data($available_updates);
     $outdated_modules = [];
     $installed_packages = array_keys($this->extensionUpdater->getActiveComposer()->getInstalledPackages());
     $non_supported_update_statuses = [];
-    foreach ($project_data as $project_name => $project_info) {
-      if (in_array($project_info['project_type'], $supported_project_types, TRUE)) {
-        if ($project_info['status'] !== UpdateManagerInterface::CURRENT) {
+    foreach ($all_projects_data as $project_name => $project_data) {
+      if (in_array($project_data['project_type'], $supported_project_types, TRUE)) {
+        if ($project_data['status'] !== UpdateManagerInterface::CURRENT) {
           if (!in_array("drupal/$project_name", $installed_packages, TRUE)) {
-            $non_supported_update_statuses[] = $project_info['status'];
+            $non_supported_update_statuses[] = $project_data['status'];
             continue;
           }
-          if (!empty($project_info['recommended'])) {
-            $outdated_modules[$project_name] = $project_info;
+          $project_information = new ProjectInfo($project_name);
+          $installable_versions = array_keys($project_information->getInstallableReleases());
+          if (!empty($project_data['recommended']) && in_array($project_data['recommended'], $installable_versions, TRUE)) {
+            $outdated_modules[$project_name] = $project_data;
           }
           else {
-            $non_supported_update_statuses[] = $project_info['status'];
+            $non_supported_update_statuses[] = $project_data['status'];
           }
         }
       }
@@ -287,7 +290,6 @@ final class UpdaterForm extends FormBase {
           $message_status
         );
       }
-
     }
     return $outdated_modules;
   }
