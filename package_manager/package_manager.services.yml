@@ -101,6 +101,7 @@ services:
   package_manager.validator.symlink:
     class: Drupal\package_manager\Validator\SymlinkValidator
     arguments:
+      - '@module_handler'
       - '@package_manager.path_locator'
     tags:
       - { name: event_subscriber }

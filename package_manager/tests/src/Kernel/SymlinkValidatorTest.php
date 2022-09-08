@@ -3,6 +3,7 @@
 namespace Drupal\Tests\package_manager\Kernel;
 
 use Drupal\Core\DependencyInjection\ContainerBuilder;
+use Drupal\Core\Url;
 use Drupal\package_manager\Event\PreCreateEvent;
 use Drupal\package_manager\Exception\StageValidationException;
 use Drupal\package_manager\ValidationResult;
@@ -39,15 +40,27 @@ class SymlinkValidatorTest extends PackageManagerKernelTestBase {
     touch($active_dir . '/modules/a_link');
     $this->assertStatusCheckResults([$result]);
     $this->assertResults([$result], PreCreateEvent::class);
+
+    $this->enableModules(['help']);
+    $this->assertStatusCheckResults($this->addHelpTextToResults([$result]));
+    $this->assertResultsWithHelp([$result], PreCreateEvent::class);
   }
 
   /**
    * Tests that a symlink in the staging area raises an error.
+   *
+   * @dataProvider providerHelpEnabledOrNot
    */
-  public function testSymlinkInStagingArea(): void {
-    $result = ValidationResult::createError([
-      'Symbolic links were found in the staging area, which are not supported at this time.',
-    ]);
+  public function testSymlinkInStagingArea(bool $enable_help): void {
+    $expected_results = [ValidationResult::createError([
+        'Symbolic links were found in the staging area, which are not supported at this time.',
+      ]),
+    ];
+
+    if ($enable_help) {
+      $this->enableModules(['help']);
+      $expected_results = $this->addHelpTextToResults($expected_results);
+    }
 
     $stage = $this->createStage();
     $stage->create();
@@ -61,14 +74,16 @@ class SymlinkValidatorTest extends PackageManagerKernelTestBase {
       $this->fail('Expected a validation error.');
     }
     catch (StageValidationException $e) {
-      $this->assertValidationResultsEqual([$result], $e->getResults());
+      $this->assertValidationResultsEqual($expected_results, $e->getResults());
     }
   }
 
   /**
    * Tests that symlinks in the project root and staging area raise an error.
+   *
+   * @dataProvider providerHelpEnabledOrNot
    */
-  public function testSymlinkInProjectRootAndStagingArea(): void {
+  public function testSymlinkInProjectRootAndStagingArea(bool $enable_help): void {
     $expected_results = [
       ValidationResult::createError([
         'Symbolic links were found in the active directory, which are not supported at this time.',
@@ -77,6 +92,11 @@ class SymlinkValidatorTest extends PackageManagerKernelTestBase {
         'Symbolic links were found in the staging area, which are not supported at this time.',
       ]),
     ];
+
+    if ($enable_help) {
+      $this->enableModules(['help']);
+      $expected_results = $this->addHelpTextToResults($expected_results);
+    }
 
     $stage = $this->createStage();
     $stage->create();
@@ -95,6 +115,60 @@ class SymlinkValidatorTest extends PackageManagerKernelTestBase {
     catch (StageValidationException $e) {
       $this->assertValidationResultsEqual($expected_results, $e->getResults());
     }
+  }
+
+  /**
+   * Data provider for test methods that test with and without the Help module.
+   *
+   * @return array[]
+   *   The test cases.
+   */
+  public function providerHelpEnabledOrNot() {
+    return [
+      'help_module_enabled' => [TRUE],
+      'help_module_disabled' => [FALSE],
+    ];
+  }
+
+  /**
+   * Asserts that a set of validation results link to the Package Manager help.
+   *
+   * @param \Drupal\package_manager\ValidationResult[] $expected_results
+   *   The expected validation results.
+   * @param string|null $event_class
+   *   (optional) The class of the event which should return the results. Must
+   *   be passed if $expected_results is not empty.
+   */
+  private function assertResultsWithHelp(array $expected_results, string $event_class = NULL): void {
+    $expected_results = $this->addHelpTextToResults($expected_results);
+    $this->assertStatusCheckResults($expected_results);
+    $this->assertResults($expected_results, $event_class);
+  }
+
+  /**
+   * Adds help text to results messages.
+   *
+   * @param \Drupal\package_manager\ValidationResult[] $results
+   *   The expected validation results.
+   *
+   * @return array
+   *   The new results.
+   */
+  public function addHelpTextToResults(array $results): array {
+    $url = Url::fromRoute('help.page', ['name' => 'package_manager'])
+      ->setOption('fragment', 'package-manager-faq-symlinks-found')
+      ->toString();
+
+    // Reformat the provided results so that they all have the link to the
+    // online documentation appended to them.
+    $map = function (string $message) use ($url): string {
+      return $message . ' See <a href="' . $url . '">the help page</a> for information on how to resolve the problem.';
+    };
+    foreach ($results as $index => $result) {
+      $messages = array_map($map, $result->getMessages());
+      $results[$index] = ValidationResult::createError($messages);
+    }
+    return $results;
   }
 
 }

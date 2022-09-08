@@ -110,7 +110,7 @@ final class ComposerExecutableValidator implements PreOperationStageValidatorInt
   protected function setError(string $message, PreOperationStageEvent $event): void {
     if ($this->moduleHandler->moduleExists('help')) {
       $url = Url::fromRoute('help.page', ['name' => 'package_manager'])
-        ->setOption('fragment', 'package-manager-requirements')
+        ->setOption('fragment', 'package-manager-faq-composer-not-found')
         ->toString();
 
       $message = $this->t('@message See <a href=":package-manager-help">the help page</a> for information on how to configure the path to Composer.', [

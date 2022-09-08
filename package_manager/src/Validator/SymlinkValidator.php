@@ -2,7 +2,9 @@
 
 namespace Drupal\package_manager\Validator;
 
+use Drupal\Core\Extension\ModuleHandlerInterface;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
+use Drupal\Core\Url;
 use Drupal\package_manager\Event\PreApplyEvent;
 use Drupal\package_manager\Event\PreCreateEvent;
 use Drupal\package_manager\Event\PreOperationStageEvent;
@@ -26,6 +28,13 @@ class SymlinkValidator implements PreOperationStageValidatorInterface {
   use StringTranslationTrait;
 
   /**
+   * The module handler service.
+   *
+   * @var \Drupal\Core\Extension\ModuleHandlerInterface
+   */
+  protected $moduleHandler;
+
+  /**
    * The path locator service.
    *
    * @var \Drupal\package_manager\PathLocator
@@ -35,10 +44,13 @@ class SymlinkValidator implements PreOperationStageValidatorInterface {
   /**
    * Constructs a SymlinkValidator object.
    *
+   * @param \Drupal\Core\Extension\ModuleHandlerInterface $module_handler
+   *   The module handler service.
    * @param \Drupal\package_manager\PathLocator $path_locator
    *   The path locator service.
    */
-  public function __construct(PathLocator $path_locator) {
+  public function __construct(ModuleHandlerInterface $module_handler, PathLocator $path_locator) {
+    $this->moduleHandler = $module_handler;
     $this->pathLocator = $path_locator;
   }
 
@@ -49,9 +61,7 @@ class SymlinkValidator implements PreOperationStageValidatorInterface {
     $dir = $this->pathLocator->getProjectRoot();
 
     if ($this->hasLinks($dir)) {
-      $event->addError([
-        $this->t('Symbolic links were found in the active directory, which are not supported at this time.'),
-      ]);
+      $this->addError('Symbolic links were found in the active directory, which are not supported at this time.', $event);
     }
   }
 
@@ -65,9 +75,7 @@ class SymlinkValidator implements PreOperationStageValidatorInterface {
     $dir = $event->getStage()->getStageDirectory();
 
     if ($this->hasLinks($dir)) {
-      $event->addError([
-        $this->t('Symbolic links were found in the staging area, which are not supported at this time.'),
-      ]);
+      $this->addError('Symbolic links were found in the staging area, which are not supported at this time.', $event);
     }
   }
 
@@ -119,6 +127,32 @@ class SymlinkValidator implements PreOperationStageValidatorInterface {
         ['preApply'],
       ],
     ];
+  }
+
+  /**
+   * Adds a validation error to a given event.
+   *
+   * @param string $message
+   *   The error message. If the Help module is enabled, a link to Package
+   *   Manager's help page will be appended.
+   * @param \Drupal\package_manager\Event\PreApplyEvent|\Drupal\package_manager\Event\PreOperationStageEvent $event
+   *   The event to add the error to.
+   *
+   * @see package_manager_help()
+   */
+  protected function addError(string $message, $event): void {
+    if ($this->moduleHandler->moduleExists('help')) {
+      $url = Url::fromRoute('help.page', ['name' => 'package_manager'])
+        ->setOption('fragment', 'package-manager-faq-symlinks-found')
+        ->toString();
+
+      $message = $this->t('@message See <a href=":package-manager-help">the help page</a> for information on how to resolve the problem.', [
+        '@message' => $message,
+        ':package-manager-help' => $url,
+      ]);
+    }
+
+    $event->addError([$message]);
   }
 
 }

@@ -179,7 +179,7 @@ class ComposerExecutableValidatorTest extends PackageManagerKernelTestBase {
    */
   private function assertResultsWithHelp(array $expected_results, string $event_class = NULL): void {
     $url = Url::fromRoute('help.page', ['name' => 'package_manager'])
-      ->setOption('fragment', 'package-manager-requirements')
+      ->setOption('fragment', 'package-manager-faq-composer-not-found')
       ->toString();
 
     // Reformat the provided results so that they all have the link to the
