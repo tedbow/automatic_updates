@@ -3,6 +3,7 @@
 namespace Drupal\Tests\automatic_updates_extensions\Kernel;
 
 use Drupal\Tests\automatic_updates\Kernel\AutomaticUpdatesKernelTestBase;
+use Drupal\Tests\package_manager\Traits\InfoYmlConverterTrait;
 use Drupal\Tests\user\Traits\UserCreationTrait;
 
 /**
@@ -13,6 +14,7 @@ use Drupal\Tests\user\Traits\UserCreationTrait;
 class ExtensionUpdaterTest extends AutomaticUpdatesKernelTestBase {
 
   use UserCreationTrait;
+  use InfoYmlConverterTrait;
 
   /**
    * {@inheritdoc}
@@ -40,6 +42,7 @@ class ExtensionUpdaterTest extends AutomaticUpdatesKernelTestBase {
     $this->setCurrentUser($user);
 
     $this->createVirtualProject(__DIR__ . '/../../fixtures/fake-site');
+    $this->renameVfsInfoYmlFiles();
   }
 
   /**

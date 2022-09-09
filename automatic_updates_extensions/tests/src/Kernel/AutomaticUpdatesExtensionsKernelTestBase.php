@@ -8,11 +8,14 @@ use Drupal\package_manager\Exception\StageValidationException;
 use Drupal\Tests\automatic_updates\Kernel\AutomaticUpdatesKernelTestBase;
 use Drupal\Tests\package_manager\Kernel\TestPathFactory;
 use Drupal\Tests\package_manager\Kernel\TestStageTrait;
+use Drupal\Tests\package_manager\Traits\InfoYmlConverterTrait;
 
 /**
  * Base class for kernel tests of the Automatic Updates Extensions module.
  */
 abstract class AutomaticUpdatesExtensionsKernelTestBase extends AutomaticUpdatesKernelTestBase {
+
+  use InfoYmlConverterTrait;
 
   /**
    * {@inheritdoc}
@@ -44,6 +47,7 @@ abstract class AutomaticUpdatesExtensionsKernelTestBase extends AutomaticUpdates
   protected function createVirtualProject(?string $source_dir = NULL): void {
     $source_dir = $source_dir ?? __DIR__ . '/../../fixtures/fake-site';
     parent::createVirtualProject($source_dir);
+    $this->renameVfsInfoYmlFiles();
   }
 
   /**
