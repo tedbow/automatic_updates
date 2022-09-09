@@ -19,9 +19,6 @@ use GuzzleHttp\HandlerStack;
 use GuzzleHttp\Psr7\Response;
 use GuzzleHttp\Psr7\Utils;
 use org\bovigo\vfs\vfsStream;
-use org\bovigo\vfs\vfsStreamDirectory;
-use org\bovigo\vfs\vfsStreamFile;
-use org\bovigo\vfs\visitor\vfsStreamAbstractVisitor;
 use PhpTuf\ComposerStager\Domain\Value\Path\PathInterface;
 use PhpTuf\ComposerStager\Infrastructure\Factory\Path\PathFactoryInterface;
 use PhpTuf\ComposerStager\Infrastructure\Value\Path\AbstractPath;
@@ -218,31 +215,7 @@ abstract class PackageManagerKernelTestBase extends KernelTestBase {
     // Create the active directory and copy its contents from a fixture.
     $active_dir = vfsStream::newDirectory('active');
     $this->vfsRoot->addChild($active_dir);
-    vfsStream::copyFromFileSystem($source_dir, $active_dir);
-
-    // Because we can't commit physical `.git` directories into the fixture, use
-    // a visitor to traverse the virtual file system and rename all `_git`
-    // directories to `.git`.
-    vfsStream::inspect(new class () extends vfsStreamAbstractVisitor {
-
-      /**
-       * {@inheritdoc}
-       */
-      public function visitFile(vfsStreamFile $file) {}
-
-      /**
-       * {@inheritdoc}
-       */
-      public function visitDirectory(vfsStreamDirectory $dir) {
-        if ($dir->getName() === '_git') {
-          $dir->rename('.git');
-        }
-        foreach ($dir->getChildren() as $child) {
-          $this->visit($child);
-        }
-      }
-
-    });
+    FixtureUtility::copyFixtureFilesTo($source_dir, $active_dir->url());
 
     // Create a staging root directory alongside the active directory.
     $stage_dir = vfsStream::newDirectory('stage');
