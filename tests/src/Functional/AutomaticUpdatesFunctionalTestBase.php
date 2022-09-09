@@ -6,9 +6,8 @@ use Drupal\Core\Site\Settings;
 use Drupal\package_manager_bypass\Beginner;
 use Drupal\package_manager_bypass\Stager;
 use Drupal\Tests\BrowserTestBase;
+use Drupal\Tests\package_manager\Kernel\FixtureUtility;
 use Symfony\Component\DependencyInjection\ContainerInterface;
-use Symfony\Component\Filesystem\Filesystem;
-use Symfony\Component\Finder\Iterator\RecursiveDirectoryIterator;
 
 /**
  * Base class for functional tests of the Automatic Updates module.
@@ -174,8 +173,7 @@ abstract class AutomaticUpdatesFunctionalTestBase extends BrowserTestBase {
    */
   protected function copyFixtureToTempDirectory(string $fixture_directory): string {
     $temp_directory = $this->root . DIRECTORY_SEPARATOR . $this->siteDirectory . DIRECTORY_SEPARATOR . $this->randomMachineName(20);
-    (new Filesystem())->mirror($fixture_directory, $temp_directory);
-    $this->assertDirectoryIsWritable($temp_directory);
+    FixtureUtility::copyFixtureFilesTo($fixture_directory, $temp_directory);
     return $temp_directory;
   }
 
@@ -193,8 +191,6 @@ abstract class AutomaticUpdatesFunctionalTestBase extends BrowserTestBase {
     Beginner::setFixturePath($active_dir);
     $this->container->get('package_manager.path_locator')
       ->setPaths($active_dir, $active_dir . '/vendor', '', NULL);
-
-    $this->renameInfoYmlFiles($active_dir);
   }
 
   /**
@@ -209,27 +205,6 @@ abstract class AutomaticUpdatesFunctionalTestBase extends BrowserTestBase {
     // directory and not affect other tests.
     $staged_dir = $this->copyFixtureToTempDirectory($fixture_directory);
     Stager::setFixturePath($staged_dir);
-
-    $this->renameInfoYmlFiles($staged_dir);
-  }
-
-  /**
-   * Renames all files that end with .info.yml.hide.
-   *
-   * @param string $dir
-   *   The directory to be iterated through.
-   */
-  protected function renameInfoYmlFiles(string $dir) {
-    // Construct the iterator.
-    $it = new RecursiveDirectoryIterator($dir, \RecursiveIteratorIterator::SELF_FIRST);
-
-    // Loop through files and rename them.
-    foreach (new \RecursiveIteratorIterator($it) as $file) {
-      if ($file->getExtension() == 'hide') {
-        rename($file->getPathname(), $dir . DIRECTORY_SEPARATOR . $file->getRelativePath() . DIRECTORY_SEPARATOR . str_replace(".hide", "", $file->getFilename()));
-      }
-    }
-
   }
 
 }
