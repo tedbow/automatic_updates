@@ -58,6 +58,9 @@ abstract class BypassedStagerServiceBase {
   /**
    * If a fixture path has been set, mirrors it to the given path.
    *
+   * Files in the destination directory but not in the source directory will
+   * not be deleted.
+   *
    * @param \PhpTuf\ComposerStager\Domain\Value\Path\PathInterface $destination
    *   The path to which the fixture files should be mirrored.
    */
@@ -67,7 +70,7 @@ abstract class BypassedStagerServiceBase {
     if ($fixture_path && is_dir($fixture_path)) {
       $this->fileSystem->mirror($fixture_path, $destination->resolve(), NULL, [
         'override' => TRUE,
-        'delete' => TRUE,
+        'delete' => FALSE,
       ]);
     }
   }

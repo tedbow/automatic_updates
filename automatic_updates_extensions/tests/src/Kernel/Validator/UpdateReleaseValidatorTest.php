@@ -131,7 +131,8 @@ class UpdateReleaseValidatorTest extends AutomaticUpdatesExtensionsKernelTestBas
       'drupal' => __DIR__ . '/../../../../../tests/fixtures/release-history/drupal.9.8.2.xml',
     ]);
     $active_dir = __DIR__ . '/../../../fixtures/update_release_validator/active';
-    $this->useComposerFixturesFiles($active_dir, $stage_dir);
+    $this->copyFixtureFolderToActiveDirectory($active_dir);
+    $this->copyFixtureFolderToStageDirectoryOnApply($stage_dir);
     if ($error_expected) {
       $expected_results = [
         ValidationResult::createError(

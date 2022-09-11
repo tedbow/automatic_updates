@@ -85,7 +85,8 @@ class PackagesInstalledWithComposerValidatorTest extends AutomaticUpdatesExtensi
    */
   public function testPreApplyException(string $stage_dir, array $expected_results): void {
     $active_dir = __DIR__ . '/../../../fixtures/packages_installed_with_composer_validator/active';
-    $this->useComposerFixturesFiles($active_dir, $stage_dir);
+    $this->copyFixtureFolderToActiveDirectory($active_dir);
+    $this->copyFixtureFolderToStageDirectoryOnApply($stage_dir);
     $this->assertUpdateResults(['my_module' => '9.8.1'], $expected_results, PreApplyEvent::class);
   }
 

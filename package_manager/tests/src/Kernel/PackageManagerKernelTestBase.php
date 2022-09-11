@@ -12,6 +12,7 @@ use Drupal\package_manager\Exception\StageException;
 use Drupal\package_manager\Exception\StageValidationException;
 use Drupal\package_manager\Stage;
 use Drupal\package_manager_bypass\Beginner;
+use Drupal\Tests\package_manager\Traits\FixtureUtilityTrait;
 use Drupal\Tests\package_manager\Traits\ValidationTestTrait;
 use GuzzleHttp\Client;
 use GuzzleHttp\Handler\MockHandler;
@@ -19,9 +20,6 @@ use GuzzleHttp\HandlerStack;
 use GuzzleHttp\Psr7\Response;
 use GuzzleHttp\Psr7\Utils;
 use org\bovigo\vfs\vfsStream;
-use org\bovigo\vfs\vfsStreamDirectory;
-use org\bovigo\vfs\vfsStreamFile;
-use org\bovigo\vfs\visitor\vfsStreamAbstractVisitor;
 use PhpTuf\ComposerStager\Domain\Value\Path\PathInterface;
 use PhpTuf\ComposerStager\Infrastructure\Factory\Path\PathFactoryInterface;
 use PhpTuf\ComposerStager\Infrastructure\Value\Path\AbstractPath;
@@ -33,6 +31,7 @@ use Symfony\Component\DependencyInjection\Definition;
  */
 abstract class PackageManagerKernelTestBase extends KernelTestBase {
 
+  use FixtureUtilityTrait;
   use ValidationTestTrait;
 
   /**
@@ -218,31 +217,8 @@ abstract class PackageManagerKernelTestBase extends KernelTestBase {
     // Create the active directory and copy its contents from a fixture.
     $active_dir = vfsStream::newDirectory('active');
     $this->vfsRoot->addChild($active_dir);
-    vfsStream::copyFromFileSystem($source_dir, $active_dir);
-
-    // Because we can't commit physical `.git` directories into the fixture, use
-    // a visitor to traverse the virtual file system and rename all `_git`
-    // directories to `.git`.
-    vfsStream::inspect(new class () extends vfsStreamAbstractVisitor {
-
-      /**
-       * {@inheritdoc}
-       */
-      public function visitFile(vfsStreamFile $file) {}
-
-      /**
-       * {@inheritdoc}
-       */
-      public function visitDirectory(vfsStreamDirectory $dir) {
-        if ($dir->getName() === '_git') {
-          $dir->rename('.git');
-        }
-        foreach ($dir->getChildren() as $child) {
-          $this->visit($child);
-        }
-      }
-
-    });
+    $active_dir = $active_dir->url();
+    static::copyFixtureFilesTo($source_dir, $active_dir);
 
     // Create a staging root directory alongside the active directory.
     $stage_dir = vfsStream::newDirectory('stage');
@@ -251,7 +227,6 @@ abstract class PackageManagerKernelTestBase extends KernelTestBase {
     // Ensure the path locator points to the virtual active directory. We assume
     // that is its own web root and that the vendor directory is at its top
     // level.
-    $active_dir = $active_dir->url();
     /** @var \Drupal\package_manager_bypass\PathLocator $path_locator */
     $path_locator = $this->container->get('package_manager.path_locator');
     $path_locator->setPaths($active_dir, $active_dir . '/vendor', '', $stage_dir->url());
@@ -279,36 +254,31 @@ abstract class PackageManagerKernelTestBase extends KernelTestBase {
   }
 
   /**
-   * Copies composer fixture files to active and stage directories.
+   * Copies a fixture directory into the active directory.
    *
    * @param string $active_fixture_dir
    *   Path to fixture active directory from which the files will be copied.
-   * @param string|null $stage_fixture_dir
-   *   (optional) Path to fixture staged directory from which the files will be
-   *    copied. If not provided $active_dir_to_set will be used as the fixture
-   *    staged directory also.
    */
-  protected function useComposerFixturesFiles(string $active_fixture_dir, string $stage_fixture_dir = NULL) {
-    $this->assertFileIsReadable("$active_fixture_dir/active.installed.json");
+  protected function copyFixtureFolderToActiveDirectory(string $active_fixture_dir) {
     $active_dir = $this->container->get('package_manager.path_locator')
       ->getProjectRoot();
-    copy("$active_fixture_dir/active.installed.json", "$active_dir/vendor/composer/installed.json");
+    static::copyFixtureFilesTo($active_fixture_dir, $active_dir);
+  }
 
-    // Before any other pre-apply listener runs, replaced the staged
-    // `vendor/composer/installed.json` with the fixture's
-    // `staged.installed.json`.
-    if ($stage_fixture_dir === NULL) {
-      $stage_fixture_dir = $active_fixture_dir;
-    }
-    if (!file_exists("$stage_fixture_dir/staged.installed.json")) {
-      return;
-    }
-    $this->assertFileIsReadable("$stage_fixture_dir/staged.installed.json");
-    $listener = function (PreApplyEvent $event) use ($stage_fixture_dir): void {
-      copy("$stage_fixture_dir/staged.installed.json", $event->getStage()->getStageDirectory() . "/vendor/composer/installed.json");
+  /**
+   * Copies a fixture directory into the stage directory on apply.
+   *
+   * @param string $fixture_dir
+   *   Path to fixture directory from which the files will be copied.
+   */
+  protected function copyFixtureFolderToStageDirectoryOnApply(string $fixture_dir) {
+    /** @var \Symfony\Component\EventDispatcher\EventDispatcherInterface $event_dispatcher */
+    $event_dispatcher = $this->container->get('event_dispatcher');
+
+    $listener = function (PreApplyEvent $event) use ($fixture_dir): void {
+      static::copyFixtureFilesTo($fixture_dir, $event->getStage()->getStageDirectory());
     };
-    $this->container->get('event_dispatcher')
-      ->addListener(PreApplyEvent::class, $listener, PHP_INT_MAX);
+    $event_dispatcher->addListener(PreApplyEvent::class, $listener, PHP_INT_MAX);
   }
 
   /**

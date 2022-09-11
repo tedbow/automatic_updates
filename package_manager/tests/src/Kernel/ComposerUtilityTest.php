@@ -4,7 +4,7 @@ namespace Drupal\Tests\package_manager\Kernel;
 
 use Drupal\KernelTests\KernelTestBase;
 use Drupal\package_manager\ComposerUtility;
-use Drupal\Tests\package_manager\Traits\InfoYmlConverterTrait;
+use Drupal\Tests\package_manager\Traits\FixtureUtilityTrait;
 use org\bovigo\vfs\vfsStream;
 
 /**
@@ -14,7 +14,7 @@ use org\bovigo\vfs\vfsStream;
  */
 class ComposerUtilityTest extends KernelTestBase {
 
-  use InfoYmlConverterTrait;
+  use FixtureUtilityTrait;
 
   /**
    * {@inheritdoc}
@@ -28,9 +28,8 @@ class ComposerUtilityTest extends KernelTestBase {
     parent::setUp();
 
     $fixture = vfsStream::newDirectory('fixture');
-    vfsStream::copyFromFileSystem(__DIR__ . '/../../fixtures/project_package_conversion', $fixture);
     $this->vfsRoot->addChild($fixture);
-    $this->renameVfsInfoYmlFiles();
+    static::copyFixtureFilesTo(__DIR__ . '/../../fixtures/project_package_conversion', $fixture->url());
   }
 
   /**

@@ -87,11 +87,9 @@ class StagedProjectsValidatorTest extends AutomaticUpdatesKernelTestBase {
   /**
    * Tests validation errors, or lack thereof.
    *
-   * @param string $fixtures_dir
-   *   A directory containing `active.installed.json` and
-   *   `staged.installed.json` files. These will be used as the virtual
-   *   project's active and staged `vendor/composer/installed.json` files,
-   *   respectively.
+   * @param string $root_fixture_directory
+   *   A directory containing to fixtures sub direcotories, 'active' and
+   *   'staged'.
    * @param string|null $expected_summary
    *   The expected error summary, or NULL if no errors are expected.
    * @param string[] $expected_messages
@@ -99,8 +97,9 @@ class StagedProjectsValidatorTest extends AutomaticUpdatesKernelTestBase {
    *
    * @dataProvider providerErrors
    */
-  public function testErrors(string $fixtures_dir, ?string $expected_summary, array $expected_messages): void {
-    $this->useComposerFixturesFiles($fixtures_dir);
+  public function testErrors(string $root_fixture_directory, ?string $expected_summary, array $expected_messages): void {
+    $this->copyFixtureFolderToActiveDirectory("$root_fixture_directory/active");
+    $this->copyFixtureFolderToStageDirectoryOnApply("$root_fixture_directory/staged");
 
     $expected_results = [];
     if ($expected_messages) {
