@@ -187,6 +187,10 @@ class ComposerUtilityTest extends KernelTestBase {
         'not_match_project',
         'drupal/not_match_package',
       ],
+      'package and project match + wrong installed path' => [
+        'not_match_path_project',
+        NULL,
+      ],
       'vendor is not drupal' => [
         'other_project',
         NULL,

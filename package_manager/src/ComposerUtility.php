@@ -255,12 +255,6 @@ class ComposerUtility {
   public function getPackageForProject(string $project_name): ?string {
     $installed = $this->getInstalledPackagesData();
 
-    // If we're lucky, the package name is the project name, prefixed with
-    // `drupal/`.
-    if (array_key_exists("drupal/$project_name", $installed)) {
-      return "drupal/$project_name";
-    }
-
     $installed = array_keys($installed);
     foreach ($installed as $package_name) {
       if ($this->getProjectForPackage($package_name) === $project_name) {

@@ -15,6 +15,10 @@ return [
       'type' => 'drupal-module',
       'install_path' => $projects_dir . '/not_match_project',
     ],
+    'drupal/not_match_path_project' => [
+      'type' => 'drupal-module',
+      'install_path' => $projects_dir . '/not_match_project',
+    ],
     'drupal/nested_no_match_package' => [
       'type' => 'drupal-module',
       'install_path' => $projects_dir . '/any_folder_name',
