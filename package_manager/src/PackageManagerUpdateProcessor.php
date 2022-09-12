@@ -21,8 +21,13 @@ use Drupal\update\UpdateProcessor;
  * project information to Update module's cache which would result in these
  * projects being returned from the Update module's global functions such as
  * update_get_available().
+ *
+ * @internal
+ *   This is an internal part of Package Manager and may be changed or removed
+ *   at any time without warning. External code should not interact with this
+ *   class.
  */
-class PackageManagerUpdateProcessor extends UpdateProcessor {
+final class PackageManagerUpdateProcessor extends UpdateProcessor {
 
   /**
    * Constructs an PackageManagerUpdateProcessor object.
