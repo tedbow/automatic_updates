@@ -1,0 +1,6 @@
+{
+  "_readme": [
+    "See \\Drupal\\Tests\\package_manager\\Kernel\\OverwriteExistingPackagesValidatorTest::testNewPackagesOverwriteExisting()."
+  ],
+  "packages": []
+}

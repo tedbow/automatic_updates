@@ -197,7 +197,7 @@ class ComposerUtility {
    *   The installed package data as represented in Composer's `installed.php`,
    *   keyed by package name.
    */
-  private function getInstalledPackagesData(): array {
+  public function getInstalledPackagesData(): array {
     $installed_php = implode(DIRECTORY_SEPARATOR, [
       // Composer returns the absolute path to the vendor directory by default.
       $this->getComposer()->getConfig()->get('vendor-dir'),

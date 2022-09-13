@@ -50,6 +50,7 @@ class StagedProjectsValidatorTest extends AutomaticUpdatesKernelTestBase {
 
     try {
       $updater->apply();
+      // If no exception occurs, ensure we weren't expecting any errors.
       $this->assertEmpty($expected_results);
     }
     catch (StageValidationException $e) {
@@ -72,10 +73,13 @@ class StagedProjectsValidatorTest extends AutomaticUpdatesKernelTestBase {
     };
     $event_dispatcher->addListener(PreApplyEvent::class, $listener, PHP_INT_MAX);
 
-    // Disable the scaffold file permissions validator because it will try to
-    // read composer.json from the active directory, which won't exist thanks to
-    // the event listener we just added.
+    // Disable the scaffold file permissions validator and overwrite existing
+    // packages validator because they will try to read composer.json from the
+    // active directory, which won't exist thanks to the event listener we just
+    // added.
     $validator = $this->container->get('automatic_updates.validator.scaffold_file_permissions');
+    $event_dispatcher->removeSubscriber($validator);
+    $validator = $this->container->get('package_manager.validator.overwrite_existing_packages');
     $event_dispatcher->removeSubscriber($validator);
 
     $result = ValidationResult::createError([

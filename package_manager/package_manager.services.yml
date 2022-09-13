@@ -111,6 +111,12 @@ services:
       - '@package_manager.path_locator'
     tags:
       - { name: event_subscriber }
+  package_manager.validator.overwrite_existing_packages:
+    class: Drupal\package_manager\Validator\OverwriteExistingPackagesValidator
+    arguments:
+      - '@package_manager.path_locator'
+    tags:
+      - { name: event_subscriber }
   package_manager.test_site_excluder:
     class: Drupal\package_manager\PathExcluder\TestSiteExcluder
     arguments:
