@@ -27,10 +27,15 @@
   },
   "scripts": {
     "phpcbf": "scripts/phpcbf.sh",
-    "phpcs": "scripts/phpcs.sh"
+    "phpcs": "scripts/phpcs.sh",
+    "test": [
+      "Composer\\Config::disableProcessTimeout",
+      "scripts/phpunit.sh"
+    ]
   },
   "scripts-descriptions": {
     "phpcbf": "Automatically fixes standards violations where possible.",
-    "phpcs": "Checks code for standards compliance."
+    "phpcs": "Checks code for standards compliance.",
+    "test": "Runs PHPUnit tests."
   }
 }

@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 # NAME
-#     phpcbf.sh - Automatically fixe standards violations where possible.
+#     phpcbf.sh - Automatically fixes standards violations where possible.
 #
 # SYNOPSIS
 #     bash phpcbf.sh
@@ -15,7 +15,7 @@
 
 cd "$(dirname "$0")" || exit 0;
 
-## Find PHPCBF in Drupal core. Check up to three directories up.
+# Find PHPCBF in Drupal core. Check up to three directories up.
 DIR=$(pwd)
 for i in {0..3}; do
   DIR=$(dirname "$DIR")

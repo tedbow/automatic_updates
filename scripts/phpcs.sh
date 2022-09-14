@@ -15,7 +15,7 @@
 
 cd "$(dirname "$0")" || exit 0;
 
-## Find PHPCS in Drupal core. Check up to three directories up.
+# Find PHPCS in Drupal core. Check up to three directories up.
 DIR=$(pwd)
 for i in {0..3}; do
   DIR=$(dirname "$DIR")
