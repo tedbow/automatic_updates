@@ -20,23 +20,6 @@ class StagedProjectsValidatorTest extends AutomaticUpdatesKernelTestBase {
   protected static $modules = ['automatic_updates'];
 
   /**
-   * The active directory in the virtual file system.
-   *
-   * @var string
-   */
-  private $activeDir;
-
-  /**
-   * {@inheritdoc}
-   */
-  protected function setUp(): void {
-    parent::setUp();
-
-    $this->activeDir = $this->container->get('package_manager.path_locator')
-      ->getProjectRoot();
-  }
-
-  /**
    * Asserts a set of validation results when staged changes are applied.
    *
    * @param \Drupal\package_manager\ValidationResult[] $expected_results
@@ -62,30 +45,26 @@ class StagedProjectsValidatorTest extends AutomaticUpdatesKernelTestBase {
    * Tests that exceptions are turned into validation errors.
    */
   public function testEventConsumesExceptionResults(): void {
-    /** @var \Symfony\Component\EventDispatcher\EventDispatcherInterface $event_dispatcher */
-    $event_dispatcher = $this->container->get('event_dispatcher');
+    $composer_json = $this->container->get('package_manager.path_locator')
+      ->getProjectRoot();
+    $composer_json .= '/composer.json';
 
-    // Just before the staged changes are applied, delete the composer.json file
-    // to trigger an error. This uses the highest possible priority to guarantee
-    // it runs before any other subscribers.
-    $listener = function (): void {
-      unlink("$this->activeDir/composer.json");
+    $listener = function (PreApplyEvent $event) use ($composer_json): void {
+      unlink($composer_json);
+      // Directly invoke the validator under test, which should raise a
+      // validation error.
+      $this->container->get('automatic_updates.staged_projects_validator')
+        ->validateStagedProjects($event);
+      // Prevent any other event subscribers from running, since they might try
+      // to read the file we just deleted.
+      $event->stopPropagation();
     };
-    $event_dispatcher->addListener(PreApplyEvent::class, $listener, PHP_INT_MAX);
+    $this->container->get('event_dispatcher')
+      ->addListener(PreApplyEvent::class, $listener, PHP_INT_MAX);
 
-    // Disable the scaffold file permissions validator and overwrite existing
-    // packages validator because they will try to read composer.json from the
-    // active directory, which won't exist thanks to the event listener we just
-    // added.
-    $validator = $this->container->get('automatic_updates.validator.scaffold_file_permissions');
-    $event_dispatcher->removeSubscriber($validator);
-    $validator = $this->container->get('package_manager.validator.overwrite_existing_packages');
-    $event_dispatcher->removeSubscriber($validator);
-
-    $result = ValidationResult::createError([
-      "Composer could not find the config file: $this->activeDir/composer.json\n",
+    $this->validate([
+      ValidationResult::createError(["Composer could not find the config file: $composer_json\n"]),
     ]);
-    $this->validate([$result]);
   }
 
   /**
