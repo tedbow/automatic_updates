@@ -309,10 +309,10 @@ class Stage {
    *
    * @param string[] $runtime
    *   The packages to add as regular top-level dependencies, in the form
-   *   'vendor/name:version'.
+   *   'vendor/name' or 'vendor/name:version'.
    * @param string[] $dev
    *   (optional) The packages to add as dev dependencies, in the form
-   *   'vendor/name:version'. Defaults to an empty array.
+   *   'vendor/name' or 'vendor/name:version'. Defaults to an empty array.
    */
   public function require(array $runtime, array $dev = []): void {
     $this->checkOwnership();
