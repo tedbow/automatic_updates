@@ -11,7 +11,7 @@ use Drupal\package_manager\Event\PreOperationStageEvent;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 /**
- * Flags a warning if Xdebug is enabled.
+ * Performs validation if Xdebug is enabled.
  *
  * @internal
  *   This is an internal part of Automatic Updates and may be changed or removed
@@ -23,7 +23,10 @@ final class XdebugValidator implements EventSubscriberInterface {
   use StringTranslationTrait;
 
   /**
-   * Flags a warning if Xdebug is enabled.
+   * Performs validation if Xdebug is enabled.
+   *
+   * If Xdebug is enabled, cron updates are prevented. For other updates, only
+   * a warning is flagged during readiness checks.
    *
    * @param \Drupal\package_manager\Event\PreOperationStageEvent $event
    *   The event object.
@@ -39,10 +42,13 @@ final class XdebugValidator implements EventSubscriberInterface {
         $this->t('Xdebug is enabled, which may cause timeout errors.'),
       ];
 
-      if ($event->getStage() instanceof CronUpdater && $event instanceof PreCreateEvent) {
+      if ($event->getStage() instanceof CronUpdater) {
+        // Cron updates are not allowed if Xdebug is enabled.
         $event->addError($messages);
       }
-      else {
+      elseif ($event instanceof ReadinessCheckEvent) {
+        // For non-cron updates provide a warning but do not stop updates from
+        // executing.
         $event->addWarning($messages);
       }
     }

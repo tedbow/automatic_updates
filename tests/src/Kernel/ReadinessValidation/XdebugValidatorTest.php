@@ -46,14 +46,21 @@ class XdebugValidatorTest extends AutomaticUpdatesKernelTestBase {
   public function testXdebugValidation(): void {
     $message = 'Xdebug is enabled, which may cause timeout errors.';
 
+    $config = $this->config('automatic_updates.settings');
+    // If cron updates are disabled, the readiness check message should only be
+    // a warning.
+    $config->set('cron', CronUpdater::DISABLED)->save();
     $result = ValidationResult::createWarning([$message]);
     $this->assertCheckerResultsFromManager([$result], TRUE);
 
     // The parent class' setUp() method simulates an available security update,
     // so ensure that the cron updater will try to update to it.
-    $this->config('automatic_updates.settings')
-      ->set('cron', CronUpdater::SECURITY)
-      ->save();
+    $config->set('cron', CronUpdater::SECURITY)->save();
+
+    // If cron updates are enabled the readiness check message should be an
+    // error.
+    $result = ValidationResult::createError([$message]);
+    $this->assertCheckerResultsFromManager([$result], TRUE);
 
     // Trying to do the update during cron should fail with an error.
     $logger = new TestLogger();
