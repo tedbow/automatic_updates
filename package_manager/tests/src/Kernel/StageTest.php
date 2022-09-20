@@ -10,6 +10,7 @@ use Drupal\package_manager\Event\PreApplyEvent;
 use Drupal\package_manager\Event\StageEvent;
 use Drupal\package_manager\Exception\ApplyFailedException;
 use Drupal\package_manager\Exception\StageException;
+use Drupal\package_manager\Stage;
 use Drupal\package_manager_bypass\Committer;
 use PhpTuf\ComposerStager\Domain\Exception\InvalidArgumentException;
 use PhpTuf\ComposerStager\Domain\Exception\PreconditionException;
@@ -301,6 +302,26 @@ class StageTest extends PackageManagerKernelTestBase {
     $this->expectExceptionCode(123);
     $stage->require(['drupal/core' => '9.8.1']);
     $stage->apply();
+  }
+
+  /**
+   * Tests enforcing that the path factory must be passed to the constructor.
+   *
+   * @group legacy
+   */
+  public function testPathFactoryConstructorDeprecation(): void {
+    $this->expectDeprecation('Calling Drupal\package_manager\Stage::__construct() without the $path_factory argument is deprecated in automatic_updates:8.x-2.3 and will be required before automatic_updates:3.0.0. See https://www.drupal.org/node/3310706.');
+    new Stage(
+      $this->container->get('config.factory'),
+      $this->container->get('package_manager.path_locator'),
+      $this->container->get('package_manager.beginner'),
+      $this->container->get('package_manager.stager'),
+      $this->container->get('package_manager.committer'),
+      $this->container->get('file_system'),
+      $this->container->get('event_dispatcher'),
+      $this->container->get('tempstore.shared'),
+      $this->container->get('datetime.time')
+    );
   }
 
 }

@@ -192,7 +192,7 @@ class Stage {
    * @param \Drupal\Component\Datetime\TimeInterface $time
    *   The time service.
    * @param \PhpTuf\ComposerStager\Infrastructure\Factory\Path\PathFactoryInterface $path_factory
-   *   (optional) The path factory service.
+   *   The path factory service.
    */
   public function __construct(ConfigFactoryInterface $config_factory, PathLocator $path_locator, BeginnerInterface $beginner, StagerInterface $stager, CommitterInterface $committer, FileSystemInterface $file_system, EventDispatcherInterface $event_dispatcher, SharedTempStoreFactory $shared_tempstore, TimeInterface $time, PathFactoryInterface $path_factory = NULL) {
     $this->configFactory = $config_factory;
@@ -204,7 +204,11 @@ class Stage {
     $this->eventDispatcher = $event_dispatcher;
     $this->time = $time;
     $this->tempStore = $shared_tempstore->get('package_manager_stage');
-    $this->pathFactory = $path_factory ?: new PathFactory();
+    if (empty($path_factory)) {
+      @trigger_error('Calling ' . __METHOD__ . '() without the $path_factory argument is deprecated in automatic_updates:8.x-2.3 and will be required before automatic_updates:3.0.0. See https://www.drupal.org/node/3310706.', E_USER_DEPRECATED);
+      $path_factory = new PathFactory();
+    }
+    $this->pathFactory = $path_factory;
   }
 
   /**
