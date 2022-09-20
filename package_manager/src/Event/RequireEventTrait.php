@@ -50,7 +50,8 @@ trait RequireEventTrait {
    *
    * @return string[]
    *   An array of packages where the values are version constraints and keys
-   *   are package names in the form 'vendor/name'.
+   *   are package names in the form `vendor/name`. Packages without a version
+   *   constraint will default to `*`.
    */
   public function getRuntimePackages(): array {
     return $this->getKeyedPackages($this->runtimePackages);
@@ -61,7 +62,8 @@ trait RequireEventTrait {
    *
    * @return string[]
    *   An array of packages where the values are version constraints and keys
-   *   are package names in the form 'vendor/name'.
+   *   are package names in the form `vendor/name`. Packages without a version
+   *   constraint will default to `*`.
    */
   public function getDevPackages(): array {
     return $this->getKeyedPackages($this->devPackages);
@@ -75,12 +77,18 @@ trait RequireEventTrait {
    *
    * @return string[]
    *   An array of packages where the values are version constraints and keys
-   *   are package names in the form 'vendor/name'.
+   *   are package names in the form `vendor/name`. Packages without a version
+   *   constraint will default to `*`.
    */
   private function getKeyedPackages(array $packages): array {
     $keyed_packages = [];
     foreach ($packages as $package) {
-      [$name, $constraint] = explode(':', $package);
+      if (strpos($package, ':') > 0) {
+        [$name, $constraint] = explode(':', $package);
+      }
+      else {
+        [$name, $constraint] = [$package, '*'];
+      }
       $keyed_packages[$name] = $constraint;
     }
     return $keyed_packages;
