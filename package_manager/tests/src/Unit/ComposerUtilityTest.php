@@ -53,6 +53,32 @@ class ComposerUtilityTest extends UnitTestCase {
   }
 
   /**
+   * @covers ::getPackagesNotIn
+   * @covers ::getPackagesWithDifferentVersionsIn
+   */
+  public function testPackageComparison(): void {
+    $active = $this->mockUtilityWithPackages([
+      'drupal/existing' => '1.0.0',
+      'drupal/updated' => '1.0.0',
+      'drupal/removed' => '1.0.0',
+    ]);
+    $staged = $this->mockUtilityWithPackages([
+      'drupal/existing' => '1.0.0',
+      'drupal/updated' => '1.1.0',
+      'drupal/added' => '1.0.0',
+    ]);
+
+    $added = $staged->getPackagesNotIn($active);
+    $this->assertSame(['drupal/added'], array_keys($added));
+
+    $removed = $active->getPackagesNotIn($staged);
+    $this->assertSame(['drupal/removed'], array_keys($removed));
+
+    $updated = $active->getPackagesWithDifferentVersionsIn($staged);
+    $this->assertSame(['drupal/updated'], array_keys($updated));
+  }
+
+  /**
    * Mocks a ComposerUtility object to return a set of installed packages.
    *
    * @param string[]|null[] $installed_packages

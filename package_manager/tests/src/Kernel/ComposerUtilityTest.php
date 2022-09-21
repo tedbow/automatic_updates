@@ -44,25 +44,6 @@ class ComposerUtilityTest extends KernelTestBase {
   }
 
   /**
-   * @covers ::getPackagesNotIn
-   * @covers ::getPackagesWithDifferentVersionsIn
-   */
-  public function testPackageComparison(): void {
-    $fixture_dir = __DIR__ . '/../../fixtures/packages_comparison';
-    $active = ComposerUtility::createForDirectory($fixture_dir . '/active');
-    $staged = ComposerUtility::createForDirectory($fixture_dir . '/stage');
-
-    $added = $staged->getPackagesNotIn($active);
-    $this->assertSame(['drupal/added'], array_keys($added));
-
-    $removed = $active->getPackagesNotIn($staged);
-    $this->assertSame(['drupal/removed'], array_keys($removed));
-
-    $updated = $active->getPackagesWithDifferentVersionsIn($staged);
-    $this->assertSame(['drupal/updated'], array_keys($updated));
-  }
-
-  /**
    * @covers ::getProjectForPackage
    *
    * @param string $package
