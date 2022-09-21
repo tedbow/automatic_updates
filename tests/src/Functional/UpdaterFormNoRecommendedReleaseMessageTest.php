@@ -42,21 +42,23 @@ class UpdaterFormNoRecommendedReleaseMessageTest extends AutomaticUpdatesFunctio
    *   The test cases.
    */
   public function providerMessages(): array {
+    $dir = __DIR__ . '/../../../package_manager/tests/fixtures/release-history';
+
     return [
       'current' => [
-        __DIR__ . '/../../fixtures/release-history/drupal.9.8.1-security.xml',
+        $dir . '/drupal.9.8.1-security.xml',
         '9.8.1',
         FALSE,
         'status',
       ],
       'not current' => [
-        __DIR__ . '/../../fixtures/release-history/drupal.9.8.2.xml',
+        $dir . '/drupal.9.8.2.xml',
         '9.7.1',
         TRUE,
         'status',
       ],
       'insecure' => [
-        __DIR__ . '/../../fixtures/release-history/drupal.9.8.1-security.xml',
+        $dir . '/drupal.9.8.1-security.xml',
         '9.7.1',
         TRUE,
         'error',

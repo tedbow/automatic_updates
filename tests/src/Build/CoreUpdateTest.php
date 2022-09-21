@@ -43,7 +43,9 @@ class CoreUpdateTest extends UpdateTestBase {
     // referenced in our fake release metadata (see
     // fixtures/release-history/drupal.0.0.xml).
     $this->setUpstreamCoreVersion('9.8.1');
-    $this->setReleaseMetadata(['drupal' => __DIR__ . '/../../fixtures/release-history/drupal.9.8.1-security.xml']);
+    $this->setReleaseMetadata([
+      'drupal' => __DIR__ . '/../../../package_manager/tests/fixtures/release-history/drupal.9.8.1-security.xml',
+    ]);
 
     // Ensure that Drupal thinks we are running 9.8.0, then refresh information
     // about available updates and ensure that an update to 9.8.1 is available.

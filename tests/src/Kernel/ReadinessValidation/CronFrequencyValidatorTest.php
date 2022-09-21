@@ -30,7 +30,9 @@ class CronFrequencyValidatorTest extends AutomaticUpdatesKernelTestBase {
     // cron is configured to run frequently enough to do automatic updates. So,
     // pretend we're already on the latest secure version of core.
     $this->setCoreVersion('9.8.1');
-    $this->setReleaseMetadata(['drupal' => __DIR__ . '/../../../fixtures/release-history/drupal.9.8.1-security.xml']);
+    $this->setReleaseMetadata([
+      'drupal' => __DIR__ . '/../../../../package_manager/tests/fixtures/release-history/drupal.9.8.1-security.xml',
+    ]);
   }
 
   /**

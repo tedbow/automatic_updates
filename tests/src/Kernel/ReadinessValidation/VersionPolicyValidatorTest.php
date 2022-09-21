@@ -28,7 +28,7 @@ class VersionPolicyValidatorTest extends AutomaticUpdatesKernelTestBase {
    *   The test cases.
    */
   public function providerReadinessCheck(): array {
-    $metadata_dir = __DIR__ . '/../../../fixtures/release-history';
+    $metadata_dir = __DIR__ . '/../../../../package_manager/tests/fixtures/release-history';
 
     return [
       // Updating from a dev, alpha, beta, or RC release is not allowed during
@@ -194,7 +194,7 @@ class VersionPolicyValidatorTest extends AutomaticUpdatesKernelTestBase {
    *   The test cases.
    */
   public function providerApi(): array {
-    $metadata_dir = __DIR__ . '/../../../fixtures/release-history';
+    $metadata_dir = __DIR__ . '/../../../../package_manager/tests/fixtures/release-history';
 
     return [
       'valid target, dev snapshot installed' => [

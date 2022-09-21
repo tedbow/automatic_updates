@@ -159,7 +159,7 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
     // aaa_update_test) are already installed by static::$modules.
     $this->container->get('theme_installer')->install(['test_theme']);
     $this->useFixtureDirectoryAsStaged(__DIR__ . '/../../fixtures/stage_composer/' . $project_name);
-    $this->setReleaseMetadata(__DIR__ . '/../../../../tests/fixtures/release-history/drupal.9.8.2.xml');
+    $this->setReleaseMetadata(__DIR__ . '/../../../../package_manager/tests/fixtures/release-history/drupal.9.8.2.xml');
     $this->setReleaseMetadata(__DIR__ . '/../../fixtures/release-history/' . $project_name . '.1.1.xml');
     $this->setProjectInstalledVersion([$project_name => $installed_version]);
     $this->checkForUpdates();
@@ -235,7 +235,7 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
    */
   public function testDisplayUpdates(bool $unrequested_updates): void {
     $this->container->get('theme_installer')->install(['automatic_updates_theme_with_updates']);
-    $this->setReleaseMetadata(__DIR__ . '/../../../../tests/fixtures/release-history/drupal.9.8.2.xml');
+    $this->setReleaseMetadata(__DIR__ . '/../../../../package_manager/tests/fixtures/release-history/drupal.9.8.2.xml');
     $this->setReleaseMetadata(__DIR__ . "/../../fixtures/release-history/semver_test.1.1.xml");
     $this->setReleaseMetadata(__DIR__ . "/../../fixtures/release-history/aaa_update_test.1.1.xml");
     Stager::setFixturePath(__DIR__ . '/../../fixtures/stage_composer/two_projects');

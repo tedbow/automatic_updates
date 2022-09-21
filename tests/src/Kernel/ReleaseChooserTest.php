@@ -21,8 +21,9 @@ class ReleaseChooserTest extends AutomaticUpdatesKernelTestBase {
    */
   protected function setUp(): void {
     parent::setUp();
-    $this->setReleaseMetadata(['drupal' => __DIR__ . '/../../fixtures/release-history/drupal.9.8.2-older-sec-release.xml']);
-
+    $this->setReleaseMetadata([
+      'drupal' => __DIR__ . '/../../../package_manager/tests/fixtures/release-history/drupal.9.8.2-older-sec-release.xml',
+    ]);
   }
 
   /**

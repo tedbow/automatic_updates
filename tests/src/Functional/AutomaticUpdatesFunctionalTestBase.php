@@ -61,7 +61,7 @@ abstract class AutomaticUpdatesFunctionalTestBase extends BrowserTestBase {
 
     // To prevent tests from making real requests to the Internet, use fake
     // release metadata that exposes a pretend Drupal 9.8.2 release.
-    $this->setReleaseMetadata(__DIR__ . '/../../fixtures/release-history/drupal.9.8.2.xml');
+    $this->setReleaseMetadata(__DIR__ . '/../../../package_manager/tests/fixtures/release-history/drupal.9.8.2.xml');
 
     parent::installModulesFromClassProperty($container);
   }
@@ -128,6 +128,8 @@ abstract class AutomaticUpdatesFunctionalTestBase extends BrowserTestBase {
    *   The path of the XML metadata file to use.
    */
   protected function setReleaseMetadata(string $file): void {
+    $this->assertFileIsReadable($file);
+
     $this->config('update.settings')
       ->set('fetch.url', $this->baseUrl . '/test-release-history')
       ->save();

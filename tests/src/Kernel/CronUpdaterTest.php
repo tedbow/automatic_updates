@@ -116,7 +116,7 @@ class CronUpdaterTest extends AutomaticUpdatesKernelTestBase {
    *   The test cases.
    */
   public function providerUpdaterCalled(): array {
-    $fixture_dir = __DIR__ . '/../../fixtures/release-history';
+    $fixture_dir = __DIR__ . '/../../../package_manager/tests/fixtures/release-history';
 
     return [
       'disabled, normal release' => [
@@ -280,7 +280,9 @@ class CronUpdaterTest extends AutomaticUpdatesKernelTestBase {
     $this->installConfig('automatic_updates');
     $this->setCoreVersion('9.8.0');
     // Ensure that there is a security release to which we should update.
-    $this->setReleaseMetadata(['drupal' => __DIR__ . "/../../fixtures/release-history/drupal.9.8.1-security.xml"]);
+    $this->setReleaseMetadata([
+      'drupal' => __DIR__ . "/../../../package_manager/tests/fixtures/release-history/drupal.9.8.1-security.xml",
+    ]);
 
     // Disable the symlink validators so that this test isn't affected by
     // symlinks that might be present in the running code base.

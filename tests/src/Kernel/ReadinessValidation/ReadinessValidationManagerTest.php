@@ -212,7 +212,9 @@ class ReadinessValidationManagerTest extends AutomaticUpdatesKernelTestBase {
   public function testStoredResultsDeletedPostApply(): void {
     $this->enableModules(['automatic_updates']);
     $this->setCoreVersion('9.8.0');
-    $this->setReleaseMetadata(['drupal' => __DIR__ . '/../../../fixtures/release-history/drupal.9.8.1-security.xml']);
+    $this->setReleaseMetadata([
+      'drupal' => __DIR__ . '/../../../../package_manager/tests/fixtures/release-history/drupal.9.8.1-security.xml',
+    ]);
 
     // The readiness checker should raise a warning, so that the update is not
     // blocked or aborted.

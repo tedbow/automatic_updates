@@ -62,7 +62,7 @@ class UpdateReleaseValidatorTest extends AutomaticUpdatesExtensionsKernelTestBas
 
     $this->setReleaseMetadata([
       $project => __DIR__ . "/../../../fixtures/release-history/$project.1.1.xml",
-      'drupal' => __DIR__ . '/../../../../../tests/fixtures/release-history/drupal.9.8.2.xml',
+      'drupal' => __DIR__ . '/../../../../../package_manager/tests/fixtures/release-history/drupal.9.8.2.xml',
     ]);
 
     if ($error_expected) {
@@ -128,7 +128,7 @@ class UpdateReleaseValidatorTest extends AutomaticUpdatesExtensionsKernelTestBas
     $this->setReleaseMetadata([
       'aaa_automatic_updates_test' => __DIR__ . "/../../../../../package_manager/tests/fixtures/release-history/aaa_automatic_updates_test.9.8.2.xml",
       $project => __DIR__ . "/../../../fixtures/release-history/$project.1.1.xml",
-      'drupal' => __DIR__ . '/../../../../../tests/fixtures/release-history/drupal.9.8.2.xml',
+      'drupal' => __DIR__ . '/../../../../../package_manager/tests/fixtures/release-history/drupal.9.8.2.xml',
     ]);
     $active_dir = __DIR__ . '/../../../fixtures/update_release_validator/active';
     $this->copyFixtureFolderToActiveDirectory($active_dir);

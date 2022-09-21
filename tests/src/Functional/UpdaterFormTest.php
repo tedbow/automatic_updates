@@ -46,7 +46,7 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
   protected function setUp(): void {
     parent::setUp();
 
-    $this->setReleaseMetadata(__DIR__ . '/../../fixtures/release-history/drupal.9.8.1-security.xml');
+    $this->setReleaseMetadata(__DIR__ . '/../../../package_manager/tests/fixtures/release-history/drupal.9.8.1-security.xml');
     $permissions = [
       'administer site configuration',
       'administer software updates',
@@ -161,7 +161,7 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
     // Check the form when there are updates in the current and next minors but
     // the site does not support minor updates.
     $this->config('automatic_updates.settings')->set('allow_core_minor_updates', FALSE)->save();
-    $this->setReleaseMetadata(__DIR__ . '/../../fixtures/release-history/drupal.9.8.2.xml');
+    $this->setReleaseMetadata(__DIR__ . '/../../../package_manager/tests/fixtures/release-history/drupal.9.8.2.xml');
     $page->clickLink('Check manually');
     $this->checkForMetaRefresh();
     $assert_session->pageTextContainsOnce('Currently installed: 9.7.0 (Update available)');
