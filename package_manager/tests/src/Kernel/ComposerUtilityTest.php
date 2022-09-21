@@ -44,49 +44,6 @@ class ComposerUtilityTest extends KernelTestBase {
   }
 
   /**
-   * Data provider for testCorePackagesFromLockFile().
-   *
-   * @return string[][]
-   *   The test cases.
-   */
-  public function providerCorePackagesFromLockFile(): array {
-    $fixtures_dir = __DIR__ . '/../../fixtures';
-
-    return [
-      'distro with drupal/core-recommended' => [
-        // This fixture's lock file mentions drupal/core, which is considered a
-        // canonical core package, but it will be ignored in favor of
-        // drupal/core-recommended, which always requires drupal/core as one of
-        // its direct dependencies.
-        "$fixtures_dir/distro_core_recommended",
-        ['drupal/core-recommended'],
-      ],
-      'distro with drupal/core' => [
-        "$fixtures_dir/distro_core",
-        ['drupal/core'],
-      ],
-    ];
-  }
-
-  /**
-   * Tests that required core packages are found by scanning the lock file.
-   *
-   * @param string $dir
-   *   The path of the fake site fixture.
-   * @param string[] $expected_packages
-   *   The names of the core packages which should be detected.
-   *
-   * @covers ::getCorePackages
-   *
-   * @dataProvider providerCorePackagesFromLockFile
-   */
-  public function testCorePackagesFromLockFile(string $dir, array $expected_packages): void {
-    $packages = ComposerUtility::createForDirectory($dir)
-      ->getCorePackages();
-    $this->assertSame($expected_packages, array_keys($packages));
-  }
-
-  /**
    * @covers ::getPackagesNotIn
    * @covers ::getPackagesWithDifferentVersionsIn
    */
