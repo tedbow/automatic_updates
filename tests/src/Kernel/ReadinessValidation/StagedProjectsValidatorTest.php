@@ -99,7 +99,7 @@ class StagedProjectsValidatorTest extends AutomaticUpdatesKernelTestBase {
    *   The test cases.
    */
   public function providerErrors(): array {
-    $fixtures_folder = __DIR__ . '/../../../fixtures/project_staged_validation';
+    $fixtures_folder = __DIR__ . '/../../../fixtures/StagedProjectsValidatorTest';
     return [
       'new_project_added' => [
         "$fixtures_folder/new_project_added",
