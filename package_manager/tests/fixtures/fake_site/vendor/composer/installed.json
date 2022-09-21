@@ -11,6 +11,14 @@
           }
         }
       }
+    },
+    {
+      "name": "drupal/core-recommended",
+      "version": "9.8.0"
+    },
+    {
+      "name": "drupal/core-dev",
+      "version": "9.8.0"
     }
   ]
 }

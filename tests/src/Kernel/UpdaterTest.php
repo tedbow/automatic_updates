@@ -49,11 +49,6 @@ class UpdaterTest extends AutomaticUpdatesKernelTestBase {
     $user = $this->createUser([], NULL, TRUE, ['uid' => 2]);
     $this->setCurrentUser($user);
 
-    // Point to a fake site which requires Drupal core via a distribution. The
-    // lock file should be scanned to determine the core packages, which should
-    // result in drupal/core-recommended being updated.
-    $this->createVirtualProject(__DIR__ . '/../../fixtures/fake-site');
-
     $id = $this->container->get('automatic_updates.updater')->begin([
       'drupal' => '9.8.1',
     ]);

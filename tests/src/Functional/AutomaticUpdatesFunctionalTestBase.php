@@ -47,7 +47,7 @@ abstract class AutomaticUpdatesFunctionalTestBase extends BrowserTestBase {
   protected function setUp(): void {
     parent::setUp();
     $this->disableValidators($this->disableValidators);
-    $this->useFixtureDirectoryAsActive(__DIR__ . '/../../fixtures/fake-site');
+    $this->useFixtureDirectoryAsActive(__DIR__ . '/../../../package_manager/tests/fixtures/fake_site');
   }
 
   /**

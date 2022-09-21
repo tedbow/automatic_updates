@@ -1,1 +1,8 @@
-{}
+{
+  "require": {
+    "drupal/core-recommended": "9.8.0"
+  },
+  "require-dev": {
+    "drupal/core-dev": "^9"
+  }
+}

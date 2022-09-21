@@ -197,10 +197,12 @@ class CronUpdaterTest extends AutomaticUpdatesKernelTestBase {
 
     $will_update = (int) $will_update;
     $this->assertCount($will_update, $this->container->get('package_manager.beginner')->getInvocationArguments());
-    // If updates happen, then there will be two calls to the stager: one to
-    // change the constraints in composer.json, and another to actually update
-    // the installed dependencies.
-    $this->assertCount($will_update * 2, $this->container->get('package_manager.stager')->getInvocationArguments());
+    // If updates happen, there will be at least two calls to the stager: one
+    // to change the runtime constraints in composer.json, and another to
+    // actually update the installed dependencies. If there are any core
+    // dev requirements (such as `drupal/core-dev`), the stager will also be
+    // called to update the dev constraints in composer.json.
+    $this->assertGreaterThanOrEqual($will_update * 2, $this->container->get('package_manager.stager')->getInvocationArguments());
     $this->assertCount($will_update, $this->container->get('package_manager.committer')->getInvocationArguments());
   }
 
