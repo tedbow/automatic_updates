@@ -53,6 +53,16 @@ class CronUpdaterTest extends AutomaticUpdatesKernelTestBase {
   private $logger;
 
   /**
+   * The people who should be emailed about successful or failed updates.
+   *
+   * The keys are the email addresses, and the values are the langcode they
+   * should be emailed in.
+   *
+   * @var string[]
+   */
+  private $emailRecipients = [];
+
+  /**
    * {@inheritdoc}
    */
   protected function setUp(): void {
@@ -64,6 +74,26 @@ class CronUpdaterTest extends AutomaticUpdatesKernelTestBase {
       ->addLogger($this->logger);
     $this->installEntitySchema('user');
     $this->installSchema('user', ['users_data']);
+
+    // Prepare the recipient list to email when an update succeeds or fails.
+    // First, create a user whose preferred language is different from the
+    // default language, so we can be sure they're emailed in their preferred
+    // language; we also ensure that an email which doesn't correspond to a user
+    // account is emailed in the default language.
+    $default_language = $this->container->get('language_manager')
+      ->getDefaultLanguage()
+      ->getId();
+    $this->assertNotSame('fr', $default_language);
+
+    $account = $this->createUser([], NULL, FALSE, [
+      'preferred_langcode' => 'fr',
+    ]);
+    $this->emailRecipients['emissary@deep.space'] = $default_language;
+    $this->emailRecipients[$account->getEmail()] = $account->getPreferredLangcode();
+
+    $this->config('update.settings')
+      ->set('notification.emails', array_keys($this->emailRecipients))
+      ->save();
   }
 
   /**
@@ -349,51 +379,99 @@ class CronUpdaterTest extends AutomaticUpdatesKernelTestBase {
   }
 
   /**
-   * Tests that user 1 is emailed when an unattended update succeeds.
+   * Tests that email is sent when an unattended update succeeds.
    */
   public function testEmailOnSuccess(): void {
-    $default_language = $this->container->get('language_manager')
-      ->getDefaultLanguage()
-      ->getId();
-    $this->assertNotSame('fr', $default_language);
-
-    $account = $this->createUser([], NULL, FALSE, [
-      'preferred_langcode' => 'fr',
-    ]);
-
-    $recipients = [
-      'emissary@deep.space',
-      $account->getEmail(),
-    ];
-    $languages = [
-      $default_language,
-      $account->getPreferredLangcode(),
-    ];
-
-    $this->config('update.settings')
-      ->set('notification.emails', $recipients)
-      ->save();
-
     $this->container->get('cron')->run();
 
     // Ensure we sent a success message to all recipients.
     $sent_messages = $this->getMails([
       'subject' => "Drupal core was successfully updated",
     ]);
-    $this->assertSame(count($recipients), count($sent_messages));
+    $this->assertNotEmpty($sent_messages);
+    $this->assertSame(count($this->emailRecipients), count($sent_messages));
+
+    foreach ($sent_messages as $message) {
+      $email = $message['to'];
+      $this->assertSame($message['langcode'], $this->emailRecipients[$email]);
+      $this->assertCorrectMessageSent($email, $message, $message['langcode'], "Congratulations!\n\nDrupal core was automatically updated from 9.8.0 to 9.8.1.\n");
+    }
+  }
+
+  /**
+   * Data provider for ::testEmailOnFailure().
+   *
+   * @return string[][]
+   *   The test cases.
+   */
+  public function providerEmailOnFailure(): array {
+    return [
+      'pre-create' => [
+        PreCreateEvent::class,
+      ],
+      'pre-require' => [
+        PreRequireEvent::class,
+      ],
+      'pre-apply' => [
+        PreApplyEvent::class,
+      ],
+    ];
+  }
+
+  /**
+   * Tests that email is sent when an unattended update fails.
+   *
+   * @param string $event_class
+   *   The event class that should trigger the failure.
+   *
+   * @dataProvider providerEmailOnFailure
+   */
+  public function testEmailOnFailure(string $event_class): void {
+    $results = [
+      ValidationResult::createError(['Error while updating!']),
+    ];
+    TestSubscriber1::setTestResult($results, $event_class);
+    $exception = new StageValidationException($results);
+
+    $this->container->get('cron')->run();
+
+    // Ensure we sent a failure message to all recipients.
+    $sent_messages = $this->getMails([
+      'subject' => "Drupal core update failed",
+    ]);
+    $this->assertNotEmpty($sent_messages);
+    $this->assertSame(count($this->emailRecipients), count($sent_messages));
+
+    foreach ($sent_messages as $message) {
+      $email = $message['to'];
+      $this->assertSame($message['langcode'], $this->emailRecipients[$email]);
+      $this->assertCorrectMessageSent($email, $message, $message['langcode'], "Drupal core failed to update automatically from 9.8.0 to 9.8.1. The following\nerror was logged:\n\n" . $exception->getMessage());
+    }
+  }
+
+  /**
+   * Asserts correct message sent to correct recipient.
+   *
+   * @param string $expected_recipient
+   *   The email address that should have received the message.
+   * @param array $sent_message
+   *   The sent message, as processed by hook_mail().
+   * @param string $expected_language_code
+   *   The language code that the recipient should have been emailed in.
+   * @param string $expected_body_text
+   *   The expected message that the email body should contain.
+   */
+  private function assertCorrectMessageSent(string $expected_recipient, array $sent_message, string $expected_language_code, string $expected_body_text): void {
     // Ensure the messages had the correct body text, and were sent to the right
     // people.
-    foreach ($sent_messages as $i => $message) {
-      $this->assertSame($message['to'], $recipients[$i]);
-      $this->assertStringStartsWith("Congratulations!\n\nDrupal core was automatically updated from 9.8.0 to 9.8.1.\n", $message['body']);
-      // The message, and every line in it, should have been sent in the
-      // expected language.
-      $langcode = $message['langcode'];
-      $this->assertSame($langcode, $languages[$i]);
-      // @see automatic_updates_test_mail_alter()
-      $this->assertArrayHasKey('line_langcodes', $message);
-      $this->assertSame([$langcode], $message['line_langcodes']);
-    }
+    $this->assertSame($sent_message['to'], $expected_recipient);
+    $this->assertStringStartsWith($expected_body_text, $sent_message['body']);
+    // The message, and every line in it, should have been sent in the
+    // expected language.
+    $this->assertSame($expected_language_code, $sent_message['langcode']);
+    // @see automatic_updates_test_mail_alter()
+    $this->assertArrayHasKey('line_langcodes', $sent_message);
+    $this->assertSame([$expected_language_code], $sent_message['line_langcodes']);
   }
 
 }

@@ -182,6 +182,15 @@ class CronUpdater extends Updater {
       $this->apply();
     }
     catch (\Throwable $e) {
+      // Send notifications about the failed update.
+      $mail_params = [
+        'previous_version' => $installed_version,
+        'target_version' => $target_version,
+        'error_message' => $e->getMessage(),
+      ];
+      foreach ($this->getEmailRecipients() as $email => $langcode) {
+        $this->mailManager->mail('automatic_updates', 'cron_failed', $email, $langcode, $mail_params);
+      }
       $this->logger->error($e->getMessage());
 
       // If an error occurred during the pre-create event, the stage will be
@@ -276,10 +285,8 @@ class CronUpdater extends Updater {
         'previous_version' => $installed_version,
         'updated_version' => $target_version,
       ];
-      $recipients = $this->configFactory->get('update.settings')
-        ->get('notification.emails');
-      foreach ($recipients as $recipient) {
-        $this->mailManager->mail('automatic_updates', 'cron_successful', $recipient, $this->getEmailLangcode($recipient), $mail_params);
+      foreach ($this->getEmailRecipients() as $recipient => $langcode) {
+        $this->mailManager->mail('automatic_updates', 'cron_successful', $recipient, $langcode, $mail_params);
       }
     }
     catch (\Throwable $e) {
@@ -315,6 +322,23 @@ class CronUpdater extends Updater {
       return $user->getPreferredLangcode();
     }
     return $this->languageManager->getDefaultLanguage()->getId();
+  }
+
+  /**
+   * Returns an array of people to email with success or failure notifications.
+   *
+   * @return string[]
+   *   An array whose keys are the email addresses to send notifications to, and
+   *   values are the langcodes that they should be emailed in.
+   */
+  protected function getEmailRecipients(): array {
+    $recipients = $this->configFactory->get('update.settings')
+      ->get('notification.emails');
+    $emails = [];
+    foreach ($recipients as $recipient) {
+      $emails[$recipient] = $this->getEmailLangcode($recipient);
+    }
+    return $emails;
   }
 
   /**
