@@ -12,6 +12,7 @@ use Drupal\package_manager\Event\PreCreateEvent;
 use Drupal\package_manager\Event\PreDestroyEvent;
 use Drupal\package_manager\Event\PreRequireEvent;
 use Drupal\package_manager\Event\StageEvent;
+use Drupal\package_manager\Event\StatusCheckEvent;
 use Drupal\system\SystemManager;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
@@ -165,6 +166,7 @@ class TestSubscriber implements EventSubscriberInterface {
       PostApplyEvent::class => ['handleEvent', $priority],
       PreDestroyEvent::class => ['handleEvent', $priority],
       PostDestroyEvent::class => ['handleEvent', $priority],
+      StatusCheckEvent::class => ['handleEvent', $priority],
     ];
   }
 
