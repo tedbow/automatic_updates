@@ -35,7 +35,8 @@ final class PackageManagerUninstallValidator implements ModuleUninstallValidator
       $this->container->get('event_dispatcher'),
       $this->container->get('tempstore.shared'),
       $this->container->get('datetime.time'),
-      $this->container->get(PathFactoryInterface::class)
+      $this->container->get(PathFactoryInterface::class),
+      $this->container->get('package_manager.failure_marker')
     );
     if ($stage->isAvailable() || !$stage->isApplying()) {
       return [];

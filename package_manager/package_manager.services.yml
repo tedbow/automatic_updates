@@ -45,6 +45,10 @@ services:
       - '%app.root%'
       - '@config.factory'
       - '@file_system'
+  package_manager.failure_marker:
+    class: Drupal\package_manager\FailureMarker
+    arguments:
+      - '@package_manager.path_locator'
 
   # Validators.
   package_manager.validator.composer_executable:

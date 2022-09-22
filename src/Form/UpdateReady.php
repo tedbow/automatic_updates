@@ -12,6 +12,7 @@ use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Messenger\MessengerInterface;
 use Drupal\Core\Render\RendererInterface;
 use Drupal\Core\State\StateInterface;
+use Drupal\package_manager\Exception\ApplyFailedException;
 use Drupal\package_manager\Exception\StageException;
 use Drupal\package_manager\Exception\StageOwnershipException;
 use Symfony\Component\DependencyInjection\ContainerInterface;
@@ -114,6 +115,10 @@ final class UpdateReady extends FormBase {
     }
     catch (StageOwnershipException $e) {
       $this->messenger()->addError($this->t('Cannot continue the update because another Composer operation is currently in progress.'));
+      return $form;
+    }
+    catch (ApplyFailedException $e) {
+      $this->messenger()->addError($e->getMessage());
       return $form;
     }
 

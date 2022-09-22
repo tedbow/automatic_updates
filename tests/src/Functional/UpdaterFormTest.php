@@ -11,6 +11,7 @@ use Drupal\package_manager\Event\PostApplyEvent;
 use Drupal\package_manager\Event\PreCreateEvent;
 use Drupal\package_manager\ValidationResult;
 use Drupal\automatic_updates_test\EventSubscriber\TestSubscriber1;
+use Drupal\package_manager_bypass\Committer;
 use Drupal\package_manager_bypass\Stager;
 use Drupal\system\SystemManager;
 use Drupal\Tests\automatic_updates\Traits\ValidationTestTrait;
@@ -310,6 +311,43 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
     $assert_session->pageTextContainsOnce((string) $expected_results[0]->getMessages()[0]);
     $assert_session->pageTextContainsOnce((string) $expected_results[0]->getMessages()[1]);
     $assert_session->pageTextNotContains($cached_message);
+  }
+
+  /**
+   * Tests that an exception is thrown if a previous apply failed.
+   */
+  public function testMarkerFileFailure(): void {
+    $session = $this->getSession();
+    $assert_session = $this->assertSession();
+    $page = $session->getPage();
+    $this->setCoreVersion('9.8.0');
+    $this->checkForUpdates();
+
+    $this->drupalGet('/admin/modules/automatic-update');
+    $assert_session->pageTextNotContains(static::$errorsExplanation);
+    $assert_session->pageTextNotContains(static::$warningsExplanation);
+    $page->pressButton('Update to 9.8.1');
+    $this->checkForMetaRefresh();
+    $this->assertUpdateStagedTimes(1);
+
+    Committer::setException(new \Exception('failed at commiter'));
+    $page->pressButton('Continue');
+    $this->checkForMetaRefresh();
+    $assert_session->pageTextContainsOnce('An error has occurred.');
+    $assert_session->pageTextContains('The update operation failed to apply. The update may have been partially applied. It is recommended that the site be restored from a code backup.');
+    $page->clickLink('the error page');
+
+    $failure_message = 'Automatic updates failed to apply, and the site is in an indeterminate state. Consider restoring the code and database from a backup.';
+    // We should be on the form (i.e., 200 response code), but unable to
+    // continue the update.
+    $assert_session->statusCodeEquals(200);
+    $assert_session->pageTextContains($failure_message);
+    $assert_session->buttonNotExists('Continue');
+    // The same thing should be true if we try to start from the beginning.
+    $this->drupalGet('/admin/modules/automatic-update');
+    $assert_session->statusCodeEquals(200);
+    $assert_session->pageTextContains($failure_message);
+    $assert_session->buttonNotExists('Update');
   }
 
   /**

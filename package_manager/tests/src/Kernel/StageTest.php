@@ -285,9 +285,11 @@ class StageTest extends PackageManagerKernelTestBase {
    *
    * @dataProvider providerCommitException
    */
-  public function testCommitException(string $thrown_class, string $expected_class = NULL): void {
+  public function testCommitException(string $thrown_class, string $expected_class): void {
     $stage = $this->createStage();
     $stage->create();
+    $stage->require(['drupal/core' => '9.8.1']);
+
     $thrown_message = 'A very bad thing happened';
     // PreconditionException requires a preconditions object.
     if ($thrown_class === PreconditionException::class) {
@@ -297,20 +299,90 @@ class StageTest extends PackageManagerKernelTestBase {
       $throwable = new $thrown_class($thrown_message, 123);
     }
     Committer::setException($throwable);
-    $this->expectException($expected_class);
-    $this->expectExceptionMessage($thrown_message);
-    $this->expectExceptionCode(123);
-    $stage->require(['drupal/core' => '9.8.1']);
-    $stage->apply();
+
+    try {
+      $stage->apply();
+      $this->fail('Expected an exception.');
+    }
+    catch (\Throwable $exception) {
+      $this->assertInstanceOf($expected_class, $exception);
+      $this->assertSame($thrown_message, $exception->getMessage());
+      $this->assertSame(123, $exception->getCode());
+
+      $failure_marker = $this->container->get('package_manager.failure_marker');
+      if ($exception instanceof ApplyFailedException) {
+        $this->assertFileExists($failure_marker->getPath());
+        $this->assertFalse($stage->isApplying());
+      }
+      else {
+        $failure_marker->assertNotExists();
+      }
+    }
   }
 
   /**
-   * Tests enforcing that the path factory must be passed to the constructor.
+   * Tests that if a stage fails to apply, another stage cannot be created.
+   */
+  public function testFailureMarkerPreventsCreate(): void {
+    $stage = $this->createStage();
+    $stage->create();
+    $stage->require(['ext-json:*']);
+
+    // Make the committer throw an exception, which should cause the failure
+    // marker to be present.
+    $thrown = new \Exception('Disastrous catastrophe!');
+    Committer::setException($thrown);
+    try {
+      $stage->apply();
+      $this->fail('Expected an exception.');
+    }
+    catch (ApplyFailedException $e) {
+      $this->assertSame($thrown->getMessage(), $e->getMessage());
+      $this->assertFalse($stage->isApplying());
+    }
+    $stage->destroy();
+
+    // Even through the previous stage was destroyed, we cannot create a new one
+    // bceause the failure marker is still there.
+    $stage = $this->createStage();
+    try {
+      $stage->create();
+      $this->fail('Expected an exception.');
+    }
+    catch (ApplyFailedException $e) {
+      $this->assertSame('Staged changes failed to apply, and the site is in an indeterminate state. It is strongly recommended to restore the code and database from a backup.', $e->getMessage());
+      $this->assertFalse($stage->isApplying());
+    }
+
+    // If the failure marker is cleared, we should be able to create the stage
+    // without issue.
+    $this->container->get('package_manager.failure_marker')->clear();
+    $stage->create();
+  }
+
+  /**
+   * Tests that the failure marker file doesn't exist if apply succeeds.
+   *
+   * @see ::testCommitException
+   */
+  public function testNoFailureFileOnSuccess(): void {
+    $stage = $this->createStage();
+    $stage->create();
+    $stage->require(['ext-json:*']);
+    $stage->apply();
+
+    $this->container->get('package_manager.failure_marker')
+      ->assertNotExists();
+  }
+
+  /**
+   * Tests enforcing that certain services must be passed to the constructor.
    *
    * @group legacy
    */
-  public function testPathFactoryConstructorDeprecation(): void {
+  public function testConstructorDeprecations(): void {
     $this->expectDeprecation('Calling Drupal\package_manager\Stage::__construct() without the $path_factory argument is deprecated in automatic_updates:8.x-2.3 and will be required before automatic_updates:3.0.0. See https://www.drupal.org/node/3310706.');
+    $this->expectDeprecation('Calling Drupal\package_manager\Stage::__construct() without the $failure_marker argument is deprecated in automatic_updates:8.x-2.3 and will be required before automatic_updates:3.0.0. See https://www.drupal.org/node/3311257.');
     new Stage(
       $this->container->get('config.factory'),
       $this->container->get('package_manager.path_locator'),

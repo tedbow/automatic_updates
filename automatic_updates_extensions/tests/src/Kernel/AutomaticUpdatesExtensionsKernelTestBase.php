@@ -114,7 +114,8 @@ abstract class AutomaticUpdatesExtensionsKernelTestBase extends AutomaticUpdates
       $this->container->get('event_dispatcher'),
       $this->container->get('tempstore.shared'),
       $this->container->get('datetime.time'),
-      new TestPathFactory()
+      new TestPathFactory(),
+      $this->container->get('package_manager.failure_marker')
     );
   }
 

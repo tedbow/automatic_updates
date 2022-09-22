@@ -4,10 +4,12 @@ namespace Drupal\automatic_updates\Form;
 
 use Drupal\automatic_updates\BatchProcessor;
 use Drupal\automatic_updates\Event\ReadinessCheckEvent;
+use Drupal\package_manager\FailureMarker;
 use Drupal\package_manager\ProjectInfo;
 use Drupal\automatic_updates\ReleaseChooser;
 use Drupal\automatic_updates\Updater;
 use Drupal\automatic_updates\Validation\ReadinessTrait;
+use Drupal\package_manager\Exception\ApplyFailedException;
 use Drupal\update\ProjectRelease;
 use Drupal\Core\Batch\BatchBuilder;
 use Drupal\Core\Extension\ExtensionVersion;
@@ -74,6 +76,13 @@ final class UpdaterForm extends FormBase {
   protected $renderer;
 
   /**
+   * Failure marker service.
+   *
+   * @var \Drupal\package_manager\FailureMarker
+   */
+  protected $failureMarker;
+
+  /**
    * Constructs a new UpdaterForm object.
    *
    * @param \Drupal\Core\State\StateInterface $state
@@ -86,13 +95,16 @@ final class UpdaterForm extends FormBase {
    *   The release chooser service.
    * @param \Drupal\Core\Render\RendererInterface $renderer
    *   The renderer service.
+   * @param \Drupal\package_manager\FailureMarker $failure_marker
+   *   The failure marker service.
    */
-  public function __construct(StateInterface $state, Updater $updater, EventDispatcherInterface $event_dispatcher, ReleaseChooser $release_chooser, RendererInterface $renderer) {
+  public function __construct(StateInterface $state, Updater $updater, EventDispatcherInterface $event_dispatcher, ReleaseChooser $release_chooser, RendererInterface $renderer, FailureMarker $failure_marker) {
     $this->updater = $updater;
     $this->state = $state;
     $this->eventDispatcher = $event_dispatcher;
     $this->releaseChooser = $release_chooser;
     $this->renderer = $renderer;
+    $this->failureMarker = $failure_marker;
   }
 
   /**
@@ -111,7 +123,8 @@ final class UpdaterForm extends FormBase {
       $container->get('automatic_updates.updater'),
       $container->get('event_dispatcher'),
       $container->get('automatic_updates.release_chooser'),
-      $container->get('renderer')
+      $container->get('renderer'),
+      $container->get('package_manager.failure_marker')
     );
   }
 
@@ -119,6 +132,13 @@ final class UpdaterForm extends FormBase {
    * {@inheritdoc}
    */
   public function buildForm(array $form, FormStateInterface $form_state) {
+    try {
+      $this->failureMarker->assertNotExists();
+    }
+    catch (ApplyFailedException $e) {
+      $this->messenger()->addError($e->getMessage());
+      return $form;
+    }
     if ($this->updater->isAvailable()) {
       $stage_exists = FALSE;
     }

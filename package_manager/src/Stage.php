@@ -7,6 +7,8 @@ use Drupal\Component\Utility\Crypt;
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\File\Exception\FileException;
 use Drupal\Core\File\FileSystemInterface;
+use Drupal\Core\StringTranslation\StringTranslationTrait;
+use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\Core\TempStore\SharedTempStoreFactory;
 use Drupal\package_manager\Event\PostApplyEvent;
 use Drupal\package_manager\Event\PostCreateEvent;
@@ -57,6 +59,8 @@ use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
  * created by that site is destroyed.
  */
 class Stage {
+
+  use StringTranslationTrait;
 
   /**
    * The tempstore key under which to store the locking info for this stage.
@@ -171,6 +175,13 @@ class Stage {
   private $lock;
 
   /**
+   * The failure marker service.
+   *
+   * @var \Drupal\package_manager\FailureMarker
+   */
+  protected $failureMarker;
+
+  /**
    * Constructs a new Stage object.
    *
    * @param \Drupal\Core\Config\ConfigFactoryInterface $config_factory
@@ -193,8 +204,10 @@ class Stage {
    *   The time service.
    * @param \PhpTuf\ComposerStager\Infrastructure\Factory\Path\PathFactoryInterface $path_factory
    *   The path factory service.
+   * @param \Drupal\package_manager\FailureMarker $failure_marker
+   *   The failure marker service.
    */
-  public function __construct(ConfigFactoryInterface $config_factory, PathLocator $path_locator, BeginnerInterface $beginner, StagerInterface $stager, CommitterInterface $committer, FileSystemInterface $file_system, EventDispatcherInterface $event_dispatcher, SharedTempStoreFactory $shared_tempstore, TimeInterface $time, PathFactoryInterface $path_factory = NULL) {
+  public function __construct(ConfigFactoryInterface $config_factory, PathLocator $path_locator, BeginnerInterface $beginner, StagerInterface $stager, CommitterInterface $committer, FileSystemInterface $file_system, EventDispatcherInterface $event_dispatcher, SharedTempStoreFactory $shared_tempstore, TimeInterface $time, PathFactoryInterface $path_factory = NULL, FailureMarker $failure_marker = NULL) {
     $this->configFactory = $config_factory;
     $this->pathLocator = $path_locator;
     $this->beginner = $beginner;
@@ -209,6 +222,11 @@ class Stage {
       $path_factory = new PathFactory();
     }
     $this->pathFactory = $path_factory;
+    if (empty($failure_marker)) {
+      @trigger_error('Calling ' . __METHOD__ . '() without the $failure_marker argument is deprecated in automatic_updates:8.x-2.3 and will be required before automatic_updates:3.0.0. See https://www.drupal.org/node/3311257.', E_USER_DEPRECATED);
+      $failure_marker = \Drupal::service('package_manager.failure_marker');
+    }
+    $this->failureMarker = $failure_marker;
   }
 
   /**
@@ -282,6 +300,8 @@ class Stage {
    * @see ::claim()
    */
   public function create(?int $timeout = 300): string {
+    $this->failureMarker->assertNotExists();
+
     if (!$this->isAvailable()) {
       throw new StageException('Cannot create a new stage because one already exists.');
     }
@@ -379,22 +399,29 @@ class Stage {
     $this->tempStore->set(self::TEMPSTORE_APPLY_TIME_KEY, $this->time->getRequestTime());
     $this->dispatch($event, $this->setNotApplying());
 
+    // Create a marker file so that we can tell later on if the commit failed.
+    $this->failureMarker->write($this, $this->getFailureMarkerMessage());
+    // Exclude the failure file from the commit operation.
+    $event->excludePath($this->failureMarker->getPath());
+
     try {
       $this->committer->commit($stage_dir, $active_dir, new PathList($event->getExcludedPaths()), NULL, $timeout);
     }
-    // @todo When this module requires PHP 8 consolidate the next 2 catch blocks
-    //   into 1.
-    catch (InvalidArgumentException $e) {
-      throw new StageException($e->getMessage(), $e->getCode(), $e);
-    }
-    catch (PreconditionException $e) {
+    catch (InvalidArgumentException | PreconditionException $e) {
+      // The commit operation has not started yet, so we can clear the failure
+      // marker.
+      $this->failureMarker->clear();
       throw new StageException($e->getMessage(), $e->getCode(), $e);
     }
     catch (\Throwable $throwable) {
-      // If the throwable is any other type the commit operation may have
-      // failed.
+      // The commit operation may have failed midway through, and the site code
+      // is in an indeterminate state. Release the flag which says we're still
+      // applying, because in this situation, the site owner should probably
+      // restore everything from a backup.
+      $this->setNotApplying()();
       throw new ApplyFailedException($throwable->getMessage(), $throwable->getCode(), $throwable);
     }
+    $this->failureMarker->clear();
   }
 
   /**
@@ -564,6 +591,8 @@ class Stage {
    * @see ::create()
    */
   final public function claim(string $unique_id): self {
+    $this->failureMarker->assertNotExists();
+
     if ($this->isAvailable()) {
       throw new StageException('Cannot claim the stage because no stage has been created.');
     }
@@ -653,6 +682,16 @@ class Stage {
   final public function isApplying(): bool {
     $apply_time = $this->tempStore->get(self::TEMPSTORE_APPLY_TIME_KEY);
     return isset($apply_time) && $this->time->getRequestTime() - $apply_time < 3600;
+  }
+
+  /**
+   * Returns the failure marker message.
+   *
+   * @return \Drupal\Core\StringTranslation\TranslatableMarkup
+   *   The translated failure marker message.
+   */
+  protected function getFailureMarkerMessage(): TranslatableMarkup {
+    return $this->t('Staged changes failed to apply, and the site is in an indeterminate state. It is strongly recommended to restore the code and database from a backup.');
   }
 
 }

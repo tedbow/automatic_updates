@@ -27,6 +27,7 @@ services:
       - '@tempstore.shared'
       - '@datetime.time'
       - '@PhpTuf\ComposerStager\Infrastructure\Factory\Path\PathFactoryInterface'
+      - '@package_manager.failure_marker'
   automatic_updates.cron_updater:
     class: Drupal\automatic_updates\CronUpdater
     arguments:
@@ -45,6 +46,7 @@ services:
       - '@tempstore.shared'
       - '@datetime.time'
       - '@PhpTuf\ComposerStager\Infrastructure\Factory\Path\PathFactoryInterface'
+      - '@package_manager.failure_marker'
   automatic_updates.staged_projects_validator:
     class: Drupal\automatic_updates\Validator\StagedProjectsValidator
     arguments:
