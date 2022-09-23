@@ -42,11 +42,18 @@ class ExtensionUpdater extends Stage {
     $require_dev = $composer->getComposer()
       ->getPackage()
       ->getDevRequires();
+    $installed_packages = $composer->getInstalledPackages();
     foreach ($project_versions as $project_name => $version) {
       $package = $composer->getPackageForProject($project_name);
       if (empty($package)) {
         throw new \InvalidArgumentException("The project $project_name is not a Drupal project known to Composer and cannot be updated.");
       }
+
+      // We don't support updating install profiles.
+      if ($installed_packages[$package]->getType() === 'drupal-profile') {
+        throw new \InvalidArgumentException("The project $project_name cannot be updated because updating install profiles is not supported.");
+      }
+
       $group = array_key_exists($package, $require_dev) ? 'dev' : 'production';
       $package_versions[$group][$package] = LegacyVersionUtility::convertToSemanticVersion($version);
     }

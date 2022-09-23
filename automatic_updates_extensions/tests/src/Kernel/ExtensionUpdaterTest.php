@@ -114,6 +114,19 @@ class ExtensionUpdaterTest extends AutomaticUpdatesKernelTestBase {
   }
 
   /**
+   * Tests that attempting to update an install profile throws an exception.
+   */
+  public function testUpdatingInstallProfile(): void {
+    $this->expectException('InvalidArgumentException');
+    $this->expectExceptionMessage("The project contrib_profile1 cannot be updated because updating install profiles is not supported.");
+
+    $this->container->get('automatic_updates_extensions.updater')
+      ->begin([
+        'contrib_profile1' => '1.1.0',
+      ]);
+  }
+
+  /**
    * Tests that an exception is thrown when calling begin() with no projects.
    */
   public function testNoProjectsInBegin(): void {

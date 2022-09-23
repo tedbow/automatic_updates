@@ -9,13 +9,35 @@
         },
         {
             "name": "drupal/my_module",
-            "version": "9.8.0"
+            "version": "9.8.0",
+            "type": "drupal-module"
+        },
+        {
+            "name": "drupal/contrib_profile1",
+            "version": "1.0.0",
+            "type": "drupal-profile"
+        },
+        {
+            "name": "drupal/semver_test",
+            "version": "1.0.0",
+            "type": "drupal-module"
+        },
+        {
+            "name": "drupal/aaa_update_test",
+            "version": "1.0.0",
+            "type": "drupal-module"
+        },
+        {
+            "name": "drupal/aaa_automatic_updates_test",
+            "version": "1.0.0",
+            "type": "drupal-module"
         }
     ],
     "packages-dev": [
         {
             "name": "drupal/my_dev_module",
-            "version": "9.8.1"
+            "version": "9.8.1",
+            "type": "drupal-module"
         }
     ]
 }

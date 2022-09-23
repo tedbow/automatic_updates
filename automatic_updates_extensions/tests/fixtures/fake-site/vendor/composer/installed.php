@@ -11,6 +11,10 @@ return [
       'type' => 'drupal-module',
       'install_path' => $projects_dir . '/my_module',
     ],
+    'drupal/contrib_profile1' => [
+      'type' => 'drupal-profile',
+      'install_path' => __DIR__ . '/../../web/profiles/contrib_profile1',
+    ],
     'drupal/my_dev_module' => [
       'type' => 'drupal-module',
       'install_path' => $projects_dir . '/my_dev_module',
