@@ -47,13 +47,43 @@ class DuplicateInfoFileValidatorTest extends PackageManagerKernelTestBase {
         ],
         [],
       ],
-      'Duplicate info.yml files in stage with one file in tests folder' => [
+      'Duplicate info.yml files in stage with one file in tests/fixtures folder' => [
         [
           '/tests/fixtures/module.info.yml',
         ],
         [
           '/tests/fixtures/module.info.yml',
           '/modules/module.info.yml',
+        ],
+        [],
+      ],
+      'Duplicate info.yml files in stage with one file in tests/modules folder' => [
+        [
+          '/tests/modules/module.info.yml',
+        ],
+        [
+          '/tests/modules/module.info.yml',
+          '/modules/module.info.yml',
+        ],
+        [],
+      ],
+      'Duplicate info.yml files in stage with one file in tests/themes folder' => [
+        [
+          '/tests/themes/theme.info.yml',
+        ],
+        [
+          '/tests/themes/theme.info.yml',
+          '/themes/theme.info.yml',
+        ],
+        [],
+      ],
+      'Duplicate info.yml files in stage with one file in tests/profiles folder' => [
+        [
+          '/tests/profiles/profile.info.yml',
+        ],
+        [
+          '/tests/profiles/profile.info.yml',
+          '/profiles/profile.info.yml',
         ],
         [],
       ],

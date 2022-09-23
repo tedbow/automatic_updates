@@ -99,19 +99,40 @@ class DuplicateInfoFileValidator implements EventSubscriberInterface {
     $info_files = [];
     /** @var \Symfony\Component\Finder\SplFileInfo $info_file */
     foreach (iterator_to_array($info_files_finder) as $info_file) {
-      // Skipping info.yml files in tests/fixtures because Drupal will not scan
-      // these directories when doing extension discovery.
-      //
-      // @todo We should also skip info.yml files in tests/modules,
-      //   tests/themes, and tests/profiles directories in
-      //   https://www.drupal.org/i/3306163.
-      if (strpos($info_file->getPath(), DIRECTORY_SEPARATOR . 'tests' . DIRECTORY_SEPARATOR . 'fixtures') !== FALSE) {
+      if ($this->skipInfoFile($info_file->getPath())) {
         continue;
       }
       $file_name = $info_file->getFilename();
       $info_files[$file_name] = ($info_files[$file_name] ?? 0) + 1;
     }
     return $info_files;
+  }
+
+  /**
+   * Determines if an info.yml file should be skipped.
+   *
+   * @param string $info_file_path
+   *   The path of the info.yml file.
+   *
+   * @return bool
+   *   TRUE if the info.yml file should be skipped, FALSE otherwise.
+   */
+  private function skipInfoFile(string $info_file_path): bool {
+    $directories_to_skip = [
+      DIRECTORY_SEPARATOR . 'tests' . DIRECTORY_SEPARATOR . 'fixtures',
+      DIRECTORY_SEPARATOR . 'tests' . DIRECTORY_SEPARATOR . 'modules',
+      DIRECTORY_SEPARATOR . 'tests' . DIRECTORY_SEPARATOR . 'themes',
+      DIRECTORY_SEPARATOR . 'tests' . DIRECTORY_SEPARATOR . 'profiles',
+    ];
+    foreach ($directories_to_skip as $directory_to_skip) {
+      // Skipping info.yml files in tests/fixtures, tests/modules, tests/themes,
+      // tests/profiles because Drupal will not scan these directories when
+      // doing extension discovery.
+      if (str_contains($info_file_path, $directory_to_skip)) {
+        return TRUE;
+      }
+    }
+    return FALSE;
   }
 
 }
