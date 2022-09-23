@@ -10,7 +10,9 @@ use Drupal\package_manager\Event\PreCreateEvent;
 use Drupal\package_manager\Event\PreOperationStageEvent;
 use Drupal\package_manager\Event\StatusCheckEvent;
 use Drupal\package_manager\PathLocator;
-use Symfony\Component\Finder\Finder;
+use PhpTuf\ComposerStager\Domain\Exception\PreconditionException;
+use PhpTuf\ComposerStager\Domain\Service\Precondition\CodebaseContainsNoSymlinksInterface;
+use PhpTuf\ComposerStager\Infrastructure\Factory\Path\PathFactoryInterface;
 
 /**
  * Flags errors if the project root or staging area contain symbolic links.
@@ -28,13 +30,6 @@ class SymlinkValidator implements PreOperationStageValidatorInterface {
   use StringTranslationTrait;
 
   /**
-   * The module handler service.
-   *
-   * @var \Drupal\Core\Extension\ModuleHandlerInterface
-   */
-  protected $moduleHandler;
-
-  /**
    * The path locator service.
    *
    * @var \Drupal\package_manager\PathLocator
@@ -42,77 +37,85 @@ class SymlinkValidator implements PreOperationStageValidatorInterface {
   protected $pathLocator;
 
   /**
+   * The Composer Stager precondition that this validator wraps.
+   *
+   * @var \PhpTuf\ComposerStager\Domain\Service\Precondition\CodebaseContainsNoSymlinksInterface
+   */
+  protected $precondition;
+
+  /**
+   * The path factory service.
+   *
+   * @var \PhpTuf\ComposerStager\Infrastructure\Factory\Path\PathFactoryInterface
+   */
+  protected $pathFactory;
+
+  /**
+   * The module handler service.
+   *
+   * @var \Drupal\Core\Extension\ModuleHandlerInterface
+   */
+  protected $moduleHandler;
+
+  /**
    * Constructs a SymlinkValidator object.
    *
-   * @param \Drupal\Core\Extension\ModuleHandlerInterface $module_handler
-   *   The module handler service.
    * @param \Drupal\package_manager\PathLocator $path_locator
    *   The path locator service.
+   * @param \PhpTuf\ComposerStager\Domain\Service\Precondition\CodebaseContainsNoSymlinksInterface $precondition
+   *   The Composer Stager precondition that this validator wraps.
+   * @param \PhpTuf\ComposerStager\Infrastructure\Factory\Path\PathFactoryInterface $path_factory
+   *   The path factory service.
+   * @param \Drupal\Core\Extension\ModuleHandlerInterface $module_handler
+   *   The module handler service.
    */
-  public function __construct(ModuleHandlerInterface $module_handler, PathLocator $path_locator) {
-    $this->moduleHandler = $module_handler;
+  public function __construct(PathLocator $path_locator, CodebaseContainsNoSymlinksInterface $precondition, PathFactoryInterface $path_factory, ModuleHandlerInterface $module_handler) {
     $this->pathLocator = $path_locator;
+    $this->precondition = $precondition;
+    $this->pathFactory = $path_factory;
+    $this->moduleHandler = $module_handler;
   }
 
   /**
    * {@inheritdoc}
    */
   public function validateStagePreOperation(PreOperationStageEvent $event): void {
-    $dir = $this->pathLocator->getProjectRoot();
+    $active_dir = $this->pathFactory->create($this->pathLocator->getProjectRoot());
 
-    if ($this->hasLinks($dir)) {
-      $this->addError('Symbolic links were found in the active directory, which are not supported at this time.', $event);
+    // The precondition requires us to pass both an active and stage directory,
+    // so if the stage hasn't been created or claimed yet, use the directory
+    // that contains this file, which contains only a few files and no symlinks,
+    // as the stage directory. The precondition itself doesn't care if the
+    // directory actually exists or not.
+    try {
+      $stage_dir = $event->getStage()->getStageDirectory();
     }
-  }
-
-  /**
-   * Checks if the staging area has any symbolic links.
-   *
-   * @param \Drupal\package_manager\Event\PreApplyEvent $event
-   *   The event object.
-   */
-  public function preApply(PreApplyEvent $event): void {
-    $dir = $event->getStage()->getStageDirectory();
-
-    if ($this->hasLinks($dir)) {
-      $this->addError('Symbolic links were found in the staging area, which are not supported at this time.', $event);
+    catch (\LogicException $e) {
+      $stage_dir = __DIR__;
     }
-  }
+    $stage_dir = $this->pathFactory->create($stage_dir);
 
-  /**
-   * Recursively checks if a directory has any symbolic links.
-   *
-   * @param string $dir
-   *   The path of the directory to check.
-   *
-   * @return bool
-   *   TRUE if the directory contains any symbolic links, FALSE otherwise.
-   */
-  protected function hasLinks(string $dir): bool {
-    // Finder::filter() explicitly requires a closure, so create one from
-    // ::isLink() so that we can still override it for testing purposes.
-    $is_link = \Closure::fromCallable([$this, 'isLink']);
+    try {
+      $this->precondition->assertIsFulfilled($active_dir, $stage_dir);
+    }
+    catch (PreconditionException $e) {
+      $message = $e->getMessage();
 
-    // Finder::hasResults() is more efficient than count() because it will
-    // return early if there is a match.
-    return Finder::create()
-      ->in($dir)
-      ->filter($is_link)
-      ->ignoreUnreadableDirs()
-      ->hasResults();
-  }
+      // If the Help module is enabled, append a link to Package Manager's help
+      // page.
+      // @see package_manager_help()
+      if ($this->moduleHandler->moduleExists('help')) {
+        $url = Url::fromRoute('help.page', ['name' => 'package_manager'])
+          ->setOption('fragment', 'package-manager-faq-symlinks-found')
+          ->toString();
 
-  /**
-   * Checks if a file or directory is a symbolic link.
-   *
-   * @param \SplFileInfo $file
-   *   A value object for the file or directory.
-   *
-   * @return bool
-   *   TRUE if the file or directory is a symbolic link, FALSE otherwise.
-   */
-  protected function isLink(\SplFileInfo $file): bool {
-    return $file->isLink();
+        $message = $this->t('@message See <a href=":package-manager-help">the help page</a> for information on how to resolve the problem.', [
+          '@message' => $message,
+          ':package-manager-help' => $url,
+        ]);
+      }
+      $event->addError([$message]);
+    }
   }
 
   /**
@@ -121,38 +124,9 @@ class SymlinkValidator implements PreOperationStageValidatorInterface {
   public static function getSubscribedEvents() {
     return [
       PreCreateEvent::class => 'validateStagePreOperation',
+      PreApplyEvent::class => 'validateStagePreOperation',
       StatusCheckEvent::class => 'validateStagePreOperation',
-      PreApplyEvent::class => [
-        ['validateStagePreOperation'],
-        ['preApply'],
-      ],
     ];
-  }
-
-  /**
-   * Adds a validation error to a given event.
-   *
-   * @param string $message
-   *   The error message. If the Help module is enabled, a link to Package
-   *   Manager's help page will be appended.
-   * @param \Drupal\package_manager\Event\PreApplyEvent|\Drupal\package_manager\Event\PreOperationStageEvent $event
-   *   The event to add the error to.
-   *
-   * @see package_manager_help()
-   */
-  protected function addError(string $message, $event): void {
-    if ($this->moduleHandler->moduleExists('help')) {
-      $url = Url::fromRoute('help.page', ['name' => 'package_manager'])
-        ->setOption('fragment', 'package-manager-faq-symlinks-found')
-        ->toString();
-
-      $message = $this->t('@message See <a href=":package-manager-help">the help page</a> for information on how to resolve the problem.', [
-        '@message' => $message,
-        ':package-manager-help' => $url,
-      ]);
-    }
-
-    $event->addError([$message]);
   }
 
 }

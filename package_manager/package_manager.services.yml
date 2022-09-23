@@ -105,8 +105,10 @@ services:
   package_manager.validator.symlink:
     class: Drupal\package_manager\Validator\SymlinkValidator
     arguments:
-      - '@module_handler'
       - '@package_manager.path_locator'
+      - '@PhpTuf\ComposerStager\Domain\Service\Precondition\CodebaseContainsNoSymlinksInterface'
+      - '@PhpTuf\ComposerStager\Infrastructure\Factory\Path\PathFactoryInterface'
+      - '@module_handler'
     tags:
       - { name: event_subscriber }
   package_manager.validator.duplicate_info_file:

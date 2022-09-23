@@ -56,8 +56,7 @@ final class GitExcluder implements EventSubscriberInterface {
       ->directories()
       ->name('.git')
       ->ignoreVCS(FALSE)
-      ->ignoreDotFiles(FALSE)
-      ->ignoreUnreadableDirs();
+      ->ignoreDotFiles(FALSE);
 
     $paths = [];
     foreach ($finder as $git_directory) {

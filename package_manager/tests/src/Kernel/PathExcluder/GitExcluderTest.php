@@ -2,7 +2,6 @@
 
 namespace Drupal\Tests\package_manager\Kernel\PathExcluder;
 
-use Drupal\package_manager_bypass\Beginner;
 use Drupal\Tests\package_manager\Kernel\PackageManagerKernelTestBase;
 
 /**
@@ -21,29 +20,6 @@ class GitExcluderTest extends PackageManagerKernelTestBase {
     // this validator will complain because they don't differ at all.
     $this->disableValidators[] = 'package_manager.validator.lock_file';
     parent::setUp();
-  }
-
-  /**
-   * Tests that unreadable directories are ignored by the event subscriber.
-   */
-  public function testUnreadableDirectoriesAreIgnored(): void {
-    $active_dir = $this->container->get('package_manager.path_locator')
-      ->getProjectRoot();
-
-    // Create an unreadable directory within the active directory, which will
-    // raise an exception as the event subscriber tries to scan for .git
-    // directories...unless unreadable directories are being ignored, as they
-    // should be.
-    $unreadable_dir = $active_dir . '/unreadable';
-    mkdir($unreadable_dir, 0000);
-    $this->assertDirectoryIsNotReadable($unreadable_dir);
-
-    // Don't mirror the active directory into the virtual staging area, since
-    // the active directory contains an unreadable directory which will cause
-    // an exception.
-    Beginner::setFixturePath(NULL);
-
-    $this->createStage()->create();
   }
 
   /**

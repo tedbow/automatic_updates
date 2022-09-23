@@ -5,9 +5,10 @@ namespace Drupal\Tests\package_manager\Kernel;
 use Drupal\Core\DependencyInjection\ContainerBuilder;
 use Drupal\Core\Url;
 use Drupal\package_manager\Event\PreCreateEvent;
-use Drupal\package_manager\Exception\StageValidationException;
 use Drupal\package_manager\ValidationResult;
-use Drupal\package_manager\Validator\SymlinkValidator;
+use PhpTuf\ComposerStager\Domain\Exception\PreconditionException;
+use PhpTuf\ComposerStager\Domain\Service\Precondition\CodebaseContainsNoSymlinksInterface;
+use Prophecy\Argument;
 
 /**
  * @covers \Drupal\package_manager\Validator\SymlinkValidator
@@ -17,144 +18,75 @@ use Drupal\package_manager\Validator\SymlinkValidator;
 class SymlinkValidatorTest extends PackageManagerKernelTestBase {
 
   /**
+   * The mocked precondition that checks for symlinks.
+   *
+   * @var \PhpTuf\ComposerStager\Domain\Service\Precondition\CodebaseContainsNoSymlinksInterface|\Prophecy\Prophecy\ObjectProphecy
+   */
+  private $precondition;
+
+  /**
+   * {@inheritdoc}
+   */
+  protected function setUp(): void {
+    $this->precondition = $this->prophesize(CodebaseContainsNoSymlinksInterface::class);
+    parent::setUp();
+  }
+
+  /**
    * {@inheritdoc}
    */
   public function register(ContainerBuilder $container) {
     parent::register($container);
 
     $container->getDefinition('package_manager.validator.symlink')
-      ->setClass(TestSymlinkValidator::class);
+      ->setArgument('$precondition', $this->precondition->reveal());
   }
 
   /**
-   * Tests that a symlink in the project root raises an error.
-   */
-  public function testSymlinkInProjectRoot(): void {
-    $result = ValidationResult::createError([
-      'Symbolic links were found in the active directory, which are not supported at this time.',
-    ]);
-
-    $active_dir = $this->container->get('package_manager.path_locator')
-      ->getProjectRoot();
-    // @see \Drupal\Tests\package_manager\Kernel\TestSymlinkValidator::isLink()
-    touch($active_dir . '/modules/a_link');
-    $this->assertStatusCheckResults([$result]);
-    $this->assertResults([$result], PreCreateEvent::class);
-
-    $this->enableModules(['help']);
-    $this->assertStatusCheckResults($this->addHelpTextToResults([$result]));
-    $this->assertResultsWithHelp([$result], PreCreateEvent::class);
-  }
-
-  /**
-   * Tests that a symlink in the staging area raises an error.
-   *
-   * @dataProvider providerHelpEnabledOrNot
-   */
-  public function testSymlinkInStagingArea(bool $enable_help): void {
-    $expected_results = [ValidationResult::createError([
-        'Symbolic links were found in the staging area, which are not supported at this time.',
-      ]),
-    ];
-
-    if ($enable_help) {
-      $this->enableModules(['help']);
-      $expected_results = $this->addHelpTextToResults($expected_results);
-    }
-
-    $stage = $this->createStage();
-    $stage->create();
-    $stage->require(['composer/semver:^3']);
-
-    // @see \Drupal\Tests\package_manager\Kernel\TestSymlinkValidator::isLink()
-    touch($stage->getStageDirectory() . '/modules/a_link');
-
-    try {
-      $stage->apply();
-      $this->fail('Expected a validation error.');
-    }
-    catch (StageValidationException $e) {
-      $this->assertValidationResultsEqual($expected_results, $e->getResults());
-    }
-  }
-
-  /**
-   * Tests that symlinks in the project root and staging area raise an error.
-   *
-   * @dataProvider providerHelpEnabledOrNot
-   */
-  public function testSymlinkInProjectRootAndStagingArea(bool $enable_help): void {
-    $expected_results = [
-      ValidationResult::createError([
-        'Symbolic links were found in the active directory, which are not supported at this time.',
-      ]),
-      ValidationResult::createError([
-        'Symbolic links were found in the staging area, which are not supported at this time.',
-      ]),
-    ];
-
-    if ($enable_help) {
-      $this->enableModules(['help']);
-      $expected_results = $this->addHelpTextToResults($expected_results);
-    }
-
-    $stage = $this->createStage();
-    $stage->create();
-    $stage->require(['composer/semver:^3']);
-
-    $active_dir = $this->container->get('package_manager.path_locator')
-      ->getProjectRoot();
-    // @see \Drupal\Tests\package_manager\Kernel\TestSymlinkValidator::isLink()
-    touch($active_dir . '/modules/a_link');
-    touch($stage->getStageDirectory() . '/modules/a_link');
-
-    try {
-      $stage->apply();
-      $this->fail('Expected a validation error.');
-    }
-    catch (StageValidationException $e) {
-      $this->assertValidationResultsEqual($expected_results, $e->getResults());
-    }
-  }
-
-  /**
-   * Data provider for test methods that test with and without the Help module.
+   * Data provider for ::testSymlink().
    *
    * @return array[]
    *   The test cases.
    */
-  public function providerHelpEnabledOrNot() {
+  public function providerSymlink(): array {
     return [
-      'help_module_enabled' => [TRUE],
-      'help_module_disabled' => [FALSE],
+      'no symlinks' => [FALSE],
+      'symlinks' => [TRUE],
     ];
   }
 
   /**
-   * Asserts that a set of validation results link to the Package Manager help.
+   * Tests that the validator invokes Composer Stager's symlink precondition.
    *
-   * @param \Drupal\package_manager\ValidationResult[] $expected_results
-   *   The expected validation results.
-   * @param string|null $event_class
-   *   (optional) The class of the event which should return the results. Must
-   *   be passed if $expected_results is not empty.
+   * @param bool $symlinks_exist
+   *   Whether or not the precondition will detect symlinks.
+   *
+   * @dataProvider providerSymlink
    */
-  private function assertResultsWithHelp(array $expected_results, string $event_class = NULL): void {
-    $expected_results = $this->addHelpTextToResults($expected_results);
-    $this->assertStatusCheckResults($expected_results);
-    $this->assertResults($expected_results, $event_class);
-  }
+  public function testSymlink(bool $symlinks_exist): void {
+    $arguments = Argument::cetera();
+    // The precondition should always be invoked.
+    $this->precondition->assertIsFulfilled($arguments)->shouldBeCalled();
 
-  /**
-   * Adds help text to results messages.
-   *
-   * @param \Drupal\package_manager\ValidationResult[] $results
-   *   The expected validation results.
-   *
-   * @return array
-   *   The new results.
-   */
-  public function addHelpTextToResults(array $results): array {
+    if ($symlinks_exist) {
+      $exception = new PreconditionException($this->precondition->reveal(), 'Symlinks were found.');
+      $this->precondition->assertIsFulfilled($arguments)->willThrow($exception);
+
+      $expected_results = [
+        ValidationResult::createError([
+          $exception->getMessage(),
+        ]),
+      ];
+    }
+    else {
+      $expected_results = [];
+    }
+
+    $this->assertStatusCheckResults($expected_results);
+    $this->assertResults($expected_results, PreCreateEvent::class);
+
+    $this->enableModules(['help']);
+
     $url = Url::fromRoute('help.page', ['name' => 'package_manager'])
       ->setOption('fragment', 'package-manager-faq-symlinks-found')
       ->toString();
@@ -164,25 +96,12 @@ class SymlinkValidatorTest extends PackageManagerKernelTestBase {
     $map = function (string $message) use ($url): string {
       return $message . ' See <a href="' . $url . '">the help page</a> for information on how to resolve the problem.';
     };
-    foreach ($results as $index => $result) {
+    foreach ($expected_results as $index => $result) {
       $messages = array_map($map, $result->getMessages());
-      $results[$index] = ValidationResult::createError($messages);
+      $expected_results[$index] = ValidationResult::createError($messages);
     }
-    return $results;
-  }
-
-}
-
-/**
- * A test validator that considers anything named 'a_link' to be a symlink.
- */
-class TestSymlinkValidator extends SymlinkValidator {
-
-  /**
-   * {@inheritdoc}
-   */
-  protected function isLink(\SplFileInfo $file): bool {
-    return $file->getBasename() === 'a_link' || parent::isLink($file);
+    $this->assertStatusCheckResults($expected_results);
+    $this->assertResults($expected_results, PreCreateEvent::class);
   }
 
 }
