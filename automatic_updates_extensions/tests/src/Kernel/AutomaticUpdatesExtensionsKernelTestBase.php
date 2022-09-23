@@ -19,7 +19,7 @@ abstract class AutomaticUpdatesExtensionsKernelTestBase extends AutomaticUpdates
    */
   protected static $modules = [
     'automatic_updates_extensions',
-    'automatic_updates_test_release_history',
+    'package_manager_test_release_history',
   ];
 
   /**

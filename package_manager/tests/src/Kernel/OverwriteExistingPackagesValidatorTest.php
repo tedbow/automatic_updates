@@ -13,6 +13,16 @@ use Drupal\package_manager\ValidationResult;
 class OverwriteExistingPackagesValidatorTest extends PackageManagerKernelTestBase {
 
   /**
+   * {@inheritdoc}
+   */
+  protected function setUp(): void {
+    // In this test, we don't care whether the updated projects are secure and
+    // supported.
+    $this->disableValidators[] = 'package_manager.validator.supported_releases';
+    parent::setUp();
+  }
+
+  /**
    * Tests that new installed packages overwrite existing directories.
    *
    * The fixture simulates a scenario where the active directory has three

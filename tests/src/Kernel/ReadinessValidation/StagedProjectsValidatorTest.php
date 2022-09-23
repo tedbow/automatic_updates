@@ -20,6 +20,16 @@ class StagedProjectsValidatorTest extends AutomaticUpdatesKernelTestBase {
   protected static $modules = ['automatic_updates'];
 
   /**
+   * {@inheritdoc}
+   */
+  protected function setUp(): void {
+    // In this test, we don't care whether the updated projects are secure and
+    // supported.
+    $this->disableValidators[] = 'package_manager.validator.supported_releases';
+    parent::setUp();
+  }
+
+  /**
    * Asserts a set of validation results when staged changes are applied.
    *
    * @param \Drupal\package_manager\ValidationResult[] $expected_results

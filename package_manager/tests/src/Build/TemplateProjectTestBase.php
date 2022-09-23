@@ -4,6 +4,8 @@ namespace Drupal\Tests\package_manager\Build;
 
 use Drupal\BuildTests\QuickStart\QuickStartTestBase;
 use Drupal\Composer\Composer;
+use Drupal\Tests\package_manager\Traits\FixtureUtilityTrait;
+use Drupal\Tests\RandomGeneratorTrait;
 
 /**
  * Base class for tests which create a test site from a core project template.
@@ -15,12 +17,32 @@ use Drupal\Composer\Composer;
  */
 abstract class TemplateProjectTestBase extends QuickStartTestBase {
 
+  use FixtureUtilityTrait;
+  use RandomGeneratorTrait;
+
   /**
    * The web root of the test site, relative to the workspace directory.
    *
    * @var string
    */
   private $webRoot;
+
+  /**
+   * A secondary server instance, to serve XML metadata about available updates.
+   *
+   * @var \Symfony\Component\Process\Process
+   */
+  private $metadataServer;
+
+  /**
+   * {@inheritdoc}
+   */
+  protected function tearDown(): void {
+    if ($this->metadataServer) {
+      $this->metadataServer->stop();
+    }
+    parent::tearDown();
+  }
 
   /**
    * Data provider for tests which use all of the core project templates.
@@ -137,6 +159,19 @@ END;
   }
 
   /**
+   * Prepares the test site to serve an XML feed of available release metadata.
+   *
+   * @param array $xml_map
+   *   The update XML map, as used by update_test.settings.
+   *
+   * @see \Drupal\automatic_updates_test\TestController::metadata()
+   */
+  protected function setReleaseMetadata(array $xml_map): void {
+    $xml_map = var_export($xml_map, TRUE);
+    $this->writeSettings("\$config['update_test.settings']['xml_map'] = $xml_map;");
+  }
+
+  /**
    * Creates a test project from a given template and installs Drupal.
    *
    * @param string $template
@@ -225,6 +260,28 @@ END;
       $this->assertStringNotContainsString('Symlinking', $output);
     }
     // END: DELETE FROM CORE MERGE REQUEST
+
+    // Install Drupal.
+    $this->installQuickStart('minimal');
+    $this->formLogin($this->adminUsername, $this->adminPassword);
+
+    // When checking for updates, we need to be able to make sub-requests, but
+    // the built-in PHP server is single-threaded. Therefore, open a second
+    // server instance on another port, which will serve the metadata about
+    // available updates.
+    $port = $this->findAvailablePort();
+    $this->metadataServer = $this->instantiateServer($port);
+    $code = <<<END
+\$config['automatic_updates.settings']['cron_port'] = $port;
+\$config['update.settings']['fetch']['url'] = 'http://localhost:$port/test-release-history';
+END;
+    $this->writeSettings($code);
+
+    // Install helpful modules.
+    $this->installModules([
+      'package_manager_test_api',
+      'package_manager_test_release_history',
+    ]);
   }
 
   /**
@@ -364,6 +421,21 @@ END;
       $page->pressButton('Continue');
       $assert_session->statusCodeEquals(200);
     }
+  }
+
+  /**
+   * Copies a fixture directory to a temporary directory and returns its path.
+   *
+   * @param string $fixture_directory
+   *   The fixture directory.
+   *
+   * @return string
+   *   The temporary directory.
+   */
+  protected function copyFixtureToTempDirectory(string $fixture_directory): string {
+    $temp_directory = $this->getWorkspaceDirectory() . '/fixtures_temp_' . $this->randomMachineName(20);
+    static::copyFixtureFilesTo($fixture_directory, $temp_directory);
+    return $temp_directory;
   }
 
   // BEGIN: DELETE FROM CORE MERGE REQUEST

@@ -1,12 +1,12 @@
 <?php
 
-namespace Drupal\automatic_updates_extensions\Validator;
+namespace Drupal\package_manager\Validator;
 
+use Drupal\Component\Render\FormattableMarkup;
 use Drupal\package_manager\ProjectInfo;
-use Drupal\automatic_updates_extensions\ExtensionUpdater;
 use Drupal\package_manager\LegacyVersionUtility;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
-use Drupal\package_manager\Event\PreCreateEvent;
+use Drupal\package_manager\Event\PreApplyEvent;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 /**
@@ -15,10 +15,8 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
  * @internal
  *   This class is an internal part of the module's update handling and
  *   should not be used by external code.
- *
- * @todo Remove this validator completely in https://www.drupal.org/i/3307369.
  */
-final class UpdateReleaseValidator implements EventSubscriberInterface {
+final class SupportedReleaseValidator implements EventSubscriberInterface {
 
   use StringTranslationTrait;
 
@@ -63,40 +61,56 @@ final class UpdateReleaseValidator implements EventSubscriberInterface {
   }
 
   /**
-   * Checks that the update projects are secure and supported.
+   * Checks that the packages are secure and supported.
    *
-   * @param \Drupal\package_manager\Event\PreCreateEvent $event
+   * @param \Drupal\package_manager\Event\PreApplyEvent $event
    *   The event object.
    */
-  public function checkRelease(PreCreateEvent $event): void {
-    $stage = $event->getStage();
-    // This check only works with Automatic Updates Extensions.
-    if (!$stage instanceof ExtensionUpdater) {
-      return;
-    }
-
-    $all_versions = $stage->getPackageVersions();
-    $messages = [];
-    foreach (['production', 'dev'] as $package_type) {
-      foreach ($all_versions[$package_type] as $package_name => $sematic_version) {
-        $project_name = $stage->getActiveComposer()->getProjectForPackage($package_name);
-        // If the version isn't in the list of installable releases, then it
-        // isn't secure and supported and the user should receive an error.
-        if (!$this->isSupportedRelease($project_name, $sematic_version)) {
-          $messages[] = $this->t('Project @project_name to version @version', [
-            '@project_name' => $project_name,
-            '@version' => $sematic_version,
-          ]);
-        }
+  public function checkStagedReleases(PreApplyEvent $event): void {
+    $active = $event->getStage()->getActiveComposer();
+    $staged = $event->getStage()->getStageComposer();
+    $updated_packages = array_merge(
+      $staged->getPackagesNotIn($active),
+      $staged->getPackagesWithDifferentVersionsIn($active)
+    );
+    $unknown_packages = [];
+    $unsupported_packages = [];
+    foreach ($updated_packages as $package_name => $staged_package) {
+      // Only packages of the types 'drupal-module' or 'drupal-theme' that
+      // start with 'drupal/' will have update XML from drupal.org.
+      if (!in_array($staged_package->getType(), ['drupal-module', 'drupal-theme'], TRUE)
+         || !str_starts_with($package_name, 'drupal/')) {
+        continue;
+      }
+      $project_name = $staged->getProjectForPackage($package_name);
+      if (empty($project_name)) {
+        $unknown_packages[] = $package_name;
+        continue;
+      }
+      $semantic_version = $staged_package->getPrettyVersion();
+      if (!$this->isSupportedRelease($project_name, $semantic_version)) {
+        $unsupported_packages[] = new FormattableMarkup('@project_name (@package_name) @version', [
+          '@project_name' => $project_name,
+          '@package_name' => $package_name,
+          '@version' => $semantic_version,
+        ]);
       }
     }
-    if ($messages) {
+    if ($unsupported_packages) {
       $summary = $this->formatPlural(
-        count($messages),
+        count($unsupported_packages),
         'Cannot update because the following project version is not in the list of installable releases.',
         'Cannot update because the following project versions are not in the list of installable releases.'
       );
-      $event->addError($messages, $summary);
+      $event->addError($unsupported_packages, $summary);
+    }
+    if ($unknown_packages) {
+      $summary = $this->formatPlural(
+        count($unknown_packages),
+        'Cannot update because the following new or updated Drupal package does not have project information.',
+        'Cannot update because the following new or updated Drupal packages do not have project information.',
+      );
+      $event->addError($unknown_packages, $summary);
     }
   }
 
@@ -105,7 +119,7 @@ final class UpdateReleaseValidator implements EventSubscriberInterface {
    */
   public static function getSubscribedEvents() {
     return [
-      PreCreateEvent::class => 'checkRelease',
+      PreApplyEvent::class => 'checkStagedReleases',
     ];
   }
 

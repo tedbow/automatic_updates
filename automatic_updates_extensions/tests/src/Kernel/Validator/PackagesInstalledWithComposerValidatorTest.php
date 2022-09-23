@@ -22,6 +22,7 @@ class PackagesInstalledWithComposerValidatorTest extends AutomaticUpdatesExtensi
     // In this test, we don't care whether the updated projects are secure and
     // supported.
     $this->disableValidators[] = 'automatic_updates_extensions.validator.target_release';
+    $this->disableValidators[] = 'package_manager.validator.supported_releases';
     // @todo The validator being tested covers the same cases as the following
     //   validator. PackagesInstalledWithComposerValidatorTest will be removed
     //   in https://drupal.org/i/3303900.

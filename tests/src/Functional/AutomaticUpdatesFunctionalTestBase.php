@@ -55,7 +55,7 @@ abstract class AutomaticUpdatesFunctionalTestBase extends BrowserTestBase {
    */
   protected function installModulesFromClassProperty(ContainerInterface $container): void {
     $container->get('module_installer')->install([
-      'automatic_updates_test_release_history',
+      'package_manager_test_release_history',
     ]);
     $this->container = $container->get('kernel')->getContainer();
 

@@ -15,19 +15,20 @@ class PackageUpdateTest extends TemplateProjectTestBase {
   public function testPackageUpdate(): void {
     $this->createTestProject('RecommendedProject');
 
-    $this->addRepository('alpha', __DIR__ . '/../../fixtures/alpha/1.0.0');
-    $this->addRepository('updated_module', __DIR__ . '/../../fixtures/updated_module/1.0.0');
+    $this->addRepository('alpha', $this->copyFixtureToTempDirectory(__DIR__ . '/../../fixtures/alpha/1.0.0'));
+    $this->addRepository('updated_module', $this->copyFixtureToTempDirectory(__DIR__ . '/../../fixtures/updated_module/1.0.0'));
+    $this->setReleaseMetadata([
+      'updated_module' => __DIR__ . '/../../fixtures/release-history/updated_module.1.1.0.xml',
+    ]);
     $this->runComposer('COMPOSER_MIRROR_PATH_REPOS=1 composer require drupal/alpha drupal/updated_module --update-with-all-dependencies', 'project');
 
-    $this->installQuickStart('minimal');
-    $this->formLogin($this->adminUsername, $this->adminPassword);
     // The updated_module provides actual Drupal-facing functionality that we're
     // testing as well, so we need to install it.
-    $this->installModules(['package_manager_test_api', 'updated_module']);
+    $this->installModules(['updated_module']);
 
     // Change both modules' upstream version.
-    $this->addRepository('alpha', __DIR__ . '/../../fixtures/alpha/1.1.0');
-    $this->addRepository('updated_module', __DIR__ . '/../../fixtures/updated_module/1.1.0');
+    $this->addRepository('alpha', $this->copyFixtureToTempDirectory(__DIR__ . '/../../fixtures/alpha/1.1.0'));
+    $this->addRepository('updated_module', $this->copyFixtureToTempDirectory(__DIR__ . '/../../fixtures/updated_module/1.1.0'));
 
     // Use the API endpoint to create a stage and update updated_module to
     // 1.1.0. Even though both modules have version 1.1.0 available, only

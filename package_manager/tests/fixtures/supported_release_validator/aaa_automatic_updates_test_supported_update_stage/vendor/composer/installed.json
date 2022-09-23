@@ -1,0 +1,25 @@
+{
+    "packages": [
+        {
+            "name": "drupal/core-recommended",
+            "version": "9.8.0",
+            "require": {
+                "drupal/core": "9.8.0"
+            }
+        },
+        {
+            "name": "drupal/core",
+            "version": "9.8.0"
+        },
+        {
+          "name": "drupal/dependency",
+          "version": "9.8.1",
+          "type": "drupal-library"
+        },
+        {
+          "name": "drupal/aaa_automatic_updates_test",
+          "version": "7.0.1",
+          "type": "drupal-module"
+        }
+    ]
+}

@@ -179,6 +179,10 @@ services:
     class: Drupal\package_manager\Validator\ComposerPatchesValidator
     tags:
       - { name: event_subscriber }
+  package_manager.validator.supported_releases:
+    class: Drupal\package_manager\Validator\SupportedReleaseValidator
+    tags:
+      - { name: event_subscriber }
   package_manager.update_processor:
     class: Drupal\package_manager\PackageManagerUpdateProcessor
     arguments: [ '@config.factory', '@queue', '@update.fetcher', '@state', '@private_key', '@keyvalue', '@keyvalue.expirable' ]

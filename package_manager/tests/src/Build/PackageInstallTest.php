@@ -15,11 +15,10 @@ class PackageInstallTest extends TemplateProjectTestBase {
   public function testPackageInstall(): void {
     $this->createTestProject('RecommendedProject');
 
-    $this->addRepository('alpha', __DIR__ . '/../../fixtures/alpha/1.0.0');
-
-    $this->installQuickStart('minimal');
-    $this->formLogin($this->adminUsername, $this->adminPassword);
-    $this->installModules(['package_manager_test_api']);
+    $this->setReleaseMetadata([
+      'alpha' => __DIR__ . '/../../fixtures/release-history/alpha.1.1.0.xml',
+    ]);
+    $this->addRepository('alpha', $this->copyFixtureToTempDirectory(__DIR__ . '/../../fixtures/alpha/1.0.0'));
 
     // Use the API endpoint to create a stage and install alpha 1.0.0. We ask
     // the API to return the contents of composer.json file of installed module,
