@@ -4,6 +4,7 @@ namespace Drupal\automatic_updates\Form;
 
 use Drupal\automatic_updates\BatchProcessor;
 use Drupal\automatic_updates\Updater;
+use Drupal\automatic_updates\Validation\ReadinessTrait;
 use Drupal\automatic_updates\Validator\StagedDatabaseUpdateValidator;
 use Drupal\Core\Batch\BatchBuilder;
 use Drupal\Core\Extension\ModuleExtensionList;
@@ -13,9 +14,11 @@ use Drupal\Core\Messenger\MessengerInterface;
 use Drupal\Core\Render\RendererInterface;
 use Drupal\Core\State\StateInterface;
 use Drupal\package_manager\Exception\ApplyFailedException;
+use Drupal\package_manager\Event\StatusCheckEvent;
 use Drupal\package_manager\Exception\StageException;
 use Drupal\package_manager\Exception\StageOwnershipException;
 use Symfony\Component\DependencyInjection\ContainerInterface;
+use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 
 /**
  * Defines a form to commit staged updates.
@@ -24,6 +27,8 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
  *   Form classes are internal and the form structure may change at any time.
  */
 final class UpdateReady extends FormBase {
+
+  use ReadinessTrait;
 
   /**
    * The updater service.
@@ -61,6 +66,13 @@ final class UpdateReady extends FormBase {
   protected $renderer;
 
   /**
+   * The event dispatcher.
+   *
+   * @var \Symfony\Component\EventDispatcher\EventDispatcherInterface
+   */
+  protected $eventDispatcher;
+
+  /**
    * Constructs a new UpdateReady object.
    *
    * @param \Drupal\automatic_updates\Updater $updater
@@ -75,14 +87,17 @@ final class UpdateReady extends FormBase {
    *   The staged database update validator service.
    * @param \Drupal\Core\Render\RendererInterface $renderer
    *   The renderer service.
+   * @param \Symfony\Component\EventDispatcher\EventDispatcherInterface $event_dispatcher
+   *   Event dispatcher service.
    */
-  public function __construct(Updater $updater, MessengerInterface $messenger, StateInterface $state, ModuleExtensionList $module_list, StagedDatabaseUpdateValidator $staged_database_update_validator, RendererInterface $renderer) {
+  public function __construct(Updater $updater, MessengerInterface $messenger, StateInterface $state, ModuleExtensionList $module_list, StagedDatabaseUpdateValidator $staged_database_update_validator, RendererInterface $renderer, EventDispatcherInterface $event_dispatcher) {
     $this->updater = $updater;
     $this->setMessenger($messenger);
     $this->state = $state;
     $this->moduleList = $module_list;
     $this->stagedDatabaseUpdateValidator = $staged_database_update_validator;
     $this->renderer = $renderer;
+    $this->eventDispatcher = $event_dispatcher;
   }
 
   /**
@@ -102,7 +117,8 @@ final class UpdateReady extends FormBase {
       $container->get('state'),
       $container->get('extension.list.module'),
       $container->get('automatic_updates.validator.staged_database_updates'),
-      $container->get('renderer')
+      $container->get('renderer'),
+      $container->get('event_dispatcher')
     );
   }
 
@@ -196,11 +212,21 @@ final class UpdateReady extends FormBase {
       ];
     }
 
+    // Don't run the status checks once the form has been submitted.
+    if (!$form_state->getUserInput()) {
+      $event = new StatusCheckEvent($this->updater);
+      $this->eventDispatcher->dispatch($event);
+      /** @var \Drupal\package_manager\ValidationResult[] $results */
+      $results = $event->getResults();
+      if (!empty($results)) {
+        $this->displayResults($results, $this->messenger(), $this->renderer);
+        return $form;
+      }
+    }
     $form['actions']['submit'] = [
       '#type' => 'submit',
       '#value' => $this->t('Continue'),
     ];
-
     return $form;
   }
 

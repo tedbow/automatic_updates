@@ -9,10 +9,12 @@ use Drupal\package_manager\Event\PostRequireEvent;
 use Drupal\package_manager\Event\PreApplyEvent;
 use Drupal\package_manager\Event\PostApplyEvent;
 use Drupal\package_manager\Event\PreCreateEvent;
+use Drupal\package_manager\Event\StatusCheckEvent;
 use Drupal\package_manager\ValidationResult;
 use Drupal\automatic_updates_test\EventSubscriber\TestSubscriber1;
 use Drupal\package_manager_bypass\Committer;
 use Drupal\package_manager_bypass\Stager;
+use Drupal\package_manager_test_validation\EventSubscriber\TestSubscriber;
 use Drupal\system\SystemManager;
 use Drupal\Tests\automatic_updates\Traits\ValidationTestTrait;
 use Drupal\Tests\package_manager\Traits\PackageManagerBypassTestTrait;
@@ -757,6 +759,26 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
     $assert_session->buttonNotExists('Delete existing update');
     $assert_session->pageTextContains('Some Exception');
     $assert_session->buttonExists('Update');
+  }
+
+  /**
+   * Tests that update cannot be completed via the UI if a status check fails.
+   */
+  public function testNoContinueOnError(): void {
+    $session = $this->getSession();
+    $assert_session = $this->assertSession();
+    $page = $session->getPage();
+    $this->setCoreVersion('9.8.0');
+    $this->checkForUpdates();
+    $this->drupalGet('/admin/modules/automatic-update');
+    $page->pressButton('Update to 9.8.1');
+    $this->checkForMetaRefresh();
+    $this->assertUpdateStagedTimes(1);
+    $error = ValidationResult::createError(['Error occured.']);
+    TestSubscriber::setTestResult([$error], StatusCheckEvent::class);
+    $this->getSession()->reload();
+    $assert_session->buttonNotExists('Continue');
+    $assert_session->buttonExists('Cancel update');
   }
 
   /**
