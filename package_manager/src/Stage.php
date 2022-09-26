@@ -337,8 +337,11 @@ class Stage {
    * @param string[] $dev
    *   (optional) The packages to add as dev dependencies, in the form
    *   'vendor/name' or 'vendor/name:version'. Defaults to an empty array.
+   * @param int|null $timeout
+   *   (optional) How long to allow the Composer operation to run before timing
+   *   out, in seconds, or NULL to never time out. Defaults to 300 seconds.
    */
-  public function require(array $runtime, array $dev = []): void {
+  public function require(array $runtime, array $dev = [], ?int $timeout = 300): void {
     $this->checkOwnership();
 
     $this->dispatch(new PreRequireEvent($this, $runtime, $dev));
@@ -349,17 +352,17 @@ class Stage {
     // the installed packages yet.
     if ($runtime) {
       $command = array_merge(['require', '--no-update'], $runtime);
-      $this->stager->stage($command, $active_dir, $stage_dir);
+      $this->stager->stage($command, $active_dir, $stage_dir, NULL, $timeout);
     }
     if ($dev) {
       $command = array_merge(['require', '--dev', '--no-update'], $dev);
-      $this->stager->stage($command, $active_dir, $stage_dir);
+      $this->stager->stage($command, $active_dir, $stage_dir, NULL, $timeout);
     }
 
     // If constraints were changed, update those packages.
     if ($runtime || $dev) {
       $command = array_merge(['update', '--with-all-dependencies'], $runtime, $dev);
-      $this->stager->stage($command, $active_dir, $stage_dir);
+      $this->stager->stage($command, $active_dir, $stage_dir, NULL, $timeout);
     }
 
     $this->dispatch(new PostRequireEvent($this, $runtime, $dev));

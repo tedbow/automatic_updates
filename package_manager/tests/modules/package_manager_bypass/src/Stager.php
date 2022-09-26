@@ -17,7 +17,7 @@ class Stager extends BypassedStagerServiceBase implements StagerInterface {
    * {@inheritdoc}
    */
   public function stage(array $composerCommand, PathInterface $activeDir, PathInterface $stagingDir, ?ProcessOutputCallbackInterface $callback = NULL, ?int $timeout = ProcessRunnerInterface::DEFAULT_TIMEOUT): void {
-    $this->saveInvocationArguments($composerCommand, $stagingDir);
+    $this->saveInvocationArguments($composerCommand, $stagingDir, $timeout);
     $this->copyFixtureFilesTo($stagingDir);
 
     // If desired, simulate a change to the lock file (e.g., as a result of

@@ -78,7 +78,7 @@ class Updater extends Stage {
   /**
    * Stages the update.
    */
-  public function stage(): void {
+  public function stage(?int $timeout = 300): void {
     $this->checkOwnership();
 
     // Convert an associative array of package versions, keyed by name, to
@@ -91,7 +91,7 @@ class Updater extends Stage {
       return $requirements;
     };
     $versions = array_map($map, $this->getPackageVersions());
-    $this->require($versions['production'], $versions['dev']);
+    $this->require($versions['production'], $versions['dev'], $timeout);
   }
 
   /**

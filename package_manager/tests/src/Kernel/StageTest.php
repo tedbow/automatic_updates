@@ -235,15 +235,25 @@ class StageTest extends PackageManagerKernelTestBase {
     $timeouts = [
       // The beginner was given an explicit timeout.
       'package_manager.beginner' => 420,
-      // The committer should have been called with a longer timeout than
-      // Composer Stager's default of 120 seconds.
+      // The stager should be called with a timeout of 300 seconds, which is
+      // longer than Composer Stager's default timeout of 120 seconds.
+      'package_manager.stager' => 300,
+      // The committer should have been called with an even longer timeout,
+      // since it's the most failure-sensitive operation.
       'package_manager.committer' => 600,
     ];
     foreach ($timeouts as $service_id => $expected_timeout) {
       $invocations = $this->container->get($service_id)->getInvocationArguments();
 
-      // The service should have been called with the expected timeout.
-      $this->assertCount(1, $invocations);
+      // The services should have been called with the expected timeouts.
+      $expected_count = 1;
+      if ($service_id === 'package_manager.stager') {
+        // Stage::require() calls Stager::stage() twice, once to change the
+        // version constraints in composer.json, and again to actually update
+        // the installed dependencies.
+        $expected_count = 2;
+      }
+      $this->assertCount($expected_count, $invocations);
       $this->assertSame($expected_timeout, end($invocations[0]));
     }
   }
