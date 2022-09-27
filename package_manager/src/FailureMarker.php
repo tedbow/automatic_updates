@@ -78,7 +78,12 @@ final class FailureMarker {
 
     if (file_exists($path)) {
       $data = file_get_contents($path);
-      $data = Json::decode($data);
+      try {
+        $data = json_decode($data, TRUE, 512, JSON_THROW_ON_ERROR);
+      }
+      catch (\JsonException $exception) {
+        throw new ApplyFailedException('Failure marker file exists but cannot be decoded.', $exception->getCode(), $exception);
+      }
 
       throw new ApplyFailedException($data['message']);
     }
