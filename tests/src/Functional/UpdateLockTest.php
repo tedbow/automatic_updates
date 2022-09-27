@@ -52,7 +52,7 @@ class UpdateLockTest extends AutomaticUpdatesFunctionalTestBase {
     // We should be able to get partway through an update without issue.
     $this->drupalLogin($user_1);
     $this->drupalGet('/admin/modules/automatic-update');
-    Stager::setFixturePath(__DIR__ . '/../../fixtures/staged/9.8.1');
+    Stager::setFixturePath(__DIR__ . '/../../fixtures/drupal-9.8.1-installed');
     $page->pressButton('Update');
     $this->checkForMetaRefresh();
     $this->assertUpdateReady('9.8.1');
