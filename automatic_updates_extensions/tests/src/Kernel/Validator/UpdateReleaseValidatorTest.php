@@ -15,14 +15,6 @@ use Drupal\Tests\automatic_updates_extensions\Kernel\AutomaticUpdatesExtensionsK
 class UpdateReleaseValidatorTest extends AutomaticUpdatesExtensionsKernelTestBase {
 
   /**
-   * {@inheritdoc}
-   */
-  protected function setUp(): void {
-    $this->disableValidators[] = 'automatic_updates_extensions.validator.packages_installed_with_composer';
-    parent::setUp();
-  }
-
-  /**
    * Data provider for testPreCreateException().
    *
    * @return mixed[][]

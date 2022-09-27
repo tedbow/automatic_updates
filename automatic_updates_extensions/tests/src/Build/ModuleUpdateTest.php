@@ -60,8 +60,6 @@ END;
     // Use the API endpoint to create a stage and update the 'new_module' module
     // to 1.1.0.
     // @see \Drupal\automatic_updates_extensions_test_api\ApiController::run()
-    // There will be error in updating as this module is not installed
-    // via composer @see \Drupal\Tests\automatic_updates_extensions\Kernel\Validator\PackagesInstalledWithComposerValidatorTest.
     $query = http_build_query([
       'projects' => [
         'new_module' => '1.1.0',
