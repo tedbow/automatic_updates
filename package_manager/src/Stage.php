@@ -32,6 +32,9 @@ use PhpTuf\ComposerStager\Domain\Exception\PreconditionException;
 use PhpTuf\ComposerStager\Infrastructure\Factory\Path\PathFactory;
 use PhpTuf\ComposerStager\Infrastructure\Factory\Path\PathFactoryInterface;
 use PhpTuf\ComposerStager\Infrastructure\Value\PathList\PathList;
+use Psr\Log\LoggerAwareInterface;
+use Psr\Log\LoggerAwareTrait;
+use Psr\Log\NullLogger;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 
 /**
@@ -58,8 +61,9 @@ use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
  * (e.g. `/tmp/.package_managerSITE_UUID`), which is deleted when any stage
  * created by that site is destroyed.
  */
-class Stage {
+class Stage implements LoggerAwareInterface {
 
+  use LoggerAwareTrait;
   use StringTranslationTrait;
 
   /**
@@ -227,6 +231,7 @@ class Stage {
       $failure_marker = \Drupal::service('package_manager.failure_marker');
     }
     $this->failureMarker = $failure_marker;
+    $this->setLogger(new NullLogger());
   }
 
   /**
@@ -446,6 +451,9 @@ class Stage {
   public function postApply(): void {
     $this->checkOwnership();
 
+    if ($this->tempStore->get(self::TEMPSTORE_APPLY_TIME_KEY) === $this->time->getRequestTime()) {
+      $this->logger->warning('Post-apply tasks are running in the same request during which staged changes were applied to the active code base. This can result in unpredictable behavior.');
+    }
     // Rebuild the container and clear all caches, to ensure that new services
     // are picked up.
     drupal_flush_all_caches();

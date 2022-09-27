@@ -28,6 +28,8 @@ services:
       - '@datetime.time'
       - '@PhpTuf\ComposerStager\Infrastructure\Factory\Path\PathFactoryInterface'
       - '@package_manager.failure_marker'
+    calls:
+      - ['setLogger', ['@logger.channel.automatic_updates']]
   automatic_updates.cron_updater:
     class: Drupal\automatic_updates\CronUpdater
     arguments:
@@ -47,6 +49,8 @@ services:
       - '@datetime.time'
       - '@PhpTuf\ComposerStager\Infrastructure\Factory\Path\PathFactoryInterface'
       - '@package_manager.failure_marker'
+    calls:
+      - ['setLogger', ['@logger.channel.automatic_updates']]
   automatic_updates.staged_projects_validator:
     class: Drupal\automatic_updates\Validator\StagedProjectsValidator
     arguments:
@@ -151,3 +155,6 @@ services:
       - '@package_manager.path_locator'
     tags:
       - { name: event_subscriber }
+  logger.channel.automatic_updates:
+    parent: logger.channel_base
+    arguments: ['automatic_updates']

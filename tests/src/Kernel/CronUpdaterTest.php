@@ -478,4 +478,12 @@ class CronUpdaterTest extends AutomaticUpdatesKernelTestBase {
     $this->assertSame([$expected_language_code], $sent_message['line_langcodes']);
   }
 
+  /**
+   * Tests that setLogger is called on the cron updater service.
+   */
+  public function testLoggerIsSetByContainer(): void {
+    $updater_method_calls = $this->container->getDefinition('automatic_updates.cron_updater')->getMethodCalls();
+    $this->assertSame('setLogger', $updater_method_calls[0][0]);
+  }
+
 }

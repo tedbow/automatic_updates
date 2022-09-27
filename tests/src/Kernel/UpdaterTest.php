@@ -188,4 +188,12 @@ class UpdaterTest extends AutomaticUpdatesKernelTestBase {
     $updater->apply();
   }
 
+  /**
+   * Tests that setLogger is called on the updater service.
+   */
+  public function testLoggerIsSetByContainer(): void {
+    $updater_method_calls = $this->container->getDefinition('automatic_updates.updater')->getMethodCalls();
+    $this->assertSame('setLogger', $updater_method_calls[0][0]);
+  }
+
 }

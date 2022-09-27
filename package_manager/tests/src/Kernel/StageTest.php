@@ -16,6 +16,8 @@ use PhpTuf\ComposerStager\Domain\Exception\InvalidArgumentException;
 use PhpTuf\ComposerStager\Domain\Exception\PreconditionException;
 use Drupal\package_manager_bypass\Beginner;
 use PhpTuf\ComposerStager\Domain\Service\Precondition\PreconditionInterface;
+use Psr\Log\LogLevel;
+use Psr\Log\Test\TestLogger;
 
 /**
  * @coversDefaultClass \Drupal\package_manager\Stage
@@ -404,6 +406,36 @@ class StageTest extends PackageManagerKernelTestBase {
       $this->container->get('tempstore.shared'),
       $this->container->get('datetime.time')
     );
+  }
+
+  /**
+   * Tests running apply and post-apply in the same request.
+   */
+  public function testApplyAndPostApplyInSameRequest(): void {
+    $stage = $this->createStage();
+
+    $logger = new TestLogger();
+    $stage->setLogger($logger);
+    $warning_message = 'Post-apply tasks are running in the same request during which staged changes were applied to the active code base. This can result in unpredictable behavior.';
+
+    // Run apply and post-apply in the same request (i.e., the same request
+    // time), and ensure the warning is logged.
+    $stage->create();
+    $stage->require(['drupal/core' => '9.8.1']);
+    $stage->apply();
+    $stage->postApply();
+    $this->assertTrue($logger->hasRecord($warning_message, LogLevel::WARNING));
+    $stage->destroy();
+
+    $logger->reset();
+    $stage->create();
+    $stage->require(['drupal/core' => '9.8.2']);
+    $stage->apply();
+    // Simulate post-apply taking place in another request by simulating a
+    // request time 30 seconds after apply started.
+    TestTime::$offset = 30;
+    $stage->postApply();
+    $this->assertFalse($logger->hasRecord($warning_message, LogLevel::WARNING));
   }
 
 }
