@@ -123,6 +123,14 @@ services:
       - '@package_manager.path_locator'
     tags:
       - { name: event_subscriber }
+  package_manager.validator.staged_database_updates:
+    class: Drupal\package_manager\Validator\StagedDBUpdateValidator
+    arguments:
+      - '@package_manager.path_locator'
+      - '@extension.list.module'
+      - '@extension.list.theme'
+    tags:
+      - { name: event_subscriber }
   package_manager.test_site_excluder:
     class: Drupal\package_manager\PathExcluder\TestSiteExcluder
     arguments:

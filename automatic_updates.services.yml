@@ -129,9 +129,7 @@ services:
   automatic_updates.validator.staged_database_updates:
     class: Drupal\automatic_updates\Validator\StagedDatabaseUpdateValidator
     arguments:
-      - '@package_manager.path_locator'
-      - '@extension.list.module'
-      - '@extension.list.theme'
+      - '@package_manager.validator.staged_database_updates'
       - '@string_translation'
     tags:
       - { name: event_subscriber }

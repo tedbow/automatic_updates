@@ -2,7 +2,7 @@
 
 namespace Drupal\automatic_updates_test;
 
-use Drupal\automatic_updates\Validator\StagedDatabaseUpdateValidator as BaseValidator;
+use Drupal\package_manager\Validator\StagedDBUpdateValidator as BaseValidator;
 use Drupal\Core\Extension\Extension;
 use Drupal\Core\State\StateInterface;
 use Drupal\package_manager\Stage;

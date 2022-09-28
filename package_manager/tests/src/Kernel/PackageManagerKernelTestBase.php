@@ -177,9 +177,12 @@ abstract class PackageManagerKernelTestBase extends KernelTestBase {
    *
    * @param \Drupal\package_manager\ValidationResult[] $expected_results
    *   The expected validation results.
+   * @param \Drupal\package_manager\Stage|null $stage
+   *   (optional) The stage to use to create the status check event. If none is
+   *   provided a new stage will be created.
    */
-  protected function assertStatusCheckResults(array $expected_results): void {
-    $event = new StatusCheckEvent($this->createStage());
+  protected function assertStatusCheckResults(array $expected_results, Stage $stage = NULL): void {
+    $event = new StatusCheckEvent($stage ?? $this->createStage());
     $this->container->get('event_dispatcher')->dispatch($event);
     $this->assertValidationResultsEqual($expected_results, $event->getResults());
   }

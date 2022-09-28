@@ -17,7 +17,7 @@ class AutomaticUpdatesTestServiceProvider extends ServiceProviderBase {
   public function alter(ContainerBuilder $container) {
     parent::alter($container);
 
-    $service_id = 'automatic_updates.validator.staged_database_updates';
+    $service_id = 'package_manager.validator.staged_database_updates';
     if ($container->hasDefinition($service_id)) {
       $container->getDefinition($service_id)
         ->setClass(StagedDatabaseUpdateValidator::class)

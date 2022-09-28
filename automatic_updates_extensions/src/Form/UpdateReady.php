@@ -4,7 +4,7 @@ namespace Drupal\automatic_updates_extensions\Form;
 
 use Drupal\package_manager\Exception\ApplyFailedException;
 use Drupal\package_manager\ProjectInfo;
-use Drupal\automatic_updates\Validator\StagedDatabaseUpdateValidator;
+use Drupal\package_manager\Validator\StagedDBUpdateValidator;
 use Drupal\automatic_updates_extensions\BatchProcessor;
 use Drupal\automatic_updates\BatchProcessor as AutoUpdatesBatchProcessor;
 use Drupal\automatic_updates_extensions\ExtensionUpdater;
@@ -52,7 +52,7 @@ final class UpdateReady extends FormBase {
   /**
    * The staged database update validator service.
    *
-   * @var \Drupal\automatic_updates\Validator\StagedDatabaseUpdateValidator
+   * @var \Drupal\package_manager\Validator\StagedDBUpdateValidator
    */
   protected $stagedDatabaseUpdateValidator;
 
@@ -74,12 +74,12 @@ final class UpdateReady extends FormBase {
    *   The state service.
    * @param \Drupal\Core\Extension\ModuleExtensionList $module_list
    *   The module list service.
-   * @param \Drupal\automatic_updates\Validator\StagedDatabaseUpdateValidator $staged_database_update_validator
+   * @param \Drupal\package_manager\Validator\StagedDBUpdateValidator $staged_database_update_validator
    *   The staged database update validator service.
    * @param \Drupal\Core\Render\RendererInterface $renderer
    *   The renderer service.
    */
-  public function __construct(ExtensionUpdater $updater, MessengerInterface $messenger, StateInterface $state, ModuleExtensionList $module_list, StagedDatabaseUpdateValidator $staged_database_update_validator, RendererInterface $renderer) {
+  public function __construct(ExtensionUpdater $updater, MessengerInterface $messenger, StateInterface $state, ModuleExtensionList $module_list, StagedDBUpdateValidator $staged_database_update_validator, RendererInterface $renderer) {
     $this->updater = $updater;
     $this->setMessenger($messenger);
     $this->state = $state;
@@ -104,7 +104,7 @@ final class UpdateReady extends FormBase {
       $container->get('messenger'),
       $container->get('state'),
       $container->get('extension.list.module'),
-      $container->get('automatic_updates.validator.staged_database_updates'),
+      $container->get('package_manager.validator.staged_database_updates'),
       $container->get('renderer')
     );
   }

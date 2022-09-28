@@ -5,7 +5,7 @@ namespace Drupal\automatic_updates\Form;
 use Drupal\automatic_updates\BatchProcessor;
 use Drupal\automatic_updates\Updater;
 use Drupal\automatic_updates\Validation\ReadinessTrait;
-use Drupal\automatic_updates\Validator\StagedDatabaseUpdateValidator;
+use Drupal\package_manager\Validator\StagedDBUpdateValidator;
 use Drupal\Core\Batch\BatchBuilder;
 use Drupal\Core\Extension\ModuleExtensionList;
 use Drupal\Core\Form\FormBase;
@@ -55,7 +55,7 @@ final class UpdateReady extends FormBase {
   /**
    * The staged database update validator service.
    *
-   * @var \Drupal\automatic_updates\Validator\StagedDatabaseUpdateValidator
+   * @var \Drupal\package_manager\Validator\StagedDBUpdateValidator
    */
   protected $stagedDatabaseUpdateValidator;
 
@@ -84,14 +84,14 @@ final class UpdateReady extends FormBase {
    *   The state service.
    * @param \Drupal\Core\Extension\ModuleExtensionList $module_list
    *   The module list service.
-   * @param \Drupal\automatic_updates\Validator\StagedDatabaseUpdateValidator $staged_database_update_validator
+   * @param \Drupal\package_manager\Validator\StagedDBUpdateValidator $staged_database_update_validator
    *   The staged database update validator service.
    * @param \Drupal\Core\Render\RendererInterface $renderer
    *   The renderer service.
    * @param \Symfony\Component\EventDispatcher\EventDispatcherInterface $event_dispatcher
    *   Event dispatcher service.
    */
-  public function __construct(Updater $updater, MessengerInterface $messenger, StateInterface $state, ModuleExtensionList $module_list, StagedDatabaseUpdateValidator $staged_database_update_validator, RendererInterface $renderer, EventDispatcherInterface $event_dispatcher) {
+  public function __construct(Updater $updater, MessengerInterface $messenger, StateInterface $state, ModuleExtensionList $module_list, StagedDBUpdateValidator $staged_database_update_validator, RendererInterface $renderer, EventDispatcherInterface $event_dispatcher) {
     $this->updater = $updater;
     $this->setMessenger($messenger);
     $this->state = $state;
@@ -117,7 +117,7 @@ final class UpdateReady extends FormBase {
       $container->get('messenger'),
       $container->get('state'),
       $container->get('extension.list.module'),
-      $container->get('automatic_updates.validator.staged_database_updates'),
+      $container->get('package_manager.validator.staged_database_updates'),
       $container->get('renderer'),
       $container->get('event_dispatcher')
     );
