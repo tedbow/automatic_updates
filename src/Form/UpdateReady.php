@@ -17,6 +17,7 @@ use Drupal\package_manager\Exception\ApplyFailedException;
 use Drupal\package_manager\Event\StatusCheckEvent;
 use Drupal\package_manager\Exception\StageException;
 use Drupal\package_manager\Exception\StageOwnershipException;
+use Drupal\system\SystemManager;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 
@@ -218,8 +219,11 @@ final class UpdateReady extends FormBase {
       $this->eventDispatcher->dispatch($event);
       /** @var \Drupal\package_manager\ValidationResult[] $results */
       $results = $event->getResults();
-      if (!empty($results)) {
-        $this->displayResults($results, $this->messenger(), $this->renderer);
+      // This will have no effect if $results is empty.
+      $this->displayResults($results, $this->messenger(), $this->renderer);
+      // If any errors occurred, return the form early so the user cannot
+      // continue.
+      if ($this->getOverallSeverity($results) === SystemManager::REQUIREMENT_ERROR) {
         return $form;
       }
     }

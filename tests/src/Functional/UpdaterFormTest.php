@@ -782,6 +782,28 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
   }
 
   /**
+   * Tests that update can be completed even if a status check throws a warning.
+   */
+  public function testContinueOnWarning(): void {
+    $session = $this->getSession();
+
+    $this->setCoreVersion('9.8.0');
+    $this->checkForUpdates();
+    $this->drupalGet('/admin/modules/automatic-update');
+    $session->getPage()->pressButton('Update to 9.8.1');
+    $this->checkForMetaRefresh();
+    $this->assertUpdateStagedTimes(1);
+
+    $warning = ValidationResult::createWarning(['Some warning.']);
+    TestSubscriber::setTestResult([$warning], StatusCheckEvent::class);
+    $session->reload();
+
+    $assert_session = $this->assertSession();
+    $assert_session->buttonExists('Continue');
+    $assert_session->pageTextContains('Some warning.');
+  }
+
+  /**
    * Sets an error message, runs readiness checks, and asserts it is displayed.
    *
    * @return string
