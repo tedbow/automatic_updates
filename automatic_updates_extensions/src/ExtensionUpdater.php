@@ -3,6 +3,8 @@
 namespace Drupal\automatic_updates_extensions;
 
 use Drupal\automatic_updates\Exception\UpdateException;
+use Drupal\Core\StringTranslation\TranslatableMarkup;
+use Drupal\package_manager\Exception\ApplyFailedException;
 use Drupal\package_manager\LegacyVersionUtility;
 use Drupal\package_manager\Event\StageEvent;
 use Drupal\package_manager\Exception\StageValidationException;
@@ -108,6 +110,25 @@ class ExtensionUpdater extends Stage {
     catch (StageValidationException $e) {
       throw new UpdateException($e->getResults(), $e->getMessage() ?: "Unable to complete the update because of errors.", $e->getCode(), $e);
     }
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function apply(?int $timeout = 600): void {
+    try {
+      parent::apply($timeout);
+    }
+    catch (ApplyFailedException $exception) {
+      throw new UpdateException([], 'The update operation failed to apply. The update may have been partially applied. It is recommended that the site be restored from a code backup.', $exception->getCode(), $exception);
+    }
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  protected function getFailureMarkerMessage(): TranslatableMarkup {
+    return $this->t('Automatic updates failed to apply, and the site is in an indeterminate state. Consider restoring the code and database from a backup.');
   }
 
 }

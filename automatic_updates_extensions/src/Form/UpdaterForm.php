@@ -13,6 +13,8 @@ use Drupal\Core\State\StateInterface;
 use Drupal\Core\Messenger\MessengerInterface;
 use Drupal\Core\Render\RendererInterface;
 use Drupal\Core\Url;
+use Drupal\package_manager\Exception\ApplyFailedException;
+use Drupal\package_manager\FailureMarker;
 use Drupal\package_manager\ProjectInfo;
 use Drupal\system\SystemManager;
 use Drupal\update\UpdateManagerInterface;
@@ -58,6 +60,13 @@ final class UpdaterForm extends FormBase {
   private $renderer;
 
   /**
+   * Failure marker service.
+   *
+   * @var \Drupal\package_manager\FailureMarker
+   */
+  private $failureMarker;
+
+  /**
    * {@inheritdoc}
    */
   public static function create(ContainerInterface $container) {
@@ -65,7 +74,8 @@ final class UpdaterForm extends FormBase {
       $container->get('automatic_updates_extensions.updater'),
       $container->get('event_dispatcher'),
       $container->get('renderer'),
-      $container->get('state')
+      $container->get('state'),
+      $container->get('package_manager.failure_marker')
     );
   }
 
@@ -80,12 +90,15 @@ final class UpdaterForm extends FormBase {
    *   The renderer service.
    * @param \Drupal\Core\State\StateInterface $state
    *   The state service.
+   * @param \Drupal\package_manager\FailureMarker $failure_marker
+   *   The failure marker service.
    */
-  public function __construct(ExtensionUpdater $extension_updater, EventDispatcherInterface $event_dispatcher, RendererInterface $renderer, StateInterface $state) {
+  public function __construct(ExtensionUpdater $extension_updater, EventDispatcherInterface $event_dispatcher, RendererInterface $renderer, StateInterface $state, FailureMarker $failure_marker) {
     $this->extensionUpdater = $extension_updater;
     $this->eventDispatcher = $event_dispatcher;
     $this->renderer = $renderer;
     $this->state = $state;
+    $this->failureMarker = $failure_marker;
   }
 
   /**
@@ -99,6 +112,13 @@ final class UpdaterForm extends FormBase {
    * {@inheritdoc}
    */
   public function buildForm(array $form, FormStateInterface $form_state) {
+    try {
+      $this->failureMarker->assertNotExists();
+    }
+    catch (ApplyFailedException $e) {
+      $this->messenger()->addError($e->getMessage());
+      return $form;
+    }
     $update_projects = $this->getRecommendedModuleUpdates();
     $options = [];
     $recommended_versions = [];

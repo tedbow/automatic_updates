@@ -7,6 +7,7 @@ use Drupal\automatic_updates_test\EventSubscriber\TestSubscriber1;
 use Drupal\automatic_updates_test\StagedDatabaseUpdateValidator;
 use Drupal\package_manager\Event\PreApplyEvent;
 use Drupal\package_manager\ValidationResult;
+use Drupal\package_manager_bypass\Committer;
 use Drupal\package_manager_bypass\Stager;
 use Drupal\Tests\automatic_updates\Functional\AutomaticUpdatesFunctionalTestBase;
 use Drupal\Tests\automatic_updates\Traits\ValidationTestTrait;
@@ -206,6 +207,47 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
     $assert_session->pageTextContainsOnce('Update complete!');
     // Confirm the site was returned to the original maintenance mode state.
     $this->assertSame($state->get('system.maintenance_mode'), $maintenance_mode_on);
+  }
+
+  /**
+   * Tests that an exception is thrown if a previous apply failed.
+   */
+  public function testMarkerFileFailure(): void {
+    $this->setReleaseMetadata(__DIR__ . '/../../fixtures/release-history/semver_test.1.1.xml');
+    $this->setProjectInstalledVersion(['semver_test' => '8.1.0']);
+    $this->checkForUpdates();
+    $page = $this->getSession()->getPage();
+    // Navigate to the automatic updates form.
+    $this->drupalGet('/admin/modules/automatic-update-extensions');
+    $assert_session = $this->assertSession();
+    $assert_session->pageTextNotContains(static::$errorsExplanation);
+    $assert_session->pageTextNotContains(static::$warningsExplanation);
+
+    $this->assertTableShowsUpdates('Semver Test', '8.1.0', '8.1.1');
+    $this->assertUpdatesCount(1);
+    $page->checkField('projects[semver_test]');
+    $page->pressButton('Update');
+    $this->checkForMetaRefresh();
+    $this->assertUpdateStagedTimes(1);
+    $assert_session->pageTextNotContains('The following dependencies will also be updated:');
+    Committer::setException(new \Exception('failed at committer'));
+    $page->pressButton('Continue');
+    $this->checkForMetaRefresh();
+    $assert_session->pageTextContainsOnce('An error has occurred.');
+    $assert_session->pageTextContains('The update operation failed to apply. The update may have been partially applied. It is recommended that the site be restored from a code backup.');
+    $page->clickLink('the error page');
+
+    $failure_message = 'Automatic updates failed to apply, and the site is in an indeterminate state. Consider restoring the code and database from a backup.';
+    // We should be on the form (i.e., 200 response code), but unable to
+    // continue the update.
+    $assert_session->statusCodeEquals(200);
+    $assert_session->pageTextContains($failure_message);
+    $assert_session->buttonNotExists('Continue');
+    // The same thing should be true if we try to start from the beginning.
+    $this->drupalGet('/admin/modules/automatic-update-extensions');
+    $assert_session->statusCodeEquals(200);
+    $assert_session->pageTextContains($failure_message);
+    $assert_session->buttonNotExists('Update');
   }
 
   /**

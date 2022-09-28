@@ -2,6 +2,7 @@
 
 namespace Drupal\automatic_updates_extensions\Form;
 
+use Drupal\package_manager\Exception\ApplyFailedException;
 use Drupal\package_manager\ProjectInfo;
 use Drupal\automatic_updates\Validator\StagedDatabaseUpdateValidator;
 use Drupal\automatic_updates_extensions\BatchProcessor;
@@ -117,6 +118,10 @@ final class UpdateReady extends FormBase {
     }
     catch (StageOwnershipException $e) {
       $this->messenger()->addError($this->t('Cannot continue the update because another Composer operation is currently in progress.'));
+      return $form;
+    }
+    catch (ApplyFailedException $e) {
+      $this->messenger()->addError($e->getMessage());
       return $form;
     }
 
