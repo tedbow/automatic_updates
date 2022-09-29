@@ -16,12 +16,3 @@ function updated_module_hello(): array {
     '#markup' => 'Hello!',
   ];
 }
-
-/**
- * A test function to test if global functions are reloaded during an update.
- *
- * @return string
- */
-function _updated_module_global1(): string {
-  return "pre-update-value";
-}

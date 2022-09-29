@@ -1,9 +1,0 @@
-services:
-  updated_module.existing_service:
-    class: stdClass
-    properties:
-      value: 'Pre-update value'
-  updated_module.deleted_service:
-    class: stdClass
-    properties:
-      value: 'Deleted service, should not exist after update'
