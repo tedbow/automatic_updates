@@ -51,7 +51,7 @@ class OverwriteExistingPackagesValidatorTest extends PackageManagerKernelTestBas
 
     $stage = $this->createStage();
     $stage->create();
-    $stage->require(['drupal' => '9.8.1']);
+    $stage->require(['drupal/core:9.8.1']);
 
     $expected_results = [
       ValidationResult::createError([

@@ -300,7 +300,7 @@ class StageTest extends PackageManagerKernelTestBase {
   public function testCommitException(string $thrown_class, string $expected_class): void {
     $stage = $this->createStage();
     $stage->create();
-    $stage->require(['drupal/core' => '9.8.1']);
+    $stage->require(['drupal/core:9.8.1']);
 
     $thrown_message = 'A very bad thing happened';
     // PreconditionException requires a preconditions object.
@@ -421,7 +421,7 @@ class StageTest extends PackageManagerKernelTestBase {
     // Run apply and post-apply in the same request (i.e., the same request
     // time), and ensure the warning is logged.
     $stage->create();
-    $stage->require(['drupal/core' => '9.8.1']);
+    $stage->require(['drupal/core:9.8.1']);
     $stage->apply();
     $stage->postApply();
     $this->assertTrue($logger->hasRecord($warning_message, LogLevel::WARNING));
@@ -429,13 +429,67 @@ class StageTest extends PackageManagerKernelTestBase {
 
     $logger->reset();
     $stage->create();
-    $stage->require(['drupal/core' => '9.8.2']);
+    $stage->require(['drupal/core:9.8.2']);
     $stage->apply();
     // Simulate post-apply taking place in another request by simulating a
     // request time 30 seconds after apply started.
     TestTime::$offset = 30;
     $stage->postApply();
     $this->assertFalse($logger->hasRecord($warning_message, LogLevel::WARNING));
+  }
+
+  /**
+   * @covers ::validatePackageNames
+   *
+   * @param string $package_name
+   *   The package name.
+   * @param bool $is_invalid
+   *   TRUE if the gien package name is invalid and will cause an exception,
+   *   FALSE otherwise.
+   *
+   * @dataProvider providerValidatePackageNames
+   */
+  public function testValidatePackageNames(string $package_name, bool $is_invalid): void {
+    $stage = $this->createStage();
+    $stage->create();
+    if ($is_invalid) {
+      $this->expectException('InvalidArgumentException');
+      $this->expectExceptionMessage("Invalid package name '$package_name'.");
+    }
+    $stage->require([$package_name]);
+    // If we got here, the package name is valid and we just need to assert something so PHPUnit doesn't complain.
+    $this->assertTrue(TRUE);
+  }
+
+  /**
+   * Data provider for testValidatePackageNames.
+   *
+   * @return array[]
+   *   The test cases.
+   */
+  public function providerValidatePackageNames(): array {
+    return [
+      // White space is trimmed out of package names during validation.
+      'empty string' => ['', FALSE],
+      'white space' => [' ', FALSE],
+      // The `composer` and `php` requirements are special, since they could
+      // otherwise be mistaken for Drupal project names.
+      'Composer runtime, unconstrained' => ['composer', FALSE],
+      'Composer runtime, constrained' => ['composer:^2.4', FALSE],
+      'Composer runtime API, unconstrained' => ['composer-runtime-api', FALSE],
+      'Composer runtime API, constrained' => ['composer-runtime-api:~2.2.0', FALSE],
+      'PHP runtime, unconstrained' => ['php', FALSE],
+      'PHP runtime, constrained' => ['php:>=7.4', FALSE],
+      'PHP runtime variant, unconstrained' => ['php-zts', FALSE],
+      'PHP runtime variant, constrained' => ['php-zts:8.1', FALSE],
+      'PHP extension, unconstrained' => ['ext-json', FALSE],
+      'PHP extension, constrained' => ['ext-json:7.4.1', FALSE],
+      'PHP library, unconstrained' => ['lib-curl', FALSE],
+      'PHP library, constrained' => ['lib-curl:^7', FALSE],
+      'Drupal package, unconstrained' => ['drupal/semver_test', FALSE],
+      'Drupal package, constrained' => ['drupal/semver_test:^1.10', FALSE],
+      'Drupal project' => ['semver_test', TRUE],
+    ];
   }
 
 }

@@ -356,10 +356,12 @@ class Stage implements LoggerAwareInterface {
     // Change the runtime and dev requirements as needed, but don't update
     // the installed packages yet.
     if ($runtime) {
+      $this->validatePackageNames($runtime);
       $command = array_merge(['require', '--no-update'], $runtime);
       $this->stager->stage($command, $active_dir, $stage_dir, NULL, $timeout);
     }
     if ($dev) {
+      $this->validatePackageNames($dev);
       $command = array_merge(['require', '--dev', '--no-update'], $dev);
       $this->stager->stage($command, $active_dir, $stage_dir, NULL, $timeout);
     }
@@ -703,6 +705,37 @@ class Stage implements LoggerAwareInterface {
    */
   protected function getFailureMarkerMessage(): TranslatableMarkup {
     return $this->t('Staged changes failed to apply, and the site is in an indeterminate state. It is strongly recommended to restore the code and database from a backup.');
+  }
+
+  /**
+   * Validates a set of package names.
+   *
+   * Package names are considered invalid if they look like Drupal project
+   * names. The only exceptions to this are `php` and `composer`, which Composer
+   * treats as legitimate requirements.
+   *
+   * @param string[] $package_versions
+   *   A set of package names (with or without version constraints), as passed
+   *   to ::require().
+   *
+   * @throws \InvalidArgumentException
+   *   Thrown if any of the given package names are invalid.
+   *
+   * @see https://getcomposer.org/doc/articles/composer-platform-dependencies.md
+   */
+  protected function validatePackageNames(array $package_versions): void {
+    foreach ($package_versions as $package_name) {
+      $package_name = trim($package_name);
+
+      // Don't mistake the legitimate `php` and `composer` platform requirements
+      // for Drupal projects.
+      if ($package_name === 'php' || $package_name === 'composer') {
+        continue;
+      }
+      elseif (preg_match('/^[a-z0-9_]+$/i', $package_name)) {
+        throw new \InvalidArgumentException("Invalid package name '$package_name'.");
+      }
+    }
   }
 
 }
