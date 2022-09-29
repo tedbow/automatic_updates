@@ -1,6 +1,6 @@
 <?php
 
-namespace Drupal\automatic_updates_test;
+namespace Drupal\package_manager_test_validation;
 
 use Drupal\package_manager\Validator\StagedDBUpdateValidator as BaseValidator;
 use Drupal\Core\Extension\Extension;

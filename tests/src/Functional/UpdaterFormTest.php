@@ -4,7 +4,7 @@ namespace Drupal\Tests\automatic_updates\Functional;
 
 use Drupal\automatic_updates\Event\ReadinessCheckEvent;
 use Drupal\automatic_updates_test\Datetime\TestTime;
-use Drupal\automatic_updates_test\StagedDatabaseUpdateValidator;
+use Drupal\package_manager_test_validation\StagedDatabaseUpdateValidator;
 use Drupal\package_manager\Event\PostRequireEvent;
 use Drupal\package_manager\Event\PreApplyEvent;
 use Drupal\package_manager\Event\PostApplyEvent;

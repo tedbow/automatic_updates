@@ -4,7 +4,7 @@ namespace Drupal\Tests\automatic_updates_extensions\Functional;
 
 use Drupal\automatic_updates\Event\ReadinessCheckEvent;
 use Drupal\automatic_updates_test\EventSubscriber\TestSubscriber1;
-use Drupal\automatic_updates_test\StagedDatabaseUpdateValidator;
+use Drupal\package_manager_test_validation\StagedDatabaseUpdateValidator;
 use Drupal\package_manager\Event\PreApplyEvent;
 use Drupal\package_manager\ValidationResult;
 use Drupal\package_manager_bypass\Committer;

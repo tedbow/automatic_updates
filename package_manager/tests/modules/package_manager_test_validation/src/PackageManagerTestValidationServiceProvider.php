@@ -1,6 +1,6 @@
 <?php
 
-namespace Drupal\automatic_updates_test;
+namespace Drupal\package_manager_test_validation;
 
 use Drupal\Core\DependencyInjection\ContainerBuilder;
 use Drupal\Core\DependencyInjection\ServiceProviderBase;
@@ -9,7 +9,7 @@ use Symfony\Component\DependencyInjection\Reference;
 /**
  * Modifies container services for testing.
  */
-class AutomaticUpdatesTestServiceProvider extends ServiceProviderBase {
+class PackageManagerTestValidationServiceProvider extends ServiceProviderBase {
 
   /**
    * {@inheritdoc}
