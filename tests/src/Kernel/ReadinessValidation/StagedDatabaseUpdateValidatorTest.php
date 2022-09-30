@@ -20,14 +20,26 @@ class StagedDatabaseUpdateValidatorTest extends AutomaticUpdatesKernelTestBase {
   protected static $modules = ['automatic_updates'];
 
   /**
-   * The suffixes of the files that can contain database updates.
+   * The extensions that will be used in this test.
+   *
+   * System and Stark are installed, so they are used to test what happens when
+   * database updates are detected in installed extensions. Views and Olivero
+   * are not installed by this test, so they are used to test what happens when
+   * uninstalled extensions have database updates.
    *
    * @var string[]
+   *
+   * @see ::setUp()
    */
-  private const SUFFIXES = ['install', 'post_update.php'];
+  private $extensions = [
+    'system' => 'core/modules/system',
+    'views' => 'core/modules/views',
+    'stark' => 'core/themes/stark',
+    'olivero' => 'core/themes/olivero',
+  ];
 
   /**
-   * The test logger channel.
+   * The test logger to collected messages logged by the cron updater.
    *
    * @var \Psr\Log\Test\TestLogger
    */
@@ -39,158 +51,119 @@ class StagedDatabaseUpdateValidatorTest extends AutomaticUpdatesKernelTestBase {
   protected function setUp(): void {
     parent::setUp();
 
+    $this->container->get('theme_installer')->install(['stark']);
+    $this->assertFalse($this->container->get('module_handler')->moduleExists('views'));
+    $this->assertFalse($this->container->get('theme_handler')->themeExists('olivero'));
+
+    // Ensure that all the extensions we're testing with have database update
+    // files in the active directory.
+    $active_dir = $this->container->get('package_manager.path_locator')
+      ->getProjectRoot();
+
+    foreach ($this->extensions as $extension_name => $extension_path) {
+      $extension_path = $active_dir . '/' . $extension_path;
+      mkdir($extension_path, 0777, TRUE);
+
+      foreach ($this->providerSuffixes() as [$suffix]) {
+        touch("$extension_path/$extension_name.$suffix");
+      }
+    }
+
     $this->logger = new TestLogger();
-    $this->container->get('logger.factory')
-      ->get('automatic_updates')
+    $this->container->get('logger.channel.automatic_updates')
       ->addLogger($this->logger);
   }
 
   /**
-   * {@inheritdoc}
+   * Data provider for several test methods.
+   *
+   * @return \string[][]
+   *   The test cases.
    */
-  protected function createVirtualProject(?string $source_dir = NULL): void {
-    parent::createVirtualProject($source_dir);
-
-    $drupal_root = $this->getDrupalRoot();
-    $virtual_active_dir = $this->container->get('package_manager.path_locator')
-      ->getProjectRoot();
-
-    // Copy the .install and .post_update.php files from all extensions used in
-    // this test class, in the *actual* Drupal code base that is running this
-    // test, into the virtual project (i.e., the active directory).
-    $module_list = $this->container->get('extension.list.module');
-    $extensions = [];
-    $extensions['system'] = $module_list->get('system');
-    $extensions['views'] = $module_list->get('views');
-    $extensions['package_manager_bypass'] = $module_list->get('package_manager_bypass');
-    $theme_list = $this->container->get('extension.list.theme');
-    $extensions['automatic_updates_theme'] = $theme_list->get('automatic_updates_theme');
-    $extensions['automatic_updates_theme_with_updates'] = $theme_list->get('automatic_updates_theme_with_updates');
-    foreach ($extensions as $name => $extension) {
-      $path = $extension->getPath();
-      @mkdir("$virtual_active_dir/$path", 0777, TRUE);
-
-      foreach (static::SUFFIXES as $suffix) {
-        // If the source file doesn't exist, silence the warning it raises.
-        @copy("$drupal_root/$path/$name.$suffix", "$virtual_active_dir/$path/$name.$suffix");
-      }
-    }
+  public function providerSuffixes(): array {
+    return [
+      'hook_update_N' => ['install'],
+      'hook_post_update_NAME' => ['post_update.php'],
+    ];
   }
 
   /**
-   * Tests that no errors are raised if staged files have no DB updates.
+   * Tests that no errors are raised if the stage has no DB updates.
    */
   public function testNoUpdates(): void {
-    // Since we're testing with a modified version of 'views' and
-    // 'automatic_updates_theme_with_updates', these should not be installed.
-    $this->assertFalse($this->container->get('module_handler')->moduleExists('views'));
-    $this->assertFalse($this->container->get('theme_handler')->themeExists('automatic_updates_theme_with_updates'));
-
-    $listener = function (PreApplyEvent $event): void {
-      // Create bogus staged versions of Views' and
-      // Automatic Updates Theme with Updates .install and .post_update.php
-      // files. Since these extensions are not installed, the changes should not
-      // raise any validation errors.
-      $dir = $event->getStage()->getStageDirectory();
-      $module_list = $this->container->get('extension.list.module')->getList();
-      $theme_list = $this->container->get('extension.list.theme')->getList();
-      $module_dir = $dir . '/' . $module_list['views']->getPath();
-      $theme_dir = $dir . '/' . $theme_list['automatic_updates_theme_with_updates']->getPath();
-      foreach (static::SUFFIXES as $suffix) {
-        file_put_contents("$module_dir/views.$suffix", $this->randomString());
-        file_put_contents("$theme_dir/automatic_updates_theme_with_updates.$suffix", $this->randomString());
-      }
-    };
-    $this->container->get('event_dispatcher')
-      ->addListener(PreApplyEvent::class, $listener, PHP_INT_MAX);
-
     $this->container->get('cron')->run();
-    // There should not have been any errors.
     $this->assertFalse($this->logger->hasRecords(RfcLogLevel::ERROR));
   }
 
   /**
-   * Data provider for testFileChanged().
-   *
-   * @return mixed[]
-   *   The test cases.
-   */
-  public function providerFileChanged(): array {
-    $scenarios = [];
-    foreach (static::SUFFIXES as $suffix) {
-      $scenarios["$suffix kept"] = [$suffix, FALSE];
-      $scenarios["$suffix deleted"] = [$suffix, TRUE];
-    }
-    return $scenarios;
-  }
-
-  /**
-   * Tests that an error is raised if install or post-update files are changed.
+   * Tests that an error is raised if DB update files are removed in the stage.
    *
    * @param string $suffix
-   *   The suffix of the file to change. Can be either 'install' or
-   *   'post_update.php'.
-   * @param bool $delete
-   *   Whether or not to delete the file.
+   *   The update file suffix to test (one of `install` or `post_update.php`).
    *
-   * @dataProvider providerFileChanged
+   * @dataProvider providerSuffixes
    */
-  public function testFileChanged(string $suffix, bool $delete): void {
-    $listener = function (PreApplyEvent $event) use ($suffix, $delete): void {
-      $dir = $event->getStage()->getStageDirectory();
-      $theme_installer = $this->container->get('theme_installer');
-      $theme_installer->install(['automatic_updates_theme_with_updates']);
-      $theme = $this->container->get('theme_handler')
-        ->getTheme('automatic_updates_theme_with_updates');
-      $module_file = "$dir/core/modules/system/system.$suffix";
-      $theme_file = "$dir/{$theme->getPath()}/{$theme->getName()}.$suffix";
-      if ($delete) {
-        unlink($module_file);
-        unlink($theme_file);
-      }
-      else {
-        file_put_contents($module_file, $this->randomString());
-        file_put_contents($theme_file, $this->randomString());
+  public function testFileDeleted(string $suffix): void {
+    $listener = function (PreApplyEvent $event) use ($suffix): void {
+      $stage_dir = $event->getStage()->getStageDirectory();
+      foreach ($this->extensions as $name => $path) {
+        unlink("$stage_dir/$path/$name.$suffix");
       }
     };
     $this->container->get('event_dispatcher')
       ->addListener(PreApplyEvent::class, $listener, PHP_INT_MAX);
 
     $this->container->get('cron')->run();
-    $this->assertTrue($this->logger->hasRecordThatContains("The update cannot proceed because possible database updates have been detected in the following extensions.\nSystem\nAutomatic Updates Theme With Updates", RfcLogLevel::ERROR));
+    $expected_message = "The update cannot proceed because possible database updates have been detected in the following extensions.\nSystem\nStark\n";
+    $this->assertTrue($this->logger->hasRecord($expected_message, RfcLogLevel::ERROR));
   }
 
   /**
-   * Tests that an error is raised if install or post-update files are added.
+   * Tests that an error is raised if DB update files are changed in the stage.
+   *
+   * @param string $suffix
+   *   The update file suffix to test (one of `install` or `post_update.php`).
+   *
+   * @dataProvider providerSuffixes
    */
-  public function testUpdatesAddedInStage(): void {
-    $listener = function (PreApplyEvent $event): void {
-      $module = $this->container->get('module_handler')
-        ->getModule('package_manager_bypass');
-      $theme_installer = $this->container->get('theme_installer');
-      $theme_installer->install(['automatic_updates_theme']);
-      $theme = $this->container->get('theme_handler')
-        ->getTheme('automatic_updates_theme');
-
-      $dir = $event->getStage()->getStageDirectory();
-
-      foreach (static::SUFFIXES as $suffix) {
-        $module_file = sprintf('%s/%s/%s.%s', $dir, $module->getPath(), $module->getName(), $suffix);
-        $theme_file = sprintf('%s/%s/%s.%s', $dir, $theme->getPath(), $theme->getName(), $suffix);
-        // The files we're creating shouldn't already exist in the staging area
-        // unless it's a file we actually ship, which is a scenario covered by
-        // ::testFileChanged().
-        $this->assertFileDoesNotExist($module_file);
-        $this->assertFileDoesNotExist($theme_file);
-        file_put_contents($module_file, $this->randomString());
-        file_put_contents($theme_file, $this->randomString());
+  public function testFileChanged(string $suffix): void {
+    $listener = function (PreApplyEvent $event) use ($suffix): void {
+      $stage_dir = $event->getStage()->getStageDirectory();
+      foreach ($this->extensions as $name => $path) {
+        file_put_contents("$stage_dir/$path/$name.$suffix", $this->randomString());
       }
     };
     $this->container->get('event_dispatcher')
       ->addListener(PreApplyEvent::class, $listener, PHP_INT_MAX);
 
     $this->container->get('cron')->run();
-    $this->assertTrue($this->logger->hasRecordThatContains("The update cannot proceed because possible database updates have been detected in the following extensions.\nPackage Manager Bypass\nAutomatic Updates Theme", RfcLogLevel::ERROR));
+    $expected_message = "The update cannot proceed because possible database updates have been detected in the following extensions.\nSystem\nStark\n";
+    $this->assertTrue($this->logger->hasRecord($expected_message, RfcLogLevel::ERROR));
+  }
+
+  /**
+   * Tests that an error is raised if DB update files are added in the stage.
+   *
+   * @param string $suffix
+   *   The update file suffix to test (one of `install` or `post_update.php`).
+   *
+   * @dataProvider providerSuffixes
+   */
+  public function testFileAdded(string $suffix): void {
+    $listener = function () use ($suffix): void {
+      $active_dir = $this->container->get('package_manager.path_locator')
+        ->getProjectRoot();
+
+      foreach ($this->extensions as $name => $path) {
+        unlink("$active_dir/$path/$name.$suffix");
+      }
+    };
+    $this->container->get('event_dispatcher')
+      ->addListener(PreApplyEvent::class, $listener, PHP_INT_MAX);
+
+    $this->container->get('cron')->run();
+    $expected_message = "The update cannot proceed because possible database updates have been detected in the following extensions.\nSystem\nStark\n";
+    $this->assertTrue($this->logger->hasRecord($expected_message, RfcLogLevel::ERROR));
   }
 
 }
