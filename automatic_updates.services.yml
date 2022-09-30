@@ -153,6 +153,13 @@ services:
       - '@package_manager.path_locator'
     tags:
       - { name: event_subscriber }
+  automatic_updates.validator.cron_server:
+    class: Drupal\automatic_updates\Validator\CronServerValidator
+    arguments:
+      - '@request_stack'
+      - '@config.factory'
+    tags:
+      - { name: event_subscriber }
   logger.channel.automatic_updates:
     parent: logger.channel_base
     arguments: ['automatic_updates']

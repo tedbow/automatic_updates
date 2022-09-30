@@ -133,7 +133,9 @@ class CoreUpdateTest extends UpdateTestBase {
     $this->createTestProject($template);
 
     $this->visit('/admin/reports/status');
-    $this->getMink()->getSession()->getPage()->clickLink('Run cron');
+    $mink = $this->getMink();
+    $mink->assertSession()->pageTextContains('Your site is ready for automatic updates.');
+    $mink->getSession()->getPage()->clickLink('Run cron');
     $this->assertUpdateSuccessful('9.8.1');
   }
 
