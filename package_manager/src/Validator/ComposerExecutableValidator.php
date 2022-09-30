@@ -2,7 +2,7 @@
 
 namespace Drupal\package_manager\Validator;
 
-use Composer\Semver\Comparator;
+use Composer\Semver\Semver;
 use Drupal\Core\Extension\ModuleHandlerInterface;
 use Drupal\Core\Url;
 use Drupal\package_manager\Event\PreCreateEvent;
@@ -31,7 +31,7 @@ final class ComposerExecutableValidator implements PreOperationStageValidatorInt
    *
    * @var string
    */
-  public const MINIMUM_COMPOSER_VERSION = '2.3.5';
+  public const MINIMUM_COMPOSER_VERSION_CONSTRAINT = '~2.2.12 || ^2.3.5';
 
   /**
    * The Composer runner.
@@ -83,9 +83,9 @@ final class ComposerExecutableValidator implements PreOperationStageValidatorInt
     }
 
     if ($this->version) {
-      if (Comparator::lessThan($this->version, static::MINIMUM_COMPOSER_VERSION)) {
-        $message = $this->t('Composer @minimum_version or later is required, but version @detected_version was detected.', [
-          '@minimum_version' => static::MINIMUM_COMPOSER_VERSION,
+      if (!Semver::satisfies($this->version, static::MINIMUM_COMPOSER_VERSION_CONSTRAINT)) {
+        $message = $this->t('A Composer version which satisfies <code>@minimum_version</code> is required, but version @detected_version was detected.', [
+          '@minimum_version' => static::MINIMUM_COMPOSER_VERSION_CONSTRAINT,
           '@detected_version' => $this->version,
         ]);
         $this->setError($message, $event);

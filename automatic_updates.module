@@ -28,7 +28,7 @@ function automatic_updates_help($route_name, RouteMatchInterface $route_match) {
       $output .= '</p>';
       $output .= '<p>' . t('Additionally, Automatic Updates periodically runs checks to ensure that updates can be installed, and will warn site administrators if problems are detected.') . '</p>';
       $output .= '<h3>' . t('Requirements') . '</h3>';
-      $output .= '<p>' . t('Automatic Updates requires Composer @version or later available as an executable, and PHP must have permission to run it. The path to the executable may be set in the <code>package_manager.settings:executables.composer</code> config setting, or it will be automatically detected.', ['@version' => ComposerExecutableValidator::MINIMUM_COMPOSER_VERSION]) . '</p>';
+      $output .= '<p>' . t('Automatic Updates requires a Composer executable whose version satisfies <code>@version</code>, and PHP must have permission to run it. The path to the executable may be set in the <code>package_manager.settings:executables.composer</code> config setting, or it will be automatically detected.', ['@version' => ComposerExecutableValidator::MINIMUM_COMPOSER_VERSION_CONSTRAINT]) . '</p>';
       $output .= '<p>' . t('For more information, see the <a href=":automatic-updates-documentation">online documentation for the Automatic Updates module</a>.', [':automatic-updates-documentation' => 'https://www.drupal.org/docs/8/update/automatic-updates']) . '</p>';
       return $output;
   }

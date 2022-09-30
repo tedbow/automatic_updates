@@ -81,17 +81,37 @@ class ComposerExecutableValidatorTest extends PackageManagerKernelTestBase {
     // in the validation result, so we need a function to churn out those fake
     // results for the test method.
     $unsupported_version = function (string $version): ValidationResult {
-      $minimum_version = ComposerExecutableValidator::MINIMUM_COMPOSER_VERSION;
+      $minimum_version = ComposerExecutableValidator::MINIMUM_COMPOSER_VERSION_CONSTRAINT;
 
       return ValidationResult::createError([
-        "Composer $minimum_version or later is required, but version $version was detected.",
+        "A Composer version which satisfies <code>$minimum_version</code> is required, but version $version was detected.",
       ]);
     };
 
     return [
       'Minimum version' => [
-        ComposerExecutableValidator::MINIMUM_COMPOSER_VERSION,
+        '2.2.12',
         [],
+      ],
+      '2.2.13' => [
+        '2.2.13',
+        [],
+      ],
+      '2.3.6' => [
+        '2.3.6',
+        [],
+      ],
+      '2.4.1' => [
+        '2.4.1',
+        [],
+      ],
+      '2.2.11' => [
+        '2.2.11',
+        [$unsupported_version('2.2.11')],
+      ],
+      '2.3.4' => [
+        '2.3.4',
+        [$unsupported_version('2.3.4')],
       ],
       '2.1.6' => [
         '2.1.6',
@@ -188,7 +208,11 @@ class ComposerExecutableValidatorTest extends PackageManagerKernelTestBase {
       return $message . ' See <a href="' . $url . '">the help page</a> for information on how to configure the path to Composer.';
     };
     foreach ($expected_results as $index => $result) {
-      $messages = array_map($map, $result->getMessages());
+      // The original messages contain HTML, so they need to be properly escaped
+      // before they are modified, to ensure that they are accurately compared
+      // with the messages returned by the validator.
+      $messages = array_map('\Drupal\Component\Utility\Html::escape', $result->getMessages());
+      $messages = array_map($map, $messages);
       $expected_results[$index] = ValidationResult::createError($messages);
     }
     $this->assertStatusCheckResults($expected_results);

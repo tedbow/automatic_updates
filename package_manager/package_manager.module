@@ -21,7 +21,7 @@ function package_manager_help($route_name, RouteMatchInterface $route_match) {
       $output .= '<h3 id="package-manager-requirements">' . t('Requirements') . '</h3>';
       $output .= '<ul>';
       $output .= '  <li>' . t("The Drupal application's codebase must be writable in order to use Automatic Updates. This includes Drupal core, modules, themes and the Composer dependencies in the <code>vendor</code> directory. This makes Automatic Updates incompatible with some hosting platforms.") . '</li>';
-      $output .= '  <li>' . t('Package Manager requires Composer @version or later available as an executable, and PHP must have permission to run it. It should be detected automatically. If not, see <a href="#package-manager-faq-composer-not-found">What if it says the "composer" executable cannot be found?</a>.', ['@version' => ComposerExecutableValidator::MINIMUM_COMPOSER_VERSION]) . '</li>';
+      $output .= '  <li>' . t('Package Manager requires a Composer executable whose version satisfies <code>@version</code>, and PHP must have permission to run it. The path to the executable may be stored in config, or it will be automatically detected. To set the path to Composer, you can add the following line to settings.php:', ['@version' => ComposerExecutableValidator::MINIMUM_COMPOSER_VERSION_CONSTRAINT]) . '</li>';
       $output .= '</ul>';
 
       $output .= '<h3 id="package-manager-limitations">' . t('Limitations') . '</h3>';
