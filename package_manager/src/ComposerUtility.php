@@ -5,7 +5,9 @@ namespace Drupal\package_manager;
 use Composer\Composer;
 use Composer\Factory;
 use Composer\IO\NullIO;
+use Composer\Package\Loader\ValidatingArrayLoader;
 use Composer\Package\PackageInterface;
+use Composer\Package\Version\VersionParser;
 use Composer\Semver\Comparator;
 use Drupal\Component\Serialization\Yaml;
 
@@ -262,6 +264,52 @@ class ComposerUtility {
       }
     }
     return NULL;
+  }
+
+  /**
+   * Determines whether a Composer requirement string is valid.
+   *
+   * @param string $requirement
+   *   A requirement string, optionally with a version constraint, e.g.,
+   *   "vendor/package" or "vendor/package:1.2.3", or any combination of package
+   *   name and requirement string that Composer understands.
+   *
+   * @return bool
+   *   TRUE if the requirement string is valid, FALSE otherwise.
+   *
+   * @see https://getcomposer.org/doc/04-schema.md#name
+   * @see https://getcomposer.org/doc/articles/versions.md
+   *
+   * @internal
+   *   This method may be changed or removed at any time without warning and
+   *   should not be used by external code.
+   */
+  public static function isValidRequirement(string $requirement): bool {
+    $version_parser = new VersionParser();
+    $parts = $version_parser->parseNameVersionPairs([$requirement])[0];
+    $package_name = $parts['name'];
+    $version = $parts['version'] ?? NULL;
+
+    // Validate just the package name.
+    if (ValidatingArrayLoader::hasPackageNamingError($package_name)) {
+      return FALSE;
+    }
+
+    // Return early if there's no version constraint to validate.
+    if ($version === NULL) {
+      return TRUE;
+    }
+
+    // Validate the version constraint.
+    try {
+      $version_parser->parseConstraints($version);
+    }
+    catch (\UnexpectedValueException $e) {
+      return FALSE;
+    }
+
+    // All good.
+    return TRUE;
   }
 
   /**

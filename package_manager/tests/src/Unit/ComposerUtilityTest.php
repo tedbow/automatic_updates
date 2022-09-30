@@ -53,6 +53,100 @@ class ComposerUtilityTest extends UnitTestCase {
   }
 
   /**
+   * @covers ::isValidRequirement
+   *
+   * @param bool $expected_is_valid
+   *   Whether the given requirement string is valid.
+   * @param string $requirement
+   *   The requirement string to validate.
+   *
+   * @dataProvider providerIsValidRequirement
+   */
+  public function testIsValidRequirement(bool $expected_is_valid, string $requirement): void {
+    $this->assertSame($expected_is_valid, ComposerUtility::isValidRequirement($requirement));
+  }
+
+  /**
+   * Data provider for ::testIsValidRequirement().
+   *
+   * @return \string[][][]
+   *   The test cases.
+   */
+  public function providerIsValidRequirement(): array {
+    return [
+      // Valid requirements.
+      [TRUE, 'vendor/package'],
+      [TRUE, 'vendor/snake_case'],
+      [TRUE, 'vendor/kebab-case'],
+      [TRUE, 'vendor/with.dots'],
+      [TRUE, '1vendor2/3package4'],
+      [TRUE, 'vendor/package:1'],
+      [TRUE, 'vendor/package:1.2'],
+      [TRUE, 'vendor/package:1.2.3'],
+      [TRUE, 'vendor/package:1.x'],
+      [TRUE, 'vendor/package:^1'],
+      [TRUE, 'vendor/package:~1'],
+      [TRUE, 'vendor/package:>1'],
+      [TRUE, 'vendor/package:<1'],
+      [TRUE, 'vendor/package:>=1'],
+      [TRUE, 'vendor/package:>1 <2'],
+      [TRUE, 'vendor/package:1 || 2'],
+      [TRUE, 'vendor/package:>=1,<1.1.0'],
+      [TRUE, 'vendor/package:1a'],
+      [TRUE, 'vendor/package:*'],
+      [TRUE, 'vendor/package:dev-master'],
+      [TRUE, 'vendor/package:*@dev'],
+      [TRUE, 'vendor/package:@dev'],
+      [TRUE, 'vendor/package:master@dev'],
+      [TRUE, 'vendor/package:master@beta'],
+      [TRUE, 'php'],
+      [TRUE, 'php:8'],
+      [TRUE, 'php:8.0'],
+      [TRUE, 'php:^8.1'],
+      [TRUE, 'php:~8.1'],
+      [TRUE, 'php-64bit'],
+      [TRUE, 'composer'],
+      [TRUE, 'composer-plugin-api'],
+      [TRUE, 'composer-plugin-api:1'],
+      [TRUE, 'ext-json'],
+      [TRUE, 'ext-json:1'],
+      [TRUE, 'ext-pdo_mysql'],
+      [TRUE, 'ext-pdo_mysql:1'],
+      [TRUE, 'lib-curl'],
+      [TRUE, 'lib-curl:1'],
+      [TRUE, 'lib-curl-zlib'],
+      [TRUE, 'lib-curl-zlib:1'],
+
+      // Invalid requirements.
+      [FALSE, ''],
+      [FALSE, ' '],
+      [FALSE, '/'],
+      [FALSE, 'php8'],
+      [FALSE, 'package'],
+      [FALSE, 'vendor\package'],
+      [FALSE, 'vendor//package'],
+      [FALSE, 'vendor/package1 vendor/package2'],
+      [FALSE, 'vendor/package/extra'],
+      [FALSE, 'vendor/package:a'],
+      [FALSE, 'vendor/package:'],
+      [FALSE, 'vendor/package::'],
+      [FALSE, 'vendor/package::1'],
+      [FALSE, 'vendor/package:1:2'],
+      [FALSE, 'vendor/package:develop@dev@dev'],
+      [FALSE, 'vendor/package:develop@'],
+      [FALSE, 'vEnDor/pAcKaGe'],
+      [FALSE, '_vendor/package'],
+      [FALSE, '_vendor/_package'],
+      [FALSE, 'vendor_/package'],
+      [FALSE, '_vendor/package_'],
+      [FALSE, 'vendor/package-'],
+      [FALSE, 'php-'],
+      [FALSE, 'ext'],
+      [FALSE, 'lib'],
+    ];
+  }
+
+  /**
    * @covers ::getPackagesNotIn
    * @covers ::getPackagesWithDifferentVersionsIn
    */

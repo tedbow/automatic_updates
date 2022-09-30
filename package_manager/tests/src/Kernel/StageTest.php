@@ -469,26 +469,8 @@ class StageTest extends PackageManagerKernelTestBase {
    */
   public function providerValidatePackageNames(): array {
     return [
-      // White space is trimmed out of package names during validation.
-      'empty string' => ['', FALSE],
-      'white space' => [' ', FALSE],
-      // The `composer` and `php` requirements are special, since they could
-      // otherwise be mistaken for Drupal project names.
-      'Composer runtime, unconstrained' => ['composer', FALSE],
-      'Composer runtime, constrained' => ['composer:^2.4', FALSE],
-      'Composer runtime API, unconstrained' => ['composer-runtime-api', FALSE],
-      'Composer runtime API, constrained' => ['composer-runtime-api:~2.2.0', FALSE],
-      'PHP runtime, unconstrained' => ['php', FALSE],
-      'PHP runtime, constrained' => ['php:>=7.4', FALSE],
-      'PHP runtime variant, unconstrained' => ['php-zts', FALSE],
-      'PHP runtime variant, constrained' => ['php-zts:8.1', FALSE],
-      'PHP extension, unconstrained' => ['ext-json', FALSE],
-      'PHP extension, constrained' => ['ext-json:7.4.1', FALSE],
-      'PHP library, unconstrained' => ['lib-curl', FALSE],
-      'PHP library, constrained' => ['lib-curl:^7', FALSE],
-      'Drupal package, unconstrained' => ['drupal/semver_test', FALSE],
-      'Drupal package, constrained' => ['drupal/semver_test:^1.10', FALSE],
-      'Drupal project' => ['semver_test', TRUE],
+      'Full package name' => ['drupal/semver_test', FALSE],
+      'Bare Drupal project name' => ['semver_test', TRUE],
     ];
   }
 

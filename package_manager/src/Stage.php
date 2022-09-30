@@ -725,14 +725,7 @@ class Stage implements LoggerAwareInterface {
    */
   protected function validatePackageNames(array $package_versions): void {
     foreach ($package_versions as $package_name) {
-      $package_name = trim($package_name);
-
-      // Don't mistake the legitimate `php` and `composer` platform requirements
-      // for Drupal projects.
-      if ($package_name === 'php' || $package_name === 'composer') {
-        continue;
-      }
-      elseif (preg_match('/^[a-z0-9_]+$/i', $package_name)) {
+      if (!ComposerUtility::isValidRequirement($package_name)) {
         throw new \InvalidArgumentException("Invalid package name '$package_name'.");
       }
     }
