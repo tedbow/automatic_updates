@@ -51,7 +51,7 @@ class CoreUpdateTest extends UpdateTestBase {
     // about available updates and ensure that an update to 9.8.1 is available.
     $this->assertCoreVersion('9.8.0');
     $this->checkForUpdates();
-    $this->visit('/admin/modules/automatic-update');
+    $this->visit('/admin/modules/update');
     $this->getMink()->assertSession()->pageTextContains('9.8.1');
 
     // Ensure that Drupal has write-protected the site directory.
@@ -238,7 +238,7 @@ class CoreUpdateTest extends UpdateTestBase {
     // @todo Figure out why this assertion fails when the batch processor
     //   redirects directly to the update form, instead of update.status, when
     //   updating via the UI.
-    $this->visit('/admin/modules/automatic-update');
+    $this->visit('/admin/modules/update');
     $this->getMink()->assertSession()->pageTextContains('No update available');
 
     // The status page should report that we're running the expected version and

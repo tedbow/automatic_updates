@@ -2,7 +2,10 @@
 
 namespace Drupal\automatic_updates\Routing;
 
+use Drupal\automatic_updates\Form\UpdaterForm;
 use Drupal\Core\Routing\RouteSubscriberBase;
+use Drupal\Core\Routing\RoutingEvents;
+use Symfony\Component\Routing\Route;
 use Symfony\Component\Routing\RouteCollection;
 
 /**
@@ -18,14 +21,23 @@ final class RouteSubscriber extends RouteSubscriberBase {
   /**
    * {@inheritdoc}
    */
+  public static function getSubscribedEvents() {
+    return [
+      // Try to run after other route subscribers, to minimize the chances of
+      // conflicting with other code that is modifying Update module routes.
+      RoutingEvents::ALTER => ['onAlterRoutes', -1000],
+    ];
+  }
+
+  /**
+   * {@inheritdoc}
+   */
   protected function alterRoutes(RouteCollection $collection) {
+    // Disable readiness checks on certain routes.
     $disabled_routes = [
-      'update.theme_update',
       'system.theme_install',
-      'update.module_update',
       'update.module_install',
       'update.status',
-      'update.report_update',
       'update.report_install',
       'update.settings',
       'system.status',
@@ -36,6 +48,35 @@ final class RouteSubscriber extends RouteSubscriberBase {
       $route = $collection->get($route);
       if ($route) {
         $route->setOption('_automatic_updates_readiness_messages', 'skip');
+      }
+    }
+
+    // Take over the routes defined by the core Update module.
+    $update_module_routes = [
+      'update.report_update',
+      'update.module_update',
+      'update.theme_update',
+    ];
+    $defaults = [
+      '_form' => UpdaterForm::class,
+      '_title' => 'Update',
+    ];
+    // Completely redefine the access requirements to disable incompatible
+    // requirements defined on the core routes, like `_access_update_manager`,
+    // which would allow access to our forms if the `allow_authorize_operations`
+    // setting is enabled.
+    $requirements = [
+      '_permission' => 'administer software updates',
+    ];
+    $options = [
+      '_admin_route' => TRUE,
+      '_maintenance_access' => TRUE,
+      '_automatic_updates_readiness_messages' => 'skip',
+    ];
+    foreach ($update_module_routes as $name) {
+      $route = $collection->get($name);
+      if ($route) {
+        $collection->add($name, new Route($route->getPath(), $defaults, $requirements, $options));
       }
     }
   }

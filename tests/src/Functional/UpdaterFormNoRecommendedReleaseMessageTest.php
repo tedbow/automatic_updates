@@ -84,7 +84,7 @@ class UpdaterFormNoRecommendedReleaseMessageTest extends AutomaticUpdatesFunctio
     $this->setReleaseMetadata($release_metadata);
     $this->setCoreVersion($installed_version);
     $this->checkForUpdates();
-    $this->drupalGet('/admin/reports/updates/automatic-update');
+    $this->drupalGet('/admin/reports/updates/update');
 
     $assert_session = $this->assertSession();
     // BEGIN: DELETE FROM CORE MERGE REQUEST

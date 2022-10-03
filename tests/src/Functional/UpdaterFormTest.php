@@ -76,8 +76,8 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
    */
   public function providerUpdateFormReferringUrl(): array {
     return [
-      'Modules page' => ['/admin/modules/automatic-update'],
-      'Reports page' => ['/admin/reports/updates/automatic-update'],
+      'Modules page' => ['/admin/modules/update'],
+      'Reports page' => ['/admin/reports/updates/update'],
     ];
   }
 
@@ -264,7 +264,7 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
 
     // If a validator raises an error during readiness checking, the form should
     // not have a submit button.
-    $this->drupalGet('/admin/modules/automatic-update');
+    $this->drupalGet('/admin/modules/update');
     $this->assertNoUpdateButtons();
     // Since this is an administrative page, the error message should be visible
     // thanks to automatic_updates_page_top(). The readiness checks were re-run
@@ -385,7 +385,7 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
     $this->setCoreVersion('9.8.0');
     $this->checkForUpdates();
 
-    $this->drupalGet('/admin/modules/automatic-update');
+    $this->drupalGet('/admin/modules/update');
     Stager::setFixturePath(__DIR__ . '/../../fixtures/drupal-9.8.1-installed');
     $page->pressButton('Update to 9.8.1');
     $this->checkForMetaRefresh();
@@ -397,12 +397,12 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
 
     // If we try to return to the start page, we should be redirected back to
     // the confirmation page.
-    $this->drupalGet('/admin/modules/automatic-update');
+    $this->drupalGet('/admin/modules/update');
     $this->assertUpdateReady('9.8.1');
 
     // Delete the existing update.
     $page->pressButton('Cancel update');
-    $assert_session->addressEquals('/admin/reports/updates/automatic-update');
+    $assert_session->addressEquals('/admin/reports/updates/update');
     $assert_session->pageTextContains($cancelled_message);
     $assert_session->pageTextNotContains($conflict_message);
     // Ensure we can start another update after deleting the existing one.
@@ -418,7 +418,7 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
     // update because the previous session already started one.
     $account = $this->createUser([], NULL, TRUE);
     $this->drupalLogin($account);
-    $this->drupalGet('/admin/reports/updates/automatic-update');
+    $this->drupalGet('/admin/reports/updates/update');
     $assert_session->pageTextContains($conflict_message);
     $this->assertNoUpdateButtons();
     // We should be able to delete the previous update, then start a new one.
@@ -450,7 +450,7 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
       'access site in maintenance mode',
     ]);
     $this->drupalLogin($user);
-    $this->drupalGet('/admin/reports/updates/automatic-update');
+    $this->drupalGet('/admin/reports/updates/update');
     $assert_session->pageTextContains($conflict_message);
     $page->pressButton('Delete existing update');
     $assert_session->statusCodeEquals(200);
@@ -520,7 +520,7 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
     StagedDatabaseUpdateValidator::setExtensionsWithUpdates(['system', 'automatic_updates_theme_with_updates']);
 
     $page = $this->getSession()->getPage();
-    $this->drupalGet('/admin/modules/automatic-update');
+    $this->drupalGet('/admin/modules/update');
     Stager::setFixturePath(__DIR__ . '/../../fixtures/drupal-9.8.1-installed');
     // The warning should be visible.
     $assert_session = $this->assertSession();
@@ -591,19 +591,19 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
   public function providerSuccessfulUpdate(): array {
     return [
       'Modules page, maintenance mode on' => [
-        '/admin/modules/automatic-update',
+        '/admin/modules/update',
         TRUE,
       ],
       'Modules page, maintenance mode off' => [
-        '/admin/modules/automatic-update',
+        '/admin/modules/update',
         FALSE,
       ],
       'Reports page, maintenance mode on' => [
-        '/admin/reports/updates/automatic-update',
+        '/admin/reports/updates/update',
         TRUE,
       ],
       'Reports page, maintenance mode off' => [
-        '/admin/reports/updates/automatic-update',
+        '/admin/reports/updates/update',
         FALSE,
       ],
     ];
@@ -707,7 +707,7 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
     $this->checkForUpdates();
 
     $page = $this->getSession()->getPage();
-    $this->drupalGet('/admin/modules/automatic-update');
+    $this->drupalGet('/admin/modules/update');
     Stager::setFixturePath(__DIR__ . '/../../fixtures/drupal-9.8.1-installed');
     $page->pressButton('Update to 9.8.1');
     $this->checkForMetaRefresh();
@@ -728,7 +728,7 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
     // We should be able to start over without any problems, and the error
     // message should not be seen on the updater form.
     $page->pressButton('Cancel update');
-    $assert_session->addressEquals('/admin/reports/updates/automatic-update');
+    $assert_session->addressEquals('/admin/reports/updates/update');
     $assert_session->pageTextNotContains($error_message);
     $assert_session->pageTextContains('The update was successfully cancelled.');
     $assert_session->buttonExists('Update');
@@ -744,7 +744,7 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
     $this->setCoreVersion('9.8.0');
     $this->checkForUpdates();
 
-    $this->drupalGet('/admin/modules/automatic-update');
+    $this->drupalGet('/admin/modules/update');
     $error = new \Exception('Some Exception');
     TestSubscriber1::setException($error, PostRequireEvent::class);
     $assert_session->pageTextNotContains(static::$errorsExplanation);
@@ -754,7 +754,7 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
     $this->assertUpdateStagedTimes(1);
     $assert_session->pageTextContainsOnce('An error has occurred.');
     $page->clickLink('the error page');
-    $assert_session->addressEquals('/admin/modules/automatic-update');
+    $assert_session->addressEquals('/admin/modules/update');
     $assert_session->pageTextNotContains('Cannot begin an update because another Composer operation is currently in progress.');
     $assert_session->buttonNotExists('Delete existing update');
     $assert_session->pageTextContains('Some Exception');

@@ -267,7 +267,7 @@ final class UpdateReady extends FormBase {
     try {
       $this->updater->destroy();
       $this->messenger()->addStatus($this->t('The update was successfully cancelled.'));
-      $form_state->setRedirect('automatic_updates.report_update');
+      $form_state->setRedirect('update.report_update');
     }
     catch (StageException $e) {
       $this->messenger()->addError($e->getMessage());

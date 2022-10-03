@@ -45,7 +45,7 @@ class SupportedBranchInstalledTest extends AutomaticUpdatesKernelTestBase {
         [TRUE],
         [
           'The currently installed version of Drupal core, 9.6.1, is not in a supported minor version. Your site will not be automatically updated during cron until it is updated to a supported minor version.',
-          'Use the <a href="/admin/modules/automatic-update">update form</a> to update to a supported version.',
+          'Use the <a href="/admin/modules/update">update form</a> to update to a supported version.',
         ],
       ],
       'unsupported version installed' => [

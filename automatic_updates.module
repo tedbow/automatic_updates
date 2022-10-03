@@ -8,7 +8,6 @@
 use Drupal\automatic_updates\BatchProcessor;
 use Drupal\Core\Routing\RouteMatchInterface;
 use Drupal\automatic_updates\Validation\AdminReadinessMessages;
-use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Url;
 use Drupal\system\Controller\DbUpdateController;
 
@@ -23,7 +22,7 @@ function automatic_updates_help($route_name, RouteMatchInterface $route_match) {
       $output .= '<p>';
       $output .= t('Automatic Updates will keep Drupal secure and up-to-date by automatically installing new patch-level updates, if available, when cron runs. It also provides a user interface to check if any updates are available and install them. You can <a href=":configure-form">configure Automatic Updates</a> to install all patch-level updates, only security updates, or no updates at all, during cron. By default, only security updates are installed during cron; this requires that you <a href=":update-form">install non-security updates through the user interface</a>.', [
         ':configure-form' => Url::fromRoute('update.settings')->toString(),
-        ':update-form' => Url::fromRoute('automatic_updates.report_update')->toString(),
+        ':update-form' => Url::fromRoute('update.report_update')->toString(),
       ]);
       $output .= '</p>';
       $output .= '<p>' . t('Additionally, Automatic Updates periodically runs checks to ensure that updates can be installed, and will warn site administrators if problems are detected.') . '</p>';
@@ -157,51 +156,6 @@ function automatic_updates_modules_uninstalled() {
 }
 
 /**
- * Implements hook_form_FORM_ID_alter() for 'update_manager_update_form'.
- */
-function automatic_updates_form_update_manager_update_form_alter(&$form, FormStateInterface $form_state, $form_id) {
-  // Remove current message that core updates are not supported with a link to
-  // use this module's form. The local task to 'update_manager_update_form' is
-  // replaced by our own from but this original form would still accessible via
-  // by its original URL.
-  if (isset($form['manual_updates']['#rows']['drupal']['data']['title'])) {
-    $current_route = \Drupal::routeMatch()->getRouteName();
-    if ($current_route === 'update.module_update') {
-      $redirect_route = 'automatic_updates.module_update';
-    }
-    elseif ($current_route === 'update.report_update') {
-      $redirect_route = 'automatic_updates.report_update';
-    }
-    if (!empty($redirect_route)) {
-      $core_updates_message = t(
-        '<h2>Core updates required</h2>Drupal core updates are supported by the enabled <a href="@url">Automatic Updates module</a>',
-        ['@url' => Url::fromRoute($redirect_route)->toString()]
-      );
-      $form['manual_updates']['#prefix'] = $core_updates_message;
-    }
-  }
-}
-
-/**
- * Implements hook_local_tasks_alter().
- */
-function automatic_updates_local_tasks_alter(array &$local_tasks) {
-  // The Update module's update form only allows updating modules and themes
-  // via archive files, which could produce unexpected results on a site using
-  // our Composer-based updater.
-  $new_routes = [
-    'update.report_update' => 'automatic_updates.report_update',
-    'update.module_update' => 'automatic_updates.module_update',
-    'update.theme_update' => 'automatic_updates.theme_update',
-  ];
-  foreach ($new_routes as $local_task_id => $new_route) {
-    if (!empty($local_tasks[$local_task_id])) {
-      $local_tasks[$local_task_id]['route_name'] = $new_route;
-    }
-  }
-}
-
-/**
  * Implements hook_batch_alter().
  *
  * @todo Remove this in https://www.drupal.org/i/3267817.
@@ -248,7 +202,7 @@ function automatic_updates_preprocess_update_project_status(array &$variables) {
       '#markup' => t(
         '@label <a href=":update-form">Update now</a>', [
           '@label' => $status['label'],
-          ':update-form' => Url::fromRoute('automatic_updates.report_update')->toString(),
+          ':update-form' => Url::fromRoute('update.report_update')->toString(),
         ]),
     ];
   }
@@ -259,7 +213,7 @@ function automatic_updates_preprocess_update_project_status(array &$variables) {
   foreach ($variables['versions'] as &$themed_version) {
     $version_info = &$themed_version['#version'];
     if ($supported_target_versions && in_array($version_info['version'], $supported_target_versions, TRUE)) {
-      $version_info['download_link'] = Url::fromRoute('automatic_updates.report_update')->setAbsolute()->toString();
+      $version_info['download_link'] = Url::fromRoute('update.report_update')->setAbsolute()->toString();
     }
     else {
       // If this version will not be displayed as an option on this module's
