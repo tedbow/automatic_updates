@@ -15,14 +15,14 @@ function package_manager_requirements(string $phase) {
 
   if (!class_exists('\PhpTuf\ComposerStager\Domain\Core\Beginner\Beginner')) {
     $requirements['package_manager_composer_dependencies'] = [
-      'title' => 'Missing dependency',
+      'title' => t('Missing dependency'),
       'description' => t('External dependencies for Package Manager are not available. Composer must be used to download the module with dependencies.'),
       'severity' => REQUIREMENT_ERROR,
     ];
   }
   if ($phase === 'runtime' && extension_loaded('xdebug')) {
     $requirements['package_manager_xdebug'] = [
-      'title' => 'Xdebug enabled',
+      'title' => t('Xdebug enabled'),
       'description' => t('Xdebug is enabled, which may have a negative performance impact on Package Manager and any modules that use it.'),
       'severity' => REQUIREMENT_WARNING,
     ];
