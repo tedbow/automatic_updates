@@ -54,6 +54,7 @@ class PackageManagerReadinessChecksTest extends AutomaticUpdatesKernelTestBase {
       'Symlink validator' => ['package_manager.validator.symlink'],
       'Settings validator' => ['package_manager.validator.settings'],
       'Patches validator' => ['package_manager.validator.patches'],
+      'Environment support validator' => ['package_manager.validator.environment_support'],
     ];
   }
 

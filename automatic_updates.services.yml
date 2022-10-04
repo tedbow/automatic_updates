@@ -73,6 +73,12 @@ services:
       - '@package_manager.validator.settings'
     tags:
       - { name: event_subscriber }
+  automatic_updates.validator.environment_support:
+    class: Drupal\automatic_updates\Validator\PackageManagerReadinessCheck
+    arguments:
+      - '@package_manager.validator.environment_support'
+    tags:
+      - { name: event_subscriber }
   automatic_updates.validator.composer_settings:
     class: Drupal\automatic_updates\Validator\PackageManagerReadinessCheck
     arguments:
