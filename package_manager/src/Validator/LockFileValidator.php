@@ -10,6 +10,7 @@ use Drupal\package_manager\Event\PreApplyEvent;
 use Drupal\package_manager\Event\PreCreateEvent;
 use Drupal\package_manager\Event\PreOperationStageEvent;
 use Drupal\package_manager\Event\PreRequireEvent;
+use Drupal\package_manager\Event\StatusCheckEvent;
 use Drupal\package_manager\PathLocator;
 
 /**
@@ -104,6 +105,11 @@ final class LockFileValidator implements PreOperationStageValidatorInterface {
    * {@inheritdoc}
    */
   public function validateStagePreOperation(PreOperationStageEvent $event): void {
+    // Early return if the stage is not already created.
+    if ($event instanceof StatusCheckEvent && $event->getStage()->isAvailable()) {
+      return;
+    }
+
     // Ensure we can get a current hash of the lock file.
     $active_hash = $this->getLockFileHash($this->pathLocator->getProjectRoot());
     if (empty($active_hash)) {
@@ -152,6 +158,7 @@ final class LockFileValidator implements PreOperationStageValidatorInterface {
       PreCreateEvent::class => 'storeHash',
       PreRequireEvent::class => 'validateStagePreOperation',
       PreApplyEvent::class => 'validateStagePreOperation',
+      StatusCheckEvent::class => 'validateStagePreOperation',
       PostDestroyEvent::class => 'deleteHash',
     ];
   }

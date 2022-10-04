@@ -148,8 +148,11 @@ abstract class PackageManagerKernelTestBase extends KernelTestBase {
    * @param string|null $event_class
    *   (optional) The class of the event which should return the results. Must
    *   be passed if $expected_results is not empty.
+   *
+   * @return \Drupal\package_manager\Stage
+   *   The stage that was used to collect the validation results.
    */
-  protected function assertResults(array $expected_results, string $event_class = NULL): void {
+  protected function assertResults(array $expected_results, string $event_class = NULL): Stage {
     $stage = $this->createStage();
 
     try {
@@ -170,6 +173,7 @@ abstract class PackageManagerKernelTestBase extends KernelTestBase {
       $this->assertNotEmpty($event_class);
       $this->assertInstanceOf($event_class, $e->event);
     }
+    return $stage;
   }
 
   /**
