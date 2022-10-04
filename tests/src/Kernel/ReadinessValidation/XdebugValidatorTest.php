@@ -44,7 +44,7 @@ class XdebugValidatorTest extends AutomaticUpdatesKernelTestBase {
    * Tests warnings and/or errors if Xdebug is enabled.
    */
   public function testXdebugValidation(): void {
-    $message = 'Xdebug is enabled, which may cause timeout errors.';
+    $message = 'Xdebug is enabled, which may have a negative performance impact on Package Manager and any modules that use it.';
 
     $config = $this->config('automatic_updates.settings');
     // If cron updates are disabled, the readiness check message should only be

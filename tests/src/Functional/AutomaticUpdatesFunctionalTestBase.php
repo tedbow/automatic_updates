@@ -39,6 +39,7 @@ abstract class AutomaticUpdatesFunctionalTestBase extends BrowserTestBase {
     'package_manager.validator.composer_executable',
     // Always allow tests to run with Xdebug on.
     'automatic_updates.validator.xdebug',
+    'package_manager.validator.xdebug',
   ];
 
   /**

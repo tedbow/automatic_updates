@@ -20,13 +20,6 @@ function package_manager_requirements(string $phase) {
       'severity' => REQUIREMENT_ERROR,
     ];
   }
-  if ($phase === 'runtime' && extension_loaded('xdebug')) {
-    $requirements['package_manager_xdebug'] = [
-      'title' => t('Xdebug enabled'),
-      'description' => t('Xdebug is enabled, which may have a negative performance impact on Package Manager and any modules that use it.'),
-      'severity' => REQUIREMENT_WARNING,
-    ];
-  }
 
   // If we're able to check for the presence of the failure marker at all, do it
   // irrespective of the current run phase. If the failure marker is there, the

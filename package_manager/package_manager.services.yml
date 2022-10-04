@@ -193,6 +193,10 @@ services:
     class: Drupal\package_manager\Validator\SupportedReleaseValidator
     tags:
       - { name: event_subscriber }
+  package_manager.validator.xdebug:
+    class: Drupal\package_manager\Validator\XdebugValidator
+    tags:
+      - { name: event_subscriber }
   package_manager.update_processor:
     class: Drupal\package_manager\PackageManagerUpdateProcessor
     arguments: [ '@config.factory', '@queue', '@update.fetcher', '@state', '@private_key', '@keyvalue', '@keyvalue.expirable' ]

@@ -135,6 +135,8 @@ services:
       - { name: event_subscriber }
   automatic_updates.validator.xdebug:
     class: Drupal\automatic_updates\Validator\XdebugValidator
+    arguments:
+      - '@package_manager.validator.xdebug'
     tags:
       - { name: event_subscriber }
   automatic_updates.validator.version_policy:
