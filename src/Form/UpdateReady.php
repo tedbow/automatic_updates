@@ -5,6 +5,7 @@ namespace Drupal\automatic_updates\Form;
 use Drupal\automatic_updates\BatchProcessor;
 use Drupal\automatic_updates\Updater;
 use Drupal\automatic_updates\Validation\ReadinessTrait;
+use Drupal\package_manager\ValidationResult;
 use Drupal\package_manager\Validator\StagedDBUpdateValidator;
 use Drupal\Core\Batch\BatchBuilder;
 use Drupal\Core\Extension\ModuleExtensionList;
@@ -29,7 +30,9 @@ use Symfony\Component\EventDispatcher\EventDispatcherInterface;
  */
 final class UpdateReady extends FormBase {
 
-  use ReadinessTrait;
+  use ReadinessTrait {
+    formatResult as traitFormatResult;
+  }
 
   /**
    * The updater service.
@@ -272,6 +275,24 @@ final class UpdateReady extends FormBase {
     catch (StageException $e) {
       $this->messenger()->addError($e->getMessage());
     }
+  }
+
+  /**
+   * {@inheritdoc}
+   *
+   * @todo Remove this in https://www.drupal.org/project/automatic_updates/issues/3313414.
+   */
+  protected function formatResult(ValidationResult $result) {
+    $messages = $result->getMessages();
+
+    if (count($messages) > 1) {
+      return [
+        '#theme' => 'item_list__automatic_updates_validation_results',
+        '#prefix' => $result->getSummary(),
+        '#items' => $messages,
+      ];
+    }
+    return $this->traitFormatResult($result);
   }
 
 }

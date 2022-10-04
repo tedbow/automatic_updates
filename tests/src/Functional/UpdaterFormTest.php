@@ -774,9 +774,20 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
     $page->pressButton('Update to 9.8.1');
     $this->checkForMetaRefresh();
     $this->assertUpdateStagedTimes(1);
-    $error = ValidationResult::createError(['Error occured.']);
+
+    $error_messages = [
+      "The only thing we're allowed to do is to",
+      "believe that we won't regret the choice",
+      "we made.",
+    ];
+    $summary = t('some generic summary');
+    $error = ValidationResult::createError($error_messages, $summary);
     TestSubscriber::setTestResult([$error], StatusCheckEvent::class);
     $this->getSession()->reload();
+    $assert_session->pageTextContains($summary);
+    foreach ($error_messages as $message) {
+      $assert_session->pageTextContains($message);
+    }
     $assert_session->buttonNotExists('Continue');
     $assert_session->buttonExists('Cancel update');
   }
@@ -794,13 +805,22 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
     $this->checkForMetaRefresh();
     $this->assertUpdateStagedTimes(1);
 
-    $warning = ValidationResult::createWarning(['Some warning.']);
+    $messages = [
+      "The only thing we're allowed to do is to",
+      "believe that we won't regret the choice",
+      "we made.",
+    ];
+    $summary = t('some generic summary');
+    $warning = ValidationResult::createWarning($messages, $summary);
     TestSubscriber::setTestResult([$warning], StatusCheckEvent::class);
     $session->reload();
 
     $assert_session = $this->assertSession();
     $assert_session->buttonExists('Continue');
-    $assert_session->pageTextContains('Some warning.');
+    $assert_session->pageTextContains($summary);
+    foreach ($messages as $message) {
+      $assert_session->pageTextContains($message);
+    }
   }
 
   /**
