@@ -30,6 +30,11 @@ function automatic_updates_help($route_name, RouteMatchInterface $route_match) {
       $output .= '<h3>' . t('Requirements') . '</h3>';
       $output .= '<p>' . t('Automatic Updates requires a Composer executable whose version satisfies <code>@version</code>, and PHP must have permission to run it. The path to the executable may be set in the <code>package_manager.settings:executables.composer</code> config setting, or it will be automatically detected.', ['@version' => ComposerExecutableValidator::MINIMUM_COMPOSER_VERSION_CONSTRAINT]) . '</p>';
       $output .= '<p>' . t('For more information, see the <a href=":automatic-updates-documentation">online documentation for the Automatic Updates module</a>.', [':automatic-updates-documentation' => 'https://www.drupal.org/docs/8/update/automatic-updates']) . '</p>';
+      $output .= '<p id="cron-alternate-port">' . t('If your site is running on the built-in PHP web server, unattended (i.e., cron) updates may not work without one of the following workarounds:') . '</p>';
+      $output .= '<ul>';
+      $output .= '<li>' . t('Use a multithreaded web server, such as Apache, NGINX, or on Windows, IIS.') . '</li>';
+      $output .= '<li>' . t('Run another instance of the built-in PHP web server on a different port and configure automatic updates accordingly: <code>$config["automatic_updates.settings"]["cron_port"] = $alternate_port_number;</code>') . '</li>';
+      $output .= '</ul>';
       return $output;
   }
 }

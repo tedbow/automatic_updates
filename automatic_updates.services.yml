@@ -166,6 +166,7 @@ services:
     arguments:
       - '@request_stack'
       - '@config.factory'
+      - '@module_handler'
     tags:
       - { name: event_subscriber }
   logger.channel.automatic_updates:

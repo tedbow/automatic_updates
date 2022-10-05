@@ -5,6 +5,7 @@ namespace Drupal\Tests\automatic_updates\Kernel\ReadinessValidation;
 use Drupal\automatic_updates\CronUpdater;
 use Drupal\automatic_updates\Validator\CronServerValidator;
 use Drupal\Core\Logger\RfcLogLevel;
+use Drupal\Core\Url;
 use Drupal\package_manager\Exception\StageValidationException;
 use Drupal\package_manager\ValidationResult;
 use Drupal\Tests\automatic_updates\Kernel\AutomaticUpdatesKernelTestBase;
@@ -68,7 +69,7 @@ class CronServerValidatorTest extends AutomaticUpdatesKernelTestBase {
   }
 
   /**
-   * Tests server configuration validation for unattended updates.
+   * Tests server validation for unattended updates.
    *
    * @param bool $alternate_port
    *   Whether or not an alternate port should be set.
@@ -116,6 +117,41 @@ class CronServerValidatorTest extends AutomaticUpdatesKernelTestBase {
         $this->assertFalse($logger->hasRecords(RfcLogLevel::ERROR));
       }
     }
+  }
+
+  /**
+   * Tests server validation for unattended updates with Help enabled.
+   *
+   * @param bool $alternate_port
+   *   Whether or not an alternate port should be set.
+   * @param string $server_api
+   *   The value of the PHP_SAPI constant, as known to the validator.
+   * @param string[] $cron_modes
+   *   The cron modes to test with. Can contain any of
+   *   \Drupal\automatic_updates\CronUpdater::DISABLED,
+   *   \Drupal\automatic_updates\CronUpdater::SECURITY, and
+   *   \Drupal\automatic_updates\CronUpdater::ALL.
+   * @param \Drupal\package_manager\ValidationResult[] $expected_results
+   *   The expected validation results.
+   *
+   * @dataProvider providerCronServerValidation
+   */
+  public function testHelpLink(bool $alternate_port, string $server_api, array $cron_modes, array $expected_results): void {
+    $this->enableModules(['help']);
+
+    $url = Url::fromRoute('help.page')
+      ->setRouteParameter('name', 'automatic_updates')
+      ->setOption('fragment', 'cron-alternate-port')
+      ->toString();
+
+    foreach ($expected_results as $i => $result) {
+      $messages = [];
+      foreach ($result->getMessages() as $message) {
+        $messages[] = "$message See <a href=\"$url\">the Automatic Updates help page</a> for more information on how to resolve this.";
+      }
+      $expected_results[$i] = ValidationResult::createError($messages);
+    }
+    $this->testCronServerValidation($alternate_port, $server_api, $cron_modes, $expected_results);
   }
 
 }

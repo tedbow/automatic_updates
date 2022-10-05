@@ -5,8 +5,10 @@ namespace Drupal\automatic_updates\Validator;
 use Drupal\automatic_updates\CronUpdater;
 use Drupal\automatic_updates\Event\ReadinessCheckEvent;
 use Drupal\Core\Config\ConfigFactoryInterface;
+use Drupal\Core\Extension\ModuleHandlerInterface;
 use Drupal\Core\Http\RequestStack;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
+use Drupal\Core\Url;
 use Drupal\package_manager\Event\PreCreateEvent;
 use Drupal\package_manager\Event\PreOperationStageEvent;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
@@ -38,6 +40,13 @@ final class CronServerValidator implements EventSubscriberInterface {
   protected $configFactory;
 
   /**
+   * The module handler service.
+   *
+   * @var \Drupal\Core\Extension\ModuleHandlerInterface
+   */
+  protected $moduleHandler;
+
+  /**
    * The type of interface between the web server and the PHP runtime.
    *
    * @var string
@@ -54,10 +63,13 @@ final class CronServerValidator implements EventSubscriberInterface {
    *   The request stack service.
    * @param \Drupal\Core\Config\ConfigFactoryInterface $config_factory
    *   The config factory service.
+   * @param \Drupal\Core\Extension\ModuleHandlerInterface $module_handler
+   *   The module handler service.
    */
-  public function __construct(RequestStack $request_stack, ConfigFactoryInterface $config_factory) {
+  public function __construct(RequestStack $request_stack, ConfigFactoryInterface $config_factory, ModuleHandlerInterface $module_handler) {
     $this->request = $request_stack->getCurrentRequest();
     $this->configFactory = $config_factory;
+    $this->moduleHandler = $module_handler;
   }
 
   /**
@@ -79,13 +91,22 @@ final class CronServerValidator implements EventSubscriberInterface {
     $alternate_port = intval($alternate_port) ?: $current_port;
 
     if (static::$serverApi === 'cli-server' && $current_port === $alternate_port) {
-      // @todo Explain how to fix this problem on our help page, and link to it,
-      //   in https://drupal.org/i/3312669.
-      $event->addError([
-        $this->t('Your site appears to be running on the built-in PHP web server on port @port. Drupal cannot be automatically updated with this configuration unless the site can also be reached on an alternate port.', [
-          '@port' => $current_port,
-        ]),
+      $message = $this->t('Your site appears to be running on the built-in PHP web server on port @port. Drupal cannot be automatically updated with this configuration unless the site can also be reached on an alternate port.', [
+        '@port' => $current_port,
       ]);
+      if ($this->moduleHandler->moduleExists('help')) {
+        $url = Url::fromRoute('help.page')
+          ->setRouteParameter('name', 'automatic_updates')
+          ->setOption('fragment', 'cron-alternate-port')
+          ->toString();
+
+        $message = $this->t('@message See <a href=":url">the Automatic Updates help page</a> for more information on how to resolve this.', [
+          '@message' => $message,
+          ':url' => $url,
+        ]);
+      }
+
+      $event->addError([$message]);
     }
   }
 
