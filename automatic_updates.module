@@ -10,13 +10,14 @@ use Drupal\Core\Routing\RouteMatchInterface;
 use Drupal\automatic_updates\Validation\AdminReadinessMessages;
 use Drupal\Core\Url;
 use Drupal\system\Controller\DbUpdateController;
+use Drupal\package_manager\Validator\ComposerExecutableValidator;
 
 /**
  * Implements hook_help().
  */
 function automatic_updates_help($route_name, RouteMatchInterface $route_match) {
   switch ($route_name) {
-    case 'help.page.auto_updates':
+    case 'help.page.automatic_updates':
       $output = '<h3>' . t('About') . '</h3>';
       $output .= '<p>' . t('Automatic Updates lets you update Drupal core.') . '</p>';
       $output .= '<p>';
