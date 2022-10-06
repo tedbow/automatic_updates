@@ -114,7 +114,7 @@ class Updater extends Stage {
       parent::apply($timeout);
     }
     catch (ApplyFailedException $exception) {
-      throw new UpdateException([], 'The update operation failed to apply. The update may have been partially applied. It is recommended that the site be restored from a code backup.', $exception->getCode(), $exception);
+      throw new UpdateException([], "The update operation failed to apply completely. All the files necessary to run Drupal correctly and securely are probably not present. It is strongly recommended to restore your site's code and database from a backup.", $exception->getCode(), $exception);
     }
   }
 

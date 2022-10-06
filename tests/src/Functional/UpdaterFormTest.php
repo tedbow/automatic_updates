@@ -336,7 +336,7 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
     $page->pressButton('Continue');
     $this->checkForMetaRefresh();
     $assert_session->pageTextContainsOnce('An error has occurred.');
-    $assert_session->pageTextContains('The update operation failed to apply. The update may have been partially applied. It is recommended that the site be restored from a code backup.');
+    $assert_session->pageTextContains("The update operation failed to apply completely. All the files necessary to run Drupal correctly and securely are probably not present. It is strongly recommended to restore your site's code and database from a backup.");
     $page->clickLink('the error page');
 
     $failure_message = 'Automatic updates failed to apply, and the site is in an indeterminate state. Consider restoring the code and database from a backup.';

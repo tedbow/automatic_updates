@@ -511,7 +511,7 @@ END;
     $expected_body = <<<END
 Drupal core failed to update automatically from 9.8.0 to 9.8.1. The following error was logged:
 
-The update operation failed to apply. The update may have been partially applied. It is recommended that the site be restored from a code backup.
+The update operation failed to apply completely. All the files necessary to run Drupal correctly and securely are probably not present. It is strongly recommended to restore your site's code and database from a backup.
 
 This e-mail was sent by the Automatic Updates module. Unattended updates are not yet fully supported.
 
