@@ -8,6 +8,7 @@ use Drupal\Core\DependencyInjection\ContainerBuilder;
 use Drupal\Core\Form\FormState;
 use Drupal\Core\Logger\RfcLogLevel;
 use Drupal\Core\Test\AssertMailTrait;
+use Drupal\Core\Url;
 use Drupal\package_manager\Event\PostApplyEvent;
 use Drupal\package_manager\Event\PostCreateEvent;
 use Drupal\package_manager\Event\PostDestroyEvent;
@@ -18,6 +19,7 @@ use Drupal\package_manager\Event\PreRequireEvent;
 use Drupal\package_manager\Event\PreCreateEvent;
 use Drupal\package_manager\Exception\StageValidationException;
 use Drupal\package_manager\ValidationResult;
+use Drupal\package_manager_bypass\Committer;
 use Drupal\Tests\package_manager\Traits\PackageManagerBypassTestTrait;
 use Drupal\Tests\user\Traits\UserCreationTrait;
 use Drupal\update\UpdateSettingsForm;
@@ -59,6 +61,8 @@ class CronUpdaterTest extends AutomaticUpdatesKernelTestBase {
    * should be emailed in.
    *
    * @var string[]
+   *
+   * @see ::setUp()
    */
   private $emailRecipients = [];
 
@@ -389,17 +393,16 @@ class CronUpdaterTest extends AutomaticUpdatesKernelTestBase {
     $this->container->get('cron')->run();
 
     // Ensure we sent a success message to all recipients.
-    $sent_messages = $this->getMails([
-      'subject' => "Drupal core was successfully updated",
-    ]);
-    $this->assertNotEmpty($sent_messages);
-    $this->assertSame(count($this->emailRecipients), count($sent_messages));
+    $expected_body = <<<END
+Congratulations!
 
-    foreach ($sent_messages as $message) {
-      $email = $message['to'];
-      $this->assertSame($message['langcode'], $this->emailRecipients[$email]);
-      $this->assertCorrectMessageSent($email, $message, $message['langcode'], "Congratulations!\n\nDrupal core was automatically updated from 9.8.0 to 9.8.1.\n");
-    }
+Drupal core was automatically updated from 9.8.0 to 9.8.1.
+
+This e-mail was sent by the Automatic Updates module. Unattended updates are not yet fully supported.
+
+If you are using this feature in production, it is strongly recommended for you to visit your site and ensure that everything still looks good.
+END;
+    $this->assertMessagesSent("Drupal core was successfully updated", $expected_body);
   }
 
   /**
@@ -423,59 +426,138 @@ class CronUpdaterTest extends AutomaticUpdatesKernelTestBase {
   }
 
   /**
-   * Tests that email is sent when an unattended update fails.
+   * Tests the failure e-mail when an unattended non-security update fails.
    *
    * @param string $event_class
    *   The event class that should trigger the failure.
    *
    * @dataProvider providerEmailOnFailure
    */
-  public function testEmailOnFailure(string $event_class): void {
+  public function testNonUrgentFailureEmail(string $event_class): void {
+    $this->setReleaseMetadata([
+      'drupal' => __DIR__ . '/../../../package_manager/tests/fixtures/release-history/drupal.9.8.2.xml',
+    ]);
+    $this->config('automatic_updates.settings')
+      ->set('cron', CronUpdater::ALL)
+      ->save();
+
     $results = [
       ValidationResult::createError(['Error while updating!']),
     ];
     TestSubscriber1::setTestResult($results, $event_class);
     $exception = new StageValidationException($results);
-
     $this->container->get('cron')->run();
 
-    // Ensure we sent a failure message to all recipients.
+    $url = Url::fromRoute('update.report_update')
+      ->setAbsolute()
+      ->toString();
+
+    $expected_body = <<<END
+Drupal core failed to update automatically from 9.8.0 to 9.8.2. The following error was logged:
+
+{$exception->getMessage()}
+
+No immediate action is needed, but it is recommended that you visit $url to perform the update, or at least check that everything still looks good.
+
+This e-mail was sent by the Automatic Updates module. Unattended updates are not yet fully supported.
+
+If you are using this feature in production, it is strongly recommended for you to visit your site and ensure that everything still looks good.
+END;
+    $this->assertMessagesSent("Drupal core update failed", $expected_body);
+  }
+
+  /**
+   * Tests the failure e-mail when an unattended security update fails.
+   *
+   * @param string $event_class
+   *   The event class that should trigger the failure.
+   *
+   * @dataProvider providerEmailOnFailure
+   */
+  public function testSecurityUpdateFailureEmail(string $event_class): void {
+    $results = [
+      ValidationResult::createError(['Error while updating!']),
+    ];
+    TestSubscriber1::setTestResult($results, $event_class);
+    $exception = new StageValidationException($results);
+    $this->container->get('cron')->run();
+
+    $url = Url::fromRoute('update.report_update')
+      ->setAbsolute()
+      ->toString();
+
+    $expected_body = <<<END
+Drupal core failed to update automatically from 9.8.0 to 9.8.1. The following error was logged:
+
+{$exception->getMessage()}
+
+Your site is running an insecure version of Drupal and should be updated as soon as possible. Visit $url to perform the update.
+
+This e-mail was sent by the Automatic Updates module. Unattended updates are not yet fully supported.
+
+If you are using this feature in production, it is strongly recommended for you to visit your site and ensure that everything still looks good.
+END;
+    $this->assertMessagesSent("URGENT: Drupal core update failed", $expected_body);
+  }
+
+  /**
+   * Tests the failure e-mail when an unattended update fails to apply.
+   */
+  public function testApplyFailureEmail(): void {
+    $error = new \Exception('I drink your milkshake!');
+    Committer::setException($error);
+
+    $this->container->get('cron')->run();
+    $expected_body = <<<END
+Drupal core failed to update automatically from 9.8.0 to 9.8.1. The following error was logged:
+
+The update operation failed to apply. The update may have been partially applied. It is recommended that the site be restored from a code backup.
+
+This e-mail was sent by the Automatic Updates module. Unattended updates are not yet fully supported.
+
+If you are using this feature in production, it is strongly recommended for you to visit your site and ensure that everything still looks good.
+END;
+    $this->assertMessagesSent('URGENT: Drupal core update failed', $expected_body);
+  }
+
+  /**
+   * Asserts that all recipients recieved a given email.
+   *
+   * @param string $subject
+   *   The subject line of the email that should have been sent.
+   * @param string $body
+   *   The beginning of the body text of the email that should have been sent.
+   *
+   * @see ::$emailRecipients
+   */
+  private function assertMessagesSent(string $subject, string $body): void {
     $sent_messages = $this->getMails([
-      'subject' => "Drupal core update failed",
+      'subject' => $subject,
     ]);
     $this->assertNotEmpty($sent_messages);
     $this->assertSame(count($this->emailRecipients), count($sent_messages));
 
+    // Ensure the body is formatted the way the PHP mailer would do it.
+    $message = [
+      'body' => [$body],
+    ];
+    $message = $this->container->get('plugin.manager.mail')
+      ->createInstance('php_mail')
+      ->format($message);
+    $body = $message['body'];
+
     foreach ($sent_messages as $message) {
       $email = $message['to'];
-      $this->assertSame($message['langcode'], $this->emailRecipients[$email]);
-      $this->assertCorrectMessageSent($email, $message, $message['langcode'], "Drupal core failed to update automatically from 9.8.0 to 9.8.1. The following\nerror was logged:\n\n" . $exception->getMessage());
-    }
-  }
+      $expected_langcode = $this->emailRecipients[$email];
 
-  /**
-   * Asserts correct message sent to correct recipient.
-   *
-   * @param string $expected_recipient
-   *   The email address that should have received the message.
-   * @param array $sent_message
-   *   The sent message, as processed by hook_mail().
-   * @param string $expected_language_code
-   *   The language code that the recipient should have been emailed in.
-   * @param string $expected_body_text
-   *   The expected message that the email body should contain.
-   */
-  private function assertCorrectMessageSent(string $expected_recipient, array $sent_message, string $expected_language_code, string $expected_body_text): void {
-    // Ensure the messages had the correct body text, and were sent to the right
-    // people.
-    $this->assertSame($sent_message['to'], $expected_recipient);
-    $this->assertStringStartsWith($expected_body_text, $sent_message['body']);
-    // The message, and every line in it, should have been sent in the
-    // expected language.
-    $this->assertSame($expected_language_code, $sent_message['langcode']);
-    // @see automatic_updates_test_mail_alter()
-    $this->assertArrayHasKey('line_langcodes', $sent_message);
-    $this->assertSame([$expected_language_code], $sent_message['line_langcodes']);
+      $this->assertSame($expected_langcode, $message['langcode']);
+      // The message, and every line in it, should have been sent in the
+      // expected language.
+      // @see automatic_updates_test_mail_alter()
+      $this->assertArrayHasKey('line_langcodes', $message);
+      $this->assertSame([$expected_langcode], $message['line_langcodes']);
+      $this->assertStringStartsWith($body, $message['body']);
+    }
   }
 
   /**

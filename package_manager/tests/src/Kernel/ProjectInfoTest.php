@@ -176,4 +176,65 @@ class ProjectInfoTest extends PackageManagerKernelTestBase {
     $project_info->getInstallableReleases();
   }
 
+  /**
+   * Data provider for ::testInstalledVersionSafe().
+   *
+   * @return array[]
+   *   The test cases.
+   */
+  public function providerInstalledVersionSafe(): array {
+    $dir = __DIR__ . '/../../fixtures/release-history';
+
+    return [
+      'safe version' => [
+        '9.8.0',
+        $dir . '/drupal.9.8.2.xml',
+        TRUE,
+      ],
+      'unpublished version' => [
+        '9.8.0',
+        $dir . '/drupal.9.8.2-unsupported_unpublished.xml',
+        FALSE,
+      ],
+      'unsupported branch' => [
+        '9.6.1',
+        $dir . '/drupal.9.8.2-unsupported_unpublished.xml',
+        FALSE,
+      ],
+      'unsupported version' => [
+        '9.8.1',
+        $dir . '/drupal.9.8.2-unsupported_unpublished.xml',
+        FALSE,
+      ],
+      'insecure version' => [
+        '9.8.0',
+        $dir . '/drupal.9.8.1-security.xml',
+        FALSE,
+      ],
+    ];
+  }
+
+  /**
+   * Tests checking if the currently installed version of a project is safe.
+   *
+   * @param string $installed_version
+   *   The currently installed version of the project.
+   * @param string $release_xml
+   *   The path of the release metadata.
+   * @param bool $expected_to_be_safe
+   *   Whether or not the installed version of the project is expected to be
+   *   found safe.
+   *
+   * @covers ::isInstalledVersionSafe
+   *
+   * @dataProvider providerInstalledVersionSafe
+   */
+  public function testInstalledVersionSafe(string $installed_version, string $release_xml, bool $expected_to_be_safe): void {
+    $this->setCoreVersion($installed_version);
+    $this->setReleaseMetadata(['drupal' => $release_xml]);
+
+    $project_info = new ProjectInfo('drupal');
+    $this->assertSame($expected_to_be_safe, $project_info->isInstalledVersionSafe());
+  }
+
 }

@@ -7,6 +7,7 @@ use Drupal\Core\Logger\LoggerChannelFactoryInterface;
 use Drupal\Core\Mail\MailManagerInterface;
 use Drupal\Core\State\StateInterface;
 use Drupal\Core\Url;
+use Drupal\package_manager\Exception\ApplyFailedException;
 use Drupal\package_manager\Exception\StageValidationException;
 use Drupal\package_manager\ProjectInfo;
 use Drupal\update\ProjectRelease;
@@ -160,13 +161,15 @@ class CronUpdater extends Updater {
    * Performs the update.
    *
    * @param string $target_version
-   *   The target version.
+   *   The target version of Drupal core.
    * @param int|null $timeout
    *   How long to allow the operation to run before timing out, in seconds, or
    *   NULL to never time out.
    */
   private function performUpdate(string $target_version, ?int $timeout): void {
-    $installed_version = (new ProjectInfo('drupal'))->getInstalledVersion();
+    $project_info = new ProjectInfo('drupal');
+
+    $installed_version = $project_info->getInstalledVersion();
     if (empty($installed_version)) {
       $this->logger->error('Unable to determine the current version of Drupal core.');
       return;
@@ -188,8 +191,21 @@ class CronUpdater extends Updater {
         'target_version' => $target_version,
         'error_message' => $e->getMessage(),
       ];
+      if ($e instanceof ApplyFailedException || $e->getPrevious() instanceof ApplyFailedException) {
+        $mail_params['urgent'] = TRUE;
+        $key = 'cron_failed_apply';
+      }
+      elseif (!$project_info->isInstalledVersionSafe()) {
+        $mail_params['urgent'] = TRUE;
+        $key = 'cron_failed_insecure';
+      }
+      else {
+        $mail_params['urgent'] = FALSE;
+        $key = 'cron_failed';
+      }
+
       foreach ($this->getEmailRecipients() as $email => $langcode) {
-        $this->mailManager->mail('automatic_updates', 'cron_failed', $email, $langcode, $mail_params);
+        $this->mailManager->mail('automatic_updates', $key, $email, $langcode, $mail_params);
       }
       $this->logger->error($e->getMessage());
 

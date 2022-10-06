@@ -185,4 +185,26 @@ final class ProjectInfo {
     return $available_projects;
   }
 
+  /**
+   * Checks if the installed version of this project is safe to use.
+   *
+   * @return bool
+   *   TRUE if the installed version of this project is secure, supported, and
+   *   published. Otherwise, or if the project information could not be
+   *   retrieved, returns FALSE.
+   */
+  public function isInstalledVersionSafe(): bool {
+    $project_data = $this->getProjectInfo();
+    if ($project_data) {
+      $unsafe = [
+        UpdateManagerInterface::NOT_SECURE,
+        UpdateManagerInterface::NOT_SUPPORTED,
+        UpdateManagerInterface::REVOKED,
+      ];
+      return !in_array($project_data['status'], $unsafe, TRUE);
+    }
+    // If we couldn't get project data, assume the installed version is unsafe.
+    return FALSE;
+  }
+
 }
