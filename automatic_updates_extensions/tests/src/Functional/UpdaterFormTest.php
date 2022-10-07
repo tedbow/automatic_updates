@@ -6,9 +6,11 @@ use Drupal\automatic_updates\Event\ReadinessCheckEvent;
 use Drupal\automatic_updates_test\EventSubscriber\TestSubscriber1;
 use Drupal\package_manager_test_validation\StagedDatabaseUpdateValidator;
 use Drupal\package_manager\Event\PreApplyEvent;
+use Drupal\package_manager\Event\StatusCheckEvent;
 use Drupal\package_manager\ValidationResult;
 use Drupal\package_manager_bypass\Committer;
 use Drupal\package_manager_bypass\Stager;
+use Drupal\package_manager_test_validation\EventSubscriber\TestSubscriber;
 use Drupal\Tests\automatic_updates\Functional\AutomaticUpdatesFunctionalTestBase;
 use Drupal\Tests\automatic_updates\Traits\ValidationTestTrait;
 use Drupal\Tests\automatic_updates_extensions\Traits\FormTestTrait;
@@ -192,11 +194,11 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
     // Ensure that a list of pending database updates is visible, along with a
     // short explanation, in the warning messages.
     $warning_messages = $assert_session->elementExists('xpath', '//div[@data-drupal-messages]//div[@aria-label="Warning message"]');
-    $this->assertStringContainsString('Possible database updates were detected in the following extensions; you may be redirected to the database update page in order to complete the update process.', $warning_messages->getText());
+    $this->assertStringContainsString('Possible database updates have been detected in the following extensions.', $warning_messages->getText());
     $pending_updates = $warning_messages->findAll('css', 'ul.item-list__automatic-updates-extensions__pending-database-updates li');
     $this->assertCount(2, $pending_updates);
-    $this->assertSame('Automatic Updates Theme With Updates', $pending_updates[0]->getText());
-    $this->assertSame('System', $pending_updates[1]->getText());
+    $this->assertSame('System', $pending_updates[0]->getText());
+    $this->assertSame('Automatic Updates Theme With Updates', $pending_updates[1]->getText());
 
     $page->pressButton('Continue');
     $this->checkForMetaRefresh();
@@ -450,9 +452,63 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
     $this->clickLink('Update Extensions');
     $this->assertTableShowsUpdates('Semver Test', '8.1.0', '8.1.1');
     $this->assertUpdatesCount(1);
-    $assert->pageTextContains(static::$warningsExplanation);
+    $this->checkForMetaRefresh();
     $assert->pageTextNotContains(static::$errorsExplanation);
+    $assert->elementExists('css', '#edit-projects-semver-test')->check();
+    $assert->checkboxChecked('edit-projects-semver-test');
+    $assert->pageTextContains(static::$warningsExplanation);
     $assert->buttonExists('Update');
+
+    // Add warnings from StatusCheckEvent.
+    $summary_status_check_event = t('Some summary');
+    $messages_status_check_event = [
+      "The only thing we're allowed to do is to",
+      "believe that we won't regret the choice",
+      "we made.",
+    ];
+    $warning_status_check_event = ValidationResult::createWarning($messages_status_check_event, $summary_status_check_event);
+    TestSubscriber::setTestResult([$warning_status_check_event], StatusCheckEvent::class);
+    $this->getSession()->getPage()->pressButton('Update');
+    $this->checkForMetaRefresh();
+    $assert->buttonExists('Continue');
+    $assert->pageTextContains($summary_status_check_event);
+    foreach ($messages_status_check_event as $message) {
+      $assert->pageTextContains($message);
+    }
+  }
+
+  /**
+   * Tests that messages from StatusCheckEvent are shown on the confirmation form.
+   */
+  public function testStatusErrorMessages(): void {
+    $this->setReleaseMetadata(__DIR__ . '/../../fixtures/release-history/semver_test.1.1.xml');
+    $assert = $this->assertSession();
+    $this->setProjectInstalledVersion(['semver_test' => '8.1.0']);
+    $this->checkForUpdates();
+    $this->drupalGet('admin/reports/updates/automatic-update-extensions');
+    $this->assertTableShowsUpdates('Semver Test', '8.1.0', '8.1.1');
+    $this->assertUpdatesCount(1);
+    $this->getSession()->reload();
+    $assert->elementExists('css', '#edit-projects-semver-test')->check();
+    $assert->checkboxChecked('edit-projects-semver-test');
+    $assert->buttonExists('Update');
+    $messages = [
+      "The only thing we're allowed to do is to",
+      "believe that we won't regret the choice",
+      "we made.",
+    ];
+    $summary = t('Some summary');
+    $error = ValidationResult::createError($messages, $summary);
+    TestSubscriber::setTestResult([$error], StatusCheckEvent::class);
+    $this->getSession()->getPage()->pressButton('Update');
+    $this->checkForMetaRefresh();
+    $assert->pageTextContains(static::$errorsExplanation);
+    $assert->pageTextNotContains(static::$warningsExplanation);
+    $assert->pageTextContains($summary);
+    foreach ($messages as $message) {
+      $assert->pageTextContains($message);
+    }
+    $assert->buttonNotExists('Continue');
   }
 
   /**
