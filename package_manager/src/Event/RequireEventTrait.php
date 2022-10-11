@@ -35,9 +35,9 @@ trait RequireEventTrait {
    *   The stage.
    * @param string[] $runtime_packages
    *   The runtime (i.e., non-dev) packages to be required, in the form
-   *   'vendor/name:constrant'.
+   *   'vendor/name:constraint'.
    * @param string[] $dev_packages
-   *   The dev packages to be required, in the form 'vendor/name:constrant'.
+   *   The dev packages to be required, in the form 'vendor/name:constraint'.
    */
   public function __construct(Stage $stage, array $runtime_packages, array $dev_packages = []) {
     $this->runtimePackages = $runtime_packages;

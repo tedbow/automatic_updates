@@ -81,7 +81,7 @@ class StagedProjectsValidatorTest extends AutomaticUpdatesKernelTestBase {
    * Tests validation errors, or lack thereof.
    *
    * @param string $root_fixture_directory
-   *   A directory containing to fixtures sub direcotories, 'active' and
+   *   A directory containing to fixtures sub-directories, 'active' and
    *   'staged'.
    * @param string|null $expected_summary
    *   The expected error summary, or NULL if no errors are expected.

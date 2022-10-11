@@ -28,7 +28,7 @@ class StageValidationExceptionTest extends PackageManagerKernelTestBase {
    *   The test cases.
    */
   public function providerResultsAsText(): array {
-    $messages = ['Blam!', 'Kapow!'];
+    $messages = ['Bang!', 'Pow!'];
     $summary = t('There was sadness.');
 
     $result_no_summary = ValidationResult::createError([$messages[0]]);

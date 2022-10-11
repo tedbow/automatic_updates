@@ -332,7 +332,7 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
     $this->checkForMetaRefresh();
     $this->assertUpdateStagedTimes(1);
 
-    Committer::setException(new \Exception('failed at commiter'));
+    Committer::setException(new \Exception('failed at committer'));
     $page->pressButton('Continue');
     $this->checkForMetaRefresh();
     $assert_session->pageTextContainsOnce('An error has occurred.');

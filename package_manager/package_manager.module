@@ -8,6 +8,8 @@
 use Drupal\Core\Routing\RouteMatchInterface;
 use Drupal\package_manager\Validator\ComposerExecutableValidator;
 
+// cspell:ignore grasmash
+
 /**
  * Implements hook_help().
  */

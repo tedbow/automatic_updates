@@ -12,7 +12,7 @@ use Drupal\package_manager\Exception\ApplyFailedException;
  * code is copied back into it, and then removed afterwards. This allows us to
  * know if a commit operation failed midway through, which could leave the site
  * code base in an indeterminate state -- which, in the worst case scenario,
- * might render Drupal unbootable.
+ * might render Drupal being unable to boot.
  */
 final class FailureMarker {
 

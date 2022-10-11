@@ -14,7 +14,7 @@ function automatic_updates_test_mail_alter(array &$message): void {
   if (str_starts_with($message['id'], 'automatic_updates_')) {
     $line_langcodes = [];
 
-    // Get the langcode of every translated line in the mssage, including the
+    // Get the langcode of every translated line in the message, including the
     // subject line.
     $lines = array_merge($message['body'], [
       $message['subject'],

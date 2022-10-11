@@ -355,7 +355,7 @@ class StageTest extends PackageManagerKernelTestBase {
     $stage->destroy();
 
     // Even through the previous stage was destroyed, we cannot create a new one
-    // bceause the failure marker is still there.
+    // because the failure marker is still there.
     $stage = $this->createStage();
     try {
       $stage->create();
@@ -444,7 +444,7 @@ class StageTest extends PackageManagerKernelTestBase {
    * @param string $package_name
    *   The package name.
    * @param bool $is_invalid
-   *   TRUE if the gien package name is invalid and will cause an exception,
+   *   TRUE if the given package name is invalid and will cause an exception,
    *   FALSE otherwise.
    *
    * @dataProvider providerValidatePackageNames

@@ -8,6 +8,8 @@ use PhpTuf\ComposerStager\Infrastructure\Factory\Process\ProcessFactoryInterface
 use PhpTuf\ComposerStager\Infrastructure\Factory\Process\ProcessFactory as StagerProcessFactory;
 use Symfony\Component\Process\Process;
 
+// cspell:ignore BINDIR
+
 /**
  * Defines a process factory which sets the COMPOSER_HOME environment variable.
  *

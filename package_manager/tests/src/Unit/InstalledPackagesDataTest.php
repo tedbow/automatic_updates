@@ -19,7 +19,7 @@ class InstalledPackagesDataTest extends UnitTestCase {
   /**
    * Tests that Composer's `installed.php` file looks how we expect.
    */
-  public function testinstalledPackagesData(): void {
+  public function testInstalledPackagesData(): void {
     $loaders = ClassLoader::getRegisteredLoaders();
     $installed_php = key($loaders) . '/composer/installed.php';
     $this->assertFileIsReadable($installed_php);

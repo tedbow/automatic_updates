@@ -47,7 +47,7 @@ final class ReleaseChooser {
    *   The updater that will be used to install the releases.
    *
    * @return \Drupal\update\ProjectRelease[]
-   *   The releases that are installable by the given updtaer, according to the
+   *   The releases that are installable by the given updater, according to the
    *   version validator service.
    */
   protected function getInstallableReleases(Updater $updater): array {

@@ -20,7 +20,7 @@ class PathLocatorTest extends UnitTestCase {
   public function testStagingRoot(): void {
     $config_factory = $this->getConfigFactoryStub([
       'system.site' => [
-        'uuid' => 'my_site_id',
+        'uuid' => '_my_site_id',
       ],
     ]);
     $file_system = $this->prophesize(FileSystemInterface::class);
@@ -31,7 +31,7 @@ class PathLocatorTest extends UnitTestCase {
       $config_factory,
       $file_system->reveal()
     );
-    $this->assertSame('/path/to/temp/.package_managermy_site_id', $path_locator->getStagingRoot());
+    $this->assertSame('/path/to/temp/.package_manager_my_site_id', $path_locator->getStagingRoot());
   }
 
   /**

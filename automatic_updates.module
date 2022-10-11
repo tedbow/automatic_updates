@@ -135,7 +135,6 @@ function automatic_updates_module_implements_alter(&$implementations, $hook) {
     unset($implementations['update']);
   }
   if ($hook === 'cron') {
-    // Whatever mofo.
     $hook = $implementations['automatic_updates'];
     unset($implementations['automatic_updates']);
     $implementations['automatic_updates'] = $hook;
