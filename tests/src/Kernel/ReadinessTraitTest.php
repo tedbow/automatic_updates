@@ -19,27 +19,6 @@ class ReadinessTraitTest extends AutomaticUpdatesKernelTestBase {
   use StringTranslationTrait;
 
   /**
-   * @covers ::getOverallSeverity
-   */
-  public function testOverallSeverity(): void {
-    // An error and a warning should be counted as an error.
-    $results = [
-      ValidationResult::createError(['Boo!']),
-      ValidationResult::createWarning(['Moo!']),
-    ];
-    $this->assertSame(SystemManager::REQUIREMENT_ERROR, $this->getOverallSeverity($results));
-
-    // If there are no results, but no errors, the results should be counted as
-    // a warning.
-    array_shift($results);
-    $this->assertSame(SystemManager::REQUIREMENT_WARNING, $this->getOverallSeverity($results));
-
-    // If there are just plain no results, we should get REQUIREMENT_OK.
-    array_shift($results);
-    $this->assertSame(SystemManager::REQUIREMENT_OK, $this->getOverallSeverity($results));
-  }
-
-  /**
    * @covers ::displayResults
    */
   public function testDisplayResults(): void {

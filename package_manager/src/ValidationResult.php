@@ -113,4 +113,24 @@ final class ValidationResult {
     return $this->severity;
   }
 
+  /**
+   * Returns the overall severity for a set of validation results.
+   *
+   * @param \Drupal\package_manager\ValidationResult[] $results
+   *   The validation results.
+   *
+   * @return int
+   *   The overall severity of the results. Will be be one of the
+   *   SystemManager::REQUIREMENT_* constants.
+   */
+  public static function getOverallSeverity(array $results): int {
+    foreach ($results as $result) {
+      if ($result->getSeverity() === SystemManager::REQUIREMENT_ERROR) {
+        return SystemManager::REQUIREMENT_ERROR;
+      }
+    }
+    // If there were no errors, then any remaining results must be warnings.
+    return $results ? SystemManager::REQUIREMENT_WARNING : SystemManager::REQUIREMENT_OK;
+  }
+
 }

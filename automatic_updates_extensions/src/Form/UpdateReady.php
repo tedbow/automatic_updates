@@ -179,7 +179,7 @@ final class UpdateReady extends FormBase {
       $this->displayResults($results, $this->messenger(), $this->renderer);
       // If any errors occurred, return the form early so the user cannot
       // continue.
-      if ($this->getOverallSeverity($results) === SystemManager::REQUIREMENT_ERROR) {
+      if (ValidationResult::getOverallSeverity($results) === SystemManager::REQUIREMENT_ERROR) {
         return $form;
       }
     }

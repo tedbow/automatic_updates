@@ -40,26 +40,6 @@ trait ReadinessTrait {
   }
 
   /**
-   * Returns the overall severity for a set of validation results.
-   *
-   * @param \Drupal\package_manager\ValidationResult[] $results
-   *   The validation results.
-   *
-   * @return int
-   *   The overall severity of the results. Will be be one of the
-   *   SystemManager::REQUIREMENT_* constants.
-   */
-  protected function getOverallSeverity(array $results): int {
-    foreach ($results as $result) {
-      if ($result->getSeverity() === SystemManager::REQUIREMENT_ERROR) {
-        return SystemManager::REQUIREMENT_ERROR;
-      }
-    }
-    // If there were no errors, then any remaining results must be warnings.
-    return $results ? SystemManager::REQUIREMENT_WARNING : SystemManager::REQUIREMENT_OK;
-  }
-
-  /**
    * Adds a set of validation results to the messages.
    *
    * @param \Drupal\package_manager\ValidationResult[] $results
@@ -70,7 +50,7 @@ trait ReadinessTrait {
    *   The renderer service.
    */
   protected function displayResults(array $results, MessengerInterface $messenger, RendererInterface $renderer): void {
-    $severity = $this->getOverallSeverity($results);
+    $severity = ValidationResult::getOverallSeverity($results);
 
     if ($severity === SystemManager::REQUIREMENT_OK) {
       return;

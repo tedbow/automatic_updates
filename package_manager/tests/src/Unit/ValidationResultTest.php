@@ -26,6 +26,27 @@ class ValidationResultTest extends UnitTestCase {
   }
 
   /**
+   * @covers ::getOverallSeverity
+   */
+  public function testOverallSeverity(): void {
+    // An error and a warning should be counted as an error.
+    $results = [
+      ValidationResult::createError(['Boo!']),
+      ValidationResult::createWarning(['Moo!']),
+    ];
+    $this->assertSame(SystemManager::REQUIREMENT_ERROR, ValidationResult::getOverallSeverity($results));
+
+    // If there are no results, but no errors, the results should be counted as
+    // a warning.
+    array_shift($results);
+    $this->assertSame(SystemManager::REQUIREMENT_WARNING, ValidationResult::getOverallSeverity($results));
+
+    // If there are just plain no results, we should get REQUIREMENT_OK.
+    array_shift($results);
+    $this->assertSame(SystemManager::REQUIREMENT_OK, ValidationResult::getOverallSeverity($results));
+  }
+
+  /**
    * @covers ::createError
    *
    * @dataProvider providerValidConstructorArguments

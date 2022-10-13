@@ -245,7 +245,7 @@ final class UpdaterForm extends FormBase {
         $release_status = $this->t('Available update');
         $type = 'update-recommended';
     }
-    $create_update_buttons = !$stage_exists && $this->getOverallSeverity($results) !== SystemManager::REQUIREMENT_ERROR;
+    $create_update_buttons = !$stage_exists && ValidationResult::getOverallSeverity($results) !== SystemManager::REQUIREMENT_ERROR;
     if ($installed_minor_release) {
       $installed_version = ExtensionVersion::createFromVersionString($project_info->getInstalledVersion());
       $form['installed_minor'] = $this->createReleaseTable(

@@ -16,6 +16,7 @@ use Drupal\Core\Url;
 use Drupal\package_manager\Exception\ApplyFailedException;
 use Drupal\package_manager\FailureMarker;
 use Drupal\package_manager\ProjectInfo;
+use Drupal\package_manager\ValidationResult;
 use Drupal\system\SystemManager;
 use Drupal\update\UpdateManagerInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
@@ -170,7 +171,7 @@ final class UpdaterForm extends FormBase {
       $results = $event->getResults();
     }
     $this->displayResults($results, $this->messenger(), $this->renderer);
-    $security_level = $this->getOverallSeverity($results);
+    $security_level = ValidationResult::getOverallSeverity($results);
 
     if ($update_projects && $security_level !== SystemManager::REQUIREMENT_ERROR) {
       $form['actions'] = $this->actions($form_state);
