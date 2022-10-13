@@ -29,12 +29,20 @@ function automatic_updates_help($route_name, RouteMatchInterface $route_match) {
       $output .= '<p>' . t('Additionally, Automatic Updates periodically runs checks to ensure that updates can be installed, and will warn site administrators if problems are detected.') . '</p>';
       $output .= '<h3>' . t('Requirements') . '</h3>';
       $output .= '<p>' . t('Automatic Updates requires a Composer executable whose version satisfies <code>@version</code>, and PHP must have permission to run it. The path to the executable may be set in the <code>package_manager.settings:executables.composer</code> config setting, or it will be automatically detected.', ['@version' => ComposerExecutableValidator::MINIMUM_COMPOSER_VERSION_CONSTRAINT]) . '</p>';
-      $output .= '<p>' . t('For more information, see the <a href=":automatic-updates-documentation">online documentation for the Automatic Updates module</a>.', [':automatic-updates-documentation' => 'https://www.drupal.org/docs/8/update/automatic-updates']) . '</p>';
       $output .= '<p id="cron-alternate-port">' . t('If your site is running on the built-in PHP web server, unattended (i.e., cron) updates may not work without one of the following workarounds:') . '</p>';
       $output .= '<ul>';
       $output .= '<li>' . t('Use a multithreaded web server, such as Apache, NGINX, or on Windows, IIS.') . '</li>';
       $output .= '<li>' . t('Run another instance of the built-in PHP web server on a different port and configure automatic updates accordingly: <code>$config["automatic_updates.settings"]["cron_port"] = $alternate_port_number;</code>') . '</li>';
       $output .= '</ul>';
+      $output .= '<p>' . t('For more information, see the <a href=":automatic-updates-documentation">online documentation for the Automatic Updates module</a>.', [':automatic-updates-documentation' => 'https://www.drupal.org/docs/8/update/automatic-updates']) . '</p>';
+      $output .= '<h3 id="minor-update">' . t('Updating to another minor version of Drupal') . '</h3>';
+      $output .= '<p>';
+      $output .= t('Automatic Updates supports updating from one minor version of Drupal core to another; for example, from Drupal 9.4.8 to Drupal 9.5.0. This is only allowed when updating via <a href=":url">the user interface</a>. Unattended background updates can only update <em>within</em> the currently installed minor version (for example, Drupal 9.4.6 to 9.4.8).', [
+        ':url' => Url::fromRoute('update.report_update')->toString(),
+      ]);
+      $output .= '</p>';
+      $output .= '<p>' . t('This is because updating from one minor version of Drupal to another is riskier than staying within the current minor version. New minor versions of Drupal introduce changes that can, in some situations, be incompatible with installed modules and themes.') . '</p>';
+      $output .= '<p>' . t('Therefore, if you want to use Automatic Updates to update to another minor version of Drupal, it is strongly recommended to do a test update first, ideally on an isolated development copy of your site, before updating your production site.') . '</p>';
       return $output;
   }
 }

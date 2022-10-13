@@ -4,6 +4,7 @@ namespace Drupal\automatic_updates\Form;
 
 use Drupal\automatic_updates\BatchProcessor;
 use Drupal\automatic_updates\Event\ReadinessCheckEvent;
+use Drupal\Core\Extension\ModuleHandlerInterface;
 use Drupal\package_manager\FailureMarker;
 use Drupal\package_manager\ProjectInfo;
 use Drupal\automatic_updates\ReleaseChooser;
@@ -83,6 +84,13 @@ final class UpdaterForm extends FormBase {
   protected $failureMarker;
 
   /**
+   * The module handler service.
+   *
+   * @var \Drupal\Core\Extension\ModuleHandlerInterface
+   */
+  protected $moduleHandler;
+
+  /**
    * Constructs a new UpdaterForm object.
    *
    * @param \Drupal\Core\State\StateInterface $state
@@ -97,14 +105,17 @@ final class UpdaterForm extends FormBase {
    *   The renderer service.
    * @param \Drupal\package_manager\FailureMarker $failure_marker
    *   The failure marker service.
+   * @param \Drupal\Core\Extension\ModuleHandlerInterface $module_handler
+   *   The module handler service.
    */
-  public function __construct(StateInterface $state, Updater $updater, EventDispatcherInterface $event_dispatcher, ReleaseChooser $release_chooser, RendererInterface $renderer, FailureMarker $failure_marker) {
+  public function __construct(StateInterface $state, Updater $updater, EventDispatcherInterface $event_dispatcher, ReleaseChooser $release_chooser, RendererInterface $renderer, FailureMarker $failure_marker, ModuleHandlerInterface $module_handler) {
     $this->updater = $updater;
     $this->state = $state;
     $this->eventDispatcher = $event_dispatcher;
     $this->releaseChooser = $release_chooser;
     $this->renderer = $renderer;
     $this->failureMarker = $failure_marker;
+    $this->moduleHandler = $module_handler;
   }
 
   /**
@@ -124,7 +135,8 @@ final class UpdaterForm extends FormBase {
       $container->get('event_dispatcher'),
       $container->get('automatic_updates.release_chooser'),
       $container->get('renderer'),
-      $container->get('package_manager.failure_marker')
+      $container->get('package_manager.failure_marker'),
+      $container->get('module_handler')
     );
   }
 
@@ -282,6 +294,22 @@ final class UpdaterForm extends FormBase {
       }
       else {
         throw new \LogicException("Release information for Drupal $first_release_version is not available.");
+      }
+
+      if ($this->moduleHandler->moduleExists('help')) {
+        $url = Url::fromRoute('help.page')
+          ->setRouteParameter('name', 'automatic_updates')
+          ->setOption('fragment', 'minor-update');
+
+        // @todo Updating this wording in https://www.drupal.org/i/3280403 to
+        //   reflect that multiple minor branches may be visible.
+        $form['minor_update_help'] = [
+          '#markup' => $this->t('The following updates are in the next minor version of Drupal. <a href=":url">Learn more about updating to another minor version.</a>', [
+            ':url' => $url->toString(),
+          ]),
+          '#prefix' => '<p>',
+          '#suffix' => '</p>',
+        ];
       }
 
       $form['next_minor'] = $this->createReleaseTable(
