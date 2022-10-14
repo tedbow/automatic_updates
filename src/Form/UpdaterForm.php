@@ -9,12 +9,10 @@ use Drupal\package_manager\FailureMarker;
 use Drupal\package_manager\ProjectInfo;
 use Drupal\automatic_updates\ReleaseChooser;
 use Drupal\automatic_updates\Updater;
-use Drupal\automatic_updates\Validation\ReadinessTrait;
 use Drupal\package_manager\Exception\ApplyFailedException;
 use Drupal\update\ProjectRelease;
 use Drupal\Core\Batch\BatchBuilder;
 use Drupal\Core\Extension\ExtensionVersion;
-use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Messenger\MessengerInterface;
 use Drupal\Core\Render\RendererInterface;
@@ -35,11 +33,7 @@ use Symfony\Component\EventDispatcher\EventDispatcherInterface;
  * @internal
  *   Form classes are internal and the form structure may change at any time.
  */
-final class UpdaterForm extends FormBase {
-
-  use ReadinessTrait {
-    formatResult as traitFormatResult;
-  }
+final class UpdaterForm extends UpdateFormBase {
 
   /**
    * The updater service.
@@ -204,7 +198,7 @@ final class UpdaterForm extends FormBase {
       $this->eventDispatcher->dispatch($event);
       $results = $event->getResults();
     }
-    $this->displayResults($results, $this->messenger(), $this->renderer);
+    $this->displayResults($results, $this->renderer);
     $project = $project_info->getProjectInfo();
     if ($installed_minor_release === NULL && $next_minor_release === NULL) {
       if ($project['status'] === UpdateManagerInterface::CURRENT) {
@@ -378,22 +372,6 @@ final class UpdaterForm extends FormBase {
       ->toArray();
 
     batch_set($batch);
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  protected function formatResult(ValidationResult $result) {
-    $messages = $result->getMessages();
-
-    if (count($messages) > 1) {
-      return [
-        '#theme' => 'item_list__automatic_updates_validation_results',
-        '#prefix' => $result->getSummary(),
-        '#items' => $messages,
-      ];
-    }
-    return $this->traitFormatResult($result);
   }
 
   /**

@@ -4,11 +4,9 @@ namespace Drupal\automatic_updates\Form;
 
 use Drupal\automatic_updates\BatchProcessor;
 use Drupal\automatic_updates\Updater;
-use Drupal\automatic_updates\Validation\ReadinessTrait;
 use Drupal\package_manager\ValidationResult;
 use Drupal\Core\Batch\BatchBuilder;
 use Drupal\Core\Extension\ModuleExtensionList;
-use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Messenger\MessengerInterface;
 use Drupal\Core\Render\RendererInterface;
@@ -27,11 +25,7 @@ use Symfony\Component\EventDispatcher\EventDispatcherInterface;
  * @internal
  *   Form classes are internal and the form structure may change at any time.
  */
-final class UpdateReady extends FormBase {
-
-  use ReadinessTrait {
-    formatResult as traitFormatResult;
-  }
+final class UpdateReady extends UpdateFormBase {
 
   /**
    * The updater service.
@@ -194,7 +188,7 @@ final class UpdateReady extends FormBase {
       /** @var \Drupal\package_manager\ValidationResult[] $results */
       $results = $event->getResults();
       // This will have no effect if $results is empty.
-      $this->displayResults($results, $this->messenger(), $this->renderer);
+      $this->displayResults($results, $this->renderer);
       // If any errors occurred, return the form early so the user cannot
       // continue.
       if (ValidationResult::getOverallSeverity($results) === SystemManager::REQUIREMENT_ERROR) {
@@ -246,24 +240,6 @@ final class UpdateReady extends FormBase {
     catch (StageException $e) {
       $this->messenger()->addError($e->getMessage());
     }
-  }
-
-  /**
-   * {@inheritdoc}
-   *
-   * @todo Remove this in https://www.drupal.org/project/automatic_updates/issues/3313414.
-   */
-  protected function formatResult(ValidationResult $result) {
-    $messages = $result->getMessages();
-
-    if (count($messages) > 1) {
-      return [
-        '#theme' => 'item_list__automatic_updates_validation_results',
-        '#prefix' => $result->getSummary(),
-        '#items' => $messages,
-      ];
-    }
-    return $this->traitFormatResult($result);
   }
 
 }

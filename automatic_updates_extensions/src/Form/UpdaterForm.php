@@ -3,11 +3,10 @@
 namespace Drupal\automatic_updates_extensions\Form;
 
 use Drupal\automatic_updates\Event\ReadinessCheckEvent;
-use Drupal\automatic_updates\Validation\ReadinessTrait;
+use Drupal\automatic_updates\Form\UpdateFormBase;
 use Drupal\automatic_updates_extensions\BatchProcessor;
 use Drupal\automatic_updates_extensions\ExtensionUpdater;
 use Drupal\Core\Batch\BatchBuilder;
-use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\State\StateInterface;
 use Drupal\Core\Messenger\MessengerInterface;
@@ -28,9 +27,7 @@ use Symfony\Component\EventDispatcher\EventDispatcherInterface;
  * @internal
  *   Form classes are internal.
  */
-final class UpdaterForm extends FormBase {
-
-  use ReadinessTrait;
+final class UpdaterForm extends UpdateFormBase {
 
   /**
    * The extension updater service.
@@ -170,7 +167,7 @@ final class UpdaterForm extends FormBase {
       $this->eventDispatcher->dispatch($event);
       $results = $event->getResults();
     }
-    $this->displayResults($results, $this->messenger(), $this->renderer);
+    $this->displayResults($results, $this->renderer);
     $security_level = ValidationResult::getOverallSeverity($results);
 
     if ($update_projects && $security_level !== SystemManager::REQUIREMENT_ERROR) {
