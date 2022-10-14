@@ -60,14 +60,9 @@ class CoreUpdateTest extends UpdateTestBase {
 
   /**
    * Tests an end-to-end core update via the API.
-   *
-   * @param string $template
-   *   The template project from which to build the test site.
-   *
-   * @dataProvider providerTemplate
    */
-  public function testApi(string $template): void {
-    $this->createTestProject($template);
+  public function testApi(): void {
+    $this->createTestProject('RecommendedProject');
 
     $mink = $this->getMink();
     $assert_session = $mink->assertSession();
@@ -87,14 +82,9 @@ class CoreUpdateTest extends UpdateTestBase {
 
   /**
    * Tests an end-to-end core update via the UI.
-   *
-   * @param string $template
-   *   The template project from which to build the test site.
-   *
-   * @dataProvider providerTemplate
    */
-  public function testUi(string $template): void {
-    $this->createTestProject($template);
+  public function testUi(): void {
+    $this->createTestProject('RecommendedProject');
 
     $mink = $this->getMink();
     $session = $mink->getSession();
