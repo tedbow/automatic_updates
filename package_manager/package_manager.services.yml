@@ -49,6 +49,12 @@ services:
     class: Drupal\package_manager\FailureMarker
     arguments:
       - '@package_manager.path_locator'
+  package_manager.update_data_subscriber:
+    class: Drupal\package_manager\EventSubscriber\UpdateDataSubscriber
+    arguments:
+      - '@update.manager'
+    tags:
+      - { name: event_subscriber }
 
   # Validators.
   package_manager.validator.environment_support:

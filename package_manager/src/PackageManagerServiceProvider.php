@@ -4,12 +4,10 @@ namespace Drupal\package_manager;
 
 use Drupal\Core\DependencyInjection\ContainerBuilder;
 use Drupal\Core\DependencyInjection\ServiceProviderBase;
-use Drupal\package_manager\EventSubscriber\UpdateDataSubscriber;
 use PhpTuf\ComposerStager\Domain\Core\Beginner\BeginnerInterface;
 use Symfony\Component\Config\FileLocator;
 use Symfony\Component\DependencyInjection\Definition;
 use Symfony\Component\DependencyInjection\Loader\DirectoryLoader;
-use Symfony\Component\DependencyInjection\Reference;
 
 /**
  * Defines dynamic container services for Package Manager.
@@ -44,15 +42,6 @@ final class PackageManagerServiceProvider extends ServiceProviderBase {
       $path . '/Domain/Exception',
       $path . '/Infrastructure/Value',
     ]);
-
-    if (array_key_exists('update', $container->getParameter('container.modules'))) {
-      $container->register('package_manager.update_data_subscriber')
-        ->setClass(UpdateDataSubscriber::class)
-        ->setArguments([
-          new Reference('update.manager'),
-        ])
-        ->addTag('event_subscriber');
-    }
   }
 
 }
