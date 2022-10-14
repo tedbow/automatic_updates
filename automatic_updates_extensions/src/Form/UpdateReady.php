@@ -351,9 +351,6 @@ final class UpdateReady extends FormBase {
         '#theme' => 'item_list__automatic_updates_validation_results',
         '#prefix' => $result->getSummary(),
         '#items' => $messages,
-        '#context' => [
-          'list_style' => 'automatic-updates-extensions__pending-database-updates',
-        ],
       ];
     }
     return $this->traitFormatResult($result);
