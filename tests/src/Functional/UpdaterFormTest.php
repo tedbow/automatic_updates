@@ -566,14 +566,9 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
 
     // Ensure that a list of pending database updates is visible, along with a
     // short explanation, in the warning messages.
-    $possible_update_message = 'Possible database updates were detected in the following extensions; you may be redirected to the database update page in order to complete the update process.';
-    $warning_messages = $assert_session->elementExists('xpath', '//div[@data-drupal-messages]//div[@aria-label="Warning message"]');
-    $this->assertStringContainsString($possible_update_message, $warning_messages->getText());
-    $pending_updates = $warning_messages->findAll('css', 'ul.item-list__automatic-updates__pending-database-updates li');
-    $this->assertCount(2, $pending_updates);
-    $this->assertSame('Automatic Updates Theme With Updates', $pending_updates[0]->getText());
-    $this->assertSame('System', $pending_updates[1]->getText());
-
+    $possible_update_message = 'Possible database updates have been detected in the following extensions.<ul><li>System</li><li>Automatic Updates Theme With Updates</li></ul>';
+    $warning_messages = $assert_session->elementExists('css', 'div[data-drupal-messages] div[aria-label="Warning message"]');
+    $this->assertStringContainsString($possible_update_message, $warning_messages->getHtml());
     if ($maintenance_mode_on === TRUE) {
       $assert_session->fieldNotExists('maintenance_mode');
     }

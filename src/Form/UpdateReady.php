@@ -6,7 +6,6 @@ use Drupal\automatic_updates\BatchProcessor;
 use Drupal\automatic_updates\Updater;
 use Drupal\automatic_updates\Validation\ReadinessTrait;
 use Drupal\package_manager\ValidationResult;
-use Drupal\package_manager\Validator\StagedDBUpdateValidator;
 use Drupal\Core\Batch\BatchBuilder;
 use Drupal\Core\Extension\ModuleExtensionList;
 use Drupal\Core\Form\FormBase;
@@ -56,13 +55,6 @@ final class UpdateReady extends FormBase {
   protected $moduleList;
 
   /**
-   * The staged database update validator service.
-   *
-   * @var \Drupal\package_manager\Validator\StagedDBUpdateValidator
-   */
-  protected $stagedDatabaseUpdateValidator;
-
-  /**
    * The renderer service.
    *
    * @var \Drupal\Core\Render\RendererInterface
@@ -87,19 +79,16 @@ final class UpdateReady extends FormBase {
    *   The state service.
    * @param \Drupal\Core\Extension\ModuleExtensionList $module_list
    *   The module list service.
-   * @param \Drupal\package_manager\Validator\StagedDBUpdateValidator $staged_database_update_validator
-   *   The staged database update validator service.
    * @param \Drupal\Core\Render\RendererInterface $renderer
    *   The renderer service.
    * @param \Symfony\Component\EventDispatcher\EventDispatcherInterface $event_dispatcher
    *   Event dispatcher service.
    */
-  public function __construct(Updater $updater, MessengerInterface $messenger, StateInterface $state, ModuleExtensionList $module_list, StagedDBUpdateValidator $staged_database_update_validator, RendererInterface $renderer, EventDispatcherInterface $event_dispatcher) {
+  public function __construct(Updater $updater, MessengerInterface $messenger, StateInterface $state, ModuleExtensionList $module_list, RendererInterface $renderer, EventDispatcherInterface $event_dispatcher) {
     $this->updater = $updater;
     $this->setMessenger($messenger);
     $this->state = $state;
     $this->moduleList = $module_list;
-    $this->stagedDatabaseUpdateValidator = $staged_database_update_validator;
     $this->renderer = $renderer;
     $this->eventDispatcher = $event_dispatcher;
   }
@@ -120,7 +109,6 @@ final class UpdateReady extends FormBase {
       $container->get('messenger'),
       $container->get('state'),
       $container->get('extension.list.module'),
-      $container->get('package_manager.validator.staged_database_updates'),
       $container->get('renderer'),
       $container->get('event_dispatcher')
     );
@@ -143,23 +131,6 @@ final class UpdateReady extends FormBase {
     }
 
     $messages = [];
-
-    // If there are any installed extensions with database updates in the
-    // staging area, warn the user that they might be sent to update.php once
-    // the staged changes have been applied.
-    $pending_updates = $this->stagedDatabaseUpdateValidator->getExtensionsWithDatabaseUpdates($this->updater);
-    if ($pending_updates) {
-      natcasesort($pending_updates);
-      $message_item_list = [
-        '#theme' => 'item_list',
-        '#prefix' => '<p>' . $this->t('Possible database updates were detected in the following extensions; you may be redirected to the database update page in order to complete the update process.') . '</p>',
-        '#items' => $pending_updates,
-        '#context' => [
-          'list_style' => 'automatic-updates__pending-database-updates',
-        ],
-      ];
-      $messages[MessengerInterface::TYPE_WARNING][] = $this->renderer->renderRoot($message_item_list);
-    }
 
     try {
       $staged_core_packages = $this->updater->getStageComposer()
