@@ -205,6 +205,14 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
     $assert_session->pageTextContainsOnce('Update complete!');
     // Confirm the site was returned to the original maintenance mode state.
     $this->assertSame($state->get('system.maintenance_mode'), $maintenance_mode_on);
+    // Confirm that the apply and post-apply operations happened in
+    // separate requests.
+    // @see \Drupal\automatic_updates_test\EventSubscriber\RequestTimeRecorder
+    $pre_apply_time = $state->get('Drupal\package_manager\Event\PreApplyEvent time');
+    $post_apply_time = $state->get('Drupal\package_manager\Event\PostApplyEvent time');
+    $this->assertNotEmpty($pre_apply_time);
+    $this->assertNotEmpty($post_apply_time);
+    $this->assertNotSame($pre_apply_time, $post_apply_time);
   }
 
   /**
