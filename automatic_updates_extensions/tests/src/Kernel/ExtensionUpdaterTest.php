@@ -2,7 +2,12 @@
 
 namespace Drupal\Tests\automatic_updates_extensions\Kernel;
 
-use Drupal\Tests\automatic_updates\Kernel\AutomaticUpdatesKernelTestBase;
+use Drupal\automatic_updates\Exception\UpdateException;
+use Drupal\package_manager\Event\PreApplyEvent;
+use Drupal\package_manager\Event\PreCreateEvent;
+use Drupal\package_manager\Event\PreRequireEvent;
+use Drupal\package_manager\ValidationResult;
+use Drupal\package_manager_test_validation\EventSubscriber\TestSubscriber;
 use Drupal\Tests\user\Traits\UserCreationTrait;
 
 /**
@@ -10,7 +15,7 @@ use Drupal\Tests\user\Traits\UserCreationTrait;
  *
  * @group automatic_updates_extensions
  */
-class ExtensionUpdaterTest extends AutomaticUpdatesKernelTestBase {
+class ExtensionUpdaterTest extends AutomaticUpdatesExtensionsKernelTestBase {
 
   use UserCreationTrait;
 
@@ -144,6 +149,53 @@ class ExtensionUpdaterTest extends AutomaticUpdatesKernelTestBase {
     $this->container->get('automatic_updates_extensions.updater')->begin([
       'my_module_unknown' => '9.8.1',
     ]);
+  }
+
+  /**
+   * Tests UpdateException handling.
+   *
+   * @param string $event_class
+   *   The stage life cycle event which should raise an error.
+   *
+   * @dataProvider providerUpdateException
+   */
+  public function testUpdateException(string $event_class): void {
+    $this->createVirtualProject(__DIR__ . '/../../fixtures/fake-site');
+    $extension_updater = $this->container->get('automatic_updates_extensions.updater');
+    $results = [
+      ValidationResult::createError(['An error of some sorts.']),
+    ];
+    TestSubscriber::setTestResult($results, $event_class);
+    try {
+      $extension_updater->begin(['my_module' => '9.8.1']);
+      $extension_updater->stage();
+      $extension_updater->apply();
+      $this->fail('Expected an exception, but none was raised.');
+    }
+    catch (UpdateException $e) {
+      $this->assertStringStartsWith('An error of some sorts.', $e->getMessage());
+      $this->assertInstanceOf($event_class, $e->event);
+    }
+  }
+
+  /**
+   * Data provider for testUpdateException().
+   *
+   * @return string[][]
+   *   The test cases.
+   */
+  public function providerUpdateException(): array {
+    return [
+      'pre-create exception' => [
+        PreCreateEvent::class,
+      ],
+      'pre-require exception' => [
+        PreRequireEvent::class,
+      ],
+      'pre-apply exception' => [
+        PreApplyEvent::class,
+      ],
+    ];
   }
 
 }

@@ -3,8 +3,13 @@
 namespace Drupal\Tests\automatic_updates\Kernel;
 
 use Drupal\automatic_updates\Exception\UpdateException;
+use Drupal\package_manager\Event\PreApplyEvent;
+use Drupal\package_manager\Event\PreCreateEvent;
+use Drupal\package_manager\Event\PreRequireEvent;
 use Drupal\package_manager\Exception\StageException;
+use Drupal\package_manager\ValidationResult;
 use Drupal\package_manager_bypass\Committer;
+use Drupal\package_manager_test_validation\EventSubscriber\TestSubscriber;
 use Drupal\Tests\user\Traits\UserCreationTrait;
 use PhpTuf\ComposerStager\Domain\Exception\InvalidArgumentException;
 
@@ -194,6 +199,52 @@ class UpdaterTest extends AutomaticUpdatesKernelTestBase {
   public function testLoggerIsSetByContainer(): void {
     $updater_method_calls = $this->container->getDefinition('automatic_updates.updater')->getMethodCalls();
     $this->assertSame('setLogger', $updater_method_calls[0][0]);
+  }
+
+  /**
+   * Tests UpdateException handling.
+   *
+   * @param string $event_class
+   *   The stage life cycle event which should raise an error.
+   *
+   * @dataProvider providerUpdateException
+   */
+  public function testUpdateException(string $event_class) {
+    $updater = $this->container->get('automatic_updates.updater');
+    $results = [
+      ValidationResult::createError(['An error of some sorts.']),
+    ];
+    TestSubscriber::setTestResult($results, $event_class);
+    try {
+      $updater->begin(['drupal' => '9.8.1']);
+      $updater->stage();
+      $updater->apply();
+      $this->fail('Expected an exception, but none was raised.');
+    }
+    catch (UpdateException $e) {
+      $this->assertStringStartsWith('An error of some sorts.', $e->getMessage());
+      $this->assertInstanceOf($event_class, $e->event);
+    }
+  }
+
+  /**
+   * Data provider for testUpdateException().
+   *
+   * @return string[][]
+   *   The test cases.
+   */
+  public function providerUpdateException(): array {
+    return [
+      'pre-create exception' => [
+        PreCreateEvent::class,
+      ],
+      'pre-require exception' => [
+        PreRequireEvent::class,
+      ],
+      'pre-apply exception' => [
+        PreApplyEvent::class,
+      ],
+    ];
   }
 
 }

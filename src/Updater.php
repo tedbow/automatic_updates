@@ -102,7 +102,7 @@ class Updater extends Stage {
       parent::dispatch($event, $on_error);
     }
     catch (StageValidationException $e) {
-      throw new UpdateException($e->getResults(), $e->getMessage() ?: "Unable to complete the update because of errors.", $e->getCode(), $e);
+      throw new UpdateException($e->getResults(), $e->getMessage(), $e->getCode(), $e);
     }
   }
 
