@@ -280,6 +280,15 @@ class CronUpdater extends Updater {
    *   An empty 200 response if the post-apply tasks succeeded.
    */
   public function handlePostApply(string $stage_id, string $installed_version, string $target_version): Response {
+    $owner = $this->tempStore->getMetadata(static::TEMPSTORE_LOCK_KEY)
+      ->getOwnerId();
+    // Reload the tempstore with the correct owner ID so we can claim the stage.
+    // We use \Drupal::service() here because, given what we inherit from the
+    // parent class, there's no clean way to inject the shared tempstore
+    // factory.
+    $this->tempStore = \Drupal::service('tempstore.shared')
+      ->get('package_manager_stage', $owner);
+
     $this->claim($stage_id);
 
     // Run post-apply tasks in their own try-catch block so that, if anything

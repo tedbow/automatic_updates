@@ -121,11 +121,30 @@ class CoreUpdateTest extends UpdateTestBase {
    */
   public function testCron(string $template): void {
     $this->createTestProject($template);
+    // Install dblog so we can check if any errors were logged during the update.
+    $this->installModules(['dblog']);
 
     $this->visit('/admin/reports/status');
     $mink = $this->getMink();
-    $mink->assertSession()->pageTextContains('Your site is ready for automatic updates.');
-    $mink->getSession()->getPage()->clickLink('Run cron');
+    $page = $mink->getSession()->getPage();
+    $assert_session = $mink->assertSession();
+
+    $assert_session->pageTextContains('Your site is ready for automatic updates.');
+    $page->clickLink('Run cron');
+    $assert_session->statusCodeEquals(200);
+
+    // There should be log messages, but no errors or warnings should have been
+    // logged by Automatic Updates.
+    $this->visit('/admin/reports/dblog');
+    $assert_session->pageTextNotContains('No log messages available.');
+    $page->selectFieldOption('Type', 'automatic_updates');
+    $page->selectFieldOption('Severity', 'Emergency', TRUE);
+    $page->selectFieldOption('Severity', 'Alert', TRUE);
+    $page->selectFieldOption('Severity', 'Critical', TRUE);
+    $page->selectFieldOption('Severity', 'Warning', TRUE);
+    $page->pressButton('Filter');
+    $assert_session->pageTextContains('No log messages available.');
+
     $this->assertUpdateSuccessful('9.8.1');
   }
 
