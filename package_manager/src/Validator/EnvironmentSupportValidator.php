@@ -8,6 +8,7 @@ use Drupal\package_manager\Event\PreCreateEvent;
 use Drupal\package_manager\Event\PreOperationStageEvent;
 use Drupal\package_manager\Event\StatusCheckEvent;
 use Drupal\Core\Url;
+use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 /**
  * Checks that the environment has support for Package Manager.
@@ -17,7 +18,7 @@ use Drupal\Core\Url;
  *   at any time without warning. External code should not interact with this
  *   class.
  */
-final class EnvironmentSupportValidator implements PreOperationStageValidatorInterface {
+final class EnvironmentSupportValidator implements EventSubscriberInterface {
 
   use StringTranslationTrait;
 

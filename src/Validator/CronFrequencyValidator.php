@@ -3,7 +3,6 @@
 namespace Drupal\automatic_updates\Validator;
 
 use Drupal\automatic_updates\CronUpdater;
-use Drupal\automatic_updates\Event\ReadinessCheckEvent;
 use Drupal\Component\Datetime\TimeInterface;
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Extension\ModuleHandlerInterface;
@@ -11,6 +10,7 @@ use Drupal\Core\State\StateInterface;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\Core\StringTranslation\TranslationInterface;
 use Drupal\Core\Url;
+use Drupal\package_manager\Event\StatusCheckEvent;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 /**
@@ -115,10 +115,10 @@ class CronFrequencyValidator implements EventSubscriberInterface {
   /**
    * Validates that cron runs frequently enough to perform automatic updates.
    *
-   * @param \Drupal\automatic_updates\Event\ReadinessCheckEvent $event
+   * @param \Drupal\package_manager\Event\StatusCheckEvent $event
    *   The event object.
    */
-  public function checkCronFrequency(ReadinessCheckEvent $event): void {
+  public function checkCronFrequency(StatusCheckEvent $event): void {
     // We only want to do this check if the stage belongs to Automatic Updates.
     if (!$event->getStage() instanceof CronUpdater) {
       return;
@@ -139,10 +139,10 @@ class CronFrequencyValidator implements EventSubscriberInterface {
   /**
    * Validates the cron frequency according to Automated Cron settings.
    *
-   * @param \Drupal\automatic_updates\Event\ReadinessCheckEvent $event
+   * @param \Drupal\package_manager\Event\StatusCheckEvent $event
    *   The event object.
    */
-  protected function validateAutomatedCron(ReadinessCheckEvent $event): void {
+  protected function validateAutomatedCron(StatusCheckEvent $event): void {
     $message = $this->t('Cron is not set to run frequently enough. <a href=":configure">Configure it</a> to run at least every @frequency hours or disable automated cron and run it via an external scheduling system.', [
       ':configure' => Url::fromRoute('system.cron_settings')->toString(),
       '@frequency' => static::SUGGESTED_INTERVAL,
@@ -161,10 +161,10 @@ class CronFrequencyValidator implements EventSubscriberInterface {
   /**
    * Validates the cron frequency according to the last cron run time.
    *
-   * @param \Drupal\automatic_updates\Event\ReadinessCheckEvent $event
+   * @param \Drupal\package_manager\Event\StatusCheckEvent $event
    *   The event object.
    */
-  protected function validateLastCronRun(ReadinessCheckEvent $event): void {
+  protected function validateLastCronRun(StatusCheckEvent $event): void {
     // Determine when cron last ran. If not known, use the time that Drupal was
     // installed, defaulting to the beginning of the Unix epoch.
     $cron_last = $this->state->get('system.cron_last', $this->state->get('install_time', 0));
@@ -189,7 +189,7 @@ class CronFrequencyValidator implements EventSubscriberInterface {
    */
   public static function getSubscribedEvents() {
     return [
-      ReadinessCheckEvent::class => 'checkCronFrequency',
+      StatusCheckEvent::class => 'checkCronFrequency',
     ];
   }
 

@@ -2,7 +2,6 @@
 
 namespace Drupal\automatic_updates_extensions\Form;
 
-use Drupal\automatic_updates\Event\ReadinessCheckEvent;
 use Drupal\automatic_updates\Form\UpdateFormBase;
 use Drupal\automatic_updates_extensions\BatchProcessor;
 use Drupal\automatic_updates_extensions\ExtensionUpdater;
@@ -163,9 +162,7 @@ final class UpdaterForm extends UpdateFormBase {
       $results = [];
     }
     else {
-      $event = new ReadinessCheckEvent($this->extensionUpdater);
-      $this->eventDispatcher->dispatch($event);
-      $results = $event->getResults();
+      $results = $this->runStatusCheck($this->extensionUpdater, $this->eventDispatcher, TRUE);
     }
     $this->displayResults($results, $this->renderer);
     $security_level = ValidationResult::getOverallSeverity($results);

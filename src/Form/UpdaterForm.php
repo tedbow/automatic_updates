@@ -3,7 +3,6 @@
 namespace Drupal\automatic_updates\Form;
 
 use Drupal\automatic_updates\BatchProcessor;
-use Drupal\automatic_updates\Event\ReadinessCheckEvent;
 use Drupal\Core\Extension\ModuleHandlerInterface;
 use Drupal\package_manager\FailureMarker;
 use Drupal\package_manager\ProjectInfo;
@@ -190,13 +189,11 @@ final class UpdaterForm extends UpdateFormBase {
       return $form;
     }
 
-    if ($form_state->getUserInput()) {
+    if ($form_state->getUserInput() || $stage_exists) {
       $results = [];
     }
     else {
-      $event = new ReadinessCheckEvent($this->updater);
-      $this->eventDispatcher->dispatch($event);
-      $results = $event->getResults();
+      $results = $this->runStatusCheck($this->updater, $this->eventDispatcher, TRUE);
     }
     $this->displayResults($results, $this->renderer);
     $project = $project_info->getProjectInfo();

@@ -7,6 +7,7 @@ use Drupal\Core\StringTranslation\TranslationInterface;
 use Drupal\package_manager\Event\PreCreateEvent;
 use Drupal\package_manager\Event\PreOperationStageEvent;
 use Drupal\package_manager\Event\StatusCheckEvent;
+use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 /**
  * Validates certain Composer settings.
@@ -16,7 +17,7 @@ use Drupal\package_manager\Event\StatusCheckEvent;
  *   at any time without warning. External code should not interact with this
  *   class.
  */
-final class ComposerSettingsValidator implements PreOperationStageValidatorInterface {
+final class ComposerSettingsValidator implements EventSubscriberInterface {
 
   use StringTranslationTrait;
 

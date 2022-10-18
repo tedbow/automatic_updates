@@ -12,7 +12,6 @@ use Drupal\Core\Messenger\MessengerInterface;
 use Drupal\Core\Render\RendererInterface;
 use Drupal\Core\State\StateInterface;
 use Drupal\package_manager\Exception\ApplyFailedException;
-use Drupal\package_manager\Event\StatusCheckEvent;
 use Drupal\package_manager\Exception\StageException;
 use Drupal\package_manager\Exception\StageOwnershipException;
 use Drupal\system\SystemManager;
@@ -183,10 +182,7 @@ final class UpdateReady extends UpdateFormBase {
 
     // Don't run the status checks once the form has been submitted.
     if (!$form_state->getUserInput()) {
-      $event = new StatusCheckEvent($this->updater);
-      $this->eventDispatcher->dispatch($event);
-      /** @var \Drupal\package_manager\ValidationResult[] $results */
-      $results = $event->getResults();
+      $results = $this->runStatusCheck($this->updater, $this->eventDispatcher);
       // This will have no effect if $results is empty.
       $this->displayResults($results, $this->renderer);
       // If any errors occurred, return the form early so the user cannot

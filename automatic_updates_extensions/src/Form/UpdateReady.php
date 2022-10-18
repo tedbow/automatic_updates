@@ -3,7 +3,6 @@
 namespace Drupal\automatic_updates_extensions\Form;
 
 use Drupal\automatic_updates\Form\UpdateFormBase;
-use Drupal\package_manager\Event\StatusCheckEvent;
 use Drupal\package_manager\Exception\ApplyFailedException;
 use Drupal\package_manager\ProjectInfo;
 use Drupal\package_manager\ValidationResult;
@@ -166,10 +165,7 @@ final class UpdateReady extends UpdateFormBase {
 
     // Don't run the status checks once the form has been submitted.
     if (!$form_state->getUserInput()) {
-      $event = new StatusCheckEvent($this->updater);
-      $this->eventDispatcher->dispatch($event);
-      /** @var \Drupal\package_manager\ValidationResult[] $results */
-      $results = $event->getResults();
+      $results = $this->runStatusCheck($this->updater, $this->eventDispatcher);
       // This will have no effect if $results is empty.
       $this->displayResults($results, $this->renderer);
       // If any errors occurred, return the form early so the user cannot

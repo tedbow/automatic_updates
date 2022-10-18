@@ -3,7 +3,6 @@
 namespace Drupal\Tests\automatic_updates\Kernel\ReadinessValidation;
 
 use Drupal\automatic_updates\CronUpdater;
-use Drupal\automatic_updates\Event\ReadinessCheckEvent;
 use Drupal\automatic_updates\Validator\CronFrequencyValidator;
 use Drupal\package_manager\ValidationResult;
 use Drupal\Tests\automatic_updates\Kernel\AutomaticUpdatesKernelTestBase;
@@ -55,14 +54,14 @@ class CronFrequencyValidatorTest extends AutomaticUpdatesKernelTestBase {
       /**
        * {@inheritdoc}
        */
-      protected function validateAutomatedCron(ReadinessCheckEvent $event): void {
+      protected function validateAutomatedCron($event): void {
         throw new AssertionFailedError(__METHOD__ . '() should not have been called.');
       }
 
       /**
        * {@inheritdoc}
        */
-      protected function validateLastCronRun(ReadinessCheckEvent $event): void {
+      protected function validateLastCronRun($event): void {
         throw new AssertionFailedError(__METHOD__ . '() should not have been called.');
       }
 

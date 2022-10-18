@@ -10,6 +10,7 @@ use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\Core\StringTranslation\TranslationInterface;
 use Drupal\package_manager\Event\StatusCheckEvent;
 use Drupal\package_manager\PathLocator;
+use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 /**
  * Validates that there is enough free disk space to do staging operations.
@@ -19,7 +20,7 @@ use Drupal\package_manager\PathLocator;
  *   at any time without warning. External code should not interact with this
  *   class.
  */
-class DiskSpaceValidator implements PreOperationStageValidatorInterface {
+class DiskSpaceValidator implements EventSubscriberInterface {
 
   use StringTranslationTrait;
 

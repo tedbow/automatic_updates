@@ -6,6 +6,7 @@ use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\package_manager\Event\PreApplyEvent;
 use Drupal\package_manager\Event\PreOperationStageEvent;
 use Drupal\package_manager\PathLocator;
+use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 /**
  * Validates that newly installed packages don't overwrite existing directories.
@@ -15,7 +16,7 @@ use Drupal\package_manager\PathLocator;
  *   at any time without warning. External code should not interact with this
  *   class.
  */
-final class OverwriteExistingPackagesValidator implements PreOperationStageValidatorInterface {
+final class OverwriteExistingPackagesValidator implements EventSubscriberInterface {
 
   use StringTranslationTrait;
 

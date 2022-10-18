@@ -4,7 +4,6 @@ namespace Drupal\automatic_updates\Validator;
 
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Drupal\automatic_updates\CronUpdater;
-use Drupal\automatic_updates\Event\ReadinessCheckEvent;
 use Drupal\automatic_updates\Updater;
 use Drupal\package_manager\Event\PreCreateEvent;
 use Drupal\package_manager\Event\PreOperationStageEvent;
@@ -64,7 +63,7 @@ final class XdebugValidator implements EventSubscriberInterface {
         $event->addError($result->getMessages(), $result->getSummary());
       }
     }
-    elseif ($event instanceof ReadinessCheckEvent) {
+    elseif ($event instanceof StatusCheckEvent) {
       // For non-cron updates provide a warning but do not stop updates from
       // executing.
       foreach ($results as $result) {
@@ -78,8 +77,8 @@ final class XdebugValidator implements EventSubscriberInterface {
    */
   public static function getSubscribedEvents() {
     return [
-      ReadinessCheckEvent::class => 'checkForXdebug',
       PreCreateEvent::class => 'checkForXdebug',
+      StatusCheckEvent::class => 'checkForXdebug',
     ];
   }
 

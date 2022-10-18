@@ -2,7 +2,6 @@
 
 namespace Drupal\Tests\automatic_updates\Functional;
 
-use Drupal\automatic_updates\Event\ReadinessCheckEvent;
 use Drupal\automatic_updates_test\Datetime\TestTime;
 use Drupal\package_manager_test_validation\StagedDatabaseUpdateValidator;
 use Drupal\package_manager\Event\PostRequireEvent;
@@ -222,7 +221,7 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
     $this->setCoreVersion('9.8.1');
     $message = "You've not experienced Shakespeare until you have read him in the original Klingon.";
     $result = ValidationResult::createError([$message]);
-    TestSubscriber1::setTestResult([$result], ReadinessCheckEvent::class);
+    TestSubscriber1::setTestResult([$result], StatusCheckEvent::class);
     $this->checkForUpdates();
     $this->drupalGet('/admin/reports/updates/automatic-update');
     $assert_session->pageTextContains('No update available');
@@ -284,7 +283,7 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
     // Set up a new fake error. Use an error with multiple messages so we can
     // ensure that they're all displayed, along with their summary.
     $expected_results = [$this->createValidationResult(SystemManager::REQUIREMENT_ERROR, 2)];
-    TestSubscriber1::setTestResult($expected_results, ReadinessCheckEvent::class);
+    TestSubscriber1::setTestResult($expected_results, StatusCheckEvent::class);
 
     // If a validator raises an error during readiness checking, the form should
     // not have a submit button.
@@ -300,7 +299,7 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
     $assert_session->pageTextContainsOnce(static::$errorsExplanation);
     $assert_session->pageTextNotContains(static::$warningsExplanation);
     $assert_session->pageTextNotContains($cached_message);
-    TestSubscriber1::setTestResult(NULL, ReadinessCheckEvent::class);
+    TestSubscriber1::setTestResult(NULL, StatusCheckEvent::class);
 
     // Make the validator throw an exception during pre-create.
     $error = new \Exception('The update exploded.');
@@ -538,7 +537,7 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
     // Flag a warning, which will not block the update but should be displayed
     // on the updater form.
     $expected_results = [$this->createValidationResult(SystemManager::REQUIREMENT_WARNING)];
-    TestSubscriber1::setTestResult($expected_results, ReadinessCheckEvent::class);
+    TestSubscriber1::setTestResult($expected_results, StatusCheckEvent::class);
     $messages = reset($expected_results)->getMessages();
 
     StagedDatabaseUpdateValidator::setExtensionsWithUpdates(['system', 'automatic_updates_theme_with_updates']);
@@ -558,11 +557,11 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
     // We must do this after the update has started, because the pending updates
     // validator will prevent an update from starting.
     $state->set('automatic_updates_test.new_update', TRUE);
-    // The warning from the updater form should be not be repeated, but we
-    // should see a warning about pending database updates, and once the staged
-    // changes have been applied, we should be redirected to update.php, where
-    // neither warning should be visible.
-    $assert_session->pageTextNotContains(reset($messages));
+    // The warning from the updater form should be repeated, and we should see
+    // a warning about pending database updates. Once the staged changes have
+    // been applied, we should be redirected to update.php, where neither
+    // warning should be visible.
+    $assert_session->pageTextContains(reset($messages));
 
     // Ensure that a list of pending database updates is visible, along with a
     // short explanation, in the warning messages.
@@ -852,7 +851,7 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
     // Store a readiness error, which will be cached.
     $message = "You've not experienced Shakespeare until you have read him in the original Klingon.";
     $result = ValidationResult::createError([$message]);
-    TestSubscriber1::setTestResult([$result], ReadinessCheckEvent::class);
+    TestSubscriber1::setTestResult([$result], StatusCheckEvent::class);
     // Run the readiness checks a visit an admin page the message will be
     // displayed.
     $this->drupalGet('/admin/reports/status');
@@ -861,7 +860,7 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
     $this->assertSession()->pageTextContains($message);
     // Clear the results so the only way the message could appear on the pages
     // used for the update process is if they show the cached results.
-    TestSubscriber1::setTestResult(NULL, ReadinessCheckEvent::class);
+    TestSubscriber1::setTestResult(NULL, StatusCheckEvent::class);
 
     return $message;
   }

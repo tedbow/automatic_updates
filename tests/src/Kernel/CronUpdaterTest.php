@@ -290,14 +290,10 @@ class CronUpdaterTest extends AutomaticUpdatesKernelTestBase {
       'drupal' => __DIR__ . "/../../../package_manager/tests/fixtures/release-history/drupal.9.8.1-security.xml",
     ]);
 
-    // Disable the symlink validators so that this test isn't affected by
+    // Disable the symlink validator so that this test isn't affected by
     // symlinks that might be present in the running code base.
-    $validators = [
-      'automatic_updates.validator.symlink',
-      'package_manager.validator.symlink',
-    ];
-    $validators = array_map([$this->container, 'get'], $validators);
-    array_walk($validators, [$this->container->get('event_dispatcher'), 'removeSubscriber']);
+    $validator = $this->container->get('package_manager.validator.symlink');
+    $this->container->get('event_dispatcher')->removeSubscriber($validator);
 
     // If the pre- or post-destroy events throw an exception, it will not be
     // caught by the cron updater, but it *will* be caught by the main cron
@@ -521,7 +517,7 @@ END;
   }
 
   /**
-   * Asserts that all recipients recieved a given email.
+   * Asserts that all recipients received a given email.
    *
    * @param string $subject
    *   The subject line of the email that should have been sent.

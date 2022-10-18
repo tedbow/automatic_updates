@@ -13,6 +13,7 @@ use Drupal\package_manager\Event\StatusCheckEvent;
 use PhpTuf\ComposerStager\Domain\Exception\ExceptionInterface;
 use PhpTuf\ComposerStager\Domain\Service\ProcessOutputCallback\ProcessOutputCallbackInterface;
 use PhpTuf\ComposerStager\Domain\Service\ProcessRunner\ComposerRunnerInterface;
+use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 /**
  * Validates the Composer executable is the correct version.
@@ -22,7 +23,7 @@ use PhpTuf\ComposerStager\Domain\Service\ProcessRunner\ComposerRunnerInterface;
  *   at any time without warning. External code should not interact with this
  *   class.
  */
-final class ComposerExecutableValidator implements PreOperationStageValidatorInterface, ProcessOutputCallbackInterface {
+final class ComposerExecutableValidator implements EventSubscriberInterface, ProcessOutputCallbackInterface {
 
   use StringTranslationTrait;
 

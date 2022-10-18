@@ -3,7 +3,7 @@
 namespace Drupal\automatic_updates\Validator;
 
 use Drupal\automatic_updates\CronUpdater;
-use Drupal\automatic_updates\Event\ReadinessCheckEvent;
+use Drupal\package_manager\Event\StatusCheckEvent;
 use Drupal\package_manager\ProjectInfo;
 use Drupal\automatic_updates\Updater;
 use Drupal\automatic_updates\Validator\VersionPolicy\ForbidDowngrade;
@@ -178,23 +178,22 @@ final class VersionPolicyValidator implements EventSubscriberInterface {
    * @throws \LogicException
    *   Thrown if the target version cannot be determined due to unexpected
    *   conditions. This can happen if, during a stage life cycle event (i.e.,
-   *   NOT a readiness check), the event or updater does not have a list of
-   *   desired package versions, or the list of package versions does not
-   *   include any Drupal core packages.
+   *   NOT a status check), the event or updater does not have a list of desired
+   *   package versions, or the list of package versions does not include any
+   *   Drupal core packages.
    */
   private function getTargetVersion(StageEvent $event): ?string {
     $updater = $event->getStage();
 
-    if ($event instanceof ReadinessCheckEvent) {
-      $package_versions = $event->getPackageVersions();
-    }
-    else {
+    // If we're not doing a status check, we expect the stage to have been
+    // created, and the requested package versions recorded.
+    if (!$event instanceof StatusCheckEvent) {
       $package_versions = $updater->getPackageVersions()['production'];
     }
 
     $unknown_target = new \LogicException('The target version of Drupal core could not be determined.');
 
-    if ($package_versions) {
+    if (isset($package_versions)) {
       $core_package_name = key($updater->getActiveComposer()->getCorePackages());
 
       if ($core_package_name && array_key_exists($core_package_name, $package_versions)) {
@@ -204,7 +203,7 @@ final class VersionPolicyValidator implements EventSubscriberInterface {
         throw $unknown_target;
       }
     }
-    elseif ($event instanceof ReadinessCheckEvent) {
+    elseif ($event instanceof StatusCheckEvent) {
       if ($updater instanceof CronUpdater) {
         $target_release = $updater->getTargetRelease();
         if ($target_release) {
@@ -256,8 +255,8 @@ final class VersionPolicyValidator implements EventSubscriberInterface {
    */
   public static function getSubscribedEvents() {
     return [
-      ReadinessCheckEvent::class => 'checkVersion',
       PreCreateEvent::class => 'checkVersion',
+      StatusCheckEvent::class => 'checkVersion',
     ];
   }
 

@@ -8,6 +8,7 @@ use Drupal\package_manager\Event\PreOperationStageEvent;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\package_manager\Event\StatusCheckEvent;
 use Drupal\package_manager\PathLocator;
+use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 /**
  * Checks that the file system is writable.
@@ -17,7 +18,7 @@ use Drupal\package_manager\PathLocator;
  *   at any time without warning. External code should not interact with this
  *   class.
  */
-class WritableFileSystemValidator implements PreOperationStageValidatorInterface {
+class WritableFileSystemValidator implements EventSubscriberInterface {
 
   use StringTranslationTrait;
 

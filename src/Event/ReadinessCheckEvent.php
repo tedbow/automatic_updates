@@ -38,6 +38,7 @@ class ReadinessCheckEvent extends PreOperationStageEvent {
    *   name.
    */
   public function __construct(Stage $stage, array $project_versions = []) {
+    @trigger_error(__CLASS__ . ' is deprecated in automatic_updates:8.x-2.5 and will be removed in automatic_updates:3.0.0. Use \Drupal\package_manager\Event\StatusCheckEvent instead. See https://www.drupal.org/node/3316086.', E_USER_DEPRECATED);
     parent::__construct($stage);
     if ($project_versions) {
       if (count($project_versions) !== 1 || !array_key_exists('drupal', $project_versions)) {

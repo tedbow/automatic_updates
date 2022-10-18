@@ -12,6 +12,7 @@ use Drupal\package_manager\Event\PreOperationStageEvent;
 use Drupal\package_manager\Event\PreRequireEvent;
 use Drupal\package_manager\Event\StatusCheckEvent;
 use Drupal\package_manager\PathLocator;
+use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 /**
  * Checks that the active lock file is unchanged during stage operations.
@@ -21,7 +22,7 @@ use Drupal\package_manager\PathLocator;
  *   at any time without warning. External code should not interact with this
  *   class.
  */
-final class LockFileValidator implements PreOperationStageValidatorInterface {
+final class LockFileValidator implements EventSubscriberInterface {
 
   use StringTranslationTrait;
 

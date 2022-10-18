@@ -2,7 +2,6 @@
 
 namespace Drupal\Tests\automatic_updates_extensions\Functional;
 
-use Drupal\automatic_updates\Event\ReadinessCheckEvent;
 use Drupal\automatic_updates_test\EventSubscriber\TestSubscriber1;
 use Drupal\package_manager_test_validation\StagedDatabaseUpdateValidator;
 use Drupal\package_manager\Event\PreApplyEvent;
@@ -432,7 +431,7 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
     $this->assertUpdatesCount(1);
     $message = t("You've not experienced Shakespeare until you have read him in the original Klingon.");
     $error = ValidationResult::createError([$message]);
-    TestSubscriber1::setTestResult([$error], ReadinessCheckEvent::class);
+    TestSubscriber1::setTestResult([$error], StatusCheckEvent::class);
     $this->getSession()->reload();
     $assert->pageTextContains($message);
     $assert->pageTextContains(static::$errorsExplanation);
@@ -450,7 +449,7 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
     $this->checkForUpdates();
     $message = t("Warning! Updating this module may cause an error.");
     $warning = ValidationResult::createWarning([$message]);
-    TestSubscriber1::setTestResult([$warning], ReadinessCheckEvent::class);
+    TestSubscriber1::setTestResult([$warning], StatusCheckEvent::class);
     // Navigate to the automatic updates form.
     $this->drupalGet('/admin/reports/updates');
     $this->clickLink('Update Extensions');

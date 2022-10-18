@@ -6,11 +6,12 @@ use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\package_manager\Event\PreCreateEvent;
 use Drupal\package_manager\Event\PreOperationStageEvent;
 use Drupal\package_manager\Event\StatusCheckEvent;
+use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 /**
  * Validates the configuration of the cweagans/composer-patches plugin.
  */
-class ComposerPatchesValidator implements PreOperationStageValidatorInterface {
+class ComposerPatchesValidator implements EventSubscriberInterface {
 
   use StringTranslationTrait;
 

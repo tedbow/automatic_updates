@@ -2,10 +2,10 @@
 
 namespace Drupal\Tests\package_manager\Kernel;
 
-use Drupal\automatic_updates_test\EventSubscriber\TestSubscriber1;
 use Drupal\package_manager\Event\PreCreateEvent;
 use Drupal\package_manager\Exception\StageValidationException;
 use Drupal\package_manager\ValidationResult;
+use Drupal\package_manager_test_validation\EventSubscriber\TestSubscriber;
 
 /**
  * @coversDefaultClass \Drupal\package_manager\Exception\StageValidationException
@@ -72,7 +72,7 @@ class StageValidationExceptionTest extends PackageManagerKernelTestBase {
    * @covers ::getResultsAsText()
    */
   public function testResultsAsText(array $validation_results, string $expected_message): void {
-    TestSubscriber1::setTestResult($validation_results, PreCreateEvent::class);
+    TestSubscriber::setTestResult($validation_results, PreCreateEvent::class);
     $this->expectException(StageValidationException::class);
     $this->expectExceptionMessage($expected_message);
     $this->createStage()->create();

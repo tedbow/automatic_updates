@@ -5,6 +5,7 @@ namespace Drupal\automatic_updates\Form;
 use Drupal\Core\Form\FormBase;
 use Drupal\Core\Render\RendererInterface;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
+use Drupal\package_manager\StatusCheckTrait;
 use Drupal\package_manager\ValidationResult;
 use Drupal\system\SystemManager;
 
@@ -16,6 +17,8 @@ use Drupal\system\SystemManager;
  *   at any time without warning. External code should not extend this class.
  */
 abstract class UpdateFormBase extends FormBase {
+
+  use StatusCheckTrait;
 
   /**
    * Gets a message, based on severity, when readiness checkers fail.

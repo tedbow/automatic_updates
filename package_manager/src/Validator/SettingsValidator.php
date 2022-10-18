@@ -8,6 +8,7 @@ use Drupal\Core\StringTranslation\TranslationInterface;
 use Drupal\package_manager\Event\PreCreateEvent;
 use Drupal\package_manager\Event\PreOperationStageEvent;
 use Drupal\package_manager\Event\StatusCheckEvent;
+use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 /**
  * Checks that Drupal's settings are valid for Package Manager.
@@ -17,7 +18,7 @@ use Drupal\package_manager\Event\StatusCheckEvent;
  *   at any time without warning. External code should not interact with this
  *   class.
  */
-final class SettingsValidator implements PreOperationStageValidatorInterface {
+final class SettingsValidator implements EventSubscriberInterface {
 
   use StringTranslationTrait;
 

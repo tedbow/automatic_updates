@@ -13,6 +13,7 @@ use Drupal\package_manager\PathLocator;
 use PhpTuf\ComposerStager\Domain\Exception\PreconditionException;
 use PhpTuf\ComposerStager\Domain\Service\Precondition\CodebaseContainsNoSymlinksInterface;
 use PhpTuf\ComposerStager\Infrastructure\Factory\Path\PathFactoryInterface;
+use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 /**
  * Flags errors if the project root or staging area contain symbolic links.
@@ -25,7 +26,7 @@ use PhpTuf\ComposerStager\Infrastructure\Factory\Path\PathFactoryInterface;
  *   at any time without warning. External code should not interact with this
  *   class.
  */
-class SymlinkValidator implements PreOperationStageValidatorInterface {
+class SymlinkValidator implements EventSubscriberInterface {
 
   use StringTranslationTrait;
 

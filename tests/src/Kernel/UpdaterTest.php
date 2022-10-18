@@ -3,13 +3,13 @@
 namespace Drupal\Tests\automatic_updates\Kernel;
 
 use Drupal\automatic_updates\Exception\UpdateException;
+use Drupal\automatic_updates_test\EventSubscriber\TestSubscriber1;
 use Drupal\package_manager\Event\PreApplyEvent;
 use Drupal\package_manager\Event\PreCreateEvent;
 use Drupal\package_manager\Event\PreRequireEvent;
 use Drupal\package_manager\Exception\StageException;
 use Drupal\package_manager\ValidationResult;
 use Drupal\package_manager_bypass\Committer;
-use Drupal\package_manager_test_validation\EventSubscriber\TestSubscriber;
 use Drupal\Tests\user\Traits\UserCreationTrait;
 use PhpTuf\ComposerStager\Domain\Exception\InvalidArgumentException;
 
@@ -214,7 +214,7 @@ class UpdaterTest extends AutomaticUpdatesKernelTestBase {
     $results = [
       ValidationResult::createError(['An error of some sorts.']),
     ];
-    TestSubscriber::setTestResult($results, $event_class);
+    TestSubscriber1::setTestResult($results, $event_class);
     try {
       $updater->begin(['drupal' => '9.8.1']);
       $updater->stage();

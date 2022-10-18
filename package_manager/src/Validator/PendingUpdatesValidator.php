@@ -9,6 +9,7 @@ use Drupal\Core\StringTranslation\TranslationInterface;
 use Drupal\Core\Update\UpdateRegistry;
 use Drupal\Core\Url;
 use Drupal\package_manager\Event\StatusCheckEvent;
+use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 /**
  * Validates that there are no pending database updates.
@@ -18,7 +19,7 @@ use Drupal\package_manager\Event\StatusCheckEvent;
  *   at any time without warning. External code should not interact with this
  *   class.
  */
-final class PendingUpdatesValidator implements PreOperationStageValidatorInterface {
+final class PendingUpdatesValidator implements EventSubscriberInterface {
 
   use StringTranslationTrait;
 

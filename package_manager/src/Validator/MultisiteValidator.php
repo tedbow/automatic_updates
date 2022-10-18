@@ -8,6 +8,7 @@ use Drupal\package_manager\Event\PreCreateEvent;
 use Drupal\package_manager\Event\PreOperationStageEvent;
 use Drupal\package_manager\Event\StatusCheckEvent;
 use Drupal\package_manager\PathLocator;
+use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 /**
  * Checks that the current site is not part of a multisite.
@@ -17,7 +18,7 @@ use Drupal\package_manager\PathLocator;
  *   at any time without warning. External code should not interact with this
  *   class.
  */
-final class MultisiteValidator implements PreOperationStageValidatorInterface {
+final class MultisiteValidator implements EventSubscriberInterface {
 
   use StringTranslationTrait;
 

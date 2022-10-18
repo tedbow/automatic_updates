@@ -3,7 +3,6 @@
 namespace Drupal\automatic_updates\Validator;
 
 use Drupal\automatic_updates\CronUpdater;
-use Drupal\automatic_updates\Event\ReadinessCheckEvent;
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Extension\ModuleHandlerInterface;
 use Drupal\Core\Http\RequestStack;
@@ -11,6 +10,7 @@ use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\Core\Url;
 use Drupal\package_manager\Event\PreCreateEvent;
 use Drupal\package_manager\Event\PreOperationStageEvent;
+use Drupal\package_manager\Event\StatusCheckEvent;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 /**
@@ -115,8 +115,8 @@ final class CronServerValidator implements EventSubscriberInterface {
    */
   public static function getSubscribedEvents() {
     return [
-      ReadinessCheckEvent::class => 'checkServer',
       PreCreateEvent::class => 'checkServer',
+      StatusCheckEvent::class => 'checkServer',
     ];
   }
 

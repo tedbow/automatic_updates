@@ -3,11 +3,11 @@
 namespace Drupal\Tests\automatic_updates\Functional;
 
 use Behat\Mink\Element\NodeElement;
-use Drupal\automatic_updates\Event\ReadinessCheckEvent;
 use Drupal\automatic_updates_test\Datetime\TestTime;
 use Drupal\automatic_updates_test\EventSubscriber\TestSubscriber1;
 use Drupal\automatic_updates_test2\EventSubscriber\TestSubscriber2;
 use Drupal\Core\Url;
+use Drupal\package_manager\Event\StatusCheckEvent;
 use Drupal\system\SystemManager;
 use Drupal\Tests\automatic_updates\Traits\ValidationTestTrait;
 use Drupal\Tests\Traits\Core\CronRunTrait;
@@ -115,7 +115,7 @@ class ReadinessValidationTest extends AutomaticUpdatesFunctionalTestBase {
     $this->assertNoErrors(TRUE);
     /** @var \Drupal\package_manager\ValidationResult[] $expected_results */
     $expected_results = [$this->createValidationResult(SystemManager::REQUIREMENT_ERROR)];
-    TestSubscriber1::setTestResult($expected_results, ReadinessCheckEvent::class);
+    TestSubscriber1::setTestResult($expected_results, StatusCheckEvent::class);
 
     // Run the readiness checks.
     $this->clickLink('Run readiness checks');
@@ -139,7 +139,7 @@ class ReadinessValidationTest extends AutomaticUpdatesFunctionalTestBase {
       'error' => $this->createValidationResult(SystemManager::REQUIREMENT_ERROR),
       'warning' => $this->createValidationResult(SystemManager::REQUIREMENT_WARNING),
     ];
-    TestSubscriber1::setTestResult($expected_results, ReadinessCheckEvent::class);
+    TestSubscriber1::setTestResult($expected_results, StatusCheckEvent::class);
     // Confirm a new message is displayed if the page is reloaded.
     $this->getSession()->reload();
     // Confirm that on the status page if there is only 1 warning or error the
@@ -153,7 +153,7 @@ class ReadinessValidationTest extends AutomaticUpdatesFunctionalTestBase {
       'error' => $this->createValidationResult(SystemManager::REQUIREMENT_ERROR, 2),
       'warning' => $this->createValidationResult(SystemManager::REQUIREMENT_WARNING, 2),
     ];
-    TestSubscriber1::setTestResult($expected_results, ReadinessCheckEvent::class);
+    TestSubscriber1::setTestResult($expected_results, StatusCheckEvent::class);
     $this->getSession()->reload();
     // Confirm that both messages and summaries will be displayed on status
     // report when there multiple messages.
@@ -161,7 +161,7 @@ class ReadinessValidationTest extends AutomaticUpdatesFunctionalTestBase {
     $this->assertWarnings([$expected_results['warning']]);
 
     $expected_results = [$this->createValidationResult(SystemManager::REQUIREMENT_WARNING, 2)];
-    TestSubscriber1::setTestResult($expected_results, ReadinessCheckEvent::class);
+    TestSubscriber1::setTestResult($expected_results, StatusCheckEvent::class);
     $this->getSession()->reload();
     $assert->pageTextContainsOnce('Update readiness checks');
     // Confirm that warnings will display on the status report if there are no
@@ -169,7 +169,7 @@ class ReadinessValidationTest extends AutomaticUpdatesFunctionalTestBase {
     $this->assertWarnings($expected_results);
 
     $expected_results = [$this->createValidationResult(SystemManager::REQUIREMENT_WARNING)];
-    TestSubscriber1::setTestResult($expected_results, ReadinessCheckEvent::class);
+    TestSubscriber1::setTestResult($expected_results, StatusCheckEvent::class);
     $this->getSession()->reload();
     $assert->pageTextContainsOnce('Update readiness checks');
     $this->assertWarnings($expected_results);
@@ -198,7 +198,7 @@ class ReadinessValidationTest extends AutomaticUpdatesFunctionalTestBase {
     // Confirm a user without the permission to run readiness checks does not
     // have a link to run the checks when the checks need to be run again.
     $expected_results = [$this->createValidationResult(SystemManager::REQUIREMENT_ERROR)];
-    TestSubscriber1::setTestResult($expected_results, ReadinessCheckEvent::class);
+    TestSubscriber1::setTestResult($expected_results, StatusCheckEvent::class);
     // @todo Change this to use ::delayRequestTime() to simulate running cron
     //   after a 24 wait instead of directly deleting 'readiness_validation_last_run'
     //   https://www.drupal.org/node/3113971.
@@ -224,7 +224,7 @@ class ReadinessValidationTest extends AutomaticUpdatesFunctionalTestBase {
       '1 error' => $this->createValidationResult(SystemManager::REQUIREMENT_ERROR),
       '1 warning' => $this->createValidationResult(SystemManager::REQUIREMENT_WARNING),
     ];
-    TestSubscriber1::setTestResult($expected_results, ReadinessCheckEvent::class);
+    TestSubscriber1::setTestResult($expected_results, StatusCheckEvent::class);
     // Confirm a new message is displayed if the cron is run after an hour.
     $this->delayRequestTime();
     $this->cronRun();
@@ -246,7 +246,7 @@ class ReadinessValidationTest extends AutomaticUpdatesFunctionalTestBase {
       '2 errors' => $this->createValidationResult(SystemManager::REQUIREMENT_ERROR, 2),
       '2 warnings' => $this->createValidationResult(SystemManager::REQUIREMENT_WARNING, 2),
     ];
-    TestSubscriber1::setTestResult($unexpected_results, ReadinessCheckEvent::class);
+    TestSubscriber1::setTestResult($unexpected_results, StatusCheckEvent::class);
     $this->delayRequestTime(30);
     $this->cronRun();
     $this->drupalGet('admin/structure');
@@ -275,7 +275,7 @@ class ReadinessValidationTest extends AutomaticUpdatesFunctionalTestBase {
     $assert->pageTextNotContains($expected_results['2 warnings']->getSummary());
 
     $expected_results = [$this->createValidationResult(SystemManager::REQUIREMENT_WARNING, 2)];
-    TestSubscriber1::setTestResult($expected_results, ReadinessCheckEvent::class);
+    TestSubscriber1::setTestResult($expected_results, StatusCheckEvent::class);
     $this->delayRequestTime();
     $this->cronRun();
     $this->drupalGet('admin/structure');
@@ -289,7 +289,7 @@ class ReadinessValidationTest extends AutomaticUpdatesFunctionalTestBase {
     $assert->pageTextContainsOnce($expected_results[0]->getSummary());
 
     $expected_results = [$this->createValidationResult(SystemManager::REQUIREMENT_WARNING)];
-    TestSubscriber1::setTestResult($expected_results, ReadinessCheckEvent::class);
+    TestSubscriber1::setTestResult($expected_results, StatusCheckEvent::class);
     $this->delayRequestTime();
     $this->cronRun();
     $this->drupalGet('admin/structure');
@@ -328,7 +328,7 @@ class ReadinessValidationTest extends AutomaticUpdatesFunctionalTestBase {
     $this->assertNoErrors(TRUE);
 
     $expected_results = [$this->createValidationResult(SystemManager::REQUIREMENT_ERROR)];
-    TestSubscriber2::setTestResult($expected_results, ReadinessCheckEvent::class);
+    TestSubscriber2::setTestResult($expected_results, StatusCheckEvent::class);
     $this->container->get('module_installer')->install(['automatic_updates_test2']);
     $this->drupalGet('admin/structure');
     $assert->pageTextContainsOnce($expected_results[0]->getMessages()[0]);
@@ -340,7 +340,7 @@ class ReadinessValidationTest extends AutomaticUpdatesFunctionalTestBase {
       '2 errors' => $this->createValidationResult(SystemManager::REQUIREMENT_ERROR, 2),
       '2 warnings' => $this->createValidationResult(SystemManager::REQUIREMENT_WARNING, 2),
     ];
-    TestSubscriber2::setTestResult($expected_results, ReadinessCheckEvent::class);
+    TestSubscriber2::setTestResult($expected_results, StatusCheckEvent::class);
     $this->container->get('module_installer')->install(['help']);
     // Check for messages on 'admin/structure' instead of the status report,
     // because validators will be run if needed on the status report.
@@ -359,9 +359,9 @@ class ReadinessValidationTest extends AutomaticUpdatesFunctionalTestBase {
     $this->drupalLogin($this->checkerRunnerUser);
 
     $expected_results_1 = [$this->createValidationResult(SystemManager::REQUIREMENT_ERROR)];
-    TestSubscriber1::setTestResult($expected_results_1, ReadinessCheckEvent::class);
+    TestSubscriber1::setTestResult($expected_results_1, StatusCheckEvent::class);
     $expected_results_2 = [$this->createValidationResult(SystemManager::REQUIREMENT_ERROR)];
-    TestSubscriber2::setTestResult($expected_results_2, ReadinessCheckEvent::class);
+    TestSubscriber2::setTestResult($expected_results_2, StatusCheckEvent::class);
     $this->container->get('module_installer')->install([
       'automatic_updates',
       'automatic_updates_test',
@@ -402,7 +402,7 @@ class ReadinessValidationTest extends AutomaticUpdatesFunctionalTestBase {
 
     // Flag a validation error, which will be displayed in the messages area.
     $results = [$this->createValidationResult(SystemManager::REQUIREMENT_ERROR)];
-    TestSubscriber1::setTestResult($results, ReadinessCheckEvent::class);
+    TestSubscriber1::setTestResult($results, StatusCheckEvent::class);
     $message = $results[0]->getMessages()[0];
 
     $this->container->get('module_installer')->install([
@@ -414,7 +414,7 @@ class ReadinessValidationTest extends AutomaticUpdatesFunctionalTestBase {
     // flagging it.
     $this->drupalGet('/admin/structure');
     $assert_session->pageTextContains($message);
-    TestSubscriber1::setTestResult(NULL, ReadinessCheckEvent::class);
+    TestSubscriber1::setTestResult(NULL, StatusCheckEvent::class);
     $this->getSession()->reload();
     $assert_session->pageTextContains($message);
 

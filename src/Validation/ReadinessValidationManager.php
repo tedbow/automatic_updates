@@ -3,7 +3,7 @@
 namespace Drupal\automatic_updates\Validation;
 
 use Drupal\automatic_updates\CronUpdater;
-use Drupal\automatic_updates\Event\ReadinessCheckEvent;
+use Drupal\package_manager\StatusCheckTrait;
 use Drupal\automatic_updates\Updater;
 use Drupal\Component\Datetime\TimeInterface;
 use Drupal\Core\KeyValueStore\KeyValueExpirableFactoryInterface;
@@ -15,6 +15,8 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
  * Defines a manager to run readiness validation.
  */
 final class ReadinessValidationManager implements EventSubscriberInterface {
+
+  use StatusCheckTrait;
 
   /**
    * The key/value expirable storage.
@@ -90,17 +92,16 @@ final class ReadinessValidationManager implements EventSubscriberInterface {
    */
   public function run(): self {
     // If updates will run during cron, use the cron updater service provided by
-    // this module. This will allow subscribers to ReadinessCheckEvent to run
-    // specific validation for conditions that only affect cron updates.
+    // this module. This will allow validators to run specific validation for
+    // conditions that only affect cron updates.
     if ($this->cronUpdater->getMode() === CronUpdater::DISABLED) {
       $stage = $this->updater;
     }
     else {
       $stage = $this->cronUpdater;
     }
-    $event = new ReadinessCheckEvent($stage);
-    $this->eventDispatcher->dispatch($event);
-    $results = $event->getResults();
+    $results = $this->runStatusCheck($stage, $this->eventDispatcher, TRUE);
+
     $this->keyValueExpirable->setWithExpire(
       'readiness_validation_last_run',
       $results,

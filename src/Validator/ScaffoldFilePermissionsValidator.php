@@ -2,15 +2,15 @@
 
 namespace Drupal\automatic_updates\Validator;
 
-use Drupal\automatic_updates\Event\ReadinessCheckEvent;
 use Drupal\automatic_updates\Updater;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\package_manager\ComposerUtility;
 use Drupal\package_manager\Event\PreApplyEvent;
 use Drupal\package_manager\Event\PreCreateEvent;
 use Drupal\package_manager\Event\PreOperationStageEvent;
+use Drupal\package_manager\Event\StatusCheckEvent;
 use Drupal\package_manager\PathLocator;
-use Drupal\package_manager\Validator\PreOperationStageValidatorInterface;
+use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 /**
  * Validates that scaffold files have appropriate permissions.
@@ -20,7 +20,7 @@ use Drupal\package_manager\Validator\PreOperationStageValidatorInterface;
  *   at any time without warning. External code should not interact with this
  *   class.
  */
-final class ScaffoldFilePermissionsValidator implements PreOperationStageValidatorInterface {
+final class ScaffoldFilePermissionsValidator implements EventSubscriberInterface {
 
   use StringTranslationTrait;
 
@@ -128,9 +128,9 @@ final class ScaffoldFilePermissionsValidator implements PreOperationStageValidat
    */
   public static function getSubscribedEvents() {
     return [
-      ReadinessCheckEvent::class => 'validateStagePreOperation',
       PreCreateEvent::class => 'validateStagePreOperation',
       PreApplyEvent::class => 'validateStagePreOperation',
+      StatusCheckEvent::class => 'validateStagePreOperation',
     ];
   }
 
