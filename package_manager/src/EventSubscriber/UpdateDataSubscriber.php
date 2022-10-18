@@ -48,7 +48,7 @@ final class UpdateDataSubscriber implements EventSubscriberInterface {
   /**
    * {@inheritdoc}
    */
-  public static function getSubscribedEvents() {
+  public static function getSubscribedEvents(): array {
     return [
       PostApplyEvent::class => ['clearData', 1000],
     ];

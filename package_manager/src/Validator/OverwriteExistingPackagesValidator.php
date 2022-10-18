@@ -75,7 +75,7 @@ final class OverwriteExistingPackagesValidator implements EventSubscriberInterfa
   /**
    * {@inheritdoc}
    */
-  public static function getSubscribedEvents() {
+  public static function getSubscribedEvents(): array {
     return [
       PreApplyEvent::class => 'validateStagePreOperation',
     ];

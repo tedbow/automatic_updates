@@ -21,7 +21,7 @@ final class RouteSubscriber extends RouteSubscriberBase {
   /**
    * {@inheritdoc}
    */
-  public static function getSubscribedEvents() {
+  public static function getSubscribedEvents(): array {
     return [
       // Try to run after other route subscribers, to minimize the chances of
       // conflicting with other code that is modifying Update module routes.

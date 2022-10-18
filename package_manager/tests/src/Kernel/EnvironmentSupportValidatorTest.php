@@ -26,7 +26,7 @@ class EnvironmentSupportValidatorTest extends PackageManagerKernelTestBase imple
   /**
    * {@inheritdoc}
    */
-  public static function getSubscribedEvents() {
+  public static function getSubscribedEvents(): array {
     $map = function (): string {
       return 'assertValidationStopped';
     };

@@ -126,7 +126,7 @@ final class ScaffoldFilePermissionsValidator implements EventSubscriberInterface
   /**
    * {@inheritdoc}
    */
-  public static function getSubscribedEvents() {
+  public static function getSubscribedEvents(): array {
     return [
       PreCreateEvent::class => 'validateStagePreOperation',
       PreApplyEvent::class => 'validateStagePreOperation',

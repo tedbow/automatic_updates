@@ -13,7 +13,7 @@ class TestSubscriber2 extends TestSubscriber1 {
 
   protected const STATE_KEY = 'automatic_updates_test2.checker_results';
 
-  public static function getSubscribedEvents() {
+  public static function getSubscribedEvents(): array {
     $events[StatusCheckEvent::class][] = ['handleEvent', 4];
     $events[PreCreateEvent::class][] = ['handleEvent', 4];
 

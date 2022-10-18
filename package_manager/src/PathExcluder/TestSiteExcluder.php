@@ -33,7 +33,7 @@ final class TestSiteExcluder implements EventSubscriberInterface {
   /**
    * {@inheritdoc}
    */
-  public static function getSubscribedEvents() {
+  public static function getSubscribedEvents(): array {
     return [
       PreCreateEvent::class => 'excludeTestSites',
       PreApplyEvent::class => 'excludeTestSites',

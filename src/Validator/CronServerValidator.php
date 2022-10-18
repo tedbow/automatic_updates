@@ -113,7 +113,7 @@ final class CronServerValidator implements EventSubscriberInterface {
   /**
    * {@inheritdoc}
    */
-  public static function getSubscribedEvents() {
+  public static function getSubscribedEvents(): array {
     return [
       PreCreateEvent::class => 'checkServer',
       StatusCheckEvent::class => 'checkServer',

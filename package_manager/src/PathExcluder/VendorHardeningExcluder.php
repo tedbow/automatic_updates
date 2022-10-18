@@ -33,7 +33,7 @@ final class VendorHardeningExcluder implements EventSubscriberInterface {
   /**
    * {@inheritdoc}
    */
-  public static function getSubscribedEvents() {
+  public static function getSubscribedEvents(): array {
     return [
       PreCreateEvent::class => 'excludeVendorHardeningFiles',
       PreApplyEvent::class => 'excludeVendorHardeningFiles',

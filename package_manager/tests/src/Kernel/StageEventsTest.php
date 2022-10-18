@@ -62,7 +62,7 @@ class StageEventsTest extends PackageManagerKernelTestBase implements EventSubsc
   /**
    * {@inheritdoc}
    */
-  public static function getSubscribedEvents() {
+  public static function getSubscribedEvents(): array {
     return [
       PreCreateEvent::class => 'handleEvent',
       PostCreateEvent::class => 'handleEvent',

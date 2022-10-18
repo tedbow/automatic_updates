@@ -61,7 +61,7 @@ final class EnvironmentSupportValidator implements EventSubscriberInterface {
   /**
    * {@inheritdoc}
    */
-  public static function getSubscribedEvents() {
+  public static function getSubscribedEvents(): array {
     return [
       PreCreateEvent::class => ['validateStagePreOperation', 200],
       StatusCheckEvent::class => ['validateStagePreOperation', 200],
