@@ -167,6 +167,9 @@ END;
    * @see \Drupal\automatic_updates_test\TestController::metadata()
    */
   protected function setReleaseMetadata(array $xml_map): void {
+    foreach ($xml_map as $metadata_file) {
+      $this->assertFileIsReadable($metadata_file);
+    }
     $xml_map = var_export($xml_map, TRUE);
     $this->writeSettings("\$config['update_test.settings']['xml_map'] = $xml_map;");
   }

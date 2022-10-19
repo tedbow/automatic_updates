@@ -21,7 +21,7 @@ class ModuleUpdateTest extends UpdateTestBase {
   protected function createTestProject(string $template): void {
     parent::createTestProject($template);
     $this->setReleaseMetadata([
-      'drupal' => __DIR__ . '/../../../../tests/fixtures/release-history/drupal.9.8.1-security.xml',
+      'drupal' => __DIR__ . '/../../../../package_manager/tests/fixtures/release-history/drupal.9.8.1-security.xml',
       'alpha'  => __DIR__ . '/../../fixtures/release-history/alpha.1.1.0.xml',
       'new_module' => __DIR__ . '/../../fixtures/release-history/new_module.1.1.0.xml',
     ]);
