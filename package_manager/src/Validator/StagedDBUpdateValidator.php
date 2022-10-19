@@ -8,7 +8,6 @@ use Drupal\Core\Extension\ThemeExtensionList;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\package_manager\Event\StatusCheckEvent;
 use Drupal\package_manager\PathLocator;
-use Drupal\package_manager\Stage;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 /**
@@ -67,13 +66,15 @@ class StagedDBUpdateValidator implements EventSubscriberInterface {
    *   The event object.
    */
   public function checkForStagedDatabaseUpdates(StatusCheckEvent $event): void {
-    $stage = $event->getStage();
-    if ($stage->isAvailable()) {
-      // No staged updates exist, therefore we don't need to run this check.
+    try {
+      $stage_dir = $event->getStage()->getStageDirectory();
+    }
+    catch (\LogicException $e) {
+      // Stage directory can't be determined, so there's nothing to validate.
       return;
     }
 
-    $extensions_with_updates = $this->getExtensionsWithDatabaseUpdates($stage);
+    $extensions_with_updates = $this->getExtensionsWithDatabaseUpdates($stage_dir);
     if ($extensions_with_updates) {
       $event->addWarning($extensions_with_updates, $this->t('Possible database updates have been detected in the following extensions.'));
     }
@@ -82,8 +83,8 @@ class StagedDBUpdateValidator implements EventSubscriberInterface {
   /**
    * Determines if a staged extension has changed update functions.
    *
-   * @param \Drupal\package_manager\Stage $stage
-   *   The updater which is controlling the update process.
+   * @param string $stage_dir
+   *   The path of the staging area.
    * @param \Drupal\Core\Extension\Extension $extension
    *   The extension to check.
    *
@@ -103,9 +104,8 @@ class StagedDBUpdateValidator implements EventSubscriberInterface {
    *
    * @see https://www.drupal.org/project/automatic_updates/issues/3253828
    */
-  public function hasStagedUpdates(Stage $stage, Extension $extension): bool {
+  public function hasStagedUpdates(string $stage_dir, Extension $extension): bool {
     $active_dir = $this->pathLocator->getProjectRoot();
-    $stage_dir = $stage->getStageDirectory();
 
     $web_root = $this->pathLocator->getWebRoot();
     if ($web_root) {
@@ -159,21 +159,21 @@ class StagedDBUpdateValidator implements EventSubscriberInterface {
   }
 
   /**
-   * Gets extensions that have database updates.
+   * Gets extensions that have database updates in the staging area.
    *
-   * @param \Drupal\package_manager\Stage $stage
-   *   The stage.
+   * @param string $stage_dir
+   *   The path of the staging area.
    *
    * @return string[]
    *   The names of the extensions that have possible database updates.
    */
-  public function getExtensionsWithDatabaseUpdates(Stage $stage): array {
+  public function getExtensionsWithDatabaseUpdates(string $stage_dir): array {
     $extensions_with_updates = [];
     // Check all installed extensions for database updates.
     $lists = [$this->moduleList, $this->themeList];
     foreach ($lists as $list) {
       foreach ($list->getAllInstalledInfo() as $name => $info) {
-        if ($this->hasStagedUpdates($stage, $list->get($name))) {
+        if ($this->hasStagedUpdates($stage_dir, $list->get($name))) {
           $extensions_with_updates[] = $info['name'];
         }
       }

@@ -141,4 +141,15 @@ class StagedDBUpdateValidatorTest extends PackageManagerKernelTestBase {
     $this->assertStatusCheckResults([$result], $stage);
   }
 
+  /**
+   * Tests that the validator disregards unclaimed stages.
+   */
+  public function testUnclaimedStage(): void {
+    $stage = $this->createStage();
+    $stage->create();
+    $this->assertStatusCheckResults([], $stage);
+    // A new, unclaimed stage should be ignored by the validator.
+    $this->assertStatusCheckResults([], $this->createStage());
+  }
+
 }

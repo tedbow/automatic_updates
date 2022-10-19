@@ -5,7 +5,6 @@ namespace Drupal\package_manager_test_validation;
 use Drupal\package_manager\Validator\StagedDBUpdateValidator as BaseValidator;
 use Drupal\Core\Extension\Extension;
 use Drupal\Core\State\StateInterface;
-use Drupal\package_manager\Stage;
 
 /**
  * Allows tests to dictate which extensions have staged database updates.
@@ -43,12 +42,12 @@ class StagedDatabaseUpdateValidator extends BaseValidator {
   /**
    * {@inheritdoc}
    */
-  public function hasStagedUpdates(Stage $stage, Extension $extension): bool {
+  public function hasStagedUpdates(string $stage_dir, Extension $extension): bool {
     $extensions = $this->state->get(static::class);
     if (isset($extensions)) {
       return in_array($extension->getName(), $extensions, TRUE);
     }
-    return parent::hasStagedUpdates($stage, $extension);
+    return parent::hasStagedUpdates($stage_dir, $extension);
   }
 
 }
