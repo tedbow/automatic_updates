@@ -67,6 +67,11 @@ class ProjectInfoTest extends PackageManagerKernelTestBase {
         '9.8.2',
         [],
       ],
+      'core, on supported branch, pre-release in next minor' => [
+        'drupal.9.8.0-alpha1.xml',
+        '9.7.1',
+        ['9.8.0-alpha1'],
+      ],
       'core, on unsupported branch, updates in multiple supported branches' => [
         'drupal.9.8.2.xml',
         '9.6.0-alpha1',

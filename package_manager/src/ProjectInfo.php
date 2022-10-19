@@ -108,18 +108,10 @@ final class ProjectInfo {
     }
     $installed_version = $this->getInstalledVersion();
 
-    if ($installed_version) {
-      // If the project is installed, and we're already up-to-date, there's
-      // nothing else we need to do.
-      if ($project['status'] === UpdateManagerInterface::CURRENT) {
-        return [];
-      }
-
-      if (empty($available_updates['releases'])) {
-        // If project is installed but not current we should always have at
-        // least one release.
-        throw new \RuntimeException('There was a problem getting update information. Try again later.');
-      }
+    if ($installed_version && empty($available_updates['releases'])) {
+      // If project is installed but not current we should always have at
+      // least one release.
+      throw new \RuntimeException('There was a problem getting update information. Try again later.');
     }
 
     $support_branches = explode(',', $available_updates['supported_branches']);
