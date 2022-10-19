@@ -181,6 +181,12 @@ services:
       - '@package_manager.path_locator'
     tags:
       - { name: event_subscriber }
+  package_manager.node_modules_excluder:
+    class: Drupal\package_manager\PathExcluder\NodeModulesExcluder
+    arguments:
+      - '@package_manager.path_locator'
+    tags:
+      - { name: event_subscriber }
   package_manager.uninstall_validator:
     class: Drupal\package_manager\PackageManagerUninstallValidator
     tags:
