@@ -1,4 +1,4 @@
 name: 'Automatic Updates Test - Disable validators'
 type: module
-description: 'Provides a mechanism to disable specific readiness validators during functional tests'
+description: 'Provides a mechanism to disable specific validators during functional tests'
 package: Testing

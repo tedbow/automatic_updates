@@ -3,8 +3,8 @@ services:
     class: Drupal\automatic_updates\Routing\RouteSubscriber
     tags:
       - { name: event_subscriber }
-  automatic_updates.readiness_validation_manager:
-    class: Drupal\automatic_updates\Validation\ReadinessValidationManager
+  automatic_updates.status_checker:
+    class: Drupal\automatic_updates\Validation\StatusChecker
     arguments:
       - '@keyvalue.expirable'
       - '@datetime.time'
@@ -14,6 +14,11 @@ services:
       - 24
     tags:
       - { name: event_subscriber }
+  automatic_updates.readiness_validation_manager:
+    class: Drupal\automatic_updates\Validation\ReadinessValidationManager
+    arguments:
+      - '@automatic_updates.status_checker'
+    deprecated: The "%service_id%" service is deprecated in automatic_updates:8.x-2.5 and is removed from automatic_updates:3.0.0. Use the automatic_updates.status_checker service instead. See https://www.drupal.org/node/3316086.
   automatic_updates.updater:
     class: Drupal\automatic_updates\Updater
     arguments:

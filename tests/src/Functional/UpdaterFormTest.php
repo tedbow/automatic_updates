@@ -214,9 +214,9 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
   }
 
   /**
-   * Tests readiness checks are displayed when there is no update available.
+   * Tests status checks are displayed when there is no update available.
    */
-  public function testReadinessCheckFailureWhenNoUpdate() {
+  public function testStatusCheckFailureWhenNoUpdateExists() {
     $assert_session = $this->assertSession();
     $this->setCoreVersion('9.8.1');
     $message = "You've not experienced Shakespeare until you have read him in the original Klingon.";
@@ -285,12 +285,12 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
     $expected_results = [$this->createValidationResult(SystemManager::REQUIREMENT_ERROR, 2)];
     TestSubscriber1::setTestResult($expected_results, StatusCheckEvent::class);
 
-    // If a validator raises an error during readiness checking, the form should
+    // If a validator raises an error during status checking, the form should
     // not have a submit button.
     $this->drupalGet('/admin/modules/update');
     $this->assertNoUpdateButtons();
     // Since this is an administrative page, the error message should be visible
-    // thanks to automatic_updates_page_top(). The readiness checks were re-run
+    // thanks to automatic_updates_page_top(). The status checks were re-run
     // during the form build, which means the new error should be cached and
     // displayed instead of the previously cached error.
     $assert_session->pageTextContainsOnce((string) $expected_results[0]->getMessages()[0]);
@@ -590,8 +590,8 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
     $assert_session->pageTextContainsOnce('Please apply database updates to complete the update process.');
     $this->assertTrue($state->get('system.maintenance_mode'));
     $page->clickLink('Continue');
-    // @see automatic_updates_update_9001()
-    $assert_session->pageTextContains('Dynamic automatic_updates_update_9001');
+    // @see automatic_updates_update_1191934()
+    $assert_session->pageTextContains('Dynamic automatic_updates_update_1191934');
     $page->clickLink('Apply pending updates');
     $this->checkForMetaRefresh();
     $assert_session->pageTextContains('Updates were attempted.');
@@ -842,17 +842,17 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
   }
 
   /**
-   * Sets an error message, runs readiness checks, and asserts it is displayed.
+   * Sets an error message, runs status checks, and asserts it is displayed.
    *
    * @return string
    *   The cached error check message.
    */
   private function setAndAssertCachedMessage(): string {
-    // Store a readiness error, which will be cached.
+    // Store a status error, which will be cached.
     $message = "You've not experienced Shakespeare until you have read him in the original Klingon.";
     $result = ValidationResult::createError([$message]);
     TestSubscriber1::setTestResult([$result], StatusCheckEvent::class);
-    // Run the readiness checks a visit an admin page the message will be
+    // Run the status checks a visit an admin page the message will be
     // displayed.
     $this->drupalGet('/admin/reports/status');
     $this->clickLink('Run readiness checks');

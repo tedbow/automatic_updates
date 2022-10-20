@@ -5,7 +5,7 @@ namespace Drupal\automatic_updates_test\EventSubscriber;
 use Drupal\package_manager_test_validation\EventSubscriber\TestSubscriber;
 
 /**
- * A test readiness checker.
+ * A test status checker.
  */
 class TestSubscriber1 extends TestSubscriber {
 }

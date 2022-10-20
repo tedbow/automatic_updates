@@ -173,7 +173,7 @@ final class VersionPolicyValidator implements EventSubscriberInterface {
    *
    * @return string|null
    *   The target version of Drupal core, or NULL if it could not be determined
-   *   during a readiness check.
+   *   during a status check.
    *
    * @throws \LogicException
    *   Thrown if the target version cannot be determined due to unexpected

@@ -41,8 +41,10 @@ class ReadinessCheckTest extends AutomaticUpdatesKernelTestBase {
    * Tests running readiness checks using the readiness validation manager.
    */
   public function testReadinessValidationManager(): void {
+    $this->expectDeprecation('The "automatic_updates.readiness_validation_manager" service is deprecated in automatic_updates:8.x-2.5 and is removed from automatic_updates:3.0.0. Use the automatic_updates.status_checker service instead. See https://www.drupal.org/node/3316086.');
     $this->expectDeprecation(ReadinessCheckEvent::class . ' is deprecated in automatic_updates:8.x-2.5 and will be removed in automatic_updates:3.0.0. Use \Drupal\package_manager\Event\StatusCheckEvent instead. See https://www.drupal.org/node/3316086.');
-    $this->assertCheckerResultsFromManager([], TRUE);
+    $this->container->get('automatic_updates.readiness_validation_manager')
+      ->run();
   }
 
 }

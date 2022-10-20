@@ -18,25 +18,25 @@ use Drupal\system\SystemManager;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
- * Class for displaying readiness messages on admin pages.
+ * Class for displaying status check results on admin pages.
  *
  * @internal
- *   This class implements logic to output the messages from readiness checkers
+ *   This class implements logic to output the messages from status checkers
  *   on admin pages. It should not be called directly.
  */
-final class AdminReadinessMessages implements ContainerInjectionInterface {
+final class AdminStatusCheckMessages implements ContainerInjectionInterface {
 
   use MessengerTrait;
   use StringTranslationTrait;
   use RedirectDestinationTrait;
-  use ReadinessTrait;
+  use ValidationResultDisplayTrait;
 
   /**
-   * The readiness checker manager.
+   * The status checker service.
    *
-   * @var \Drupal\automatic_updates\Validation\ReadinessValidationManager
+   * @var \Drupal\automatic_updates\Validation\StatusChecker
    */
-  protected $readinessCheckerManager;
+  protected $statusChecker;
 
   /**
    * The admin context service.
@@ -74,10 +74,10 @@ final class AdminReadinessMessages implements ContainerInjectionInterface {
   protected $renderer;
 
   /**
-   * Constructs a ReadinessRequirement object.
+   * Constructs an AdminStatusCheckMessages object.
    *
-   * @param \Drupal\automatic_updates\Validation\ReadinessValidationManager $readiness_checker_manager
-   *   The readiness checker manager service.
+   * @param \Drupal\automatic_updates\Validation\StatusChecker $status_checker
+   *   The status checker service.
    * @param \Drupal\Core\Messenger\MessengerInterface $messenger
    *   The messenger service.
    * @param \Drupal\Core\Routing\AdminContext $admin_context
@@ -93,8 +93,8 @@ final class AdminReadinessMessages implements ContainerInjectionInterface {
    * @param \Drupal\Core\Render\RendererInterface $renderer
    *   The renderer service.
    */
-  public function __construct(ReadinessValidationManager $readiness_checker_manager, MessengerInterface $messenger, AdminContext $admin_context, AccountProxyInterface $current_user, TranslationInterface $translation, CurrentRouteMatch $current_route_match, CronUpdater $cron_updater, RendererInterface $renderer) {
-    $this->readinessCheckerManager = $readiness_checker_manager;
+  public function __construct(StatusChecker $status_checker, MessengerInterface $messenger, AdminContext $admin_context, AccountProxyInterface $current_user, TranslationInterface $translation, CurrentRouteMatch $current_route_match, CronUpdater $cron_updater, RendererInterface $renderer) {
+    $this->statusChecker = $status_checker;
     $this->setMessenger($messenger);
     $this->adminContext = $admin_context;
     $this->currentUser = $current_user;
@@ -109,7 +109,7 @@ final class AdminReadinessMessages implements ContainerInjectionInterface {
    */
   public static function create(ContainerInterface $container): self {
     return new static(
-      $container->get('automatic_updates.readiness_validation_manager'),
+      $container->get('automatic_updates.status_checker'),
       $container->get('messenger'),
       $container->get('router.admin_context'),
       $container->get('current_user'),
@@ -127,8 +127,8 @@ final class AdminReadinessMessages implements ContainerInjectionInterface {
     if (!$this->displayResultsOnCurrentPage()) {
       return;
     }
-    if ($this->readinessCheckerManager->getResults() === NULL) {
-      $checker_url = Url::fromRoute('automatic_updates.update_readiness')->setOption('query', $this->getDestinationArray());
+    if ($this->statusChecker->getResults() === NULL) {
+      $checker_url = Url::fromRoute('automatic_updates.status_check')->setOption('query', $this->getDestinationArray());
       if ($checker_url->access()) {
         $this->messenger()->addError($this->t('Your site has not recently run an update readiness check. <a href=":url">Run readiness checks now.</a>', [
           ':url' => $checker_url->toString(),
@@ -152,14 +152,20 @@ final class AdminReadinessMessages implements ContainerInjectionInterface {
    */
   protected function displayResultsOnCurrentPage(): bool {
     // If updates will not run during cron then we don't need to show the
-    // readiness checks on admin pages.
+    // status checks on admin pages.
     if ($this->cronUpdater->getMode() === CronUpdater::DISABLED) {
       return FALSE;
     }
 
     if ($this->adminContext->isAdminRoute() && $this->currentUser->hasPermission('administer site configuration')) {
       $route = $this->currentRouteMatch->getRouteObject();
-      return $route && $route->getOption('_automatic_updates_readiness_messages') !== 'skip';
+      if ($route) {
+        if ($route->hasOption('_automatic_updates_readiness_messages')) {
+          @trigger_error('The _automatic_updates_readiness_messages route option is deprecated in automatic_updates:8.x-2.5 and will be removed in automatic_updates:3.0.0. Use _automatic_updates_status_messages route option instead. See https://www.drupal.org/node/3316086.', E_USER_DEPRECATED);
+          $route->setOption('_automatic_updates_status_messages', $route->getOption('_automatic_updates_readiness_messages'));
+        }
+        return $route->getOption('_automatic_updates_status_messages') !== 'skip';
+      }
     }
     return FALSE;
   }
@@ -175,7 +181,7 @@ final class AdminReadinessMessages implements ContainerInjectionInterface {
    *   Whether any results were displayed.
    */
   protected function displayResultsForSeverity(int $severity): bool {
-    $results = $this->readinessCheckerManager->getResults($severity);
+    $results = $this->statusChecker->getResults($severity);
     if (empty($results)) {
       return FALSE;
     }

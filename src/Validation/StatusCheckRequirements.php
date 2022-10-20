@@ -12,25 +12,25 @@ use Drupal\system\SystemManager;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
- * Class for generating the readiness checkers' output for hook_requirements().
+ * Class for generating the status checkers' output for hook_requirements().
  *
  * @see automatic_updates_requirements()
  *
  * @internal
- *   This class implements logic to output the messages from readiness checkers
+ *   This class implements logic to output the messages from status checkers
  *   on the status report page. It should not be called directly.
  */
-final class ReadinessRequirements implements ContainerInjectionInterface {
+final class StatusCheckRequirements implements ContainerInjectionInterface {
 
   use StringTranslationTrait;
-  use ReadinessTrait;
+  use ValidationResultDisplayTrait;
 
   /**
-   * The readiness checker manager.
+   * The status checker service.
    *
-   * @var \Drupal\automatic_updates\Validation\ReadinessValidationManager
+   * @var \Drupal\automatic_updates\Validation\StatusChecker
    */
-  protected $readinessCheckerManager;
+  protected $statusChecker;
 
   /**
    * The date formatter service.
@@ -40,17 +40,17 @@ final class ReadinessRequirements implements ContainerInjectionInterface {
   protected $dateFormatter;
 
   /**
-   * Constructor ReadinessRequirement object.
+   * Constructs a StatusCheckRequirements object.
    *
-   * @param \Drupal\automatic_updates\Validation\ReadinessValidationManager $readiness_checker_manager
-   *   The readiness checker manager service.
+   * @param \Drupal\automatic_updates\Validation\StatusChecker $status_checker
+   *   The status checker service.
    * @param \Drupal\Core\StringTranslation\TranslationInterface $translation
    *   The translation service.
    * @param \Drupal\Core\Datetime\DateFormatterInterface $date_formatter
    *   The date formatter service.
    */
-  public function __construct(ReadinessValidationManager $readiness_checker_manager, TranslationInterface $translation, DateFormatterInterface $date_formatter) {
-    $this->readinessCheckerManager = $readiness_checker_manager;
+  public function __construct(StatusChecker $status_checker, TranslationInterface $translation, DateFormatterInterface $date_formatter) {
+    $this->statusChecker = $status_checker;
     $this->setStringTranslation($translation);
     $this->dateFormatter = $date_formatter;
   }
@@ -60,7 +60,7 @@ final class ReadinessRequirements implements ContainerInjectionInterface {
    */
   public static function create(ContainerInterface $container): self {
     return new static(
-      $container->get('automatic_updates.readiness_validation_manager'),
+      $container->get('automatic_updates.status_checker'),
       $container->get('string_translation'),
       $container->get('date.formatter')
     );
@@ -73,10 +73,10 @@ final class ReadinessRequirements implements ContainerInjectionInterface {
    *   Requirements arrays as specified by hook_requirements().
    */
   public function getRequirements(): array {
-    $results = $this->readinessCheckerManager->run()->getResults();
+    $results = $this->statusChecker->run()->getResults();
     $requirements = [];
     if (empty($results)) {
-      $requirements['automatic_updates_readiness'] = [
+      $requirements['automatic_updates_status_check'] = [
         'title' => $this->t('Update readiness checks'),
         'severity' => SystemManager::REQUIREMENT_OK,
         // @todo Link "automatic updates" to documentation in
@@ -85,13 +85,13 @@ final class ReadinessRequirements implements ContainerInjectionInterface {
       ];
       $run_link = $this->createRunLink();
       if ($run_link) {
-        $requirements['automatic_updates_readiness']['description'] = $run_link;
+        $requirements['automatic_updates_status_check']['description'] = $run_link;
       }
     }
     else {
       foreach ([SystemManager::REQUIREMENT_WARNING, SystemManager::REQUIREMENT_ERROR] as $severity) {
         if ($requirement = $this->createRequirementForSeverity($severity)) {
-          $requirements["automatic_updates_readiness_$severity"] = $requirement;
+          $requirements["automatic_updates_status_$severity"] = $requirement;
         }
       }
     }
@@ -111,7 +111,7 @@ final class ReadinessRequirements implements ContainerInjectionInterface {
    */
   protected function createRequirementForSeverity(int $severity): ?array {
     $severity_messages = [];
-    $results = $this->readinessCheckerManager->getResults($severity);
+    $results = $this->statusChecker->getResults($severity);
     if (!$results) {
       return NULL;
     }
@@ -153,18 +153,18 @@ final class ReadinessRequirements implements ContainerInjectionInterface {
   }
 
   /**
-   * Creates a link to run the readiness checkers.
+   * Creates a link to run the status checks.
    *
    * @return \Drupal\Core\StringTranslation\TranslatableMarkup|null
-   *   A link, if the user has access to run the readiness checkers, otherwise
+   *   A link, if the user has access to run the status checks, otherwise
    *   NULL.
    */
   protected function createRunLink(): ?TranslatableMarkup {
-    $readiness_check_url = Url::fromRoute('automatic_updates.update_readiness');
-    if ($readiness_check_url->access()) {
+    $status_check_url = Url::fromRoute('automatic_updates.status_check');
+    if ($status_check_url->access()) {
       return $this->t(
         '<a href=":link">Run readiness checks</a> now.',
-        [':link' => $readiness_check_url->toString()]
+        [':link' => $status_check_url->toString()]
       );
     }
     return NULL;

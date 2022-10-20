@@ -21,7 +21,7 @@ abstract class UpdateFormBase extends FormBase {
   use StatusCheckTrait;
 
   /**
-   * Gets a message, based on severity, when readiness checkers fail.
+   * Gets a message, based on severity, when status checks fail.
    *
    * @param int $severity
    *   The severity. Should be one of the SystemManager::REQUIREMENT_*

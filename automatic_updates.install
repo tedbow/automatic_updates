@@ -5,7 +5,7 @@
  * Contains install and update functions for Automatic Updates.
  */
 
-use Drupal\automatic_updates\Validation\ReadinessRequirements;
+use Drupal\automatic_updates\Validation\StatusCheckRequirements;
 
 /**
  * Implements hook_uninstall().
@@ -20,8 +20,19 @@ function automatic_updates_uninstall() {
 function automatic_updates_requirements($phase) {
   if ($phase === 'runtime') {
     // Check that site is ready to perform automatic updates.
-    /** @var \Drupal\automatic_updates\Validation\ReadinessRequirements $readiness_requirement */
-    $readiness_requirement = \Drupal::classResolver(ReadinessRequirements::class);
-    return $readiness_requirement->getRequirements();
+    /** @var \Drupal\automatic_updates\Validation\StatusCheckRequirements $status_check_requirement */
+    $status_check_requirement = \Drupal::classResolver(StatusCheckRequirements::class);
+    return $status_check_requirement->getRequirements();
   }
+}
+
+/**
+ * Stores cached readiness check results under a new key.
+ */
+function automatic_updates_update_9001(): void {
+  /** @var \Drupal\Core\KeyValueStore\KeyValueStoreExpirableInterface $key_value */
+  $key_value = \Drupal::service('keyvalue.expirable')
+    ->get('automatic_updates');
+  $key_value->rename('readiness_validation_last_run', 'status_check_last_run');
+  $key_value->rename('readiness_check_timestamp', 'status_check_timestamp');
 }

@@ -9,7 +9,7 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 /**
  * Clears stored validation results after certain config changes.
  *
- * @todo Move this functionality into ReadinessValidationManager when
+ * @todo Move this functionality into StatusChecker when
  *   https://www.drupal.org/i/3275317#comment-14482995 is resolved.
  *
  * @internal
@@ -36,7 +36,7 @@ final class ConfigSubscriber implements EventSubscriberInterface {
    */
   public function onConfigSave(ConfigCrudEvent $event): void {
     if ($event->getConfig()->getName() === 'package_manager.settings' && $event->isChanged('executables.composer')) {
-      \Drupal::service('automatic_updates.readiness_validation_manager')
+      \Drupal::service('automatic_updates.status_checker')
         ->clearStoredResults();
     }
   }

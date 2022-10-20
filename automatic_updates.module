@@ -7,7 +7,7 @@
 
 use Drupal\automatic_updates\BatchProcessor;
 use Drupal\Core\Routing\RouteMatchInterface;
-use Drupal\automatic_updates\Validation\AdminReadinessMessages;
+use Drupal\automatic_updates\Validation\AdminStatusCheckMessages;
 use Drupal\Core\Url;
 use Drupal\system\Controller\DbUpdateController;
 use Drupal\package_manager\Validator\ComposerExecutableValidator;
@@ -108,9 +108,9 @@ function automatic_updates_mail(string $key, array &$message, array $params): vo
  * Implements hook_page_top().
  */
 function automatic_updates_page_top() {
-  /** @var \Drupal\automatic_updates\Validation\AdminReadinessMessages $readiness_messages */
-  $readiness_messages = \Drupal::classResolver(AdminReadinessMessages::class);
-  $readiness_messages->displayAdminPageMessages();
+  /** @var \Drupal\automatic_updates\Validation\AdminStatusCheckMessages $status_check_messages */
+  $status_check_messages = \Drupal::classResolver(AdminStatusCheckMessages::class);
+  $status_check_messages->displayAdminPageMessages();
 
   // @todo Rely on the route option after https://www.drupal.org/i/3236497 is
   //   committed.
@@ -155,14 +155,14 @@ function automatic_updates_module_implements_alter(&$implementations, $hook) {
 function automatic_updates_cron() {
   \Drupal::service('automatic_updates.cron_updater')->handleCron();
 
-  /** @var \Drupal\automatic_updates\Validation\ReadinessValidationManager $checker_manager */
-  $checker_manager = \Drupal::service('automatic_updates.readiness_validation_manager');
-  $last_results = $checker_manager->getResults();
-  $last_run_time = $checker_manager->getLastRunTime();
-  // Do not run readiness checks more than once an hour unless there are no
-  // results available.
+  /** @var \Drupal\automatic_updates\Validation\StatusChecker $status_checker */
+  $status_checker = \Drupal::service('automatic_updates.status_checker');
+  $last_results = $status_checker->getResults();
+  $last_run_time = $status_checker->getLastRunTime();
+  // Do not run status checks more than once an hour unless there are no results
+  // available.
   if ($last_results === NULL || !$last_run_time || \Drupal::time()->getRequestTime() - $last_run_time > 3600) {
-    $checker_manager->run();
+    $status_checker->run();
   }
 
 }
@@ -171,22 +171,22 @@ function automatic_updates_cron() {
  * Implements hook_modules_installed().
  */
 function automatic_updates_modules_installed() {
-  // Run the readiness checkers if needed when any modules are installed in
-  // case they provide readiness checker services.
-  /** @var \Drupal\automatic_updates\Validation\ReadinessValidationManager $checker_manager */
-  $checker_manager = \Drupal::service('automatic_updates.readiness_validation_manager');
-  $checker_manager->run();
+  // Run the status checkers if needed when any modules are installed in
+  // case they provide status checkers.
+  /** @var \Drupal\automatic_updates\Validation\StatusChecker $status_checker */
+  $status_checker = \Drupal::service('automatic_updates.status_checker');
+  $status_checker->run();
 }
 
 /**
  * Implements hook_modules_uninstalled().
  */
 function automatic_updates_modules_uninstalled() {
-  // Run the readiness checkers if needed when any modules are uninstalled in
-  // case they provided readiness checker services.
-  /** @var \Drupal\automatic_updates\Validation\ReadinessValidationManager $checker_manager */
-  $checker_manager = \Drupal::service('automatic_updates.readiness_validation_manager');
-  $checker_manager->run();
+  // Run the status checkers if needed when any modules are uninstalled in
+  // case they provided status checkers.
+  /** @var \Drupal\automatic_updates\Validation\StatusChecker $status_checker */
+  $status_checker = \Drupal::service('automatic_updates.status_checker');
+  $status_checker->run();
 }
 
 /**

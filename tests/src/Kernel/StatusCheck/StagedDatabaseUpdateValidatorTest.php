@@ -1,6 +1,6 @@
 <?php
 
-namespace Drupal\Tests\automatic_updates\Kernel\ReadinessValidation;
+namespace Drupal\Tests\automatic_updates\Kernel\StatusCheck;
 
 use Drupal\Core\Logger\RfcLogLevel;
 use Drupal\package_manager\Event\PreApplyEvent;

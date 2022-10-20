@@ -1,6 +1,6 @@
 <?php
 
-namespace Drupal\Tests\automatic_updates\Kernel\ReadinessValidation\VersionPolicy;
+namespace Drupal\Tests\automatic_updates\Kernel\StatusCheck\VersionPolicy;
 
 use Drupal\automatic_updates\Validator\VersionPolicy\SupportedBranchInstalled;
 use Drupal\Tests\automatic_updates\Kernel\AutomaticUpdatesKernelTestBase;

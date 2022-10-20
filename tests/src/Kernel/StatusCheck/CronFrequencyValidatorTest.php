@@ -1,6 +1,6 @@
 <?php
 
-namespace Drupal\Tests\automatic_updates\Kernel\ReadinessValidation;
+namespace Drupal\Tests\automatic_updates\Kernel\StatusCheck;
 
 use Drupal\automatic_updates\CronUpdater;
 use Drupal\automatic_updates\Validator\CronFrequencyValidator;

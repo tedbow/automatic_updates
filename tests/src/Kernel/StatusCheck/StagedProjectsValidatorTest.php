@@ -1,6 +1,6 @@
 <?php
 
-namespace Drupal\Tests\automatic_updates\Kernel\ReadinessValidation;
+namespace Drupal\Tests\automatic_updates\Kernel\StatusCheck;
 
 use Drupal\package_manager\Event\PreApplyEvent;
 use Drupal\package_manager\Exception\StageValidationException;

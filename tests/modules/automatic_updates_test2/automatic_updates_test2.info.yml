@@ -1,6 +1,6 @@
 name: 'Automatic Updates Test module 2'
 type: module
-description: 'Test module to provide an additional readiness checker.'
+description: 'Test module to provide an additional status checker.'
 package: Testing
 dependencies:
   - drupal:automatic_updates_test

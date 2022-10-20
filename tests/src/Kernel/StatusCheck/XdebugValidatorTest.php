@@ -1,6 +1,6 @@
 <?php
 
-namespace Drupal\Tests\automatic_updates\Kernel\ReadinessValidation;
+namespace Drupal\Tests\automatic_updates\Kernel\StatusCheck;
 
 use Drupal\automatic_updates\CronUpdater;
 use Drupal\Core\Logger\RfcLogLevel;
@@ -47,7 +47,7 @@ class XdebugValidatorTest extends AutomaticUpdatesKernelTestBase {
     $message = 'Xdebug is enabled, which may have a negative performance impact on Package Manager and any modules that use it.';
 
     $config = $this->config('automatic_updates.settings');
-    // If cron updates are disabled, the readiness check message should only be
+    // If cron updates are disabled, the status check message should only be
     // a warning.
     $config->set('cron', CronUpdater::DISABLED)->save();
     $result = ValidationResult::createWarning([$message]);
@@ -57,7 +57,7 @@ class XdebugValidatorTest extends AutomaticUpdatesKernelTestBase {
     // so ensure that the cron updater will try to update to it.
     $config->set('cron', CronUpdater::SECURITY)->save();
 
-    // If cron updates are enabled the readiness check message should be an
+    // If cron updates are enabled the status check message should be an
     // error.
     $result = ValidationResult::createError([$message]);
     $this->assertCheckerResultsFromManager([$result], TRUE);

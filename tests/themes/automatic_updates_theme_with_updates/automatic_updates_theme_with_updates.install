@@ -4,5 +4,5 @@
  * @file
  * Blank .install file.
  *
- * @see \Drupal\Tests\automatic_updates\Kernel\ReadinessValidation\StagedDatabaseUpdateValidatorTest
+ * @see \Drupal\Tests\automatic_updates\Kernel\StatusCheck\StagedDatabaseUpdateValidatorTest
  */

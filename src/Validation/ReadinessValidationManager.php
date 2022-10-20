@@ -2,178 +2,70 @@
 
 namespace Drupal\automatic_updates\Validation;
 
-use Drupal\automatic_updates\CronUpdater;
-use Drupal\package_manager\StatusCheckTrait;
-use Drupal\automatic_updates\Updater;
-use Drupal\Component\Datetime\TimeInterface;
-use Drupal\Core\KeyValueStore\KeyValueExpirableFactoryInterface;
-use Drupal\package_manager\Event\PostApplyEvent;
-use Symfony\Component\EventDispatcher\EventDispatcherInterface;
-use Symfony\Component\EventDispatcher\EventSubscriberInterface;
-
 /**
  * Defines a manager to run readiness validation.
  */
-final class ReadinessValidationManager implements EventSubscriberInterface {
-
-  use StatusCheckTrait;
+final class ReadinessValidationManager {
 
   /**
-   * The key/value expirable storage.
+   * The decorated status checker service.
    *
-   * @var \Drupal\Core\KeyValueStore\KeyValueStoreExpirableInterface
+   * @var \Drupal\automatic_updates\Validation\StatusChecker
    */
-  protected $keyValueExpirable;
-
-  /**
-   * The time service.
-   *
-   * @var \Drupal\Component\Datetime\TimeInterface
-   */
-  protected $time;
-
-  /**
-   * The event dispatcher service.
-   *
-   * @var \Symfony\Component\EventDispatcher\EventDispatcherInterface
-   */
-  protected $eventDispatcher;
-
-  /**
-   * The number of hours to store results.
-   *
-   * @var int
-   */
-  protected $resultsTimeToLive;
-
-  /**
-   * The updater service.
-   *
-   * @var \Drupal\automatic_updates\Updater
-   */
-  protected $updater;
-
-  /**
-   * The cron updater service.
-   *
-   * @var \Drupal\automatic_updates\CronUpdater
-   */
-  protected $cronUpdater;
+  private $statusChecker;
 
   /**
    * Constructs a ReadinessValidationManager.
    *
-   * @param \Drupal\Core\KeyValueStore\KeyValueExpirableFactoryInterface $key_value_expirable_factory
-   *   The key/value expirable factory.
-   * @param \Drupal\Component\Datetime\TimeInterface $time
-   *   The time service.
-   * @param \Symfony\Component\EventDispatcher\EventDispatcherInterface $dispatcher
-   *   The event dispatcher service.
-   * @param \Drupal\automatic_updates\Updater $updater
-   *   The updater service.
-   * @param \Drupal\automatic_updates\CronUpdater $cron_updater
-   *   The cron updater service.
-   * @param int $results_time_to_live
-   *   The number of hours to store results.
+   * @param \Drupal\automatic_updates\Validation\StatusChecker $status_checker
+   *   The decorated status checker service.
    */
-  public function __construct(KeyValueExpirableFactoryInterface $key_value_expirable_factory, TimeInterface $time, EventDispatcherInterface $dispatcher, Updater $updater, CronUpdater $cron_updater, int $results_time_to_live) {
-    $this->keyValueExpirable = $key_value_expirable_factory->get('automatic_updates');
-    $this->time = $time;
-    $this->eventDispatcher = $dispatcher;
-    $this->updater = $updater;
-    $this->cronUpdater = $cron_updater;
-    $this->resultsTimeToLive = $results_time_to_live;
+  public function __construct(StatusChecker $status_checker) {
+    $this->statusChecker = $status_checker;
   }
 
   /**
-   * Dispatches the readiness check event and stores the results.
-   *
-   * @return $this
+   * Wraps \Drupal\automatic_updates\Validation\StatusChecker::run().
    */
   public function run(): self {
-    // If updates will run during cron, use the cron updater service provided by
-    // this module. This will allow validators to run specific validation for
-    // conditions that only affect cron updates.
-    if ($this->cronUpdater->getMode() === CronUpdater::DISABLED) {
-      $stage = $this->updater;
-    }
-    else {
-      $stage = $this->cronUpdater;
-    }
-    $results = $this->runStatusCheck($stage, $this->eventDispatcher, TRUE);
-
-    $this->keyValueExpirable->setWithExpire(
-      'readiness_validation_last_run',
-      $results,
-      $this->resultsTimeToLive * 60 * 60
-    );
-    $this->keyValueExpirable->set('readiness_check_timestamp', $this->time->getRequestTime());
+    $this->statusChecker->run();
     return $this;
   }
 
   /**
-   * Dispatches the readiness check event if there no stored valid results.
-   *
-   * @return $this
-   *
-   * @see self::getResults()
+   * Wraps \Drupal\automatic_updates\Validation\StatusChecker::runIfNoStoredResults().
    */
   public function runIfNoStoredResults(): self {
-    if ($this->getResults() === NULL) {
-      $this->run();
-    }
+    $this->statusChecker->runIfNoStoredResults();
     return $this;
   }
 
   /**
-   * Gets the validation results from the last run.
-   *
-   * @param int|null $severity
-   *   (optional) The severity for the results to return. Should be one of the
-   *   SystemManager::REQUIREMENT_* constants.
-   *
-   * @return \Drupal\package_manager\ValidationResult[]|
-   *   The validation result objects or NULL if no results are
-   *   available or if the stored results are no longer valid.
+   * Wraps \Drupal\automatic_updates\Validation\StatusChecker::getResults().
    */
   public function getResults(?int $severity = NULL): ?array {
-    $results = $this->keyValueExpirable->get('readiness_validation_last_run');
-    if ($results !== NULL) {
-      if ($severity !== NULL) {
-        $results = array_filter($results, function ($result) use ($severity) {
-          return $result->getSeverity() === $severity;
-        });
-      }
-      return $results;
-    }
-    return NULL;
+    return $this->statusChecker->getResults($severity);
   }
 
   /**
-   * Deletes any stored readiness validation results.
+   * Wraps \Drupal\automatic_updates\Validation\StatusChecker::clearStoredResults().
    */
   public function clearStoredResults(): void {
-    $this->keyValueExpirable->delete('readiness_validation_last_run');
+    $this->statusChecker->clearStoredResults();
   }
 
   /**
-   * Gets the timestamp of the last run.
-   *
-   * @return int|null
-   *   The timestamp of the last completed run, or NULL if no run has
-   *   been completed.
+   * Wraps \Drupal\automatic_updates\Validation\StatusChecker::getLastRunTime().
    */
   public function getLastRunTime(): ?int {
-    return $this->keyValueExpirable->get('readiness_check_timestamp');
+    return $this->statusChecker->getLastRunTime();
   }
 
   /**
-   * {@inheritdoc}
+   * Wraps \Drupal\automatic_updates\Validation\StatusChecker::getSubscribedEvents().
    */
-  public static function getSubscribedEvents(): array {
-    return [
-      PostApplyEvent::class => 'clearStoredResults',
-    ];
+  public static function getSubscribedEvents() {
+    return StatusChecker::getSubscribedEvents();
   }
 
 }

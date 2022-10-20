@@ -7,7 +7,7 @@ use Drupal\package_manager\Event\PreCreateEvent;
 use Drupal\package_manager\Event\StatusCheckEvent;
 
 /**
- * A test readiness checker.
+ * A test status checker.
  */
 class TestSubscriber2 extends TestSubscriber1 {
 

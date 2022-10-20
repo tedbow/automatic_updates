@@ -33,7 +33,7 @@ final class RouteSubscriber extends RouteSubscriberBase {
    * {@inheritdoc}
    */
   protected function alterRoutes(RouteCollection $collection) {
-    // Disable readiness checks on certain routes.
+    // Disable status checks on certain routes.
     $disabled_routes = [
       'system.theme_install',
       'update.module_install',
@@ -47,7 +47,7 @@ final class RouteSubscriber extends RouteSubscriberBase {
     foreach ($disabled_routes as $route) {
       $route = $collection->get($route);
       if ($route) {
-        $route->setOption('_automatic_updates_readiness_messages', 'skip');
+        $route->setOption('_automatic_updates_status_messages', 'skip');
       }
     }
 
@@ -71,7 +71,7 @@ final class RouteSubscriber extends RouteSubscriberBase {
     $options = [
       '_admin_route' => TRUE,
       '_maintenance_access' => TRUE,
-      '_automatic_updates_readiness_messages' => 'skip',
+      '_automatic_updates_status_messages' => 'skip',
     ];
     foreach ($update_module_routes as $name) {
       $route = $collection->get($name);

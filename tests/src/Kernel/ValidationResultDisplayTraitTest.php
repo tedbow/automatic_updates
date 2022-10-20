@@ -2,20 +2,20 @@
 
 namespace Drupal\Tests\automatic_updates\Kernel;
 
-use Drupal\automatic_updates\Validation\ReadinessTrait;
+use Drupal\automatic_updates\Validation\ValidationResultDisplayTrait;
 use Drupal\Core\Messenger\MessengerInterface;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\package_manager\ValidationResult;
 use Drupal\system\SystemManager;
 
 /**
- * @coversDefaultClass \Drupal\automatic_updates\Validation\ReadinessTrait
+ * @coversDefaultClass \Drupal\automatic_updates\Validation\ValidationResultDisplayTrait
  *
  * @group automatic_updates
  */
-class ReadinessTraitTest extends AutomaticUpdatesKernelTestBase {
+class ValidationResultDisplayTraitTest extends AutomaticUpdatesKernelTestBase {
 
-  use ReadinessTrait;
+  use ValidationResultDisplayTrait;
   use StringTranslationTrait;
 
   /**

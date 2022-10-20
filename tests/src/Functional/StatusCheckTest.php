@@ -13,11 +13,11 @@ use Drupal\Tests\automatic_updates\Traits\ValidationTestTrait;
 use Drupal\Tests\Traits\Core\CronRunTrait;
 
 /**
- * Tests readiness validation.
+ * Tests status checks.
  *
  * @group automatic_updates
  */
-class ReadinessValidationTest extends AutomaticUpdatesFunctionalTestBase {
+class StatusCheckTest extends AutomaticUpdatesFunctionalTestBase {
 
   use CronRunTrait;
   use ValidationTestTrait;
@@ -35,7 +35,7 @@ class ReadinessValidationTest extends AutomaticUpdatesFunctionalTestBase {
   protected $reportViewerUser;
 
   /**
-   * A user who can view the status report and run readiness checkers.
+   * A user who can view the status report and run status checks.
    *
    * @var \Drupal\user\Entity\User
    */
@@ -70,9 +70,9 @@ class ReadinessValidationTest extends AutomaticUpdatesFunctionalTestBase {
   }
 
   /**
-   * Tests readiness checkers on status report page.
+   * Tests status checks on status report page.
    */
-  public function testReadinessChecksStatusReport(): void {
+  public function testStatusChecksOnStatusReport(): void {
     $assert = $this->assertSession();
 
     // Ensure automated_cron is disabled before installing automatic_updates.
@@ -91,13 +91,13 @@ class ReadinessValidationTest extends AutomaticUpdatesFunctionalTestBase {
     $this->drupalGet('admin/reports/status');
     $this->assertNoErrors(TRUE);
 
-    // Confirm a user without the permission to run readiness checks does not
+    // Confirm a user without the permission to run status checks does not
     // have a link to run the checks when the checks need to be run again.
     // @todo Change this to fake the request time in
     //   https://www.drupal.org/node/3113971.
     /** @var \Drupal\Core\KeyValueStore\KeyValueStoreInterface $key_value */
     $key_value = $this->container->get('keyvalue.expirable')->get('automatic_updates');
-    $key_value->delete('readiness_validation_last_run');
+    $key_value->delete('status_check_last_run');
     $this->drupalLogin($this->reportViewerUser);
     $this->drupalGet('admin/reports/status');
     $this->assertNoErrors();
@@ -105,8 +105,8 @@ class ReadinessValidationTest extends AutomaticUpdatesFunctionalTestBase {
     $this->drupalGet('admin/reports/status');
     $this->assertNoErrors(TRUE);
 
-    // Confirm a user with the permission to run readiness checks does have a
-    // link to run the checks when the checks need to be run again.
+    // Confirm a user with the permission to run status checks does have a link
+    // to run the checks when the checks need to be run again.
     $this->drupalLogin($this->reportViewerUser);
     $this->drupalGet('admin/reports/status');
     $this->assertNoErrors();
@@ -117,7 +117,7 @@ class ReadinessValidationTest extends AutomaticUpdatesFunctionalTestBase {
     $expected_results = [$this->createValidationResult(SystemManager::REQUIREMENT_ERROR)];
     TestSubscriber1::setTestResult($expected_results, StatusCheckEvent::class);
 
-    // Run the readiness checks.
+    // Run the status checks.
     $this->clickLink('Run readiness checks');
     $assert->statusCodeEquals(200);
     // Confirm redirect back to status report page.
@@ -176,9 +176,9 @@ class ReadinessValidationTest extends AutomaticUpdatesFunctionalTestBase {
   }
 
   /**
-   * Tests readiness checkers results on admin pages..
+   * Tests status check results on admin pages..
    */
-  public function testReadinessChecksAdminPages(): void {
+  public function testStatusChecksOnAdminPages(): void {
     $assert = $this->assertSession();
     $messages_section_selector = '[data-drupal-messages]';
 
@@ -195,16 +195,16 @@ class ReadinessValidationTest extends AutomaticUpdatesFunctionalTestBase {
     $this->drupalGet('admin/structure');
     $assert->elementNotExists('css', $messages_section_selector);
 
-    // Confirm a user without the permission to run readiness checks does not
-    // have a link to run the checks when the checks need to be run again.
+    // Confirm a user without the permission to run status checks does not have
+    // a link to run the checks when the checks need to be run again.
     $expected_results = [$this->createValidationResult(SystemManager::REQUIREMENT_ERROR)];
     TestSubscriber1::setTestResult($expected_results, StatusCheckEvent::class);
     // @todo Change this to use ::delayRequestTime() to simulate running cron
-    //   after a 24 wait instead of directly deleting 'readiness_validation_last_run'
+    //   after a 24 wait instead of directly deleting 'status_check_last_run'
     //   https://www.drupal.org/node/3113971.
     /** @var \Drupal\Core\KeyValueStore\KeyValueStoreInterface $key_value */
     $key_value = $this->container->get('keyvalue.expirable')->get('automatic_updates');
-    $key_value->delete('readiness_validation_last_run');
+    $key_value->delete('status_check_last_run');
     // A user without the permission to run the checkers will not see a message
     // on other pages if the checkers need to be run again.
     $this->drupalGet('admin/structure');
@@ -301,7 +301,7 @@ class ReadinessValidationTest extends AutomaticUpdatesFunctionalTestBase {
     $assert->pageTextContainsOnce($expected_results[0]->getMessages()[0]);
     $assert->pageTextNotContains($expected_results[0]->getSummary());
 
-    // Confirm readiness messages are not displayed when cron updates are
+    // Confirm status check messages are not displayed when cron updates are
     // disabled.
     $this->drupalGet(Url::fromRoute('update.settings'));
     $edit['automatic_updates_cron'] = 'disable';
@@ -312,9 +312,9 @@ class ReadinessValidationTest extends AutomaticUpdatesFunctionalTestBase {
   }
 
   /**
-   * Tests installing a module with a checker before installing automatic_updates.
+   * Tests installing a module with a checker before installing Automatic Updates.
    */
-  public function testReadinessCheckAfterInstall(): void {
+  public function testStatusCheckAfterInstall(): void {
     $assert = $this->assertSession();
     $this->drupalLogin($this->checkerRunnerUser);
 
@@ -354,7 +354,7 @@ class ReadinessValidationTest extends AutomaticUpdatesFunctionalTestBase {
   /**
    * Tests that checker message for an uninstalled module is not displayed.
    */
-  public function testReadinessCheckerUninstall(): void {
+  public function testStatusCheckUninstall(): void {
     $assert = $this->assertSession();
     $this->drupalLogin($this->checkerRunnerUser);
 
@@ -420,7 +420,7 @@ class ReadinessValidationTest extends AutomaticUpdatesFunctionalTestBase {
 
     // Do the update; we don't expect any errors or special conditions to appear
     // during it. The Update button is displayed because the form does its own
-    // readiness check (without storing the results), and the checker is no
+    // status check (without storing the results), and the checker is no
     // longer raising an error.
     $this->drupalGet('/admin/modules/update');
     $this->useFixtureDirectoryAsStaged(__DIR__ . '/../../fixtures/drupal-9.8.1-installed');
@@ -445,10 +445,10 @@ class ReadinessValidationTest extends AutomaticUpdatesFunctionalTestBase {
   }
 
   /**
-   * Asserts that the readiness requirement displays no errors or warnings.
+   * Asserts that the status check requirement displays no errors or warnings.
    *
    * @param bool $run_link
-   *   (optional) Whether there should be a link to run the readiness checks.
+   *   (optional) Whether there should be a link to run the status checks.
    *   Defaults to FALSE.
    */
   private function assertNoErrors(bool $run_link = FALSE): void {
@@ -456,12 +456,12 @@ class ReadinessValidationTest extends AutomaticUpdatesFunctionalTestBase {
   }
 
   /**
-   * Asserts that the displayed readiness requirement contains warnings.
+   * Asserts that the displayed status check requirement contains warnings.
    *
    * @param \Drupal\package_manager\ValidationResult[] $expected_results
-   *   The readiness check results that should be visible.
+   *   The status check results that should be visible.
    * @param bool $run_link
-   *   (optional) Whether there should be a link to run the readiness checks.
+   *   (optional) Whether there should be a link to run the status checks.
    *   Defaults to FALSE.
    */
   private function assertWarnings(array $expected_results, bool $run_link = FALSE): void {
@@ -469,12 +469,12 @@ class ReadinessValidationTest extends AutomaticUpdatesFunctionalTestBase {
   }
 
   /**
-   * Asserts that the displayed readiness requirement contains errors.
+   * Asserts that the displayed status check requirement contains errors.
    *
    * @param \Drupal\package_manager\ValidationResult[] $expected_results
-   *   The readiness check results that should be visible.
+   *   The status check results that should be visible.
    * @param bool $run_link
-   *   (optional) Whether there should be a link to run the readiness checks.
+   *   (optional) Whether there should be a link to run the status checks.
    *   Defaults to FALSE.
    */
   private function assertErrors(array $expected_results, bool $run_link = FALSE): void {
@@ -482,7 +482,7 @@ class ReadinessValidationTest extends AutomaticUpdatesFunctionalTestBase {
   }
 
   /**
-   * Asserts that the readiness requirement is correct.
+   * Asserts that the status check requirement is correct.
    *
    * @param string $section
    *   The section of the status report in which the requirement is expected to
@@ -490,10 +490,10 @@ class ReadinessValidationTest extends AutomaticUpdatesFunctionalTestBase {
    * @param string $preamble
    *   The text that should appear before the result messages.
    * @param \Drupal\package_manager\ValidationResult[] $expected_results
-   *   The expected readiness check results, in the order we expect them to be
+   *   The expected status check results, in the order we expect them to be
    *   displayed.
    * @param bool $run_link
-   *   (optional) Whether there should be a link to run the readiness checks.
+   *   (optional) Whether there should be a link to run the status checks.
    *   Defaults to FALSE.
    *
    * @see \Drupal\Core\Render\Element\StatusReport::getInfo()
@@ -526,13 +526,13 @@ class ReadinessValidationTest extends AutomaticUpdatesFunctionalTestBase {
   }
 
   /**
-   * Extracts the readiness result messages from the requirement element.
+   * Extracts the status check result messages from the requirement element.
    *
    * @param \Behat\Mink\Element\NodeElement $requirement
-   *   The page element containing the readiness check results.
+   *   The page element containing the status check results.
    *
    * @return string[]
-   *   The readiness result messages (including summaries), in the order they
+   *   The status result messages (including summaries), in the order they
    *   appear on the page.
    */
   private function getMessagesFromRequirement(NodeElement $requirement): array {

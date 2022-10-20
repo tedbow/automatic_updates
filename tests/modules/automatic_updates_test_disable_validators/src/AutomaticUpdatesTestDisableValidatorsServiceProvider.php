@@ -7,7 +7,7 @@ use Drupal\Core\DependencyInjection\ServiceProviderBase;
 use Drupal\Core\Site\Settings;
 
 /**
- * Disables specific readiness validators in the service container.
+ * Disables specific validators in the service container.
  */
 class AutomaticUpdatesTestDisableValidatorsServiceProvider extends ServiceProviderBase {
 

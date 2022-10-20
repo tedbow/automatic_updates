@@ -14,14 +14,14 @@ trait ValidationTestTrait {
   use PackageManagerValidationTestTrait;
 
   /**
-   * Expected explanation text when readiness checkers return error messages.
+   * Expected explanation text when status checkers return error messages.
    *
    * @var string
    */
   protected static $errorsExplanation = 'Your site does not pass some readiness checks for automatic updates. It cannot be automatically updated until further action is performed.';
 
   /**
-   * Expected explanation text when readiness checkers return warning messages.
+   * Expected explanation text when status checkers return warning messages.
    *
    * @var string
    */
@@ -72,7 +72,7 @@ trait ValidationTestTrait {
    *   The messages of the type.
    */
   protected function getResultsFromManager(bool $call_run = FALSE, ?int $severity = NULL): ?array {
-    $manager = $this->container->get('automatic_updates.readiness_validation_manager');
+    $manager = $this->container->get('automatic_updates.status_checker');
     if ($call_run) {
       $manager->run();
     }

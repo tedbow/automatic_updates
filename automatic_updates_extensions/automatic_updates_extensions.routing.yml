@@ -7,7 +7,7 @@ automatic_updates_extensions.report_update:
     _permission: 'administer software updates'
   options:
     _admin_route: TRUE
-    _automatic_updates_readiness_messages: skip
+    _automatic_updates_status_messages: skip
 
 automatic_updates_extensions.module_update:
   path: '/admin/modules/automatic-update-extensions'
@@ -19,7 +19,7 @@ automatic_updates_extensions.module_update:
   options:
     _admin_route: TRUE
     _maintenance_access: TRUE
-    _automatic_updates_readiness_messages: skip
+    _automatic_updates_status_messages: skip
 
 automatic_updates_extension.theme_update:
   path: '/admin/appearance/automatic-update-extensions'
@@ -31,7 +31,7 @@ automatic_updates_extension.theme_update:
   options:
     _admin_route: TRUE
     _maintenance_access: TRUE
-    _automatic_updates_readiness_messages: skip
+    _automatic_updates_status_messages: skip
 
 automatic_updates_extension.confirmation_page:
   path: '/admin/automatic-update-extensions-ready/{stage_id}'
@@ -43,4 +43,4 @@ automatic_updates_extension.confirmation_page:
   options:
     _admin_route: TRUE
     _maintenance_access: TRUE
-    _automatic_updates_readiness_messages: skip
+    _automatic_updates_status_messages: skip

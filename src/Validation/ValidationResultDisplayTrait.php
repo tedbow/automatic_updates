@@ -9,17 +9,17 @@ use Drupal\package_manager\ValidationResult;
 use Drupal\system\SystemManager;
 
 /**
- * Common methods for working with readiness checkers.
+ * Common methods for displaying validation results in the admin UI.
  *
  * @internal
  *   This trait implements logic to output the messages from readiness checkers
  *   on admin pages. It may be changed or removed at any time without warning
  *   and should not be used by external code.
  */
-trait ReadinessTrait {
+trait ValidationResultDisplayTrait {
 
   /**
-   * Gets a message, based on severity, when readiness checkers fail.
+   * Gets a message, based on severity, when status checks fail.
    *
    * @param int $severity
    *   The severity. Should be one of the SystemManager::REQUIREMENT_*

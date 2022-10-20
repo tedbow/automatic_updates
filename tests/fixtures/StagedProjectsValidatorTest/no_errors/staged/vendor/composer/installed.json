@@ -2,7 +2,7 @@
   "_readme": [
     "This file simulates a list of packages installed in a virtual staging area.",
     "It will be compared against active.installed.json.",
-    "See \\Drupal\\Tests\\automatic_updates\\Kernel\\ReadinessValidation\\StagedProjectsValidatorTest::testErrors()"
+    "See \\Drupal\\Tests\\automatic_updates\\Kernel\\StatusCheck\\StagedProjectsValidatorTest::testErrors()"
   ],
   "packages": [
     {

@@ -1,13 +1,13 @@
-automatic_updates.update_readiness:
-  path: '/admin/automatic_updates/readiness'
+automatic_updates.status_check:
+  path: '/admin/automatic_updates/status'
   defaults:
-    _controller: '\Drupal\automatic_updates\Controller\ReadinessCheckerController::run'
+    _controller: '\Drupal\automatic_updates\Controller\StatusCheckController::run'
     _title: 'Update readiness checking'
   requirements:
     _permission: 'administer software updates'
   options:
     _maintenance_access: TRUE
-    _automatic_updates_readiness_messages: skip
+    _automatic_updates_status_messages: skip
 automatic_updates.confirmation_page:
   path: '/admin/automatic-update-ready/{stage_id}'
   defaults:
@@ -17,7 +17,7 @@ automatic_updates.confirmation_page:
     _permission: 'administer software updates'
   options:
     _maintenance_access: TRUE
-    _automatic_updates_readiness_messages: skip
+    _automatic_updates_status_messages: skip
 automatic_updates.finish:
   path: '/automatic-update/finish'
   defaults:
@@ -26,7 +26,7 @@ automatic_updates.finish:
     _permission: 'administer software updates'
   options:
     _maintenance_access: TRUE
-    _automatic_updates_readiness_messages: skip
+    _automatic_updates_status_messages: skip
 automatic_updates.cron.post_apply:
   path: '/automatic-update/cron/post-apply/{stage_id}/{installed_version}/{target_version}/{key}'
   defaults:
@@ -56,3 +56,13 @@ automatic_updates.theme_update:
     _controller: '\Drupal\automatic_updates\Controller\UpdateController::redirectDeprecatedRoute'
   requirements:
     _access: 'TRUE'
+automatic_updates.update_readiness:
+  path: '/admin/automatic_updates/readiness'
+  defaults:
+    _controller: '\Drupal\automatic_updates\Controller\StatusCheckController::runReadiness'
+    _title: 'Update readiness checking'
+  requirements:
+    _permission: 'administer software updates'
+  options:
+    _maintenance_access: TRUE
+    _automatic_updates_status_messages: skip

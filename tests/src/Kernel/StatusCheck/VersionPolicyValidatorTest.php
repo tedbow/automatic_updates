@@ -1,6 +1,6 @@
 <?php
 
-namespace Drupal\Tests\automatic_updates\Kernel\ReadinessValidation;
+namespace Drupal\Tests\automatic_updates\Kernel\StatusCheck;
 
 use Drupal\automatic_updates\CronUpdater;
 use Drupal\package_manager\Event\PreCreateEvent;
@@ -22,19 +22,18 @@ class VersionPolicyValidatorTest extends AutomaticUpdatesKernelTestBase {
   protected static $modules = ['automatic_updates'];
 
   /**
-   * Data provider for testReadinessCheck().
+   * Data provider for testStatusCheck().
    *
    * @return mixed[][]
    *   The test cases.
    */
-  public function providerReadinessCheck(): array {
+  public function providerStatusCheck(): array {
     $metadata_dir = __DIR__ . '/../../../../package_manager/tests/fixtures/release-history';
 
     return [
       // Updating from a dev, alpha, beta, or RC release is not allowed during
       // cron. The first case is a control to prove that a legitimate
-      // patch-level update from a stable release never raises a readiness
-      // error.
+      // patch-level update from a stable release never raises an error.
       'stable release installed' => [
         '9.8.0',
         "$metadata_dir/drupal.9.8.1-security.xml",
@@ -54,7 +53,7 @@ class VersionPolicyValidatorTest extends AutomaticUpdatesKernelTestBase {
         ],
       ],
       // The next six cases prove that updating from an alpha, beta, or RC
-      // release raises a readiness error if unattended updates are enabled.
+      // release raises an error if unattended updates are enabled.
       'alpha installed, cron disabled' => [
         '9.8.0-alpha1',
         "$metadata_dir/drupal.9.8.1-security.xml",
@@ -116,11 +115,11 @@ class VersionPolicyValidatorTest extends AutomaticUpdatesKernelTestBase {
         [],
       ],
       // These three cases prove that updating from an unsupported minor version
-      // will raise a readiness error if unattended updates are enabled.
-      // Furthermore, if an error is raised, the messaging will vary depending
-      // on whether attended updates across minor versions are allowed. (Note
-      // that the target version will not be automatically detected because the
-      // release metadata used in these cases doesn't have any 9.7.x releases.)
+      // will raise an error if unattended updates are enabled. Furthermore, if
+      // an error is raised, the messaging will vary depending on whether
+      // attended updates across minor versions are allowed. (Note that the
+      // target version will not be automatically detected because the release
+      // metadata used in these cases doesn't have any 9.7.x releases.)
       'update from unsupported minor, cron disabled' => [
         '9.7.1',
         "$metadata_dir/drupal.9.8.1-security.xml",
@@ -154,7 +153,7 @@ class VersionPolicyValidatorTest extends AutomaticUpdatesKernelTestBase {
   }
 
   /**
-   * Tests target version validation during readiness checks.
+   * Tests target version validation during status checks.
    *
    * @param string $installed_version
    *   The installed version of Drupal core.
@@ -171,9 +170,9 @@ class VersionPolicyValidatorTest extends AutomaticUpdatesKernelTestBase {
    *   (optional) Whether or not attended updates across minor updates are
    *   allowed. Defaults to FALSE.
    *
-   * @dataProvider providerReadinessCheck
+   * @dataProvider providerStatusCheck
    */
-  public function testReadinessCheck(string $installed_version, string $release_metadata, array $cron_modes, array $expected_results, bool $allow_minor_updates = FALSE): void {
+  public function testStatusCheck(string $installed_version, string $release_metadata, array $cron_modes, array $expected_results, bool $allow_minor_updates = FALSE): void {
     $this->setCoreVersion($installed_version);
     $this->setReleaseMetadata(['drupal' => $release_metadata]);
 
