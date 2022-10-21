@@ -3,7 +3,6 @@
 namespace Drupal\automatic_updates_test;
 
 use Drupal\automatic_updates\Exception\UpdateException;
-use Drupal\Component\Utility\Environment;
 use Drupal\Core\Controller\ControllerBase;
 use Drupal\Core\Render\HtmlResponse;
 use Symfony\Component\HttpFoundation\Response;
@@ -23,8 +22,6 @@ class TestController extends ControllerBase {
    *   The response object.
    */
   public function update(string $to_version): Response {
-    // Let it take as long as it needs.
-    Environment::setTimeLimit(0);
 
     /** @var \Drupal\automatic_updates\Updater $updater */
     $updater = \Drupal::service('automatic_updates.updater');
