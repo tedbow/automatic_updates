@@ -63,20 +63,28 @@ class CoreUpdateTest extends UpdateTestBase {
    */
   public function testApi(): void {
     $this->createTestProject('RecommendedProject');
-
-    $mink = $this->getMink();
-    $assert_session = $mink->assertSession();
-
+    $query = http_build_query([
+      'projects' => [
+        'drupal' => '9.8.1',
+      ],
+      'files_to_return' => [
+        'web/core/lib/Drupal.php',
+      ],
+    ]);
     // Ensure that the update is prevented if the web root and/or vendor
     // directories are not writable.
-    $this->assertReadOnlyFileSystemError('/automatic-update-test/update/9.8.1');
+    $this->assertReadOnlyFileSystemError("/automatic-updates-test-api?$query");
 
+    $mink = $this->getMink();
     $session = $mink->getSession();
     $session->reload();
-    $this->assertSame('9.8.1 found in Drupal.php', trim($session->getPage()->getContent()));
+    $mink->assertSession()->statusCodeEquals(200);
+    $file_contents = $session->getPage()->getContent();
+    $file_contents = json_decode($file_contents, TRUE, 512, JSON_THROW_ON_ERROR);
+    $this->assertStringContainsString("const VERSION = '9.8.1';", $file_contents['web/core/lib/Drupal.php']);
     // Even though the response is what we expect, assert the status code as
     // well, to be extra-certain that there was no kind of server-side error.
-    $assert_session->statusCodeEquals(200);
+
     $this->assertUpdateSuccessful('9.8.1');
   }
 

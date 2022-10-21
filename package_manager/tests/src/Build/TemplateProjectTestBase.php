@@ -164,7 +164,7 @@ END;
    * @param array $xml_map
    *   The update XML map, as used by update_test.settings.
    *
-   * @see \Drupal\automatic_updates_test\TestController::metadata()
+   * @see \Drupal\package_manager_test_release_history\TestController::metadata()
    */
   protected function setReleaseMetadata(array $xml_map): void {
     foreach ($xml_map as $metadata_file) {

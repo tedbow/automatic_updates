@@ -17,11 +17,18 @@ use Symfony\Component\HttpFoundation\Request;
 class ApiController extends ControllerBase {
 
   /**
+   * The route to redirect to after the stage has been applied.
+   *
+   * @var string
+   */
+  protected $finishedRoute = 'package_manager_test_api.finish';
+
+  /**
    * The stage.
    *
    * @var \Drupal\package_manager\Stage
    */
-  private $stage;
+  protected $stage;
 
   /**
    * The path locator service.
@@ -83,14 +90,8 @@ class ApiController extends ControllerBase {
    * @see ::finish()
    */
   public function run(Request $request): RedirectResponse {
-    $id = $this->stage->create();
-    $this->stage->require(
-      $request->get('runtime', []),
-      $request->get('dev', [])
-    );
-    $this->stage->apply();
-
-    $redirect_url = Url::fromRoute('package_manager_test_api.finish')
+    $id = $this->createAndApplyStage($request);
+    $redirect_url = Url::fromRoute($this->finishedRoute)
       ->setRouteParameter('id', $id)
       ->setOption('query', [
         'files_to_return' => $request->get('files_to_return', []),
@@ -126,6 +127,31 @@ class ApiController extends ControllerBase {
       $file_contents[$path] = file_get_contents($dir . '/' . $path);
     }
     return new JsonResponse($file_contents);
+  }
+
+  /**
+   * Creates a stage, requires packages into it, and applies the changes.
+   *
+   * @param \Symfony\Component\HttpFoundation\Request $request
+   *   The request. The runtime and dev dependencies are expected to be in
+   *   either the query string or request body, under the 'runtime' and 'dev'
+   *   keys, respectively. There may also be a 'files_to_return' key, which
+   *   contains an array of file paths, relative to the project root, whose
+   *   contents should be returned in the response.
+   *
+   * @return string
+   *   Unique ID for the stage, which can be used to claim the stage before
+   *   performing other operations on it. Calling code should store this ID for
+   *   as long as the stage needs to exist.
+   */
+  protected function createAndApplyStage(Request $request) : string {
+    $id = $this->stage->create();
+    $this->stage->require(
+      $request->get('runtime', []),
+      $request->get('dev', [])
+    );
+    $this->stage->apply();
+    return $id;
   }
 
 }
