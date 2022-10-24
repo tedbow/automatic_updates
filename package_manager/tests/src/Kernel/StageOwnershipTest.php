@@ -128,6 +128,20 @@ class StageOwnershipTest extends PackageManagerKernelTestBase {
   }
 
   /**
+   * Tests that the stage is owned by the person who calls create() on it.
+   */
+  public function testStageOwnedByCreator(): void {
+    // Even if the stage is instantiated before anyone is logged in, it should
+    // still be owned (and claimable) by the user who called create() on it.
+    $stage = $this->createStage();
+
+    $account = $this->createUser([], NULL, FALSE, ['uid' => 2]);
+    $this->setCurrentUser($account);
+    $id = $stage->create();
+    $this->createStage()->claim($id);
+  }
+
+  /**
    * Tests behavior of claiming a stage.
    */
   public function testClaim(): void {
@@ -253,8 +267,8 @@ class StageOwnershipTest extends PackageManagerKernelTestBase {
         // Normally, the stage will call this method as it tries to make
         // everything in the staging area writable so it can be deleted. We
         // don't wan't to do that in this test, since we're specifically testing
-        // what happens when we try to delete a staging area with unwritable
-        // files.
+        // what happens when we try to delete a staging area with
+        // write-protected files.
       }
 
     });
@@ -264,8 +278,8 @@ class StageOwnershipTest extends PackageManagerKernelTestBase {
     $stage->create();
     $this->assertFalse($stage->isAvailable());
 
-    // Make the stage directory unwritable, which should prevent files in it
-    // from being deleted.
+    // Write-protect the stage directory, which should prevent files in it from
+    // being deleted.
     $dir = $stage->getStageDirectory();
     chmod($dir, 0400);
     $this->assertDirectoryIsNotWritable($dir);

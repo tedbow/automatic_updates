@@ -283,11 +283,7 @@ class CronUpdater extends Updater {
     $owner = $this->tempStore->getMetadata(static::TEMPSTORE_LOCK_KEY)
       ->getOwnerId();
     // Reload the tempstore with the correct owner ID so we can claim the stage.
-    // We use \Drupal::service() here because, given what we inherit from the
-    // parent class, there's no clean way to inject the shared tempstore
-    // factory.
-    $this->tempStore = \Drupal::service('tempstore.shared')
-      ->get('package_manager_stage', $owner);
+    $this->tempStore = $this->tempStoreFactory->get('package_manager_stage', $owner);
 
     $this->claim($stage_id);
 

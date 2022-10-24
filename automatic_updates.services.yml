@@ -98,6 +98,8 @@ services:
       - { name: event_subscriber }
   automatic_updates.config_subscriber:
     class: Drupal\automatic_updates\EventSubscriber\ConfigSubscriber
+    arguments:
+      - '@automatic_updates.status_checker'
     tags:
       - { name: event_subscriber }
   automatic_updates.validator.scaffold_file_permissions:

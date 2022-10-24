@@ -149,6 +149,13 @@ class Stage implements LoggerAwareInterface {
   protected $eventDispatcher;
 
   /**
+   * The shared temp store factory.
+   *
+   * @var \Drupal\Core\TempStore\SharedTempStoreFactory
+   */
+  protected $tempStoreFactory;
+
+  /**
    * The shared temp store.
    *
    * @var \Drupal\Core\TempStore\SharedTempStore
@@ -202,7 +209,7 @@ class Stage implements LoggerAwareInterface {
    *   The file system service.
    * @param \Symfony\Contracts\EventDispatcher\EventDispatcherInterface $event_dispatcher
    *   The event dispatcher service.
-   * @param \Drupal\Core\TempStore\SharedTempStoreFactory $shared_tempstore
+   * @param \Drupal\Core\TempStore\SharedTempStoreFactory $temp_store_factory
    *   The shared tempstore factory.
    * @param \Drupal\Component\Datetime\TimeInterface $time
    *   The time service.
@@ -211,7 +218,7 @@ class Stage implements LoggerAwareInterface {
    * @param \Drupal\package_manager\FailureMarker $failure_marker
    *   The failure marker service.
    */
-  public function __construct(ConfigFactoryInterface $config_factory, PathLocator $path_locator, BeginnerInterface $beginner, StagerInterface $stager, CommitterInterface $committer, FileSystemInterface $file_system, EventDispatcherInterface $event_dispatcher, SharedTempStoreFactory $shared_tempstore, TimeInterface $time, PathFactoryInterface $path_factory = NULL, FailureMarker $failure_marker = NULL) {
+  public function __construct(ConfigFactoryInterface $config_factory, PathLocator $path_locator, BeginnerInterface $beginner, StagerInterface $stager, CommitterInterface $committer, FileSystemInterface $file_system, EventDispatcherInterface $event_dispatcher, SharedTempStoreFactory $temp_store_factory, TimeInterface $time, PathFactoryInterface $path_factory = NULL, FailureMarker $failure_marker = NULL) {
     $this->configFactory = $config_factory;
     $this->pathLocator = $path_locator;
     $this->beginner = $beginner;
@@ -220,7 +227,8 @@ class Stage implements LoggerAwareInterface {
     $this->fileSystem = $file_system;
     $this->eventDispatcher = $event_dispatcher;
     $this->time = $time;
-    $this->tempStore = $shared_tempstore->get('package_manager_stage');
+    $this->tempStoreFactory = $temp_store_factory;
+    $this->tempStore = $temp_store_factory->get('package_manager_stage');
     if (empty($path_factory)) {
       @trigger_error('Calling ' . __METHOD__ . '() without the $path_factory argument is deprecated in automatic_updates:8.x-2.3 and will be required before automatic_updates:3.0.0. See https://www.drupal.org/node/3310706.', E_USER_DEPRECATED);
       $path_factory = new PathFactory();
@@ -259,7 +267,7 @@ class Stage implements LoggerAwareInterface {
   protected function getMetadata(string $key) {
     $this->checkOwnership();
 
-    $metadata = $this->tempStore->getIfOwner(static::TEMPSTORE_METADATA_KEY) ?: [];
+    $metadata = $this->tempStore->get(static::TEMPSTORE_METADATA_KEY) ?: [];
     return $metadata[$key] ?? NULL;
   }
 
@@ -317,6 +325,12 @@ class Stage implements LoggerAwareInterface {
     // while the event is being processed, the stage is marked as available.
     // @see ::dispatch()
     $id = Crypt::randomBytesBase64();
+    // Re-acquire the tempstore to ensure that the lock is written by whoever is
+    // actually logged in (or not) right now, since it's possible that the stage
+    // was instantiated (i.e., __construct() was called) by a different session,
+    // which would result in the lock having the wrong owner and the stage not
+    // being claimable by whoever is actually creating it.
+    $this->tempStore = $this->tempStoreFactory->get('package_manager_stage');
     $this->tempStore->set(static::TEMPSTORE_LOCK_KEY, [$id, static::class]);
     $this->claim($id);
 
@@ -610,7 +624,7 @@ class Stage implements LoggerAwareInterface {
       throw new StageException('Cannot claim the stage because no stage has been created.');
     }
 
-    $stored_lock = $this->tempStore->getIfOwner(self::TEMPSTORE_LOCK_KEY);
+    $stored_lock = $this->tempStore->getIfOwner(static::TEMPSTORE_LOCK_KEY);
     if (!$stored_lock) {
       throw new StageOwnershipException('Cannot claim the stage because it is not owned by the current user or session.');
     }

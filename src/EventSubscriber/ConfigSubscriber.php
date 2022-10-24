@@ -2,6 +2,7 @@
 
 namespace Drupal\automatic_updates\EventSubscriber;
 
+use Drupal\automatic_updates\Validation\StatusChecker;
 use Drupal\Core\Config\ConfigCrudEvent;
 use Drupal\Core\Config\ConfigEvents;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
@@ -20,6 +21,23 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 final class ConfigSubscriber implements EventSubscriberInterface {
 
   /**
+   * The status checker service.
+   *
+   * @var \Drupal\automatic_updates\Validation\StatusChecker
+   */
+  protected $statusChecker;
+
+  /**
+   * Constructs a ConfigSubscriber object.
+   *
+   * @param \Drupal\automatic_updates\Validation\StatusChecker $status_checker
+   *   The status checker service.
+   */
+  public function __construct(StatusChecker $status_checker) {
+    $this->statusChecker = $status_checker;
+  }
+
+  /**
    * {@inheritdoc}
    */
   public static function getSubscribedEvents(): array {
@@ -36,8 +54,7 @@ final class ConfigSubscriber implements EventSubscriberInterface {
    */
   public function onConfigSave(ConfigCrudEvent $event): void {
     if ($event->getConfig()->getName() === 'package_manager.settings' && $event->isChanged('executables.composer')) {
-      \Drupal::service('automatic_updates.status_checker')
-        ->clearStoredResults();
+      $this->statusChecker->clearStoredResults();
     }
   }
 
