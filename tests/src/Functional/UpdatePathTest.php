@@ -15,7 +15,7 @@ class UpdatePathTest extends UpdatePathTestBase {
   protected function setDatabaseDumpFiles() {
     $this->databaseDumpFiles = [
       $this->getDrupalRoot() . '/core/modules/system/tests/fixtures/update/drupal-9.3.0.filled.standard.php.gz',
-      __DIR__ . '/../../fixtures/automatic_updates-installed.php.gz',
+      __DIR__ . '/../../fixtures/automatic_updates-installed.php',
     ];
   }
 
