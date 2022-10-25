@@ -240,6 +240,12 @@ class Stage implements LoggerAwareInterface {
     }
     $this->failureMarker = $failure_marker;
     $this->setLogger(new NullLogger());
+    if (self::TEMPSTORE_METADATA_KEY !== static::TEMPSTORE_METADATA_KEY) {
+      @trigger_error('Overriding ' . __CLASS__ . '::TEMPSTORE_METADATA_KEY is deprecated in automatic_updates:8.x-2.5 and will not be possible in automatic_updates:3.0.0. There is no replacement. See https://www.drupal.org/node/3317450.', E_USER_DEPRECATED);
+    }
+    if (self::TEMPSTORE_LOCK_KEY !== static::TEMPSTORE_LOCK_KEY) {
+      @trigger_error('Overriding ' . __CLASS__ . '::TEMPSTORE_LOCK_KEY is deprecated in automatic_updates:8.x-2.5 and will not be possible in automatic_updates:3.0.0. There is no replacement. See https://www.drupal.org/node/3317450.', E_USER_DEPRECATED);
+    }
   }
 
   /**
