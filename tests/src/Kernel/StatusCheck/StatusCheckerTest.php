@@ -22,6 +22,7 @@ class StatusCheckerTest extends AutomaticUpdatesKernelTestBase {
    */
   protected static $modules = [
     'automatic_updates_test',
+    'package_manager_test_validation',
     'user',
   ];
 
@@ -39,7 +40,8 @@ class StatusCheckerTest extends AutomaticUpdatesKernelTestBase {
    * @covers ::getResults
    */
   public function testGetResults(): void {
-    $this->enableModules(['automatic_updates', 'automatic_updates_test2']);
+    $this->container->get('module_installer')
+      ->install(['automatic_updates', 'automatic_updates_test2']);
     $this->assertCheckerResultsFromManager([], TRUE);
     $checker_1_expected = [$this->createValidationResult(SystemManager::REQUIREMENT_ERROR)];
     $checker_2_expected = [$this->createValidationResult(SystemManager::REQUIREMENT_ERROR)];
@@ -210,11 +212,11 @@ class StatusCheckerTest extends AutomaticUpdatesKernelTestBase {
    * Tests that stored validation results are deleted after an update.
    */
   public function testStoredResultsDeletedPostApply(): void {
-    $this->enableModules(['automatic_updates']);
     $this->setCoreVersion('9.8.0');
     $this->setReleaseMetadata([
       'drupal' => __DIR__ . '/../../../../package_manager/tests/fixtures/release-history/drupal.9.8.1-security.xml',
     ]);
+    $this->container->get('module_installer')->install(['automatic_updates']);
 
     // The status checker should raise a warning, so that the update is not
     // blocked or aborted.
@@ -258,7 +260,7 @@ class StatusCheckerTest extends AutomaticUpdatesKernelTestBase {
    * Tests that certain config changes clear stored results.
    */
   public function testStoredResultsClearedOnConfigChanges(): void {
-    $this->enableModules(['automatic_updates']);
+    $this->container->get('module_installer')->install(['automatic_updates']);
 
     $results = [$this->createValidationResult(SystemManager::REQUIREMENT_ERROR)];
     TestSubscriber1::setTestResult($results, StatusCheckEvent::class);

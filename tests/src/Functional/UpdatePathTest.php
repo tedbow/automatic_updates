@@ -2,6 +2,7 @@
 
 namespace Drupal\Tests\automatic_updates\Functional;
 
+use Drupal\automatic_updates\StatusCheckMailer;
 use Drupal\FunctionalTests\Update\UpdatePathTestBase;
 
 /**
@@ -39,10 +40,14 @@ class UpdatePathTest extends UpdatePathTestBase {
       // Ensure the stored value will still be retrievable.
       $key_value->setWithExpire($old_key, $value, 3600);
     }
+    $this->assertEmpty($this->config('automatic_updates.settings')->get('status_check_mail'));
+
     $this->runUpdates();
+
     foreach ($map as $new_key) {
       $this->assertNotEmpty($key_value->get($new_key));
     }
+    $this->assertSame(StatusCheckMailer::ERRORS_ONLY, $this->config('automatic_updates.settings')->get('status_check_mail'));
 
     // Ensure that the router was rebuilt and routes have the expected changes.
     $routes = $this->container->get('router')->getRouteCollection();

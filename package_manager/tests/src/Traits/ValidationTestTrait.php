@@ -2,6 +2,8 @@
 
 namespace Drupal\Tests\package_manager\Traits;
 
+use Drupal\package_manager\ValidationResult;
+
 /**
  * Contains helpful methods for testing stage validators.
  */
@@ -20,12 +22,7 @@ trait ValidationTestTrait {
 
     foreach ($expected_results as $expected_result) {
       $actual_result = array_shift($actual_results);
-      $this->assertSame($expected_result->getSeverity(), $actual_result->getSeverity());
-      $this->assertSame((string) $expected_result->getSummary(), (string) $actual_result->getSummary());
-      $this->assertSame(
-        array_map('strval', $expected_result->getMessages()),
-        array_map('strval', $actual_result->getMessages())
-      );
+      $this->assertTrue(ValidationResult::isEqual($expected_result, $actual_result));
     }
   }
 

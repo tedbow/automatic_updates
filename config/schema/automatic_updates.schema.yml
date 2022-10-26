@@ -11,3 +11,6 @@ automatic_updates.settings:
     allow_core_minor_updates:
       type: boolean
       label: 'Allow minor level Drupal core updates'
+    status_check_mail:
+      type: string
+      label: 'Whether to send status check failure e-mail notifications during cron'

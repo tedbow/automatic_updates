@@ -7,7 +7,6 @@ use Drupal\automatic_updates_test\EventSubscriber\TestSubscriber1;
 use Drupal\Core\DependencyInjection\ContainerBuilder;
 use Drupal\Core\Form\FormState;
 use Drupal\Core\Logger\RfcLogLevel;
-use Drupal\Core\Test\AssertMailTrait;
 use Drupal\Core\Url;
 use Drupal\package_manager\Event\PostApplyEvent;
 use Drupal\package_manager\Event\PostCreateEvent;
@@ -20,6 +19,7 @@ use Drupal\package_manager\Event\PreCreateEvent;
 use Drupal\package_manager\Exception\StageValidationException;
 use Drupal\package_manager\ValidationResult;
 use Drupal\package_manager_bypass\Committer;
+use Drupal\Tests\automatic_updates\Traits\EmailNotificationsTestTrait;
 use Drupal\Tests\package_manager\Traits\PackageManagerBypassTestTrait;
 use Drupal\Tests\user\Traits\UserCreationTrait;
 use Drupal\update\UpdateSettingsForm;
@@ -34,7 +34,7 @@ use Symfony\Component\EventDispatcher\EventDispatcherInterface;
  */
 class CronUpdaterTest extends AutomaticUpdatesKernelTestBase {
 
-  use AssertMailTrait;
+  use EmailNotificationsTestTrait;
   use PackageManagerBypassTestTrait;
   use UserCreationTrait;
 
@@ -55,18 +55,6 @@ class CronUpdaterTest extends AutomaticUpdatesKernelTestBase {
   private $logger;
 
   /**
-   * The people who should be emailed about successful or failed updates.
-   *
-   * The keys are the email addresses, and the values are the langcode they
-   * should be emailed in.
-   *
-   * @var string[]
-   *
-   * @see ::setUp()
-   */
-  private $emailRecipients = [];
-
-  /**
    * {@inheritdoc}
    */
   protected function setUp(): void {
@@ -79,25 +67,7 @@ class CronUpdaterTest extends AutomaticUpdatesKernelTestBase {
     $this->installEntitySchema('user');
     $this->installSchema('user', ['users_data']);
 
-    // Prepare the recipient list to email when an update succeeds or fails.
-    // First, create a user whose preferred language is different from the
-    // default language, so we can be sure they're emailed in their preferred
-    // language; we also ensure that an email which doesn't correspond to a user
-    // account is emailed in the default language.
-    $default_language = $this->container->get('language_manager')
-      ->getDefaultLanguage()
-      ->getId();
-    $this->assertNotSame('fr', $default_language);
-
-    $account = $this->createUser([], NULL, FALSE, [
-      'preferred_langcode' => 'fr',
-    ]);
-    $this->emailRecipients['emissary@deep.space'] = $default_language;
-    $this->emailRecipients[$account->getEmail()] = $account->getPreferredLangcode();
-
-    $this->config('update.settings')
-      ->set('notification.emails', array_keys($this->emailRecipients))
-      ->save();
+    $this->setUpEmailRecipients();
   }
 
   /**
@@ -514,46 +484,6 @@ This e-mail was sent by the Automatic Updates module. Unattended updates are not
 If you are using this feature in production, it is strongly recommended for you to visit your site and ensure that everything still looks good.
 END;
     $this->assertMessagesSent('URGENT: Drupal core update failed', $expected_body);
-  }
-
-  /**
-   * Asserts that all recipients received a given email.
-   *
-   * @param string $subject
-   *   The subject line of the email that should have been sent.
-   * @param string $body
-   *   The beginning of the body text of the email that should have been sent.
-   *
-   * @see ::$emailRecipients
-   */
-  private function assertMessagesSent(string $subject, string $body): void {
-    $sent_messages = $this->getMails([
-      'subject' => $subject,
-    ]);
-    $this->assertNotEmpty($sent_messages);
-    $this->assertSame(count($this->emailRecipients), count($sent_messages));
-
-    // Ensure the body is formatted the way the PHP mailer would do it.
-    $message = [
-      'body' => [$body],
-    ];
-    $message = $this->container->get('plugin.manager.mail')
-      ->createInstance('php_mail')
-      ->format($message);
-    $body = $message['body'];
-
-    foreach ($sent_messages as $message) {
-      $email = $message['to'];
-      $expected_langcode = $this->emailRecipients[$email];
-
-      $this->assertSame($expected_langcode, $message['langcode']);
-      // The message, and every line in it, should have been sent in the
-      // expected language.
-      // @see automatic_updates_test_mail_alter()
-      $this->assertArrayHasKey('line_langcodes', $message);
-      $this->assertSame([$expected_langcode], $message['line_langcodes']);
-      $this->assertStringStartsWith($body, $message['body']);
-    }
   }
 
   /**

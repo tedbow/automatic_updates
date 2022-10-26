@@ -2,7 +2,6 @@
 
 namespace Drupal\automatic_updates;
 
-use Drupal\Core\Language\LanguageManagerInterface;
 use Drupal\Core\Logger\LoggerChannelFactoryInterface;
 use Drupal\Core\Mail\MailManagerInterface;
 use Drupal\Core\State\StateInterface;
@@ -19,7 +18,9 @@ use Symfony\Component\HttpFoundation\Response;
  *
  * @internal
  *   This class implements logic specific to Automatic Updates' cron hook
- *   implementation. It should not be called directly.
+ *   implementation and may be changed or removed at any time without warning.
+ *   It should not be called directly, and external code should not interact
+ *   with it.
  */
 class CronUpdater extends Updater {
 
@@ -75,11 +76,11 @@ class CronUpdater extends Updater {
   protected $mailManager;
 
   /**
-   * The language manager service.
+   * The status check mailer service.
    *
-   * @var \Drupal\Core\Language\LanguageManagerInterface
+   * @var \Drupal\automatic_updates\StatusCheckMailer
    */
-  protected $languageManager;
+  protected $statusCheckMailer;
 
   /**
    * The state service.
@@ -97,19 +98,19 @@ class CronUpdater extends Updater {
    *   The logger channel factory.
    * @param \Drupal\Core\Mail\MailManagerInterface $mail_manager
    *   The mail manager service.
-   * @param \Drupal\Core\Language\LanguageManagerInterface $language_manager
-   *   The language manager service.
+   * @param \Drupal\automatic_updates\StatusCheckMailer $status_check_mailer
+   *   The status check mailer service.
    * @param \Drupal\Core\State\StateInterface $state
    *   The state service.
    * @param mixed ...$arguments
    *   Additional arguments to pass to the parent constructor.
    */
-  public function __construct(ReleaseChooser $release_chooser, LoggerChannelFactoryInterface $logger_factory, MailManagerInterface $mail_manager, LanguageManagerInterface $language_manager, StateInterface $state, ...$arguments) {
+  public function __construct(ReleaseChooser $release_chooser, LoggerChannelFactoryInterface $logger_factory, MailManagerInterface $mail_manager, StatusCheckMailer $status_check_mailer, StateInterface $state, ...$arguments) {
     parent::__construct(...$arguments);
     $this->releaseChooser = $release_chooser;
     $this->logger = $logger_factory->get('automatic_updates');
     $this->mailManager = $mail_manager;
-    $this->languageManager = $language_manager;
+    $this->statusCheckMailer = $status_check_mailer;
     $this->state = $state;
   }
 
@@ -204,7 +205,7 @@ class CronUpdater extends Updater {
         $key = 'cron_failed';
       }
 
-      foreach ($this->getEmailRecipients() as $email => $langcode) {
+      foreach ($this->statusCheckMailer->getRecipients() as $email => $langcode) {
         $this->mailManager->mail('automatic_updates', $key, $email, $langcode, $mail_params);
       }
       $this->logger->error($e->getMessage());
@@ -306,7 +307,7 @@ class CronUpdater extends Updater {
         'previous_version' => $installed_version,
         'updated_version' => $target_version,
       ];
-      foreach ($this->getEmailRecipients() as $recipient => $langcode) {
+      foreach ($this->statusCheckMailer->getRecipients() as $recipient => $langcode) {
         $this->mailManager->mail('automatic_updates', 'cron_successful', $recipient, $langcode, $mail_params);
       }
     }
@@ -326,40 +327,6 @@ class CronUpdater extends Updater {
     }
 
     return new Response();
-  }
-
-  /**
-   * Retrieves preferred language to send email.
-   *
-   * @param string $recipient
-   *   The email address of the recipient.
-   *
-   * @return string
-   *   The preferred language of the recipient.
-   */
-  protected function getEmailLangcode(string $recipient): string {
-    $user = user_load_by_mail($recipient);
-    if ($user) {
-      return $user->getPreferredLangcode();
-    }
-    return $this->languageManager->getDefaultLanguage()->getId();
-  }
-
-  /**
-   * Returns an array of people to email with success or failure notifications.
-   *
-   * @return string[]
-   *   An array whose keys are the email addresses to send notifications to, and
-   *   values are the langcodes that they should be emailed in.
-   */
-  protected function getEmailRecipients(): array {
-    $recipients = $this->configFactory->get('update.settings')
-      ->get('notification.emails');
-    $emails = [];
-    foreach ($recipients as $recipient) {
-      $emails[$recipient] = $this->getEmailLangcode($recipient);
-    }
-    return $emails;
   }
 
   /**

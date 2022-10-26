@@ -14,6 +14,12 @@ services:
       - 24
     tags:
       - { name: event_subscriber }
+  automatic_updates.status_check_mailer:
+    class: Drupal\automatic_updates\StatusCheckMailer
+    arguments:
+      - '@config.factory'
+      - '@plugin.manager.mail'
+      - '@language_manager'
   automatic_updates.readiness_validation_manager:
     class: Drupal\automatic_updates\Validation\ReadinessValidationManager
     arguments:
@@ -41,7 +47,7 @@ services:
       - '@automatic_updates.release_chooser'
       - '@logger.factory'
       - '@plugin.manager.mail'
-      - '@language_manager'
+      - '@automatic_updates.status_check_mailer'
       - '@state'
       - '@config.factory'
       - '@package_manager.path_locator'

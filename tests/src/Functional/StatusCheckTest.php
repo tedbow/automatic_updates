@@ -3,6 +3,7 @@
 namespace Drupal\Tests\automatic_updates\Functional;
 
 use Behat\Mink\Element\NodeElement;
+use Drupal\automatic_updates\StatusCheckMailer;
 use Drupal\automatic_updates_test\Datetime\TestTime;
 use Drupal\automatic_updates_test\EventSubscriber\TestSubscriber1;
 use Drupal\automatic_updates_test2\EventSubscriber\TestSubscriber2;
@@ -442,6 +443,58 @@ class StatusCheckTest extends AutomaticUpdatesFunctionalTestBase {
     // The warning should not be visible anymore.
     $this->drupalGet('/admin/structure');
     $assert_session->pageTextNotContains($message);
+  }
+
+  /**
+   * Tests that stored results are deleted after certain config changes.
+   */
+  public function testStoredResultsClearedAfterConfigChanges(): void {
+    $this->drupalLogin($this->checkerRunnerUser);
+
+    // Flag a validation error, which will be displayed in the messages area.
+    $result = $this->createValidationResult(SystemManager::REQUIREMENT_ERROR);
+    TestSubscriber1::setTestResult([$result], StatusCheckEvent::class);
+    $message = $result->getMessages()[0];
+
+    $this->container->get('module_installer')->install([
+      'automatic_updates',
+      'automatic_updates_test',
+    ]);
+    $this->container = $this->container->get('kernel')->getContainer();
+
+    // The error should be persistently visible, even after the checker stops
+    // flagging it.
+    $this->drupalGet('/admin/structure');
+    $assert_session = $this->assertSession();
+    $assert_session->pageTextContains($message);
+    TestSubscriber1::setTestResult(NULL, StatusCheckEvent::class);
+    $session = $this->getSession();
+    $session->reload();
+    $assert_session->pageTextContains($message);
+
+    $config = $this->config('automatic_updates.settings');
+    // If we disable notifications, stored results should not be cleared.
+    $config->set('status_check_mail', StatusCheckMailer::DISABLED)->save();
+    $session->reload();
+    $assert_session->pageTextContains($message);
+
+    // If we re-enable them, though, they should be cleared.
+    $config->set('status_check_mail', StatusCheckMailer::ERRORS_ONLY)->save();
+    $session->reload();
+    $assert_session->pageTextNotContains($message);
+    $no_results_message = 'Your site has not recently run an update readiness check.';
+    $assert_session->pageTextContains($no_results_message);
+
+    // If we flag an error again, and keep notifications enabled but change
+    // their sensitivity level, the stored results should be cleared.
+    TestSubscriber1::setTestResult([$result], StatusCheckEvent::class);
+    $session->getPage()->clickLink('Run readiness checks now');
+    $this->drupalGet('/admin/structure');
+    $assert_session->pageTextContains($message);
+    $config->set('status_check_mail', StatusCheckMailer::ALL)->save();
+    $session->reload();
+    $assert_session->pageTextNotContains($message);
+    $assert_session->pageTextContains($no_results_message);
   }
 
   /**

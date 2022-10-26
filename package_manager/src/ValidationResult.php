@@ -133,4 +133,24 @@ final class ValidationResult {
     return $results ? SystemManager::REQUIREMENT_WARNING : SystemManager::REQUIREMENT_OK;
   }
 
+  /**
+   * Determines if two validation results are equivalent.
+   *
+   * @param self $a
+   *   A validation result.
+   * @param self $b
+   *   Another validation result.
+   *
+   * @return bool
+   *   TRUE if the given validation results have the same severity, summary,
+   *   and messages (in the same order); otherwise FALSE.
+   */
+  public static function isEqual(self $a, self $b): bool {
+    return (
+      $a->getSeverity() === $b->getSeverity() &&
+      strval($a->getSummary()) === strval($b->getSummary()) &&
+      array_map('strval', $a->getMessages()) === array_map('strval', $b->getMessages())
+    );
+  }
+
 }
