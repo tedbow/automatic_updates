@@ -242,9 +242,13 @@ class Stage implements LoggerAwareInterface {
     $this->setLogger(new NullLogger());
     if (self::TEMPSTORE_METADATA_KEY !== static::TEMPSTORE_METADATA_KEY) {
       @trigger_error('Overriding ' . __CLASS__ . '::TEMPSTORE_METADATA_KEY is deprecated in automatic_updates:8.x-2.5 and will not be possible in automatic_updates:3.0.0. There is no replacement. See https://www.drupal.org/node/3317450.', E_USER_DEPRECATED);
+      \Drupal::logger('package_manager')
+        ->error(__CLASS__ . '::TEMPSTORE_METADATA_KEY is overridden by ' . static::class . '. This is deprecated because it can cause errors or other unexpected behavior. It is strongly recommended to stop overriding this constant. See https://www.drupal.org/node/3317450 for more information.');
     }
     if (self::TEMPSTORE_LOCK_KEY !== static::TEMPSTORE_LOCK_KEY) {
       @trigger_error('Overriding ' . __CLASS__ . '::TEMPSTORE_LOCK_KEY is deprecated in automatic_updates:8.x-2.5 and will not be possible in automatic_updates:3.0.0. There is no replacement. See https://www.drupal.org/node/3317450.', E_USER_DEPRECATED);
+      \Drupal::logger('package_manager')
+        ->error(__CLASS__ . '::TEMPSTORE_LOCK_KEY is overridden by ' . static::class . '. This is deprecated because it can cause errors or other unexpected behavior. It is strongly recommended to stop overriding this constant. See https://www.drupal.org/node/3317450 for more information.');
     }
   }
 

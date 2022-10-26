@@ -5,6 +5,7 @@ namespace Drupal\Tests\package_manager\Kernel;
 use Drupal\Component\Datetime\Time;
 use Drupal\Core\DependencyInjection\ContainerBuilder;
 use Drupal\Core\Extension\ModuleUninstallValidatorException;
+use Drupal\Core\Logger\RfcLogLevel;
 use Drupal\package_manager\Event\PostApplyEvent;
 use Drupal\package_manager\Event\PreApplyEvent;
 use Drupal\package_manager\Event\StageEvent;
@@ -393,6 +394,11 @@ class StageTest extends PackageManagerKernelTestBase {
    * @group legacy
    */
   public function testConstructorDeprecations(): void {
+    $logger = new TestLogger();
+    $this->container->get('logger.factory')
+      ->get('package_manager')
+      ->addLogger($logger);
+
     $this->expectDeprecation('Calling Drupal\package_manager\Stage::__construct() without the $path_factory argument is deprecated in automatic_updates:8.x-2.3 and will be required before automatic_updates:3.0.0. See https://www.drupal.org/node/3310706.');
     $this->expectDeprecation('Calling Drupal\package_manager\Stage::__construct() without the $failure_marker argument is deprecated in automatic_updates:8.x-2.3 and will be required before automatic_updates:3.0.0. See https://www.drupal.org/node/3311257.');
     $this->expectDeprecation('Overriding Drupal\package_manager\Stage::TEMPSTORE_METADATA_KEY is deprecated in automatic_updates:8.x-2.5 and will not be possible in automatic_updates:3.0.0. There is no replacement. See https://www.drupal.org/node/3317450.');
@@ -408,6 +414,8 @@ class StageTest extends PackageManagerKernelTestBase {
       $this->container->get('tempstore.shared'),
       $this->container->get('datetime.time')
     );
+    $this->assertTrue($logger->hasRecord('Drupal\package_manager\Stage::TEMPSTORE_METADATA_KEY is overridden by ' . TestStageOverriddenConstants::class . '. This is deprecated because it can cause errors or other unexpected behavior. It is strongly recommended to stop overriding this constant. See https://www.drupal.org/node/3317450 for more information.', RfcLogLevel::ERROR));
+    $this->assertTrue($logger->hasRecord('Drupal\package_manager\Stage::TEMPSTORE_LOCK_KEY is overridden by ' . TestStageOverriddenConstants::class . '. This is deprecated because it can cause errors or other unexpected behavior. It is strongly recommended to stop overriding this constant. See https://www.drupal.org/node/3317450 for more information.', RfcLogLevel::ERROR));
   }
 
   /**
