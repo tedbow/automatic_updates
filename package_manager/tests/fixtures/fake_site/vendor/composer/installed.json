@@ -20,5 +20,6 @@
       "name": "drupal/core-dev",
       "version": "9.8.0"
     }
-  ]
+  ],
+  "dev-package-names": []
 }

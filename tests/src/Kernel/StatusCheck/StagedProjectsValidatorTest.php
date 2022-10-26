@@ -6,6 +6,7 @@ use Drupal\package_manager\Event\PreApplyEvent;
 use Drupal\package_manager\Exception\StageValidationException;
 use Drupal\package_manager\ValidationResult;
 use Drupal\Tests\automatic_updates\Kernel\AutomaticUpdatesKernelTestBase;
+use Drupal\Tests\package_manager\Traits\FixtureUtilityTrait;
 
 /**
  * @covers \Drupal\automatic_updates\Validator\StagedProjectsValidator
@@ -13,6 +14,8 @@ use Drupal\Tests\automatic_updates\Kernel\AutomaticUpdatesKernelTestBase;
  * @group automatic_updates
  */
 class StagedProjectsValidatorTest extends AutomaticUpdatesKernelTestBase {
+
+  use FixtureUtilityTrait;
 
   /**
    * {@inheritdoc}
@@ -27,28 +30,6 @@ class StagedProjectsValidatorTest extends AutomaticUpdatesKernelTestBase {
     // supported.
     $this->disableValidators[] = 'package_manager.validator.supported_releases';
     parent::setUp();
-  }
-
-  /**
-   * Asserts a set of validation results when staged changes are applied.
-   *
-   * @param \Drupal\package_manager\ValidationResult[] $expected_results
-   *   The expected validation results.
-   */
-  private function validate(array $expected_results): void {
-    /** @var \Drupal\automatic_updates\Updater $updater */
-    $updater = $this->container->get('automatic_updates.updater');
-    $updater->begin(['drupal' => '9.8.1']);
-    $updater->stage();
-
-    try {
-      $updater->apply();
-      // If no exception occurs, ensure we weren't expecting any errors.
-      $this->assertEmpty($expected_results);
-    }
-    catch (StageValidationException $e) {
-      $this->assertValidationResultsEqual($expected_results, $e->getResults());
-    }
   }
 
   /**
@@ -72,75 +53,188 @@ class StagedProjectsValidatorTest extends AutomaticUpdatesKernelTestBase {
     $this->container->get('event_dispatcher')
       ->addListener(PreApplyEvent::class, $listener, PHP_INT_MAX);
 
-    $this->validate([
-      ValidationResult::createError(["Composer could not find the config file: $composer_json\n"]),
-    ]);
-  }
+    /** @var \Drupal\automatic_updates\Updater $updater */
+    $updater = $this->container->get('automatic_updates.updater');
+    $updater->begin(['drupal' => '9.8.1']);
+    $updater->stage();
 
-  /**
-   * Tests validation errors, or lack thereof.
-   *
-   * @param string $root_fixture_directory
-   *   A directory containing to fixtures sub-directories, 'active' and
-   *   'staged'.
-   * @param string|null $expected_summary
-   *   The expected error summary, or NULL if no errors are expected.
-   * @param string[] $expected_messages
-   *   The expected error messages, if any.
-   *
-   * @dataProvider providerErrors
-   */
-  public function testErrors(string $root_fixture_directory, ?string $expected_summary, array $expected_messages): void {
-    $this->copyFixtureFolderToActiveDirectory("$root_fixture_directory/active");
-    $this->copyFixtureFolderToStageDirectoryOnApply("$root_fixture_directory/staged");
-
-    $expected_results = [];
-    if ($expected_messages) {
-      // @codingStandardsIgnoreLine
-      $expected_results[] = ValidationResult::createError($expected_messages, t($expected_summary));
+    $error = ValidationResult::createError(["Composer could not find the config file: $composer_json\n"]);
+    try {
+      $updater->apply();
+      $this->fail('Expected an error, but none was raised.');
     }
-    $this->validate($expected_results);
+    catch (StageValidationException $e) {
+      $this->assertValidationResultsEqual([$error], $e->getResults());
+    }
   }
 
   /**
-   * Data provider for testErrors().
-   *
-   * @return \string[][]
-   *   The test cases.
+   * Tests that an error is raised if Drupal extensions are unexpectedly added.
    */
-  public function providerErrors(): array {
-    $fixtures_folder = __DIR__ . '/../../../fixtures/StagedProjectsValidatorTest';
-    return [
-      'new_project_added' => [
-        "$fixtures_folder/new_project_added",
-        'The update cannot proceed because the following Drupal projects were installed during the update.',
-        [
-          "module 'drupal/test_module2' installed.",
-          "custom module 'drupal/dev-test_module2' installed.",
-        ],
-      ],
-      'project_removed' => [
-        "$fixtures_folder/project_removed",
-        'The update cannot proceed because the following Drupal projects were removed during the update.',
-        [
-          "theme 'drupal/test_theme' removed.",
-          "custom theme 'drupal/dev-test_theme' removed.",
-        ],
-      ],
-      'version_changed' => [
-        "$fixtures_folder/version_changed",
-        'The update cannot proceed because the following Drupal projects were unexpectedly updated. Only Drupal Core updates are currently supported.',
-        [
-          "module 'drupal/test_module' from 1.3.0 to 1.3.1.",
-          "module 'drupal/dev-test_module' from 1.3.0 to 1.3.1.",
-        ],
-      ],
-      'no_errors' => [
-        "$fixtures_folder/no_errors",
-        NULL,
-        [],
-      ],
+  public function testProjectsAdded(): void {
+    $this->copyFixtureFolderToActiveDirectory(__DIR__ . '/../../../fixtures/StagedProjectsValidatorTest/new_project_added');
+
+    $updater = $this->container->get('automatic_updates.updater');
+    $updater->begin(['drupal' => '9.8.1']);
+    $updater->stage();
+
+    $stage_dir = $updater->getStageDirectory();
+    $this->addPackage($stage_dir, [
+      'name' => 'drupal/test_module2',
+      'version' => '1.3.1',
+      'type' => 'drupal-module',
+      'install_path' => '../../modules/test_module2',
+    ]);
+    $this->addPackage($stage_dir, [
+      'name' => 'drupal/dev-test_module2',
+      'version' => '1.3.1',
+      'type' => 'drupal-custom-module',
+      'dev_requirement' => TRUE,
+      'install_path' => '../../modules/dev-test_module2',
+    ]);
+    // The validator shouldn't complain about these packages being added or
+    // removed, since it only cares about Drupal modules and themes.
+    $this->addPackage($stage_dir, [
+      'name' => 'other/new_project',
+      'version' => '1.3.1',
+      'type' => 'library',
+      'install_path' => '../other/new_project',
+    ]);
+    $this->addPackage($stage_dir, [
+      'name' => 'other/dev-new_project',
+      'version' => '1.3.1',
+      'type' => 'library',
+      'dev_requirement' => TRUE,
+      'install_path' => '../other/dev-new_project',
+    ]);
+    $this->removePackage($stage_dir, 'other/removed');
+    $this->removePackage($stage_dir, 'other/dev-removed');
+
+    $messages = [
+      "module 'drupal/test_module2' installed.",
+      "custom module 'drupal/dev-test_module2' installed.",
     ];
+    $error = ValidationResult::createError($messages, t('The update cannot proceed because the following Drupal projects were installed during the update.'));
+    try {
+      $updater->apply();
+      $this->fail('Expected an error, but none was raised.');
+    }
+    catch (StageValidationException $e) {
+      $this->assertValidationResultsEqual([$error], $e->getResults());
+    }
+  }
+
+  /**
+   * Tests that errors are raised if Drupal extensions are unexpectedly removed.
+   */
+  public function testProjectsRemoved(): void {
+    $this->copyFixtureFolderToActiveDirectory(__DIR__ . '/../../../fixtures/StagedProjectsValidatorTest/project_removed');
+
+    $updater = $this->container->get('automatic_updates.updater');
+    $updater->begin(['drupal' => '9.8.1']);
+    $updater->stage();
+
+    $stage_dir = $updater->getStageDirectory();
+    $this->removePackage($stage_dir, 'drupal/test_theme');
+    $this->removePackage($stage_dir, 'drupal/dev-test_theme');
+    // The validator shouldn't complain about these packages being removed,
+    // since it only cares about Drupal modules and themes.
+    $this->removePackage($stage_dir, 'other/removed');
+    $this->removePackage($stage_dir, 'other/dev-removed');
+
+    $messages = [
+      "theme 'drupal/test_theme' removed.",
+      "custom theme 'drupal/dev-test_theme' removed.",
+    ];
+    $error = ValidationResult::createError($messages, t('The update cannot proceed because the following Drupal projects were removed during the update.'));
+    try {
+      $updater->apply();
+      $this->fail('Expected an error, but none was raised.');
+    }
+    catch (StageValidationException $e) {
+      $this->assertValidationResultsEqual([$error], $e->getResults());
+    }
+  }
+
+  /**
+   * Tests that errors are raised if Drupal extensions are unexpectedly updated.
+   */
+  public function testVersionsChanged(): void {
+    $this->copyFixtureFolderToActiveDirectory(__DIR__ . '/../../../fixtures/StagedProjectsValidatorTest/version_changed');
+
+    $updater = $this->container->get('automatic_updates.updater');
+    $updater->begin(['drupal' => '9.8.1']);
+    $updater->stage();
+
+    $stage_dir = $updater->getStageDirectory();
+    $this->modifyPackage($stage_dir, 'drupal/test_module', [
+      'version' => '1.3.1',
+    ]);
+    $this->modifyPackage($stage_dir, 'drupal/dev-test_module', [
+      'version' => '1.3.1',
+    ]);
+    // The validator shouldn't complain about these packages being updated,
+    // because it only cares about Drupal modules and themes.
+    $this->modifyPackage($stage_dir, 'other/changed', [
+      'version' => '1.3.2',
+    ]);
+    $this->modifyPackage($stage_dir, 'other/dev-changed', [
+      'version' => '1.3.2',
+    ]);
+
+    $messages = [
+      "module 'drupal/test_module' from 1.3.0 to 1.3.1.",
+      "module 'drupal/dev-test_module' from 1.3.0 to 1.3.1.",
+    ];
+    $error = ValidationResult::createError($messages, t('The update cannot proceed because the following Drupal projects were unexpectedly updated. Only Drupal Core updates are currently supported.'));
+    try {
+      $updater->apply();
+      $this->fail('Expected an error, but none was raised.');
+    }
+    catch (StageValidationException $e) {
+      $this->assertValidationResultsEqual([$error], $e->getResults());
+    }
+  }
+
+  /**
+   * Tests that no errors occur if only core and its dependencies are updated.
+   */
+  public function testNoErrors(): void {
+    $this->copyFixtureFolderToActiveDirectory(__DIR__ . '/../../../fixtures/StagedProjectsValidatorTest/no_errors');
+
+    $updater = $this->container->get('automatic_updates.updater');
+    $updater->begin(['drupal' => '9.8.1']);
+    $updater->stage();
+
+    $stage_dir = $updater->getStageDirectory();
+    $this->modifyPackage($stage_dir, 'drupal/core', [
+      'version' => '9.8.1',
+    ]);
+    // The validator shouldn't care what happens to these packages, since it
+    // only concerns itself with Drupal modules and themes.
+    $this->addPackage($stage_dir, [
+      'name' => 'other/new_project',
+      'version' => '1.3.1',
+      'type' => 'library',
+      'install_path' => '../other/new_project',
+    ]);
+    $this->addPackage($stage_dir, [
+      'name' => 'other/dev-new_project',
+      'version' => '1.3.1',
+      'type' => 'library',
+      'dev_requirement' => TRUE,
+      'install_path' => '../other/dev-new_project',
+    ]);
+    $this->modifyPackage($stage_dir, 'other/changed', [
+      'version' => '1.3.2',
+    ]);
+    $this->modifyPackage($stage_dir, 'other/dev-changed', [
+      'version' => '1.3.2',
+    ]);
+    $this->removePackage($stage_dir, 'other/removed');
+    $this->removePackage($stage_dir, 'other/dev-removed');
+
+    $updater->apply();
   }
 
 }
