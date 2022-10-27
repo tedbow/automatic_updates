@@ -72,7 +72,30 @@ class StagedProjectsValidatorTest extends AutomaticUpdatesKernelTestBase {
    * Tests that an error is raised if Drupal extensions are unexpectedly added.
    */
   public function testProjectsAdded(): void {
-    $this->copyFixtureFolderToActiveDirectory(__DIR__ . '/../../../fixtures/StagedProjectsValidatorTest/new_project_added');
+    $active_dir = $this->container->get('package_manager.path_locator')
+      ->getProjectRoot();
+    $this->addPackage($active_dir, [
+      'name' => 'drupal/test_module',
+      'version' => '1.3.0',
+      'type' => 'drupal_module',
+    ]);
+    $this->addPackage($active_dir, [
+      'name' => 'other/removed',
+      'version' => '1.3.1',
+      'type' => 'library',
+    ]);
+    $this->addPackage($active_dir, [
+      'name' => 'drupal/dev-test_module',
+      'version' => '1.3.0',
+      'type' => 'drupal_module',
+      'dev_requirement' => TRUE,
+    ]);
+    $this->addPackage($active_dir, [
+      'name' => 'other/dev-removed',
+      'version' => '1.3.1',
+      'type' => 'library',
+      'dev_requirement' => TRUE,
+    ]);
 
     $updater = $this->container->get('automatic_updates.updater');
     $updater->begin(['drupal' => '9.8.1']);
@@ -128,7 +151,41 @@ class StagedProjectsValidatorTest extends AutomaticUpdatesKernelTestBase {
    * Tests that errors are raised if Drupal extensions are unexpectedly removed.
    */
   public function testProjectsRemoved(): void {
-    $this->copyFixtureFolderToActiveDirectory(__DIR__ . '/../../../fixtures/StagedProjectsValidatorTest/project_removed');
+    $active_dir = $this->container->get('package_manager.path_locator')
+      ->getProjectRoot();
+    $this->addPackage($active_dir, [
+      'name' => 'drupal/test_theme',
+      'version' => '1.3.0',
+      'type' => 'drupal-theme',
+    ]);
+    $this->addPackage($active_dir, [
+      'name' => 'drupal/test_module2',
+      'version' => '1.3.1',
+      'type' => 'drupal-module',
+    ]);
+    $this->addPackage($active_dir, [
+      'name' => 'other/removed',
+      'version' => '1.3.1',
+      'type' => 'library',
+    ]);
+    $this->addPackage($active_dir, [
+      'name' => 'drupal/dev-test_theme',
+      'version' => '1.3.0',
+      'type' => 'drupal-custom-theme',
+      'dev_requirement' => TRUE,
+    ]);
+    $this->addPackage($active_dir, [
+      'name' => 'drupal/dev-test_module2',
+      'version' => '1.3.1',
+      'type' => 'drupal-module',
+      'dev_requirement' => TRUE,
+    ]);
+    $this->addPackage($active_dir, [
+      'name' => 'other/dev-removed',
+      'version' => '1.3.1',
+      'type' => 'library',
+      'dev_requirement' => TRUE,
+    ]);
 
     $updater = $this->container->get('automatic_updates.updater');
     $updater->begin(['drupal' => '9.8.1']);
@@ -160,7 +217,30 @@ class StagedProjectsValidatorTest extends AutomaticUpdatesKernelTestBase {
    * Tests that errors are raised if Drupal extensions are unexpectedly updated.
    */
   public function testVersionsChanged(): void {
-    $this->copyFixtureFolderToActiveDirectory(__DIR__ . '/../../../fixtures/StagedProjectsValidatorTest/version_changed');
+    $active_dir = $this->container->get('package_manager.path_locator')
+      ->getProjectRoot();
+    $this->addPackage($active_dir, [
+      'name' => 'drupal/test_module',
+      'version' => '1.3.0',
+      'type' => 'drupal-module',
+    ]);
+    $this->addPackage($active_dir, [
+      'name' => 'other/changed',
+      'version' => '1.3.1',
+      'type' => 'library',
+    ]);
+    $this->addPackage($active_dir, [
+      'name' => 'drupal/dev-test_module',
+      'version' => '1.3.0',
+      'type' => 'drupal-module',
+      'dev_requirement' => TRUE,
+    ]);
+    $this->addPackage($active_dir, [
+      'name' => 'other/dev-changed',
+      'version' => '1.3.1',
+      'type' => 'library',
+      'dev_requirement' => TRUE,
+    ]);
 
     $updater = $this->container->get('automatic_updates.updater');
     $updater->begin(['drupal' => '9.8.1']);
@@ -200,7 +280,41 @@ class StagedProjectsValidatorTest extends AutomaticUpdatesKernelTestBase {
    * Tests that no errors occur if only core and its dependencies are updated.
    */
   public function testNoErrors(): void {
-    $this->copyFixtureFolderToActiveDirectory(__DIR__ . '/../../../fixtures/StagedProjectsValidatorTest/no_errors');
+    $active_dir = $this->container->get('package_manager.path_locator')
+      ->getProjectRoot();
+    $this->addPackage($active_dir, [
+      'name' => 'drupal/test_module',
+      'version' => '1.3.0',
+      'type' => 'drupal-module',
+    ]);
+    $this->addPackage($active_dir, [
+      'name' => 'other/removed',
+      'version' => '1.3.1',
+      'type' => 'library',
+    ]);
+    $this->addPackage($active_dir, [
+      'name' => 'other/changed',
+      'version' => '1.3.1',
+      'type' => 'library',
+    ]);
+    $this->addPackage($active_dir, [
+      'name' => 'drupal/dev-test_module',
+      'version' => '1.3.0',
+      'type' => 'drupal-module',
+      'dev_requirement' => TRUE,
+    ]);
+    $this->addPackage($active_dir, [
+      'name' => 'other/dev-removed',
+      'version' => '1.3.1',
+      'type' => 'library',
+      'dev_requirement' => TRUE,
+    ]);
+    $this->addPackage($active_dir, [
+      'name' => 'other/dev-changed',
+      'version' => '1.3.1',
+      'type' => 'library',
+      'dev_requirement' => TRUE,
+    ]);
 
     $updater = $this->container->get('automatic_updates.updater');
     $updater->begin(['drupal' => '9.8.1']);
