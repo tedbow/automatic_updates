@@ -23,7 +23,7 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
  *   at any time without warning. External code should not interact with this
  *   class.
  */
-final class ComposerExecutableValidator implements EventSubscriberInterface, ProcessOutputCallbackInterface {
+class ComposerExecutableValidator implements EventSubscriberInterface {
 
   use StringTranslationTrait;
 
@@ -49,13 +49,6 @@ final class ComposerExecutableValidator implements EventSubscriberInterface, Pro
   protected $moduleHandler;
 
   /**
-   * The detected version of Composer.
-   *
-   * @var string
-   */
-  protected $version;
-
-  /**
    * Constructs a ComposerExecutableValidator object.
    *
    * @param \PhpTuf\ComposerStager\Domain\Service\ProcessRunner\ComposerRunnerInterface $composer
@@ -76,18 +69,24 @@ final class ComposerExecutableValidator implements EventSubscriberInterface, Pro
    */
   public function validateStagePreOperation(PreOperationStageEvent $event): void {
     try {
-      $this->composer->run(['--version'], $this);
+      $output = $this->runCommand();
     }
     catch (ExceptionInterface $e) {
       $this->setError($e->getMessage(), $event);
       return;
     }
 
-    if ($this->version) {
-      if (!Semver::satisfies($this->version, static::MINIMUM_COMPOSER_VERSION_CONSTRAINT)) {
+    $matched = [];
+    // Search for a semantic version number and optional stability flag.
+    if (preg_match('/([0-9]+\.?){3}-?((alpha|beta|rc)[0-9]*)?/i', $output, $matched)) {
+      $version = $matched[0];
+    }
+
+    if (isset($version)) {
+      if (!Semver::satisfies($version, static::MINIMUM_COMPOSER_VERSION_CONSTRAINT)) {
         $message = $this->t('A Composer version which satisfies <code>@minimum_version</code> is required, but version @detected_version was detected.', [
           '@minimum_version' => static::MINIMUM_COMPOSER_VERSION_CONSTRAINT,
-          '@detected_version' => $this->version,
+          '@detected_version' => $version,
         ]);
         $this->setError($message, $event);
       }
@@ -133,14 +132,35 @@ final class ComposerExecutableValidator implements EventSubscriberInterface, Pro
   }
 
   /**
-   * {@inheritdoc}
+   * Runs `composer --version` and returns its output.
+   *
+   * @return string
+   *   The output of `composer --version`.
    */
-  public function __invoke(string $type, string $buffer): void {
-    $matched = [];
-    // Search for a semantic version number and optional stability flag.
-    if (preg_match('/([0-9]+\.?){3}-?((alpha|beta|rc)[0-9]*)?/i', $buffer, $matched)) {
-      $this->version = $matched[0];
-    }
+  protected function runCommand(): string {
+    // For whatever reason, PHPCS thinks that $output is not used, even though
+    // it very clearly *is*. So, shut PHPCS up for the duration of this method.
+    // phpcs:disable
+    $callback = new class () implements ProcessOutputCallbackInterface {
+
+      /**
+       * The command output.
+       *
+       * @var string
+       */
+      public string $output = '';
+
+      /**
+       * {@inheritdoc}
+       */
+      public function __invoke(string $type, string $buffer): void {
+        $this->output .= $buffer;
+      }
+
+    };
+    $this->composer->run(['--version'], $callback);
+    return $callback->output;
+    // phpcs:enable
   }
 
 }
