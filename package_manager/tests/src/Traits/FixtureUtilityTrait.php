@@ -80,6 +80,13 @@ trait FixtureUtilityTrait {
   /**
    * Adds a package.
    *
+   * If $package contains an `install_path` key, it should be relative to the
+   * location of `installed.json` and `installed.php`, which are in
+   * `vendor/composer`. For example, if the package would be installed at
+   * `vendor/kirk/enterprise`, the install path should be `../kirk/enterprise`.
+   * If the package would be installed outside of vendor (for example, a Drupal
+   * module in the `modules` directory), it would be `../../modules/my_module`.
+   *
    * @param string $dir
    *   The root Composer-managed directory (e.g., the project root or staging
    *   area).
@@ -94,6 +101,9 @@ trait FixtureUtilityTrait {
 
   /**
    * Modifies a package's installed info.
+   *
+   * See ::addPackage() for information on how the `install_path` key is
+   * handled, if $package has it.
    *
    * @param string $dir
    *   The root Composer-managed directory (e.g., the project root or staging
@@ -140,7 +150,9 @@ trait FixtureUtilityTrait {
    *   Whether or not the package is expected to already be installed.
    */
   private function setPackage(string $dir, string $name, ?array $package, bool $should_exist): void {
-    $file = $dir . '/vendor/composer/installed.json';
+    $dir .= '/vendor/composer';
+
+    $file = $dir . '/installed.json';
     $this->assertFileIsWritable($file);
 
     $data = file_get_contents($file);
@@ -176,6 +188,10 @@ trait FixtureUtilityTrait {
     }
     // Add the package back to the list, if we have data for it.
     if ($package) {
+      // If an install path was provided, ensure it's relative.
+      if (array_key_exists('install_path', $package)) {
+        $this->assertStringStartsWith('../', $package['install_path']);
+      }
       $package['name'] = $name;
       $data['packages'][] = $package;
 
@@ -185,17 +201,23 @@ trait FixtureUtilityTrait {
     }
     file_put_contents($file, json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
 
-    $file = $dir . '/vendor/composer/installed.php';
+    $file = $dir . '/installed.php';
     $this->assertFileIsWritable($file);
 
     $data = require $file;
+    unset($data['versions'][$name]);
+    // The installation paths in $data will have been interpreted by the PHP
+    // runtime, so make them all relative again by stripping $dir out.
+    array_walk($data['versions'], function (array &$package) use ($dir): void {
+      if (array_key_exists('install_path', $package)) {
+        $package['install_path'] = str_replace("$dir/", '', $package['install_path']);
+      }
+    });
     if ($package) {
       $data['versions'][$name] = $package;
     }
-    else {
-      unset($data['versions'][$name]);
-    }
     $data = var_export($data, TRUE);
+    $data = str_replace("'install_path' => '../", "'install_path' => __DIR__ . '/../", $data);
     file_put_contents($file, "<?php\nreturn $data;");
   }
 

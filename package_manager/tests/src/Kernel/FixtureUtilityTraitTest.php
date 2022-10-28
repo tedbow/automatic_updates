@@ -30,11 +30,14 @@ class FixtureUtilityTraitTest extends PackageManagerKernelTestBase {
     $this->dir = $this->container->get('package_manager.path_locator')
       ->getProjectRoot();
 
-    $this->addPackage($this->dir, ['name' => 'my/package']);
+    $this->addPackage($this->dir, [
+      'name' => 'my/package',
+    ]);
     $this->addPackage($this->dir, [
       'name' => 'my/dev-package',
       'version' => '2.1.0',
       'dev_requirement' => TRUE,
+      'install_path' => '../relative/path',
     ]);
   }
 
@@ -60,6 +63,18 @@ class FixtureUtilityTraitTest extends PackageManagerKernelTestBase {
       $this->assertStringContainsString("Expected package 'my/package' to not be installed, but it was.", $e->getMessage());
     }
 
+    // We should not be able to add a package with an absolute installation
+    // path.
+    try {
+      $this->addPackage($this->dir, [
+        'name' => 'absolute/path',
+        'install_path' => '/absolute/path',
+      ]);
+    }
+    catch (AssertionFailedError $e) {
+      $this->assertSame('Failed asserting that \'/absolute/path\' starts with "../".', $e->getMessage());
+    }
+
     $expected_packages = [
       'my/package' => [
         'name' => 'my/package',
@@ -68,6 +83,7 @@ class FixtureUtilityTraitTest extends PackageManagerKernelTestBase {
         'name' => 'my/dev-package',
         'version' => '2.1.0',
         'dev_requirement' => TRUE,
+        'install_path' => '../relative/path',
       ],
     ];
     [$installed_json, $installed_php] = $this->getData();
@@ -75,6 +91,10 @@ class FixtureUtilityTraitTest extends PackageManagerKernelTestBase {
     $this->assertSame($expected_packages, $installed_json['packages']);
     $this->assertContains('my/dev-package', $installed_json['dev-package-names']);
     $this->assertNotContains('my/package', $installed_json['dev-package-names']);
+    // In installed.php, the relative installation path of my/dev-package should
+    // have been prefixed with the __DIR__ constant, which should be interpreted
+    // when installed.php is loaded by the PHP runtime.
+    $expected_packages['my/dev-package']['install_path'] = "$this->dir/vendor/composer/../relative/path";
     $this->assertSame($expected_packages, $installed_php);
   }
 
@@ -111,6 +131,7 @@ class FixtureUtilityTraitTest extends PackageManagerKernelTestBase {
         'name' => 'my/dev-package',
         'version' => '3.2.1',
         'dev_requirement' => TRUE,
+        'install_path' => '../relative/path',
       ],
       'my/other-package' => [
         'name' => 'my/other-package',
@@ -125,6 +146,8 @@ class FixtureUtilityTraitTest extends PackageManagerKernelTestBase {
     $this->assertContains('my/dev-package', $installed_json['dev-package-names']);
     $this->assertContains('my/other-package', $installed_json['dev-package-names']);
     $this->assertNotContains('my/package', $installed_json['dev-package-names']);
+    // @see ::testAddPackage()
+    $expected_packages['my/dev-package']['install_path'] = "$this->dir/vendor/composer/../relative/path";
     $this->assertSame($expected_packages, $installed_php);
   }
 
