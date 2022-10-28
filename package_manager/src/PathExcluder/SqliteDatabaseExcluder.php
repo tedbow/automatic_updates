@@ -3,9 +3,7 @@
 namespace Drupal\package_manager\PathExcluder;
 
 use Drupal\Core\Database\Connection;
-use Drupal\package_manager\Event\PreApplyEvent;
-use Drupal\package_manager\Event\PreCreateEvent;
-use Drupal\package_manager\Event\StageEvent;
+use Drupal\package_manager\Event\CollectIgnoredPathsEvent;
 use Drupal\package_manager\PathLocator;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
@@ -46,18 +44,17 @@ class SqliteDatabaseExcluder implements EventSubscriberInterface {
    */
   public static function getSubscribedEvents(): array {
     return [
-      PreCreateEvent::class => 'excludeDatabaseFiles',
-      PreApplyEvent::class => 'excludeDatabaseFiles',
+      CollectIgnoredPathsEvent::class => 'excludeDatabaseFiles',
     ];
   }
 
   /**
    * Excludes SQLite database files from staging operations.
    *
-   * @param \Drupal\package_manager\Event\StageEvent $event
+   * @param \Drupal\package_manager\Event\CollectIgnoredPathsEvent $event
    *   The event object.
    */
-  public function excludeDatabaseFiles(StageEvent $event): void {
+  public function excludeDatabaseFiles(CollectIgnoredPathsEvent $event): void {
     // If the database is SQLite, it might be located in the active directory
     // and we should ignore it. Always treat it as relative to the project root.
     if ($this->database->driver() === 'sqlite') {

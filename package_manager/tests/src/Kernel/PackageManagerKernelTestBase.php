@@ -6,7 +6,7 @@ use Drupal\Core\DependencyInjection\ContainerBuilder;
 use Drupal\KernelTests\KernelTestBase;
 use Drupal\package_manager\Event\PreApplyEvent;
 use Drupal\package_manager\Event\StageEvent;
-use Drupal\package_manager\Event\StatusCheckEvent;
+use Drupal\package_manager\StatusCheckTrait;
 use Drupal\package_manager\Validator\DiskSpaceValidator;
 use Drupal\package_manager\Exception\StageException;
 use Drupal\package_manager\Exception\StageValidationException;
@@ -32,6 +32,7 @@ use Symfony\Component\DependencyInjection\Definition;
 abstract class PackageManagerKernelTestBase extends KernelTestBase {
 
   use FixtureUtilityTrait;
+  use StatusCheckTrait;
   use ValidationTestTrait;
 
   /**
@@ -186,9 +187,8 @@ abstract class PackageManagerKernelTestBase extends KernelTestBase {
    *   provided a new stage will be created.
    */
   protected function assertStatusCheckResults(array $expected_results, Stage $stage = NULL): void {
-    $event = new StatusCheckEvent($stage ?? $this->createStage());
-    $this->container->get('event_dispatcher')->dispatch($event);
-    $this->assertValidationResultsEqual($expected_results, $event->getResults());
+    $actual_results = $this->runStatusCheck($stage ?? $this->createStage(), $this->container->get('event_dispatcher'));
+    $this->assertValidationResultsEqual($expected_results, $actual_results);
   }
 
   /**

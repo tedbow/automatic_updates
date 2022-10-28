@@ -6,8 +6,10 @@ use Drupal\Component\Datetime\Time;
 use Drupal\Core\DependencyInjection\ContainerBuilder;
 use Drupal\Core\Extension\ModuleUninstallValidatorException;
 use Drupal\Core\Logger\RfcLogLevel;
+use Drupal\package_manager\Event\CollectIgnoredPathsEvent;
 use Drupal\package_manager\Event\PostApplyEvent;
 use Drupal\package_manager\Event\PreApplyEvent;
+use Drupal\package_manager\Event\PreCreateEvent;
 use Drupal\package_manager\Event\StageEvent;
 use Drupal\package_manager\Exception\ApplyFailedException;
 use Drupal\package_manager\Exception\StageException;
@@ -482,6 +484,37 @@ class StageTest extends PackageManagerKernelTestBase {
       'Full package name' => ['drupal/semver_test', FALSE],
       'Bare Drupal project name' => ['semver_test', TRUE],
     ];
+  }
+
+  /**
+   * Tests that ignored paths are collected before create and apply.
+   */
+  public function testCollectIgnoredPaths(): void {
+    /** @var \Symfony\Component\EventDispatcher\EventDispatcherInterface $event_dispatcher */
+    $event_dispatcher = $this->container->get('event_dispatcher');
+
+    $event_dispatcher->addListener(CollectIgnoredPathsEvent::class, function (CollectIgnoredPathsEvent $event): void {
+      $event->add(['ignore/me']);
+    });
+
+    // On pre-create and pre-apply, ensure that the ignored path is known to
+    // the event.
+    $asserted = FALSE;
+    $assert_ignored = function (object $event) use (&$asserted): void {
+      $this->assertContains('ignore/me', $event->getExcludedPaths());
+      // Use this to confirm that this listener was actually called.
+      $asserted = TRUE;
+    };
+    $event_dispatcher->addListener(PreCreateEvent::class, $assert_ignored);
+    $event_dispatcher->addListener(PreApplyEvent::class, $assert_ignored);
+
+    $stage = $this->createStage();
+    $stage->create();
+    $this->assertTrue($asserted);
+    $asserted = FALSE;
+    $stage->require(['ext-json:*']);
+    $stage->apply();
+    $this->assertTrue($asserted);
   }
 
 }

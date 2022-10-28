@@ -3,6 +3,7 @@
 namespace Drupal\package_manager;
 
 use Drupal\automatic_updates\Event\ReadinessCheckEvent;
+use Drupal\package_manager\Event\CollectIgnoredPathsEvent;
 use Drupal\package_manager\Event\StatusCheckEvent;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 
@@ -34,7 +35,10 @@ trait StatusCheckTrait {
   protected function runStatusCheck(Stage $stage, EventDispatcherInterface $event_dispatcher = NULL, bool $do_readiness_check = FALSE): array {
     $event_dispatcher ??= \Drupal::service('event_dispatcher');
 
-    $event = new StatusCheckEvent($stage);
+    $ignored_paths = new CollectIgnoredPathsEvent($stage);
+    $event_dispatcher->dispatch($ignored_paths);
+
+    $event = new StatusCheckEvent($stage, $ignored_paths->getAll());
     $event_dispatcher->dispatch($event);
     $results = $event->getResults();
 

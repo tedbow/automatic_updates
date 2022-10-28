@@ -2,9 +2,7 @@
 
 namespace Drupal\package_manager\PathExcluder;
 
-use Drupal\package_manager\Event\PreApplyEvent;
-use Drupal\package_manager\Event\PreCreateEvent;
-use Drupal\package_manager\Event\StageEvent;
+use Drupal\package_manager\Event\CollectIgnoredPathsEvent;
 use Drupal\package_manager\PathLocator;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\Component\Finder\Finder;
@@ -36,18 +34,17 @@ final class GitExcluder implements EventSubscriberInterface {
    */
   public static function getSubscribedEvents(): array {
     return [
-      PreCreateEvent::class => 'excludeGitDirectories',
-      PreApplyEvent::class => 'excludeGitDirectories',
+      CollectIgnoredPathsEvent::class => 'excludeGitDirectories',
     ];
   }
 
   /**
    * Excludes .git directories from staging operations.
    *
-   * @param \Drupal\package_manager\Event\StageEvent $event
+   * @param \Drupal\package_manager\Event\CollectIgnoredPathsEvent $event
    *   The event object.
    */
-  public function excludeGitDirectories(StageEvent $event): void {
+  public function excludeGitDirectories(CollectIgnoredPathsEvent $event): void {
     // Find all .git directories in the project and exclude them. We cannot do
     // this with FileSystemInterface::scanDirectory() because it unconditionally
     // excludes anything starting with a dot.

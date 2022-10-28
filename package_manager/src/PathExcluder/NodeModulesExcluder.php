@@ -2,9 +2,7 @@
 
 namespace Drupal\package_manager\PathExcluder;
 
-use Drupal\package_manager\Event\PreApplyEvent;
-use Drupal\package_manager\Event\PreCreateEvent;
-use Drupal\package_manager\Event\StageEvent;
+use Drupal\package_manager\Event\CollectIgnoredPathsEvent;
 use Drupal\package_manager\PathLocator;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\Component\Finder\Finder;
@@ -34,12 +32,10 @@ class NodeModulesExcluder implements EventSubscriberInterface {
   /**
    * Excludes node_modules directories from staging operations.
    *
-   * @param \Drupal\package_manager\Event\PreApplyEvent|\Drupal\package_manager\Event\PreCreateEvent $event
+   * @param \Drupal\package_manager\Event\CollectIgnoredPathsEvent $event
    *   The event object.
-   *
-   * @see \Drupal\package_manager\Event\ExcludedPathsTrait::excludePath()
    */
-  public function excludeNodeModulesFiles(StageEvent $event): void {
+  public function excludeNodeModulesFiles(CollectIgnoredPathsEvent $event): void {
     $finder = Finder::create()
       ->in($this->pathLocator->getProjectRoot())
       ->directories()
@@ -58,8 +54,7 @@ class NodeModulesExcluder implements EventSubscriberInterface {
    */
   public static function getSubscribedEvents(): array {
     return [
-      PreCreateEvent::class => 'excludeNodeModulesFiles',
-      PreApplyEvent::class => 'excludeNodeModulesFiles',
+      CollectIgnoredPathsEvent::class => 'excludeNodeModulesFiles',
     ];
   }
 

@@ -10,6 +10,7 @@ use Drupal\Core\File\FileSystemInterface;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\Core\TempStore\SharedTempStoreFactory;
+use Drupal\package_manager\Event\CollectIgnoredPathsEvent;
 use Drupal\package_manager\Event\PostApplyEvent;
 use Drupal\package_manager\Event\PostCreateEvent;
 use Drupal\package_manager\Event\PostDestroyEvent;
@@ -301,6 +302,22 @@ class Stage implements LoggerAwareInterface {
   }
 
   /**
+   * Collects paths that Composer Stager should ignore.
+   *
+   * @return string[]
+   *   A list of paths that Composer Stager should ignore when creating the
+   *   staging area and applying staged changes to the active directory.
+   *
+   * @see ::create()
+   * @see ::apply()
+   */
+  protected function getIgnoredPaths(): array {
+    $event = new CollectIgnoredPathsEvent($this);
+    $this->eventDispatcher->dispatch($event);
+    return $event->getAll();
+  }
+
+  /**
    * Copies the active code base into the staging area.
    *
    * This will automatically claim the stage, so external code does NOT need to
@@ -347,7 +364,7 @@ class Stage implements LoggerAwareInterface {
     $active_dir = $this->pathFactory->create($this->pathLocator->getProjectRoot());
     $stage_dir = $this->pathFactory->create($this->getStageDirectory());
 
-    $event = new PreCreateEvent($this);
+    $event = new PreCreateEvent($this, $this->getIgnoredPaths());
     // If an error occurs and we won't be able to create the stage, mark it as
     // available.
     $this->dispatch($event, [$this, 'markAsAvailable']);
@@ -429,17 +446,20 @@ class Stage implements LoggerAwareInterface {
     // If an error occurs while dispatching the events, ensure that ::destroy()
     // doesn't think we're in the middle of applying the staged changes to the
     // active directory.
-    $event = new PreApplyEvent($this);
+    $event = new PreApplyEvent($this, $this->getIgnoredPaths());
     $this->tempStore->set(self::TEMPSTORE_APPLY_TIME_KEY, $this->time->getRequestTime());
     $this->dispatch($event, $this->setNotApplying());
 
     // Create a marker file so that we can tell later on if the commit failed.
     $this->failureMarker->write($this, $this->getFailureMarkerMessage());
     // Exclude the failure file from the commit operation.
-    $event->excludePath($this->failureMarker->getPath());
+    $ignored_paths = new PathList($event->getExcludedPaths());
+    $ignored_paths->add([
+      $this->failureMarker->getPath(),
+    ]);
 
     try {
-      $this->committer->commit($stage_dir, $active_dir, new PathList($event->getExcludedPaths()), NULL, $timeout);
+      $this->committer->commit($stage_dir, $active_dir, $ignored_paths, NULL, $timeout);
     }
     catch (InvalidArgumentException | PreconditionException $e) {
       // The commit operation has not started yet, so we can clear the failure

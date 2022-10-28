@@ -51,7 +51,7 @@ final class XdebugValidator implements EventSubscriberInterface {
       return;
     }
 
-    $status_check = new StatusCheckEvent($stage);
+    $status_check = new StatusCheckEvent($stage, []);
     $this->packageManagerValidator->checkForXdebug($status_check);
     $results = $status_check->getResults();
     if (empty($results)) {

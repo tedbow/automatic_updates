@@ -2,9 +2,7 @@
 
 namespace Drupal\package_manager\PathExcluder;
 
-use Drupal\package_manager\Event\PreApplyEvent;
-use Drupal\package_manager\Event\PreCreateEvent;
-use Drupal\package_manager\Event\StageEvent;
+use Drupal\package_manager\Event\CollectIgnoredPathsEvent;
 use Drupal\package_manager\PathLocator;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
@@ -35,18 +33,17 @@ final class TestSiteExcluder implements EventSubscriberInterface {
    */
   public static function getSubscribedEvents(): array {
     return [
-      PreCreateEvent::class => 'excludeTestSites',
-      PreApplyEvent::class => 'excludeTestSites',
+      CollectIgnoredPathsEvent::class => 'excludeTestSites',
     ];
   }
 
   /**
    * Excludes sites/simpletest from staging operations.
    *
-   * @param \Drupal\package_manager\Event\StageEvent $event
+   * @param \Drupal\package_manager\Event\CollectIgnoredPathsEvent $event
    *   The event object.
    */
-  public function excludeTestSites(StageEvent $event): void {
+  public function excludeTestSites(CollectIgnoredPathsEvent $event): void {
     // Always ignore automated test directories. If they exist, they will be in
     // the web root.
     $this->excludeInWebRoot($event, ['sites/simpletest']);

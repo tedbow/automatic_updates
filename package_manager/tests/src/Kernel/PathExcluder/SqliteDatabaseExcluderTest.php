@@ -4,7 +4,7 @@ namespace Drupal\Tests\package_manager\Kernel\PathExcluder;
 
 use Drupal\Core\Database\Connection;
 use Drupal\Core\DependencyInjection\ContainerBuilder;
-use Drupal\package_manager\Event\PreCreateEvent;
+use Drupal\package_manager\Event\CollectIgnoredPathsEvent;
 use Drupal\package_manager\PathExcluder\SqliteDatabaseExcluder;
 use Drupal\Tests\package_manager\Kernel\PackageManagerKernelTestBase;
 
@@ -160,13 +160,13 @@ class SqliteDatabaseExcluderTest extends PackageManagerKernelTestBase {
       'database' => $database_path,
     ]);
 
-    $event = new PreCreateEvent($this->createStage());
+    $event = new CollectIgnoredPathsEvent($this->createStage());
     // Invoke the event subscriber directly, so we can check that the database
     // was correctly excluded.
     $this->container->get('package_manager.sqlite_excluder')
       ->excludeDatabaseFiles($event);
     // All of the expected exclusions should be flagged.
-    $this->assertEmpty(array_diff($expected_exclusions, $event->getExcludedPaths()));
+    $this->assertEmpty(array_diff($expected_exclusions, $event->getAll()));
   }
 
 }

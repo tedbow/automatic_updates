@@ -13,6 +13,7 @@ use Drupal\package_manager\PathLocator;
 use PhpTuf\ComposerStager\Domain\Exception\PreconditionException;
 use PhpTuf\ComposerStager\Domain\Service\Precondition\CodebaseContainsNoSymlinksInterface;
 use PhpTuf\ComposerStager\Infrastructure\Factory\Path\PathFactoryInterface;
+use PhpTuf\ComposerStager\Infrastructure\Value\PathList\PathList;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 /**
@@ -97,7 +98,8 @@ class SymlinkValidator implements EventSubscriberInterface {
     $stage_dir = $this->pathFactory->create($stage_dir);
 
     try {
-      $this->precondition->assertIsFulfilled($active_dir, $stage_dir);
+      $ignored_paths = $event->getExcludedPaths();
+      $this->precondition->assertIsFulfilled($active_dir, $stage_dir, new PathList($ignored_paths));
     }
     catch (PreconditionException $e) {
       $message = $e->getMessage();

@@ -2,9 +2,7 @@
 
 namespace Drupal\package_manager\PathExcluder;
 
-use Drupal\package_manager\Event\PreApplyEvent;
-use Drupal\package_manager\Event\PreCreateEvent;
-use Drupal\package_manager\Event\StageEvent;
+use Drupal\package_manager\Event\CollectIgnoredPathsEvent;
 use Drupal\package_manager\PathLocator;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
@@ -35,18 +33,17 @@ final class VendorHardeningExcluder implements EventSubscriberInterface {
    */
   public static function getSubscribedEvents(): array {
     return [
-      PreCreateEvent::class => 'excludeVendorHardeningFiles',
-      PreApplyEvent::class => 'excludeVendorHardeningFiles',
+      CollectIgnoredPathsEvent::class => 'excludeVendorHardeningFiles',
     ];
   }
 
   /**
    * Excludes vendor hardening files from staging operations.
    *
-   * @param \Drupal\package_manager\Event\StageEvent $event
+   * @param \Drupal\package_manager\Event\CollectIgnoredPathsEvent $event
    *   The event object.
    */
-  public function excludeVendorHardeningFiles(StageEvent $event): void {
+  public function excludeVendorHardeningFiles(CollectIgnoredPathsEvent $event): void {
     // If the core-vendor-hardening plugin (used in the legacy-project template)
     // is present, it may have written security hardening files in the vendor
     // directory. They should always be ignored.

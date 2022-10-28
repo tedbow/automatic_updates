@@ -34,6 +34,7 @@ trait ExcludedPathsTrait {
    * @see \Drupal\package_manager\PathExcluder\SiteConfigurationExcluder
    */
   public function excludePath(string $path): void {
+    @trigger_error(__METHOD__ . '() is deprecated in automatic_updates:8.x-2.5 and removed in automatic_updates:3.0.0. Use ' . CollectIgnoredPathsEvent::class . ' instead. See https://www.drupal.org/node/3317862.', E_USER_DEPRECATED);
     $this->excludedPaths[] = $path;
   }
 
