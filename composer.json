@@ -31,11 +31,18 @@
     "test": [
       "Composer\\Config::disableProcessTimeout",
       "scripts/phpunit.sh"
-    ]
+    ],
+    "core-convert": "Drupal\\automatic_updates\\CoreCovert\\Converter::doConvert"
   },
   "scripts-descriptions": {
     "phpcbf": "Automatically fixes standards violations where possible.",
     "phpcs": "Checks code for standards compliance.",
-    "test": "Runs PHPUnit tests."
-  }
+    "test": "Runs PHPUnit tests.",
+    "core-convert": "Converts this module to a core merge request. Excepts 2 arguments. 1) The core clone directory. 2) The core merge request branch."
+  },
+    "autoload": {
+        "psr-4": {
+            "Drupal\\automatic_updates\\CoreCovert\\": "scripts/src"
+        }
+    }
 }

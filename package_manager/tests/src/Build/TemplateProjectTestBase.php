@@ -251,7 +251,6 @@ END;
     // Now that we know the project was created successfully, we can set the
     // web root with confidence.
     $this->webRoot = 'project/' . $this->runComposer('composer config extra.drupal-scaffold.locations.web-root', 'project');
-
     // BEGIN: DELETE FROM CORE MERGE REQUEST
     // Install Automatic Updates into the test project and ensure it wasn't
     // symlinked.
@@ -441,7 +440,7 @@ END;
     return $temp_directory;
   }
 
-  // BEGIN: DELETE FROM CORE MERGE REQUEST
+  // BEGIN: DELETE FROM CORE MERGE REQUEST.
 
   /**
    * {@inheritdoc}
@@ -463,5 +462,5 @@ END;
     file_put_contents($file, json_encode($data, JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT));
   }
 
-  // END: DELETE FROM CORE MERGE REQUEST
+  // END: DELETE FROM CORE MERGE REQUEST.
 }
