@@ -130,11 +130,11 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
     $assert_session = $this->assertSession();
 
     $assert_minor_update_help = function () use ($assert_session): void {
-      $assert_session->pageTextContains('The following updates are in the next minor version of Drupal. Learn more about updating to another minor version.');
+      $assert_session->pageTextContainsOnce('The following updates are in newer minor version of Drupal. Learn more about updating to another minor version.');
       $assert_session->linkExists('Learn more about updating to another minor version.');
     };
     $assert_no_minor_update_help = function () use ($assert_session): void {
-      $assert_session->pageTextNotContains('The following updates are in the next minor version of Drupal. Learn more about updating to another minor version.');
+      $assert_session->pageTextNotContains('The following updates are in newer minor version of Drupal. Learn more about updating to another minor version.');
     };
 
     $page = $this->getSession()->getPage();
@@ -158,7 +158,7 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
     // Check the form when there is an update in the installed minor only.
     $assert_session->pageTextContainsOnce('Currently installed: 9.8.0 (Security update required!)');
     $this->checkReleaseTable('#edit-installed-minor', '.update-update-security', '9.8.1', TRUE, 'Latest version of Drupal 9.8 (currently installed):');
-    $assert_session->elementNotExists('css', '#edit-next-minor');
+    $assert_session->elementNotExists('css', '#edit-next-minor-1');
     $assert_no_minor_update_help();
 
     // Check the form when there is an update in the next minor only.
@@ -166,9 +166,9 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
     $this->setCoreVersion('9.7.0');
     $page->clickLink('Check manually');
     $this->checkForMetaRefresh();
-    $this->checkReleaseTable('#edit-next-minor', '.update-update-recommended', '9.8.1', TRUE, 'Latest version of Drupal 9.8 (next minor) (Release notes):');
+    $this->checkReleaseTable('#edit-next-minor-1', '.update-update-recommended', '9.8.1', TRUE, 'Latest version of Drupal 9.8 (next minor) (Release notes):');
     $assert_minor_update_help();
-    $this->assertReleaseNotesLink(9, 8);
+    $this->assertReleaseNotesLink(9, 8, '#edit-next-minor-1');
     $assert_session->pageTextContainsOnce('Currently installed: 9.7.0 (Not supported!)');
     $assert_session->elementNotExists('css', '#edit-installed-minor');
 
@@ -180,7 +180,7 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
     $this->checkForMetaRefresh();
     $assert_session->pageTextContainsOnce('Currently installed: 9.7.0 (Update available)');
     $this->checkReleaseTable('#edit-installed-minor', '.update-update-recommended', '9.7.1', TRUE, 'Latest version of Drupal 9.7 (currently installed):');
-    $assert_session->elementNotExists('css', '#edit-next-minor');
+    $assert_session->elementNotExists('css', '#edit-next-minor-1');
     $assert_no_minor_update_help();
 
     // Check that if minor updates are enabled the update in the next minor will
@@ -188,8 +188,8 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
     $this->config('automatic_updates.settings')->set('allow_core_minor_updates', TRUE)->save();
     $this->getSession()->reload();
     $this->checkReleaseTable('#edit-installed-minor', '.update-update-recommended', '9.7.1', TRUE, 'Latest version of Drupal 9.7 (currently installed):');
-    $this->checkReleaseTable('#edit-next-minor', '.update-update-optional', '9.8.2', FALSE, 'Latest version of Drupal 9.8 (next minor) (Release notes):');
-    $this->assertReleaseNotesLink(9, 8);
+    $this->checkReleaseTable('#edit-next-minor-1', '.update-update-optional', '9.8.2', FALSE, 'Latest version of Drupal 9.8 (next minor) (Release notes):');
+    $this->assertReleaseNotesLink(9, 8, '#edit-next-minor-1');
     $assert_minor_update_help();
 
     $this->setCoreVersion('9.7.1');
@@ -197,8 +197,39 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
     $this->checkForMetaRefresh();
     $assert_session->pageTextContainsOnce('Currently installed: 9.7.1 (Update available)');
     $assert_session->elementNotExists('css', '#edit-installed-minor');
-    $this->checkReleaseTable('#edit-next-minor', '.update-update-recommended', '9.8.2', FALSE, 'Latest version of Drupal 9.8 (next minor) (Release notes):');
-    $this->assertReleaseNotesLink(9, 8);
+    $this->checkReleaseTable('#edit-next-minor-1', '.update-update-recommended', '9.8.2', FALSE, 'Latest version of Drupal 9.8 (next minor) (Release notes):');
+    $this->assertReleaseNotesLink(9, 8, '#edit-next-minor-1');
+    $assert_minor_update_help();
+
+    // Check that if minor updates are enabled then updates in the next minors
+    // are visible.
+    $this->config('automatic_updates.settings')->set('allow_core_minor_updates', TRUE)->save();
+    $this->setReleaseMetadata(__DIR__ . '/../../../package_manager/tests/fixtures/release-history/drupal.10.0.0.xml');
+    $this->setCoreVersion('9.5.0');
+    $page->clickLink('Check manually');
+    $this->checkForMetaRefresh();
+    $assert_session->pageTextNotContains('10.0.0');
+    $assert_session->pageTextContainsOnce('Currently installed: 9.5.0 (Update available)');
+    $this->checkReleaseTable('#edit-installed-minor', '.update-update-recommended', '9.5.1', TRUE, 'Latest version of Drupal 9.5 (currently installed):');
+    $this->checkReleaseTable('#edit-next-minor-1', '.update-update-optional', '9.6.1', FALSE, 'Latest version of Drupal 9.6 (next minor) (Release notes):');
+    $this->assertReleaseNotesLink(9, 6, '#edit-next-minor-1');
+    $this->checkReleaseTable('#edit-next-minor-2', '.update-update-optional', '9.7.2', FALSE, 'Latest version of Drupal 9.7 (next minor) (Release notes):');
+    $this->assertReleaseNotesLink(9, 7, '#edit-next-minor-2');
+    $assert_minor_update_help();
+
+    // Check that if installed version is unsupported and minor updates are
+    // enabled then updates in the next minors are visible.
+    $this->setCoreVersion('9.4.0');
+    $page->clickLink('Check manually');
+    $this->checkForMetaRefresh();
+    $assert_session->pageTextNotContains('10.0.0');
+    $assert_session->pageTextContainsOnce('Currently installed: 9.4.0 (Not supported!)');
+    $this->checkReleaseTable('#edit-next-minor-1', '.update-update-recommended', '9.5.1', TRUE, 'Latest version of Drupal 9.5 (next minor) (Release notes):');
+    $this->assertReleaseNotesLink(9, 5, '#edit-next-minor-1');
+    $this->checkReleaseTable('#edit-next-minor-2', '.update-update-recommended', '9.6.1', FALSE, 'Latest version of Drupal 9.6 (next minor) (Release notes):');
+    $this->assertReleaseNotesLink(9, 6, '#edit-next-minor-2');
+    $this->checkReleaseTable('#edit-next-minor-3', '.update-update-recommended', '9.7.2', FALSE, 'Latest version of Drupal 9.7 (next minor) (Release notes):');
+    $this->assertReleaseNotesLink(9, 7, '#edit-next-minor-3');
     $assert_minor_update_help();
 
     $this->assertUpdateStagedTimes(0);
@@ -898,10 +929,12 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
    *   Major version of next minor release.
    * @param int $minor
    *   Minor version of next minor release.
+   * @param string $selector
+   *   The selector.
    */
-  private function assertReleaseNotesLink(int $major, int $minor): void {
+  private function assertReleaseNotesLink(int $major, int $minor, string $selector): void {
     $assert_session = $this->assertSession();
-    $row = $assert_session->elementExists('css', '#edit-next-minor');
+    $row = $assert_session->elementExists('css', $selector);
     $link_href = $assert_session->elementExists('named', ['link', 'Release notes'], $row)->getAttribute('href');
     $this->assertSame('http://example.com/drupal-' . $major . '-' . $minor . '-0-release', $link_href);
   }

@@ -199,4 +199,15 @@ final class ProjectInfo {
     return FALSE;
   }
 
+  /**
+   * Gets the supported branches of the project.
+   *
+   * @return string[]
+   *   The supported branches.
+   */
+  public function getSupportedBranches(): array {
+    $available_updates = $this->getAvailableProjects()[$this->name];
+    return isset($available_updates['supported_branches']) ? explode(',', $available_updates['supported_branches']) : [];
+  }
+
 }

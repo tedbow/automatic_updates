@@ -174,13 +174,19 @@ final class UpdaterForm extends UpdateFormBase {
     ];
     $project_info = new ProjectInfo('drupal');
 
+    $installed_version = ExtensionVersion::createFromVersionString($project_info->getInstalledVersion());
     try {
-      // @todo Until https://www.drupal.org/i/3264849 is fixed, we can only show
-      //   one release on the form. First, try to show the latest release in the
-      //   currently installed minor. Failing that, try to show the latest
-      //   release in the next minor.
-      $installed_minor_release = $this->releaseChooser->getLatestInInstalledMinor($this->updater);
-      $next_minor_release = $this->releaseChooser->getLatestInNextMinor($this->updater);
+      $support_branches = $project_info->getSupportedBranches();
+      $releases = [];
+      foreach ($support_branches as $support_branch) {
+        $support_branch_extension_version = ExtensionVersion::createFromSupportBranch($support_branch);
+        if ($support_branch_extension_version->getMajorVersion() === $installed_version->getMajorVersion() && $support_branch_extension_version->getMinorVersion() >= $installed_version->getMinorVersion()) {
+          $recent_release_in_minor = $this->releaseChooser->getMostRecentReleaseInMinor($this->updater, $support_branch . '0');
+          if ($recent_release_in_minor) {
+            $releases[$support_branch] = $recent_release_in_minor;
+          }
+        }
+      }
     }
     catch (\RuntimeException $e) {
       $form['message'] = [
@@ -197,7 +203,7 @@ final class UpdaterForm extends UpdateFormBase {
     }
     $this->displayResults($results, $this->renderer);
     $project = $project_info->getProjectInfo();
-    if ($installed_minor_release === NULL && $next_minor_release === NULL) {
+    if (empty($releases)) {
       if ($project['status'] === UpdateManagerInterface::CURRENT) {
         $this->messenger()->addMessage($this->t('No update available'));
       }
@@ -249,72 +255,82 @@ final class UpdaterForm extends UpdateFormBase {
         $type = 'update-recommended';
     }
     $create_update_buttons = !$stage_exists && ValidationResult::getOverallSeverity($results) !== SystemManager::REQUIREMENT_ERROR;
-    if ($installed_minor_release) {
-      $installed_version = ExtensionVersion::createFromVersionString($project_info->getInstalledVersion());
-      $form['installed_minor'] = $this->createReleaseTable(
-        $installed_minor_release,
-        $release_status,
-        $this->t('Latest version of Drupal @major.@minor (currently installed):', [
-          '@major' => $installed_version->getMajorVersion(),
-          '@minor' => $installed_version->getMinorVersion(),
-        ]),
-        $type,
-        $create_update_buttons,
-        // Any update in the current minor should be the primary update.
-        TRUE,
-      );
-    }
-    if ($next_minor_release) {
-      // If there is no update in the current minor make the button for the next
-      // minor primary unless the project status is 'CURRENT' or 'NOT_CURRENT'.
-      // 'NOT_CURRENT' does not denote that installed version is not a valid
-      // only that there is newer version available.
-      $is_primary = !$installed_minor_release && !($project['status'] === UpdateManagerInterface::CURRENT || $project['status'] === UpdateManagerInterface::NOT_CURRENT);
-      $next_minor_version = ExtensionVersion::createFromVersionString($next_minor_release->getVersion());
 
-      // Since updating to another minor version of Drupal is more disruptive
-      // than updating within the currently installed minor version, ensure we
-      // display a link to the release notes for the first (x.y.0) release of
-      // the next minor version, which will inform site owners of any potential
-      // pitfalls or major changes. We should always be able to get release info
-      // for it; if we can't, that's an error condition.
-      $first_release_version = $next_minor_version->getMajorVersion() . '.' . $next_minor_version->getMinorVersion() . '.0';
-      $available_updates = update_get_available(TRUE);
-      if (isset($available_updates['drupal']['releases'][$first_release_version])) {
-        $next_minor_first_release = ProjectRelease::createFromArray($available_updates['drupal']['releases'][$first_release_version]);
+    $installed_minor_release = FALSE;
+    $next_minor_release_count = 0;
+    foreach ($releases as $release) {
+      $release_version = ExtensionVersion::createFromVersionString($release->getVersion());
+      if ($release_version->getMinorVersion() === $installed_version->getMinorVersion()) {
+        $installed_minor_release = TRUE;
+        $installed_version = ExtensionVersion::createFromVersionString($project_info->getInstalledVersion());
+        $form['installed_minor'] = $this->createReleaseTable(
+          $release,
+          $release_status,
+          $this->t('Latest version of Drupal @major.@minor (currently installed):', [
+            '@major' => $installed_version->getMajorVersion(),
+            '@minor' => $installed_version->getMinorVersion(),
+          ]),
+          $type,
+          $create_update_buttons,
+          // Any update in the current minor should be the primary update.
+          TRUE,
+        );
       }
       else {
-        throw new \LogicException("Release information for Drupal $first_release_version is not available.");
-      }
+        $next_minor_release_count++;
+        if ($next_minor_release_count === 1) {
+          if ($this->moduleHandler->moduleExists('help')) {
+            $url = Url::fromRoute('help.page')
+              ->setRouteParameter('name', 'automatic_updates')
+              ->setOption('fragment', 'minor-update');
 
-      if ($this->moduleHandler->moduleExists('help')) {
-        $url = Url::fromRoute('help.page')
-          ->setRouteParameter('name', 'automatic_updates')
-          ->setOption('fragment', 'minor-update');
+            $form['minor_update_help'] = [
+              '#markup' => $this->t('The following updates are in newer minor version of Drupal. <a href=":url">Learn more about updating to another minor version.</a>', [
+                ':url' => $url->toString(),
+              ]),
+              '#prefix' => '<p>',
+              '#suffix' => '</p>',
+            ];
+          }
+        }
+        // If there is no update in the current minor make the button for the
+        // next minor primary unless the project status is 'CURRENT' or
+        // 'NOT_CURRENT'. 'NOT_CURRENT' does not denote that installed version
+        // is not a valid only that there is newer version available.
+        if (!isset($is_primary)) {
+          $is_primary = !$installed_minor_release && !($project['status'] === UpdateManagerInterface::CURRENT || $project['status'] === UpdateManagerInterface::NOT_CURRENT);
+        }
+        else {
+          $is_primary = FALSE;
+        }
 
-        // @todo Updating this wording in https://www.drupal.org/i/3280403 to
-        //   reflect that multiple minor branches may be visible.
-        $form['minor_update_help'] = [
-          '#markup' => $this->t('The following updates are in the next minor version of Drupal. <a href=":url">Learn more about updating to another minor version.</a>', [
-            ':url' => $url->toString(),
+        // Since updating to another minor version of Drupal is more
+        // disruptive than updating within the currently installed minor
+        // version, ensure we display a link to the release notes for the
+        // first (x.y.0) release of the next minor version, which will inform
+        // site owners of any potential pitfalls or major changes. We should
+        // always be able to get release info for it; if we can't, that's an
+        // error condition.
+        $first_release_version = $release_version->getMajorVersion() . '.' . $release_version->getMinorVersion() . '.0';
+        $available_updates = update_get_available(TRUE);
+
+        // @todo In https://www.drupal.org/i/3310666 handle if the .0 release is
+        //   not available, and only pre-releases are available.
+        $next_minor_first_release = ProjectRelease::createFromArray($available_updates['drupal']['releases'][$first_release_version]);
+
+        $form["next_minor_$next_minor_release_count"] = $this->createReleaseTable(
+          $release,
+          $installed_minor_release ? $this->t('Minor update') : $release_status,
+          $this->t('Latest version of Drupal @major.@minor (next minor) (<a href=":url">Release notes</a>):', [
+            '@major' => $release_version->getMajorVersion(),
+            '@minor' => $release_version->getMinorVersion(),
+            ':url' => $next_minor_first_release->getReleaseUrl(),
           ]),
-          '#prefix' => '<p>',
-          '#suffix' => '</p>',
-        ];
+          $installed_minor_release ? 'update-optional' : $type,
+          $create_update_buttons,
+          $is_primary
+        );
       }
-
-      $form['next_minor'] = $this->createReleaseTable(
-        $next_minor_release,
-        $installed_minor_release ? $this->t('Minor update') : $release_status,
-        $this->t('Latest version of Drupal @major.@minor (next minor) (<a href=":url">Release notes</a>):', [
-          '@major' => $next_minor_version->getMajorVersion(),
-          '@minor' => $next_minor_version->getMinorVersion(),
-          ':url' => $next_minor_first_release->getReleaseUrl(),
-        ]),
-        $installed_minor_release ? 'update-optional' : $type,
-        $create_update_buttons,
-        $is_primary
-      );
     }
 
     $form['backup'] = [

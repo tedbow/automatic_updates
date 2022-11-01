@@ -242,4 +242,52 @@ class ProjectInfoTest extends PackageManagerKernelTestBase {
     $this->assertSame($expected_to_be_safe, $project_info->isInstalledVersionSafe());
   }
 
+  /**
+   * Data provider for testGetSupportedBranches().
+   *
+   * @return mixed[][]
+   *   The test cases.
+   */
+  public function providerGetSupportedBranches(): array {
+    $dir = __DIR__ . '/../../fixtures/release-history/';
+
+    return [
+      'xml with supported branches' => [
+        $dir . 'drupal.10.0.0.xml',
+        [
+          '9.5.',
+          '9.6.',
+          '9.7.',
+          '10.0.',
+        ],
+      ],
+      'xml with supported branches not set' => [
+        $dir . 'drupal.9.8.1-supported_branches_not_set.xml',
+        [],
+      ],
+      'xml with empty supported branches' => [
+        $dir . 'drupal.9.8.1-empty_supported_branches.xml',
+        [
+          '',
+        ],
+      ],
+    ];
+  }
+
+  /**
+   * @covers ::getSupportedBranches()
+   *
+   * @param string $release_xml
+   *   The path of the release metadata.
+   * @param string[] $expected_supported_branches
+   *   The expected supported branches.
+   *
+   * @dataProvider providerGetSupportedBranches
+   */
+  public function testGetSupportedBranches(string $release_xml, array $expected_supported_branches): void {
+    $this->setReleaseMetadata(['drupal' => $release_xml]);
+    $project_info = new ProjectInfo('drupal');
+    $this->assertSame($expected_supported_branches, $project_info->getSupportedBranches());
+  }
+
 }

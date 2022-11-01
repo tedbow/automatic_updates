@@ -2,6 +2,7 @@
 
 namespace Drupal\Tests\automatic_updates\Kernel;
 
+use Drupal\Core\Extension\ExtensionVersion;
 use Drupal\update\ProjectRelease;
 
 /**
@@ -140,6 +141,7 @@ class ReleaseChooserTest extends AutomaticUpdatesKernelTestBase {
    *
    * @covers ::getLatestInInstalledMinor
    * @covers ::getLatestInNextMinor
+   * @covers ::getMostRecentReleaseInMinor
    */
   public function testReleases(string $updater_service, bool $minor_support, string $installed_version, ?string $current_minor, ?string $next_minor): void {
     $this->setCoreVersion($installed_version);
@@ -150,6 +152,14 @@ class ReleaseChooserTest extends AutomaticUpdatesKernelTestBase {
     $updater = $this->container->get($updater_service);
     $this->assertReleaseVersion($current_minor, $chooser->getLatestInInstalledMinor($updater));
     $this->assertReleaseVersion($next_minor, $chooser->getLatestInNextMinor($updater));
+
+    $this->assertReleaseVersion($current_minor, $chooser->getMostRecentReleaseInMinor($updater, $this->getRelativeVersion($installed_version, 0)));
+    $next_minor_version = $this->getRelativeVersion($installed_version, 1);
+    $this->assertReleaseVersion($next_minor, $chooser->getMostRecentReleaseInMinor($updater, $next_minor_version));
+    $previous_minor_version = $this->getRelativeVersion($installed_version, -1);
+    // The chooser should never return a release for a minor before the
+    // currently installed version.
+    $this->assertReleaseVersion(NULL, $chooser->getMostRecentReleaseInMinor($updater, $previous_minor_version));
   }
 
   /**
@@ -168,6 +178,22 @@ class ReleaseChooserTest extends AutomaticUpdatesKernelTestBase {
       $this->assertNotEmpty($release);
       $this->assertSame($version, $release->getVersion());
     }
+  }
+
+  /**
+   * Gets a version number in a minor version relative to another version.
+   *
+   * @param string $version
+   *   The version string.
+   * @param int $minor_offset
+   *   The minor offset.
+   *
+   * @return string
+   *   The first patch release in a minor relative to the version string.
+   */
+  private function getRelativeVersion(string $version, int $minor_offset): string {
+    $installed_version_object = ExtensionVersion::createFromVersionString($version);
+    return $installed_version_object->getMajorVersion() . '.' . (((int) $installed_version_object->getMinorVersion()) + $minor_offset) . '.0';
   }
 
 }
