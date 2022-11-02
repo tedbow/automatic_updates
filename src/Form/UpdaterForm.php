@@ -314,18 +314,28 @@ final class UpdaterForm extends UpdateFormBase {
         $first_release_version = $release_version->getMajorVersion() . '.' . $release_version->getMinorVersion() . '.0';
         $available_updates = update_get_available(TRUE);
 
-        // @todo In https://www.drupal.org/i/3310666 handle if the .0 release is
-        //   not available, and only pre-releases are available.
-        $next_minor_first_release = ProjectRelease::createFromArray($available_updates['drupal']['releases'][$first_release_version]);
+        // If the `.0` patch release of this minor is available link to its
+        // release notes because this will document the most important changes
+        // in this minor.
+        if (isset($available_updates['drupal']['releases'][$first_release_version])) {
+          $next_minor_first_release = ProjectRelease::createFromArray($available_updates['drupal']['releases'][$first_release_version]);
+          $caption = $this->t('Latest version of Drupal @major.@minor (next minor) (<a href=":url">Release notes</a>):', [
+            '@major' => $release_version->getMajorVersion(),
+            '@minor' => $release_version->getMinorVersion(),
+            ':url' => $next_minor_first_release->getReleaseUrl(),
+          ]);
+        }
+        else {
+          $caption = $this->t('Latest version of Drupal @major.@minor (next minor):', [
+            '@major' => $release_version->getMajorVersion(),
+            '@minor' => $release_version->getMinorVersion(),
+          ]);
+        }
 
         $form["next_minor_$next_minor_release_count"] = $this->createReleaseTable(
           $release,
           $installed_minor_release ? $this->t('Minor update') : $release_status,
-          $this->t('Latest version of Drupal @major.@minor (next minor) (<a href=":url">Release notes</a>):', [
-            '@major' => $release_version->getMajorVersion(),
-            '@minor' => $release_version->getMinorVersion(),
-            ':url' => $next_minor_first_release->getReleaseUrl(),
-          ]),
+          $caption,
           $installed_minor_release ? 'update-optional' : $type,
           $create_update_buttons,
           $is_primary
