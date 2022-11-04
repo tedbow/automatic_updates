@@ -18,7 +18,7 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 /**
  * Defines an event subscriber to test logging during events in Package Manager.
  */
-class EventLogSubscriber implements EventSubscriberInterface {
+final class EventLogSubscriber implements EventSubscriberInterface {
 
   /**
    * Adds validation results to a stage event.

@@ -526,5 +526,4 @@ END;
   }
 
   // END: DELETE FROM CORE MERGE REQUEST.
-
 }
