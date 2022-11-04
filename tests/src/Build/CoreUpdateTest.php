@@ -88,7 +88,7 @@ class CoreUpdateTest extends UpdateTestBase {
     $mink = $this->getMink();
     $session = $mink->getSession();
     $session->reload();
-    $update_staus_code = $session->getStatusCode();
+    $update_status_code = $session->getStatusCode();
     $file_contents = $session->getPage()->getContent();
     // Assert the stage events that have been logged before other asserts
     // because knowing which events have been fired can help determine why the
@@ -112,7 +112,7 @@ class CoreUpdateTest extends UpdateTestBase {
     );
     // Even though the response is what we expect, assert the status code as
     // well, to be extra-certain that there was no kind of server-side error.
-    $this->assertSame(200, $update_staus_code, 'Status code is 200');
+    $this->assertSame(200, $update_status_code, 'Status code is 200');
     file_put_contents("/Users/ted.bowman/sites/test.json", $file_contents);
     $file_contents = json_decode($file_contents, TRUE, 512, JSON_THROW_ON_ERROR);
 
