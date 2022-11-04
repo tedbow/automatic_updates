@@ -4,6 +4,14 @@ namespace Drupal\Tests\package_manager\Build;
 
 use Drupal\BuildTests\QuickStart\QuickStartTestBase;
 use Drupal\Composer\Composer;
+use Drupal\package_manager\Event\PostApplyEvent;
+use Drupal\package_manager\Event\PostCreateEvent;
+use Drupal\package_manager\Event\PostDestroyEvent;
+use Drupal\package_manager\Event\PostRequireEvent;
+use Drupal\package_manager\Event\PreApplyEvent;
+use Drupal\package_manager\Event\PreCreateEvent;
+use Drupal\package_manager\Event\PreDestroyEvent;
+use Drupal\package_manager\Event\PreRequireEvent;
 use Drupal\Tests\package_manager\Traits\FixtureUtilityTrait;
 use Drupal\Tests\RandomGeneratorTrait;
 
@@ -422,6 +430,7 @@ END;
       ->getValue();
     if (preg_match('/^system_modules_(experimental_|non_stable_)?confirm_form$/', $form_id)) {
       $page->pressButton('Continue');
+      file_put_contents("/Users/ted.bowman/sites/test.html", $page->getContent());
       $assert_session->statusCodeEquals(200);
     }
   }
@@ -439,6 +448,58 @@ END;
     $temp_directory = $this->getWorkspaceDirectory() . '/fixtures_temp_' . $this->randomMachineName(20);
     static::copyFixtureFilesTo($fixture_directory, $temp_directory);
     return $temp_directory;
+  }
+
+  /**
+   * Asserts stage events were called in a specific order.
+   *
+   * @param string $expected_stage_class
+   *   The expected stage class for the events.
+   * @param array|null $events
+   *   (optional) The expected stage events that should have been fired in the
+   *   order in which they should have been fired. Events can be specified more
+   *   that once if they will be fired multiple times. If there are no events
+   *   specified all life cycle events from PreCreateEvent to PostDestroy will
+   *   be asserted.
+   */
+  protected function assertStageEventsLogged(string $expected_stage_class, ?array $events = NULL): void {
+    if (is_null($events)) {
+      $events = [
+        PreCreateEvent::class,
+        PostCreateEvent::class,
+        PreRequireEvent::class,
+        PostRequireEvent::class,
+        PreApplyEvent::class,
+        PostApplyEvent::class,
+        PreDestroyEvent::class,
+        PostDestroyEvent::class,
+      ];
+    }
+    else {
+      $this->assertLessThan(25, $this->count($events), 'More than 25 events may not appear on one page of the log view');
+    }
+    $assert_session = $this->getMink()->assertSession();
+    $page = $this->getMink()->getSession()->getPage();
+    $this->visit('/admin/reports/dblog');
+    $assert_session->statusCodeEquals(200);
+    $page->selectFieldOption('Type', 'package_manager_test_event_logger');
+    $page->pressButton('Filter');
+    $assert_session->statusCodeEquals(200);
+
+    // The log entries will not appear completely in the page text but they will
+    // appear in the title attribute of the links.
+    $links = $page->findAll('css', 'a[title^=package_manager_test_event_logger-start]');
+    $actual_titles = [];
+    // Loop through the links in reverse order because the most recent entries
+    // will be first.
+    foreach (array_reverse($links) as $link) {
+      $actual_titles[] = $link->getAttribute('title');
+    }
+    $expected_titles = [];
+    foreach ($events as $event) {
+      $expected_titles[] = "package_manager_test_event_logger-start: Event: $event, Stage instance of: $expected_stage_class:package_manager_test_event_logger-end";
+    }
+    $this->assertSame($expected_titles, $actual_titles);
   }
 
   // BEGIN: DELETE FROM CORE MERGE REQUEST.
@@ -464,4 +525,5 @@ END;
   }
 
   // END: DELETE FROM CORE MERGE REQUEST.
+
 }
