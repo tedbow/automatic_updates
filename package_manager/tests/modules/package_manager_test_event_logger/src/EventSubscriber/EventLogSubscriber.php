@@ -4,7 +4,6 @@ declare(strict_types = 1);
 
 namespace Drupal\package_manager_test_event_logger\EventSubscriber;
 
-use Drupal\Component\Datetime\TimeInterface;
 use Drupal\package_manager\Event\PostApplyEvent;
 use Drupal\package_manager\Event\PostCreateEvent;
 use Drupal\package_manager\Event\PostDestroyEvent;
