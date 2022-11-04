@@ -2,6 +2,15 @@
 
 namespace Drupal\Tests\package_manager\Build;
 
+use Drupal\package_manager\Event\PostApplyEvent;
+use Drupal\package_manager\Event\PostCreateEvent;
+use Drupal\package_manager\Event\PostDestroyEvent;
+use Drupal\package_manager\Event\PostRequireEvent;
+use Drupal\package_manager\Event\PreApplyEvent;
+use Drupal\package_manager\Event\PreCreateEvent;
+use Drupal\package_manager\Event\PreDestroyEvent;
+use Drupal\package_manager\Event\PreRequireEvent;
+
 /**
  * Tests updating packages in a staging area.
  *
@@ -67,6 +76,24 @@ class PackageUpdateTest extends TemplateProjectTestBase {
     // created this file.
     // @see \Drupal\updated_module\PostApplySubscriber::postApply()
     $this->assertSame('Bravo!', $file_contents['bravo.txt']);
+
+    $assert_session = $mink->assertSession();
+    // There should be information for every event triggered.
+    $this->visit('/admin/reports/dblog');
+    file_put_contents("/Users/kunal.sachdev/www/test_sample.html", $mink->getSession()->getPage()->getContent());
+    $events = [
+      PreCreateEvent::class,
+      PostCreateEvent::class,
+      PreRequireEvent::class,
+      PostRequireEvent::class,
+      PreApplyEvent::class,
+      PostApplyEvent::class,
+      PreDestroyEvent::class,
+      PostDestroyEvent::class,
+    ];
+    foreach ($events as $event) {
+      $assert_session->pageTextContains('Event: ' . $event);
+    }
   }
 
 }

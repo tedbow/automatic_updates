@@ -282,6 +282,7 @@ END;
     // Install helpful modules.
     $this->installModules([
       'package_manager_test_api',
+      'package_manager_test_event_logger',
       'package_manager_test_release_history',
     ]);
   }

@@ -1,0 +1,7 @@
+services:
+  package_manager_test_event_logger.subscriber:
+    class: Drupal\package_manager_test_event_logger\EventSubscriber\EventLogSubscriber
+    arguments:
+      - '@datetime.time'
+    tags:
+      - { name: event_subscriber }
