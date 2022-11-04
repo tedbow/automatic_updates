@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types = 1);
+
 namespace Drupal\package_manager_test_event_logger\EventSubscriber;
 
 use Drupal\Component\Datetime\TimeInterface;
@@ -12,7 +14,6 @@ use Drupal\package_manager\Event\PreCreateEvent;
 use Drupal\package_manager\Event\PreDestroyEvent;
 use Drupal\package_manager\Event\PreRequireEvent;
 use Drupal\package_manager\Event\StageEvent;
-use Drupal\package_manager\Event\StatusCheckEvent;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 /**
@@ -60,7 +61,6 @@ class EventLogSubscriber implements EventSubscriberInterface {
       PostApplyEvent::class => ['logEventInfo'],
       PreDestroyEvent::class => ['logEventInfo'],
       PostDestroyEvent::class => ['logEventInfo'],
-      StatusCheckEvent::class => ['logEventInfo'],
     ];
   }
 
