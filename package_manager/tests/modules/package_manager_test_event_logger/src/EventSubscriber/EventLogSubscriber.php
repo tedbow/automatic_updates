@@ -22,23 +22,6 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 class EventLogSubscriber implements EventSubscriberInterface {
 
   /**
-   * The time service.
-   *
-   * @var \Drupal\Component\Datetime\TimeInterface
-   */
-  protected $time;
-
-  /**
-   * Creates a EventLogSubscriber object.
-   *
-   * @param \Drupal\Component\Datetime\TimeInterface $time
-   *   The time service.
-   */
-  public function __construct(TimeInterface $time) {
-    $this->time = $time;
-  }
-
-  /**
    * Adds validation results to a stage event.
    *
    * @param \Drupal\package_manager\Event\StageEvent $event
@@ -51,7 +34,7 @@ class EventLogSubscriber implements EventSubscriberInterface {
   /**
    * {@inheritdoc}
    */
-  public static function getSubscribedEvents() {
+  public static function getSubscribedEvents(): array {
     return [
       PreCreateEvent::class => ['logEventInfo'],
       PostCreateEvent::class => ['logEventInfo'],

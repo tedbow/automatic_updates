@@ -430,7 +430,6 @@ END;
       ->getValue();
     if (preg_match('/^system_modules_(experimental_|non_stable_)?confirm_form$/', $form_id)) {
       $page->pressButton('Continue');
-      file_put_contents("/Users/ted.bowman/sites/test.html", $page->getContent());
       $assert_session->statusCodeEquals(200);
     }
   }
@@ -465,7 +464,7 @@ END;
    * @see \Drupal\package_manager_test_event_logger\EventSubscriber\EventLogSubscriber::logEventInfo
    */
   protected function assertStageEventsLogged(string $expected_stage_class, ?array $events = NULL): void {
-    if (is_null($events)) {
+    if ($events === NULL) {
       $events = [
         PreCreateEvent::class,
         PostCreateEvent::class,
