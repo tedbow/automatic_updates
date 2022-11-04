@@ -461,6 +461,8 @@ END;
    *   that once if they will be fired multiple times. If there are no events
    *   specified all life cycle events from PreCreateEvent to PostDestroy will
    *   be asserted.
+   *
+   * @see \Drupal\package_manager_test_event_logger\EventSubscriber\EventLogSubscriber::logEventInfo
    */
   protected function assertStageEventsLogged(string $expected_stage_class, ?array $events = NULL): void {
     if (is_null($events)) {

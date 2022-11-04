@@ -2,7 +2,17 @@
 
 namespace Drupal\Tests\automatic_updates\Build;
 
+use Drupal\automatic_updates\CronUpdater;
+use Drupal\automatic_updates\Updater;
 use Drupal\Composer\Composer;
+use Drupal\package_manager\Event\PostApplyEvent;
+use Drupal\package_manager\Event\PostCreateEvent;
+use Drupal\package_manager\Event\PostDestroyEvent;
+use Drupal\package_manager\Event\PostRequireEvent;
+use Drupal\package_manager\Event\PreApplyEvent;
+use Drupal\package_manager\Event\PreCreateEvent;
+use Drupal\package_manager\Event\PreDestroyEvent;
+use Drupal\package_manager\Event\PreRequireEvent;
 
 /**
  * Tests an end-to-end update of Drupal core.
@@ -78,13 +88,35 @@ class CoreUpdateTest extends UpdateTestBase {
     $mink = $this->getMink();
     $session = $mink->getSession();
     $session->reload();
-    $mink->assertSession()->statusCodeEquals(200);
+    $update_staus_code = $session->getStatusCode();
     $file_contents = $session->getPage()->getContent();
-    $file_contents = json_decode($file_contents, TRUE, 512, JSON_THROW_ON_ERROR);
-    $this->assertStringContainsString("const VERSION = '9.8.1';", $file_contents['web/core/lib/Drupal.php']);
+    // Assert the stage events that have been logged before other asserts
+    // because knowing which events have been fired can help determine why the
+    // test may be failing.
+    $this->assertStageEventsLogged(
+      Updater::class,
+      [
+        // ::assertReadOnlyFileSystemError attempts to start an update
+        // multiple times so 'PreCreateEvent' will be fired multiple times.
+        PreCreateEvent::class,
+        PreCreateEvent::class,
+        PreCreateEvent::class,
+        PostCreateEvent::class,
+        PreRequireEvent::class,
+        PostRequireEvent::class,
+        PreApplyEvent::class,
+        PostApplyEvent::class,
+        PreDestroyEvent::class,
+        PostDestroyEvent::class,
+      ]
+    );
     // Even though the response is what we expect, assert the status code as
     // well, to be extra-certain that there was no kind of server-side error.
+    $this->assertSame(200, $update_staus_code, 'Status code is 200');
+    file_put_contents("/Users/ted.bowman/sites/test.json", $file_contents);
+    $file_contents = json_decode($file_contents, TRUE, 512, JSON_THROW_ON_ERROR);
 
+    $this->assertStringContainsString("const VERSION = '9.8.1';", $file_contents['web/core/lib/Drupal.php']);
     $this->assertUpdateSuccessful('9.8.1');
   }
 
@@ -115,6 +147,7 @@ class CoreUpdateTest extends UpdateTestBase {
     $page->pressButton('Continue');
     $this->waitForBatchJob();
     $assert_session->pageTextContains('Update complete!');
+    $this->assertStageEventsLogged(Updater::class);
     $assert_session->pageTextNotContains('There is a security update available for your version of Drupal.');
     $this->assertUpdateSuccessful('9.8.1');
   }
@@ -139,7 +172,12 @@ class CoreUpdateTest extends UpdateTestBase {
 
     $assert_session->pageTextContains('Your site is ready for automatic updates.');
     $page->clickLink('Run cron');
-    $assert_session->statusCodeEquals(200);
+    $cron_run_status_code = $mink->getSession()->getStatusCode();
+    // Assert the stage events that have been logged before other asserts
+    // because knowing which events have been fired can help determine why the
+    // test may be failing.
+    $this->assertStageEventsLogged(CronUpdater::class);
+    $this->assertSame(200, $cron_run_status_code, 'Status code is 200');
 
     // There should be log messages, but no errors or warnings should have been
     // logged by Automatic Updates.
