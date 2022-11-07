@@ -73,7 +73,7 @@ class CoreUpdateTest extends UpdateTestBase {
   /**
    * Tests an end-to-end core update via the API.
    */
-  public function xtestApi(): void {
+  public function testApi(): void {
     $this->createTestProject('RecommendedProject');
     $query = http_build_query([
       'projects' => [
@@ -161,7 +161,7 @@ class CoreUpdateTest extends UpdateTestBase {
    *
    * @dataProvider providerTemplate
    */
-  public function xtestCron(string $template): void {
+  public function testCron(string $template): void {
     $this->createTestProject($template);
     // Install dblog so we can check if any errors were logged during the update.
     $this->installModules(['dblog']);
