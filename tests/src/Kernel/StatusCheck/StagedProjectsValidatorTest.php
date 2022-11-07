@@ -84,18 +84,24 @@ class StagedProjectsValidatorTest extends AutomaticUpdatesKernelTestBase {
       'version' => '1.3.1',
       'type' => 'library',
     ]);
-    $this->addPackage($active_dir, [
-      'name' => 'drupal/dev-test_module',
-      'version' => '1.3.0',
-      'type' => 'drupal_module',
-      'dev_requirement' => TRUE,
-    ]);
-    $this->addPackage($active_dir, [
-      'name' => 'other/dev-removed',
-      'version' => '1.3.1',
-      'type' => 'library',
-      'dev_requirement' => TRUE,
-    ]);
+    $this->addPackage(
+      $active_dir,
+      [
+        'name' => 'drupal/dev-test_module',
+        'version' => '1.3.0',
+        'type' => 'drupal_module',
+      ],
+      TRUE
+    );
+    $this->addPackage(
+      $active_dir,
+      [
+        'name' => 'other/dev-removed',
+        'version' => '1.3.1',
+        'type' => 'library',
+      ],
+      TRUE
+    );
 
     $updater = $this->container->get('automatic_updates.updater');
     $updater->begin(['drupal' => '9.8.1']);
@@ -108,13 +114,16 @@ class StagedProjectsValidatorTest extends AutomaticUpdatesKernelTestBase {
       'type' => 'drupal-module',
       'install_path' => '../../modules/test_module2',
     ]);
-    $this->addPackage($stage_dir, [
-      'name' => 'drupal/dev-test_module2',
-      'version' => '1.3.1',
-      'type' => 'drupal-custom-module',
-      'dev_requirement' => TRUE,
-      'install_path' => '../../modules/dev-test_module2',
-    ]);
+    $this->addPackage(
+      $stage_dir,
+      [
+        'name' => 'drupal/dev-test_module2',
+        'version' => '1.3.1',
+        'type' => 'drupal-custom-module',
+        'install_path' => '../../modules/dev-test_module2',
+      ],
+      TRUE
+    );
     // The validator shouldn't complain about these packages being added or
     // removed, since it only cares about Drupal modules and themes.
     $this->addPackage($stage_dir, [
@@ -123,13 +132,16 @@ class StagedProjectsValidatorTest extends AutomaticUpdatesKernelTestBase {
       'type' => 'library',
       'install_path' => '../other/new_project',
     ]);
-    $this->addPackage($stage_dir, [
-      'name' => 'other/dev-new_project',
-      'version' => '1.3.1',
-      'type' => 'library',
-      'dev_requirement' => TRUE,
-      'install_path' => '../other/dev-new_project',
-    ]);
+    $this->addPackage(
+      $stage_dir,
+      [
+        'name' => 'other/dev-new_project',
+        'version' => '1.3.1',
+        'type' => 'library',
+        'install_path' => '../other/dev-new_project',
+      ],
+      TRUE
+    );
     $this->removePackage($stage_dir, 'other/removed');
     $this->removePackage($stage_dir, 'other/dev-removed');
 
@@ -168,24 +180,33 @@ class StagedProjectsValidatorTest extends AutomaticUpdatesKernelTestBase {
       'version' => '1.3.1',
       'type' => 'library',
     ]);
-    $this->addPackage($active_dir, [
-      'name' => 'drupal/dev-test_theme',
-      'version' => '1.3.0',
-      'type' => 'drupal-custom-theme',
-      'dev_requirement' => TRUE,
-    ]);
-    $this->addPackage($active_dir, [
-      'name' => 'drupal/dev-test_module2',
-      'version' => '1.3.1',
-      'type' => 'drupal-module',
-      'dev_requirement' => TRUE,
-    ]);
-    $this->addPackage($active_dir, [
-      'name' => 'other/dev-removed',
-      'version' => '1.3.1',
-      'type' => 'library',
-      'dev_requirement' => TRUE,
-    ]);
+    $this->addPackage(
+      $active_dir,
+      [
+        'name' => 'drupal/dev-test_theme',
+        'version' => '1.3.0',
+        'type' => 'drupal-custom-theme',
+      ],
+      TRUE
+    );
+    $this->addPackage(
+      $active_dir,
+      [
+        'name' => 'drupal/dev-test_module2',
+        'version' => '1.3.1',
+        'type' => 'drupal-module',
+      ],
+      TRUE
+    );
+    $this->addPackage(
+      $active_dir,
+      [
+        'name' => 'other/dev-removed',
+        'version' => '1.3.1',
+        'type' => 'library',
+      ],
+      TRUE
+    );
 
     $updater = $this->container->get('automatic_updates.updater');
     $updater->begin(['drupal' => '9.8.1']);
@@ -229,18 +250,24 @@ class StagedProjectsValidatorTest extends AutomaticUpdatesKernelTestBase {
       'version' => '1.3.1',
       'type' => 'library',
     ]);
-    $this->addPackage($active_dir, [
-      'name' => 'drupal/dev-test_module',
-      'version' => '1.3.0',
-      'type' => 'drupal-module',
-      'dev_requirement' => TRUE,
-    ]);
-    $this->addPackage($active_dir, [
-      'name' => 'other/dev-changed',
-      'version' => '1.3.1',
-      'type' => 'library',
-      'dev_requirement' => TRUE,
-    ]);
+    $this->addPackage(
+      $active_dir,
+      [
+        'name' => 'drupal/dev-test_module',
+        'version' => '1.3.0',
+        'type' => 'drupal-module',
+      ],
+      TRUE
+    );
+    $this->addPackage(
+      $active_dir,
+      [
+        'name' => 'other/dev-changed',
+        'version' => '1.3.1',
+        'type' => 'library',
+      ],
+      TRUE
+    );
 
     $updater = $this->container->get('automatic_updates.updater');
     $updater->begin(['drupal' => '9.8.1']);
@@ -297,24 +324,32 @@ class StagedProjectsValidatorTest extends AutomaticUpdatesKernelTestBase {
       'version' => '1.3.1',
       'type' => 'library',
     ]);
-    $this->addPackage($active_dir, [
-      'name' => 'drupal/dev-test_module',
-      'version' => '1.3.0',
-      'type' => 'drupal-module',
-      'dev_requirement' => TRUE,
-    ]);
-    $this->addPackage($active_dir, [
-      'name' => 'other/dev-removed',
-      'version' => '1.3.1',
-      'type' => 'library',
-      'dev_requirement' => TRUE,
-    ]);
-    $this->addPackage($active_dir, [
-      'name' => 'other/dev-changed',
-      'version' => '1.3.1',
-      'type' => 'library',
-      'dev_requirement' => TRUE,
-    ]);
+    $this->addPackage(
+      $active_dir, [
+        'name' => 'drupal/dev-test_module',
+        'version' => '1.3.0',
+        'type' => 'drupal-module',
+      ],
+      TRUE
+    );
+    $this->addPackage(
+      $active_dir,
+      [
+        'name' => 'other/dev-removed',
+        'version' => '1.3.1',
+        'type' => 'library',
+      ],
+      TRUE
+    );
+    $this->addPackage(
+      $active_dir,
+      [
+        'name' => 'other/dev-changed',
+        'version' => '1.3.1',
+        'type' => 'library',
+      ],
+      TRUE
+    );
 
     $updater = $this->container->get('automatic_updates.updater');
     $updater->begin(['drupal' => '9.8.1']);
@@ -332,13 +367,16 @@ class StagedProjectsValidatorTest extends AutomaticUpdatesKernelTestBase {
       'type' => 'library',
       'install_path' => '../other/new_project',
     ]);
-    $this->addPackage($stage_dir, [
-      'name' => 'other/dev-new_project',
-      'version' => '1.3.1',
-      'type' => 'library',
-      'dev_requirement' => TRUE,
-      'install_path' => '../other/dev-new_project',
-    ]);
+    $this->addPackage(
+      $stage_dir,
+      [
+        'name' => 'other/dev-new_project',
+        'version' => '1.3.1',
+        'type' => 'library',
+        'install_path' => '../other/dev-new_project',
+      ],
+      TRUE
+    );
     $this->modifyPackage($stage_dir, 'other/changed', [
       'version' => '1.3.2',
     ]);
