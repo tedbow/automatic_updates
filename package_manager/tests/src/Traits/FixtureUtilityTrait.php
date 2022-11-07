@@ -93,10 +93,12 @@ trait FixtureUtilityTrait {
    * @param array $package
    *   The package info that should be added to installed.json and
    *   installed.php. Must include a `name` key.
+   * @param bool $is_dev_requirement
+   *   Whether or not the package is a development requirement.
    */
-  protected function addPackage(string $dir, array $package): void {
+  protected function addPackage(string $dir, array $package, bool $is_dev_requirement = FALSE): void {
     $this->assertArrayHasKey('name', $package);
-    $this->setPackage($dir, $package['name'], $package, FALSE);
+    $this->setPackage($dir, $package['name'], $package, FALSE, $is_dev_requirement);
   }
 
   /**
@@ -148,8 +150,11 @@ trait FixtureUtilityTrait {
    *   package is already installed.
    * @param bool $should_exist
    *   Whether or not the package is expected to already be installed.
+   * @param bool|null $is_dev_requirement
+   *   Whether or not the package is a developer requirement.
    */
-  private function setPackage(string $dir, string $name, ?array $package, bool $should_exist): void {
+  private function setPackage(string $dir, string $name, ?array $package, bool $should_exist, ?bool $is_dev_requirement = NULL): void {
+    $this->assertNotTrue($should_exist && isset($is_dev_requirement), 'Changing an existing project to a dev requirement is not supported');
     $dir .= '/vendor/composer';
 
     $file = $dir . '/installed.json';
@@ -173,29 +178,30 @@ trait FixtureUtilityTrait {
       : "Expected package '$name' to not be installed, but it was.";
     $this->assertSame($should_exist, isset($position), $message);
 
+    if ($package) {
+      $package = ['name' => $name] + $package;
+      $install_json_package = array_diff_key($package, array_flip(['install_path']));
+    }
+
     if (isset($position)) {
       // If we're going to be updating the package data, merge the incoming data
       // into what we already have.
       if ($package) {
-        $package = NestedArray::mergeDeep($data['packages'][$position], $package);
+        $install_json_package = NestedArray::mergeDeep($data['packages'][$position], $install_json_package);
       }
 
       // Remove the existing package; the array will be re-keyed by
       // array_splice().
       array_splice($data['packages'], $position, 1);
+      $is_existing_dev_package = in_array($name, $data['dev-package-names'], TRUE);
       $data['dev-package-names'] = array_diff($data['dev-package-names'], [$name]);
       $data['dev-package-names'] = array_values($data['dev-package-names']);
     }
     // Add the package back to the list, if we have data for it.
-    if ($package) {
-      // If an install path was provided, ensure it's relative.
-      if (array_key_exists('install_path', $package)) {
-        $this->assertStringStartsWith('../', $package['install_path']);
-      }
-      $package['name'] = $name;
-      $data['packages'][] = $package;
+    if (isset($package)) {
+      $data['packages'][] = $install_json_package;
 
-      if (!empty($package['dev_requirement'])) {
+      if ($is_dev_requirement || !empty($is_existing_dev_package)) {
         $data['dev-package-names'][] = $name;
       }
     }
@@ -205,17 +211,37 @@ trait FixtureUtilityTrait {
     $this->assertFileIsWritable($file);
 
     $data = require $file;
-    unset($data['versions'][$name]);
-    // The installation paths in $data will have been interpreted by the PHP
-    // runtime, so make them all relative again by stripping $dir out.
-    array_walk($data['versions'], function (array &$package) use ($dir): void {
-      if (array_key_exists('install_path', $package)) {
-        $package['install_path'] = str_replace("$dir/", '', $package['install_path']);
-      }
-    });
-    if ($package) {
-      $data['versions'][$name] = $package;
+
+    // Ensure that we actually expect to find the package already installed (or
+    // not).
+    if ($should_exist) {
+      $this->assertArrayHasKey($name, $data['versions']);
     }
+    else {
+      $this->assertArrayNotHasKey($name, $data['versions']);
+    }
+    if ($package) {
+      // If an install path was provided, ensure it's relative.
+      if (array_key_exists('install_path', $package)) {
+        $this->assertStringStartsWith('../', $package['install_path']);
+      }
+      $install_php_package = $should_exist ?
+        NestedArray::mergeDeep($data['versions'][$name], $package) :
+        $package;
+
+      // The installation paths in $data will have been interpreted by the PHP
+      // runtime, so make them all relative again by stripping $dir out.
+      array_walk($data['versions'], function (array &$install_php_package) use ($dir): void {
+        if (array_key_exists('install_path', $install_php_package)) {
+          $install_php_package['install_path'] = str_replace("$dir/", '', $install_php_package['install_path']);
+        }
+      });
+      $data['versions'][$name] = $install_php_package;
+    }
+    else {
+      unset($data['versions'][$name]);
+    }
+
     $data = var_export($data, TRUE);
     $data = str_replace("'install_path' => '../", "'install_path' => __DIR__ . '/../", $data);
     file_put_contents($file, "<?php\nreturn $data;");

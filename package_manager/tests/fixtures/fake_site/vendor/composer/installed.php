@@ -6,5 +6,9 @@
 
 // Composer Utility needs the versions key to be present.
 return [
-  'versions' => [],
+  'versions' => [
+    'drupal/core' => [
+      'name' => 'drupal/core',
+    ],
+  ],
 ];

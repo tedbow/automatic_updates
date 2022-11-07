@@ -4,6 +4,7 @@ namespace Drupal\Tests\package_manager\Kernel;
 
 use Drupal\Tests\package_manager\Traits\FixtureUtilityTrait;
 use PHPUnit\Framework\AssertionFailedError;
+use Symfony\Component\Filesystem\Filesystem;
 
 /**
  * @coversDefaultClass \Drupal\Tests\package_manager\Traits\FixtureUtilityTrait
@@ -36,9 +37,10 @@ class FixtureUtilityTraitTest extends PackageManagerKernelTestBase {
     $this->addPackage($this->dir, [
       'name' => 'my/dev-package',
       'version' => '2.1.0',
-      'dev_requirement' => TRUE,
       'install_path' => '../relative/path',
-    ]);
+    ],
+    TRUE,
+    );
   }
 
   /**
@@ -70,38 +72,76 @@ class FixtureUtilityTraitTest extends PackageManagerKernelTestBase {
         'name' => 'absolute/path',
         'install_path' => '/absolute/path',
       ]);
+      $this->fail('Add package should have failed.');
     }
     catch (AssertionFailedError $e) {
       $this->assertSame('Failed asserting that \'/absolute/path\' starts with "../".', $e->getMessage());
     }
 
-    $expected_packages = [
+    $installed_json_expected_packages = [
       'my/package' => [
         'name' => 'my/package',
       ],
       'my/dev-package' => [
         'name' => 'my/dev-package',
         'version' => '2.1.0',
-        'dev_requirement' => TRUE,
-        'install_path' => '../relative/path',
       ],
     ];
+    $installed_php_expected_packages = $installed_json_expected_packages;
     [$installed_json, $installed_php] = $this->getData();
-    $installed_json['packages'] = array_intersect_key($installed_json['packages'], $expected_packages);
-    $this->assertSame($expected_packages, $installed_json['packages']);
+    $installed_json['packages'] = array_intersect_key($installed_json['packages'], $installed_json_expected_packages);
+    $this->assertSame($installed_json_expected_packages, $installed_json['packages']);
     $this->assertContains('my/dev-package', $installed_json['dev-package-names']);
     $this->assertNotContains('my/package', $installed_json['dev-package-names']);
     // In installed.php, the relative installation path of my/dev-package should
     // have been prefixed with the __DIR__ constant, which should be interpreted
     // when installed.php is loaded by the PHP runtime.
-    $expected_packages['my/dev-package']['install_path'] = "$this->dir/vendor/composer/../relative/path";
-    $this->assertSame($expected_packages, $installed_php);
+    $installed_php_expected_packages['my/dev-package']['install_path'] = "$this->dir/vendor/composer/../relative/path";
+    $installed_php_expected_packages = ['drupal/core' => ['name' => 'drupal/core']] + $installed_php_expected_packages;
+    $this->assertSame($installed_php_expected_packages, $installed_php);
   }
 
   /**
    * @covers ::modifyPackage
    */
   public function testModifyPackage(): void {
+    $fs = (new Filesystem());
+    // Assert ::modifyPackage() works with a package in an existing fixture not
+    // created by ::addPackage().
+    $existing_fixture = __DIR__ . '/../../fixtures/FixtureUtilityTraitTest/existing_correct_fixture';
+    $temp_fixture = $this->siteDirectory . $this->randomMachineName('42');
+    $fs->mirror($existing_fixture, $temp_fixture);
+    $decode_installed_json = function () use ($temp_fixture) {
+      return json_decode(file_get_contents($temp_fixture . '/vendor/composer/installed.json'), TRUE, 512, JSON_THROW_ON_ERROR);
+    };
+    $original_installed_json = $decode_installed_json();
+    $this->assertIsArray($original_installed_json);
+    $this->modifyPackage(
+      $temp_fixture,
+      'the-org/the-package',
+      ['install_path' => '../../a_new_path'],
+    );
+    $this->assertSame($original_installed_json, $decode_installed_json());
+
+    // Assert that ::modifyPackage() throws an error if a package exists in the
+    // 'installed.json' file but not the 'installed.php' file. We cannot test
+    // this with the trait functions because they cannot produce this starting
+    // point.
+    $existing_incorrect_fixture = __DIR__ . '/../../fixtures/FixtureUtilityTraitTest/missing_installed_php';
+    $temp_fixture = $this->siteDirectory . $this->randomMachineName('42');
+    $fs->mirror($existing_incorrect_fixture, $temp_fixture);
+    try {
+      $this->modifyPackage(
+        $temp_fixture,
+        'the-org/the-package',
+        ['install_path' => '../../a_new_path'],
+      );
+      $this->fail('Modifying a non-existent package should raise an error.');
+    }
+    catch (AssertionFailedError $e) {
+      $this->assertStringContainsString("Failed asserting that an array has the key 'the-org/the-package'.", $e->getMessage());
+    }
+
     // We should not be able to modify a non-existent package.
     try {
       $this->modifyPackage($this->dir, 'junk/drawer', ['type' => 'library']);
@@ -120,9 +160,8 @@ class FixtureUtilityTraitTest extends PackageManagerKernelTestBase {
       'name' => 'my/other-package',
       'type' => 'library',
     ]);
-    $this->modifyPackage($this->dir, 'my/other-package', ['dev_requirement' => TRUE]);
 
-    $expected_packages = [
+    $install_json_expected_packages = [
       'my/package' => [
         'name' => 'my/package',
         'type' => 'metapackage',
@@ -130,25 +169,23 @@ class FixtureUtilityTraitTest extends PackageManagerKernelTestBase {
       'my/dev-package' => [
         'name' => 'my/dev-package',
         'version' => '3.2.1',
-        'dev_requirement' => TRUE,
-        'install_path' => '../relative/path',
       ],
       'my/other-package' => [
         'name' => 'my/other-package',
         'type' => 'library',
-        'dev_requirement' => TRUE,
       ],
     ];
-
+    $installed_php_expected_packages = $install_json_expected_packages;
+    $installed_php_expected_packages['my/dev-package']['install_path'] = "$this->dir/vendor/composer/../relative/path";
     [$installed_json, $installed_php] = $this->getData();
-    $installed_json['packages'] = array_intersect_key($installed_json['packages'], $expected_packages);
-    $this->assertSame($expected_packages, $installed_json['packages']);
+    $installed_json['packages'] = array_intersect_key($installed_json['packages'], $install_json_expected_packages);
+    $this->assertSame($install_json_expected_packages, $installed_json['packages']);
     $this->assertContains('my/dev-package', $installed_json['dev-package-names']);
-    $this->assertContains('my/other-package', $installed_json['dev-package-names']);
+    $this->assertNotContains('my/other-package', $installed_json['dev-package-names']);
     $this->assertNotContains('my/package', $installed_json['dev-package-names']);
+    $installed_php_expected_packages = ['drupal/core' => ['name' => 'drupal/core']] + $installed_php_expected_packages;
     // @see ::testAddPackage()
-    $expected_packages['my/dev-package']['install_path'] = "$this->dir/vendor/composer/../relative/path";
-    $this->assertSame($expected_packages, $installed_php);
+    $this->assertSame($installed_php_expected_packages, $installed_php);
   }
 
   /**
@@ -168,9 +205,10 @@ class FixtureUtilityTraitTest extends PackageManagerKernelTestBase {
     $this->removePackage($this->dir, 'my/dev-package');
 
     foreach (['json', 'php'] as $extension) {
-      $contents = file_get_contents("$this->dir/vendor/composer/installed.$extension");
-      $this->assertStringNotContainsString('my/package', $contents);
-      $this->assertStringNotContainsString('my/dev-package', $contents);
+      $file = "$this->dir/vendor/composer/installed.$extension";
+      $contents = file_get_contents($file);
+      $this->assertStringNotContainsString('my/package', $contents, "'my/package' not found in $file");
+      $this->assertStringNotContainsString('my/dev-package', $contents, "'my/dev-package' not found in $file");
     }
   }
 
