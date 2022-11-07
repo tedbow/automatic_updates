@@ -2,6 +2,7 @@
 
 namespace Drupal\Tests\automatic_updates\Build;
 
+use Composer\Semver\VersionParser;
 use Drupal\automatic_updates\CronUpdater;
 use Drupal\automatic_updates\Updater;
 use Drupal\Composer\Composer;
@@ -21,6 +22,7 @@ use Drupal\package_manager\Event\PreRequireEvent;
  */
 class CoreUpdateTest extends UpdateTestBase {
 
+  protected $destroyBuild = FALSE;
   /**
    * {@inheritdoc}
    */
@@ -71,7 +73,7 @@ class CoreUpdateTest extends UpdateTestBase {
   /**
    * Tests an end-to-end core update via the API.
    */
-  public function testApi(): void {
+  public function xtestApi(): void {
     $this->createTestProject('RecommendedProject');
     $query = http_build_query([
       'projects' => [
@@ -159,7 +161,7 @@ class CoreUpdateTest extends UpdateTestBase {
    *
    * @dataProvider providerTemplate
    */
-  public function testCron(string $template): void {
+  public function xtestCron(string $template): void {
     $this->createTestProject($template);
     // Install dblog so we can check if any errors were logged during the update.
     $this->installModules(['dblog']);
@@ -258,6 +260,30 @@ class CoreUpdateTest extends UpdateTestBase {
       $this->assertIsResource($file);
       fwrite($file, "# This is part of Drupal $version.\n");
       fclose($file);
+    }
+
+    $vender_json_path = $workspace_dir . '/vendor.json';
+    if (file_exists($vender_json_path)) {
+      $this->assertIsWritable($vender_json_path);
+      $vendor_json = json_decode(file_get_contents($vender_json_path), TRUE);
+      $version_parser = new VersionParser();
+      $core_packages = ['drupal/core-vendor-hardening', 'drupal/core-project-message'];
+      $core_packge_altered = FALSE;
+      foreach (array_keys($vendor_json['packages']) as $package_name) {
+        if (in_array($package_name, $core_packages, TRUE)) {
+          $package_versions = &$vendor_json['packages'][$package_name];
+          if (count($package_versions) !== 1) {
+            $this->fail("$package_name has more than 1 version set up.");
+          }
+          $core_packge_altered = TRUE;
+          $vendor_json['packages'][$package_name][$version] = array_pop($package_versions);
+          $vendor_json['packages'][$package_name][$version]['version'] = $version;
+          $vendor_json['packages'][$package_name][$version]['version_normalized'] = $version_parser->normalize($version);
+        }
+      }
+      if ($core_packge_altered) {
+        file_put_contents($vender_json_path, json_encode($vendor_json, JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT));
+      }
     }
   }
 

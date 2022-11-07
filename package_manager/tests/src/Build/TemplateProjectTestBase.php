@@ -305,8 +305,12 @@ END;
     $packages = [];
     $drupal_root = $this->getDrupalRoot();
 
+    $core_packages = ['drupal/core-vendor-hardening', 'drupal/core-project-message'];
     foreach ($this->getInstalledPackages() as $package) {
       $name = $package['name'];
+      if (in_array($name, $core_packages, TRUE)) {
+        continue;
+      }
       $path = "$drupal_root/vendor/$name";
 
       // We are building a set of path repositories to projects in the vendor
