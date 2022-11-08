@@ -296,8 +296,18 @@ END;
     $packages = [];
     $drupal_root = $this->getDrupalRoot();
 
+    // @todo Add assertions that these packages never get added to vendor.json
+    //   and determine if this logic should removed in the core merge request in
+    //   https://drupal.org/i/3319679.
+    $core_packages = [
+      'drupal/core-vendor-hardening',
+      'drupal/core-project-message',
+    ];
     foreach ($this->getInstalledPackages() as $package) {
       $name = $package['name'];
+      if (in_array($name, $core_packages, TRUE)) {
+        continue;
+      }
       $path = "$drupal_root/vendor/$name";
 
       // We are building a set of path repositories to projects in the vendor
