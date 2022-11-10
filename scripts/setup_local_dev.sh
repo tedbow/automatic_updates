@@ -12,6 +12,8 @@
 #     installing the module and its dependencies. It does NOT set up a web
 #     server or install Drupal in a database.
 
+# cSpell:disable
+
 # GNU realpath can't be depended upon to always be available. Simulate it.
 # https://stackoverflow.com/questions/3572030/bash-script-absolute-path-with-os-x
 safe_realpath() {
@@ -108,6 +110,7 @@ modules
 profiles
 themes
 # Drupal site configuration
+default
 sites
 # Composer libraries
 vendor

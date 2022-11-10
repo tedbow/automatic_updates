@@ -12,6 +12,8 @@
 #     It is assumed that this module is inside a Drupal core installation, in
 #     modules or modules/contrib. See setup_local_dev.sh.
 
+# cSpell:disable
+
 cd "$(dirname "$0")" || exit 0;
 
 # Find PHPUnit in Drupal core. Check up to three directories up.
