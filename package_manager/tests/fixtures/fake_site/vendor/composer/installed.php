@@ -9,6 +9,7 @@ return [
   'versions' => [
     'drupal/core' => [
       'name' => 'drupal/core',
+      'type' => 'drupal-core',
     ],
   ],
 ];

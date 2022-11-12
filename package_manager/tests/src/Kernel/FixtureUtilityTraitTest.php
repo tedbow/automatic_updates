@@ -97,7 +97,12 @@ class FixtureUtilityTraitTest extends PackageManagerKernelTestBase {
     // have been prefixed with the __DIR__ constant, which should be interpreted
     // when installed.php is loaded by the PHP runtime.
     $installed_php_expected_packages['my/dev-package']['install_path'] = "$this->dir/vendor/composer/../relative/path";
-    $installed_php_expected_packages = ['drupal/core' => ['name' => 'drupal/core']] + $installed_php_expected_packages;
+    $installed_php_expected_packages = [
+      'drupal/core' => [
+        'name' => 'drupal/core',
+        'type' => 'drupal-core',
+      ],
+    ] + $installed_php_expected_packages;
     $this->assertSame($installed_php_expected_packages, $installed_php);
   }
 
@@ -183,7 +188,12 @@ class FixtureUtilityTraitTest extends PackageManagerKernelTestBase {
     $this->assertContains('my/dev-package', $installed_json['dev-package-names']);
     $this->assertNotContains('my/other-package', $installed_json['dev-package-names']);
     $this->assertNotContains('my/package', $installed_json['dev-package-names']);
-    $installed_php_expected_packages = ['drupal/core' => ['name' => 'drupal/core']] + $installed_php_expected_packages;
+    $installed_php_expected_packages = [
+      'drupal/core' => [
+        'name' => 'drupal/core',
+        'type' => 'drupal-core',
+      ],
+    ] + $installed_php_expected_packages;
     // @see ::testAddPackage()
     $this->assertSame($installed_php_expected_packages, $installed_php);
   }

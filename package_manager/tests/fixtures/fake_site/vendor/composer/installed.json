@@ -3,6 +3,7 @@
     {
       "name": "drupal/core",
       "version": "9.8.0",
+      "type": "drupal-core",
       "extra": {
         "drupal-scaffold": {
           "file-mapping": {
@@ -14,11 +15,13 @@
     },
     {
       "name": "drupal/core-recommended",
-      "version": "9.8.0"
+      "version": "9.8.0",
+      "type": "drupal-core"
     },
     {
       "name": "drupal/core-dev",
-      "version": "9.8.0"
+      "version": "9.8.0",
+      "type": "drupal-core"
     }
   ],
   "dev-package-names": []
