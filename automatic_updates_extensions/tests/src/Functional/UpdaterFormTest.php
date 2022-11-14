@@ -58,7 +58,7 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
         FALSE, 'aaa_update_test', 'AAA Update test', '8.x-2.0', '8.x-2.1',
       ],
       'maintenance mode off, legacy theme' => [
-        FALSE, 'test_theme', 'Test theme', '8.x-2.0', '8.x-2.1',
+        FALSE, 'automatic_updates_extensions_test_theme', 'Automatic Updates Extensions Test Theme', '8.x-2.0', '8.x-2.1',
       ],
     ];
   }
@@ -155,7 +155,7 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
     // By default, the Update module only checks for updates of installed
     // modules and themes. The two modules we're testing here (semver_test and
     // aaa_update_test) are already installed by static::$modules.
-    $this->container->get('theme_installer')->install(['test_theme']);
+    $this->container->get('theme_installer')->install(['automatic_updates_extensions_test_theme']);
     $this->useFixtureDirectoryAsStaged(__DIR__ . '/../../fixtures/stage_composer/' . $project_name);
     $this->setReleaseMetadata(__DIR__ . '/../../../../package_manager/tests/fixtures/release-history/drupal.9.8.2.xml');
     $this->setReleaseMetadata(__DIR__ . '/../../fixtures/release-history/' . $project_name . '.1.1.xml');

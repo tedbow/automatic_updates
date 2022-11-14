@@ -16,7 +16,7 @@
             "version": "9.8.1"
         },
         {
-            "name": "drupal/test_theme",
+            "name": "drupal/automatic_updates_extensions_test_theme",
             "version": "9.8.1"
         }
     ]

@@ -21,7 +21,7 @@
       "type": "drupal-module"
     },
     {
-      "name": "drupal/test_theme",
+      "name": "drupal/automatic_updates_extensions_test_theme",
       "version": "2.1.0",
       "type": "drupal-theme"
     }

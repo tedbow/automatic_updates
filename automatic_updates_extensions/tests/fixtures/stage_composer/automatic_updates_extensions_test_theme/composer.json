@@ -2,7 +2,7 @@
   "extra": {
     "_readme": [
         "This fixture assumes that ../../two_projects is active directory for the test.",
-        "Simulates a stage directory in which test_theme is updated."
+        "Simulates a stage directory in which automatic_updates_extensions_test_theme is updated."
     ]
   }
 }
