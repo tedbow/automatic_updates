@@ -52,8 +52,8 @@ composer config \
 # Prevent Composer from symlinking path repositories.
 export COMPOSER_MIRROR_PATH_REPOS=1
 
-# Update the Composer platform PHP emulation.
-composer config platform.php 7.4.0
+# Remove the Composer platform PHP emulation.
+composer config --unset platform.php
 
 # Prevent Composer from installing symlinks from common packages known to
 # contain them.
