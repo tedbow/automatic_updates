@@ -251,20 +251,6 @@ class CoreUpdateTest extends UpdateTestBase {
    *   The expected active version of Drupal core.
    */
   private function assertUpdateSuccessful(string $expected_version): void {
-    // The update form should not have any available updates.
-    // @todo Figure out why this assertion fails when the batch processor
-    //   redirects directly to the update form, instead of update.status, when
-    //   updating via the UI.
-    $this->visit('/admin/modules/update');
-    $this->getMink()->assertSession()->pageTextContains('No update available');
-
-    // The status page should report that we're running the expected version and
-    // the README and default site configuration files should contain the
-    // placeholder text written by ::setUpstreamCoreVersion(), even though
-    // `sites/default` is write-protected.
-    // @see ::createTestProject()
-    // @see ::setUpstreamCoreVersion()
-    $this->assertCoreVersion($expected_version);
     $web_root = $this->getWebRoot();
     $placeholder = file_get_contents("$web_root/core/README.txt");
     $this->assertSame("Placeholder for Drupal core $expected_version.", $placeholder);
@@ -297,6 +283,20 @@ class CoreUpdateTest extends UpdateTestBase {
     $this->assertArrayNotHasKey('drupal/core-dev', $info['requires']);
     // ...but it should have been updated in the dev dependencies.
     $this->assertSame($expected_version, $info['devRequires']['drupal/core-dev']);
+    // The update form should not have any available updates.
+    // @todo Figure out why this assertion fails when the batch processor
+    //   redirects directly to the update form, instead of update.status, when
+    //   updating via the UI.
+    $this->visit('/admin/modules/update');
+    $this->getMink()->assertSession()->pageTextContains('No update available');
+
+    // The status page should report that we're running the expected version and
+    // the README and default site configuration files should contain the
+    // placeholder text written by ::setUpstreamCoreVersion(), even though
+    // `sites/default` is write-protected.
+    // @see ::createTestProject()
+    // @see ::setUpstreamCoreVersion()
+    $this->assertCoreVersion($expected_version);
   }
 
 }
