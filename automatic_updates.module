@@ -164,6 +164,12 @@ function automatic_updates_module_implements_alter(&$implementations, $hook) {
  * Implements hook_cron().
  */
 function automatic_updates_cron() {
+  // @todo Refactor this after https://www.drupal.org/project/drupal/issues/2969056
+  // @todo Remove this after https://www.drupal.org/project/drupal/issues/3318964
+  if (defined('MAINTENANCE_MODE') || stripos($_SERVER['PHP_SELF'], 'update.php') !== FALSE) {
+    return;
+  }
+
   /** @var \Drupal\automatic_updates\CronUpdater $updater */
   $updater = \Drupal::service('automatic_updates.cron_updater');
   $updater->handleCron();

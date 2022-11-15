@@ -55,13 +55,6 @@ class CronUpdater extends Updater {
   public const ALL = 'patch';
 
   /**
-   * The logger.
-   *
-   * @var \Psr\Log\LoggerInterface
-   */
-  protected $logger;
-
-  /**
    * The cron release chooser service.
    *
    * @var \Drupal\automatic_updates\ReleaseChooser

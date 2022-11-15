@@ -11,7 +11,7 @@ use Drupal\package_manager\Exception\StageOwnershipException;
 use Drupal\package_manager_bypass\Stager;
 use Drupal\package_manager_test_validation\EventSubscriber\TestSubscriber;
 use Drupal\Tests\user\Traits\UserCreationTrait;
-use Psr\Log\Test\TestLogger;
+use ColinODell\PsrTestLogger\TestLogger;
 
 /**
  * Tests that ownership of the stage is enforced.

@@ -217,6 +217,13 @@ END;
     // Disable Packagist entirely so that we don't test the Internet.
     $this->runComposer('composer config repo.packagist.org false', $template_dir);
 
+    // Allow any version of the Drupal core packages in the template project.
+    $this->runComposer('composer require --no-update drupal/core-recommended:* drupal/core-project-message:* drupal/core-composer-scaffold:*', $template_dir);
+    $this->runComposer('composer require --no-update --dev drupal/core-dev:*', $template_dir);
+    if ($template === 'LegacyProject') {
+      $this->runComposer('composer require --no-update drupal/core-vendor-hardening:*', $template_dir);
+    }
+
     // Create the test project, defining its repository as part of the
     // `composer create-project` command.
     $repository = [
@@ -327,6 +334,11 @@ END;
           $package['require']['symfony/polyfill-php72'],
           $package['require']['symfony/polyfill-php73']
         );
+        // If we're running on Drupal 10, which requires PHP 8.1 or later, this
+        // polyfill won't be installed, so make sure it's not required.
+        if (str_starts_with(\Drupal::VERSION, '10.')) {
+          unset($package['require']['symfony/polyfill-php80']);
+        }
         // Disabling symlinks in the transport options doesn't seem to have an
         // effect, so we use the COMPOSER_MIRROR_PATH_REPOS environment variable
         // to force mirroring in ::createTestProject().

@@ -12,7 +12,7 @@
   },
   "require": {
     "ext-json": "*",
-    "drupal/core": "^9.3",
+    "drupal/core": "^9.3 || ^10",
     "php-tuf/composer-stager": "^1.2",
     "composer/composer": "^2.2.12 || ^2.3.5",
     "composer-runtime-api": "^2.1",
@@ -39,6 +39,9 @@
     "phpcs": "Checks code for standards compliance.",
     "test": "Runs PHPUnit tests.",
     "core-convert": "Converts this module to a core merge request. Excepts 2 arguments. 1) The core clone directory. 2) The core merge request branch."
+  },
+  "require-dev": {
+    "colinodell/psr-testlogger": "^1"
   },
     "autoload": {
         "psr-4": {

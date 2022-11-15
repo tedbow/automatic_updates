@@ -23,7 +23,8 @@ use Drupal\Tests\automatic_updates\Traits\EmailNotificationsTestTrait;
 use Drupal\Tests\package_manager\Traits\PackageManagerBypassTestTrait;
 use Drupal\Tests\user\Traits\UserCreationTrait;
 use Drupal\update\UpdateSettingsForm;
-use Psr\Log\Test\TestLogger;
+use ColinODell\PsrTestLogger\TestLogger;
+use Prophecy\Argument;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 
 /**
@@ -163,6 +164,7 @@ class CronUpdaterTest extends AutomaticUpdatesKernelTestBase {
     // are called as expected, disable validation by replacing the event
     // dispatcher with a dummy version.
     $event_dispatcher = $this->prophesize(EventDispatcherInterface::class);
+    $event_dispatcher->dispatch(Argument::type('object'))->willReturnArgument(0);
     $this->container->set('event_dispatcher', $event_dispatcher->reveal());
 
     // Run cron and ensure that Package Manager's services were called or

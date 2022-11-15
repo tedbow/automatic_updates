@@ -76,8 +76,9 @@ abstract class PackageManagerKernelTestBase extends KernelTestBase {
     $this->createVirtualProject();
 
     // The Update module's default configuration must be installed for our
-    // fake release metadata to be fetched.
-    $this->installConfig('update');
+    // fake release metadata to be fetched, and the System module's to ensure
+    // the site has a name.
+    $this->installConfig(['system', 'update']);
 
     // Make the update system think that all of System's post-update functions
     // have run.

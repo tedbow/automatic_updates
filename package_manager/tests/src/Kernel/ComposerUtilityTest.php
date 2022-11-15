@@ -33,6 +33,17 @@ class ComposerUtilityTest extends KernelTestBase {
   }
 
   /**
+   * Tests that ComposerUtility::CreateForDirectory() validates the directory.
+   */
+  public function testCreateForDirectoryValidation(): void {
+    $this->expectException(\InvalidArgumentException::class);
+    $this->expectExceptionMessage('Composer could not find the config file: vfs://root/composer.json');
+
+    $dir = vfsStream::setup()->url();
+    ComposerUtility::createForDirectory($dir);
+  }
+
+  /**
    * Tests that ComposerUtility disables automatic creation of .htaccess files.
    */
   public function testHtaccessProtectionDisabled(): void {

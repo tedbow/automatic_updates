@@ -32,8 +32,11 @@ class ComposerPatchesValidatorTest extends PackageManagerKernelTestBase {
     ];
     $file->write($data);
 
+    // Because ComposerUtility reads composer.json and passes it to the Composer
+    // factory as an array, Composer will assume that the configuration is
+    // coming from a config.json file, even if one doesn't exist.
     $error = ValidationResult::createError([
-      'The <code>cweagans/composer-patches</code> plugin is installed, but the <code>composer-exit-on-patch-failure</code> key is not set to <code>true</code> in the <code>extra</code> section of composer.json.',
+      "The <code>cweagans/composer-patches</code> plugin is installed, but the <code>composer-exit-on-patch-failure</code> key is not set to <code>true</code> in the <code>extra</code> section of $dir/config.json.",
     ]);
     $this->assertStatusCheckResults([$error]);
     $this->assertResults([$error], PreCreateEvent::class);

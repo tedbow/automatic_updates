@@ -5,7 +5,7 @@ namespace Drupal\Tests\automatic_updates\Kernel\StatusCheck;
 use Drupal\Core\Logger\RfcLogLevel;
 use Drupal\package_manager\Event\PreApplyEvent;
 use Drupal\Tests\automatic_updates\Kernel\AutomaticUpdatesKernelTestBase;
-use Psr\Log\Test\TestLogger;
+use ColinODell\PsrTestLogger\TestLogger;
 
 /**
  * @covers \Drupal\automatic_updates\Validator\StagedDatabaseUpdateValidator

@@ -8,6 +8,7 @@ use Composer\IO\NullIO;
 use Composer\Package\Loader\ValidatingArrayLoader;
 use Composer\Package\PackageInterface;
 use Composer\Package\Version\VersionParser;
+use Composer\PartialComposer;
 use Composer\Semver\Comparator;
 use Drupal\Component\Serialization\Yaml;
 
@@ -31,22 +32,45 @@ class ComposerUtility {
   private static $corePackages;
 
   /**
+   * Whether to raise a deprecation error when the constructor is called.
+   *
+   * @var bool
+   */
+  private static $triggerConstructorDeprecation = TRUE;
+
+  /**
    * Constructs a new ComposerUtility object.
    *
-   * @param \Composer\Composer $composer
+   * @param \Composer\Composer|\Composer\PartialComposer $composer
    *   The Composer instance.
    */
-  public function __construct(Composer $composer) {
+  public function __construct(object $composer) {
+    // @todo Remove this in https://www.drupal.org/project/automatic_updates/issues/3321474.
+    if (self::$triggerConstructorDeprecation) {
+      @trigger_error(__METHOD__ . '() is deprecated in automatic_updates:8.x-2.5 and will be removed in automatic_updates:3.0.0. Use ' . __CLASS__ . '::createForDirectory() instead. See https://www.drupal.org/node/3314137.', E_USER_DEPRECATED);
+    }
+    self::$triggerConstructorDeprecation = TRUE;
+
+    // @todo Remove this check when either:
+    //   - PHP 8 or later is required, in which case the $composer type hint
+    //     should be Composer|PartialComposer.
+    //   - Composer 2.3 or later is required, in which case the $composer type
+    //     hint should be changed to PartialComposer.
+    // @todo Update in https://www.drupal.org/project/automatic_updates/issues/3321474
+    // @todo Update in https://www.drupal.org/project/automatic_updates/issues/3321476
+    if (!$composer instanceof Composer && !$composer instanceof PartialComposer) {
+      throw new \InvalidArgumentException('The $composer argument must be an instance of ' . Composer::class . ' or ' . PartialComposer::class);
+    }
     $this->composer = $composer;
   }
 
   /**
    * Returns the underlying Composer instance.
    *
-   * @return \Composer\Composer
+   * @return \Composer\Composer|\Composer\PartialComposer
    *   The Composer instance.
    */
-  public function getComposer(): Composer {
+  public function getComposer(): object {
     return $this->composer;
   }
 
@@ -58,10 +82,21 @@ class ComposerUtility {
    *
    * @return \Drupal\package_manager\ComposerUtility
    *   The utility object.
+   *
+   * @throws \InvalidArgumentException
+   *   When $dir does not contain a composer.json file.
    */
   public static function createForDirectory(string $dir): self {
     $io = new NullIO();
+
+    // Pre-load the contents of composer.json so that Factory::createComposer()
+    // won't try to call realpath(), which will fail if composer.json is in a
+    // virtual file system.
     $configuration = $dir . DIRECTORY_SEPARATOR . 'composer.json';
+    if (file_exists($configuration)) {
+      $configuration = file_get_contents($configuration);
+      $configuration = json_decode($configuration, TRUE, 512, JSON_THROW_ON_ERROR);
+    }
 
     // The Composer factory requires that either the HOME or COMPOSER_HOME
     // environment variables be set, so momentarily set the COMPOSER_HOME
@@ -87,6 +122,7 @@ class ComposerUtility {
     putenv("COMPOSER_HOME=$home");
     putenv("COMPOSER_HTACCESS_PROTECT=$htaccess");
 
+    self::$triggerConstructorDeprecation = FALSE;
     return new static($composer);
   }
 

@@ -14,8 +14,14 @@ class UpdatePathTest extends UpdatePathTestBase {
    * {@inheritdoc}
    */
   protected function setDatabaseDumpFiles() {
+    // phpcs on 9.5 expects one thing, on 10.0 another. 🤷
+    // @see https://www.drupal.org/project/automatic_updates/issues/3314137#comment-14771510
+    // phpcs:disable
+    [$version] = explode('.', \Drupal::VERSION, 2);
     $this->databaseDumpFiles = [
-      $this->getDrupalRoot() . '/core/modules/system/tests/fixtures/update/drupal-9.3.0.filled.standard.php.gz',
+      $version == 9
+        ? $this->getDrupalRoot() . '/core/modules/system/tests/fixtures/update/drupal-9.3.0.filled.standard.php.gz'
+        : $this->getDrupalRoot() . '/core/modules/system/tests/fixtures/update/drupal-9.4.0.filled.standard.php.gz',
       __DIR__ . '/../../fixtures/automatic_updates-installed.php',
     ];
   }
@@ -32,11 +38,15 @@ class UpdatePathTest extends UpdatePathTestBase {
       'readiness_validation_last_run' => 'status_check_last_run',
       'readiness_check_timestamp' => 'status_check_timestamp',
     ];
+    $expected_values = [];
     foreach ($map as $old_key => $new_key) {
       $this->assertFalse($key_value->has($new_key));
 
       $value = $key_value->get($old_key);
       $this->assertNotEmpty($value);
+      // Allow testing that the values post-update are indeed the values
+      // pre-update and not recomputed ones.
+      $expected_values[$new_key] = $value;
       // Ensure the stored value will still be retrievable.
       $key_value->setWithExpire($old_key, $value, 3600);
     }
@@ -44,9 +54,14 @@ class UpdatePathTest extends UpdatePathTestBase {
 
     $this->runUpdates();
 
-    foreach ($map as $new_key) {
-      $this->assertNotEmpty($key_value->get($new_key));
-    }
+    // TRICKY: we do expect `readiness_validation_last_run` to have been renamed
+    // to `status_check_last_run`, but then
+    // automatic_updates_post_update_create_status_check_mail_config() should
+    // cause that to be erased.
+    // @see automatic_updates_post_update_create_status_check_mail_config()
+    // @see \Drupal\automatic_updates\EventSubscriber\ConfigSubscriber::onConfigSave()
+    unset($expected_values['status_check_last_run']);
+    $this->assertSame($expected_values, $key_value->getMultiple(array_values($map)));
     $this->assertSame(StatusCheckMailer::ERRORS_ONLY, $this->config('automatic_updates.settings')->get('status_check_mail'));
 
     // Ensure that the router was rebuilt and routes have the expected changes.

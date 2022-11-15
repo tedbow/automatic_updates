@@ -32,6 +32,8 @@ build:
           - sed -i "s/yarn run -s spellcheck/yarn run -s spellcheck --root \$TOP_LEVEL/" modules/contrib/automatic_updates/commit-code-check.sh
           # Add our words to the dictionary.
           - cat modules/contrib/automatic_updates/dictionary.txt >> core/misc/cspell/dictionary.txt
+          # Ensure we have the full path to PHPStan.
+          - sed -i "s/vendor\/bin\/phpstan/\/var\/www\/html\/vendor\/bin\/phpstan/" modules/contrib/automatic_updates/commit-code-check.sh
           # After all of the shenanigans above, we're finally ready to run core's `commit-code-check.sh`! :)
           - "modules/contrib/automatic_updates/commit-code-check.sh --drupalci"
           # Restore the original permissions.

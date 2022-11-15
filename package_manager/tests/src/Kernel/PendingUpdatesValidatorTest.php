@@ -52,8 +52,9 @@ class PendingUpdatesValidatorTest extends PackageManagerKernelTestBase {
    */
   public function testPendingPostUpdate(): void {
     $this->registerPostUpdateFunctions();
-    // The System module's post-update functions have not been registered, so
-    // the update registry will think they're pending.
+    // Make an additional post-update function available; the update registry
+    // will think it's pending.
+    require_once __DIR__ . '/../../fixtures/post_update.php';
     $result = ValidationResult::createError([
       'Some modules have database schema updates to install. You should run the <a href="/update.php">database update script</a> immediately.',
     ]);

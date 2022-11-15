@@ -5,13 +5,13 @@ namespace Drupal\automatic_updates\Validator;
 use Drupal\automatic_updates\CronUpdater;
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Extension\ModuleHandlerInterface;
-use Drupal\Core\Http\RequestStack;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\Core\Url;
 use Drupal\package_manager\Event\PreCreateEvent;
 use Drupal\package_manager\Event\PreOperationStageEvent;
 use Drupal\package_manager\Event\StatusCheckEvent;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
+use Symfony\Component\HttpFoundation\RequestStack;
 
 /**
  * Validates that the current server configuration can run cron updates.
@@ -59,7 +59,7 @@ final class CronServerValidator implements EventSubscriberInterface {
   /**
    * Constructs a CronServerValidator object.
    *
-   * @param \Drupal\Core\Http\RequestStack $request_stack
+   * @param \Symfony\Component\HttpFoundation\RequestStack $request_stack
    *   The request stack service.
    * @param \Drupal\Core\Config\ConfigFactoryInterface $config_factory
    *   The config factory service.

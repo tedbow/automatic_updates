@@ -7,7 +7,7 @@ use Drupal\Core\Logger\RfcLogLevel;
 use Drupal\package_manager\ValidationResult;
 use Drupal\Tests\automatic_updates\Kernel\AutomaticUpdatesKernelTestBase;
 use Drupal\Tests\package_manager\Traits\PackageManagerBypassTestTrait;
-use Psr\Log\Test\TestLogger;
+use ColinODell\PsrTestLogger\TestLogger;
 
 /**
  * @covers \Drupal\automatic_updates\Validator\XdebugValidator

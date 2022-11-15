@@ -9,7 +9,7 @@ use Drupal\Core\Url;
 use Drupal\package_manager\Exception\StageValidationException;
 use Drupal\package_manager\ValidationResult;
 use Drupal\Tests\automatic_updates\Kernel\AutomaticUpdatesKernelTestBase;
-use Psr\Log\Test\TestLogger;
+use ColinODell\PsrTestLogger\TestLogger;
 
 /**
  * @covers \Drupal\automatic_updates\Validator\CronServerValidator

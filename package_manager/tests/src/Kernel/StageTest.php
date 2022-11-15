@@ -20,7 +20,7 @@ use PhpTuf\ComposerStager\Domain\Exception\PreconditionException;
 use Drupal\package_manager_bypass\Beginner;
 use PhpTuf\ComposerStager\Domain\Service\Precondition\PreconditionInterface;
 use Psr\Log\LogLevel;
-use Psr\Log\Test\TestLogger;
+use ColinODell\PsrTestLogger\TestLogger;
 
 /**
  * @coversDefaultClass \Drupal\package_manager\Stage

@@ -24,7 +24,7 @@ class ExecutableFinderTest extends PackageManagerKernelTestBase {
       /**
        * {@inheritdoc}
        */
-      public function find($name, $default = NULL, array $extraDirs = []) {
+      public function find($name, $default = NULL, array $extraDirs = []): ?string {
         return '/dev/null';
       }
 

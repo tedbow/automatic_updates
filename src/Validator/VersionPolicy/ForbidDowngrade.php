@@ -29,6 +29,8 @@ final class ForbidDowngrade {
    *   The error messages, if any.
    */
   public function validate(string $installed_version, ?string $target_version): array {
+    // TRICKY: \Drupal\automatic_updates\Validator\VersionPolicyValidator::getTargetVersion() may potentially not be able to determine a version.
+    $target_version = $target_version ?? '';
     if (Comparator::lessThan($target_version, $installed_version)) {
       return [
         $this->t('Update version @target_version is lower than @installed_version, downgrading is not supported.', [

@@ -45,11 +45,36 @@ $extensions = $connection->select('config', 'c')
 $extensions = unserialize($extensions);
 $extensions['module']['automatic_updates'] = 0;
 $extensions['module']['package_manager'] = 0;
+// Install the mysql module manually because
+// system_post_update_enable_provider_database_driver() makes reliable update
+// path testing impossible.
+// @see https://www.drupal.org/project/automatic_updates/issues/3314137#comment-14772840
+$extensions['module']['mysql'] = 0;
 $connection->update('config')
   ->fields([
     'data' => serialize($extensions),
   ])
   ->condition('name', 'core.extension')
+  ->execute();
+
+// Add system_post_update_enable_provider_database_driver() as an existing
+// update.
+// @see https://www.drupal.org/project/automatic_updates/issues/3314137#comment-14772840
+$existing_updates = $connection->select('key_value')
+  ->fields('key_value', ['value'])
+  ->condition('collection', 'post_update')
+  ->condition('name', 'existing_updates')
+  ->execute()
+  ->fetchField();
+$existing_updates = unserialize($existing_updates);
+$existing_updates = array_merge(
+  $existing_updates,
+  ['system_post_update_enable_provider_database_driver'],
+);
+$connection->update('key_value')
+  ->fields(['value' => serialize($existing_updates)])
+  ->condition('collection', 'post_update')
+  ->condition('name', 'existing_updates')
   ->execute();
 
 $connection->insert('key_value')
