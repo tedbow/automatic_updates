@@ -73,6 +73,7 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
       'administer site configuration',
       'administer software updates',
       'access site in maintenance mode',
+      'access administration pages',
     ]);
     // We need this fixture as only projects installed via composer will show up
     // on the form.
@@ -212,6 +213,80 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
     $this->assertNotEmpty($pre_apply_time);
     $this->assertNotEmpty($post_apply_time);
     $this->assertNotSame($pre_apply_time, $post_apply_time);
+  }
+
+  /**
+   * Data provider for testStatusCheckerRunAfterUpdate().
+   *
+   * @return bool[][]
+   *   The test cases.
+   */
+  public function providerStatusCheckerRunAfterUpdate(): array {
+    return [
+      'has database updates' => [TRUE],
+      'does not have database updates' => [FALSE],
+    ];
+  }
+
+  /**
+   * Tests status checks are run after an update.
+   *
+   * @param bool $has_database_updates
+   *   Whether the site has database updates or not.
+   *
+   * @dataProvider providerStatusCheckerRunAfterUpdate
+   */
+  public function testStatusCheckerRunAfterUpdate(bool $has_database_updates): void {
+    $this->useFixtureDirectoryAsStaged(__DIR__ . '/../../fixtures/stage_composer/semver_test');
+    $this->setReleaseMetadata(__DIR__ . '/../../fixtures/release-history/semver_test.1.1.xml');
+    $this->setProjectInstalledVersion(['semver_test' => '8.1.0']);
+    $this->checkForUpdates();
+    $page = $this->getSession()->getPage();
+    // Navigate to the automatic updates form.
+    $this->drupalGet('/admin/modules/automatic-update-extensions');
+    $assert_session = $this->assertSession();
+    $assert_session->pageTextNotContains(static::$errorsExplanation);
+    $assert_session->pageTextNotContains(static::$warningsExplanation);
+
+    $this->assertTableShowsUpdates('Semver Test', '8.1.0', '8.1.1');
+    $this->assertUpdatesCount(1);
+    $page->checkField('projects[semver_test]');
+    $page->pressButton('Update');
+    $this->checkForMetaRefresh();
+    $this->assertUpdateStagedTimes(1);
+    // Set an error before completing the update. This error should be visible
+    // on admin pages after completing the update without having to explicitly
+    // run the status checks.
+    TestSubscriber1::setTestResult([ValidationResult::createError(['Error before continue.'])], StatusCheckEvent::class);
+    if ($has_database_updates) {
+      // Simulate a staged database update in the automatic_updates_test module.
+      // We must do this after the update has started, because the pending
+      // updates validator will prevent an update from starting.
+      $this->container->get('state')->set('automatic_updates_test.new_update', TRUE);
+      $page->pressButton('Continue');
+      $this->checkForMetaRefresh();
+      $this->assertSession()->addressEquals('/update.php');
+      $assert_session->pageTextNotContains('Possible database updates have been detected in the following extensions.');
+      $assert_session->pageTextContainsOnce('Please apply database updates to complete the update process.');
+      $page->clickLink('Continue');
+      // @see automatic_updates_update_1191934()
+      $assert_session->pageTextContains('Dynamic automatic_updates_update_1191934');
+      $page->clickLink('Apply pending updates');
+      $this->checkForMetaRefresh();
+      $assert_session->pageTextContains('Updates were attempted.');
+    }
+    else {
+      $page->pressButton('Continue');
+      $this->checkForMetaRefresh();
+      $assert_session->addressEquals('/admin/reports/updates');
+      $assert_session->pageTextContainsOnce('Update complete!');
+    }
+    // Status checks should display errors on admin page.
+    $this->drupalGet('/admin');
+    // Confirm that the status checks were run and the new error is displayed.
+    $assert_session->statusMessageContains('Error before continue.', 'error');
+    $assert_session->statusMessageContains(static::$errorsExplanation, 'error');
+    $assert_session->pageTextNotContains('Your site has not recently run an update readiness check. Run readiness checks now.');
   }
 
   /**

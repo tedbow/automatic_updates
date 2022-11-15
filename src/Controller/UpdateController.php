@@ -3,6 +3,7 @@
 namespace Drupal\automatic_updates\Controller;
 
 use Drupal\automatic_updates\BatchProcessor;
+use Drupal\automatic_updates\Validation\StatusChecker;
 use Drupal\Core\Controller\ControllerBase;
 use Drupal\Core\Messenger\MessengerInterface;
 use Drupal\Core\Routing\RouteMatchInterface;
@@ -36,6 +37,13 @@ final class UpdateController extends ControllerBase {
   protected $routeMatch;
 
   /**
+   * The status checker.
+   *
+   * @var \Drupal\automatic_updates\Validation\StatusChecker
+   */
+  protected $statusChecker;
+
+  /**
    * Constructs an UpdateController object.
    *
    * @param \Drupal\package_manager\Validator\PendingUpdatesValidator $pending_updates_validator
@@ -44,11 +52,14 @@ final class UpdateController extends ControllerBase {
    *   The state service.
    * @param \Drupal\Core\Routing\RouteMatchInterface $route_match
    *   The current route match.
+   * @param \Drupal\automatic_updates\Validation\StatusChecker $status_checker
+   *   The status checker service.
    */
-  public function __construct(PendingUpdatesValidator $pending_updates_validator, StateInterface $state, RouteMatchInterface $route_match) {
+  public function __construct(PendingUpdatesValidator $pending_updates_validator, StateInterface $state, RouteMatchInterface $route_match, StatusChecker $status_checker) {
     $this->pendingUpdatesValidator = $pending_updates_validator;
     $this->stateService = $state;
     $this->routeMatch = $route_match;
+    $this->statusChecker = $status_checker;
   }
 
   /**
@@ -58,7 +69,8 @@ final class UpdateController extends ControllerBase {
     return new static(
       $container->get('package_manager.validator.pending_updates'),
       $container->get('state'),
-      $container->get('current_route_match')
+      $container->get('current_route_match'),
+      $container->get('automatic_updates.status_checker')
     );
   }
 
@@ -76,6 +88,7 @@ final class UpdateController extends ControllerBase {
    *   A redirect to the appropriate destination.
    */
   public function onFinish(Request $request): RedirectResponse {
+    $this->statusChecker->run();
     if ($this->pendingUpdatesValidator->updatesExist()) {
       $message = $this->t('Please apply database updates to complete the update process.');
       $url = Url::fromRoute('system.db_update');
