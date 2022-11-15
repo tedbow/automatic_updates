@@ -153,6 +153,11 @@ class CoreUpdateTest extends UpdateTestBase {
     $page->pressButton('Filter');
     $assert_session->pageTextContains('No log messages available.');
 
+    // Ensure that the update occurred.
+    $page->selectFieldOption('Severity', 'Info');
+    $page->pressButton('Filter');
+    $assert_session->elementsCount('css', '#admin-dblog tbody tr', 1);
+    $assert_session->elementTextContains('css', '#admin-dblog tr:nth-of-type(1) td:nth-of-type(4)', 'Drupal core has been updated from 9.8.0 to 9.8.1');
     $this->assertUpdateSuccessful('9.8.1');
   }
 
