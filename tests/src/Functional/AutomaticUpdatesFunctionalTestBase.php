@@ -35,6 +35,7 @@ abstract class AutomaticUpdatesFunctionalTestBase extends BrowserTestBase {
     // server. This should be okay in most situations because, apart from the
     // validator, only Composer Stager needs run Composer, and
     // package_manager_bypass is disabling those operations.
+    // @todo https://www.drupal.org/project/automatic_updates/issues/3320755.
     'automatic_updates.composer_executable_validator',
     'package_manager.validator.composer_executable',
     // Always allow tests to run with Xdebug on.

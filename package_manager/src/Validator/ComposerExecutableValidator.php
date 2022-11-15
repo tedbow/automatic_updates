@@ -99,7 +99,7 @@ class ComposerExecutableValidator implements EventSubscriberInterface {
   /**
    * Flags a validation error.
    *
-   * @param string $message
+   * @param string|\Drupal\Core\StringTranslation\TranslatableMarkup $message
    *   The error message. If the Help module is enabled, a link to Package
    *   Manager's online documentation will be appended.
    * @param \Drupal\package_manager\Event\PreOperationStageEvent $event
@@ -107,7 +107,7 @@ class ComposerExecutableValidator implements EventSubscriberInterface {
    *
    * @see package_manager_help()
    */
-  protected function setError(string $message, PreOperationStageEvent $event): void {
+  protected function setError($message, PreOperationStageEvent $event): void {
     if ($this->moduleHandler->moduleExists('help')) {
       $url = Url::fromRoute('help.page', ['name' => 'package_manager'])
         ->setOption('fragment', 'package-manager-faq-composer-not-found')

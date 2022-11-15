@@ -173,11 +173,7 @@ class ComposerExecutableValidatorTest extends PackageManagerKernelTestBase {
       return $message . ' See <a href="' . $url . '">the help page</a> for information on how to configure the path to Composer.';
     };
     foreach ($expected_results as $index => $result) {
-      // The original messages contain HTML, so they need to be properly escaped
-      // before they are modified, to ensure that they are accurately compared
-      // with the messages returned by the validator.
-      $messages = array_map('\Drupal\Component\Utility\Html::escape', $result->getMessages());
-      $messages = array_map($map, $messages);
+      $messages = array_map($map, $result->getMessages());
       $expected_results[$index] = ValidationResult::createError($messages);
     }
     $this->assertStatusCheckResults($expected_results);
