@@ -16,5 +16,8 @@ return [
       'type' => 'drupal-module',
       'install_path' => $projects_dir . '/aaa_update_test',
     ],
+    'drupal/dependency' => [
+      'type' => 'drupal-library',
+    ],
   ],
 ];
