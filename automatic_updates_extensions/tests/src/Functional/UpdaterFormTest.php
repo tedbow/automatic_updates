@@ -13,6 +13,7 @@ use Drupal\package_manager_test_validation\EventSubscriber\TestSubscriber;
 use Drupal\Tests\automatic_updates\Functional\AutomaticUpdatesFunctionalTestBase;
 use Drupal\Tests\automatic_updates\Traits\ValidationTestTrait;
 use Drupal\Tests\automatic_updates_extensions\Traits\FormTestTrait;
+use Drupal\Tests\package_manager\Traits\FixtureUtilityTrait;
 use Drupal\Tests\package_manager\Traits\PackageManagerBypassTestTrait;
 
 /**
@@ -25,6 +26,14 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
   use ValidationTestTrait;
   use FormTestTrait;
   use PackageManagerBypassTestTrait;
+  use FixtureUtilityTrait;
+
+  /**
+   * The path of the test project's active directory.
+   *
+   * @var string
+   */
+  private $activeDir;
 
   /**
    * {@inheritdoc}
@@ -75,9 +84,26 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
       'access site in maintenance mode',
       'access administration pages',
     ]);
-    // We need this fixture as only projects installed via composer will show up
-    // on the form.
-    $this->useFixtureDirectoryAsActive(__DIR__ . '/../../fixtures/two_projects');
+    $this->activeDir = $this->container->get('package_manager.path_locator')->getProjectRoot();
+    $this->copyFixtureFilesTo(__DIR__ . '/../../fixtures/two_projects', $this->activeDir);
+    $this->addPackage($this->activeDir, [
+      'name' => 'drupal/semver_test',
+      'version' => '8.1.0',
+      'type' => 'drupal-module',
+      'install_path' => '../../web/projects/semver_test',
+    ]);
+    $this->addPackage($this->activeDir, [
+      'name' => 'drupal/aaa_update_test',
+      'version' => '2.0.0',
+      'type' => 'drupal-module',
+      'install_path' => '../../web/projects/aaa_update_test',
+    ]);
+    $this->addPackage($this->activeDir, [
+      'name' => 'drupal/automatic_updates_extensions_test_theme',
+      'version' => '2.0.0',
+      'type' => 'drupal-theme',
+      'install_path' => '../../web/projects/automatic_updates_extensions_test_theme',
+    ]);
     $this->drupalLogin($user);
     $this->drupalPlaceBlock('local_tasks_block', ['primary' => TRUE]);
   }
@@ -418,9 +444,8 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
         'semver_test' => '8.1.0',
       ]
     );
-
     // One module not installed through composer.
-    $this->useFixtureDirectoryAsActive(__DIR__ . '/../../fixtures/one_project');
+    $this->removePackage($this->activeDir, 'drupal/aaa_update_test');
     $assert = $this->assertSession();
     $user = $this->createUser(
       [
@@ -436,7 +461,7 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
     $this->assertUpdatesCount(1);
 
     // Both of the modules not installed through composer.
-    $this->useFixtureDirectoryAsActive(__DIR__ . '/../../fixtures/no_project');
+    $this->removePackage($this->activeDir, 'drupal/semver_test');
     $this->getSession()->reload();
     $assert->pageTextContains('Updates were found, but they must be performed manually. See the list of available updates for more information.');
     $this->assertNoUpdates();
