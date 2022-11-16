@@ -130,6 +130,12 @@ class CoreUpdateTest extends UpdateTestBase {
   public function testCron(string $template): void {
     $this->createTestProject($template);
     // Install dblog so we can check if any errors were logged during the update.
+    // This implies one can only retrieve log entries through the dblog UI. This
+    // seems non-ideal but it is the choice that requires least custom
+    // configuration or custom code. Using the `syslog` or `syslog_test` module
+    // or the `@RestResource=dblog` plugin for the `rest` module require
+    // more additional code than the inflexible log querying via
+    // `/admin/reports/dblog` below.
     $this->installModules(['dblog']);
 
     $this->visit('/admin/reports/status');
