@@ -52,8 +52,11 @@ composer config \
 # Prevent Composer from symlinking path repositories.
 export COMPOSER_MIRROR_PATH_REPOS=1
 
-# Remove the Composer platform PHP emulation.
-composer config --unset platform.php
+# Remove the Composer platform PHP requirement, but only on Drupal 9.
+CORE_BRANCH=$(git rev-parse --abbrev-ref HEAD)
+if [[ "$CORE_BRANCH" =~ 9.* ]]; then
+  composer config --unset platform.php
+fi
 
 # Prevent Composer from installing symlinks from common packages known to
 # contain them.
@@ -65,6 +68,11 @@ composer config --json extra.drupal-core-vendor-hardening.grasmash/yaml-expander
 composer require \
   --no-ansi \
   drupal/automatic_updates:*@dev
+
+# `composer install` only installs root package development dependencies. So add
+# automatic_updates' development dependencies to the root.
+# @see https://getcomposer.org/doc/04-schema.md#require-dev
+composer require --dev colinodell/psr-testlogger:^1
 
 # Revert needless changes to Core Composer metapackages.
 git checkout -- "$SITE_DIRECTORY/composer/Metapackage"

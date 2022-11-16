@@ -24,7 +24,7 @@ safe_realpath() {
 # your terminal session) to override their default values.
 # @see https://www.serverlab.ca/tutorials/linux/administration-linux/how-to-set-environment-variables-in-linux/
 # Variables beginning with an underscore (_) cannot be overridden.
-DRUPAL_CORE_BRANCH=${DRUPAL_CORE_BRANCH:="9.5.x"}
+DRUPAL_CORE_BRANCH=${DRUPAL_CORE_BRANCH:="10.0.x"}
 DRUPAL_CORE_SHALLOW_CLONE=${DRUPAL_CORE_SHALLOW_CLONE:="TRUE"}
 AUTOMATIC_UPDATES_BRANCH=${AUTOMATIC_UPDATES_BRANCH:="8.x-2.x"}
 SITE_DIRECTORY=${SITE_DIRECTORY:="auto_updates_dev"}
@@ -160,8 +160,11 @@ composer config \
 # Prevent Composer from symlinking path repositories.
 export COMPOSER_MIRROR_PATH_REPOS=1
 
-# Remove the Composer platform PHP requirement.
-composer config --unset platform.php
+# Remove the Composer platform PHP requirement, but only on Drupal 9.
+CORE_BRANCH=$(git rev-parse --abbrev-ref HEAD)
+if [[ "$CORE_BRANCH" =~ 9.* ]]; then
+  composer config --unset platform.php
+fi
 
 # Prevent Composer from installing symlinks from common packages known to
 # contain them.
@@ -173,6 +176,11 @@ composer config --json extra.drupal-core-vendor-hardening.grasmash/yaml-expander
 composer require \
   --no-ansi \
   drupal/automatic_updates:dev-"$AUTOMATIC_UPDATES_BRANCH"
+
+# `composer install` only installs root package development dependencies. So add
+# automatic_updates' development dependencies to the root.
+# @see https://getcomposer.org/doc/04-schema.md#require-dev
+composer require --dev colinodell/psr-testlogger:^1
 
 # Revert needless changes to Core Composer metapackages.
 git checkout -- "$_SITE_DIRECTORY_REALPATH/composer/Metapackage"
