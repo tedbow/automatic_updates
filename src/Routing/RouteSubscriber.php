@@ -39,7 +39,6 @@ final class RouteSubscriber extends RouteSubscriberBase {
       'update.module_install',
       'update.status',
       'update.report_install',
-      'update.settings',
       'system.status',
       'update.confirmation_page',
       'system.batch_page.html',

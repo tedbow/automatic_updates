@@ -75,7 +75,6 @@ class UpdatePathTest extends UpdatePathTestBase {
       'update.module_update',
       'update.report_install',
       'update.report_update',
-      'update.settings',
       'update.status',
       'update.theme_update',
       'automatic_updates.status_check',

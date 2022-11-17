@@ -177,9 +177,32 @@ class StatusCheckTest extends AutomaticUpdatesFunctionalTestBase {
   }
 
   /**
-   * Tests status check results on admin pages..
+   * Data provider for URLs to the admin page.
+   *
+   * These particular admin routes are tested as status checks are disabled on
+   * certain routes but not on these.
+   *
+   * @see \Drupal\automatic_updates\Routing\RouteSubscriber::alterRoutes()
+   *
+   * @return string[][]
+   *   The test cases.
    */
-  public function testStatusChecksOnAdminPages(): void {
+  public function providerAdminRoutes(): array {
+    return [
+      'Structure Page' => ['system.admin_structure'],
+      'Update settings Page' => ['update.settings'],
+    ];
+  }
+
+  /**
+   * Tests status check results on admin pages..
+   *
+   * @param string $admin_route
+   *   The admin route to check.
+   *
+   * @dataProvider providerAdminRoutes
+   */
+  public function testStatusChecksOnAdminPages(string $admin_route): void {
     $assert = $this->assertSession();
     $messages_section_selector = '[data-drupal-messages]';
 
@@ -193,7 +216,7 @@ class StatusCheckTest extends AutomaticUpdatesFunctionalTestBase {
     $this->drupalLogin($this->reportViewerUser);
     $this->drupalGet('admin/reports/status');
     $this->assertNoErrors();
-    $this->drupalGet('admin/structure');
+    $this->drupalGet(Url::fromRoute($admin_route));
     $assert->elementNotExists('css', $messages_section_selector);
 
     // Confirm a user without the permission to run status checks does not have
@@ -208,17 +231,17 @@ class StatusCheckTest extends AutomaticUpdatesFunctionalTestBase {
     $key_value->delete('status_check_last_run');
     // A user without the permission to run the checkers will not see a message
     // on other pages if the checkers need to be run again.
-    $this->drupalGet('admin/structure');
+    $this->drupalGet(Url::fromRoute($admin_route));
     $assert->elementNotExists('css', $messages_section_selector);
 
     // Confirm that a user with the correct permission can also run the checkers
     // on another admin page.
     $this->drupalLogin($this->checkerRunnerUser);
-    $this->drupalGet('admin/structure');
+    $this->drupalGet(Url::fromRoute($admin_route));
     $assert->elementExists('css', $messages_section_selector);
     $assert->pageTextContainsOnce('Your site has not recently run an update readiness check. Run readiness checks now.');
     $this->clickLink('Run readiness checks now.');
-    $assert->addressEquals('admin/structure');
+    $assert->addressEquals(Url::fromRoute($admin_route));
     $assert->pageTextContainsOnce($expected_results[0]->getMessages()[0]);
 
     $expected_results = [
@@ -229,7 +252,7 @@ class StatusCheckTest extends AutomaticUpdatesFunctionalTestBase {
     // Confirm a new message is displayed if the cron is run after an hour.
     $this->delayRequestTime();
     $this->cronRun();
-    $this->drupalGet('admin/structure');
+    $this->drupalGet(Url::fromRoute($admin_route));
     $assert->pageTextContainsOnce(static::$errorsExplanation);
     // Confirm on admin pages that a single error will be displayed instead of a
     // summary.
@@ -250,7 +273,7 @@ class StatusCheckTest extends AutomaticUpdatesFunctionalTestBase {
     TestSubscriber1::setTestResult($unexpected_results, StatusCheckEvent::class);
     $this->delayRequestTime(30);
     $this->cronRun();
-    $this->drupalGet('admin/structure');
+    $this->drupalGet(Url::fromRoute($admin_route));
     $assert->pageTextNotContains($unexpected_results['2 errors']->getSummary());
     $assert->pageTextContainsOnce($expected_results['1 error']->getMessages()[0]);
     $assert->pageTextNotContains($unexpected_results['2 warnings']->getSummary());
@@ -261,7 +284,7 @@ class StatusCheckTest extends AutomaticUpdatesFunctionalTestBase {
     $this->delayRequestTime(31);
     $this->cronRun();
     $expected_results = $unexpected_results;
-    $this->drupalGet('admin/structure');
+    $this->drupalGet(Url::fromRoute($admin_route));
     // Confirm on admin pages only the error summary will be displayed if there
     // is more than 1 error.
     $this->assertSame(SystemManager::REQUIREMENT_ERROR, $expected_results['2 errors']->getSeverity());
@@ -279,7 +302,7 @@ class StatusCheckTest extends AutomaticUpdatesFunctionalTestBase {
     TestSubscriber1::setTestResult($expected_results, StatusCheckEvent::class);
     $this->delayRequestTime();
     $this->cronRun();
-    $this->drupalGet('admin/structure');
+    $this->drupalGet(Url::fromRoute($admin_route));
     // Confirm that the warnings summary is displayed on admin pages if there
     // are no errors.
     $assert->pageTextNotContains(static::$errorsExplanation);
@@ -293,7 +316,7 @@ class StatusCheckTest extends AutomaticUpdatesFunctionalTestBase {
     TestSubscriber1::setTestResult($expected_results, StatusCheckEvent::class);
     $this->delayRequestTime();
     $this->cronRun();
-    $this->drupalGet('admin/structure');
+    $this->drupalGet(Url::fromRoute($admin_route));
     $assert->pageTextNotContains(static::$errorsExplanation);
     // Confirm that a single warning is displayed and not the summary on admin
     // pages if there is only 1 warning and there are no errors.
@@ -307,7 +330,7 @@ class StatusCheckTest extends AutomaticUpdatesFunctionalTestBase {
     $this->drupalGet(Url::fromRoute('update.settings'));
     $edit['automatic_updates_cron'] = 'disable';
     $this->submitForm($edit, 'Save configuration');
-    $this->drupalGet('admin/structure');
+    $this->drupalGet(Url::fromRoute($admin_route));
     $assert->pageTextNotContains(static::$warningsExplanation);
     $assert->pageTextNotContains($expected_results[0]->getMessages()[0]);
   }
