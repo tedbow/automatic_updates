@@ -13,6 +13,35 @@ use Drupal\package_manager\ValidationResult;
 class SupportedReleaseValidatorTest extends PackageManagerKernelTestBase {
 
   /**
+   * {@inheritdoc}
+   */
+  protected function setUp(): void {
+    parent::setUp();
+
+    $active_fixture_dir = __DIR__ . '/../../fixtures/supported_release_validator/active';
+    $this->copyFixtureFolderToActiveDirectory($active_fixture_dir);
+    $active_dir = $this->container->get('package_manager.path_locator')
+      ->getProjectRoot();
+    $this->addPackage($active_dir, [
+      'name' => "drupal/dependency",
+      'version' => '9.8.0',
+      'type' => 'drupal-library',
+    ]);
+    $this->addPackage($active_dir, [
+      'name' => "drupal/semver_test",
+      'version' => '8.1.0',
+      'type' => 'drupal-module',
+      'install_path' => '../../modules/semver_test',
+    ]);
+    $this->addPackage($active_dir, [
+      'name' => "drupal/aaa_update_test",
+      'version' => '2.0.0',
+      'type' => 'drupal-module',
+      'install_path' => '../../modules/aaa_update_test',
+    ]);
+  }
+
+  /**
    * Data provider for testException().
    *
    * @return mixed[][]
@@ -135,8 +164,6 @@ class SupportedReleaseValidatorTest extends PackageManagerKernelTestBase {
    */
   public function testException(array $release_metadata, ?string $stage_fixture_dir, bool $project_in_active, array $package, array $expected_results): void {
     $this->setReleaseMetadata(['drupal' => __DIR__ . '/../../fixtures/release-history/drupal.9.8.2.xml'] + $release_metadata);
-    $active_fixture_dir = __DIR__ . '/../../fixtures/supported_release_validator/active';
-    $this->copyFixtureFolderToActiveDirectory($active_fixture_dir);
     if ($stage_fixture_dir) {
       $this->copyFixtureFolderToStageDirectoryOnApply($stage_fixture_dir);
     }
