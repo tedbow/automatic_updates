@@ -3,6 +3,7 @@
 namespace Drupal\Tests\automatic_updates\Build;
 
 use Drupal\Composer\Composer;
+use Drupal\Tests\WebAssert;
 
 /**
  * Tests an end-to-end update of Drupal core.
@@ -10,6 +11,21 @@ use Drupal\Composer\Composer;
  * @group automatic_updates
  */
 class CoreUpdateTest extends UpdateTestBase {
+
+  /**
+   * WebAssert object.
+   *
+   * @var \Drupal\Tests\WebAssert
+   */
+  protected $webAssert;
+
+  /**
+   * {@inheritdoc}
+   */
+  protected function setUp(): void {
+    parent::setUp();
+    $this->webAssert = new WebAssert($this->getMink()->getSession());
+  }
 
   /**
    * {@inheritdoc}
@@ -165,6 +181,18 @@ class CoreUpdateTest extends UpdateTestBase {
     $assert_session->elementsCount('css', '#admin-dblog tbody tr', 1);
     $assert_session->elementTextContains('css', '#admin-dblog tr:nth-of-type(1) td:nth-of-type(4)', 'Drupal core has been updated from 9.8.0 to 9.8.1');
     $this->assertUpdateSuccessful('9.8.1');
+    // \Drupal\automatic_updates\Routing\RouteSubscriber::alterRoutes() sets
+    // `_automatic_updates_status_messages: skip` on the route for the path
+    // `/admin/modules/reports/status`, but not on the `/admin/reports` path. So
+    // to test AdminStatusCheckMessages::displayAdminPageMessages(), another
+    // page must be visited. `/admin/reports` was chosen, but it could be
+    // another too.
+    $assert_session->addressEquals('/admin/reports/status');
+    $this->visit('/admin/reports');
+    $assert_session->statusCodeEquals(200);
+    // @see \Drupal\automatic_updates\Validation\AdminStatusCheckMessages::displayAdminPageMessages()
+    $this->webAssert->statusMessageNotExists('error');
+    $this->webAssert->statusMessageNotExists('warning');
   }
 
   /**
