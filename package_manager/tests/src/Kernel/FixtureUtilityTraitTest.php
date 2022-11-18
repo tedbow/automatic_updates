@@ -33,10 +33,12 @@ class FixtureUtilityTraitTest extends PackageManagerKernelTestBase {
 
     $this->addPackage($this->dir, [
       'name' => 'my/package',
+      'type' => 'library',
     ]);
     $this->addPackage($this->dir, [
       'name' => 'my/dev-package',
       'version' => '2.1.0',
+      'type' => 'library',
       'install_path' => '../relative/path',
     ],
     TRUE,
@@ -56,9 +58,21 @@ class FixtureUtilityTraitTest extends PackageManagerKernelTestBase {
       $this->assertSame("Failed asserting that an array has the key 'name'.", $e->getMessage());
     }
 
+    // Packages cannot be added without a type.
+    try {
+      $this->addPackage($this->dir, ['name' => 'unknown']);
+      $this->fail('Adding an package without a type should raise an error.');
+    }
+    catch (AssertionFailedError $e) {
+      $this->assertSame("Failed asserting that an array has the key 'type'.", $e->getMessage());
+    }
+
     // We should not be able to add an existing package.
     try {
-      $this->addPackage($this->dir, ['name' => 'my/package']);
+      $this->addPackage($this->dir, [
+        'name' => 'my/package',
+        'type' => 'library',
+      ]);
       $this->fail('Trying to add an existing package should raise an error.');
     }
     catch (AssertionFailedError $e) {
@@ -71,6 +85,7 @@ class FixtureUtilityTraitTest extends PackageManagerKernelTestBase {
       $this->addPackage($this->dir, [
         'name' => 'absolute/path',
         'install_path' => '/absolute/path',
+        'type' => 'library',
       ]);
       $this->fail('Add package should have failed.');
     }
@@ -81,10 +96,12 @@ class FixtureUtilityTraitTest extends PackageManagerKernelTestBase {
     $installed_json_expected_packages = [
       'my/package' => [
         'name' => 'my/package',
+        'type' => 'library',
       ],
       'my/dev-package' => [
         'name' => 'my/dev-package',
         'version' => '2.1.0',
+        'type' => 'library',
       ],
     ];
     $installed_php_expected_packages = $installed_json_expected_packages;
@@ -174,6 +191,7 @@ class FixtureUtilityTraitTest extends PackageManagerKernelTestBase {
       'my/dev-package' => [
         'name' => 'my/dev-package',
         'version' => '3.2.1',
+        'type' => 'library',
       ],
       'my/other-package' => [
         'name' => 'my/other-package',

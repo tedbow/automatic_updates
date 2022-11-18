@@ -92,12 +92,14 @@ trait FixtureUtilityTrait {
    *   area).
    * @param array $package
    *   The package info that should be added to installed.json and
-   *   installed.php. Must include a `name` key.
+   *   installed.php. Must include the `name` and `type` keys.
    * @param bool $is_dev_requirement
    *   Whether or not the package is a development requirement.
    */
   protected function addPackage(string $dir, array $package, bool $is_dev_requirement = FALSE): void {
-    $this->assertArrayHasKey('name', $package);
+    foreach (['name', 'type'] as $required_key) {
+      $this->assertArrayHasKey($required_key, $package);
+    }
     $this->setPackage($dir, $package['name'], $package, FALSE, $is_dev_requirement);
   }
 
