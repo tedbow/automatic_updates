@@ -1,5 +1,8 @@
 <?php
 
+declare(strict_types = 1);
+
+
 namespace Drupal\automatic_updates\Validator\VersionPolicy;
 
 use Drupal\Core\Extension\ExtensionVersion;

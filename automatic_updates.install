@@ -5,6 +5,8 @@
  * Contains install and update functions for Automatic Updates.
  */
 
+declare(strict_types = 1);
+
 use Drupal\automatic_updates\Validation\StatusCheckRequirements;
 
 /**

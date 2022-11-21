@@ -2,6 +2,7 @@
 
 namespace Drupal\Tests\package_manager\Kernel;
 
+use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\package_manager\Exception\ApplyFailedException;
 
 /**
@@ -10,13 +11,14 @@ use Drupal\package_manager\Exception\ApplyFailedException;
  * @group package_manager
  */
 class FailureMarkerTest extends PackageManagerKernelTestBase {
+  use StringTranslationTrait;
 
   /**
    * @covers ::assertNotExists
    */
   public function testExceptionIfExists(): void {
     $failure_marker = $this->container->get('package_manager.failure_marker');
-    $failure_marker->write($this->createStage(), 'Disastrous catastrophe!');
+    $failure_marker->write($this->createStage(), $this->t('Disastrous catastrophe!'));
 
     $this->expectException(ApplyFailedException::class);
     $this->expectExceptionMessage('Disastrous catastrophe!');

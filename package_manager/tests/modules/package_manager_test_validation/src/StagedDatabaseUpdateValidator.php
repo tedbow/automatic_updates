@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types = 1);
+
 namespace Drupal\package_manager_test_validation;
 
 use Drupal\package_manager\Validator\StagedDBUpdateValidator as BaseValidator;

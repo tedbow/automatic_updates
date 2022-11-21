@@ -1,8 +1,11 @@
 <?php
 
+declare(strict_types = 1);
+
 namespace Drupal\package_manager;
 
 use Drupal\Component\Serialization\Json;
+use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\package_manager\Exception\ApplyFailedException;
 
 /**
@@ -55,10 +58,10 @@ final class FailureMarker {
    *
    * @param \Drupal\package_manager\Stage $stage
    *   The stage.
-   * @param string $message
+   * @param \Drupal\Core\StringTranslation\TranslatableMarkup $message
    *   Failure message to be added.
    */
-  public function write(Stage $stage, string $message): void {
+  public function write(Stage $stage, TranslatableMarkup $message): void {
     $data = [
       'stage_class' => get_class($stage),
       'stage_file' => (new \ReflectionObject($stage))->getFileName(),

@@ -1,8 +1,11 @@
 <?php
 
+declare(strict_types = 1);
+
 namespace Drupal\package_manager;
 
 use Composer\Semver\Comparator;
+use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\update\ProjectRelease;
 use Drupal\Core\Extension\ExtensionVersion;
 use Drupal\update\UpdateManagerInterface;
@@ -143,8 +146,25 @@ final class ProjectInfo {
    *   the project information is not available.
    */
   public function getInstalledVersion(): ?string {
-    if ($project_data = $this->getProjectInfo()) {
-      return $project_data['existing_version'] ?? NULL;
+    $project_data = $this->getProjectInfo();
+    if ($project_data && array_key_exists('existing_version', $project_data)) {
+      $existing_version = $project_data['existing_version'];
+      // Treat an unknown version the same as a project whose project
+      // information is not available, so return NULL.
+      // @see \update_process_project_info()
+      if ($existing_version instanceof TranslatableMarkup && $existing_version->getUntranslatedString() === 'Unknown') {
+        return NULL;
+      }
+
+      // TRICKY: Since this is relying on data coming from
+      // \Drupal\update\UpdateManager::getProjects(), we cannot be certain that
+      // we are actually receiving strings.
+      // @see \Drupal\update\UpdateManager::getProjects()
+      if (!is_string($existing_version)) {
+        return NULL;
+      }
+
+      return $existing_version;
     }
     return NULL;
   }

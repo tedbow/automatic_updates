@@ -2,6 +2,7 @@
 
 namespace Drupal\Tests\package_manager\Functional;
 
+use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\package_manager\Stage;
 use Drupal\Tests\BrowserTestBase;
 
@@ -11,6 +12,7 @@ use Drupal\Tests\BrowserTestBase;
  * @group package_manager
  */
 class FailureMarkerRequirementTest extends BrowserTestBase {
+  use StringTranslationTrait;
 
   /**
    * {@inheritdoc}
@@ -38,7 +40,7 @@ class FailureMarkerRequirementTest extends BrowserTestBase {
       ->setPaths($this->publicFilesDirectory, NULL, NULL, NULL);
 
     $failure_marker = $this->container->get('package_manager.failure_marker');
-    $message = 'Package Manager is here to wreck your day.';
+    $message = $this->t('Package Manager is here to wreck your day.');
     $failure_marker->write($this->createMock(Stage::class), $message);
     $path = $failure_marker->getPath();
     $this->assertFileExists($path);

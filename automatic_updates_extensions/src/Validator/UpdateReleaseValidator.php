@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types = 1);
+
 namespace Drupal\automatic_updates_extensions\Validator;
 
 use Drupal\package_manager\ProjectInfo;

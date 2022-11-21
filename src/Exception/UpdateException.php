@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types = 1);
+
 namespace Drupal\automatic_updates\Exception;
 
 use Drupal\package_manager\Exception\StageValidationException;

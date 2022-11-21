@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types = 1);
+
 namespace Drupal\Tests\package_manager\Traits;
 
 use org\bovigo\vfs\vfsStream;

@@ -5,6 +5,8 @@
  * Contains post-update hooks for Automatic Updates.
  */
 
+declare(strict_types = 1);
+
 use Drupal\automatic_updates\StatusCheckMailer;
 
 /**

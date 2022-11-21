@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types = 1);
+
 namespace Drupal\package_manager_bypass;
 
 use Drupal\Core\State\StateInterface;
@@ -34,7 +36,15 @@ class PathLocator extends BasePathLocator {
    * {@inheritdoc}
    */
   public function getProjectRoot(): string {
-    return $this->state->get(static::class . ' root', parent::getProjectRoot());
+    $project_root = $this->state->get(static::class . ' root');
+    if ($project_root === NULL) {
+      $project_root = $this->getVendorDirectory() . DIRECTORY_SEPARATOR . '..';
+      // @see https://github.com/bovigo/vfsStream/issues/207
+      $project_root = !str_starts_with($project_root, 'vfs://')
+        ? realpath($project_root)
+        : $project_root;
+    }
+    return $project_root;
   }
 
   /**

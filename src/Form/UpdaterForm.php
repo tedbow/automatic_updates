@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types = 1);
+
 namespace Drupal\automatic_updates\Form;
 
 use Drupal\automatic_updates\BatchProcessor;
@@ -402,7 +404,7 @@ final class UpdaterForm extends UpdateFormBase {
    *
    * @param \Drupal\update\ProjectRelease $release
    *   The project release.
-   * @param string $release_description
+   * @param \Drupal\Core\StringTranslation\TranslatableMarkup $release_description
    *   The release description.
    * @param \Drupal\Core\StringTranslation\TranslatableMarkup|null $caption
    *   The table caption, if any.
@@ -416,7 +418,7 @@ final class UpdaterForm extends UpdateFormBase {
    * @return string[][]
    *   The table render array.
    */
-  private function createReleaseTable(ProjectRelease $release, string $release_description, ?TranslatableMarkup $caption, string $update_type, bool $create_update_button, bool $is_primary): array {
+  private function createReleaseTable(ProjectRelease $release, TranslatableMarkup $release_description, ?TranslatableMarkup $caption, string $update_type, bool $create_update_button, bool $is_primary): array {
     $release_section = ['#type' => 'container'];
     $release_section['table'] = [
       '#type' => 'table',

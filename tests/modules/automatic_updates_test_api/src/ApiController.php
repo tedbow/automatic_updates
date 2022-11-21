@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types = 1);
+
 namespace Drupal\automatic_updates_test_api;
 
 use Drupal\package_manager_test_api\ApiController as PackageManagerApiController;

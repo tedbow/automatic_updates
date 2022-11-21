@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types = 1);
+
 namespace Drupal\package_manager;
 
 use Drupal\Core\Config\ConfigFactoryInterface;

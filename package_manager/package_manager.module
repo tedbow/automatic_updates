@@ -5,6 +5,8 @@
  * Contains hook implementations for Package Manager.
  */
 
+declare(strict_types = 1);
+
 use Drupal\Core\Routing\RouteMatchInterface;
 use Drupal\package_manager\Validator\ComposerExecutableValidator;
 

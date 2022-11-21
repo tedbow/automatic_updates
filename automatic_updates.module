@@ -5,6 +5,8 @@
  * Contains hook implementations for Automatic Updates.
  */
 
+declare(strict_types = 1);
+
 use Drupal\automatic_updates\BatchProcessor;
 use Drupal\automatic_updates\CronUpdater;
 use Drupal\Core\Routing\RouteMatchInterface;
