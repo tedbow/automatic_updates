@@ -121,10 +121,9 @@ cp "$_SITE_DIRECTORY_REALPATH/sites/default/default.settings.php" \
    "$_SITE_DIRECTORY_REALPATH/sites/default/settings.php"
 
 # Set trusted_host_patterns configuration.
-TRUSTED_HOST_PATTERN="${SITE_HOST//\./\\.}"
-  echo "
+echo "
 \$settings['trusted_host_patterns'] = [
-  '^$TRUSTED_HOST_PATTERN\$',
+  '^.*\$',
 ];" \
   | tee -a sites/default/settings.php
 
