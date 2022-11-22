@@ -4,6 +4,7 @@ namespace Drupal\Tests\package_manager\Kernel;
 
 use Drupal\package_manager\Event\PreApplyEvent;
 use Drupal\package_manager\ValidationResult;
+use Drupal\Tests\package_manager\Traits\FixtureUtilityTrait;
 
 /**
  * @coversDefaultClass \Drupal\package_manager\Validator\SupportedReleaseValidator
@@ -11,6 +12,8 @@ use Drupal\package_manager\ValidationResult;
  * @group package_manager
  */
 class SupportedReleaseValidatorTest extends PackageManagerKernelTestBase {
+
+  use FixtureUtilityTrait;
 
   /**
    * {@inheritdoc}
@@ -164,11 +167,11 @@ class SupportedReleaseValidatorTest extends PackageManagerKernelTestBase {
    */
   public function testException(array $release_metadata, ?string $stage_fixture_dir, bool $project_in_active, array $package, array $expected_results): void {
     $this->setReleaseMetadata(['drupal' => __DIR__ . '/../../fixtures/release-history/drupal.9.8.2.xml'] + $release_metadata);
-    if ($stage_fixture_dir) {
-      $this->copyFixtureFolderToStageDirectoryOnApply($stage_fixture_dir);
-    }
 
-    $listener = function (PreApplyEvent $event) use ($project_in_active, $package): void {
+    $listener = function (PreApplyEvent $event) use ($project_in_active, $package, $stage_fixture_dir): void {
+      if ($stage_fixture_dir) {
+        $this->copyFixtureFilesTo($stage_fixture_dir, $event->getStage()->getStageDirectory());
+      }
       $stage_dir = $event->getStage()->getStageDirectory();
       // @todo add test coverage for packages that don't start with 'drupal/' in
       //   https://www.drupal.org/node/3321386.

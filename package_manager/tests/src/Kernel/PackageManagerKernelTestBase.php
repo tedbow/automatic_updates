@@ -6,7 +6,6 @@ namespace Drupal\Tests\package_manager\Kernel;
 
 use Drupal\Core\DependencyInjection\ContainerBuilder;
 use Drupal\KernelTests\KernelTestBase;
-use Drupal\package_manager\Event\PreApplyEvent;
 use Drupal\package_manager\Event\StageEvent;
 use Drupal\package_manager\StatusCheckTrait;
 use Drupal\package_manager\Validator\DiskSpaceValidator;
@@ -274,22 +273,6 @@ abstract class PackageManagerKernelTestBase extends KernelTestBase {
     $active_dir = $this->container->get('package_manager.path_locator')
       ->getProjectRoot();
     static::copyFixtureFilesTo($active_fixture_dir, $active_dir);
-  }
-
-  /**
-   * Copies a fixture directory into the stage directory on apply.
-   *
-   * @param string $fixture_dir
-   *   Path to fixture directory from which the files will be copied.
-   */
-  protected function copyFixtureFolderToStageDirectoryOnApply(string $fixture_dir) {
-    /** @var \Symfony\Component\EventDispatcher\EventDispatcherInterface $event_dispatcher */
-    $event_dispatcher = $this->container->get('event_dispatcher');
-
-    $listener = function (PreApplyEvent $event) use ($fixture_dir): void {
-      static::copyFixtureFilesTo($fixture_dir, $event->getStage()->getStageDirectory());
-    };
-    $event_dispatcher->addListener(PreApplyEvent::class, $listener, PHP_INT_MAX);
   }
 
   /**
