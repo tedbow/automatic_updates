@@ -1,9 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
+This fixture is used by \Drupal\Tests\package_manager\Kernel\ProjectInfoTest.
+
 Contains metadata about the following (fake) releases of Drupal core, all of which are secure, in order:
-* 9.8.0-alpha1
-* 9.7.1
-* 9.7.0
+- 9.8.0-alpha1
+- 9.7.1
+- 9.7.0
 -->
 <project xmlns:dc="http://purl.org/dc/elements/1.1/">
     <title>Drupal</title>

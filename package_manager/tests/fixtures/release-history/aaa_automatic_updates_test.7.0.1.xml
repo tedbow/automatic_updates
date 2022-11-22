@@ -1,4 +1,20 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!--
+This fixture is used by:
+- \Drupal\Tests\package_manager\Kernel\SupportedReleaseValidatorTest
+- \Drupal\Tests\package_manager\Kernel\ProjectInfoTest
+
+Contains metadata about the following (fake) releases of aaa_automatic_updates_test module, all of which are secure, in order:
+- 7.0.1
+- 7.0.0
+- 7.0.0-alpha1
+- 8.x-6.2
+- 8.x-6.1
+- 8.x-6.0
+- 8.x-6.0-alpha1
+- 7.0.x-dev
+- 8.x-6.x-dev
+-->
 <project xmlns:dc="http://purl.org/dc/elements/1.1/">
 <title>AAA</title>
 <short_name>aaa_automatic_updates_test</short_name>

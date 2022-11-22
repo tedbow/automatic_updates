@@ -1,4 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!--
+This fixture is used by \Drupal\Tests\package_manager\Build\PackageUpdateTest.
+
+Contains metadata about the following (fake) releases of updated_module, all of which are secure, in order:
+- 1.1.0
+- 1.0.0
+-->
 <project xmlns:dc="http://purl.org/dc/elements/1.1/">
 <title>Updated Module</title>
 <short_name>updated_module</short_name>

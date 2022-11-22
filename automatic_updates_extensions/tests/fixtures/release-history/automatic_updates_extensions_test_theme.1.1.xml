@@ -1,4 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!--
+This fixture is used by \Drupal\Tests\automatic_updates_extensions\Functional\UpdaterFormTest.
+
+Contains metadata about the following (fake) releases of automatic_updates_extensions_test_theme, all of which are secure, in order:
+- 3.0.0
+- 8.x-2.1
+- 8.x-2.0
+-->
 <project xmlns:dc="http://purl.org/dc/elements/1.1/">
   <title>Automatic Updates Extensions Test Theme</title>
   <short_name>automatic_updates_extensions_test_theme</short_name>

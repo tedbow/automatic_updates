@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
+This fixture is used by \Drupal\Tests\package_manager\Kernel\ProjectInfoTest.
+
 Contains metadata about releases of Drupal core with <supported_branches></supported_branches> not set:
 -->
 <project xmlns:dc="http://purl.org/dc/elements/1.1/">

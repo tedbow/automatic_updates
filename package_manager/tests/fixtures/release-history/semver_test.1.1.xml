@@ -1,4 +1,22 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!--
+This fixture is used by \Drupal\Tests\package_manager\Kernel\SupportedReleaseValidatorTest.
+
+Contains metadata about the following (fake) releases of semver_test module, all of which are secure, in order:
+- 8.2.0, which is in an unsupported branch
+- 8.1.1
+- 8.1.1-beta1
+- 8.1.1-alpha1
+- 8.1.0
+- 8.1.0-beta1
+- 8.1.0-alpha1
+- 8.0.1
+- 8.0.1-beta1
+- 8.0.1-alpha1
+- 8.0.0
+- 8.0.0-beta1
+- 8.0.0-alpha1
+-->
 <project xmlns:dc="http://purl.org/dc/elements/1.1/">
 <title>Semver Test</title>
 <short_name>semver_test</short_name>

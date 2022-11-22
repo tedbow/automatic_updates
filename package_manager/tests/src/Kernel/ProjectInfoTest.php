@@ -100,22 +100,22 @@ class ProjectInfoTest extends PackageManagerKernelTestBase {
         ['9.8.2', '9.8.1', '9.8.1-beta1', '9.8.0-alpha1', '9.7.1'],
       ],
       'contrib, semver and legacy' => [
-        'aaa_automatic_updates_test.9.8.2.xml',
+        'aaa_automatic_updates_test.7.0.1.xml',
         '8.x-6.0-alpha1',
         ['7.0.1', '7.0.0', '7.0.0-alpha1', '8.x-6.2', '8.x-6.1', '8.x-6.0'],
       ],
       'contrib, semver and legacy, some lower' => [
-        'aaa_automatic_updates_test.9.8.2.xml',
+        'aaa_automatic_updates_test.7.0.1.xml',
         '8.x-6.1',
         ['7.0.1', '7.0.0', '7.0.0-alpha1', '8.x-6.2'],
       ],
       'contrib, semver and legacy, on semantic dev' => [
-        'aaa_automatic_updates_test.9.8.2.xml',
+        'aaa_automatic_updates_test.7.0.1.xml',
         '7.0.x-dev',
         ['7.0.1', '7.0.0', '7.0.0-alpha1'],
       ],
       'contrib, semver and legacy, on legacy dev' => [
-        'aaa_automatic_updates_test.9.8.2.xml',
+        'aaa_automatic_updates_test.7.0.1.xml',
         '8.x-6.x-dev',
         ['7.0.1', '7.0.0', '7.0.0-alpha1', '8.x-6.2', '8.x-6.1', '8.x-6.0', '8.x-6.0-alpha1'],
       ],
@@ -128,7 +128,7 @@ class ProjectInfoTest extends PackageManagerKernelTestBase {
   public function testNewProject(): void {
     $fixtures_directory = __DIR__ . '/../../fixtures/release-history/';
     $metadata_fixtures['drupal'] = $fixtures_directory . 'drupal.9.8.2.xml';
-    $metadata_fixtures['aaa_automatic_updates_test'] = $fixtures_directory . 'aaa_automatic_updates_test.9.8.2.xml';
+    $metadata_fixtures['aaa_automatic_updates_test'] = $fixtures_directory . 'aaa_automatic_updates_test.7.0.1.xml';
     $this->setReleaseMetadata($metadata_fixtures);
     $available = update_get_available(TRUE);
     $this->assertSame(['drupal'], array_keys($available));

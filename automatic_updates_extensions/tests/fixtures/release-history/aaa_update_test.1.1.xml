@@ -1,5 +1,22 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Test legacy versions -->
+<!--
+This fixture is used by \Drupal\Tests\automatic_updates_extensions\Functional\UpdaterFormTest.
+
+Contains metadata about the following (fake) releases of aaa_update_test module, all of which are secure, in order:
+- 8.x-3.0, which is in an unsupported branch
+- 8.x-2.1
+- 8.x-2.1-beta1
+- 8.x-2.1-alpha1
+- 8.x-2.0
+- 8.x-2.0-beta1
+- 8.x-2.0-alpha1
+- 8.x-1.1
+- 8.x-1.1-beta1
+- 8.x-1.1-alpha1
+- 8.x-1.0
+- 8.x-1.0-beta1
+- 8.x-1.0-alpha1
+-->
 <project xmlns:dc="http://purl.org/dc/elements/1.1/">
 <title>AAA Update test</title>
 <short_name>aaa_update_test</short_name>

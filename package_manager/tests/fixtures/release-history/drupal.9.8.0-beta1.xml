@@ -1,9 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
+This fixture is used by \Drupal\Tests\automatic_updates\Functional\UpdaterFormTest.
+
 Contains metadata about the following (fake) releases of Drupal core, in order:
-* 9.8.0-beta1
-* 9.7.0
-* 9.8.x-dev
+- 9.8.0-beta1
+- 9.7.0
+- 9.8.x-dev
 -->
 <project xmlns:dc="http://purl.org/dc/elements/1.1/">
     <title>Drupal</title>

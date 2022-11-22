@@ -117,7 +117,7 @@ class SupportedReleaseValidatorTest extends PackageManagerKernelTestBase {
       ],
       'aaa_automatic_updates_test(not in active), update to unsupported branch' => [
         [
-          'aaa_automatic_updates_test' => "$release_fixture_folder/aaa_automatic_updates_test.9.8.2.xml",
+          'aaa_automatic_updates_test' => "$release_fixture_folder/aaa_automatic_updates_test.7.0.1.xml",
         ],
         "$fixtures_folder/aaa_automatic_updates_test_unsupported_update_stage",
         FALSE,
@@ -133,7 +133,7 @@ class SupportedReleaseValidatorTest extends PackageManagerKernelTestBase {
       ],
       'aaa_automatic_updates_test(not in active), update to supported branch' => [
         [
-          'aaa_automatic_updates_test' => "$release_fixture_folder/aaa_automatic_updates_test.9.8.2.xml",
+          'aaa_automatic_updates_test' => "$release_fixture_folder/aaa_automatic_updates_test.7.0.1.xml",
         ],
         "$fixtures_folder/aaa_automatic_updates_test_supported_update_stage",
         FALSE,

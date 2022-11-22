@@ -1,16 +1,20 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
+This fixture is used by:
+- \Drupal\Tests\package_manager\Kernel\ProjectInfoTest
+- \Drupal\Tests\automatic_updates\Functional\UpdaterFormTest
+
 Contains metadata about the following (fake) releases of Drupal core, all of which are secure, in order:
-* 10.0.0
-* 9.7.2
-* 9.7.1
-* 9.7.0
-* 9.6.1
-* 9.6.0
-* 9.5.1
-* 9.5.0
-* 9.4.0, which is in an unsupported branch
-* 9.7.x-dev
+- 10.0.0
+- 9.7.2
+- 9.7.1
+- 9.7.0
+- 9.6.1
+- 9.6.0
+- 9.5.1
+- 9.5.0
+- 9.4.0, which is in an unsupported branch
+- 9.7.x-dev
 -->
 <project xmlns:dc="http://purl.org/dc/elements/1.1/">
     <title>Drupal</title>
