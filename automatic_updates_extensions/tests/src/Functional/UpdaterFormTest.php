@@ -185,7 +185,8 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
     $this->container->get('theme_installer')->install(['automatic_updates_extensions_test_theme']);
     $this->useFixtureDirectoryAsStaged(__DIR__ . '/../../fixtures/stage_composer/' . $project_name);
     $this->setReleaseMetadata(__DIR__ . '/../../../../package_manager/tests/fixtures/release-history/drupal.9.8.2.xml');
-    $this->setReleaseMetadata(__DIR__ . '/../../fixtures/release-history/' . $project_name . '.1.1.xml');
+    $path_to_fixtures_folder = $project_name === 'aaa_update_test' ? '/../../../../package_manager/tests' : '/../..';
+    $this->setReleaseMetadata(__DIR__ . $path_to_fixtures_folder . '/fixtures/release-history/' . $project_name . '.1.1.xml');
     $this->setProjectInstalledVersion([$project_name => $installed_version]);
     $this->checkForUpdates();
     $state = $this->container->get('state');
@@ -381,7 +382,7 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
     $this->container->get('theme_installer')->install(['automatic_updates_theme_with_updates']);
     $this->setReleaseMetadata(__DIR__ . '/../../../../package_manager/tests/fixtures/release-history/drupal.9.8.2.xml');
     $this->setReleaseMetadata(__DIR__ . "/../../fixtures/release-history/semver_test.1.1.xml");
-    $this->setReleaseMetadata(__DIR__ . "/../../fixtures/release-history/aaa_update_test.1.1.xml");
+    $this->setReleaseMetadata(__DIR__ . "/../../../../package_manager/tests/fixtures/release-history/aaa_update_test.1.1.xml");
     Stager::setFixturePath(__DIR__ . '/../../fixtures/stage_composer/two_projects');
     $this->setProjectInstalledVersion([
       'semver_test' => '8.1.0',
@@ -433,7 +434,7 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
    * Tests the form when modules requiring an update not installed via composer.
    */
   public function testNonComposerProjects(): void {
-    $this->setReleaseMetadata(__DIR__ . '/../../fixtures/release-history/aaa_update_test.1.1.xml');
+    $this->setReleaseMetadata(__DIR__ . '/../../../../package_manager/tests/fixtures/release-history/aaa_update_test.1.1.xml');
     $this->setReleaseMetadata(__DIR__ . '/../../fixtures/release-history/semver_test.1.1.xml');
     $this->config('update.settings')
       ->set('fetch.url', $this->baseUrl . '/test-release-history')

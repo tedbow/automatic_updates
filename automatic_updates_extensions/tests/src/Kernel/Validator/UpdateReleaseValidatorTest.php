@@ -51,8 +51,9 @@ class UpdateReleaseValidatorTest extends AutomaticUpdatesExtensionsKernelTestBas
       ->set("system_info.$project", $module_info)
       ->save();
 
+    $path_to_fixtures_folder = $project === 'aaa_update_test' ? '/../../../../../package_manager/tests/' : '/../../../';
     $this->setReleaseMetadata([
-      $project => __DIR__ . "/../../../fixtures/release-history/$project.1.1.xml",
+      $project => __DIR__ . $path_to_fixtures_folder . "fixtures/release-history/$project.1.1.xml",
       'drupal' => __DIR__ . '/../../../../../package_manager/tests/fixtures/release-history/drupal.9.8.2.xml',
     ]);
 
