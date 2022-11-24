@@ -8,8 +8,8 @@ use Drupal\Tests\automatic_updates\Kernel\AutomaticUpdatesKernelTestBase;
 
 /**
  * @covers \Drupal\automatic_updates\Validator\ScaffoldFilePermissionsValidator
- *
  * @group automatic_updates
+ * @internal
  */
 class ScaffoldFilePermissionsValidatorTest extends AutomaticUpdatesKernelTestBase {
 

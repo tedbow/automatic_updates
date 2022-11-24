@@ -8,6 +8,8 @@ use Behat\Mink\WebAssert;
 
 /**
  * Common methods for testing the update form.
+ *
+ * @internal
  */
 trait FormTestTrait {
 

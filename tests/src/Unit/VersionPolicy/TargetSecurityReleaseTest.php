@@ -9,8 +9,8 @@ use Drupal\Tests\UnitTestCase;
 
 /**
  * @covers \Drupal\automatic_updates\Validator\VersionPolicy\TargetSecurityRelease
- *
  * @group automatic_updates
+ * @internal
  */
 class TargetSecurityReleaseTest extends UnitTestCase {
 

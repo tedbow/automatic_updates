@@ -6,8 +6,8 @@ use Drupal\Tests\package_manager\Kernel\PackageManagerKernelTestBase;
 
 /**
  * @covers \Drupal\package_manager\PathExcluder\GitExcluder
- *
  * @group package_manager
+ * @internal
  */
 class GitExcluderTest extends PackageManagerKernelTestBase {
 

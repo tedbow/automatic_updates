@@ -14,6 +14,8 @@ use Drupal\Tests\package_manager\Kernel\TestStageTrait;
 
 /**
  * Base class for kernel tests of the Automatic Updates module.
+ *
+ * @internal
  */
 abstract class AutomaticUpdatesKernelTestBase extends PackageManagerKernelTestBase {
 

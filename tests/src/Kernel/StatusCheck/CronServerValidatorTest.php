@@ -13,8 +13,8 @@ use ColinODell\PsrTestLogger\TestLogger;
 
 /**
  * @covers \Drupal\automatic_updates\Validator\CronServerValidator
- *
  * @group automatic_updates
+ * @internal
  */
 class CronServerValidatorTest extends AutomaticUpdatesKernelTestBase {
 

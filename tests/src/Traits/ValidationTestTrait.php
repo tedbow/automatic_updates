@@ -10,6 +10,8 @@ use Drupal\Tests\package_manager\Traits\ValidationTestTrait as PackageManagerVal
 
 /**
  * Common methods for testing validation.
+ *
+ * @internal
  */
 trait ValidationTestTrait {
 

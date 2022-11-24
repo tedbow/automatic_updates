@@ -6,6 +6,7 @@ namespace Drupal\Tests\package_manager\Build;
  * Tests installing packages in a staging area.
  *
  * @group package_manager
+ * @internal
  */
 class PackageInstallTest extends TemplateProjectTestBase {
 

@@ -6,6 +6,8 @@ namespace Drupal\Tests\automatic_updates\Traits;
 
 /**
  * Common methods for testing version policy rules.
+ *
+ * @internal
  */
 trait VersionPolicyTestTrait {
 

@@ -7,8 +7,8 @@ use Drupal\package_manager\ValidationResult;
 
 /**
  * @covers \Drupal\package_manager\Validator\SettingsValidator
- *
  * @group package_manager
+ * @internal
  */
 class SettingsValidatorTest extends PackageManagerKernelTestBase {
 

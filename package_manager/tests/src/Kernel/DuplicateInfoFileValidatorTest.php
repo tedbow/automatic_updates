@@ -8,8 +8,8 @@ use Symfony\Component\Filesystem\Filesystem;
 
 /**
  * @covers \Drupal\package_manager\Validator\DuplicateInfoFileValidator
- *
  * @group package_manager
+ * @internal
  */
 class DuplicateInfoFileValidatorTest extends PackageManagerKernelTestBase {
 

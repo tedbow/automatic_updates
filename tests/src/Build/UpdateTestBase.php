@@ -9,6 +9,8 @@ use Drupal\Tests\package_manager\Build\TemplateProjectTestBase;
 
 /**
  * Base class for tests that perform in-place updates.
+ *
+ * @internal
  */
 abstract class UpdateTestBase extends TemplateProjectTestBase {
 

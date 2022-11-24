@@ -15,8 +15,8 @@ use PhpTuf\ComposerStager\Domain\Exception\InvalidArgumentException;
 
 /**
  * @coversDefaultClass \Drupal\automatic_updates\Updater
- *
  * @group automatic_updates
+ * @internal
  */
 class UpdaterTest extends AutomaticUpdatesKernelTestBase {
 

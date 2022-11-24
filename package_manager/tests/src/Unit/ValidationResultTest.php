@@ -9,8 +9,8 @@ use Drupal\Tests\UnitTestCase;
 
 /**
  * @coversDefaultClass \Drupal\package_manager\ValidationResult
- *
  * @group package_manager
+ * @internal
  */
 class ValidationResultTest extends UnitTestCase {
 

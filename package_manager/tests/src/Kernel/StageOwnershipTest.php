@@ -17,6 +17,7 @@ use ColinODell\PsrTestLogger\TestLogger;
  * Tests that ownership of the stage is enforced.
  *
  * @group package_manager
+ * @internal
  */
 class StageOwnershipTest extends PackageManagerKernelTestBase {
 

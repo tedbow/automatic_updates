@@ -23,8 +23,8 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
  * Tests that the staging area fires events during its lifecycle.
  *
  * @covers \Drupal\package_manager\Event\StageEvent
- *
  * @group package_manager
+ * @internal
  */
 class StageEventsTest extends PackageManagerKernelTestBase implements EventSubscriberInterface {
 

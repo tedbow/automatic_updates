@@ -8,8 +8,8 @@ use Drupal\Tests\package_manager\Traits\FixtureUtilityTrait;
 
 /**
  * @covers \Drupal\package_manager\Validator\OverwriteExistingPackagesValidator
- *
  * @group package_manager
+ * @internal
  */
 class OverwriteExistingPackagesValidatorTest extends PackageManagerKernelTestBase {
 

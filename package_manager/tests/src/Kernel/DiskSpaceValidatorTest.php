@@ -8,8 +8,8 @@ use Drupal\Component\Utility\Bytes;
 
 /**
  * @covers \Drupal\package_manager\Validator\DiskSpaceValidator
- *
  * @group package_manager
+ * @internal
  */
 class DiskSpaceValidatorTest extends PackageManagerKernelTestBase {
 

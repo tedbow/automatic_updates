@@ -7,6 +7,7 @@ use Drupal\FunctionalTests\Update\UpdatePathTestBase;
 
 /**
  * @group automatic_updates
+ * @internal
  */
 class UpdatePathTest extends UpdatePathTestBase {
 

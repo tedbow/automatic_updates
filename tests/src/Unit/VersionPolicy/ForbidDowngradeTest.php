@@ -8,8 +8,8 @@ use Drupal\Tests\UnitTestCase;
 
 /**
  * @covers \Drupal\automatic_updates\Validator\VersionPolicy\ForbidDowngrade
- *
  * @group automatic_updates
+ * @internal
  */
 class ForbidDowngradeTest extends UnitTestCase {
 

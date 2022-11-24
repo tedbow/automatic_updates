@@ -9,8 +9,8 @@ use Drupal\Tests\UnitTestCase;
 
 /**
  * @covers \Drupal\automatic_updates\Validator\VersionPolicy\TargetVersionInstallable
- *
  * @group automatic_updates
+ * @internal
  */
 class TargetVersionInstallableTest extends UnitTestCase {
 

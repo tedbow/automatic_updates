@@ -7,9 +7,9 @@ use Drupal\Core\Url;
 /**
  * @covers \Drupal\automatic_updates\Controller\UpdateController::redirectDeprecatedRoute
  * @covers \Drupal\automatic_updates\Routing\RouteSubscriber
- *
  * @group automatic_updates
  * @group legacy
+ * @internal
  */
 class DeprecatedRoutesTest extends AutomaticUpdatesFunctionalTestBase {
 

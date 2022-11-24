@@ -10,8 +10,8 @@ use Drupal\system\SystemManager;
 
 /**
  * @coversDefaultClass \Drupal\automatic_updates\Validation\ValidationResultDisplayTrait
- *
  * @group automatic_updates
+ * @internal
  */
 class ValidationResultDisplayTraitTest extends AutomaticUpdatesKernelTestBase {
 

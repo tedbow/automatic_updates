@@ -6,6 +6,8 @@ namespace Drupal\Tests\package_manager\Traits;
 
 /**
  * Common functions for testing using the package_manager_bypass module.
+ *
+ * @internal
  */
 trait PackageManagerBypassTestTrait {
 

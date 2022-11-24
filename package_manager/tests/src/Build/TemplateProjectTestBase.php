@@ -16,6 +16,8 @@ use Drupal\Tests\RandomGeneratorTrait;
  * (drupal/recommended-project or drupal/legacy-project) and contain complete
  * copies of Drupal core and all installed dependencies, completely independent
  * of the currently running code base.
+ *
+ * @internal
  */
 abstract class TemplateProjectTestBase extends QuickStartTestBase {
 

@@ -8,6 +8,8 @@ use Drupal\package_manager\ValidationResult;
 
 /**
  * Contains helpful methods for testing stage validators.
+ *
+ * @internal
  */
 trait ValidationTestTrait {
 

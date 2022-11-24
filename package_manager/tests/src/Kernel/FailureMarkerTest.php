@@ -7,8 +7,8 @@ use Drupal\package_manager\Exception\ApplyFailedException;
 
 /**
  * @coversDefaultClass \Drupal\package_manager\FailureMarker
- *
  * @group package_manager
+ * @internal
  */
 class FailureMarkerTest extends PackageManagerKernelTestBase {
   use StringTranslationTrait;

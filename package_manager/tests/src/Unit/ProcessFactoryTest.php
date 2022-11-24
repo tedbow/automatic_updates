@@ -7,8 +7,8 @@ use Drupal\Tests\UnitTestCase;
 
 /**
  * @coversDefaultClass \Drupal\package_manager\ProcessFactory
- *
  * @group automatic_updates
+ * @internal
  */
 class ProcessFactoryTest extends UnitTestCase {
 

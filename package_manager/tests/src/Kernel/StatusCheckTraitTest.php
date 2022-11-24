@@ -8,8 +8,8 @@ use Drupal\package_manager\StatusCheckTrait;
 
 /**
  * @covers \Drupal\package_manager\StatusCheckTrait
- *
  * @group package_manager
+ * @internal
  */
 class StatusCheckTraitTest extends PackageManagerKernelTestBase {
 

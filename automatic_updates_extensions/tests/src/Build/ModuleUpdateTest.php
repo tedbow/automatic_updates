@@ -10,6 +10,7 @@ use Symfony\Component\Filesystem\Filesystem as SymfonyFilesystem;
  * Tests updating modules in a staging area.
  *
  * @group automatic_updates_extensions
+ * @internal
  */
 class ModuleUpdateTest extends UpdateTestBase {
 

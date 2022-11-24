@@ -9,6 +9,7 @@ use Drupal\package_manager\StatusCheckTrait;
  * Tests that running readiness checks raises deprecation notices.
  *
  * @group legacy
+ * @internal
  */
 class ReadinessCheckTest extends AutomaticUpdatesKernelTestBase {
 

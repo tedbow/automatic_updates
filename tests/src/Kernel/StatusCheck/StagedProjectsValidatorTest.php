@@ -10,8 +10,8 @@ use Drupal\Tests\package_manager\Traits\FixtureUtilityTrait;
 
 /**
  * @covers \Drupal\automatic_updates\Validator\StagedProjectsValidator
- *
  * @group automatic_updates
+ * @internal
  */
 class StagedProjectsValidatorTest extends AutomaticUpdatesKernelTestBase {
 

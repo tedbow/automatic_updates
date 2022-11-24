@@ -12,8 +12,8 @@ use Drupal\Tests\automatic_updates\Kernel\AutomaticUpdatesKernelTestBase;
 
 /**
  * @coversDefaultClass \Drupal\automatic_updates\Validation\StatusChecker
- *
  * @group automatic_updates
+ * @internal
  */
 class StatusCheckerTest extends AutomaticUpdatesKernelTestBase {
 

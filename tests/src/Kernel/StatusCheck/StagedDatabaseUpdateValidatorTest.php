@@ -9,8 +9,8 @@ use ColinODell\PsrTestLogger\TestLogger;
 
 /**
  * @covers \Drupal\automatic_updates\Validator\StagedDatabaseUpdateValidator
- *
  * @group automatic_updates
+ * @internal
  */
 class StagedDatabaseUpdateValidatorTest extends AutomaticUpdatesKernelTestBase {
 

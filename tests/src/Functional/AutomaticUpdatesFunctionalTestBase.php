@@ -13,6 +13,8 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
  * Base class for functional tests of the Automatic Updates module.
+ *
+ * @internal
  */
 abstract class AutomaticUpdatesFunctionalTestBase extends BrowserTestBase {
 

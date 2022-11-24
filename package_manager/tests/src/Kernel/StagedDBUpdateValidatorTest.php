@@ -6,8 +6,8 @@ use Drupal\package_manager\ValidationResult;
 
 /**
  * @covers \Drupal\package_manager\Validator\StagedDBUpdateValidator
- *
  * @group package_manager
+ * @internal
  */
 class StagedDBUpdateValidatorTest extends PackageManagerKernelTestBase {
 

@@ -9,8 +9,8 @@ use Drupal\Tests\UnitTestCase;
 
 /**
  * @coversDefaultClass \Drupal\package_manager\PathLocator
- *
  * @group package_manager
+ * @internal
  */
 class PathLocatorTest extends UnitTestCase {
 

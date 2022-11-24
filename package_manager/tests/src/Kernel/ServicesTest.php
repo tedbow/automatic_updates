@@ -12,6 +12,7 @@ use PhpTuf\ComposerStager\Infrastructure\Service\Finder\ExecutableFinderInterfac
  * Tests that Package Manager services are wired correctly.
  *
  * @group package_manager
+ * @internal
  */
 class ServicesTest extends KernelTestBase {
 

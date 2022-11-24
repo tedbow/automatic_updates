@@ -15,8 +15,8 @@ use Symfony\Component\Filesystem\Filesystem;
  * @see \Drupal\Tests\automatic_updates\Build\CoreUpdateTest::assertReadOnlyFileSystemError()
  *
  * @covers \Drupal\package_manager\Validator\WritableFileSystemValidator
- *
  * @group package_manager
+ * @internal
  */
 class WritableFileSystemValidatorTest extends PackageManagerKernelTestBase {
 

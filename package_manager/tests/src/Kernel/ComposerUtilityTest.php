@@ -9,8 +9,8 @@ use org\bovigo\vfs\vfsStream;
 
 /**
  * @coversDefaultClass \Drupal\package_manager\ComposerUtility
- *
  * @group package_manager
+ * @internal
  */
 class ComposerUtilityTest extends KernelTestBase {
 

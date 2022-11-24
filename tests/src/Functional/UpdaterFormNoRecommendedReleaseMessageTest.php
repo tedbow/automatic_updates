@@ -6,6 +6,7 @@ namespace Drupal\Tests\automatic_updates\Functional;
  * Tests messages on the updater form when there is no recommended release.
  *
  * @group automatic_updates
+ * @internal
  */
 class UpdaterFormNoRecommendedReleaseMessageTest extends AutomaticUpdatesFunctionalTestBase {
 

@@ -12,8 +12,8 @@ use Drupal\Tests\user\Traits\UserCreationTrait;
 
 /**
  * @coversDefaultClass \Drupal\automatic_updates_extensions\ExtensionUpdater
- *
  * @group automatic_updates_extensions
+ * @internal
  */
 class ExtensionUpdaterTest extends AutomaticUpdatesExtensionsKernelTestBase {
 

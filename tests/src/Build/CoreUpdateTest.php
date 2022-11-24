@@ -9,6 +9,7 @@ use Drupal\Tests\WebAssert;
  * Tests an end-to-end update of Drupal core.
  *
  * @group automatic_updates
+ * @internal
  */
 class CoreUpdateTest extends UpdateTestBase {
 

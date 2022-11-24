@@ -9,8 +9,8 @@ use Drupal\Tests\automatic_updates_extensions\Kernel\AutomaticUpdatesExtensionsK
 
 /**
  * @coversDefaultClass \Drupal\automatic_updates_extensions\Validator\UpdateReleaseValidator
- *
  * @group automatic_updates_extensions
+ * @internal
  */
 class UpdateReleaseValidatorTest extends AutomaticUpdatesExtensionsKernelTestBase {
 

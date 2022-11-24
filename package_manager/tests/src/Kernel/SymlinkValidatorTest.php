@@ -16,8 +16,8 @@ use Prophecy\Argument;
 
 /**
  * @covers \Drupal\package_manager\Validator\SymlinkValidator
- *
  * @group package_manager
+ * @internal
  */
 class SymlinkValidatorTest extends PackageManagerKernelTestBase {
 

@@ -17,6 +17,7 @@ use Drupal\Tests\Traits\Core\CronRunTrait;
  * Tests status checks.
  *
  * @group automatic_updates
+ * @internal
  */
 class StatusCheckTest extends AutomaticUpdatesFunctionalTestBase {
 

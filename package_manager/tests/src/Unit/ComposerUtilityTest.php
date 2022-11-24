@@ -8,8 +8,8 @@ use Drupal\Tests\UnitTestCase;
 
 /**
  * @coversDefaultClass \Drupal\package_manager\ComposerUtility
- *
  * @group package_manager
+ * @internal
  */
 class ComposerUtilityTest extends UnitTestCase {
 

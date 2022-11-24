@@ -20,6 +20,7 @@ use Symfony\Component\Finder\Finder;
  *   in the Drupal\Tests\Composer namespace.
  *
  * @group package_manager
+ * @internal
  */
 class CorePackageManifestTest extends KernelTestBase {
 

@@ -9,8 +9,8 @@ use Drupal\package_manager_test_validation\EventSubscriber\TestSubscriber;
 
 /**
  * @coversDefaultClass \Drupal\package_manager\Exception\StageValidationException
- *
  * @group package_manager
+ * @internal
  */
 class StageValidationExceptionTest extends PackageManagerKernelTestBase {
 

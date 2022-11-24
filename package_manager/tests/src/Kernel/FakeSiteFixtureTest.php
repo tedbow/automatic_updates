@@ -8,6 +8,7 @@ use Drupal\package_manager\ComposerUtility;
  * Test that the 'fake-site' fixture is a valid starting point.
  *
  * @group package_manager
+ * @internal
  */
 class FakeSiteFixtureTest extends PackageManagerKernelTestBase {
 

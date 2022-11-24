@@ -6,8 +6,8 @@ use Drupal\package_manager\ValidationResult;
 
 /**
  * @covers \Drupal\package_manager\Validator\XdebugValidator
- *
  * @group package_manager
+ * @internal
  */
 class XdebugValidatorTest extends PackageManagerKernelTestBase {
 

@@ -8,6 +8,7 @@ use Drupal\Core\Url;
  * Tests changes to the Available Updates report provided by the Update module.
  *
  * @group automatic_updates
+ * @internal
  */
 class AvailableUpdatesReportTest extends AutomaticUpdatesFunctionalTestBase {
 

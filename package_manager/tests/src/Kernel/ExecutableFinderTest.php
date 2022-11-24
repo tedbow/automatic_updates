@@ -9,8 +9,8 @@ use Symfony\Component\Process\ExecutableFinder as SymfonyExecutableFinder;
 
 /**
  * @covers \Drupal\package_manager\ExecutableFinder
- *
  * @group package_manager
+ * @internal
  */
 class ExecutableFinderTest extends PackageManagerKernelTestBase {
 

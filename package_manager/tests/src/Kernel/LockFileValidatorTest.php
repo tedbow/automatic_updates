@@ -11,8 +11,8 @@ use Drupal\package_manager_bypass\Stager;
 
 /**
  * @coversDefaultClass \Drupal\package_manager\Validator\LockFileValidator
- *
  * @group package_manager
+ * @internal
  */
 class LockFileValidatorTest extends PackageManagerKernelTestBase {
 

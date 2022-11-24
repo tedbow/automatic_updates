@@ -8,8 +8,8 @@ use Drupal\Tests\UnitTestCase;
 
 /**
  * @covers \Drupal\automatic_updates\Validator\VersionPolicy\StableReleaseInstalled
- *
  * @group automatic_updates
+ * @internal
  */
 class StableReleaseInstalledTest extends UnitTestCase {
 

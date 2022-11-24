@@ -12,8 +12,8 @@ use PHPUnit\Framework\Assert;
 
 /**
  * @covers \Drupal\package_manager\Validator\ComposerExecutableValidator
- *
  * @group package_manager
+ * @internal
  */
 class ComposerExecutableValidatorTest extends PackageManagerKernelTestBase {
 

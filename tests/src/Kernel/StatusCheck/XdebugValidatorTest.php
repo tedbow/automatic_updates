@@ -11,8 +11,8 @@ use ColinODell\PsrTestLogger\TestLogger;
 
 /**
  * @covers \Drupal\automatic_updates\Validator\XdebugValidator
- *
  * @group automatic_updates
+ * @internal
  */
 class XdebugValidatorTest extends AutomaticUpdatesKernelTestBase {
 

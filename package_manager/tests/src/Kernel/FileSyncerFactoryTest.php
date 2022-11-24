@@ -9,8 +9,8 @@ use PhpTuf\ComposerStager\Infrastructure\Service\FileSyncer\RsyncFileSyncer;
 
 /**
  * @covers \Drupal\package_manager\FileSyncerFactory
- *
  * @group package_manager
+ * @internal
  */
 class FileSyncerFactoryTest extends KernelTestBase {
 

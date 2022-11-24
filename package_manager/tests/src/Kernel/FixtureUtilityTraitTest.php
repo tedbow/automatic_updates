@@ -8,8 +8,8 @@ use Symfony\Component\Filesystem\Filesystem;
 
 /**
  * @coversDefaultClass \Drupal\Tests\package_manager\Traits\FixtureUtilityTrait
- *
  * @group package_manager
+ * @internal
  */
 class FixtureUtilityTraitTest extends PackageManagerKernelTestBase {
 

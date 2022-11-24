@@ -13,6 +13,8 @@ use Drupal\Tests\package_manager\Kernel\TestStageTrait;
 
 /**
  * Base class for kernel tests of the Automatic Updates Extensions module.
+ *
+ * @internal
  */
 abstract class AutomaticUpdatesExtensionsKernelTestBase extends AutomaticUpdatesKernelTestBase {
 

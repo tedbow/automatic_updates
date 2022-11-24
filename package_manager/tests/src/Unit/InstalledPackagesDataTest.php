@@ -13,6 +13,7 @@ use Drupal\Tests\UnitTestCase;
  * internal structure changes in a way that would break our functionality.
  *
  * @group package_manager
+ * @internal
  */
 class InstalledPackagesDataTest extends UnitTestCase {
 

@@ -11,8 +11,8 @@ use Drupal\Tests\automatic_updates\Kernel\AutomaticUpdatesKernelTestBase;
 
 /**
  * @covers \Drupal\automatic_updates\Validator\VersionPolicyValidator
- *
  * @group automatic_updates
+ * @internal
  */
 class VersionPolicyValidatorTest extends AutomaticUpdatesKernelTestBase {
 

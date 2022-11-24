@@ -16,8 +16,8 @@ use Drupal\Tests\automatic_updates\Traits\EmailNotificationsTestTrait;
  * Tests status check failure notification emails during cron runs.
  *
  * @group automatic_updates
- *
  * @covers \Drupal\automatic_updates\StatusCheckMailer
+ * @internal
  */
 class StatusCheckFailureEmailTest extends AutomaticUpdatesKernelTestBase {
 

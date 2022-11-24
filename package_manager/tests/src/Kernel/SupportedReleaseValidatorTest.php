@@ -8,8 +8,8 @@ use Drupal\Tests\package_manager\Traits\FixtureUtilityTrait;
 
 /**
  * @coversDefaultClass \Drupal\package_manager\Validator\SupportedReleaseValidator
- *
  * @group package_manager
+ * @internal
  */
 class SupportedReleaseValidatorTest extends PackageManagerKernelTestBase {
 

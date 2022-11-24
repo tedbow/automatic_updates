@@ -10,6 +10,7 @@ use Drupal\Tests\BrowserTestBase;
  * Tests that Package Manager's requirements check for the failure marker.
  *
  * @group package_manager
+ * @internal
  */
 class FailureMarkerRequirementTest extends BrowserTestBase {
   use StringTranslationTrait;

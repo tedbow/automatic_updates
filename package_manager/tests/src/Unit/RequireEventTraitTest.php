@@ -6,8 +6,8 @@ use Drupal\Tests\UnitTestCase;
 
 /**
  * @covers \Drupal\package_manager\Event\RequireEventTrait
- *
  * @group package_manager
+ * @internal
  */
 class RequireEventTraitTest extends UnitTestCase {
 

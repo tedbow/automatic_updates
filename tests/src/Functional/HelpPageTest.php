@@ -6,6 +6,7 @@ use Drupal\Tests\BrowserTestBase;
 
 /**
  * @group automatic_updates
+ * @internal
  */
 class HelpPageTest extends BrowserTestBase {
 

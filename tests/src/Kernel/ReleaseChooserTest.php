@@ -7,8 +7,8 @@ use Drupal\update\ProjectRelease;
 
 /**
  * @coversDefaultClass \Drupal\automatic_updates\ReleaseChooser
- *
  * @group automatic_updates
+ * @internal
  */
 class ReleaseChooserTest extends AutomaticUpdatesKernelTestBase {
 

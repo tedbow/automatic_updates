@@ -29,6 +29,8 @@ use Symfony\Component\DependencyInjection\Definition;
 
 /**
  * Base class for kernel tests of Package Manager's functionality.
+ *
+ * @internal
  */
 abstract class PackageManagerKernelTestBase extends KernelTestBase {
 

@@ -11,6 +11,8 @@ use org\bovigo\vfs\visitor\vfsStreamAbstractVisitor;
 
 /**
  * Common methods to convert info.yml file that will pass core coding standards.
+ *
+ * @internal
  */
 trait InfoYmlConverterTrait {
 

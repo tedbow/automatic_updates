@@ -9,6 +9,8 @@ use Drupal\Tests\user\Traits\UserCreationTrait;
 
 /**
  * Contains helper methods for testing e-mail sent by Automatic Updates.
+ *
+ * @internal
  */
 trait EmailNotificationsTestTrait {
 

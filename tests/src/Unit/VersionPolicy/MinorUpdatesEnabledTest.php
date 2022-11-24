@@ -8,8 +8,8 @@ use Drupal\Tests\UnitTestCase;
 
 /**
  * @covers \Drupal\automatic_updates\Validator\VersionPolicy\MinorUpdatesEnabled
- *
  * @group automatic_updates
+ * @internal
  */
 class MinorUpdatesEnabledTest extends UnitTestCase {
 

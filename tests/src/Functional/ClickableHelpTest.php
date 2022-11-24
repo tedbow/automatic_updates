@@ -8,6 +8,7 @@ namespace Drupal\Tests\automatic_updates\Functional;
  * Tests package manager help link is clickable.
  *
  * @group automatic_updates
+ * @internal
  */
 class ClickableHelpTest extends AutomaticUpdatesFunctionalTestBase {
 

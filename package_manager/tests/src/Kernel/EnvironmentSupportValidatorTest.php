@@ -10,8 +10,8 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 /**
  * @covers \Drupal\package_manager\Validator\EnvironmentSupportValidator
- *
  * @group package_manager
+ * @internal
  */
 class EnvironmentSupportValidatorTest extends PackageManagerKernelTestBase implements EventSubscriberInterface {
 

@@ -7,8 +7,8 @@ use Drupal\package_manager\ValidationResult;
 
 /**
  * @covers \Drupal\package_manager\Validator\PendingUpdatesValidator
- *
  * @group package_manager
+ * @internal
  */
 class PendingUpdatesValidatorTest extends PackageManagerKernelTestBase {
 

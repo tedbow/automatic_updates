@@ -10,8 +10,8 @@ use PHPUnit\Framework\AssertionFailedError;
 
 /**
  * @covers \Drupal\automatic_updates\Validator\CronFrequencyValidator
- *
  * @group automatic_updates
+ * @internal
  */
 class CronFrequencyValidatorTest extends AutomaticUpdatesKernelTestBase {
 

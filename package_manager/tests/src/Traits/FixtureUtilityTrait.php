@@ -10,6 +10,8 @@ use Symfony\Component\Finder\Iterator\RecursiveDirectoryIterator;
 
 /**
  * A utility for all things fixtures.
+ *
+ * @internal
  */
 trait FixtureUtilityTrait {
 

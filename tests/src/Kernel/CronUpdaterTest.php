@@ -30,8 +30,8 @@ use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 /**
  * @covers \Drupal\automatic_updates\CronUpdater
  * @covers \automatic_updates_form_update_settings_alter
- *
  * @group automatic_updates
+ * @internal
  */
 class CronUpdaterTest extends AutomaticUpdatesKernelTestBase {
 

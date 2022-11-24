@@ -7,8 +7,8 @@ use Drupal\Tests\automatic_updates\Kernel\AutomaticUpdatesKernelTestBase;
 
 /**
  * @covers \Drupal\automatic_updates\Validator\VersionPolicy\SupportedBranchInstalled
- *
  * @group automatic_updates
+ * @internal
  */
 class SupportedBranchInstalledTest extends AutomaticUpdatesKernelTestBase {
 

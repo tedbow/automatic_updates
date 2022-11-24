@@ -8,6 +8,7 @@ use Drupal\package_manager_bypass\Stager;
  * Tests that only one Automatic Update operation can be performed at a time.
  *
  * @group automatic_updates
+ * @internal
  */
 class UpdateLockTest extends AutomaticUpdatesFunctionalTestBase {
 

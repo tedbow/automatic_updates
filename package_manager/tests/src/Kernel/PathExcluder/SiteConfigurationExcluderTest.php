@@ -8,8 +8,8 @@ use Drupal\Tests\package_manager\Kernel\PackageManagerKernelTestBase;
 
 /**
  * @covers \Drupal\package_manager\PathExcluder\SiteConfigurationExcluder
- *
  * @group package_manager
+ * @internal
  */
 class SiteConfigurationExcluderTest extends PackageManagerKernelTestBase {
 
@@ -50,7 +50,9 @@ class SiteConfigurationExcluderTest extends PackageManagerKernelTestBase {
     $site_path = 'sites/example.com';
 
     // Update the event subscribers' dependencies.
-    $this->container->get('package_manager.site_configuration_excluder')->sitePath = $site_path;
+    /** @var \Drupal\Tests\package_manager\Kernel\PathExcluder\TestSiteConfigurationExcluder $site_configuration_excluder */
+    $site_configuration_excluder = $this->container->get('package_manager.site_configuration_excluder');
+    $site_configuration_excluder->sitePath = $site_path;
 
     $stage = $this->createStage();
     $stage->create();

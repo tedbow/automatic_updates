@@ -20,6 +20,7 @@ use Drupal\Tests\package_manager\Traits\PackageManagerBypassTestTrait;
  * Tests updating using the form.
  *
  * @group automatic_updates_extensions
+ * @internal
  */
 class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
 

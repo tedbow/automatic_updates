@@ -7,8 +7,8 @@ use Drupal\Tests\UnitTestCase;
 
 /**
  * @coversDefaultClass \Drupal\package_manager\LegacyVersionUtility
- *
  * @group automatic_updates
+ * @internal
  */
 class LegacyVersionUtilityTest extends UnitTestCase {
 

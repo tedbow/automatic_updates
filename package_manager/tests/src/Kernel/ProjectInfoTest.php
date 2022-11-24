@@ -6,8 +6,8 @@ use Drupal\package_manager\ProjectInfo;
 
 /**
  * @coversDefaultClass \Drupal\package_manager\ProjectInfo
- *
  * @group automatic_updates
+ * @internal
  */
 class ProjectInfoTest extends PackageManagerKernelTestBase {
 

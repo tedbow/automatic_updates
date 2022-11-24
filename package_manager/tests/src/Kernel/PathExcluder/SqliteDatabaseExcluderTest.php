@@ -10,8 +10,8 @@ use Drupal\Tests\package_manager\Kernel\PackageManagerKernelTestBase;
 
 /**
  * @covers \Drupal\package_manager\PathExcluder\SqliteDatabaseExcluder
- *
  * @group package_manager
+ * @internal
  */
 class SqliteDatabaseExcluderTest extends PackageManagerKernelTestBase {
 
@@ -47,8 +47,9 @@ class SqliteDatabaseExcluderTest extends PackageManagerKernelTestBase {
     $database->driver()->willReturn('sqlite');
     $database->getConnectionOptions()->willReturn($connection_options);
 
-    $this->container->get('package_manager.sqlite_excluder')
-      ->database = $database->reveal();
+    /** @var \Drupal\Tests\package_manager\Kernel\PathExcluder\TestSiteConfigurationExcluder $sqlite_excluder */
+    $sqlite_excluder = $this->container->get('package_manager.sqlite_excluder');
+    $sqlite_excluder->database = $database->reveal();
   }
 
   /**

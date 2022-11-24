@@ -24,10 +24,9 @@ use ColinODell\PsrTestLogger\TestLogger;
 
 /**
  * @coversDefaultClass \Drupal\package_manager\Stage
- *
  * @covers \Drupal\package_manager\PackageManagerUninstallValidator
- *
  * @group package_manager
+ * @internal
  */
 class StageTest extends PackageManagerKernelTestBase {
 

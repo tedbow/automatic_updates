@@ -8,8 +8,8 @@ use Drupal\package_manager\ValidationResult;
 
 /**
  * @covers \Drupal\package_manager\Validator\ComposerSettingsValidator
- *
  * @group package_manager
+ * @internal
  */
 class ComposerSettingsValidatorTest extends PackageManagerKernelTestBase {
 
