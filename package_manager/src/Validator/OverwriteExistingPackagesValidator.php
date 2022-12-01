@@ -13,10 +13,27 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 /**
  * Validates that newly installed packages don't overwrite existing directories.
  *
+ * Whether a new package in the stage directory would overwrite an existing
+ * directory in the active directory when the operation is applied is determined
+ * by inspecting the `install_path` property of the staged package.
+ *
+ * Not all packages will have an `install_path` property and therefore
+ * those packages without this property will be ignored by this validator. For
+ * instance packages with the `metapackage` type do not have this property as
+ * they contain no files that are written to the file system. There are also may
+ * be other custom types that do not have an `install_path` property.
+ *
+ * The Composer facade at https://packages.drupal.org/8 currently uses the
+ * `metapackage` type for submodules of Drupal projects.
+ *
  * @internal
  *   This is an internal part of Package Manager and may be changed or removed
  *   at any time without warning. External code should not interact with this
  *   class.
+ *
+ * @link https://getcomposer.org/doc/04-schema.md#type
+ *
+ * @see \Drupal\package_manager\ComposerUtility::getInstalledPackagesData()
  */
 final class OverwriteExistingPackagesValidator implements EventSubscriberInterface {
 
@@ -62,6 +79,11 @@ final class OverwriteExistingPackagesValidator implements EventSubscriberInterfa
 
     $new_installed_data = array_intersect_key($installed_packages_data, $new_packages);
     foreach ($new_installed_data as $package_name => $data) {
+      if (empty($data['install_path'])) {
+        // Packages without an `install_path` cannot overwrite existing
+        // directories.
+        continue;
+      }
       $relative_path = str_replace($stage_dir, '', $data['install_path']);
       if (is_dir($active_dir . DIRECTORY_SEPARATOR . $relative_path)) {
         $event->addError([

@@ -84,6 +84,15 @@ class OverwriteExistingPackagesValidatorTest extends PackageManagerKernelTestBas
       'type' => 'drupal-module',
       'install_path' => '../../modules/module_5_different_path',
     ]);
+
+    // Add a package without an install_path set which will not raise an error.
+    // The most common example of this in the Drupal ecosystem is a submodule.
+    $this->addPackage($stage_dir, [
+      'name' => 'drupal/sub-module',
+      'version' => '1.3.0',
+      'type' => 'metapackage',
+    ]);
+
     $expected_results = [
       ValidationResult::createError([
         'The new package drupal/module_1 will be installed in the directory /vendor/composer/../../modules/module_1, which already exists but is not managed by Composer.',
