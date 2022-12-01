@@ -42,6 +42,18 @@ class SupportedReleaseValidatorTest extends PackageManagerKernelTestBase {
       'type' => 'drupal-module',
       'install_path' => '../../modules/aaa_update_test',
     ]);
+    $this->addPackage($active_dir, [
+      'name' => "drupal/package_manager_theme",
+      'version' => '8.1.0',
+      'type' => 'drupal-theme',
+      'install_path' => '../../modules/package_manager_theme',
+    ]);
+    $this->addPackage($active_dir, [
+      'name' => "somewhere/a_drupal_module",
+      'version' => '8.1.0',
+      'type' => 'drupal-module',
+      'install_path' => '../../modules/a_drupal_module',
+    ]);
   }
 
   /**
@@ -142,6 +154,51 @@ class SupportedReleaseValidatorTest extends PackageManagerKernelTestBase {
           'version' => '7.0.1',
           'type' => 'drupal-module',
           'install_path' => '../../modules/aaa_automatic_updates_test',
+        ],
+        [],
+      ],
+      'package_manager_theme, supported update' => [
+        [
+          'package_manager_theme' => "$release_fixture_folder/package_manager_theme.1.1.xml",
+        ],
+        NULL,
+        TRUE,
+        [
+          'name' => "drupal/package_manager_theme",
+          'version' => '8.1.1',
+          'type' => 'drupal-theme',
+          'install_path' => NULL,
+        ],
+        [],
+      ],
+      'package_manager_theme, update to unsupported branch' => [
+        [
+          'package_manager_theme' => "$release_fixture_folder/package_manager_theme.1.1.xml",
+        ],
+        NULL,
+        TRUE,
+        [
+          'name' => "drupal/package_manager_theme",
+          'version' => '8.2.0',
+          'type' => 'drupal-theme',
+          'install_path' => NULL,
+        ],
+        [
+          ValidationResult::createError(['package_manager_theme (drupal/package_manager_theme) 8.2.0'], $summary),
+        ],
+      ],
+      // For modules that don't start with 'drupal/' will not have update XML
+      // from drupal.org and so will not be checked by the validator.
+      // @see \Drupal\package_manager\Validator\SupportedReleaseValidator::checkStagedReleases()
+      'updating a module that does not start with drupal/' => [
+        [],
+        NULL,
+        TRUE,
+        [
+          'name' => "somewhere/a_drupal_module",
+          'version' => '8.1.1',
+          'type' => 'drupal-module',
+          'install_path' => NULL,
         ],
         [],
       ],
