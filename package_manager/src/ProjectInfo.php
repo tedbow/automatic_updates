@@ -8,6 +8,7 @@ use Composer\Semver\Comparator;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\update\ProjectRelease;
 use Drupal\Core\Extension\ExtensionVersion;
+use Drupal\Core\Utility\Error;
 use Drupal\update\UpdateManagerInterface;
 
 /**
@@ -120,7 +121,17 @@ final class ProjectInfo {
     $support_branches = explode(',', $available_updates['supported_branches']);
     $installable_releases = [];
     foreach ($available_updates['releases'] as $release_info) {
-      $release = ProjectRelease::createFromArray($release_info);
+      try {
+        $release = ProjectRelease::createFromArray($release_info);
+      }
+      catch (\UnexpectedValueException $exception) {
+        // Ignore releases that are in an invalid format. Although this is
+        // unlikely we should still only process releases in the correct format.
+        \Drupal::logger('package_manager')
+          ->error(sprintf('Invalid project format: %s', print_r($release_info, TRUE)), Error::decodeException($exception));
+        continue;
+      }
+
       $version = $release->getVersion();
       if ($installed_version) {
         $semantic_version = LegacyVersionUtility::convertToSemanticVersion($version);

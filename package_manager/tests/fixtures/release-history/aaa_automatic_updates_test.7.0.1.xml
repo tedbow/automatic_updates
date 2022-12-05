@@ -14,6 +14,7 @@ Contains metadata about the following (fake) releases of aaa_automatic_updates_t
 - 8.x-6.0-alpha1
 - 7.0.x-dev
 - 8.x-6.x-dev
+- 8.x-5.x - An invalid release to ensure invalid releases do not affect processing other releases.
 -->
 <project xmlns:dc="http://purl.org/dc/elements/1.1/">
 <title>AAA</title>
@@ -129,6 +130,33 @@ Contains metadata about the following (fake) releases of aaa_automatic_updates_t
         <release_link>http://example.com/aaa_automatic_updates_test-9-8-0-dev-release</release_link>
         <download_link>http://example.com/aaa_automatic_updates_test-9-8-0-dev.tar.gz</download_link>
         <date>1250424521</date>
+        <terms>
+            <term><name>Release type</name><value>New features</value></term>
+            <term><name>Release type</name><value>Bug fixes</value></term>
+        </terms>
+    </release>
+    <release>
+        <name>AAA 8.x-5.x</name>
+        <version>8.x-5.x</version>
+        <status>published</status>
+        <release_link>http://example.com/aaa_automatic_updates_test-9-5-0-dev-release</release_link>
+        <download_link/>
+        <date/>
+        <filesize/>
+        <files>
+            <file>
+                <url/>
+                <archive_type/>
+                <md5/>
+                <size/>
+            </file>
+            <file>
+                <url/>
+                <archive_type/>
+                <md5/>
+                <size/>
+            </file>
+        </files>
         <terms>
             <term><name>Release type</name><value>New features</value></term>
             <term><name>Release type</name><value>Bug fixes</value></term>

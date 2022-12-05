@@ -2,7 +2,9 @@
 
 namespace Drupal\Tests\package_manager\Kernel;
 
+use Drupal\Core\Logger\RfcLogLevel;
 use Drupal\package_manager\ProjectInfo;
+use ColinODell\PsrTestLogger\TestLogger;
 
 /**
  * @coversDefaultClass \Drupal\package_manager\ProjectInfo
@@ -126,6 +128,10 @@ class ProjectInfoTest extends PackageManagerKernelTestBase {
    * Tests a project that is not in the codebase.
    */
   public function testNewProject(): void {
+    $logger = new TestLogger();
+    $this->container->get('logger.factory')
+      ->get('package_manager')
+      ->addLogger($logger);
     $fixtures_directory = __DIR__ . '/../../fixtures/release-history/';
     $metadata_fixtures['drupal'] = $fixtures_directory . 'drupal.9.8.2.xml';
     $metadata_fixtures['aaa_automatic_updates_test'] = $fixtures_directory . 'aaa_automatic_updates_test.7.0.1.xml';
@@ -151,8 +157,9 @@ class ProjectInfoTest extends PackageManagerKernelTestBase {
       '8.x-6.0-alpha1',
       '7.0.x-dev',
       '8.x-6.x-dev',
+      '8.x-5.x',
     ];
-    $uninstallable_releases = ['7.0.x-dev', '8.x-6.x-dev'];
+    $uninstallable_releases = ['7.0.x-dev', '8.x-6.x-dev', '8.x-5.x'];
     $installable_releases = array_values(array_diff($all_releases, $uninstallable_releases));
     $this->assertSame(
       $all_releases,
@@ -166,6 +173,9 @@ class ProjectInfoTest extends PackageManagerKernelTestBase {
     // Ensure we have not changed the state the update module uses to store
     // the last checked time.
     $this->assertSame(123, $state->get('update.last_check'));
+
+    $this->assertTrue($logger->hasRecordThatContains('Invalid project format: Array', RfcLogLevel::ERROR));
+    $this->assertTrue($logger->hasRecordThatContains('[name] => AAA 8.x-5.x', RfcLogLevel::ERROR));
   }
 
   /**
