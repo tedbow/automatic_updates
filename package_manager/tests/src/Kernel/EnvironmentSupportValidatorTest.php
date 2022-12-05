@@ -3,47 +3,16 @@
 namespace Drupal\Tests\package_manager\Kernel;
 
 use Drupal\package_manager\Event\PreCreateEvent;
-use Drupal\package_manager\Event\PreOperationStageEvent;
+use Drupal\package_manager\Event\StatusCheckEvent;
 use Drupal\package_manager\ValidationResult;
 use Drupal\package_manager\Validator\EnvironmentSupportValidator;
-use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 /**
  * @covers \Drupal\package_manager\Validator\EnvironmentSupportValidator
  * @group package_manager
  * @internal
  */
-class EnvironmentSupportValidatorTest extends PackageManagerKernelTestBase implements EventSubscriberInterface {
-
-  /**
-   * {@inheritdoc}
-   */
-  protected function setUp(): void {
-    parent::setUp();
-    $this->container->get('event_dispatcher')->addSubscriber($this);
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public static function getSubscribedEvents(): array {
-    $map = function (): string {
-      return 'assertValidationStopped';
-    };
-    return array_map($map, EnvironmentSupportValidator::getSubscribedEvents());
-  }
-
-  /**
-   * Ensures that the validator stops any further validation.
-   *
-   * @param \Drupal\package_manager\Event\PreOperationStageEvent $event
-   *   The event object.
-   */
-  public function assertValidationStopped(PreOperationStageEvent $event): void {
-    if ($event->getResults()) {
-      $this->assertTrue($event->isPropagationStopped());
-    }
-  }
+class EnvironmentSupportValidatorTest extends PackageManagerKernelTestBase {
 
   /**
    * Tests handling of an invalid URL in the environment support variable.
@@ -54,6 +23,18 @@ class EnvironmentSupportValidatorTest extends PackageManagerKernelTestBase imple
     $result = ValidationResult::createError([
       'Package Manager is not supported by your environment.',
     ]);
+    foreach ([PreCreateEvent::class, StatusCheckEvent::class] as $event_class) {
+      $this->container->get('event_dispatcher')->addListener(
+        $event_class,
+        function () use ($event_class): void {
+          $this->fail('Event propagation should have been stopped during ' . $event_class . '.');
+        },
+        // Execute this listener immediately after the tested validator, which
+        // uses priority 200. This ensures informative test failures.
+        // @see \Drupal\package_manager\Validator\EnvironmentSupportValidator::getSubscribedEvents()
+        199
+      );
+    }
     $this->assertStatusCheckResults([$result]);
     $this->assertResults([$result], PreCreateEvent::class);
   }

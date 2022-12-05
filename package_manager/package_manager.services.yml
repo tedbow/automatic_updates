@@ -141,6 +141,13 @@ services:
       - '@extension.list.theme'
     tags:
       - { name: event_subscriber }
+  package_manager.validator.composer_json_exists:
+    class: Drupal\package_manager\Validator\ComposerJsonExistsValidator
+    arguments:
+      - '@package_manager.path_locator'
+      - '@string_translation'
+    tags:
+      - { name: event_subscriber }
   package_manager.test_site_excluder:
     class: Drupal\package_manager\PathExcluder\TestSiteExcluder
     arguments:
