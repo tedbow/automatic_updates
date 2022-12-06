@@ -1,9 +1,12 @@
 <?php
 
+declare(strict_types = 1);
+
 namespace Drupal\Tests\automatic_updates\Kernel\StatusCheck;
 
 use Drupal\automatic_updates\CronUpdater;
 use Drupal\Core\Logger\RfcLogLevel;
+use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\package_manager\ValidationResult;
 use Drupal\Tests\automatic_updates\Kernel\AutomaticUpdatesKernelTestBase;
 use Drupal\Tests\package_manager\Traits\PackageManagerBypassTestTrait;
@@ -17,6 +20,7 @@ use ColinODell\PsrTestLogger\TestLogger;
 class XdebugValidatorTest extends AutomaticUpdatesKernelTestBase {
 
   use PackageManagerBypassTestTrait;
+  use StringTranslationTrait;
 
   /**
    * {@inheritdoc}
@@ -70,7 +74,7 @@ class XdebugValidatorTest extends AutomaticUpdatesKernelTestBase {
 
     $this->container->get('cron')->run();
     $this->assertUpdateStagedTimes(0);
-    $this->assertTrue($logger->hasRecordThatMatches("/$message/", RfcLogLevel::ERROR));
+    $this->assertTrue($logger->hasRecordThatMatches("/$message/", (string) RfcLogLevel::ERROR));
   }
 
 }

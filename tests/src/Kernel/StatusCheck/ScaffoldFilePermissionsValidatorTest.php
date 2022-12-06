@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types = 1);
+
 namespace Drupal\Tests\automatic_updates\Kernel\StatusCheck;
 
 use Drupal\package_manager\Exception\StageValidationException;

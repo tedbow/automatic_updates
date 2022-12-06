@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types = 1);
+
 namespace Drupal\Tests\package_manager\Kernel;
 
 use Drupal\Component\Datetime\Time;
@@ -415,8 +417,8 @@ class StageTest extends PackageManagerKernelTestBase {
       $this->container->get('tempstore.shared'),
       $this->container->get('datetime.time')
     );
-    $this->assertTrue($logger->hasRecord('Drupal\package_manager\Stage::TEMPSTORE_METADATA_KEY is overridden by ' . TestStageOverriddenConstants::class . '. This is deprecated because it can cause errors or other unexpected behavior. It is strongly recommended to stop overriding this constant. See https://www.drupal.org/node/3317450 for more information.', RfcLogLevel::ERROR));
-    $this->assertTrue($logger->hasRecord('Drupal\package_manager\Stage::TEMPSTORE_LOCK_KEY is overridden by ' . TestStageOverriddenConstants::class . '. This is deprecated because it can cause errors or other unexpected behavior. It is strongly recommended to stop overriding this constant. See https://www.drupal.org/node/3317450 for more information.', RfcLogLevel::ERROR));
+    $this->assertTrue($logger->hasRecord('Drupal\package_manager\Stage::TEMPSTORE_METADATA_KEY is overridden by ' . TestStageOverriddenConstants::class . '. This is deprecated because it can cause errors or other unexpected behavior. It is strongly recommended to stop overriding this constant. See https://www.drupal.org/node/3317450 for more information.', (string) RfcLogLevel::ERROR));
+    $this->assertTrue($logger->hasRecord('Drupal\package_manager\Stage::TEMPSTORE_LOCK_KEY is overridden by ' . TestStageOverriddenConstants::class . '. This is deprecated because it can cause errors or other unexpected behavior. It is strongly recommended to stop overriding this constant. See https://www.drupal.org/node/3317450 for more information.', (string) RfcLogLevel::ERROR));
   }
 
   /**

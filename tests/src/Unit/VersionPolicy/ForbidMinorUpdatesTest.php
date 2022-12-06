@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types = 1);
+
 namespace Drupal\Tests\automatic_updates\Unit\VersionPolicy;
 
 use Drupal\automatic_updates\Validator\VersionPolicy\ForbidMinorUpdates;

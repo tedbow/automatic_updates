@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types = 1);
+
 namespace Drupal\Tests\automatic_updates\Kernel\StatusCheck;
 
 use Drupal\Core\Logger\RfcLogLevel;
@@ -92,7 +94,7 @@ class StagedDatabaseUpdateValidatorTest extends AutomaticUpdatesKernelTestBase {
    */
   public function testNoUpdates(): void {
     $this->container->get('cron')->run();
-    $this->assertFalse($this->logger->hasRecords(RfcLogLevel::ERROR));
+    $this->assertFalse($this->logger->hasRecords((string) RfcLogLevel::ERROR));
   }
 
   /**
@@ -115,7 +117,7 @@ class StagedDatabaseUpdateValidatorTest extends AutomaticUpdatesKernelTestBase {
 
     $this->container->get('cron')->run();
     $expected_message = "The update cannot proceed because possible database updates have been detected in the following extensions.\nSystem\nStark\n";
-    $this->assertTrue($this->logger->hasRecord($expected_message, RfcLogLevel::ERROR));
+    $this->assertTrue($this->logger->hasRecord($expected_message, (string) RfcLogLevel::ERROR));
   }
 
   /**
@@ -138,7 +140,7 @@ class StagedDatabaseUpdateValidatorTest extends AutomaticUpdatesKernelTestBase {
 
     $this->container->get('cron')->run();
     $expected_message = "The update cannot proceed because possible database updates have been detected in the following extensions.\nSystem\nStark\n";
-    $this->assertTrue($this->logger->hasRecord($expected_message, RfcLogLevel::ERROR));
+    $this->assertTrue($this->logger->hasRecord($expected_message, (string) RfcLogLevel::ERROR));
   }
 
   /**
@@ -163,7 +165,7 @@ class StagedDatabaseUpdateValidatorTest extends AutomaticUpdatesKernelTestBase {
 
     $this->container->get('cron')->run();
     $expected_message = "The update cannot proceed because possible database updates have been detected in the following extensions.\nSystem\nStark\n";
-    $this->assertTrue($this->logger->hasRecord($expected_message, RfcLogLevel::ERROR));
+    $this->assertTrue($this->logger->hasRecord($expected_message, (string) RfcLogLevel::ERROR));
   }
 
 }

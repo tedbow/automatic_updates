@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types = 1);
+
 namespace Drupal\Tests\package_manager\Kernel;
 
 use Drupal\Core\File\FileSystem;
@@ -307,7 +309,7 @@ class StageOwnershipTest extends PackageManagerKernelTestBase {
         str_contains($record['context']['%path'], $dir)
       );
     };
-    $this->assertTrue($logger->hasRecordThatPasses($predicate, RfcLogLevel::ERROR));
+    $this->assertTrue($logger->hasRecordThatPasses($predicate, (string) RfcLogLevel::ERROR));
   }
 
 }

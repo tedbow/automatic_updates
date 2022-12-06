@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types = 1);
+
 namespace Drupal\Tests\automatic_updates\Unit;
 
 use Drupal\package_manager\LegacyVersionUtility;

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types = 1);
+
 namespace Drupal\Tests\automatic_updates_extensions\Functional;
 
 use Drupal\automatic_updates_test\EventSubscriber\TestSubscriber1;

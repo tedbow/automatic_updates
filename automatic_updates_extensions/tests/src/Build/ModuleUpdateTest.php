@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types = 1);
+
 namespace Drupal\Tests\automatic_updates_extensions\Build;
 
 use Drupal\Tests\automatic_updates\Build\UpdateTestBase;

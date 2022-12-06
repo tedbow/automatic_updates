@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types = 1);
+
 namespace Drupal\automatic_updates_test\Datetime;
 
 use Drupal\Component\Datetime\Time;

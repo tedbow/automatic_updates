@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types = 1);
+
 namespace Drupal\updated_module;
 
 use Drupal\package_manager\Event\PostApplyEvent;

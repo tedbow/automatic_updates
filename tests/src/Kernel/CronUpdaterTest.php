@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types = 1);
+
 namespace Drupal\Tests\automatic_updates\Kernel;
 
 use Drupal\automatic_updates\CronUpdater;
@@ -51,7 +53,7 @@ class CronUpdaterTest extends AutomaticUpdatesKernelTestBase {
   /**
    * The test logger.
    *
-   * @var \Psr\Log\Test\TestLogger
+   * @var ColinODell\PsrTestLogger\TestLogger
    */
   private $logger;
 
@@ -156,7 +158,7 @@ class CronUpdaterTest extends AutomaticUpdatesKernelTestBase {
     $form = $form_builder->buildForm(UpdateSettingsForm::class, $form_state);
     // Ensure that the version ranges in the setting's description, which are
     // computed dynamically, look correct.
-    $this->assertStringContainsString('Automatic updates are only supported for 9.8.x versions of Drupal core. Drupal 9.8 will receive security updates until 9.10.0 is released.', $form['automatic_updates_cron']['#description']);
+    $this->assertStringContainsString('Automatic updates are only supported for 9.8.x versions of Drupal core. Drupal 9.8 will receive security updates until 9.10.0 is released.', (string) $form['automatic_updates_cron']['#description']);
     $form_state->setValue('automatic_updates_cron', $setting);
     $form_builder->submitForm(UpdateSettingsForm::class, $form_state);
 
@@ -301,7 +303,7 @@ class CronUpdaterTest extends AutomaticUpdatesKernelTestBase {
     $this->assertTrue($updater->isAvailable());
     $this->container->get('cron')->run();
 
-    $logged_by_updater = $this->logger->hasRecord($expected_log_message, RfcLogLevel::ERROR);
+    $logged_by_updater = $this->logger->hasRecord($expected_log_message, (string) RfcLogLevel::ERROR);
     // To check if the exception was logged by the main cron service, we need
     // to set up a special predicate, because exceptions logged by cron are
     // always formatted in a particular way that we don't control. But the
@@ -314,7 +316,7 @@ class CronUpdaterTest extends AutomaticUpdatesKernelTestBase {
       }
       return FALSE;
     };
-    $logged_by_cron = $cron_logger->hasRecordThatPasses($predicate, RfcLogLevel::ERROR);
+    $logged_by_cron = $cron_logger->hasRecordThatPasses($predicate, (string) RfcLogLevel::ERROR);
 
     // If a pre-destroy event flags a validation error, it's handled like any
     // other event (logged by the cron updater, but not the main cron service).

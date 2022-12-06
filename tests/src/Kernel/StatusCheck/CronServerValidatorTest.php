@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types = 1);
+
 namespace Drupal\Tests\automatic_updates\Kernel\StatusCheck;
 
 use Drupal\automatic_updates\CronUpdater;
@@ -111,10 +113,10 @@ class CronServerValidatorTest extends AutomaticUpdatesKernelTestBase {
       $this->container->get('cron')->run();
       if ($expected_results) {
         $error = new StageValidationException($expected_results);
-        $this->assertTrue($logger->hasRecord($error->getMessage(), RfcLogLevel::ERROR));
+        $this->assertTrue($logger->hasRecord($error->getMessage(), (string) RfcLogLevel::ERROR));
       }
       else {
-        $this->assertFalse($logger->hasRecords(RfcLogLevel::ERROR));
+        $this->assertFalse($logger->hasRecords((string) RfcLogLevel::ERROR));
       }
     }
   }

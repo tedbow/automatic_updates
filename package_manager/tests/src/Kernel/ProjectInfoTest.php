@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types = 1);
+
 namespace Drupal\Tests\package_manager\Kernel;
 
 use Drupal\Core\Logger\RfcLogLevel;
@@ -174,8 +176,8 @@ class ProjectInfoTest extends PackageManagerKernelTestBase {
     // the last checked time.
     $this->assertSame(123, $state->get('update.last_check'));
 
-    $this->assertTrue($logger->hasRecordThatContains('Invalid project format: Array', RfcLogLevel::ERROR));
-    $this->assertTrue($logger->hasRecordThatContains('[name] => AAA 8.x-5.x', RfcLogLevel::ERROR));
+    $this->assertTrue($logger->hasRecordThatContains('Invalid project format: Array', (string) RfcLogLevel::ERROR));
+    $this->assertTrue($logger->hasRecordThatContains('[name] => AAA 8.x-5.x', (string) RfcLogLevel::ERROR));
   }
 
   /**

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types = 1);
+
 namespace Drupal\Tests\package_manager\Unit;
 
 use Drupal\package_manager\ValidationResult;
