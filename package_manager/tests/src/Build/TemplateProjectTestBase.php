@@ -6,6 +6,14 @@ namespace Drupal\Tests\package_manager\Build;
 
 use Drupal\BuildTests\QuickStart\QuickStartTestBase;
 use Drupal\Composer\Composer;
+use Drupal\package_manager\Event\PostApplyEvent;
+use Drupal\package_manager\Event\PostCreateEvent;
+use Drupal\package_manager\Event\PostDestroyEvent;
+use Drupal\package_manager\Event\PostRequireEvent;
+use Drupal\package_manager\Event\PreApplyEvent;
+use Drupal\package_manager\Event\PreCreateEvent;
+use Drupal\package_manager\Event\PreDestroyEvent;
+use Drupal\package_manager\Event\PreRequireEvent;
 use Drupal\Tests\package_manager\Traits\FixtureUtilityTrait;
 use Drupal\Tests\RandomGeneratorTrait;
 
@@ -293,6 +301,7 @@ END;
     // Install helpful modules.
     $this->installModules([
       'package_manager_test_api',
+      'package_manager_test_event_logger',
       'package_manager_test_release_history',
     ]);
   }
@@ -464,6 +473,67 @@ END;
     $temp_directory = $this->getWorkspaceDirectory() . '/fixtures_temp_' . $this->randomMachineName(20);
     static::copyFixtureFilesTo($fixture_directory, $temp_directory);
     return $temp_directory;
+  }
+
+  /**
+   * Asserts stage events were fired in a specific order.
+   *
+   * @param string $expected_stage_class
+   *   The expected stage class for the events.
+   * @param array|null $expected_events
+   *   (optional) The expected stage events that should have been fired in the
+   *   order in which they should have been fired. Events can be specified more
+   *   that once if they will be fired multiple times. If there are no events
+   *   specified all life cycle events from PreCreateEvent to PostDestroyEvent
+   *   will be asserted.
+   *
+   * @see \Drupal\package_manager_test_event_logger\EventSubscriber\EventLogSubscriber::logEventInfo
+   */
+  protected function assertExpectedStageEventsFired(string $expected_stage_class, ?array $expected_events = NULL): void {
+    if ($expected_events === NULL) {
+      $expected_events = [
+        PreCreateEvent::class,
+        PostCreateEvent::class,
+        PreRequireEvent::class,
+        PostRequireEvent::class,
+        PreApplyEvent::class,
+        PostApplyEvent::class,
+        PreDestroyEvent::class,
+        PostDestroyEvent::class,
+      ];
+    }
+    else {
+      // The view at 'admin/reports/dblog' currently only shows 50 entries but
+      // this view could be changed to show fewer and our test would not fail.
+      // We need to be sure we are seeing all entries, not just first page.
+      // Since we don't need to log anywhere near 50 entries use 25 to be overly
+      // cautious of the view changing.
+      // @todo Find a better solution than a view that could change to ensure
+      //   ensure these events have fired in https://drupal.org/i/3319768.
+      $this->assertLessThan(25, count($expected_events), 'More than 25 events may not appear on one page of the log view');
+    }
+    $assert_session = $this->getMink()->assertSession();
+    $page = $this->getMink()->getSession()->getPage();
+    $this->visit('/admin/reports/dblog');
+    $assert_session->statusCodeEquals(200);
+    $page->selectFieldOption('Type', 'package_manager_test_event_logger');
+    $page->pressButton('Filter');
+    $assert_session->statusCodeEquals(200);
+
+    // The log entries will not appear completely in the page text but they will
+    // appear in the title attribute of the links.
+    $links = $page->findAll('css', 'a[title^=package_manager_test_event_logger-start]');
+    $actual_titles = [];
+    // Loop through the links in reverse order because the most recent entries
+    // will be first.
+    foreach (array_reverse($links) as $link) {
+      $actual_titles[] = $link->getAttribute('title');
+    }
+    $expected_titles = [];
+    foreach ($expected_events as $event) {
+      $expected_titles[] = "package_manager_test_event_logger-start: Event: $event, Stage instance of: $expected_stage_class:package_manager_test_event_logger-end";
+    }
+    $this->assertSame($expected_titles, $actual_titles);
   }
 
   // BEGIN: DELETE FROM CORE MERGE REQUEST.
