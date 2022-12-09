@@ -4,6 +4,7 @@ declare(strict_types = 1);
 
 namespace Drupal\Tests\automatic_updates\Functional;
 
+use Drupal\automatic_updates\CronUpdater;
 use Drupal\automatic_updates\StatusCheckMailer;
 use Drupal\FunctionalTests\Update\UpdatePathTestBase;
 
@@ -55,7 +56,11 @@ class UpdatePathTest extends UpdatePathTestBase {
     }
     $this->assertEmpty($this->config('automatic_updates.settings')->get('status_check_mail'));
 
+    $this->assertSame(CronUpdater::SECURITY, $this->config('automatic_updates.settings')->get('cron'));
+
     $this->runUpdates();
+
+    $this->assertSame(CronUpdater::DISABLED, $this->config('automatic_updates.settings')->get('cron'));
 
     // TRICKY: we do expect `readiness_validation_last_run` to have been renamed
     // to `status_check_last_run`, but then

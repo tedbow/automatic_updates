@@ -5,6 +5,7 @@ declare(strict_types = 1);
 namespace Drupal\Tests\automatic_updates\Functional;
 
 use Behat\Mink\Element\NodeElement;
+use Drupal\automatic_updates\CronUpdater;
 use Drupal\automatic_updates\StatusCheckMailer;
 use Drupal\automatic_updates_test\Datetime\TestTime;
 use Drupal\automatic_updates_test\EventSubscriber\TestSubscriber1;
@@ -330,10 +331,9 @@ class StatusCheckTest extends AutomaticUpdatesFunctionalTestBase {
 
     // Confirm status check messages are not displayed when cron updates are
     // disabled.
-    $this->drupalGet(Url::fromRoute('update.settings'));
-    $edit['automatic_updates_cron'] = 'disable';
-    $this->submitForm($edit, 'Save configuration');
-    $this->drupalGet(Url::fromRoute($admin_route));
+    $this->config('automatic_updates.settings')->set('cron', CronUpdater::DISABLED)->save();
+    $this->drupalGet('admin/structure');
+    $this->checkForMetaRefresh();
     $assert->pageTextNotContains(static::$warningsExplanation);
     $assert->pageTextNotContains($expected_results[0]->getMessages()[0]);
   }
@@ -344,6 +344,7 @@ class StatusCheckTest extends AutomaticUpdatesFunctionalTestBase {
   public function testStatusCheckAfterInstall(): void {
     $assert = $this->assertSession();
     $this->drupalLogin($this->checkerRunnerUser);
+    $this->container->get('module_installer')->uninstall(['automatic_updates']);
 
     $this->drupalGet('admin/reports/status');
     $assert->pageTextNotContains('Update readiness checks');
@@ -351,6 +352,8 @@ class StatusCheckTest extends AutomaticUpdatesFunctionalTestBase {
     // We have to install the automatic_updates_test module because it provides
     // the functionality to retrieve our fake release history metadata.
     $this->container->get('module_installer')->install(['automatic_updates', 'automatic_updates_test']);
+    // @todo Remove in https://www.drupal.org/project/automatic_updates/issues/3284443
+    $this->config('automatic_updates.settings')->set('cron', CronUpdater::SECURITY)->save();
     $this->drupalGet('admin/reports/status');
     $this->assertNoErrors(TRUE);
 

@@ -19,12 +19,15 @@ abstract class UpdateTestBase extends TemplateProjectTestBase {
    */
   protected function createTestProject(string $template): void {
     parent::createTestProject($template);
-
+    // @todo Remove in https://www.drupal.org/project/automatic_updates/issues/3284443
+    $code = <<<END
+\$config['automatic_updates.settings']['cron'] = 'security';
+END;
+    $this->writeSettings($code);
     // Install Automatic Updates, and other modules needed for testing.
     $this->installModules([
       'automatic_updates',
       'automatic_updates_test_api',
-      'automatic_updates_test_cron',
     ]);
   }
 

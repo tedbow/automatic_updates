@@ -21,6 +21,11 @@ class ValidationResultDisplayTraitTest extends AutomaticUpdatesKernelTestBase {
   use StringTranslationTrait;
 
   /**
+   * {@inheritdoc}
+   */
+  protected static $modules = ['automatic_updates'];
+
+  /**
    * @covers ::displayResults
    */
   public function testDisplayResults(): void {

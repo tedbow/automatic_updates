@@ -23,10 +23,18 @@ abstract class AutomaticUpdatesKernelTestBase extends PackageManagerKernelTestBa
 
   /**
    * {@inheritdoc}
+   *
+   * TRICKY: due to the way that automatic_updates forcibly disables cron-based
+   * updating for the end user, we need to override the current default
+   * configuration BEFORE the module is installed. This triggers config schema
+   * exceptions. Since none of these tests are interacting with configuration
+   * anyway, this is a reasonable temporary workaround.
+   *
+   * @see ::setUp()
+   * @see https://www.drupal.org/project/automatic_updates/issues/3284443
+   * @todo Remove in https://www.drupal.org/project/automatic_updates/issues/3284443
    */
-  protected static $modules = [
-    'automatic_updates_test_cron',
-  ];
+  protected $strictConfigSchema = FALSE;
 
   /**
    * {@inheritdoc}
@@ -46,6 +54,9 @@ abstract class AutomaticUpdatesKernelTestBase extends PackageManagerKernelTestBa
     $this->disableValidators[] = 'automatic_updates.validator.xdebug';
     $this->disableValidators[] = 'package_manager.validator.xdebug';
     parent::setUp();
+    // Enable cron updates, which will eventually be the default.
+    // @todo Remove in https://www.drupal.org/project/automatic_updates/issues/3284443
+    $this->config('automatic_updates.settings')->set('cron', CronUpdater::SECURITY)->save();
 
     // By default, pretend we're running Drupal core 9.8.0 and a non-security
     // update to 9.8.1 is available.
@@ -56,9 +67,6 @@ abstract class AutomaticUpdatesKernelTestBase extends PackageManagerKernelTestBa
     // from a sane state.
     // @see \Drupal\automatic_updates\Validator\CronFrequencyValidator
     $this->container->get('state')->set('system.cron_last', time());
-
-    // @todo Remove this when TUF integration is stable.
-    $this->container->get('automatic_updates_test_cron.enabler')->enableCron();
   }
 
   /**

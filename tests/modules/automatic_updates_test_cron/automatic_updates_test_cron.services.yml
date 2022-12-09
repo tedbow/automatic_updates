@@ -1,5 +1,0 @@
-services:
-  automatic_updates_test_cron.enabler:
-    class: Drupal\automatic_updates_test_cron\Enabler
-    tags:
-      - { name: event_subscriber }

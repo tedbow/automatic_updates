@@ -53,6 +53,8 @@ class StatusCheckFailureEmailTest extends AutomaticUpdatesKernelTestBase {
     $this->installSchema('user', ['users_data']);
 
     $this->installConfig('automatic_updates');
+    // @todo Remove in https://www.drupal.org/project/automatic_updates/issues/3284443
+    $this->config('automatic_updates.settings')->set('cron', CronUpdater::SECURITY)->save();
     $this->setUpEmailRecipients();
 
     // Allow stored available update data to live for a very, very long time.

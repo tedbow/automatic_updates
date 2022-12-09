@@ -4,6 +4,7 @@ declare(strict_types = 1);
 
 namespace Drupal\Tests\automatic_updates\Functional;
 
+use Drupal\automatic_updates\CronUpdater;
 use Drupal\Core\Site\Settings;
 use Drupal\package_manager_bypass\Beginner;
 use Drupal\package_manager_bypass\Stager;
@@ -23,7 +24,7 @@ abstract class AutomaticUpdatesFunctionalTestBase extends BrowserTestBase {
    * {@inheritdoc}
    */
   protected static $modules = [
-    'automatic_updates_test_cron',
+    'automatic_updates',
     'automatic_updates_test_disable_validators',
     'package_manager_bypass',
   ];
@@ -54,6 +55,8 @@ abstract class AutomaticUpdatesFunctionalTestBase extends BrowserTestBase {
     parent::setUp();
     $this->disableValidators($this->disableValidators);
     $this->useFixtureDirectoryAsActive(__DIR__ . '/../../../package_manager/tests/fixtures/fake_site');
+    // @todo Remove in https://www.drupal.org/project/automatic_updates/issues/3284443
+    $this->config('automatic_updates.settings')->set('cron', CronUpdater::SECURITY)->save();
   }
 
   /**

@@ -7,7 +7,6 @@ namespace Drupal\Tests\automatic_updates\Kernel;
 use Drupal\automatic_updates\CronUpdater;
 use Drupal\automatic_updates_test\EventSubscriber\TestSubscriber1;
 use Drupal\Core\DependencyInjection\ContainerBuilder;
-use Drupal\Core\Form\FormState;
 use Drupal\Core\Logger\RfcLogLevel;
 use Drupal\Core\Url;
 use Drupal\package_manager\Event\PostApplyEvent;
@@ -24,9 +23,8 @@ use Drupal\package_manager_bypass\Committer;
 use Drupal\Tests\automatic_updates\Traits\EmailNotificationsTestTrait;
 use Drupal\Tests\package_manager\Traits\PackageManagerBypassTestTrait;
 use Drupal\Tests\user\Traits\UserCreationTrait;
-use Drupal\update\UpdateSettingsForm;
-use ColinODell\PsrTestLogger\TestLogger;
 use Prophecy\Argument;
+use ColinODell\PsrTestLogger\TestLogger;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 
 /**
@@ -53,7 +51,7 @@ class CronUpdaterTest extends AutomaticUpdatesKernelTestBase {
   /**
    * The test logger.
    *
-   * @var ColinODell\PsrTestLogger\TestLogger
+   * @var \ColinODell\PsrTestLogger\TestLogger
    */
   private $logger;
 
@@ -151,16 +149,7 @@ class CronUpdaterTest extends AutomaticUpdatesKernelTestBase {
     $this->setCoreVersion('9.8.0');
     update_get_available(TRUE);
 
-    // Submit the configuration form programmatically, to prove our alterations
-    // work as expected.
-    $form_builder = $this->container->get('form_builder');
-    $form_state = new FormState();
-    $form = $form_builder->buildForm(UpdateSettingsForm::class, $form_state);
-    // Ensure that the version ranges in the setting's description, which are
-    // computed dynamically, look correct.
-    $this->assertStringContainsString('Automatic updates are only supported for 9.8.x versions of Drupal core. Drupal 9.8 will receive security updates until 9.10.0 is released.', (string) $form['automatic_updates_cron']['#description']);
-    $form_state->setValue('automatic_updates_cron', $setting);
-    $form_builder->submitForm(UpdateSettingsForm::class, $form_state);
+    $this->config('automatic_updates.settings')->set('cron', $setting)->save();
 
     // Since we're just trying to ensure that all of Package Manager's services
     // are called as expected, disable validation by replacing the event
@@ -258,6 +247,8 @@ class CronUpdaterTest extends AutomaticUpdatesKernelTestBase {
    */
   public function testStageDestroyedOnError(string $event_class, string $exception_class): void {
     $this->installConfig('automatic_updates');
+    // @todo Remove in https://www.drupal.org/project/automatic_updates/issues/3284443
+    $this->config('automatic_updates.settings')->set('cron', CronUpdater::SECURITY)->save();
     $this->setCoreVersion('9.8.0');
     // Ensure that there is a security release to which we should update.
     $this->setReleaseMetadata([

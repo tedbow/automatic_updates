@@ -36,6 +36,12 @@ class StatusCheckerTest extends AutomaticUpdatesKernelTestBase {
     $this->setCoreVersion('9.8.2');
     $this->installEntitySchema('user');
     $this->installSchema('user', ['users_data']);
+
+    // Undoes the override in parent::setUp(), to allow the module to be
+    // installed, which every other test methods in this class does. Without
+    // this \Drupal\Core\Config\PreExistingConfigException is thrown.
+    // @todo Remove in https://www.drupal.org/project/automatic_updates/issues/3284443
+    $this->config('automatic_updates.settings')->delete();
   }
 
   /**

@@ -17,6 +17,11 @@ use Drupal\Tests\automatic_updates_extensions\Kernel\AutomaticUpdatesExtensionsK
 class UpdateReleaseValidatorTest extends AutomaticUpdatesExtensionsKernelTestBase {
 
   /**
+   * {@inheritdoc}
+   */
+  protected static $modules = ['automatic_updates'];
+
+  /**
    * Data provider for testPreCreateException().
    *
    * @return mixed[][]

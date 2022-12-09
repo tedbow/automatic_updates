@@ -27,15 +27,6 @@ use Symfony\Component\HttpFoundation\Response;
 class CronUpdater extends Updater {
 
   /**
-   * Whether or not cron updates are hard-disabled.
-   *
-   * @var bool
-   *
-   * @todo Remove this when TUF integration is stable.
-   */
-  private static $disabled = TRUE;
-
-  /**
    * All automatic updates are disabled.
    *
    * @var string
@@ -337,9 +328,6 @@ class CronUpdater extends Updater {
    *     during cron.
    */
   final public function getMode(): string {
-    if (self::$disabled) {
-      return static::DISABLED;
-    }
     $mode = $this->configFactory->get('automatic_updates.settings')->get('cron');
     return $mode ?: CronUpdater::SECURITY;
   }
