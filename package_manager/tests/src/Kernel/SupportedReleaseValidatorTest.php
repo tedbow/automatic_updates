@@ -23,8 +23,6 @@ class SupportedReleaseValidatorTest extends PackageManagerKernelTestBase {
   protected function setUp(): void {
     parent::setUp();
 
-    $active_fixture_dir = __DIR__ . '/../../fixtures/supported_release_validator/active';
-    $this->copyFixtureFolderToActiveDirectory($active_fixture_dir);
     $active_dir = $this->container->get('package_manager.path_locator')
       ->getProjectRoot();
     $this->addPackage($active_dir, [
@@ -73,7 +71,6 @@ class SupportedReleaseValidatorTest extends PackageManagerKernelTestBase {
         [
           'semver_test' => "$release_fixture_folder/semver_test.1.1.xml",
         ],
-        NULL,
         TRUE,
         [
           'name' => "drupal/semver_test",
@@ -87,7 +84,6 @@ class SupportedReleaseValidatorTest extends PackageManagerKernelTestBase {
         [
           'semver_test' => "$release_fixture_folder/semver_test.1.1.xml",
         ],
-        NULL,
         TRUE,
         [
           'name' => "drupal/semver_test",
@@ -103,7 +99,6 @@ class SupportedReleaseValidatorTest extends PackageManagerKernelTestBase {
         [
           'aaa_update_test' => "$release_fixture_folder/aaa_update_test.1.1.xml",
         ],
-        NULL,
         TRUE,
         [
           'name' => "drupal/aaa_update_test",
@@ -117,7 +112,6 @@ class SupportedReleaseValidatorTest extends PackageManagerKernelTestBase {
         [
           'aaa_update_test' => "$release_fixture_folder/aaa_update_test.1.1.xml",
         ],
-        NULL,
         TRUE,
         [
           'name' => "drupal/aaa_update_test",
@@ -133,7 +127,6 @@ class SupportedReleaseValidatorTest extends PackageManagerKernelTestBase {
         [
           'aaa_automatic_updates_test' => "$release_fixture_folder/aaa_automatic_updates_test.7.0.1.xml",
         ],
-        "$fixtures_folder/aaa_automatic_updates_test_unsupported_update_stage",
         FALSE,
         [
           'name' => "drupal/aaa_automatic_updates_test",
@@ -149,7 +142,6 @@ class SupportedReleaseValidatorTest extends PackageManagerKernelTestBase {
         [
           'aaa_automatic_updates_test' => "$release_fixture_folder/aaa_automatic_updates_test.7.0.1.xml",
         ],
-        "$fixtures_folder/aaa_automatic_updates_test_supported_update_stage",
         FALSE,
         [
           'name' => "drupal/aaa_automatic_updates_test",
@@ -163,7 +155,6 @@ class SupportedReleaseValidatorTest extends PackageManagerKernelTestBase {
         [
           'package_manager_theme' => "$release_fixture_folder/package_manager_theme.1.1.xml",
         ],
-        NULL,
         TRUE,
         [
           'name' => "drupal/package_manager_theme",
@@ -177,7 +168,6 @@ class SupportedReleaseValidatorTest extends PackageManagerKernelTestBase {
         [
           'package_manager_theme' => "$release_fixture_folder/package_manager_theme.1.1.xml",
         ],
-        NULL,
         TRUE,
         [
           'name' => "drupal/package_manager_theme",
@@ -194,7 +184,6 @@ class SupportedReleaseValidatorTest extends PackageManagerKernelTestBase {
       // @see \Drupal\package_manager\Validator\SupportedReleaseValidator::checkStagedReleases()
       'updating a module that does not start with drupal/' => [
         [],
-        NULL,
         TRUE,
         [
           'name' => "somewhere/a_drupal_module",
@@ -212,9 +201,6 @@ class SupportedReleaseValidatorTest extends PackageManagerKernelTestBase {
    *
    * @param array $release_metadata
    *   Array of paths of the fake release metadata keyed by project name.
-   * @param string|null $stage_fixture_dir
-   *   Path of fixture stage directory or NULL. It will be used to fixture files
-   *   to virtual stage directory when the project is not in active.
    * @param bool $project_in_active
    *   Whether the project is in the active directory or not.
    * @param array $package
@@ -224,13 +210,11 @@ class SupportedReleaseValidatorTest extends PackageManagerKernelTestBase {
    *
    * @dataProvider providerException
    */
-  public function testException(array $release_metadata, ?string $stage_fixture_dir, bool $project_in_active, array $package, array $expected_results): void {
+  public function testException(array $release_metadata, bool $project_in_active, array $package, array $expected_results): void {
     $this->setReleaseMetadata(['drupal' => __DIR__ . '/../../fixtures/release-history/drupal.9.8.2.xml'] + $release_metadata);
 
-    $listener = function (PreApplyEvent $event) use ($project_in_active, $package, $stage_fixture_dir): void {
-      if ($stage_fixture_dir) {
-        $this->copyFixtureFilesTo($stage_fixture_dir, $event->getStage()->getStageDirectory());
-      }
+    $listener = function (PreApplyEvent $event) use ($project_in_active, $package, $expected_results): void {
+
       $stage_dir = $event->getStage()->getStageDirectory();
       // @todo add test coverage for packages that don't start with 'drupal/' in
       //   https://www.drupal.org/node/3321386.

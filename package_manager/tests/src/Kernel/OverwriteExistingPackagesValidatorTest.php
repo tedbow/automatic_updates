@@ -36,27 +36,39 @@ class OverwriteExistingPackagesValidatorTest extends PackageManagerKernelTestBas
    * by the 'package_manager_bypass' module.
    */
   public function testNewPackagesOverwriteExisting(): void {
-    $fixtures_dir = __DIR__ . '/../../fixtures/overwrite_existing_validation';
-    $this->copyFixtureFolderToActiveDirectory("$fixtures_dir/active");
-
+    $active_dir = $this->container->get('package_manager.path_locator')->getProjectRoot();
+    $modules_dir = "$active_dir/modules";
+    $this->addProjectAtPath("$modules_dir/module_1");
+    $this->addProjectAtPath("$modules_dir/module_2");
+    $this->addProjectAtPath("$modules_dir/module_5");
     $stage = $this->createStage();
     $stage->create();
     $stage_dir = $stage->getStageDirectory();
 
     // module_1 and module_2 will raise errors because they would overwrite
     // non-Composer managed paths in the active directory.
-    $this->addPackage($stage_dir, [
-      'name' => 'drupal/module_1',
-      'version' => '1.3.0',
-      'type' => 'drupal-module',
-      'install_path' => '../../modules/module_1',
-    ]);
-    $this->addPackage($stage_dir, [
-      'name' => 'drupal/module_2',
-      'version' => '1.3.0',
-      'type' => 'drupal-module',
-      'install_path' => '../../modules/module_2',
-    ]);
+    $this->addPackage(
+      $stage_dir,
+      [
+        'name' => 'drupal/module_1',
+        'version' => '1.3.0',
+        'type' => 'drupal-module',
+        'install_path' => '../../modules/module_1',
+      ],
+      FALSE,
+      FALSE
+    );
+    $this->addPackage(
+      $stage_dir,
+      [
+        'name' => 'drupal/module_2',
+        'version' => '1.3.0',
+        'type' => 'drupal-module',
+        'install_path' => '../../modules/module_2',
+      ],
+      FALSE,
+      FALSE
+    );
 
     // module_3 will cause no problems, since it doesn't exist in the active
     // directory at all.
@@ -70,12 +82,17 @@ class OverwriteExistingPackagesValidatorTest extends PackageManagerKernelTestBas
     // module_4 doesn't exist in the active directory but the 'install_path' as
     // known to Composer in the staged directory collides with module_1 in the
     // active directory which will cause an error.
-    $this->addPackage($stage_dir, [
-      'name' => 'drupal/module_4',
-      'version' => '1.3.0',
-      'type' => 'drupal-module',
-      'install_path' => '../../modules/module_1',
-    ]);
+    $this->addPackage(
+      $stage_dir,
+      [
+        'name' => 'drupal/module_4',
+        'version' => '1.3.0',
+        'type' => 'drupal-module',
+        'install_path' => '../../modules/module_1',
+      ],
+      FALSE,
+      FALSE,
+    );
 
     // module_5_different_path will not cause a problem, even though its package
     // name is drupal/module_5, because its project name and path in the staging
@@ -111,7 +128,7 @@ class OverwriteExistingPackagesValidatorTest extends PackageManagerKernelTestBas
     try {
       $stage->apply();
       // If no exception occurs, ensure we weren't expecting any errors.
-      $this->assertEmpty($expected_results);
+      $this->assertValidationResultsEqual($expected_results, []);
     }
     catch (StageValidationException $e) {
       $this->assertNotEmpty($expected_results);

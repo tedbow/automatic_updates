@@ -88,7 +88,6 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
       'access administration pages',
     ]);
     $this->activeDir = $this->container->get('package_manager.path_locator')->getProjectRoot();
-    $this->copyFixtureFilesTo(__DIR__ . '/../../fixtures/two_projects', $this->activeDir);
     $this->addPackage($this->activeDir, [
       'name' => 'drupal/semver_test',
       'version' => '8.1.0',

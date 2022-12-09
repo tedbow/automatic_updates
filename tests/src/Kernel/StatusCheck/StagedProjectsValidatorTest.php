@@ -79,7 +79,8 @@ class StagedProjectsValidatorTest extends AutomaticUpdatesKernelTestBase {
     $this->addPackage($active_dir, [
       'name' => 'drupal/test_module',
       'version' => '1.3.0',
-      'type' => 'drupal_module',
+      'type' => 'drupal-module',
+      'install_path' => '../../modules/test_module',
     ]);
     $this->addPackage($active_dir, [
       'name' => 'other/removed',
@@ -91,7 +92,8 @@ class StagedProjectsValidatorTest extends AutomaticUpdatesKernelTestBase {
       [
         'name' => 'drupal/dev-test_module',
         'version' => '1.3.0',
-        'type' => 'drupal_module',
+        'type' => 'drupal-module',
+        'install_path' => '../../modules/dev_test_module',
       ],
       TRUE
     );
@@ -171,11 +173,13 @@ class StagedProjectsValidatorTest extends AutomaticUpdatesKernelTestBase {
       'name' => 'drupal/test_theme',
       'version' => '1.3.0',
       'type' => 'drupal-theme',
+      'install_path' => '../../themes/test_theme',
     ]);
     $this->addPackage($active_dir, [
       'name' => 'drupal/test_module2',
       'version' => '1.3.1',
       'type' => 'drupal-module',
+      'install_path' => '../../modules/test_module2',
     ]);
     $this->addPackage($active_dir, [
       'name' => 'other/removed',
@@ -188,6 +192,7 @@ class StagedProjectsValidatorTest extends AutomaticUpdatesKernelTestBase {
         'name' => 'drupal/dev-test_theme',
         'version' => '1.3.0',
         'type' => 'drupal-custom-theme',
+        'install_path' => '../../modules/dev_test_theme',
       ],
       TRUE
     );
@@ -197,6 +202,7 @@ class StagedProjectsValidatorTest extends AutomaticUpdatesKernelTestBase {
         'name' => 'drupal/dev-test_module2',
         'version' => '1.3.1',
         'type' => 'drupal-module',
+        'install_path' => '../../modules/dev_test_module2',
       ],
       TRUE
     );
@@ -246,6 +252,7 @@ class StagedProjectsValidatorTest extends AutomaticUpdatesKernelTestBase {
       'name' => 'drupal/test_module',
       'version' => '1.3.0',
       'type' => 'drupal-module',
+      'install_path' => '../../modules/test_module',
     ]);
     $this->addPackage($active_dir, [
       'name' => 'other/changed',
@@ -258,6 +265,7 @@ class StagedProjectsValidatorTest extends AutomaticUpdatesKernelTestBase {
         'name' => 'drupal/dev-test_module',
         'version' => '1.3.0',
         'type' => 'drupal-module',
+        'install_path' => '../../modules/dev_test_module',
       ],
       TRUE
     );
@@ -315,6 +323,7 @@ class StagedProjectsValidatorTest extends AutomaticUpdatesKernelTestBase {
       'name' => 'drupal/test_module',
       'version' => '1.3.0',
       'type' => 'drupal-module',
+      'install_path' => '../../modules/test_module',
     ]);
     $this->addPackage($active_dir, [
       'name' => 'other/removed',
@@ -331,6 +340,7 @@ class StagedProjectsValidatorTest extends AutomaticUpdatesKernelTestBase {
         'name' => 'drupal/dev-test_module',
         'version' => '1.3.0',
         'type' => 'drupal-module',
+        'install_path' => '../../modules/dev_test_module',
       ],
       TRUE
     );

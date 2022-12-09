@@ -5,6 +5,7 @@ declare(strict_types = 1);
 namespace Drupal\Tests\package_manager\Traits;
 
 use Drupal\Component\Utility\NestedArray;
+use Drupal\Core\Serialization\Yaml;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\Finder\Iterator\RecursiveDirectoryIterator;
 
@@ -99,12 +100,48 @@ trait FixtureUtilityTrait {
    *   installed.php. Must include the `name` and `type` keys.
    * @param bool $is_dev_requirement
    *   Whether or not the package is a development requirement.
+   * @param bool $create_project
+   *   Whether or not the project info.yml file should be created.
    */
-  protected function addPackage(string $dir, array $package, bool $is_dev_requirement = FALSE): void {
+  protected function addPackage(string $dir, array $package, bool $is_dev_requirement = FALSE, bool $create_project = TRUE): void {
     foreach (['name', 'type'] as $required_key) {
       $this->assertArrayHasKey($required_key, $package);
     }
     $this->setPackage($dir, $package['name'], $package, FALSE, $is_dev_requirement);
+    $drupal_project_types = [
+      'drupal-module',
+      'drupal-theme',
+      'drupal-custom-module',
+      'drupal-custom-theme',
+    ];
+    if (!$create_project || !in_array($package['type'], $drupal_project_types, TRUE)) {
+      return;
+    }
+    $this->assertNotEmpty($package['install_path']);
+    $install_path = "$dir/vendor/composer/" . $package['install_path'];
+    $this->addProjectAtPath($install_path);
+  }
+
+  /**
+   * Adds a project at a path.
+   *
+   * @param string $path
+   *   The path.
+   * @param string|null $project_name
+   *   (optional) The project name. If known is specified the last part of the
+   *   path will be used.
+   *
+   * @todo Move to FixtureManipulator in https://www.drupal.org/i/3322913.
+   */
+  protected function addProjectAtPath(string $path, ?string $project_name = NULL): void {
+    $fs = new Filesystem();
+    $this->assertDirectoryDoesNotExist($path);
+    $fs->mkdir($path);
+    if ($project_name === NULL) {
+      $path_parts = explode('/', $path);
+      $project_name = array_pop($path_parts);
+    }
+    file_put_contents("$path/$project_name.info.yml", Yaml::encode(['project' => $project_name]));
   }
 
   /**
