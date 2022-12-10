@@ -11,6 +11,7 @@ use Drupal\Core\Url;
 use Drupal\package_manager\Exception\ApplyFailedException;
 use Drupal\package_manager\Exception\StageValidationException;
 use Drupal\package_manager\ProjectInfo;
+use Drupal\package_manager\UnusedConfigFactory;
 use Drupal\update\ProjectRelease;
 use GuzzleHttp\Psr7\Uri as GuzzleUri;
 use Symfony\Component\HttpFoundation\Response;
@@ -92,7 +93,11 @@ class CronUpdater extends Updater {
    *   Additional arguments to pass to the parent constructor.
    */
   public function __construct(ReleaseChooser $release_chooser, LoggerChannelFactoryInterface $logger_factory, MailManagerInterface $mail_manager, StatusCheckMailer $status_check_mailer, StateInterface $state, ...$arguments) {
+    $config_factory = $arguments[0];
+    $arguments[0] = new UnusedConfigFactory();
     parent::__construct(...$arguments);
+    // @todo Remove this in https://www.drupal.org/i/3303167
+    $this->configFactory = $config_factory;
     $this->releaseChooser = $release_chooser;
     $this->logger = $logger_factory->get('automatic_updates');
     $this->mailManager = $mail_manager;

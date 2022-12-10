@@ -232,6 +232,10 @@ class Stage implements LoggerAwareInterface {
     $this->time = $time;
     $this->tempStoreFactory = $temp_store_factory;
     $this->tempStore = $temp_store_factory->get('package_manager_stage');
+    if (!$config_factory instanceof UnusedConfigFactory) {
+      // @todo Remove this in https://www.drupal.org/i/3303167
+      @trigger_error('Calling ' . __METHOD__ . '() with the $config_factory argument is deprecated in automatic_updates:8.x-2.6 and will be removed in automatic_updates:3.0.0. See https://www.drupal.org/node/3325718.', E_USER_DEPRECATED);
+    }
     if (empty($path_factory)) {
       @trigger_error('Calling ' . __METHOD__ . '() without the $path_factory argument is deprecated in automatic_updates:8.x-2.3 and will be required before automatic_updates:3.0.0. See https://www.drupal.org/node/3310706.', E_USER_DEPRECATED);
       $path_factory = new PathFactory();

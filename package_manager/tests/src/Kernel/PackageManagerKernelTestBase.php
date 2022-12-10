@@ -8,6 +8,7 @@ use Drupal\Core\DependencyInjection\ContainerBuilder;
 use Drupal\KernelTests\KernelTestBase;
 use Drupal\package_manager\Event\StageEvent;
 use Drupal\package_manager\StatusCheckTrait;
+use Drupal\package_manager\UnusedConfigFactory;
 use Drupal\package_manager\Validator\DiskSpaceValidator;
 use Drupal\package_manager\Exception\StageException;
 use Drupal\package_manager\Exception\StageValidationException;
@@ -21,6 +22,7 @@ use GuzzleHttp\HandlerStack;
 use GuzzleHttp\Psr7\Response;
 use GuzzleHttp\Psr7\Utils;
 use org\bovigo\vfs\vfsStream;
+use PHPStan\Rules\Arrays\UnpackIterableInArrayRule;
 use PhpTuf\ComposerStager\Domain\Value\Path\PathInterface;
 use PhpTuf\ComposerStager\Infrastructure\Factory\Path\PathFactoryInterface;
 use PhpTuf\ComposerStager\Infrastructure\Value\Path\AbstractPath;
@@ -131,7 +133,8 @@ abstract class PackageManagerKernelTestBase extends KernelTestBase {
    */
   protected function createStage(): TestStage {
     return new TestStage(
-      $this->container->get('config.factory'),
+      // @todo Remove this in https://www.drupal.org/i/3303167
+      new UnusedConfigFactory(),
       $this->container->get('package_manager.path_locator'),
       $this->container->get('package_manager.beginner'),
       $this->container->get('package_manager.stager'),

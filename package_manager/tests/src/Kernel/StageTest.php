@@ -402,6 +402,7 @@ class StageTest extends PackageManagerKernelTestBase {
       ->get('package_manager')
       ->addLogger($logger);
 
+    $this->expectDeprecation('Calling Drupal\package_manager\Stage::__construct() with the $config_factory argument is deprecated in automatic_updates:8.x-2.6 and will be removed in automatic_updates:3.0.0. See https://www.drupal.org/node/3325718.');
     $this->expectDeprecation('Calling Drupal\package_manager\Stage::__construct() without the $path_factory argument is deprecated in automatic_updates:8.x-2.3 and will be required before automatic_updates:3.0.0. See https://www.drupal.org/node/3310706.');
     $this->expectDeprecation('Calling Drupal\package_manager\Stage::__construct() without the $failure_marker argument is deprecated in automatic_updates:8.x-2.3 and will be required before automatic_updates:3.0.0. See https://www.drupal.org/node/3311257.');
     $this->expectDeprecation('Overriding Drupal\package_manager\Stage::TEMPSTORE_METADATA_KEY is deprecated in automatic_updates:8.x-2.5 and will not be possible in automatic_updates:3.0.0. There is no replacement. See https://www.drupal.org/node/3317450.');

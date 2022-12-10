@@ -28,7 +28,8 @@ final class PackageManagerUninstallValidator implements ModuleUninstallValidator
    */
   public function validate($module) {
     $stage = new Stage(
-      $this->container->get('config.factory'),
+      // @todo Remove this in https://www.drupal.org/i/3303167
+      new UnusedConfigFactory(),
       $this->container->get('package_manager.path_locator'),
       $this->container->get('package_manager.beginner'),
       $this->container->get('package_manager.stager'),

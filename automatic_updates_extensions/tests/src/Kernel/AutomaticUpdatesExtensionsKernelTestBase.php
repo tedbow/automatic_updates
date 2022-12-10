@@ -7,6 +7,7 @@ namespace Drupal\Tests\automatic_updates_extensions\Kernel;
 use Drupal\automatic_updates_extensions\ExtensionUpdater;
 use Drupal\Core\DependencyInjection\ContainerBuilder;
 use Drupal\package_manager\Exception\StageValidationException;
+use Drupal\package_manager\UnusedConfigFactory;
 use Drupal\Tests\automatic_updates\Kernel\AutomaticUpdatesKernelTestBase;
 use Drupal\Tests\package_manager\Kernel\TestPathFactory;
 use Drupal\Tests\package_manager\Kernel\TestStageTrait;
@@ -109,7 +110,8 @@ abstract class AutomaticUpdatesExtensionsKernelTestBase extends AutomaticUpdates
    */
   protected function createExtensionUpdater(): TestExtensionUpdater {
     return new TestExtensionUpdater(
-      $this->container->get('config.factory'),
+      // @todo Remove this in https://www.drupal.org/i/3303167
+      new UnusedConfigFactory(),
       $this->container->get('package_manager.path_locator'),
       $this->container->get('package_manager.beginner'),
       $this->container->get('package_manager.stager'),
