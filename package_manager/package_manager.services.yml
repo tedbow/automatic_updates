@@ -67,6 +67,8 @@ services:
       - '@PhpTuf\ComposerStager\Domain\Service\ProcessRunner\ComposerRunnerInterface'
       - '@module_handler'
       - '@string_translation'
+      - '@PhpTuf\ComposerStager\Domain\Service\Precondition\ComposerIsAvailableInterface'
+      - '@PhpTuf\ComposerStager\Infrastructure\Factory\Path\PathFactoryInterface'
     tags:
       - { name: event_subscriber }
   package_manager.validator.disk_space:

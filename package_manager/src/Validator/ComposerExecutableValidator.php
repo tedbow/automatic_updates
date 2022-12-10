@@ -13,8 +13,11 @@ use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\Core\StringTranslation\TranslationInterface;
 use Drupal\package_manager\Event\StatusCheckEvent;
 use PhpTuf\ComposerStager\Domain\Exception\ExceptionInterface;
+use PhpTuf\ComposerStager\Domain\Exception\PreconditionException;
+use PhpTuf\ComposerStager\Domain\Service\Precondition\ComposerIsAvailableInterface;
 use PhpTuf\ComposerStager\Domain\Service\ProcessOutputCallback\ProcessOutputCallbackInterface;
 use PhpTuf\ComposerStager\Domain\Service\ProcessRunner\ComposerRunnerInterface;
+use PhpTuf\ComposerStager\Infrastructure\Factory\Path\PathFactoryInterface;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 /**
@@ -44,11 +47,25 @@ class ComposerExecutableValidator implements EventSubscriberInterface {
   protected $composer;
 
   /**
+   * The "Composer is available" precondition service.
+   *
+   * @var \PhpTuf\ComposerStager\Domain\Service\Precondition\ComposerIsAvailableInterface
+   */
+  protected $composerIsAvailable;
+
+  /**
    * The module handler service.
    *
    * @var \Drupal\Core\Extension\ModuleHandlerInterface
    */
   protected $moduleHandler;
+
+  /**
+   * The path factory service.
+   *
+   * @var \PhpTuf\ComposerStager\Infrastructure\Factory\Path\PathFactoryInterface
+   */
+  protected $pathFactory;
 
   /**
    * Constructs a ComposerExecutableValidator object.
@@ -59,17 +76,38 @@ class ComposerExecutableValidator implements EventSubscriberInterface {
    *   The module handler service.
    * @param \Drupal\Core\StringTranslation\TranslationInterface $translation
    *   The translation service.
+   * @param \PhpTuf\ComposerStager\Domain\Service\Precondition\ComposerIsAvailableInterface $composer_is_available
+   *   The "Composer is available" precondition service.
+   * @param \PhpTuf\ComposerStager\Infrastructure\Factory\Path\PathFactoryInterface $path_factory
+   *   The path factory service.
    */
-  public function __construct(ComposerRunnerInterface $composer, ModuleHandlerInterface $module_handler, TranslationInterface $translation) {
+  public function __construct(ComposerRunnerInterface $composer, ModuleHandlerInterface $module_handler, TranslationInterface $translation, ComposerIsAvailableInterface $composer_is_available, PathFactoryInterface $path_factory) {
     $this->composer = $composer;
     $this->moduleHandler = $module_handler;
     $this->setStringTranslation($translation);
+    $this->composerIsAvailable = $composer_is_available;
+    $this->pathFactory = $path_factory;
   }
 
   /**
    * {@inheritdoc}
    */
   public function validateStagePreOperation(PreOperationStageEvent $event): void {
+    // Return early if Composer is not available.
+    try {
+      // The "Composer is available" precondition requires active and staging
+      // directories, but they don't actually matter to it, nor do path
+      // exclusions, so dummies can be passed for simplicity.
+      $active_dir = $this->pathFactory::create(__DIR__);
+      $stage_dir = $active_dir;
+
+      $this->composerIsAvailable->assertIsFulfilled($active_dir, $stage_dir);
+    }
+    catch (PreconditionException $e) {
+      $event->addError([$e->getMessage()]);
+      return;
+    }
+
     try {
       $output = $this->runCommand();
     }

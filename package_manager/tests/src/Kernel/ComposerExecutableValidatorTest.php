@@ -10,7 +10,10 @@ use Drupal\package_manager\Event\PreCreateEvent;
 use Drupal\package_manager\Validator\ComposerExecutableValidator;
 use Drupal\package_manager\ValidationResult;
 use PhpTuf\ComposerStager\Domain\Exception\IOException;
+use PhpTuf\ComposerStager\Domain\Exception\LogicException;
+use PhpTuf\ComposerStager\Infrastructure\Service\Finder\ExecutableFinderInterface;
 use PHPUnit\Framework\Assert;
+use Symfony\Component\DependencyInjection\Reference;
 
 /**
  * @covers \Drupal\package_manager\Validator\ComposerExecutableValidator
@@ -27,6 +30,8 @@ class ComposerExecutableValidatorTest extends PackageManagerKernelTestBase {
 
     $container->getDefinition('package_manager.validator.composer_executable')
       ->setClass(TestComposerExecutableValidator::class);
+    $container
+      ->register('test.terrible_composer_finder', TestFailingComposerFinder::class);
   }
 
   /**
@@ -45,6 +50,26 @@ class ComposerExecutableValidatorTest extends PackageManagerKernelTestBase {
 
     $this->enableModules(['help']);
     $this->assertResultsWithHelp([$error], PreCreateEvent::class);
+  }
+
+  /**
+   * Test RuntimeError is handled correctly.
+   */
+  public function testComposerNotFound(): void {
+    // @see \PhpTuf\ComposerStager\Infrastructure\Service\Precondition\ComposerIsAvailable::getUnfulfilledStatusMessage()
+    $exception = new \Exception('Composer cannot be found.');
+    TestComposerExecutableValidator::setCommandOutput($exception);
+
+    // Change ComposerRunnerInterface path to throw a LogicException.
+    $definition = $this->container->getDefinition('PhpTuf\ComposerStager\Domain\Service\Precondition\ComposerIsAvailableInterface');
+    $definition->setArgument(0, new Reference('test.terrible_composer_finder'));
+
+    // The validator should translate that exception into an error.
+    $error = ValidationResult::createError([
+      $exception->getMessage(),
+    ]);
+    $this->assertStatusCheckResults([$error]);
+    $this->assertResults([$error], PreCreateEvent::class);
   }
 
   /**
@@ -209,6 +234,20 @@ class TestComposerExecutableValidator extends ComposerExecutableValidator {
       throw $output;
     }
     return $output;
+  }
+
+}
+
+/**
+ * A test-only version of ExecutableFinderInterface that throws LogicException.
+ */
+class TestFailingComposerFinder implements ExecutableFinderInterface {
+
+  /**
+   * {@inheritdoc}
+   */
+  public function find(string $name): string {
+    throw new LogicException();
   }
 
 }
