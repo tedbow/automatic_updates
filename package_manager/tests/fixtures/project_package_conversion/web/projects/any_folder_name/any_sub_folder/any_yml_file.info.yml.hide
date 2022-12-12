@@ -1,3 +1,0 @@
-# A test info.yml file where the folder names and info.yml file names do not match the project or package.
-# Only the project key in this file need to match.
-project: nested_no_match_project

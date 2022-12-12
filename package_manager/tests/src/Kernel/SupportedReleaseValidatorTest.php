@@ -4,6 +4,8 @@ declare(strict_types = 1);
 
 namespace Drupal\Tests\package_manager\Kernel;
 
+use Drupal\fixture_manipulator\ActiveFixtureManipulator;
+use Drupal\fixture_manipulator\StageFixtureManipulator;
 use Drupal\package_manager\Event\PreApplyEvent;
 use Drupal\package_manager\ValidationResult;
 use Drupal\Tests\package_manager\Traits\FixtureUtilityTrait;
@@ -22,38 +24,37 @@ class SupportedReleaseValidatorTest extends PackageManagerKernelTestBase {
    */
   protected function setUp(): void {
     parent::setUp();
-
-    $active_dir = $this->container->get('package_manager.path_locator')
-      ->getProjectRoot();
-    $this->addPackage($active_dir, [
-      'name' => "drupal/dependency",
-      'version' => '9.8.0',
-      'type' => 'drupal-library',
-    ]);
-    $this->addPackage($active_dir, [
-      'name' => "drupal/semver_test",
-      'version' => '8.1.0',
-      'type' => 'drupal-module',
-      'install_path' => '../../modules/semver_test',
-    ]);
-    $this->addPackage($active_dir, [
-      'name' => "drupal/aaa_update_test",
-      'version' => '2.0.0',
-      'type' => 'drupal-module',
-      'install_path' => '../../modules/aaa_update_test',
-    ]);
-    $this->addPackage($active_dir, [
-      'name' => "drupal/package_manager_theme",
-      'version' => '8.1.0',
-      'type' => 'drupal-theme',
-      'install_path' => '../../modules/package_manager_theme',
-    ]);
-    $this->addPackage($active_dir, [
-      'name' => "somewhere/a_drupal_module",
-      'version' => '8.1.0',
-      'type' => 'drupal-module',
-      'install_path' => '../../modules/a_drupal_module',
-    ]);
+    (new ActiveFixtureManipulator())
+      ->addPackage([
+        'name' => "drupal/dependency",
+        'version' => '9.8.0',
+        'type' => 'drupal-library',
+      ])
+      ->addPackage([
+        'name' => "drupal/semver_test",
+        'version' => '8.1.0',
+        'type' => 'drupal-module',
+        'install_path' => '../../modules/semver_test',
+      ])
+      ->addPackage([
+        'name' => "drupal/aaa_update_test",
+        'version' => '2.0.0',
+        'type' => 'drupal-module',
+        'install_path' => '../../modules/aaa_update_test',
+      ])
+      ->addPackage([
+        'name' => "drupal/package_manager_theme",
+        'version' => '8.1.0',
+        'type' => 'drupal-theme',
+        'install_path' => '../../modules/package_manager_theme',
+      ])
+      ->addPackage([
+        'name' => "somewhere/a_drupal_module",
+        'version' => '8.1.0',
+        'type' => 'drupal-module',
+        'install_path' => '../../modules/a_drupal_module',
+      ])
+      ->commitChanges();
   }
 
   /**
@@ -63,7 +64,6 @@ class SupportedReleaseValidatorTest extends PackageManagerKernelTestBase {
    *   The test cases.
    */
   public function providerException(): array {
-    $fixtures_folder = __DIR__ . '/../../fixtures/supported_release_validator';
     $release_fixture_folder = __DIR__ . '/../../fixtures/release-history';
     $summary = t('Cannot update because the following project version is not in the list of installable releases.');
     return [
@@ -213,28 +213,18 @@ class SupportedReleaseValidatorTest extends PackageManagerKernelTestBase {
   public function testException(array $release_metadata, bool $project_in_active, array $package, array $expected_results): void {
     $this->setReleaseMetadata(['drupal' => __DIR__ . '/../../fixtures/release-history/drupal.9.8.2.xml'] + $release_metadata);
 
-    $listener = function (PreApplyEvent $event) use ($project_in_active, $package, $expected_results): void {
-
-      $stage_dir = $event->getStage()->getStageDirectory();
-      // @todo add test coverage for packages that don't start with 'drupal/' in
-      //   https://www.drupal.org/node/3321386.
-      if (!$project_in_active) {
-        $this->addPackage($stage_dir, $package);
-      }
-      else {
-        $this->modifyPackage($stage_dir, $package['name'], [
-          'version' => $package['version'],
-        ]);
-      }
-      // We always update this module to prove that the validator will skip this
-      // module as it's of type 'drupal-library'.
-      // @see \Drupal\package_manager\Validator\SupportedReleaseValidator::checkStagedReleases()
-      $this->modifyPackage($stage_dir, "drupal/dependency", [
-        'version' => '9.8.1',
-      ]);
-    };
-    $this->container->get('event_dispatcher')
-      ->addListener(PreApplyEvent::class, $listener, PHP_INT_MAX);
+    $stage_manipulator = new StageFixtureManipulator();
+    if ($project_in_active) {
+      $stage_manipulator->setVersion($package['name'], $package['version']);
+    }
+    else {
+      $stage_manipulator->addPackage($package);
+    }
+    // We always update this module to prove that the validator will skip this
+    // module as it's of type 'drupal-library'.
+    // @see \Drupal\package_manager\Validator\SupportedReleaseValidator::checkStagedReleases()
+    $stage_manipulator->setVersion('drupal/dependency', '9.8.1');
+    $stage_manipulator->setReadyToCommit();
     $this->assertResults($expected_results, PreApplyEvent::class);
   }
 

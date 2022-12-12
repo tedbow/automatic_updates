@@ -4,7 +4,9 @@ declare(strict_types = 1);
 
 namespace Drupal\Tests\package_manager\Kernel;
 
-use Drupal\package_manager\Exception\StageValidationException;
+use Drupal\fixture_manipulator\ActiveFixtureManipulator;
+use Drupal\fixture_manipulator\StageFixtureManipulator;
+use Drupal\package_manager\Event\PreApplyEvent;
 use Drupal\package_manager\ValidationResult;
 use Drupal\Tests\package_manager\Traits\FixtureUtilityTrait;
 
@@ -36,43 +38,40 @@ class OverwriteExistingPackagesValidatorTest extends PackageManagerKernelTestBas
    * by the 'package_manager_bypass' module.
    */
   public function testNewPackagesOverwriteExisting(): void {
-    $active_dir = $this->container->get('package_manager.path_locator')->getProjectRoot();
-    $modules_dir = "$active_dir/modules";
-    $this->addProjectAtPath("$modules_dir/module_1");
-    $this->addProjectAtPath("$modules_dir/module_2");
-    $this->addProjectAtPath("$modules_dir/module_5");
-    $stage = $this->createStage();
-    $stage->create();
-    $stage_dir = $stage->getStageDirectory();
+    (new ActiveFixtureManipulator())
+      ->addProjectAtPath('modules/module_1')
+      ->addProjectAtPath('modules/module_2')
+      ->addProjectAtPath('modules/module_5')
+      ->commitChanges();
+    $stage_manipulator = new StageFixtureManipulator();
 
     // module_1 and module_2 will raise errors because they would overwrite
     // non-Composer managed paths in the active directory.
-    $this->addPackage(
-      $stage_dir,
-      [
-        'name' => 'drupal/module_1',
-        'version' => '1.3.0',
-        'type' => 'drupal-module',
-        'install_path' => '../../modules/module_1',
-      ],
-      FALSE,
-      FALSE
-    );
-    $this->addPackage(
-      $stage_dir,
-      [
-        'name' => 'drupal/module_2',
-        'version' => '1.3.0',
-        'type' => 'drupal-module',
-        'install_path' => '../../modules/module_2',
-      ],
-      FALSE,
-      FALSE
-    );
+    $stage_manipulator
+      ->addPackage(
+        [
+          'name' => 'drupal/module_1',
+          'version' => '1.3.0',
+          'type' => 'drupal-module',
+          'install_path' => '../../modules/module_1',
+        ],
+        FALSE,
+        FALSE
+      )
+      ->addPackage(
+        [
+          'name' => 'drupal/module_2',
+          'version' => '1.3.0',
+          'type' => 'drupal-module',
+          'install_path' => '../../modules/module_2',
+        ],
+        FALSE,
+        FALSE
+      );
 
     // module_3 will cause no problems, since it doesn't exist in the active
     // directory at all.
-    $this->addPackage($stage_dir, [
+    $stage_manipulator->addPackage([
       'name' => 'drupal/module_3',
       'version' => '1.3.0',
       'type' => 'drupal-module',
@@ -82,8 +81,7 @@ class OverwriteExistingPackagesValidatorTest extends PackageManagerKernelTestBas
     // module_4 doesn't exist in the active directory but the 'install_path' as
     // known to Composer in the staged directory collides with module_1 in the
     // active directory which will cause an error.
-    $this->addPackage(
-      $stage_dir,
+    $stage_manipulator->addPackage(
       [
         'name' => 'drupal/module_4',
         'version' => '1.3.0',
@@ -97,7 +95,7 @@ class OverwriteExistingPackagesValidatorTest extends PackageManagerKernelTestBas
     // module_5_different_path will not cause a problem, even though its package
     // name is drupal/module_5, because its project name and path in the staging
     // area differ from the active directory.
-    $this->addPackage($stage_dir, [
+    $stage_manipulator->addPackage([
       'name' => 'drupal/module_5',
       'version' => '1.3.0',
       'type' => 'drupal-module',
@@ -106,11 +104,12 @@ class OverwriteExistingPackagesValidatorTest extends PackageManagerKernelTestBas
 
     // Add a package without an install_path set which will not raise an error.
     // The most common example of this in the Drupal ecosystem is a submodule.
-    $this->addPackage($stage_dir, [
+    $stage_manipulator->addPackage([
       'name' => 'drupal/sub-module',
       'version' => '1.3.0',
       'type' => 'metapackage',
     ]);
+    $stage_manipulator->setReadyToCommit();
 
     $expected_results = [
       ValidationResult::createError([
@@ -123,17 +122,7 @@ class OverwriteExistingPackagesValidatorTest extends PackageManagerKernelTestBas
         'The new package drupal/module_4 will be installed in the directory /vendor/composer/../../modules/module_1, which already exists but is not managed by Composer.',
       ]),
     ];
-
-    $stage->require(['drupal/core:9.8.1']);
-    try {
-      $stage->apply();
-      // If no exception occurs, ensure we weren't expecting any errors.
-      $this->assertValidationResultsEqual($expected_results, []);
-    }
-    catch (StageValidationException $e) {
-      $this->assertNotEmpty($expected_results);
-      $this->assertValidationResultsEqual($expected_results, $e->getResults());
-    }
+    $this->assertResults($expected_results, PreApplyEvent::class);
   }
 
 }

@@ -57,6 +57,7 @@ abstract class PackageManagerKernelTestBase extends KernelTestBase {
    * {@inheritdoc}
    */
   protected static $modules = [
+    'fixture_manipulator',
     'package_manager',
     'package_manager_bypass',
     'system',

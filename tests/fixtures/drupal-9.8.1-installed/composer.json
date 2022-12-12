@@ -1,7 +1,0 @@
-{
-  "extra": {
-    "_readme": [
-      "This fixture simulates a staging area in which, according to Composer, Drupal core 9.8.1 is installed."
-    ]
-  }
-}

@@ -4,18 +4,17 @@ declare(strict_types = 1);
 
 namespace Drupal\Tests\package_manager\Kernel;
 
-use Drupal\Tests\package_manager\Traits\FixtureUtilityTrait;
-use PHPUnit\Framework\AssertionFailedError;
+use Drupal\fixture_manipulator\ActiveFixtureManipulator;
+use Drupal\fixture_manipulator\FixtureManipulator;
+use Drupal\fixture_manipulator\StageFixtureManipulator;
 use Symfony\Component\Filesystem\Filesystem;
 
 /**
- * @coversDefaultClass \Drupal\Tests\package_manager\Traits\FixtureUtilityTrait
+ * @coversDefaultClass \Drupal\fixture_manipulator\FixtureManipulator
+ *
  * @group package_manager
- * @internal
  */
-class FixtureUtilityTraitTest extends PackageManagerKernelTestBase {
-
-  use FixtureUtilityTrait;
+class FixtureManipulatorTest extends PackageManagerKernelTestBase {
 
   /**
    * The root directory of the virtual project.
@@ -23,6 +22,29 @@ class FixtureUtilityTraitTest extends PackageManagerKernelTestBase {
    * @var string
    */
   private string $dir;
+
+  /**
+   * The existing packages in the fixture.
+   *
+   * @var \string[][]
+   */
+  private array $existingCorePackages = [
+    'drupal/core' => [
+      'name' => 'drupal/core',
+      'version' => '9.8.0',
+      'type' => 'drupal-core',
+    ],
+    'drupal/core-recommended' => [
+      'name' => 'drupal/core-recommended',
+      'version' => '9.8.0',
+      'type' => 'drupal-core',
+    ],
+    'drupal/core-dev' => [
+      'name' => 'drupal/core-dev',
+      'version' => '9.8.0',
+      'type' => 'drupal-core',
+    ],
+  ];
 
   /**
    * {@inheritdoc}
@@ -33,18 +55,22 @@ class FixtureUtilityTraitTest extends PackageManagerKernelTestBase {
     $this->dir = $this->container->get('package_manager.path_locator')
       ->getProjectRoot();
 
-    $this->addPackage($this->dir, [
-      'name' => 'my/package',
-      'type' => 'library',
-    ]);
-    $this->addPackage($this->dir, [
-      'name' => 'my/dev-package',
-      'version' => '2.1.0',
-      'type' => 'library',
-      'install_path' => '../relative/path',
-    ],
-    TRUE,
-    );
+    $manipulator = new ActiveFixtureManipulator();
+    $manipulator
+      ->addPackage([
+        'name' => 'my/package',
+        'type' => 'library',
+      ])
+      ->addPackage(
+        [
+          'name' => 'my/dev-package',
+          'version' => '2.1.0',
+          'type' => 'library',
+          'install_path' => '../relative/path',
+        ],
+        TRUE
+      )
+      ->commitChanges();
   }
 
   /**
@@ -52,47 +78,54 @@ class FixtureUtilityTraitTest extends PackageManagerKernelTestBase {
    */
   public function testAddPackage(): void {
     // Packages cannot be added without a name.
-    try {
-      $this->addPackage($this->dir, ['type' => 'unknown']);
-      $this->fail('Adding an anonymous package should raise an error.');
-    }
-    catch (AssertionFailedError $e) {
-      $this->assertSame("Failed asserting that an array has the key 'name'.", $e->getMessage());
-    }
-
-    // Packages cannot be added without a type.
-    try {
-      $this->addPackage($this->dir, ['name' => 'unknown']);
-      $this->fail('Adding an package without a type should raise an error.');
-    }
-    catch (AssertionFailedError $e) {
-      $this->assertSame("Failed asserting that an array has the key 'type'.", $e->getMessage());
+    foreach (['name', 'type'] as $require_key) {
+      // Make a package that is missing the required key.
+      $package = array_diff_key(
+        [
+          'name' => 'Any old name',
+          'type' => 'Any old type',
+        ],
+        [$require_key => '']
+      );
+      try {
+        $manipulator = new ActiveFixtureManipulator();
+        $manipulator->addPackage($package)
+          ->commitChanges();
+        $this->fail("Adding a package without the '$require_key' should raise an error.");
+      }
+      catch (\UnexpectedValueException $e) {
+        $this->assertSame("The '$require_key' is required when calling ::addPackage().", $e->getMessage());
+      }
     }
 
     // We should not be able to add an existing package.
     try {
-      $this->addPackage($this->dir, [
+      $manipulator = new ActiveFixtureManipulator();
+      $manipulator->addPackage([
         'name' => 'my/package',
         'type' => 'library',
-      ]);
+      ])
+        ->commitChanges();
       $this->fail('Trying to add an existing package should raise an error.');
     }
-    catch (AssertionFailedError $e) {
+    catch (\LogicException $e) {
       $this->assertStringContainsString("Expected package 'my/package' to not be installed, but it was.", $e->getMessage());
     }
 
     // We should not be able to add a package with an absolute installation
     // path.
     try {
-      $this->addPackage($this->dir, [
-        'name' => 'absolute/path',
-        'install_path' => '/absolute/path',
-        'type' => 'library',
-      ]);
+      (new ActiveFixtureManipulator())
+        ->addPackage([
+          'name' => 'absolute/path',
+          'install_path' => '/absolute/path',
+          'type' => 'library',
+        ])
+        ->commitChanges();
       $this->fail('Add package should have failed.');
     }
-    catch (AssertionFailedError $e) {
-      $this->assertSame('Failed asserting that \'/absolute/path\' starts with "../".', $e->getMessage());
+    catch (\UnexpectedValueException $e) {
+      $this->assertSame("'install_path' must start with '../'.", $e->getMessage());
     }
 
     $installed_json_expected_packages = [
@@ -116,23 +149,7 @@ class FixtureUtilityTraitTest extends PackageManagerKernelTestBase {
     // have been prefixed with the __DIR__ constant, which should be interpreted
     // when installed.php is loaded by the PHP runtime.
     $installed_php_expected_packages['my/dev-package']['install_path'] = "$this->dir/vendor/composer/../relative/path";
-    $installed_php_expected_packages = [
-      'drupal/core' => [
-        'name' => 'drupal/core',
-        'version' => '9.8.0',
-        'type' => 'drupal-core',
-      ],
-      'drupal/core-recommended' => [
-        'name' => 'drupal/core-recommended',
-        'version' => '9.8.0',
-        'type' => 'drupal-core',
-      ],
-      'drupal/core-dev' => [
-        'name' => 'drupal/core-dev',
-        'version' => '9.8.0',
-        'type' => 'drupal-core',
-      ],
-    ] + $installed_php_expected_packages;
+    $installed_php_expected_packages = $this->existingCorePackages + $installed_php_expected_packages;
     $this->assertSame($installed_php_expected_packages, $installed_php);
   }
 
@@ -151,11 +168,9 @@ class FixtureUtilityTraitTest extends PackageManagerKernelTestBase {
     };
     $original_installed_json = $decode_installed_json();
     $this->assertIsArray($original_installed_json);
-    $this->modifyPackage(
-      $temp_fixture,
-      'the-org/the-package',
-      ['install_path' => '../../a_new_path'],
-    );
+    (new FixtureManipulator())
+      ->modifyPackage('the-org/the-package', ['install_path' => '../../a_new_path'])
+      ->commitChanges($temp_fixture);
     $this->assertSame($original_installed_json, $decode_installed_json());
 
     // Assert that ::modifyPackage() throws an error if a package exists in the
@@ -166,35 +181,37 @@ class FixtureUtilityTraitTest extends PackageManagerKernelTestBase {
     $temp_fixture = $this->siteDirectory . $this->randomMachineName('42');
     $fs->mirror($existing_incorrect_fixture, $temp_fixture);
     try {
-      $this->modifyPackage(
-        $temp_fixture,
-        'the-org/the-package',
-        ['install_path' => '../../a_new_path'],
-      );
+      (new FixtureManipulator())
+        ->modifyPackage('the-org/the-package', ['install_path' => '../../a_new_path'])
+        ->commitChanges($temp_fixture);
       $this->fail('Modifying a non-existent package should raise an error.');
     }
-    catch (AssertionFailedError $e) {
-      $this->assertStringContainsString("Failed asserting that an array has the key 'the-org/the-package'.", $e->getMessage());
+    catch (\LogicException $e) {
+      $this->assertSame("Expected package 'the-org/the-package' to be installed, but it wasn't.", $e->getMessage());
     }
 
     // We should not be able to modify a non-existent package.
     try {
-      $this->modifyPackage($this->dir, 'junk/drawer', ['type' => 'library']);
+      (new ActiveFixtureManipulator())
+        ->modifyPackage('junk/drawer', ['type' => 'library'])
+        ->commitChanges();
       $this->fail('Modifying a non-existent package should raise an error.');
     }
-    catch (AssertionFailedError $e) {
+    catch (\LogicException $e) {
       $this->assertStringContainsString("Expected package 'junk/drawer' to be installed, but it wasn't.", $e->getMessage());
     }
 
-    // Add a key to an existing package.
-    $this->modifyPackage($this->dir, 'my/package', ['type' => 'metapackage']);
-    // Change a key in an existing package.
-    $this->modifyPackage($this->dir, 'my/dev-package', ['version' => '3.2.1']);
-    // Move an existing package to dev requirements.
-    $this->addPackage($this->dir, [
-      'name' => 'my/other-package',
-      'type' => 'library',
-    ]);
+    (new ActiveFixtureManipulator())
+      // Add a key to an existing package.
+      ->modifyPackage('my/package', ['type' => 'metapackage'])
+      // Change a key in an existing package.
+      ->setVersion('my/dev-package', '3.2.1')
+      // Move an existing package to dev requirements.
+      ->addPackage([
+        'name' => 'my/other-package',
+        'type' => 'library',
+      ])
+      ->commitChanges();
 
     $install_json_expected_packages = [
       'my/package' => [
@@ -219,23 +236,7 @@ class FixtureUtilityTraitTest extends PackageManagerKernelTestBase {
     $this->assertContains('my/dev-package', $installed_json['dev-package-names']);
     $this->assertNotContains('my/other-package', $installed_json['dev-package-names']);
     $this->assertNotContains('my/package', $installed_json['dev-package-names']);
-    $installed_php_expected_packages = [
-      'drupal/core' => [
-        'name' => 'drupal/core',
-        'version' => '9.8.0',
-        'type' => 'drupal-core',
-      ],
-      'drupal/core-recommended' => [
-        'name' => 'drupal/core-recommended',
-        'version' => '9.8.0',
-        'type' => 'drupal-core',
-      ],
-      'drupal/core-dev' => [
-        'name' => 'drupal/core-dev',
-        'version' => '9.8.0',
-        'type' => 'drupal-core',
-      ],
-    ] + $installed_php_expected_packages;
+    $installed_php_expected_packages = $this->existingCorePackages + $installed_php_expected_packages;
     // @see ::testAddPackage()
     $this->assertSame($installed_php_expected_packages, $installed_php);
   }
@@ -246,15 +247,19 @@ class FixtureUtilityTraitTest extends PackageManagerKernelTestBase {
   public function testRemovePackage(): void {
     // We should not be able to remove a package that's not installed.
     try {
-      $this->removePackage($this->dir, 'junk/drawer');
+      (new ActiveFixtureManipulator())
+        ->removePackage('junk/drawer')
+        ->commitChanges();
       $this->fail('Removing a non-existent package should raise an error.');
     }
-    catch (AssertionFailedError $e) {
+    catch (\LogicException $e) {
       $this->assertStringContainsString("Expected package 'junk/drawer' to be installed, but it wasn't.", $e->getMessage());
     }
 
-    $this->removePackage($this->dir, 'my/package');
-    $this->removePackage($this->dir, 'my/dev-package');
+    (new ActiveFixtureManipulator())
+      ->removePackage('my/package')
+      ->removePackage('my/dev-package')
+      ->commitChanges();
 
     foreach (['json', 'php'] as $extension) {
       $file = "$this->dir/vendor/composer/installed.$extension";
@@ -287,6 +292,26 @@ class FixtureUtilityTraitTest extends PackageManagerKernelTestBase {
       $installed_json,
       $installed_php['versions'],
     ];
+  }
+
+  /**
+   * Test that an exception is thrown if ::commitChanges() is not called.
+   */
+  public function testNoCommitError(): void {
+    $this->expectException(\LogicException::class);
+    $this->expectExceptionMessage('commitChanges() must be called.');
+    (new ActiveFixtureManipulator())
+      ->setVersion('drupal/core', '1.2.3');
+  }
+
+  /**
+   * Test that no exception is thrown if ::setReadyToCommit() is called.
+   */
+  public function testNoCommitExpected(): void {
+    $manipulator = new StageFixtureManipulator();
+    $manipulator->setVersion('drupal/core', '1.2.3');
+    $manipulator->setReadyToCommit();
+    $this->assertTrue(TRUE);
   }
 
 }

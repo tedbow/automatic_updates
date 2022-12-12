@@ -4,6 +4,7 @@ declare(strict_types = 1);
 
 namespace Drupal\Tests\package_manager\Kernel;
 
+use Drupal\fixture_manipulator\FixtureManipulator;
 use Drupal\KernelTests\KernelTestBase;
 use Drupal\package_manager\ComposerUtility;
 use Drupal\Tests\package_manager\Traits\FixtureUtilityTrait;
@@ -31,7 +32,61 @@ class ComposerUtilityTest extends KernelTestBase {
 
     $fixture = vfsStream::newDirectory('fixture');
     $this->vfsRoot->addChild($fixture);
-    static::copyFixtureFilesTo(__DIR__ . '/../../fixtures/project_package_conversion', $fixture->url());
+    static::copyFixtureFilesTo(__DIR__ . '/../../fixtures/fake_site', $fixture->url());
+    $relative_projects_dir = '../../web/projects';
+    (new FixtureManipulator())
+      ->addPackage(
+        [
+          'name' => 'drupal/package_project_match',
+          'type' => 'drupal-module',
+          'install_path' => "$relative_projects_dir/package_project_match",
+        ]
+      )
+      ->addPackage(
+        [
+          'name' => 'drupal/not_match_package',
+          'type' => 'drupal-module',
+          'install_path' => "$relative_projects_dir/not_match_project",
+        ]
+      )
+      ->addPackage(
+        [
+          'name' => 'drupal/not_match_path_project',
+          'type' => 'drupal-module',
+          'install_path' => "$relative_projects_dir/not_match_project",
+        ],
+        FALSE,
+        FALSE,
+      )
+      ->addProjectAtPath("web/projects/not_match_path_project", 'not_match_path_project')
+      ->addPackage(
+        [
+          'name' => 'drupal/nested_no_match_package',
+          'type' => 'drupal-module',
+          'install_path' => "$relative_projects_dir/any_folder_name",
+        ],
+        FALSE,
+        FALSE,
+      )
+      ->addPackage(
+        [
+          'name' => 'non_drupal/other_project',
+          'type' => 'drupal-module',
+          'install_path' => "$relative_projects_dir/other_project",
+        ]
+      )
+      ->addPackage(
+        [
+          'name' => 'drupal/custom_module',
+          'type' => 'drupal-custom-module',
+          'install_path' => "$relative_projects_dir/custom_module",
+        ]
+      )
+      // A test info.yml file where the folder names and info.yml file names do
+      // not match the project or package. Only the project key in this file
+      // need to match.
+      ->addProjectAtPath("web/projects/any_folder_name/any_sub_folder", 'nested_no_match_project', 'any_yml_file.info.yml')
+      ->commitChanges($fixture->url());
   }
 
   /**

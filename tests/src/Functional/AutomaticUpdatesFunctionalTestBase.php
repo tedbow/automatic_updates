@@ -6,6 +6,7 @@ namespace Drupal\Tests\automatic_updates\Functional;
 
 use Drupal\automatic_updates\CronUpdater;
 use Drupal\Core\Site\Settings;
+use Drupal\fixture_manipulator\StageFixtureManipulator;
 use Drupal\package_manager_bypass\Beginner;
 use Drupal\package_manager_bypass\Stager;
 use Drupal\Tests\BrowserTestBase;
@@ -20,6 +21,7 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
 abstract class AutomaticUpdatesFunctionalTestBase extends BrowserTestBase {
 
   use FixtureUtilityTrait;
+
   /**
    * {@inheritdoc}
    */
@@ -28,6 +30,20 @@ abstract class AutomaticUpdatesFunctionalTestBase extends BrowserTestBase {
     'automatic_updates_test_disable_validators',
     'package_manager_bypass',
   ];
+
+  /**
+   * Set the core update version.
+   *
+   * @param string $version
+   *   The core version.
+   */
+  protected function setCoreUpdate(string $version):void {
+    $stage_manipulator = new StageFixtureManipulator();
+    $stage_manipulator->setVersion('drupal/core', $version)
+      ->setVersion('drupal/core-recommended', $version)
+      ->setVersion('drupal/core-dev', $version)
+      ->setReadyToCommit();
+  }
 
   /**
    * The service IDs of any validators to disable.

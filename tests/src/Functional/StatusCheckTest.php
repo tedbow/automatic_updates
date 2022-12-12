@@ -453,7 +453,7 @@ class StatusCheckTest extends AutomaticUpdatesFunctionalTestBase {
     // status check (without storing the results), and the checker is no
     // longer raising an error.
     $this->drupalGet('/admin/modules/update');
-    $this->useFixtureDirectoryAsStaged(__DIR__ . '/../../fixtures/drupal-9.8.1-installed');
+    $this->setCoreUpdate('9.8.1');
     $assert_session->buttonExists('Update');
     // Ensure that the previous results are still displayed on another admin
     // page, to confirm that the updater form is not discarding the previous

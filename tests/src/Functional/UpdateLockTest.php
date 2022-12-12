@@ -4,8 +4,6 @@ declare(strict_types = 1);
 
 namespace Drupal\Tests\automatic_updates\Functional;
 
-use Drupal\package_manager_bypass\Stager;
-
 /**
  * Tests that only one Automatic Update operation can be performed at a time.
  *
@@ -55,7 +53,7 @@ class UpdateLockTest extends AutomaticUpdatesFunctionalTestBase {
     // We should be able to get partway through an update without issue.
     $this->drupalLogin($user_1);
     $this->drupalGet('/admin/modules/update');
-    Stager::setFixturePath(__DIR__ . '/../../fixtures/drupal-9.8.1-installed');
+    $this->setCoreUpdate('9.8.1');
     $page->pressButton('Update');
     $this->checkForMetaRefresh();
     $this->assertUpdateReady('9.8.1');

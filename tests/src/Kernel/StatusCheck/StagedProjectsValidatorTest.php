@@ -4,11 +4,12 @@ declare(strict_types = 1);
 
 namespace Drupal\Tests\automatic_updates\Kernel\StatusCheck;
 
+use Drupal\fixture_manipulator\ActiveFixtureManipulator;
+use Drupal\fixture_manipulator\StageFixtureManipulator;
 use Drupal\package_manager\Event\PreApplyEvent;
 use Drupal\package_manager\Exception\StageValidationException;
 use Drupal\package_manager\ValidationResult;
 use Drupal\Tests\automatic_updates\Kernel\AutomaticUpdatesKernelTestBase;
-use Drupal\Tests\package_manager\Traits\FixtureUtilityTrait;
 
 /**
  * @covers \Drupal\automatic_updates\Validator\StagedProjectsValidator
@@ -16,8 +17,6 @@ use Drupal\Tests\package_manager\Traits\FixtureUtilityTrait;
  * @internal
  */
 class StagedProjectsValidatorTest extends AutomaticUpdatesKernelTestBase {
-
-  use FixtureUtilityTrait;
 
   /**
    * {@inheritdoc}
@@ -74,86 +73,84 @@ class StagedProjectsValidatorTest extends AutomaticUpdatesKernelTestBase {
    * Tests that an error is raised if Drupal extensions are unexpectedly added.
    */
   public function testProjectsAdded(): void {
-    $active_dir = $this->container->get('package_manager.path_locator')
-      ->getProjectRoot();
-    $this->addPackage($active_dir, [
-      'name' => 'drupal/test_module',
-      'version' => '1.3.0',
-      'type' => 'drupal-module',
-      'install_path' => '../../modules/test_module',
-    ]);
-    $this->addPackage($active_dir, [
-      'name' => 'other/removed',
-      'version' => '1.3.1',
-      'type' => 'library',
-    ]);
-    $this->addPackage(
-      $active_dir,
-      [
-        'name' => 'drupal/dev-test_module',
+    (new ActiveFixtureManipulator())
+      ->addPackage([
+        'name' => 'drupal/test_module',
         'version' => '1.3.0',
+        'type' => 'drupal_module',
+        'install_path' => '../../modules/test_module',
+      ])
+      ->addPackage([
+        'name' => 'other/removed',
+        'version' => '1.3.1',
+        'type' => 'library',
+      ])
+      ->addPackage(
+        [
+          'name' => 'drupal/dev-test_module',
+          'version' => '1.3.0',
+          'type' => 'drupal-module',
+          'install_path' => '../../modules/dev_test_module',
+        ],
+        TRUE
+      )
+      ->addPackage(
+        [
+          'name' => 'other/dev-removed',
+          'version' => '1.3.1',
+          'type' => 'library',
+        ],
+        TRUE
+      )
+      ->commitChanges();
+
+    $stage_manipulator = new StageFixtureManipulator();
+    $stage_manipulator
+      ->addPackage([
+        'name' => 'drupal/test_module2',
+        'version' => '1.3.1',
         'type' => 'drupal-module',
-        'install_path' => '../../modules/dev_test_module',
-      ],
-      TRUE
-    );
-    $this->addPackage(
-      $active_dir,
-      [
-        'name' => 'other/dev-removed',
+        'install_path' => '../../modules/test_module2',
+      ])
+      ->addPackage(
+        [
+          'name' => 'drupal/dev-test_module2',
+          'version' => '1.3.1',
+          'type' => 'drupal-custom-module',
+          'install_path' => '../../modules/dev-test_module2',
+        ],
+        TRUE
+      )
+      // The validator shouldn't complain about these packages being added or
+      // removed, since it only cares about Drupal modules and themes.
+      ->addPackage([
+        'name' => 'other/new_project',
         'version' => '1.3.1',
         'type' => 'library',
-      ],
-      TRUE
-    );
-
-    $updater = $this->container->get('automatic_updates.updater');
-    $updater->begin(['drupal' => '9.8.1']);
-    $updater->stage();
-
-    $stage_dir = $updater->getStageDirectory();
-    $this->addPackage($stage_dir, [
-      'name' => 'drupal/test_module2',
-      'version' => '1.3.1',
-      'type' => 'drupal-module',
-      'install_path' => '../../modules/test_module2',
-    ]);
-    $this->addPackage(
-      $stage_dir,
-      [
-        'name' => 'drupal/dev-test_module2',
-        'version' => '1.3.1',
-        'type' => 'drupal-custom-module',
-        'install_path' => '../../modules/dev-test_module2',
-      ],
-      TRUE
-    );
-    // The validator shouldn't complain about these packages being added or
-    // removed, since it only cares about Drupal modules and themes.
-    $this->addPackage($stage_dir, [
-      'name' => 'other/new_project',
-      'version' => '1.3.1',
-      'type' => 'library',
-      'install_path' => '../other/new_project',
-    ]);
-    $this->addPackage(
-      $stage_dir,
-      [
-        'name' => 'other/dev-new_project',
-        'version' => '1.3.1',
-        'type' => 'library',
-        'install_path' => '../other/dev-new_project',
-      ],
-      TRUE
-    );
-    $this->removePackage($stage_dir, 'other/removed');
-    $this->removePackage($stage_dir, 'other/dev-removed');
+        'install_path' => '../other/new_project',
+      ])
+      ->addPackage(
+        [
+          'name' => 'other/dev-new_project',
+          'version' => '1.3.1',
+          'type' => 'library',
+          'install_path' => '../other/dev-new_project',
+        ],
+        TRUE
+      )
+      ->removePackage('other/removed')
+      ->removePackage('other/dev-removed')
+      ->setReadyToCommit();
 
     $messages = [
       "module 'drupal/test_module2' installed.",
       "custom module 'drupal/dev-test_module2' installed.",
     ];
     $error = ValidationResult::createError($messages, t('The update cannot proceed because the following Drupal projects were installed during the update.'));
+
+    $updater = $this->container->get('automatic_updates.updater');
+    $updater->begin(['drupal' => '9.8.1']);
+    $updater->stage();
     try {
       $updater->apply();
       $this->fail('Expected an error, but none was raised.');
@@ -167,72 +164,69 @@ class StagedProjectsValidatorTest extends AutomaticUpdatesKernelTestBase {
    * Tests that errors are raised if Drupal extensions are unexpectedly removed.
    */
   public function testProjectsRemoved(): void {
-    $active_dir = $this->container->get('package_manager.path_locator')
-      ->getProjectRoot();
-    $this->addPackage($active_dir, [
-      'name' => 'drupal/test_theme',
-      'version' => '1.3.0',
-      'type' => 'drupal-theme',
-      'install_path' => '../../themes/test_theme',
-    ]);
-    $this->addPackage($active_dir, [
-      'name' => 'drupal/test_module2',
-      'version' => '1.3.1',
-      'type' => 'drupal-module',
-      'install_path' => '../../modules/test_module2',
-    ]);
-    $this->addPackage($active_dir, [
-      'name' => 'other/removed',
-      'version' => '1.3.1',
-      'type' => 'library',
-    ]);
-    $this->addPackage(
-      $active_dir,
-      [
-        'name' => 'drupal/dev-test_theme',
+    (new ActiveFixtureManipulator())
+      ->addPackage([
+        'name' => 'drupal/test_theme',
         'version' => '1.3.0',
-        'type' => 'drupal-custom-theme',
-        'install_path' => '../../modules/dev_test_theme',
-      ],
-      TRUE
-    );
-    $this->addPackage(
-      $active_dir,
-      [
-        'name' => 'drupal/dev-test_module2',
+        'type' => 'drupal-theme',
+        'install_path' => '../../themes/test_theme',
+      ])
+      ->addPackage([
+        'name' => 'drupal/test_module2',
         'version' => '1.3.1',
         'type' => 'drupal-module',
-        'install_path' => '../../modules/dev_test_module2',
-      ],
-      TRUE
-    );
-    $this->addPackage(
-      $active_dir,
-      [
-        'name' => 'other/dev-removed',
+        'install_path' => '../../modules/test_module2',
+      ])
+      ->addPackage([
+        'name' => 'other/removed',
         'version' => '1.3.1',
         'type' => 'library',
-      ],
-      TRUE
-    );
+      ])
+      ->addPackage(
+        [
+          'name' => 'drupal/dev-test_theme',
+          'version' => '1.3.0',
+          'type' => 'drupal-custom-theme',
+          'install_path' => '../../modules/dev_test_theme',
+        ],
+        TRUE
+      )
+      ->addPackage(
+        [
+          'name' => 'drupal/dev-test_module2',
+          'version' => '1.3.1',
+          'type' => 'drupal-module',
+          'install_path' => '../../modules/dev_test_module2',
+        ],
+        TRUE
+      )
+      ->addPackage(
+        [
+          'name' => 'other/dev-removed',
+          'version' => '1.3.1',
+          'type' => 'library',
+        ],
+        TRUE
+      )
+      ->commitChanges();
 
-    $updater = $this->container->get('automatic_updates.updater');
-    $updater->begin(['drupal' => '9.8.1']);
-    $updater->stage();
-
-    $stage_dir = $updater->getStageDirectory();
-    $this->removePackage($stage_dir, 'drupal/test_theme');
-    $this->removePackage($stage_dir, 'drupal/dev-test_theme');
+    $stage_manipulator = new StageFixtureManipulator();
+    $stage_manipulator->removePackage('drupal/test_theme')
+      ->removePackage('drupal/dev-test_theme')
     // The validator shouldn't complain about these packages being removed,
     // since it only cares about Drupal modules and themes.
-    $this->removePackage($stage_dir, 'other/removed');
-    $this->removePackage($stage_dir, 'other/dev-removed');
+      ->removePackage('other/removed')
+      ->removePackage('other/dev-removed')
+      ->setReadyToCommit();
 
     $messages = [
       "theme 'drupal/test_theme' removed.",
       "custom theme 'drupal/dev-test_theme' removed.",
     ];
     $error = ValidationResult::createError($messages, t('The update cannot proceed because the following Drupal projects were removed during the update.'));
+    $updater = $this->container->get('automatic_updates.updater');
+    $updater->begin(['drupal' => '9.8.1']);
+    $updater->stage();
     try {
       $updater->apply();
       $this->fail('Expected an error, but none was raised.');
@@ -246,64 +240,55 @@ class StagedProjectsValidatorTest extends AutomaticUpdatesKernelTestBase {
    * Tests that errors are raised if Drupal extensions are unexpectedly updated.
    */
   public function testVersionsChanged(): void {
-    $active_dir = $this->container->get('package_manager.path_locator')
-      ->getProjectRoot();
-    $this->addPackage($active_dir, [
-      'name' => 'drupal/test_module',
-      'version' => '1.3.0',
-      'type' => 'drupal-module',
-      'install_path' => '../../modules/test_module',
-    ]);
-    $this->addPackage($active_dir, [
-      'name' => 'other/changed',
-      'version' => '1.3.1',
-      'type' => 'library',
-    ]);
-    $this->addPackage(
-      $active_dir,
-      [
-        'name' => 'drupal/dev-test_module',
+    (new ActiveFixtureManipulator())
+      ->addPackage([
+        'name' => 'drupal/test_module',
         'version' => '1.3.0',
         'type' => 'drupal-module',
-        'install_path' => '../../modules/dev_test_module',
-      ],
-      TRUE
-    );
-    $this->addPackage(
-      $active_dir,
-      [
-        'name' => 'other/dev-changed',
+        'install_path' => '../../modules/test_module',
+      ])
+      ->addPackage([
+        'name' => 'other/changed',
         'version' => '1.3.1',
         'type' => 'library',
-      ],
-      TRUE
-    );
+      ])
+      ->addPackage(
+        [
+          'name' => 'drupal/dev-test_module',
+          'version' => '1.3.0',
+          'type' => 'drupal-module',
+          'install_path' => '../../modules/dev_test_module',
+        ],
+        TRUE
+      )
+      ->addPackage(
+        [
+          'name' => 'other/dev-changed',
+          'version' => '1.3.1',
+          'type' => 'library',
+        ],
+        TRUE
+      )
+      ->commitChanges();
 
-    $updater = $this->container->get('automatic_updates.updater');
-    $updater->begin(['drupal' => '9.8.1']);
-    $updater->stage();
-
-    $stage_dir = $updater->getStageDirectory();
-    $this->modifyPackage($stage_dir, 'drupal/test_module', [
-      'version' => '1.3.1',
-    ]);
-    $this->modifyPackage($stage_dir, 'drupal/dev-test_module', [
-      'version' => '1.3.1',
-    ]);
+    $stage_manipulator = new StageFixtureManipulator();
+    $stage_manipulator->setVersion('drupal/test_module', '1.3.1')
+      ->setVersion('drupal/dev-test_module', '1.3.1')
     // The validator shouldn't complain about these packages being updated,
     // because it only cares about Drupal modules and themes.
-    $this->modifyPackage($stage_dir, 'other/changed', [
-      'version' => '1.3.2',
-    ]);
-    $this->modifyPackage($stage_dir, 'other/dev-changed', [
-      'version' => '1.3.2',
-    ]);
+      ->setVersion('other/changed', '1.3.2')
+      ->setVersion('other/dev-changed', '1.3.2')
+      ->setReadyToCommit();
 
     $messages = [
       "module 'drupal/test_module' from 1.3.0 to 1.3.1.",
       "module 'drupal/dev-test_module' from 1.3.0 to 1.3.1.",
     ];
     $error = ValidationResult::createError($messages, t('The update cannot proceed because the following Drupal projects were unexpectedly updated. Only Drupal Core updates are currently supported.'));
+    $updater = $this->container->get('automatic_updates.updater');
+    $updater->begin(['drupal' => '9.8.1']);
+    $updater->stage();
+
     try {
       $updater->apply();
       $this->fail('Expected an error, but none was raised.');
@@ -317,88 +302,80 @@ class StagedProjectsValidatorTest extends AutomaticUpdatesKernelTestBase {
    * Tests that no errors occur if only core and its dependencies are updated.
    */
   public function testNoErrors(): void {
-    $active_dir = $this->container->get('package_manager.path_locator')
-      ->getProjectRoot();
-    $this->addPackage($active_dir, [
-      'name' => 'drupal/test_module',
-      'version' => '1.3.0',
-      'type' => 'drupal-module',
-      'install_path' => '../../modules/test_module',
-    ]);
-    $this->addPackage($active_dir, [
-      'name' => 'other/removed',
-      'version' => '1.3.1',
-      'type' => 'library',
-    ]);
-    $this->addPackage($active_dir, [
-      'name' => 'other/changed',
-      'version' => '1.3.1',
-      'type' => 'library',
-    ]);
-    $this->addPackage(
-      $active_dir, [
-        'name' => 'drupal/dev-test_module',
+    (new ActiveFixtureManipulator())
+      ->addPackage([
+        'name' => 'drupal/test_module',
         'version' => '1.3.0',
         'type' => 'drupal-module',
-        'install_path' => '../../modules/dev_test_module',
-      ],
-      TRUE
-    );
-    $this->addPackage(
-      $active_dir,
-      [
-        'name' => 'other/dev-removed',
+        'install_path' => '../../modules/test_module',
+      ])
+      ->addPackage([
+        'name' => 'other/removed',
         'version' => '1.3.1',
         'type' => 'library',
-      ],
-      TRUE
-    );
-    $this->addPackage(
-      $active_dir,
-      [
-        'name' => 'other/dev-changed',
+      ])
+      ->addPackage([
+        'name' => 'other/changed',
         'version' => '1.3.1',
         'type' => 'library',
-      ],
-      TRUE
-    );
+      ])
+      ->addPackage(
+        [
+          'name' => 'drupal/dev-test_module',
+          'version' => '1.3.0',
+          'type' => 'drupal-module',
+          'install_path' => '../../modules/dev_test_module',
+        ],
+        TRUE
+      )
+      ->addPackage(
+        [
+          'name' => 'other/dev-removed',
+          'version' => '1.3.1',
+          'type' => 'library',
+        ],
+        TRUE
+      )
+      ->addPackage(
+        [
+          'name' => 'other/dev-changed',
+          'version' => '1.3.1',
+          'type' => 'library',
+        ],
+        TRUE
+      )
+      ->commitChanges();
+
+    $stage_manipulator = new StageFixtureManipulator();
+    $stage_manipulator->setVersion('drupal/core', '9.8.1')
+    // The validator shouldn't care what happens to these packages, since it
+    // only concerns itself with Drupal modules and themes.
+      ->addPackage([
+        'name' => 'other/new_project',
+        'version' => '1.3.1',
+        'type' => 'library',
+        'install_path' => '../other/new_project',
+      ])
+      ->addPackage(
+        [
+          'name' => 'other/dev-new_project',
+          'version' => '1.3.1',
+          'type' => 'library',
+          'install_path' => '../other/dev-new_project',
+        ],
+        TRUE
+      )
+      ->setVersion('other/changed', '1.3.2')
+      ->setVersion('other/dev-changed', '1.3.2')
+      ->removePackage('other/removed')
+      ->removePackage('other/dev-removed')
+      ->setReadyToCommit();
 
     $updater = $this->container->get('automatic_updates.updater');
     $updater->begin(['drupal' => '9.8.1']);
     $updater->stage();
-
-    $stage_dir = $updater->getStageDirectory();
-    $this->modifyPackage($stage_dir, 'drupal/core', [
-      'version' => '9.8.1',
-    ]);
-    // The validator shouldn't care what happens to these packages, since it
-    // only concerns itself with Drupal modules and themes.
-    $this->addPackage($stage_dir, [
-      'name' => 'other/new_project',
-      'version' => '1.3.1',
-      'type' => 'library',
-      'install_path' => '../other/new_project',
-    ]);
-    $this->addPackage(
-      $stage_dir,
-      [
-        'name' => 'other/dev-new_project',
-        'version' => '1.3.1',
-        'type' => 'library',
-        'install_path' => '../other/dev-new_project',
-      ],
-      TRUE
-    );
-    $this->modifyPackage($stage_dir, 'other/changed', [
-      'version' => '1.3.2',
-    ]);
-    $this->modifyPackage($stage_dir, 'other/dev-changed', [
-      'version' => '1.3.2',
-    ]);
-    $this->removePackage($stage_dir, 'other/removed');
-    $this->removePackage($stage_dir, 'other/dev-removed');
-
     $updater->apply();
+    $this->assertTrue(TRUE);
   }
 
 }

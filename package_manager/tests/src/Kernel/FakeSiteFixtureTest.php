@@ -4,6 +4,7 @@ declare(strict_types = 1);
 
 namespace Drupal\Tests\package_manager\Kernel;
 
+use Drupal\fixture_manipulator\ActiveFixtureManipulator;
 use Drupal\package_manager\ComposerUtility;
 
 /**
@@ -43,40 +44,35 @@ class FakeSiteFixtureTest extends PackageManagerKernelTestBase {
   /**
    * Tests if `modifyPackage` can be called on all packages in the fixture.
    *
-   * @see \Drupal\Tests\package_manager\Traits\FixtureUtilityTrait::modifyPackage()
+   * @see \Drupal\fixture_manipulator\FixtureManipulator::modifyPackage()
    */
   public function testCallToModifyPackage(): void {
-    $project_root = $this->container->get('package_manager.path_locator')->getProjectRoot();
     $stage = $this->createStage();
     $installed_packages = $stage->getActiveComposer()->getInstalledPackages();
     foreach (self::getExpectedFakeSitePackages() as $package_name) {
       $this->assertArrayHasKey($package_name, $installed_packages);
       $this->assertSame('9.8.0', $installed_packages[$package_name]->getPrettyVersion());
-      $this->modifyPackage(
-        $project_root,
-        $package_name,
-        ['version' => '11.1.0']
-      );
+      (new ActiveFixtureManipulator())
+        ->modifyPackage($package_name, ['version' => '11.1.0'])
+        ->commitChanges();
     }
   }
 
   /**
    * Tests if `removePackage` can be called on all packages in the fixture.
    *
-   * @covers \Drupal\Tests\package_manager\Traits\FixtureUtilityTrait::removePackage()
+   * @covers \Drupal\fixture_manipulator\FixtureManipulator::removePackage()
    */
   public function testCallToRemovePackage(): void {
     $expected_packages = self::getExpectedFakeSitePackages();
-    $project_root = $this->container->get('package_manager.path_locator')->getProjectRoot();
     $stage = $this->createStage();
     $actual_packages = array_keys($stage->getActiveComposer()->getInstalledPackages());
     sort($actual_packages);
     $this->assertSame($expected_packages, $actual_packages);
     foreach (self::getExpectedFakeSitePackages() as $package_name) {
-      $this->removePackage(
-        $project_root,
-        $package_name,
-      );
+      (new ActiveFixtureManipulator())
+        ->removePackage($package_name)
+        ->commitChanges();
     }
   }
 
