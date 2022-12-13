@@ -15,7 +15,7 @@ use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
 
 /**
- * Provides API endpoints to interact with a staging area in functional tests.
+ * Provides API endpoints to interact with a stage directory in functional test.
  */
 class ApiController extends ControllerBase {
 
@@ -78,8 +78,8 @@ class ApiController extends ControllerBase {
   /**
    * Begins a stage life cycle.
    *
-   * Creates a staging area, requires packages into it, applies changes to the
-   * active directory.
+   * Creates a stage directory, requires packages into it, applies changes to
+   * the active directory.
    *
    * @param \Symfony\Component\HttpFoundation\Request $request
    *   The request. The runtime and dev dependencies are expected to be in

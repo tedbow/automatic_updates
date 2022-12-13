@@ -34,7 +34,7 @@ class OverwriteExistingPackagesValidatorTest extends PackageManagerKernelTestBas
    *
    * The fixture simulates a scenario where the active directory has three
    * modules installed: module_1, module_2, and module_5. None of them are
-   * managed by Composer. These modules will be moved into the staging directory
+   * managed by Composer. These modules will be moved into the stage directory
    * by the 'package_manager_bypass' module.
    */
   public function testNewPackagesOverwriteExisting(): void {
@@ -93,8 +93,8 @@ class OverwriteExistingPackagesValidatorTest extends PackageManagerKernelTestBas
     );
 
     // module_5_different_path will not cause a problem, even though its package
-    // name is drupal/module_5, because its project name and path in the staging
-    // area differ from the active directory.
+    // name is drupal/module_5, because its project name and path in the stage
+    // directory differ from the active directory.
     $stage_manipulator->addPackage([
       'name' => 'drupal/module_5',
       'version' => '1.3.0',

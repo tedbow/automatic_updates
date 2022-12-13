@@ -1,6 +1,6 @@
 name: 'Package Manager'
 type: module
-description: 'API module providing functionality for staging package installs and updates with Composer.'
+description: 'API module providing functionality to stage package installs and updates with Composer.'
 core_version_requirement: ^9.3 || ^10
 php: 7.4
 dependencies:

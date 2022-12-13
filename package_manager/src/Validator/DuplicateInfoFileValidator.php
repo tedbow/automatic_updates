@@ -54,7 +54,7 @@ class DuplicateInfoFileValidator implements EventSubscriberInterface {
         // $stage_info_file than in the active directory.
         if ($stage_info_count > $active_info_files[$stage_info_file]) {
           $event->addError([
-            $this->t('The staging directory has @stage_count instances of @stage_info_file as compared to @active_count in the active directory. This likely indicates that a duplicate extension was installed.', [
+            $this->t('The stage directory has @stage_count instances of @stage_info_file as compared to @active_count in the active directory. This likely indicates that a duplicate extension was installed.', [
               '@stage_info_file' => $stage_info_file,
               '@stage_count' => $stage_info_count,
               '@active_count' => $active_info_files[$stage_info_file],
@@ -66,7 +66,7 @@ class DuplicateInfoFileValidator implements EventSubscriberInterface {
       // $stage_info_file which are not in active directory.
       elseif ($stage_info_count > 1) {
         $event->addError([
-          $this->t('The staging directory has @stage_count instances of @stage_info_file. This likely indicates that a duplicate extension was installed.', [
+          $this->t('The stage directory has @stage_count instances of @stage_info_file. This likely indicates that a duplicate extension was installed.', [
             '@stage_info_file' => $stage_info_file,
             '@stage_count' => $stage_info_count,
           ]),

@@ -242,7 +242,7 @@ class StatusCheckerTest extends AutomaticUpdatesKernelTestBase {
     $this->assertValidationResultsEqual($results, $manager->getResults());
 
     // Don't validate staged projects or scaffold file permissions because
-    // actual staging operations are bypassed by package_manager_bypass, which
+    // actual stage operations are bypassed by package_manager_bypass, which
     // will make these validators complain that there is no actual Composer data
     // for them to inspect.
     $validators = array_map([$this->container, 'get'], [

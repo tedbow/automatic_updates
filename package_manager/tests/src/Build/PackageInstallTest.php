@@ -5,7 +5,7 @@ declare(strict_types = 1);
 namespace Drupal\Tests\package_manager\Build;
 
 /**
- * Tests installing packages in a staging area.
+ * Tests installing packages in a stage directory.
  *
  * @group package_manager
  * @internal
@@ -13,7 +13,7 @@ namespace Drupal\Tests\package_manager\Build;
 class PackageInstallTest extends TemplateProjectTestBase {
 
   /**
-   * Tests installing packages in a staging area.
+   * Tests installing packages in a stage directory.
    */
   public function testPackageInstall(): void {
     $this->createTestProject('RecommendedProject');

@@ -33,7 +33,7 @@ class DuplicateInfoFileValidatorTest extends PackageManagerKernelTestBase {
         ],
         [
           ValidationResult::createError([
-            'The staging directory has 2 instances of module.info.yml as compared to 1 in the active directory. This likely indicates that a duplicate extension was installed.',
+            'The stage directory has 2 instances of module.info.yml as compared to 1 in the active directory. This likely indicates that a duplicate extension was installed.',
           ]),
         ],
       ],
@@ -97,7 +97,7 @@ class DuplicateInfoFileValidatorTest extends PackageManagerKernelTestBase {
         ],
         [
           ValidationResult::createError([
-            'The staging directory has 2 instances of module.info.yml. This likely indicates that a duplicate extension was installed.',
+            'The stage directory has 2 instances of module.info.yml. This likely indicates that a duplicate extension was installed.',
           ]),
         ],
       ],
@@ -136,10 +136,10 @@ class DuplicateInfoFileValidatorTest extends PackageManagerKernelTestBase {
         ],
         [
           ValidationResult::createError([
-            'The staging directory has 2 instances of module1.info.yml as compared to 1 in the active directory. This likely indicates that a duplicate extension was installed.',
+            'The stage directory has 2 instances of module1.info.yml as compared to 1 in the active directory. This likely indicates that a duplicate extension was installed.',
           ]),
           ValidationResult::createError([
-            'The staging directory has 3 instances of module2.info.yml as compared to 1 in the active directory. This likely indicates that a duplicate extension was installed.',
+            'The stage directory has 3 instances of module2.info.yml as compared to 1 in the active directory. This likely indicates that a duplicate extension was installed.',
           ]),
         ],
       ],
@@ -154,10 +154,10 @@ class DuplicateInfoFileValidatorTest extends PackageManagerKernelTestBase {
         ],
         [
           ValidationResult::createError([
-            'The staging directory has 2 instances of module1.info.yml. This likely indicates that a duplicate extension was installed.',
+            'The stage directory has 2 instances of module1.info.yml. This likely indicates that a duplicate extension was installed.',
           ]),
           ValidationResult::createError([
-            'The staging directory has 3 instances of module2.info.yml. This likely indicates that a duplicate extension was installed.',
+            'The stage directory has 3 instances of module2.info.yml. This likely indicates that a duplicate extension was installed.',
           ]),
         ],
       ],
@@ -174,10 +174,10 @@ class DuplicateInfoFileValidatorTest extends PackageManagerKernelTestBase {
         ],
         [
           ValidationResult::createError([
-            'The staging directory has 2 instances of module1.info.yml as compared to 1 in the active directory. This likely indicates that a duplicate extension was installed.',
+            'The stage directory has 2 instances of module1.info.yml as compared to 1 in the active directory. This likely indicates that a duplicate extension was installed.',
           ]),
           ValidationResult::createError([
-            'The staging directory has 3 instances of module2.info.yml. This likely indicates that a duplicate extension was installed.',
+            'The stage directory has 3 instances of module2.info.yml. This likely indicates that a duplicate extension was installed.',
           ]),
         ],
       ],

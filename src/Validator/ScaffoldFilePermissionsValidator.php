@@ -64,9 +64,10 @@ final class ScaffoldFilePermissionsValidator implements EventSubscriberInterface
     $stage = $event->getStage();
     $active_scaffold_files = $this->getDefaultSiteFilesFromScaffold($stage->getActiveComposer());
 
-    // If the active directory and staging area have different files scaffolded
-    // into `sites/default` (i.e., files were added, renamed, or deleted), the
-    // site directory itself must be writable for the changes to be applied.
+    // If the active directory and stage directory have different files
+    // scaffolded into `sites/default` (i.e., files were added, renamed, or
+    // deleted), the site directory itself must be writable for the changes to
+    // be applied.
     if ($event instanceof PreApplyEvent) {
       $staged_scaffold_files = $this->getDefaultSiteFilesFromScaffold($stage->getStageComposer());
 
@@ -75,7 +76,7 @@ final class ScaffoldFilePermissionsValidator implements EventSubscriberInterface
       }
     }
     // The scaffolded files themselves must be writable, so that any changes to
-    // them in the staging area can be synced back to the active directory.
+    // them in the stage directory can be synced back to the active directory.
     foreach ($active_scaffold_files as $scaffold_file) {
       $paths[] = $site_dir . '/' . $scaffold_file;
     }

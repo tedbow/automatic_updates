@@ -9,7 +9,7 @@ use Symfony\Component\HttpFoundation\Request;
 use Drupal\package_manager_test_api\ApiController as PackageManagerApiController;
 
 /**
- * Provides API endpoints to interact with a staging area in functional tests.
+ * Provides API endpoint to interact with stage directory in functional tests.
  */
 class ApiController extends PackageManagerApiController {
 

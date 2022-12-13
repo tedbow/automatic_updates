@@ -86,7 +86,7 @@ class StagedDBUpdateValidator implements EventSubscriberInterface {
    * Determines if a staged extension has changed update functions.
    *
    * @param string $stage_dir
-   *   The path of the staging area.
+   *   The path of the stage directory.
    * @param \Drupal\Core\Extension\Extension $extension
    *   The extension to check.
    *
@@ -161,10 +161,10 @@ class StagedDBUpdateValidator implements EventSubscriberInterface {
   }
 
   /**
-   * Gets extensions that have database updates in the staging area.
+   * Gets extensions that have database updates in the stage directory.
    *
    * @param string $stage_dir
-   *   The path of the staging area.
+   *   The path of the stage directory.
    *
    * @return string[]
    *   The names of the extensions that have possible database updates.

@@ -10,7 +10,7 @@ use Drupal\package_manager\PathLocator;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 /**
- * Excludes SQLite database files from staging operations.
+ * Excludes SQLite database files from stage operations.
  *
  * @internal
  *   This is an internal part of Package Manager and may be changed or removed
@@ -51,7 +51,7 @@ class SqliteDatabaseExcluder implements EventSubscriberInterface {
   }
 
   /**
-   * Excludes SQLite database files from staging operations.
+   * Excludes SQLite database files from stage operations.
    *
    * @param \Drupal\package_manager\Event\CollectIgnoredPathsEvent $event
    *   The event object.

@@ -12,7 +12,7 @@ use PhpTuf\ComposerStager\Infrastructure\Value\PathList\PathList;
  * Defines an event that collects ignored paths.
  *
  * Ignored paths are completely ignored by Composer Stager. They are never
- * copied into the staging area from the active directory, or vice-versa.
+ * copied into the stage directory from the active directory, or vice-versa.
  */
 class CollectIgnoredPathsEvent extends StageEvent implements PathListInterface {
 

@@ -15,7 +15,7 @@ use Drupal\package_manager\PathLocator;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 /**
- * Validates that there is enough free disk space to do staging operations.
+ * Validates that there is enough free disk space to do stage operations.
  *
  * @internal
  *   This is an internal part of Package Manager and may be changed or removed
@@ -147,7 +147,7 @@ class DiskSpaceValidator implements EventSubscriberInterface {
 
     if ($messages) {
       $summary = count($messages) > 1
-        ? $this->t("There is not enough disk space to create a staging area.")
+        ? $this->t("There is not enough disk space to create a stage directory.")
         : NULL;
       $event->addError($messages, $summary);
     }

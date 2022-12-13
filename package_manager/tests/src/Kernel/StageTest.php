@@ -69,7 +69,7 @@ class StageTest extends PackageManagerKernelTestBase {
     $stage_dir = $stage->getStageDirectory();
     $this->assertStringStartsWith($path_locator->getStagingRoot() . '/', $stage_dir);
     $this->assertStringEndsWith("/$id", $stage_dir);
-    // If the staging root is changed, the existing stage shouldn't be
+    // If the stage root directory is changed, the existing stage shouldn't be
     // affected...
     $active_dir = $path_locator->getProjectRoot();
     $path_locator->setPaths($active_dir, "$active_dir/vendor", '', '/junk/drawer');
@@ -188,7 +188,7 @@ class StageTest extends PackageManagerKernelTestBase {
     $stage->require(['ext-json:*']);
     if ($expect_exception) {
       $this->expectException(StageException::class);
-      $this->expectExceptionMessage('Cannot destroy the staging area while it is being applied to the active directory.');
+      $this->expectExceptionMessage('Cannot destroy the stage directory while it is being applied to the active directory.');
     }
     $stage->apply();
 

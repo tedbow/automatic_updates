@@ -9,7 +9,7 @@ use Drupal\package_manager\PathLocator;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 /**
- * Excludes vendor hardening files from staging operations.
+ * Excludes vendor hardening files from stage operations.
  *
  * @internal
  *   This is an internal part of Package Manager and may be changed or removed
@@ -40,7 +40,7 @@ final class VendorHardeningExcluder implements EventSubscriberInterface {
   }
 
   /**
-   * Excludes vendor hardening files from staging operations.
+   * Excludes vendor hardening files from stage operations.
    *
    * @param \Drupal\package_manager\Event\CollectIgnoredPathsEvent $event
    *   The event object.

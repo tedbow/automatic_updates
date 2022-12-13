@@ -8,7 +8,7 @@ use Drupal\package_manager\Stage;
 use Symfony\Contracts\EventDispatcher\Event;
 
 /**
- * Base class for all events related to the life cycle of the staging area.
+ * Base class for all events related to the life cycle of the stage.
  */
 abstract class StageEvent extends Event {
 

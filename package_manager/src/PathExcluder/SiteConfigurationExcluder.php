@@ -9,7 +9,7 @@ use Drupal\package_manager\PathLocator;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 /**
- * Excludes site configuration files from staging areas.
+ * Excludes site configuration files from stage directories.
  *
  * @internal
  *   This is an internal part of Package Manager and may be changed or removed
@@ -41,7 +41,7 @@ class SiteConfigurationExcluder implements EventSubscriberInterface {
   }
 
   /**
-   * Excludes site configuration files from staging operations.
+   * Excludes site configuration files from stage operations.
    *
    * @param \Drupal\package_manager\Event\CollectIgnoredPathsEvent $event
    *   The event object.

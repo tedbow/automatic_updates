@@ -12,7 +12,7 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\Component\Filesystem\Filesystem;
 
 /**
- * Excludes public and private files from staging operations.
+ * Excludes public and private files from stage operations.
  *
  * @internal
  *   This is an internal part of Package Manager and may be changed or removed
@@ -63,7 +63,7 @@ final class SiteFilesExcluder implements EventSubscriberInterface {
   }
 
   /**
-   * Excludes public and private files from staging operations.
+   * Excludes public and private files from stage operations.
    *
    * @param \Drupal\package_manager\Event\CollectIgnoredPathsEvent $event
    *   The event object.

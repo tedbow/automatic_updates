@@ -236,7 +236,7 @@ abstract class PackageManagerKernelTestBase extends KernelTestBase {
     $active_dir = $active_dir->url();
     static::copyFixtureFilesTo($source_dir, $active_dir);
 
-    // Create a staging root directory alongside the active directory.
+    // Create a stage root directory alongside the active directory.
     $stage_dir = vfsStream::newDirectory('stage');
     $this->vfsRoot->addChild($stage_dir);
 
@@ -247,7 +247,8 @@ abstract class PackageManagerKernelTestBase extends KernelTestBase {
     $path_locator = $this->container->get('package_manager.path_locator');
     $path_locator->setPaths($active_dir, $active_dir . '/vendor', '', $stage_dir->url());
 
-    // Ensure the active directory will be copied into the virtual staging area.
+    // Ensure the active directory will be copied into the virtual stage
+    // directory.
     Beginner::setFixturePath($active_dir);
 
     // Since the path locator now points to a virtual file system, we need to

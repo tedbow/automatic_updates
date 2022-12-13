@@ -70,7 +70,7 @@ class StageOwnershipTest extends PackageManagerKernelTestBase {
   }
 
   /**
-   * Asserts that ownership is enforced across staging areas.
+   * Asserts that ownership is enforced across stage directories.
    *
    * @param \Drupal\Tests\package_manager\Kernel\TestStage $will_create
    *   The stage that will be created, and owned by the current user or session.
@@ -79,17 +79,18 @@ class StageOwnershipTest extends PackageManagerKernelTestBase {
    *   ownership and status of the other stage.
    */
   private function assertOwnershipIsEnforced(TestStage $will_create, TestStage $never_create): void {
-    // Before the staging area is created, isAvailable() should return TRUE.
+    // Before the stage directory is created, isAvailable() should return
+    // TRUE.
     $this->assertTrue($will_create->isAvailable());
     $this->assertTrue($never_create->isAvailable());
 
     $stage_id = $will_create->create();
-    // Both staging areas should be considered unavailable (i.e., cannot be
-    // created until the existing one is destroyed first).
+    // Both stage directories should be considered unavailable (i.e., cannot
+    // be created until the existing one is destroyed first).
     $this->assertFalse($will_create->isAvailable());
     $this->assertFalse($never_create->isAvailable());
 
-    // We should get an error if we try to create the staging area again,
+    // We should get an error if we try to create the stage directory again,
     // regardless of who owns it.
     foreach ([$will_create, $never_create] as $stage) {
       try {
@@ -199,7 +200,7 @@ class StageOwnershipTest extends PackageManagerKernelTestBase {
     ];
     // Since we deliberately don't call create() on the stages we create as
     // we loop through the life cycle methods, ensure that the active directory
-    // is mirrored into the staging area when a package is required.
+    // is mirrored into the stage directory when a package is required.
     $active_dir = $this->container->get('package_manager.path_locator')
       ->getProjectRoot();
     Stager::setFixturePath($active_dir);
@@ -268,9 +269,9 @@ class StageOwnershipTest extends PackageManagerKernelTestBase {
        */
       public function chmod($uri, $mode = NULL) {
         // Normally, the stage will call this method as it tries to make
-        // everything in the staging area writable so it can be deleted. We
+        // everything in the stage directory writable so it can be deleted. We
         // don't wan't to do that in this test, since we're specifically testing
-        // what happens when we try to delete a staging area with
+        // what happens when we try to delete a stage directory with
         // write-protected files.
       }
 

@@ -10,7 +10,7 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\Component\Finder\Finder;
 
 /**
- * Excludes node_modules files from staging areas.
+ * Excludes node_modules files from stage directories.
  *
  * @internal
  *   This is an internal part of Package Manager and may be changed or removed
@@ -32,7 +32,7 @@ class NodeModulesExcluder implements EventSubscriberInterface {
   }
 
   /**
-   * Excludes node_modules directories from staging operations.
+   * Excludes node_modules directories from stage operations.
    *
    * @param \Drupal\package_manager\Event\CollectIgnoredPathsEvent $event
    *   The event object.

@@ -25,13 +25,13 @@ class SiteFilesExcluderTest extends PackageManagerKernelTestBase {
   }
 
   /**
-   * Tests that public and private files are excluded from staging operations.
+   * Tests that public and private files are excluded from stage operations.
    */
   public function testSiteFilesExcluded(): void {
     // The private stream wrapper is only registered if this setting is set.
     // @see \Drupal\Core\CoreServiceProvider::register()
     $this->setSetting('file_private_path', 'private');
-    // In this test, we want to perform the actual staging operations so that we
+    // In this test, we want to perform the actual stage operations so that we
     // can be sure that files are staged as expected. This will also rebuild
     // the container, enabling the private stream wrapper.
     $this->setSetting('package_manager_bypass_composer_stager', FALSE);

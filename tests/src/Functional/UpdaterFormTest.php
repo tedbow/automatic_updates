@@ -510,7 +510,7 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
     $page->pressButton('Cancel update');
     // The exception should have been caught and displayed in the messages area.
     $assert_session->statusCodeEquals(200);
-    $destroy_error = 'Cannot destroy the staging area while it is being applied to the active directory.';
+    $destroy_error = 'Cannot destroy the stage directory while it is being applied to the active directory.';
     $assert_session->pageTextContains($destroy_error);
     $assert_session->pageTextNotContains($cancelled_message);
 

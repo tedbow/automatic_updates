@@ -8,7 +8,7 @@ use Drupal\package_manager\Event\CollectIgnoredPathsEvent;
 use Drupal\package_manager\Event\StageEvent;
 
 /**
- * Contains methods for excluding paths from staging operations.
+ * Contains methods for excluding paths from stage operations.
  */
 trait PathExclusionsTrait {
 

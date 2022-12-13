@@ -19,7 +19,7 @@ use PhpTuf\ComposerStager\Infrastructure\Value\PathList\PathList;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 /**
- * Flags errors if the project root or staging area contain symbolic links.
+ * Flags errors if the project root or stage directory contain symbolic links.
  *
  * @todo Remove this when Composer Stager's PHP file copier handles symlinks
  *   without issues.

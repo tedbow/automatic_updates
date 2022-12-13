@@ -38,9 +38,9 @@ final class UpdateDataSubscriber implements EventSubscriberInterface {
   /**
    * Clears stale update data.
    *
-   * This will always run after any staging area is applied to the active
-   * directory, since it's likely that core and/or multiple extensions have been
-   * added, removed, or updated.
+   * This will always run after any stage directory changes are applied to the
+   * active directory, since it's likely that core and/or multiple extensions
+   * have been added, removed, or updated.
    */
   public function clearData(): void {
     $this->updateManager->refreshUpdateData();

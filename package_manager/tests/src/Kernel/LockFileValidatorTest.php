@@ -155,7 +155,7 @@ class LockFileValidatorTest extends PackageManagerKernelTestBase {
   }
 
   /**
-   * Data provider for test methods that validate the staging area.
+   * Data provider for test methods that validate the stage directory.
    *
    * @return string[][]
    *   The test cases.

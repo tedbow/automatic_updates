@@ -7,7 +7,7 @@ namespace Drupal\package_manager\Event;
 use Drupal\package_manager\Stage;
 
 /**
- * Event fired before a staging area is created.
+ * Event fired before a stage directory is created.
  */
 class PreCreateEvent extends PreOperationStageEvent {
 

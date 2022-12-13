@@ -37,10 +37,10 @@ class SiteConfigurationExcluderTest extends PackageManagerKernelTestBase {
   }
 
   /**
-   * Tests that certain paths are excluded from staging operations.
+   * Tests that certain paths are excluded from stage operations.
    */
   public function testExcludedPaths(): void {
-    // In this test, we want to perform the actual staging operations so that we
+    // In this test, we want to perform the actual stage operations so that we
     // can be sure that files are staged as expected.
     $this->setSetting('package_manager_bypass_composer_stager', FALSE);
     // Ensure we have an up-to-date container.
@@ -78,7 +78,7 @@ class SiteConfigurationExcluderTest extends PackageManagerKernelTestBase {
     // Regular module files should be staged.
     $this->assertFileExists("$stage_dir/modules/example/example.info.yml");
 
-    // A new file added to the site directory in the staging area should be
+    // A new file added to the site directory in the stage directory should be
     // copied to the active directory.
     $file = "$stage_dir/sites/default/new.txt";
     touch($file);

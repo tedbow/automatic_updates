@@ -101,22 +101,22 @@ class WritableFileSystemValidatorTest extends PackageManagerKernelTestBase {
     $non_writable_permission = 0444;
     $summary = t('The file system is not writable.');
     return [
-      'writable staging root exists' => [
+      'writable stage root exists' => [
         $writable_permission,
         [],
         FALSE,
       ],
-      'write-protected staging root exists' => [
+      'write-protected stage root exists' => [
         $non_writable_permission,
         [
-          ValidationResult::createError(['The staging root directory "vfs://root/stage" is not writable.'], $summary),
+          ValidationResult::createError(['The stage root directory "vfs://root/stage" is not writable.'], $summary),
         ],
         FALSE,
       ],
-      'staging root does not exist, parent directory not writable' => [
+      'stage root directory does not exist, parent directory not writable' => [
         $non_writable_permission,
         [
-          ValidationResult::createError(['The staging root directory will not able to be created at "vfs://root".'], $summary),
+          ValidationResult::createError(['The stage root directory will not able to be created at "vfs://root".'], $summary),
         ],
         TRUE,
       ],
@@ -124,15 +124,15 @@ class WritableFileSystemValidatorTest extends PackageManagerKernelTestBase {
   }
 
   /**
-   * Tests that the staging root's permissions are validated.
+   * Tests that the stage root's permissions are validated.
    *
    * @param int $permissions
-   *   The file permissions to apply to the staging root, or its parent
+   *   The file permissions to apply to the stage root directory, or its parent
    *   directory, depending on the value of $delete_staging_root.
    * @param array $expected_results
    *   The expected validation results.
    * @param bool $delete_staging_root
-   *   Whether the staging root directory will exist at all.
+   *   Whether the stage root directory will exist at all.
    *
    * @dataProvider providerStagingRootPermissions
    */

@@ -83,8 +83,8 @@ class ScaffoldFilePermissionsValidatorTest extends AutomaticUpdatesKernelTestBas
       ],
       // Whether the site directory is write-protected only matters during
       // pre-apply, because it only presents a problem if scaffold files have
-      // been added or removed in the staging area. Which is a condition we can
-      // only detect during pre-apply.
+      // been added or removed in the stage directory. Which is a condition we
+      // can only detect during pre-apply.
       'write-protected scaffold file and site directory' => [
         [
           'sites/default/default.settings.php',
@@ -294,7 +294,8 @@ class ScaffoldFilePermissionsValidatorTest extends AutomaticUpdatesKernelTestBas
    */
   public function testScaffoldFilesChanged(array $write_protected_paths, array $active_scaffold_files, array $staged_scaffold_files, array $expected_results): void {
     // Create fake scaffold files so we can test scenarios in which a scaffold
-    // file that exists in the active directory is deleted in the staging area.
+    // file that exists in the active directory is deleted in the stage
+    // directory.
     touch($this->activeDir . '/sites/default/deleted.txt');
     touch($this->activeDir . '/foo.txt');
 

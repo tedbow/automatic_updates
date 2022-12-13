@@ -7,7 +7,7 @@ namespace Drupal\Tests\package_manager\Build;
 use Drupal\package_manager\Stage;
 
 /**
- * Tests updating packages in a staging area.
+ * Tests updating packages in a stage directory.
  *
  * @group package_manager
  * @internal
@@ -15,7 +15,7 @@ use Drupal\package_manager\Stage;
 class PackageUpdateTest extends TemplateProjectTestBase {
 
   /**
-   * Tests updating packages in a staging area.
+   * Tests updating packages in a stage directory.
    */
   public function testPackageUpdate(): void {
     $this->createTestProject('RecommendedProject');

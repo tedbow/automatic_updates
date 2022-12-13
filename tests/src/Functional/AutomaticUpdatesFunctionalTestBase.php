@@ -95,8 +95,8 @@ abstract class AutomaticUpdatesFunctionalTestBase extends BrowserTestBase {
    * {@inheritdoc}
    */
   protected function tearDown(): void {
-    // If automatic_updates is installed, ensure any staging area created during
-    // the test is cleaned up.
+    // If automatic_updates is installed, ensure any stage directory created
+    // during the test is cleaned up.
     $service_id = 'automatic_updates.updater';
     if ($this->container->has($service_id)) {
       $this->container->get($service_id)->destroy(TRUE);

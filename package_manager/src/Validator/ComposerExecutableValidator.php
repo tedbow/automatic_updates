@@ -95,7 +95,7 @@ class ComposerExecutableValidator implements EventSubscriberInterface {
   public function validateStagePreOperation(PreOperationStageEvent $event): void {
     // Return early if Composer is not available.
     try {
-      // The "Composer is available" precondition requires active and staging
+      // The "Composer is available" precondition requires active and stage
       // directories, but they don't actually matter to it, nor do path
       // exclusions, so dummies can be passed for simplicity.
       $active_dir = $this->pathFactory::create(__DIR__);

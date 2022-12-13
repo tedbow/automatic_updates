@@ -25,10 +25,10 @@ class VendorHardeningExcluderTest extends PackageManagerKernelTestBase {
   }
 
   /**
-   * Tests that vendor hardening files are excluded from staging operations.
+   * Tests that vendor hardening files are excluded from stage operations.
    */
   public function testVendorHardeningFilesExcluded(): void {
-    // In this test, we want to perform the actual staging operations so that we
+    // In this test, we want to perform the actual stage operations so that we
     // can be sure that files are staged as expected.
     $this->setSetting('package_manager_bypass_composer_stager', FALSE);
     // Ensure we have an up-to-date container.

@@ -20,8 +20,8 @@ trait ExcludedPathsTrait {
    * Adds a path to exclude from the current operation.
    *
    * If called on an instance of \Drupal\package_manager\Event\PreCreateEvent,
-   * excluded paths will not be copied into the staging area when the stage is
-   * created. If called on an instance of
+   * excluded paths will not be copied into the stage directory when the stage
+   * is created. If called on an instance of
    * \Drupal\package_manager\Event\PreApplyEvent, excluded paths will not be
    * deleted from the active directory when staged changes are applied. So,
    * to ensure that a given path is never staged, but also preserved in the

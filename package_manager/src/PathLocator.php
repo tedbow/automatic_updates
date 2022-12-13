@@ -117,14 +117,15 @@ class PathLocator {
   }
 
   /**
-   * Returns the directory where staging areas will be created.
+   * Returns the directory where stage directories will be created.
    *
-   * The staging root may be affected by site settings, so stages may wish to
+   * The stage root may be affected by site settings, so stages may wish to
    * cache the value returned by this method, to ensure that they use the same
-   * staging root throughout their life cycle.
+   * stage root directory throughout their life cycle.
    *
    * @return string
-   *   The absolute path of the directory where staging areas should be created.
+   *   The absolute path of the directory where stage directories should be
+   *   created.
    */
   public function getStagingRoot(): string {
     $site_id = $this->configFactory->get('system.site')->get('uuid');

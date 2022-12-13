@@ -230,7 +230,7 @@ final class UpdateReady extends UpdateFormBase {
    *   A render array displaying packages that will be updated.
    */
   private function showUpdates(): array {
-    // Get packages that were updated in the staging area.
+    // Get packages that were updated in the stage directory.
     $active = $this->updater->getActiveComposer();
     $staged = $this->updater->getStageComposer();
     $updated_packages = $staged->getPackagesWithDifferentVersionsIn($active);

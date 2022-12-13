@@ -22,7 +22,7 @@ use Drupal\package_manager\ValidationResult;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 /**
- * Tests that the staging area fires events during its lifecycle.
+ * Tests that the stage fires events during its lifecycle.
  *
  * @covers \Drupal\package_manager\Event\StageEvent
  * @group package_manager
@@ -81,7 +81,7 @@ class StageEventsTest extends PackageManagerKernelTestBase implements EventSubsc
   }
 
   /**
-   * Handles a staging area life cycle event.
+   * Handles a stage life cycle event.
    *
    * @param \Drupal\package_manager\Event\StageEvent $event
    *   The event object.
@@ -94,7 +94,7 @@ class StageEventsTest extends PackageManagerKernelTestBase implements EventSubsc
   }
 
   /**
-   * Tests that the staging area fires life cycle events in a specific order.
+   * Tests that the stage fires life cycle events in a specific order.
    */
   public function testEvents(): void {
     $this->container->get('event_dispatcher')->addSubscriber($this);

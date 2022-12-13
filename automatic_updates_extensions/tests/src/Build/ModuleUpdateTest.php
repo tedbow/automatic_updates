@@ -9,7 +9,7 @@ use Drupal\Tests\automatic_updates_extensions\Traits\FormTestTrait;
 use Symfony\Component\Filesystem\Filesystem as SymfonyFilesystem;
 
 /**
- * Tests updating modules in a staging area.
+ * Tests updating modules in a stage directory.
  *
  * @group automatic_updates_extensions
  * @internal
@@ -56,7 +56,7 @@ END;
   }
 
   /**
-   * Tests updating a module in a staging area via the API.
+   * Tests updating a module in a stage directory via the API.
    */
   public function testApi(): void {
     $this->createTestProject('RecommendedProject');
@@ -99,7 +99,7 @@ END;
   }
 
   /**
-   * Tests updating a module in a staging area via the UI.
+   * Tests updating a module in a stage directory via the UI.
    */
   public function testUi(): void {
     $this->createTestProject('RecommendedProject');

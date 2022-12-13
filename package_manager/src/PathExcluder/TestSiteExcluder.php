@@ -9,7 +9,7 @@ use Drupal\package_manager\PathLocator;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 /**
- * Excludes 'sites/simpletest' from staging operations.
+ * Excludes 'sites/simpletest' from stage operations.
  *
  * @internal
  *   This is an internal part of Package Manager and may be changed or removed
@@ -40,7 +40,7 @@ final class TestSiteExcluder implements EventSubscriberInterface {
   }
 
   /**
-   * Excludes sites/simpletest from staging operations.
+   * Excludes sites/simpletest from stage operations.
    *
    * @param \Drupal\package_manager\Event\CollectIgnoredPathsEvent $event
    *   The event object.

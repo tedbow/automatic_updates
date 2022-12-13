@@ -79,8 +79,8 @@ class PathLocator extends BasePathLocator {
    *   The web root, relative to the project root, or NULL to defer to the
    *   parent class.
    * @param string|null $staging_root
-   *   The absolute path of the staging root, or NULL to defer to the parent
-   *   class.
+   *   The absolute path of the stage root directory, or NULL to defer to the
+   *   parent class.
    */
   public function setPaths(?string $project_root, ?string $vendor_dir, ?string $web_root, ?string $staging_root): void {
     $this->state->set(static::class . ' root', $project_root);

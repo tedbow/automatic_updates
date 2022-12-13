@@ -41,27 +41,27 @@ use Psr\Log\NullLogger;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 
 /**
- * Creates and manages a staging area in which to install or update code.
+ * Creates and manages a stage directory in which to install or update code.
  *
- * Allows calling code to copy the current Drupal site into a temporary staging
+ * Allows calling code to copy the current Drupal site into a temporary stage
  * directory, use Composer to require packages into it, sync changes from the
- * staging directory back into the active code base, and then delete the
- * staging directory.
+ * stage directory back into the active code base, and then delete the
+ * stage directory.
  *
- * Only one staging area can exist at any given time, and the stage is owned by
- * the user or session that originally created it. Only the owner can perform
- * operations on the staging area, and the stage must be "claimed" by its owner
- * before any such operations are done. A stage is claimed by presenting a
- * unique token that is generated when the stage is created.
+ * Only one stage directory can exist at any given time, and the stage is
+ * owned by the user or session that originally created it. Only the owner can
+ * perform operations on the stage directory, and the stage must be "claimed"
+ * by its owner before any such operations are done. A stage is claimed by
+ * presenting a unique token that is generated when the stage is created.
  *
- * Although a site can only have one staging area, it is possible for privileged
- * users to destroy a stage created by another user. To prevent such actions
- * from putting the file system into an uncertain state (for example, if a stage
- * is destroyed by another user while it is still being created), the staging
- * directory has a randomly generated name. For additional cleanliness, all
- * staging directories created by a specific site live in a single directory,
- * called the "staging root" and identified by the UUID of the current site
- * (e.g. `/tmp/.package_managerSITE_UUID`), which is deleted when any stage
+ * Although a site can only have one stage directory, it is possible for
+ * privileged users to destroy a stage created by another user. To prevent such
+ * actions from putting the file system into an uncertain state (for example, if
+ * a stage is destroyed by another user while it is still being created), the
+ * stage directory has a randomly generated name. For additional cleanliness,
+ * all stage directories created by a specific site live in a single directory
+ * ,called the "stage root directory" and identified by the UUID of the current
+ * site (e.g. `/tmp/.package_managerSITE_UUID`), which is deleted when any stage
  * created by that site is destroyed.
  */
 class Stage implements LoggerAwareInterface {
@@ -84,7 +84,7 @@ class Stage implements LoggerAwareInterface {
   protected const TEMPSTORE_METADATA_KEY = 'metadata';
 
   /**
-   * The tempstore key under which to store the path of the staging root.
+   * The tempstore key under which to store the path of stage root directory.
    *
    * @var string
    *
@@ -260,10 +260,10 @@ class Stage implements LoggerAwareInterface {
   }
 
   /**
-   * Determines if the staging area can be created.
+   * Determines if the stage directory can be created.
    *
    * @return bool
-   *   TRUE if the staging area can be created, otherwise FALSE.
+   *   TRUE if the stage directory can be created, otherwise FALSE.
    */
   final public function isAvailable(): bool {
     return empty($this->tempStore->getMetadata(static::TEMPSTORE_LOCK_KEY));
@@ -312,7 +312,7 @@ class Stage implements LoggerAwareInterface {
    *
    * @return string[]
    *   A list of paths that Composer Stager should ignore when creating the
-   *   staging area and applying staged changes to the active directory.
+   *   stage directory and applying staged changes to the active directory.
    *
    * @see ::create()
    * @see ::apply()
@@ -324,7 +324,7 @@ class Stage implements LoggerAwareInterface {
   }
 
   /**
-   * Copies the active code base into the staging area.
+   * Copies the active code base into the stage directory.
    *
    * This will automatically claim the stage, so external code does NOT need to
    * call ::claim(). However, if it was created during another request, the
@@ -341,7 +341,7 @@ class Stage implements LoggerAwareInterface {
    *   as long as the stage needs to exist.
    *
    * @throws \Drupal\package_manager\Exception\StageException
-   *   Thrown if a staging area already exists.
+   *   Thrown if a stage directory already exists.
    *
    * @see ::claim()
    */
@@ -354,7 +354,7 @@ class Stage implements LoggerAwareInterface {
     // Mark the stage as unavailable as early as possible, before dispatching
     // the pre-create event. The idea is to prevent a race condition if the
     // event subscribers take a while to finish, and two different users attempt
-    // to create a staging area at around the same time. If an error occurs
+    // to create a stage directory at around the same time. If an error occurs
     // while the event is being processed, the stage is marked as available.
     // @see ::dispatch()
     $id = Crypt::randomBytesBase64();
@@ -381,7 +381,7 @@ class Stage implements LoggerAwareInterface {
   }
 
   /**
-   * Adds or updates packages in the staging area.
+   * Adds or updates packages in the stage directory.
    *
    * @param string[] $runtime
    *   The packages to add as regular top-level dependencies, in the form
@@ -520,11 +520,11 @@ class Stage implements LoggerAwareInterface {
   }
 
   /**
-   * Deletes the staging area.
+   * Deletes the stage directory.
    *
    * @param bool $force
-   *   (optional) If TRUE, the staging area will be destroyed even if it is not
-   *   owned by the current user or session. Defaults to FALSE.
+   *   (optional) If TRUE, the stage directory will be destroyed even if it is
+   *   not owned by the current user or session. Defaults to FALSE.
    *
    * @throws \Drupal\package_manager\Exception\StageException
    *   If the staged changes are being applied to the active directory.
@@ -534,12 +534,12 @@ class Stage implements LoggerAwareInterface {
       $this->checkOwnership();
     }
     if ($this->isApplying()) {
-      throw new StageException('Cannot destroy the staging area while it is being applied to the active directory.');
+      throw new StageException('Cannot destroy the stage directory while it is being applied to the active directory.');
     }
 
     $this->dispatch(new PreDestroyEvent($this));
     $staging_root = $this->getStagingRoot();
-    // If the staging root exists, delete it and everything in it.
+    // If the stage root directory exists, delete it and everything in it.
     if (file_exists($staging_root)) {
       try {
         $this->fileSystem->deleteRecursive($staging_root, function (string $path): void {
@@ -549,8 +549,8 @@ class Stage implements LoggerAwareInterface {
       catch (FileException $e) {
         // Deliberately swallow the exception so that the stage will be marked
         // as available and the post-destroy event will be fired, even if the
-        // staging area can't actually be deleted. The file system service logs
-        // the exception, so we don't need to do anything else here.
+        // stage directory can't actually be deleted. The file system service
+        // logs the exception, so we don't need to do anything else here.
       }
     }
 
@@ -673,7 +673,7 @@ class Stage implements LoggerAwareInterface {
   }
 
   /**
-   * Validates the ownership of staging area.
+   * Validates the ownership of stage directory.
    *
    * The stage is considered under valid ownership if it was created by current
    * user or session, using the current class.
@@ -681,8 +681,8 @@ class Stage implements LoggerAwareInterface {
    * @throws \LogicException
    *   If ::claim() has not been previously called.
    * @throws \Drupal\package_manager\Exception\StageOwnershipException
-   *   If the current user or session does not own the staging area, or it was
-   *   created by a different class.
+   *   If the current user or session does not own the stage directory, or it
+   *   was created by a different class.
    */
   final protected function checkOwnership(): void {
     if (empty($this->lock)) {
@@ -712,14 +712,14 @@ class Stage implements LoggerAwareInterface {
   }
 
   /**
-   * Returns the directory where staging areas will be created.
+   * Returns the directory where stage directories will be created.
    *
    * @return string
-   *   The absolute path of the directory containing the staging areas managed
-   *   by this class.
+   *   The absolute path of the directory containing the stage directories
+   *   managed by this class.
    */
   private function getStagingRoot(): string {
-    // Since the staging root can depend on site settings, store it so that
+    // Since the stage root can depend on site settings, store it so that
     // things won't break if the settings change during this stage's life
     // cycle.
     $dir = $this->tempStore->get(self::TEMPSTORE_STAGING_ROOT_KEY);
