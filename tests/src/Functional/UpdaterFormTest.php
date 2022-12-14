@@ -572,6 +572,8 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
    *   update process.
    *
    * @dataProvider providerStagedDatabaseUpdates
+   *
+   * @requires PHP >= 8.0
    */
   public function testStagedDatabaseUpdates(bool $maintenance_mode_on): void {
     $this->setCoreVersion('9.8.0');
@@ -743,6 +745,8 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
    *   Whether the site has database updates or not.
    *
    * @dataProvider providerStatusCheckerRunAfterUpdate
+   *
+   * @requires PHP >= 8.0
    */
   public function testStatusCheckerRunAfterUpdate(bool $has_database_updates) {
     $assert_session = $this->assertSession();

@@ -267,6 +267,8 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
    *   Whether the site has database updates or not.
    *
    * @dataProvider providerStatusCheckerRunAfterUpdate
+   *
+   * @requires PHP >= 8.0
    */
   public function testStatusCheckerRunAfterUpdate(bool $has_database_updates): void {
     $this->useFixtureDirectoryAsStaged(__DIR__ . '/../../fixtures/stage_composer/semver_test');
