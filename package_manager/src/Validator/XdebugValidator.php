@@ -16,7 +16,7 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
  *   at any time without warning. External code should not interact with this
  *   class.
  */
-final class XdebugValidator implements EventSubscriberInterface {
+class XdebugValidator implements EventSubscriberInterface {
 
   use StringTranslationTrait;
 
@@ -26,13 +26,26 @@ final class XdebugValidator implements EventSubscriberInterface {
    * @param \Drupal\package_manager\Event\StatusCheckEvent $event
    *   The event object.
    */
-  public function checkForXdebug(StatusCheckEvent $event): void {
+  public function validateXdebugOff(StatusCheckEvent $event): void {
+    $warning = $this->checkForXdebug();
+    if ($warning) {
+      $event->addWarning($warning);
+    }
+  }
+
+  /**
+   * Checks if Xdebug is enabled and returns a warning if it is.
+   *
+   * @return array|null
+   *   Returns an array of warnings or null if Xdebug isn't detected.
+   */
+  protected function checkForXdebug(): ?array {
     if (function_exists('xdebug_break')) {
-      $messages = [
+      return [
         $this->t('Xdebug is enabled, which may have a negative performance impact on Package Manager and any modules that use it.'),
       ];
-      $event->addWarning($messages);
     }
+    return NULL;
   }
 
   /**
@@ -40,7 +53,7 @@ final class XdebugValidator implements EventSubscriberInterface {
    */
   public static function getSubscribedEvents(): array {
     return [
-      StatusCheckEvent::class => 'checkForXdebug',
+      StatusCheckEvent::class => 'validateXdebugOff',
     ];
   }
 

@@ -6,7 +6,6 @@ namespace Drupal\automatic_updates\Validator;
 
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Drupal\automatic_updates\CronUpdater;
-use Drupal\automatic_updates\Updater;
 use Drupal\package_manager\Event\PreCreateEvent;
 use Drupal\package_manager\Event\PreOperationStageEvent;
 use Drupal\package_manager\Event\StatusCheckEvent;
@@ -20,24 +19,7 @@ use Drupal\package_manager\Validator\XdebugValidator as PackageManagerXdebugVali
  *   at any time without warning. External code should not interact with this
  *   class.
  */
-final class XdebugValidator implements EventSubscriberInterface {
-
-  /**
-   * The Package Manager validator we're wrapping.
-   *
-   * @var \Drupal\package_manager\Validator\XdebugValidator
-   */
-  private $packageManagerValidator;
-
-  /**
-   * Constructs an XdebugValidator object.
-   *
-   * @param \Drupal\package_manager\Validator\XdebugValidator $package_manager_validator
-   *   The Package Manager validator we're wrapping.
-   */
-  public function __construct(PackageManagerXdebugValidator $package_manager_validator) {
-    $this->packageManagerValidator = $package_manager_validator;
-  }
+final class XdebugValidator extends PackageManagerXdebugValidator implements EventSubscriberInterface {
 
   /**
    * Performs validation if Xdebug is enabled.
@@ -45,31 +27,17 @@ final class XdebugValidator implements EventSubscriberInterface {
    * @param \Drupal\package_manager\Event\PreOperationStageEvent $event
    *   The event object.
    */
-  public function checkForXdebug(PreOperationStageEvent $event): void {
+  public function validateXdebugOff(PreOperationStageEvent $event): void {
     $stage = $event->getStage();
+    $warning = $this->checkForXdebug();
 
-    // We only want to do this check if the stage belongs to Automatic Updates.
-    if (!($stage instanceof Updater)) {
-      return;
-    }
-
-    $status_check = new StatusCheckEvent($stage, []);
-    $this->packageManagerValidator->checkForXdebug($status_check);
-    $results = $status_check->getResults();
-    if (empty($results)) {
-      return;
-    }
-    elseif ($stage instanceof CronUpdater) {
-      // Cron updates are not allowed if Xdebug is enabled.
-      foreach ($results as $result) {
-        $event->addError($result->getMessages(), $result->getSummary());
+    if ($warning) {
+      if ($stage instanceof CronUpdater) {
+        // Cron updates are not allowed if Xdebug is enabled.
+        $event->addError([$this->t("Xdebug is enabled, currently Cron Updates are not allowed while it is enabled. If Xdebug is not disabled you will not receive security and other updates during cron.")]);
       }
-    }
-    elseif ($event instanceof StatusCheckEvent) {
-      // For non-cron updates provide a warning but do not stop updates from
-      // executing.
-      foreach ($results as $result) {
-        $event->addWarning($result->getMessages(), $result->getSummary());
+      elseif ($event instanceof StatusCheckEvent) {
+        $event->addWarning($warning);
       }
     }
   }
@@ -79,8 +47,8 @@ final class XdebugValidator implements EventSubscriberInterface {
    */
   public static function getSubscribedEvents(): array {
     return [
-      PreCreateEvent::class => 'checkForXdebug',
-      StatusCheckEvent::class => 'checkForXdebug',
+      PreCreateEvent::class => 'validateXdebugOff',
+      StatusCheckEvent::class => 'validateXdebugOff',
     ];
   }
 

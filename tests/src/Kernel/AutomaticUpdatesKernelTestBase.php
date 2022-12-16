@@ -51,7 +51,6 @@ abstract class AutomaticUpdatesKernelTestBase extends PackageManagerKernelTestBa
       $this->disableValidators[] = 'automatic_updates.validator.symlink';
     }
     // Always disable the Xdebug validator to allow test to run with Xdebug on.
-    $this->disableValidators[] = 'automatic_updates.validator.xdebug';
     $this->disableValidators[] = 'package_manager.validator.xdebug';
     parent::setUp();
     // Enable cron updates, which will eventually be the default.
