@@ -5,6 +5,7 @@ declare(strict_types = 1);
 namespace Drupal\Tests\package_manager\Kernel;
 
 use Drupal\KernelTests\KernelTestBase;
+use Drupal\Tests\package_manager\Traits\AssertPreconditionsTrait;
 use PhpTuf\ComposerStager\Domain\Service\FileSyncer\FileSyncerInterface;
 use PhpTuf\ComposerStager\Infrastructure\Service\FileSyncer\PhpFileSyncer;
 use PhpTuf\ComposerStager\Infrastructure\Service\FileSyncer\RsyncFileSyncer;
@@ -15,6 +16,8 @@ use PhpTuf\ComposerStager\Infrastructure\Service\FileSyncer\RsyncFileSyncer;
  * @internal
  */
 class FileSyncerFactoryTest extends KernelTestBase {
+
+  use AssertPreconditionsTrait;
 
   /**
    * {@inheritdoc}

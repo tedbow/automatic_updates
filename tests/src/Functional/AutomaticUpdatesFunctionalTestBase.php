@@ -10,6 +10,7 @@ use Drupal\fixture_manipulator\StageFixtureManipulator;
 use Drupal\package_manager_bypass\Beginner;
 use Drupal\package_manager_bypass\Stager;
 use Drupal\Tests\BrowserTestBase;
+use Drupal\Tests\package_manager\Traits\AssertPreconditionsTrait;
 use Drupal\Tests\package_manager\Traits\FixtureUtilityTrait;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
@@ -20,6 +21,7 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
  */
 abstract class AutomaticUpdatesFunctionalTestBase extends BrowserTestBase {
 
+  use AssertPreconditionsTrait;
   use FixtureUtilityTrait;
 
   /**

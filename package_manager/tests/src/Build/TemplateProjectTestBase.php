@@ -14,6 +14,7 @@ use Drupal\package_manager\Event\PreApplyEvent;
 use Drupal\package_manager\Event\PreCreateEvent;
 use Drupal\package_manager\Event\PreDestroyEvent;
 use Drupal\package_manager\Event\PreRequireEvent;
+use Drupal\Tests\package_manager\Traits\AssertPreconditionsTrait;
 use Drupal\Tests\package_manager\Traits\FixtureUtilityTrait;
 use Drupal\Tests\RandomGeneratorTrait;
 
@@ -29,6 +30,7 @@ use Drupal\Tests\RandomGeneratorTrait;
  */
 abstract class TemplateProjectTestBase extends QuickStartTestBase {
 
+  use AssertPreconditionsTrait;
   use FixtureUtilityTrait;
   use RandomGeneratorTrait;
 

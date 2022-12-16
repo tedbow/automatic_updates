@@ -7,6 +7,7 @@ namespace Drupal\Tests\package_manager\Kernel;
 use Drupal\fixture_manipulator\FixtureManipulator;
 use Drupal\KernelTests\KernelTestBase;
 use Drupal\package_manager\ComposerUtility;
+use Drupal\Tests\package_manager\Traits\AssertPreconditionsTrait;
 use Drupal\Tests\package_manager\Traits\FixtureUtilityTrait;
 use org\bovigo\vfs\vfsStream;
 
@@ -17,6 +18,7 @@ use org\bovigo\vfs\vfsStream;
  */
 class ComposerUtilityTest extends KernelTestBase {
 
+  use AssertPreconditionsTrait;
   use FixtureUtilityTrait;
 
   /**

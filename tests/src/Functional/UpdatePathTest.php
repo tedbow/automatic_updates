@@ -7,12 +7,15 @@ namespace Drupal\Tests\automatic_updates\Functional;
 use Drupal\automatic_updates\CronUpdater;
 use Drupal\automatic_updates\StatusCheckMailer;
 use Drupal\FunctionalTests\Update\UpdatePathTestBase;
+use Drupal\Tests\package_manager\Traits\AssertPreconditionsTrait;
 
 /**
  * @group automatic_updates
  * @internal
  */
 class UpdatePathTest extends UpdatePathTestBase {
+
+  use AssertPreconditionsTrait;
 
   /**
    * {@inheritdoc}

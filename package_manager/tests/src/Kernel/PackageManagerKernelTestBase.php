@@ -14,6 +14,7 @@ use Drupal\package_manager\Exception\StageException;
 use Drupal\package_manager\Exception\StageValidationException;
 use Drupal\package_manager\Stage;
 use Drupal\package_manager_bypass\Beginner;
+use Drupal\Tests\package_manager\Traits\AssertPreconditionsTrait;
 use Drupal\Tests\package_manager\Traits\FixtureUtilityTrait;
 use Drupal\Tests\package_manager\Traits\ValidationTestTrait;
 use GuzzleHttp\Client;
@@ -35,6 +36,7 @@ use Symfony\Component\DependencyInjection\Definition;
  */
 abstract class PackageManagerKernelTestBase extends KernelTestBase {
 
+  use AssertPreconditionsTrait;
   use FixtureUtilityTrait;
   use StatusCheckTrait;
   use ValidationTestTrait;

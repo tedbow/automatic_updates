@@ -7,6 +7,7 @@ namespace Drupal\Tests\package_manager\Kernel;
 use Drupal\Component\Serialization\Json;
 use Drupal\Component\Serialization\Yaml;
 use Drupal\KernelTests\KernelTestBase;
+use Drupal\Tests\package_manager\Traits\AssertPreconditionsTrait;
 use Symfony\Component\Finder\Finder;
 
 /**
@@ -25,6 +26,8 @@ use Symfony\Component\Finder\Finder;
  * @internal
  */
 class CorePackageManifestTest extends KernelTestBase {
+
+  use AssertPreconditionsTrait;
 
   /**
    * Tests that detected core packages match our hard-coded manifest file.

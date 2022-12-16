@@ -7,6 +7,7 @@ namespace Drupal\Tests\package_manager\Kernel;
 use Drupal\KernelTests\KernelTestBase;
 use Drupal\package_manager\ExecutableFinder;
 use Drupal\package_manager\ProcessFactory;
+use Drupal\Tests\package_manager\Traits\AssertPreconditionsTrait;
 use PhpTuf\ComposerStager\Infrastructure\Factory\Process\ProcessFactoryInterface;
 use PhpTuf\ComposerStager\Infrastructure\Service\Finder\ExecutableFinderInterface;
 
@@ -17,6 +18,8 @@ use PhpTuf\ComposerStager\Infrastructure\Service\Finder\ExecutableFinderInterfac
  * @internal
  */
 class ServicesTest extends KernelTestBase {
+
+  use AssertPreconditionsTrait;
 
   /**
    * {@inheritdoc}

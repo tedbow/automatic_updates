@@ -7,6 +7,7 @@ namespace Drupal\Tests\package_manager\Functional;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\package_manager\Stage;
 use Drupal\Tests\BrowserTestBase;
+use Drupal\Tests\package_manager\Traits\AssertPreconditionsTrait;
 
 /**
  * Tests that Package Manager's requirements check for the failure marker.
@@ -16,6 +17,8 @@ use Drupal\Tests\BrowserTestBase;
  */
 class FailureMarkerRequirementTest extends BrowserTestBase {
   use StringTranslationTrait;
+
+  use AssertPreconditionsTrait;
 
   /**
    * {@inheritdoc}

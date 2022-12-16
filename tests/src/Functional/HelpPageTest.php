@@ -5,12 +5,15 @@ declare(strict_types = 1);
 namespace Drupal\Tests\automatic_updates\Functional;
 
 use Drupal\Tests\BrowserTestBase;
+use Drupal\Tests\package_manager\Traits\AssertPreconditionsTrait;
 
 /**
  * @group automatic_updates
  * @internal
  */
 class HelpPageTest extends BrowserTestBase {
+
+  use AssertPreconditionsTrait;
 
   /**
    * {@inheritdoc}
