@@ -16,6 +16,7 @@ use Drupal\Core\Session\AccountProxyInterface;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\Core\StringTranslation\TranslationInterface;
 use Drupal\Core\Url;
+use Drupal\package_manager\ValidationResult;
 use Drupal\system\SystemManager;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
@@ -189,6 +190,36 @@ final class AdminStatusCheckMessages implements ContainerInjectionInterface {
     }
     $this->displayResults($results, $this->messenger(), $this->renderer);
     return TRUE;
+  }
+
+  /**
+   * Displays the result summary.
+   */
+  public function displayResultSummary(): void {
+    if (!$this->currentUser->hasPermission('administer site configuration')) {
+      return;
+    }
+    $results = $this->statusChecker->getResults();
+    if (empty($results)) {
+      return;
+    }
+    // First message: severity.
+    $overall_severity = ValidationResult::getOverallSeverity($results);
+    $message = $this->getFailureMessageForSeverity($overall_severity);
+    $message_type = $overall_severity === SystemManager::REQUIREMENT_ERROR ? MessengerInterface::TYPE_ERROR : MessengerInterface::TYPE_WARNING;
+    $this->messenger()->addMessage($message, $message_type);
+
+    // Optional second message: more details (for users with sufficient
+    // permissions).
+    $status_report_url = Url::fromRoute('system.status');
+    if ($status_report_url->access()) {
+      $this->messenger()->addMessage(
+      $this->t('<a href=":url">See status report for more details.</a>', [
+        ':url' => $status_report_url->toString(),
+      ]),
+      $message_type,
+      );
+    }
   }
 
 }

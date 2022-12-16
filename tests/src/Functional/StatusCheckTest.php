@@ -12,6 +12,7 @@ use Drupal\automatic_updates_test\EventSubscriber\TestSubscriber1;
 use Drupal\automatic_updates_test2\EventSubscriber\TestSubscriber2;
 use Drupal\Core\Url;
 use Drupal\package_manager\Event\StatusCheckEvent;
+use Drupal\package_manager_test_validation\EventSubscriber\TestSubscriber;
 use Drupal\system\SystemManager;
 use Drupal\Tests\automatic_updates\Traits\ValidationTestTrait;
 use Drupal\Tests\Traits\Core\CronRunTrait;
@@ -56,6 +57,13 @@ class StatusCheckTest extends AutomaticUpdatesFunctionalTestBase {
   /**
    * {@inheritdoc}
    */
+  protected static $modules = [
+    'package_manager_test_validation',
+  ];
+
+  /**
+   * {@inheritdoc}
+   */
   protected function setUp(): void {
     parent::setUp();
     $this->setReleaseMetadata(__DIR__ . '/../../../package_manager/tests/fixtures/release-history/drupal.9.8.1-security.xml');
@@ -70,8 +78,47 @@ class StatusCheckTest extends AutomaticUpdatesFunctionalTestBase {
       'administer software updates',
       'access administration pages',
       'access site in maintenance mode',
+      'administer modules',
     ]);
     $this->drupalLogin($this->reportViewerUser);
+  }
+
+  /**
+   * Tests status checks are displayed after Automatic Updates is installed.
+   *
+   * @dataProvider providerTestModuleFormInstallDisplay
+   */
+  public function testModuleFormInstallDisplay(int $results_severity): void {
+    // Uninstall Automatic Updates as it is installed in TestBase setup().
+    $this->container->get('module_installer')->uninstall(['automatic_updates']);
+    $expected_result = $this->createValidationResult($results_severity);
+    TestSubscriber::setTestResult([$expected_result], StatusCheckEvent::class);
+
+    $this->drupalLogin($this->checkerRunnerUser);
+    $this->drupalGet('admin/modules');
+    $page = $this->getSession()->getPage();
+    $page->checkField('modules[automatic_updates][enable]');
+    $page->pressButton('Install');
+
+    // Cron Updates will always be disabled on installation as per
+    // automatic_updates.settings.yml .
+    $session = $this->assertSession();
+    $session->pageTextNotContains($expected_result->getMessages()[0]);
+    $session->linkExists('See status report for more details.');
+  }
+
+  /**
+   * Provides data for testModuleFormInstallDisplay.
+   */
+  public function providerTestModuleFormInstallDisplay(): array {
+    return [
+      'Error' => [
+        SystemManager::REQUIREMENT_ERROR,
+      ],
+      'Warning' => [
+        SystemManager::REQUIREMENT_WARNING,
+      ],
+    ];
   }
 
   /**
