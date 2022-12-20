@@ -4,6 +4,7 @@ declare(strict_types = 1);
 
 namespace Drupal\Tests\package_manager\Kernel;
 
+use Drupal\package_manager\Event\PreApplyEvent;
 use Drupal\package_manager\Event\PreCreateEvent;
 use Drupal\package_manager\ValidationResult;
 use Drupal\Component\Utility\Bytes;
@@ -152,6 +153,36 @@ class DiskSpaceValidatorTest extends PackageManagerKernelTestBase {
 
     $this->assertStatusCheckResults($expected_results);
     $this->assertResults($expected_results, PreCreateEvent::class);
+  }
+
+  /**
+   * Tests disk space validation during pre-apply.
+   *
+   * @param bool $shared_disk
+   *   Whether the root and vendor directories are on the same logical disk.
+   * @param array $free_space
+   *   The free space that should be reported for various paths. The keys
+   *   are the paths, and the values are the free space that should be reported,
+   *   in a format that can be parsed by
+   *   \Drupal\Component\Utility\Bytes::toNumber().
+   * @param \Drupal\package_manager\ValidationResult[] $expected_results
+   *   The expected validation results.
+   *
+   * @dataProvider providerDiskSpaceValidation
+   */
+  public function testDiskSpaceValidationDuringPreApply(bool $shared_disk, array $free_space, array $expected_results): void {
+    $this->container->get('event_dispatcher')->addListener(
+      PreApplyEvent::class,
+      function () use ($shared_disk, $free_space): void {
+        /** @var \Drupal\Tests\package_manager\Kernel\TestDiskSpaceValidator $validator */
+        $validator = $this->container->get('package_manager.validator.disk_space');
+        $validator->sharedDisk = $shared_disk;
+        $validator->freeSpace = array_map([Bytes::class, 'toNumber'], $free_space);
+      },
+      PHP_INT_MAX
+    );
+
+    $this->assertResults($expected_results, PreApplyEvent::class);
   }
 
 }

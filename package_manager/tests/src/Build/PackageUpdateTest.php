@@ -34,6 +34,7 @@ class PackageUpdateTest extends TemplateProjectTestBase {
     // Change both modules' upstream version.
     $this->addRepository('alpha', $this->copyFixtureToTempDirectory(__DIR__ . '/../../fixtures/alpha/1.1.0'));
     $this->addRepository('updated_module', $this->copyFixtureToTempDirectory(__DIR__ . '/../../fixtures/updated_module/1.1.0'));
+    // Make .git folder
 
     // Use the API endpoint to create a stage and update updated_module to
     // 1.1.0. Even though both modules have version 1.1.0 available, only
@@ -55,6 +56,8 @@ class PackageUpdateTest extends TemplateProjectTestBase {
     $this->visit("/package-manager-test-api?$query");
     $mink = $this->getMink();
     $mink->assertSession()->statusCodeEquals(200);
+
+
 
     $file_contents = $mink->getSession()->getPage()->getContent();
     $file_contents = json_decode($file_contents, TRUE);

@@ -633,11 +633,17 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
     // Confirm the site remains in maintenance more when redirected to
     // update.php.
     $this->assertTrue($state->get('system.maintenance_mode'));
+    $assert_session->pageTextContainsOnce('An error has occurred.');
+    $assert_session->pageTextContainsOnce('Please continue to the error page');
+    $page->clickLink('the error page');
+    $assert_session->pageTextContains('Some modules have database schema updates to install. You should run the database update script immediately.');
+    $assert_session->linkExists('database update script');
+    $assert_session->linkByHrefExists('/update.php');
+    $page->clickLink('database update script');
     $assert_session->addressEquals('/update.php');
     $assert_session->pageTextNotContains($cached_message);
     $assert_session->pageTextNotContains(reset($messages));
     $assert_session->pageTextNotContains($possible_update_message);
-    $assert_session->pageTextContainsOnce('Please apply database updates to complete the update process.');
     $this->assertTrue($state->get('system.maintenance_mode'));
     $page->clickLink('Continue');
     // @see automatic_updates_update_1191934()
@@ -771,28 +777,38 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
       $this->container->get('state')->set('automatic_updates_test.new_update', TRUE);
       $page->pressButton('Continue');
       $this->checkForMetaRefresh();
+      $assert_session->pageTextContainsOnce('An error has occurred.');
+      $assert_session->pageTextContainsOnce('Please continue to the error page');
+      $page->clickLink('the error page');
+      $assert_session->pageTextContains('Some modules have database schema updates to install. You should run the database update script immediately.');
+      $assert_session->linkExists('database update script');
+      $assert_session->linkByHrefExists('/update.php');
+      $page->clickLink('database update script');
       $this->assertSession()->addressEquals('/update.php');
       $assert_session->pageTextNotContains('Possible database updates have been detected in the following extension');
-      $assert_session->pageTextContainsOnce('Please apply database updates to complete the update process.');
       $page->clickLink('Continue');
       // @see automatic_updates_update_1191934()
       $assert_session->pageTextContains('Dynamic automatic_updates_update_1191934');
       $page->clickLink('Apply pending updates');
       $this->checkForMetaRefresh();
       $assert_session->pageTextContains('Updates were attempted.');
+      // PendingUpdatesValidator prevented the update to complete, so the status
+      // checks weren't run.
+      $this->drupalGet('/admin');
+      $assert_session->pageTextContains('Your site has not recently run an update readiness check. Run readiness checks now.');
     }
     else {
       $page->pressButton('Continue');
       $this->checkForMetaRefresh();
       $assert_session->addressEquals('/admin/reports/updates');
       $assert_session->pageTextContainsOnce('Update complete!');
+      // Status checks should display errors on admin page.
+      $this->drupalGet('/admin');
+      // Confirm that the status checks were run and the new error is displayed.
+      $assert_session->statusMessageContains('Error before continue.', 'error');
+      $assert_session->statusMessageContains(static::$errorsExplanation, 'error');
+      $assert_session->pageTextNotContains('Your site has not recently run an update readiness check. Run readiness checks now.');
     }
-    // Status checks should display errors on admin page.
-    $this->drupalGet('/admin');
-    // Confirm that the status checks were run and the new error is displayed.
-    $assert_session->statusMessageContains('Error before continue.', 'error');
-    $assert_session->statusMessageContains(static::$errorsExplanation, 'error');
-    $assert_session->pageTextNotContains('Your site has not recently run an update readiness check. Run readiness checks now.');
   }
 
   /**

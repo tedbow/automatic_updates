@@ -4,6 +4,7 @@ declare(strict_types = 1);
 
 namespace Drupal\package_manager\Validator;
 
+use Drupal\package_manager\Event\PreApplyEvent;
 use Drupal\package_manager\Event\PreCreateEvent;
 use Drupal\package_manager\Event\PreOperationStageEvent;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
@@ -92,6 +93,7 @@ final class PendingUpdatesValidator implements EventSubscriberInterface {
     return [
       PreCreateEvent::class => 'validateStagePreOperation',
       StatusCheckEvent::class => 'validateStagePreOperation',
+      PreApplyEvent::class => 'validateStagePreOperation',
     ];
   }
 

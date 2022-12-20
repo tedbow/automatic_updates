@@ -4,6 +4,7 @@ declare(strict_types = 1);
 
 namespace Drupal\Tests\package_manager\Kernel;
 
+use Drupal\package_manager\Event\PreApplyEvent;
 use Drupal\package_manager\Event\PreCreateEvent;
 use Drupal\package_manager\ValidationResult;
 use Symfony\Component\Filesystem\Filesystem;
@@ -88,6 +89,38 @@ class WritableFileSystemValidatorTest extends PackageManagerKernelTestBase {
 
     $this->assertStatusCheckResults($expected_results);
     $this->assertResults($expected_results, PreCreateEvent::class);
+  }
+
+  /**
+   * Tests the file system permissions validator during pre-apply.
+   *
+   * @param int $root_permissions
+   *   The file permissions for the root folder.
+   * @param int $vendor_permissions
+   *   The file permissions for the vendor folder.
+   * @param array $expected_results
+   *   The expected validation results.
+   *
+   * @dataProvider providerWritable
+   */
+  public function testWritableDuringPreApply(int $root_permissions, int $vendor_permissions, array $expected_results): void {
+    $this->container->get('event_dispatcher')->addListener(
+      PreApplyEvent::class,
+      function () use ($root_permissions, $vendor_permissions): void {
+        $path_locator = $this->container->get('package_manager.path_locator');
+
+        // We need to set the vendor directory's permissions first because, in
+        // the virtual project, it's located inside the project root.
+        $this->assertTrue(chmod($path_locator->getVendorDirectory(), $vendor_permissions));
+        $this->assertTrue(chmod($path_locator->getProjectRoot(), $root_permissions));
+
+        // During pre-apply we don't care whether the staging root is writable.
+        $this->assertTrue(chmod($path_locator->getStagingRoot(), 0444));
+      },
+      PHP_INT_MAX
+    );
+
+    $this->assertResults($expected_results, PreApplyEvent::class);
   }
 
   /**

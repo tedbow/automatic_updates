@@ -5,6 +5,7 @@ declare(strict_types = 1);
 namespace Drupal\package_manager\Validator;
 
 use Drupal\Core\StringTranslation\TranslationInterface;
+use Drupal\package_manager\Event\PreApplyEvent;
 use Drupal\package_manager\Event\PreCreateEvent;
 use Drupal\package_manager\Event\PreOperationStageEvent;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
@@ -71,8 +72,15 @@ class WritableFileSystemValidator implements EventSubscriberInterface {
       $messages[] = $this->t('The vendor directory "@dir" is not writable.', ['@dir' => $dir]);
     }
 
-    // Ensure the stage root directory is writable. If it doesn't exist, ensure
-    // we will be able to create it.
+    // During pre-apply don't check whether the staging root is writable.
+    if ($event instanceof PreApplyEvent) {
+      if ($messages) {
+        $event->addError($messages, $this->t('The file system is not writable.'));
+      }
+      return;
+    }
+    // Ensure the staging root is writable. If it doesn't exist, ensure we will
+    // be able to create it.
     $dir = $this->pathLocator->getStagingRoot();
     if (!file_exists($dir)) {
       $dir = dirname($dir);
@@ -99,6 +107,7 @@ class WritableFileSystemValidator implements EventSubscriberInterface {
   public static function getSubscribedEvents(): array {
     return [
       PreCreateEvent::class => 'validateStagePreOperation',
+      PreApplyEvent::class => 'validateStagePreOperation',
       StatusCheckEvent::class => 'validateStagePreOperation',
     ];
   }

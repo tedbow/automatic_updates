@@ -4,6 +4,7 @@ declare(strict_types = 1);
 
 namespace Drupal\automatic_updates\Validator;
 
+use Drupal\package_manager\Event\PreApplyEvent;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Drupal\automatic_updates\CronUpdater;
 use Drupal\package_manager\Event\PreCreateEvent;
@@ -48,6 +49,7 @@ final class XdebugValidator extends PackageManagerXdebugValidator implements Eve
   public static function getSubscribedEvents(): array {
     return [
       PreCreateEvent::class => 'validateXdebugOff',
+      PreApplyEvent::class => 'validateXdebugOff',
       StatusCheckEvent::class => 'validateXdebugOff',
     ];
   }

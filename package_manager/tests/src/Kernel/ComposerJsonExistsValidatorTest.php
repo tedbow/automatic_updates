@@ -4,6 +4,7 @@ declare(strict_types = 1);
 
 namespace Drupal\Tests\package_manager\Kernel;
 
+use Drupal\package_manager\Event\PreApplyEvent;
 use Drupal\package_manager\Event\PreCreateEvent;
 use Drupal\package_manager\Event\StatusCheckEvent;
 use Drupal\package_manager\ValidationResult;
@@ -37,6 +38,34 @@ class ComposerJsonExistsValidatorTest extends PackageManagerKernelTestBase {
     }
     $this->assertStatusCheckResults([$result]);
     $this->assertResults([$result], PreCreateEvent::class);
+  }
+
+  /**
+   * Tests that active composer.json is not present during pre-apply.
+   */
+  public function testComposerRequirementDuringPreApply(): void {
+    $result = ValidationResult::createError([
+      'No composer.json file can be found at vfs://root/active',
+    ]);
+    $this->container->get('event_dispatcher')->addListener(
+        PreApplyEvent::class,
+        function (): void {
+          unlink($this->container->get('package_manager.path_locator')
+            ->getProjectRoot() . '/composer.json');
+        },
+        PHP_INT_MAX
+      );
+    $this->container->get('event_dispatcher')->addListener(
+      PreApplyEvent::class,
+      function (): void {
+        $this->fail('Event propagation should have been stopped during ' . PreApplyEvent::class . '.');
+      },
+      // Execute this listener immediately after the tested validator, which
+      // uses priority 190. This ensures informative test failures.
+      // @see \Drupal\package_manager\Validator\ComposerJsonExistsValidator::getSubscribedEvents()
+      189
+    );
+    $this->assertResults([$result], PreApplyEvent::class);
   }
 
 }

@@ -6,6 +6,7 @@ namespace Drupal\Tests\package_manager\Kernel;
 
 use Drupal\Core\DependencyInjection\ContainerBuilder;
 use Drupal\Core\Url;
+use Drupal\package_manager\Event\PreApplyEvent;
 use Drupal\package_manager\Event\PreCreateEvent;
 use Drupal\package_manager\Validator\ComposerExecutableValidator;
 use Drupal\package_manager\ValidationResult;
@@ -70,6 +71,33 @@ class ComposerExecutableValidatorTest extends PackageManagerKernelTestBase {
     ]);
     $this->assertStatusCheckResults([$error]);
     $this->assertResults([$error], PreCreateEvent::class);
+  }
+
+  /**
+   * Tests error on pre-apply if the Composer executable isn't found.
+   */
+  public function testErrorIfComposerNotFoundDuringPreApply(): void {
+    // Setting command output which doesn't raise error for pre-create event.
+    TestComposerExecutableValidator::setCommandOutput("Composer version 2.2.12");
+    $exception = new IOException("This is your regularly scheduled error.");
+
+    $listener = function () use ($exception): void {
+      TestComposerExecutableValidator::setCommandOutput($exception);
+    };
+    $this->container->get('event_dispatcher')->addListener(PreApplyEvent::class, $listener, PHP_INT_MAX);
+
+    // The validator should translate that exception into an error.
+    $error = ValidationResult::createError([
+      $exception->getMessage(),
+    ]);
+    $stage = $this->assertResults([$error], PreApplyEvent::class);
+    $stage->destroy(TRUE);
+
+    // Setting command output which doesn't raise error for pre-create event.
+    TestComposerExecutableValidator::setCommandOutput("Composer version 2.2.12");
+    $this->enableModules(['help']);
+    $this->container->get('event_dispatcher')->addListener(PreApplyEvent::class, $listener, PHP_INT_MAX);
+    $this->assertResultsWithHelp([$error], PreApplyEvent::class, FALSE);
   }
 
   /**
@@ -181,6 +209,36 @@ class ComposerExecutableValidatorTest extends PackageManagerKernelTestBase {
   }
 
   /**
+   * Tests validation of various Composer versions on pre-apply.
+   *
+   * @param string $reported_version
+   *   The version of Composer that `composer --version` should report.
+   * @param \Drupal\package_manager\ValidationResult[] $expected_results
+   *   The expected validation results.
+   *
+   * @dataProvider providerComposerVersionValidation
+   */
+  public function testComposerVersionValidationDuringPreApply(string $reported_version, array $expected_results): void {
+    // Setting command output which doesn't raise error for pre-create event.
+    TestComposerExecutableValidator::setCommandOutput("Composer version 2.2.12");
+    $listener = function () use ($reported_version): void {
+      TestComposerExecutableValidator::setCommandOutput("Composer version $reported_version");
+    };
+    $this->container->get('event_dispatcher')->addListener(PreApplyEvent::class, $listener, PHP_INT_MAX);
+
+    // If the validator can't find a recognized, supported version of Composer,
+    // it should produce errors.
+    $stage = $this->assertResults($expected_results, PreApplyEvent::class);
+    $stage->destroy(TRUE);
+
+    // Setting command output which doesn't raise error for pre-create event.
+    TestComposerExecutableValidator::setCommandOutput("Composer version 2.2.12");
+    $this->enableModules(['help']);
+    $this->container->get('event_dispatcher')->addListener(PreApplyEvent::class, $listener, PHP_INT_MAX);
+    $this->assertResultsWithHelp($expected_results, PreApplyEvent::class, FALSE);
+  }
+
+  /**
    * Asserts that a set of validation results link to the Package Manager help.
    *
    * @param \Drupal\package_manager\ValidationResult[] $expected_results
@@ -188,8 +246,11 @@ class ComposerExecutableValidatorTest extends PackageManagerKernelTestBase {
    * @param string|null $event_class
    *   (optional) The class of the event which should return the results. Must
    *   be passed if $expected_results is not empty.
+   * @param bool $assert_status_check
+   *   (optional) Whether the status checks should be asserted. Defaults to
+   *   TRUE.
    */
-  private function assertResultsWithHelp(array $expected_results, string $event_class = NULL): void {
+  private function assertResultsWithHelp(array $expected_results, string $event_class = NULL, bool $assert_status_check = TRUE): void {
     $url = Url::fromRoute('help.page', ['name' => 'package_manager'])
       ->setOption('fragment', 'package-manager-faq-composer-not-found')
       ->toString();
@@ -203,7 +264,9 @@ class ComposerExecutableValidatorTest extends PackageManagerKernelTestBase {
       $messages = array_map($map, $result->getMessages());
       $expected_results[$index] = ValidationResult::createError($messages);
     }
-    $this->assertStatusCheckResults($expected_results);
+    if ($assert_status_check) {
+      $this->assertStatusCheckResults($expected_results);
+    }
     $this->assertResults($expected_results, $event_class);
   }
 

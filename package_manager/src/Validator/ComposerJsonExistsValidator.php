@@ -6,6 +6,7 @@ namespace Drupal\package_manager\Validator;
 
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\Core\StringTranslation\TranslationInterface;
+use Drupal\package_manager\Event\PreApplyEvent;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Drupal\package_manager\Event\PreCreateEvent;
 use Drupal\package_manager\Event\PreOperationStageEvent;
@@ -52,6 +53,7 @@ final class ComposerJsonExistsValidator implements EventSubscriberInterface {
     // @see \Drupal\package_manager\Validator\EnvironmentSupportValidator
     return [
       PreCreateEvent::class => ['validateComposerJson', 190],
+      PreApplyEvent::class => ['validateComposerJson', 190],
       StatusCheckEvent::class => ['validateComposerJson', 190],
     ];
   }

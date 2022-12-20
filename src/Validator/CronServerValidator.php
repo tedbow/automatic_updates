@@ -9,6 +9,7 @@ use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Extension\ModuleHandlerInterface;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\Core\Url;
+use Drupal\package_manager\Event\PreApplyEvent;
 use Drupal\package_manager\Event\PreCreateEvent;
 use Drupal\package_manager\Event\PreOperationStageEvent;
 use Drupal\package_manager\Event\StatusCheckEvent;
@@ -118,6 +119,7 @@ final class CronServerValidator implements EventSubscriberInterface {
   public static function getSubscribedEvents(): array {
     return [
       PreCreateEvent::class => 'checkServer',
+      PreApplyEvent::class => 'checkServer',
       StatusCheckEvent::class => 'checkServer',
     ];
   }

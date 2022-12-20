@@ -4,6 +4,7 @@ declare(strict_types = 1);
 
 namespace Drupal\Tests\package_manager\Kernel;
 
+use Drupal\package_manager\Event\PreApplyEvent;
 use Drupal\package_manager\Event\PreCreateEvent;
 use Drupal\package_manager\ValidationResult;
 
@@ -43,6 +44,27 @@ class SettingsValidatorTest extends PackageManagerKernelTestBase {
     $this->setSetting('update_fetch_with_http_fallback', $setting);
     $this->assertStatusCheckResults($expected_results);
     $this->assertResults($expected_results, PreCreateEvent::class);
+  }
+
+  /**
+   * Tests settings validation during pre-apply.
+   *
+   * @param bool $setting
+   *   The value of the update_fetch_with_http_fallback setting.
+   * @param \Drupal\package_manager\ValidationResult[] $expected_results
+   *   The expected validation results.
+   *
+   * @dataProvider providerSettingsValidation
+   */
+  public function testSettingsValidationDuringPreApply(bool $setting, array $expected_results): void {
+    $this->container->get('event_dispatcher')->addListener(
+      PreApplyEvent::class,
+      function () use ($setting): void {
+        $this->setSetting('update_fetch_with_http_fallback', $setting);
+      },
+      PHP_INT_MAX
+    );
+    $this->assertResults($expected_results, PreApplyEvent::class);
   }
 
 }

@@ -4,6 +4,7 @@ declare(strict_types = 1);
 
 namespace Drupal\Tests\package_manager\Kernel;
 
+use Drupal\package_manager\Event\PreApplyEvent;
 use Drupal\package_manager\Event\PreCreateEvent;
 use Drupal\package_manager\Event\StatusCheckEvent;
 use Drupal\package_manager\ValidationResult;
@@ -42,6 +43,35 @@ class EnvironmentSupportValidatorTest extends PackageManagerKernelTestBase {
   }
 
   /**
+   * Tests an invalid URL in the environment support variable during pre-apply.
+   */
+  public function testInvalidUrlDuringPreApply(): void {
+    $this->container->get('event_dispatcher')->addListener(
+      PreApplyEvent::class,
+      function (): void {
+        putenv(EnvironmentSupportValidator::VARIABLE_NAME . '=broken/url.org');
+      },
+      PHP_INT_MAX
+    );
+
+    $result = ValidationResult::createError([
+      'Package Manager is not supported by your environment.',
+    ]);
+
+    $this->container->get('event_dispatcher')->addListener(
+      PreApplyEvent::class,
+      function (): void {
+        $this->fail('Event propagation should have been stopped during ' . PreApplyEvent::class . '.');
+      },
+      // Execute this listener immediately after the tested validator, which
+      // uses priority 200. This ensures informative test failures.
+      // @see \Drupal\package_manager\Validator\EnvironmentSupportValidator::getSubscribedEvents()
+      199
+    );
+    $this->assertResults([$result], PreApplyEvent::class);
+  }
+
+  /**
    * Tests that the validation message links to the provided URL.
    */
   public function testValidUrl(): void {
@@ -53,6 +83,25 @@ class EnvironmentSupportValidatorTest extends PackageManagerKernelTestBase {
     ]);
     $this->assertStatusCheckResults([$result]);
     $this->assertResults([$result], PreCreateEvent::class);
+  }
+
+  /**
+   * Tests that the validation message links to the provided URL during pre-apply.
+   */
+  public function testValidUrlDuringPreApply(): void {
+    $url = 'http://www.example.com';
+    $this->container->get('event_dispatcher')->addListener(
+      PreApplyEvent::class,
+      function () use ($url): void {
+        putenv(EnvironmentSupportValidator::VARIABLE_NAME . '=' . $url);
+      },
+      PHP_INT_MAX
+    );
+
+    $result = ValidationResult::createError([
+      '<a href="' . $url . '">Package Manager is not supported by your environment.</a>',
+    ]);
+    $this->assertResults([$result], PreApplyEvent::class);
   }
 
 }

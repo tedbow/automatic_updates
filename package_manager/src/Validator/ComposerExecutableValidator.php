@@ -7,6 +7,7 @@ namespace Drupal\package_manager\Validator;
 use Composer\Semver\Semver;
 use Drupal\Core\Extension\ModuleHandlerInterface;
 use Drupal\Core\Url;
+use Drupal\package_manager\Event\PreApplyEvent;
 use Drupal\package_manager\Event\PreCreateEvent;
 use Drupal\package_manager\Event\PreOperationStageEvent;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
@@ -167,6 +168,7 @@ class ComposerExecutableValidator implements EventSubscriberInterface {
   public static function getSubscribedEvents(): array {
     return [
       PreCreateEvent::class => 'validateStagePreOperation',
+      PreApplyEvent::class => 'validateStagePreOperation',
       StatusCheckEvent::class => 'validateStagePreOperation',
     ];
   }

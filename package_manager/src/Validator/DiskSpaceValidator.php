@@ -4,6 +4,7 @@ declare(strict_types = 1);
 
 namespace Drupal\package_manager\Validator;
 
+use Drupal\package_manager\Event\PreApplyEvent;
 use Drupal\package_manager\Event\PreCreateEvent;
 use Drupal\package_manager\Event\PreOperationStageEvent;
 use Drupal\Component\FileSystem\FileSystem;
@@ -169,6 +170,7 @@ class DiskSpaceValidator implements EventSubscriberInterface {
   public static function getSubscribedEvents(): array {
     return [
       PreCreateEvent::class => 'validateStagePreOperation',
+      PreApplyEvent::class => 'validateStagePreOperation',
       StatusCheckEvent::class => 'validateStagePreOperation',
     ];
   }
