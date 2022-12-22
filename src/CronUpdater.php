@@ -161,6 +161,28 @@ class CronUpdater extends Updater {
   private function performUpdate(string $target_version, ?int $timeout): void {
     $project_info = new ProjectInfo('drupal');
 
+    if (!$this->isAvailable()) {
+      if ($project_info->isInstalledVersionSafe() && !$this->isApplying()) {
+        $this->logger->notice('Cron will not perform any updates because there is an existing stage and the current version of the site is secure.');
+        return;
+      }
+      if (!$project_info->isInstalledVersionSafe() && $this->isApplying()) {
+        $this->logger->notice(
+          'Cron will not perform any updates as an existing staged update is applying. The site is currently on an insecure version of Drupal core but will attempt to update to a secure version next time cron is run. This update may be applied manually at the <a href="%url">update form</a>.',
+          ['%url' => Url::fromRoute('update.report_update')->setAbsolute()->toString()],
+        );
+        return;
+      }
+    }
+
+    // Delete the existing staging area if not available and the site is
+    // currently on an insecure version.
+    if (!$project_info->isInstalledVersionSafe() && !$this->isAvailable() && !$this->isApplying()) {
+      // @todo Improve this in https://www.drupal.org/i/3325654.
+      $this->logger->notice('The existing stage was not in the process of being applied, so it was destroyed to allow updating the site to a secure version during cron.');
+      $this->destroy(TRUE);
+    }
+
     $installed_version = $project_info->getInstalledVersion();
     if (empty($installed_version)) {
       $this->logger->error('Unable to determine the current version of Drupal core.');

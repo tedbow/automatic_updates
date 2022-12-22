@@ -22,6 +22,7 @@ use Drupal\package_manager\Exception\StageValidationException;
 use Drupal\package_manager\ValidationResult;
 use Drupal\package_manager_bypass\Committer;
 use Drupal\Tests\automatic_updates\Traits\EmailNotificationsTestTrait;
+use Drupal\Tests\package_manager\Kernel\TestStage;
 use Drupal\Tests\package_manager\Traits\PackageManagerBypassTestTrait;
 use Drupal\Tests\user\Traits\UserCreationTrait;
 use Prophecy\Argument;
@@ -342,6 +343,90 @@ class CronUpdaterTest extends AutomaticUpdatesKernelTestBase {
       $this->assertFalse($logged_by_cron);
       $this->assertTrue($updater->isAvailable());
     }
+  }
+
+  /**
+   * Tests stage is destroyed if not available and site is on insecure version.
+   */
+  public function testStageDestroyedIfNotAvailable(): void {
+    $stage = $this->createStage();
+    $stage->create();
+    $original_stage_directory = $stage->getStageDirectory();
+    $this->assertDirectoryExists($original_stage_directory);
+
+    $listener = function (PostRequireEvent $event) use (&$cron_stage_dir, $original_stage_directory): void {
+      $this->assertDirectoryDoesNotExist($original_stage_directory);
+      $cron_stage_dir = $this->container->get('package_manager.stager')->getInvocationArguments()[0][1]->resolve();
+      $this->assertSame($event->getStage()->getStageDirectory(), $cron_stage_dir);
+      $this->assertDirectoryExists($cron_stage_dir);
+    };
+    $this->container->get('event_dispatcher')->addListener(PostRequireEvent::class, $listener, PHP_INT_MAX);
+
+    $this->container->get('cron')->run();
+    $this->assertIsString($cron_stage_dir);
+    $this->assertNotEquals($original_stage_directory, $cron_stage_dir);
+    $this->assertDirectoryDoesNotExist($cron_stage_dir);
+    $this->assertTrue($this->logger->hasRecord('The existing stage was not in the process of being applied, so it was destroyed to allow updating the site to a secure version during cron.', (string) RfcLogLevel::NOTICE));
+  }
+
+  /**
+   * Tests stage is not destroyed if another update is applying.
+   */
+  public function testStageNotDestroyedIfApplying(): void {
+    $this->config('automatic_updates.settings')->set('cron', CronUpdater::ALL)->save();
+    $this->setReleaseMetadata([
+      'drupal' => __DIR__ . "/../../../package_manager/tests/fixtures/release-history/drupal.9.8.1-security.xml",
+    ]);
+    $this->setCoreVersion('9.8.0');
+    $stage = $this->createStage();
+    $stage->create();
+    $stage->require(['drupal/core:9.8.1']);
+    $stop_error = t('Stopping stage from applying');
+
+    // Add a PreApplyEvent event listener so we can attempt to run cron when
+    // another stage is applying.
+    $this->container->get('event_dispatcher')->addListener(PreApplyEvent::class, function (PreApplyEvent $event) use ($stop_error) {
+      // Ensure the stage that is applying the operation is not the cron
+      // updater.
+      $this->assertInstanceOf(TestStage::class, $event->getStage());
+      $this->container->get('cron')->run();
+      // We do not actually want to apply this operation it was just invoked to
+      // allow cron to be  attempted.
+      $event->addError([$stop_error]);
+    }, PHP_INT_MAX);
+
+    try {
+      $stage->apply();
+      $this->fail('Expected update to fail');
+    }
+    catch (StageValidationException $exception) {
+      $this->assertValidationResultsEqual([ValidationResult::createError([$stop_error])], $exception->getResults());
+    }
+
+    $this->assertTrue($this->logger->hasRecord("Cron will not perform any updates as an existing staged update is applying. The site is currently on an insecure version of Drupal core but will attempt to update to a secure version next time cron is run. This update may be applied manually at the <a href=\"%url\">update form</a>.", (string) RfcLogLevel::NOTICE));
+    $this->assertUpdateStagedTimes(1);
+  }
+
+  /**
+   * Tests stage is not destroyed if not available and site is on secure version.
+   */
+  public function testStageNotDestroyedIfSecure(): void {
+    $this->config('automatic_updates.settings')->set('cron', CronUpdater::ALL)->save();
+    $this->setReleaseMetadata([
+      'drupal' => __DIR__ . "/../../../package_manager/tests/fixtures/release-history/drupal.9.8.2.xml",
+    ]);
+    $this->setCoreVersion('9.8.1');
+    $stage = $this->createStage();
+    $stage->create();
+    $stage->require(['drupal/random']);
+    $this->assertUpdateStagedTimes(1);
+
+    // Trigger CronUpdater, the above should cause it to detect a stage that is
+    // applying.
+    $this->container->get('cron')->run();
+
+    $this->assertTrue($this->logger->hasRecord('Cron will not perform any updates because there is an existing stage and the current version of the site is secure.', (string) RfcLogLevel::NOTICE));
+    $this->assertUpdateStagedTimes(1);
   }
 
   /**

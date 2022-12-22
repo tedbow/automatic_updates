@@ -4,6 +4,7 @@ declare(strict_types = 1);
 
 namespace Drupal\Tests\automatic_updates\Build;
 
+use Behat\Mink\Element\DocumentElement;
 use Drupal\automatic_updates\CronUpdater;
 use Drupal\automatic_updates\Updater;
 use Drupal\Composer\Composer;
@@ -146,20 +147,7 @@ class CoreUpdateTest extends UpdateTestBase {
     $session = $mink->getSession();
     $page = $session->getPage();
     $assert_session = $mink->assertSession();
-
-    $this->visit('/admin/modules');
-    $assert_session->pageTextContains('There is a security update available for your version of Drupal.');
-    $page->clickLink('Update');
-
-    // Ensure that the update is prevented if the web root and/or vendor
-    // directories are not writable.
-    $this->assertReadOnlyFileSystemError(parse_url($session->getCurrentUrl(), PHP_URL_PATH));
-    $session->reload();
-
-    $assert_session->pageTextNotContains('There is a security update available for your version of Drupal.');
-    $page->pressButton('Update to 9.8.1');
-    $this->waitForBatchJob();
-    $assert_session->pageTextContains('Ready to update');
+    $this->coreUpdateTillUpdateReady($page);
     $page->pressButton('Continue');
     $this->waitForBatchJob();
     $assert_session->pageTextContains('Update complete!');
@@ -228,6 +216,22 @@ class CoreUpdateTest extends UpdateTestBase {
     // @see \Drupal\automatic_updates\Validation\AdminStatusCheckMessages::displayAdminPageMessages()
     $this->webAssert->statusMessageNotExists('error');
     $this->webAssert->statusMessageNotExists('warning');
+  }
+
+  /**
+   * Tests stage is destroyed if not available and site is on insecure version.
+   */
+  public function testStageDestroyedIfNotAvailable(): void {
+    $this->createTestProject('RecommendedProject');
+    $mink = $this->getMink();
+    $session = $mink->getSession();
+    $page = $session->getPage();
+    $assert_session = $mink->assertSession();
+    $this->coreUpdateTillUpdateReady($page);
+    $this->visit('/admin/reports/status');
+    $assert_session->pageTextContains('Your site is ready for automatic updates.');
+    $page->clickLink('Run cron');
+    $this->assertUpdateSuccessful('9.8.1');
   }
 
   /**
@@ -371,6 +375,30 @@ class CoreUpdateTest extends UpdateTestBase {
     // @see ::createTestProject()
     // @see ::setUpstreamCoreVersion()
     $this->assertCoreVersion($expected_version);
+  }
+
+  /**
+   * Performs core update till update ready form.
+   *
+   * @param \Behat\Mink\Element\DocumentElement $page
+   *   The page element.
+   */
+  private function coreUpdateTillUpdateReady(DocumentElement $page): void {
+    $session = $this->getMink()->getSession();
+    $this->visit('/admin/modules');
+    $assert_session = $this->getMink()->assertSession($session);
+    $assert_session->pageTextContains('There is a security update available for your version of Drupal.');
+    $page->clickLink('Update');
+
+    // Ensure that the update is prevented if the web root and/or vendor
+    // directories are not writable.
+    $this->assertReadOnlyFileSystemError(parse_url($session->getCurrentUrl(), PHP_URL_PATH));
+    $session->reload();
+
+    $assert_session->pageTextNotContains('There is a security update available for your version of Drupal.');
+    $page->pressButton('Update to 9.8.1');
+    $this->waitForBatchJob();
+    $assert_session->pageTextContains('Ready to update');
   }
 
 }
