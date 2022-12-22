@@ -486,7 +486,7 @@ class StatusCheckTest extends AutomaticUpdatesFunctionalTestBase {
       'automatic_updates',
       'automatic_updates_test',
     ]);
-
+    $this->checkForUpdates();
     // The error should be persistently visible, even after the checker stops
     // flagging it.
     $this->drupalGet('/admin/structure');
@@ -501,7 +501,7 @@ class StatusCheckTest extends AutomaticUpdatesFunctionalTestBase {
     // longer raising an error.
     $this->drupalGet('/admin/modules/update');
     $this->setCoreUpdate('9.8.1');
-    $assert_session->buttonExists('Update');
+    $assert_session->buttonExists('Update to 9.8.1');
     // Ensure that the previous results are still displayed on another admin
     // page, to confirm that the updater form is not discarding the previous
     // results by doing its checks.
@@ -509,7 +509,7 @@ class StatusCheckTest extends AutomaticUpdatesFunctionalTestBase {
     $assert_session->pageTextContains($message);
     // Proceed with the update.
     $this->drupalGet('/admin/modules/update');
-    $page->pressButton('Update');
+    $page->pressButton('Update to 9.8.1');
     $this->checkForMetaRefresh();
     $this->assertUpdateReady('9.8.1');
     $page->pressButton('Continue');

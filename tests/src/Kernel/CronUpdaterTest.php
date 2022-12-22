@@ -9,6 +9,7 @@ use Drupal\automatic_updates_test\EventSubscriber\TestSubscriber1;
 use Drupal\Core\DependencyInjection\ContainerBuilder;
 use Drupal\Core\Logger\RfcLogLevel;
 use Drupal\Core\Url;
+use Drupal\fixture_manipulator\StageFixtureManipulator;
 use Drupal\package_manager\Event\PostApplyEvent;
 use Drupal\package_manager\Event\PostCreateEvent;
 use Drupal\package_manager\Event\PostDestroyEvent;
@@ -143,12 +144,15 @@ class CronUpdaterTest extends AutomaticUpdatesKernelTestBase {
    * @dataProvider providerUpdaterCalled
    */
   public function testUpdaterCalled(string $setting, array $release_data, bool $will_update): void {
+    $version = strpos($release_data['drupal'], '9.8.2') ? '9.8.2' : '9.8.1';
+    (new StageFixtureManipulator())
+      ->setCorePackageVersion($version)
+      ->setReadyToCommit();
     // Our form alter does not refresh information on available updates, so
     // ensure that the appropriate update data is loaded beforehand.
     $this->setReleaseMetadata($release_data);
     $this->setCoreVersion('9.8.0');
     update_get_available(TRUE);
-
     $this->config('automatic_updates.settings')->set('cron', $setting)->save();
 
     // Since we're just trying to ensure that all of Package Manager's services
@@ -246,10 +250,12 @@ class CronUpdaterTest extends AutomaticUpdatesKernelTestBase {
    * @dataProvider providerStageDestroyedOnError
    */
   public function testStageDestroyedOnError(string $event_class, string $exception_class): void {
+    (new StageFixtureManipulator())
+      ->setCorePackageVersion('9.8.1')
+      ->setReadyToCommit();
     $this->installConfig('automatic_updates');
     // @todo Remove in https://www.drupal.org/project/automatic_updates/issues/3284443
     $this->config('automatic_updates.settings')->set('cron', CronUpdater::SECURITY)->save();
-    $this->setCoreVersion('9.8.0');
     // Ensure that there is a security release to which we should update.
     $this->setReleaseMetadata([
       'drupal' => __DIR__ . "/../../../package_manager/tests/fixtures/release-history/drupal.9.8.1-security.xml",
@@ -351,6 +357,9 @@ class CronUpdaterTest extends AutomaticUpdatesKernelTestBase {
    * Tests that email is sent when an unattended update succeeds.
    */
   public function testEmailOnSuccess(): void {
+    (new StageFixtureManipulator())
+      ->setCorePackageVersion('9.8.1')
+      ->setReadyToCommit();
     $this->container->get('cron')->run();
 
     // Ensure we sent a success message to all recipients.
@@ -395,6 +404,9 @@ END;
    * @dataProvider providerEmailOnFailure
    */
   public function testNonUrgentFailureEmail(string $event_class): void {
+    (new StageFixtureManipulator())
+      ->setCorePackageVersion('9.8.2')
+      ->setReadyToCommit();
     $this->setReleaseMetadata([
       'drupal' => __DIR__ . '/../../../package_manager/tests/fixtures/release-history/drupal.9.8.2.xml',
     ]);
@@ -436,6 +448,9 @@ END;
    * @dataProvider providerEmailOnFailure
    */
   public function testSecurityUpdateFailureEmail(string $event_class): void {
+    (new StageFixtureManipulator())
+      ->setCorePackageVersion('9.8.1')
+      ->setReadyToCommit();
     $results = [
       ValidationResult::createError(['Error while updating!']),
     ];
@@ -465,6 +480,9 @@ END;
    * Tests the failure e-mail when an unattended update fails to apply.
    */
   public function testApplyFailureEmail(): void {
+    (new StageFixtureManipulator())
+      ->setCorePackageVersion('9.8.1')
+      ->setReadyToCommit();
     $error = new \Exception('I drink your milkshake!');
     Committer::setException($error);
 

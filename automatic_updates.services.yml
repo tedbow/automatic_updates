@@ -62,6 +62,12 @@ services:
       - '@package_manager.failure_marker'
     calls:
       - ['setLogger', ['@logger.channel.automatic_updates']]
+  automatic_updates.requested_update_validator:
+    class: Drupal\automatic_updates\Validator\RequestedUpdateValidator
+    arguments:
+      - '@string_translation'
+    tags:
+      - { name: event_subscriber }
   automatic_updates.staged_projects_validator:
     class: Drupal\automatic_updates\Validator\StagedProjectsValidator
     arguments:

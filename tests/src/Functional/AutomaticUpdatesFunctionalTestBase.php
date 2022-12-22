@@ -39,11 +39,9 @@ abstract class AutomaticUpdatesFunctionalTestBase extends BrowserTestBase {
    * @param string $version
    *   The core version.
    */
-  protected function setCoreUpdate(string $version):void {
+  protected function setCoreUpdate(string $version): void {
     $stage_manipulator = new StageFixtureManipulator();
-    $stage_manipulator->setVersion('drupal/core', $version)
-      ->setVersion('drupal/core-recommended', $version)
-      ->setVersion('drupal/core-dev', $version)
+    $stage_manipulator->setCorePackageVersion($version)
       ->setReadyToCommit();
   }
 

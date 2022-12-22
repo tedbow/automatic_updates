@@ -4,6 +4,8 @@ declare(strict_types = 1);
 
 namespace Drupal\Tests\automatic_updates\Kernel\StatusCheck;
 
+use Drupal\fixture_manipulator\ActiveFixtureManipulator;
+use Drupal\fixture_manipulator\StageFixtureManipulator;
 use Drupal\package_manager\Exception\StageValidationException;
 use Drupal\package_manager\ValidationResult;
 use Drupal\Tests\automatic_updates\Kernel\AutomaticUpdatesKernelTestBase;
@@ -293,6 +295,27 @@ class ScaffoldFilePermissionsValidatorTest extends AutomaticUpdatesKernelTestBas
    * @dataProvider providerScaffoldFilesChanged
    */
   public function testScaffoldFilesChanged(array $write_protected_paths, array $active_scaffold_files, array $staged_scaffold_files, array $expected_results): void {
+    // Rewrite the active and staged installed.json files, inserting the given
+    // lists of scaffold files.
+    (new ActiveFixtureManipulator())
+      ->modifyPackage('drupal/core', [
+        'extra' => [
+          'drupal-scaffold' => [
+            'file-mapping' => $active_scaffold_files,
+          ],
+        ],
+      ])
+      ->commitChanges();
+    (new StageFixtureManipulator())
+      ->setCorePackageVersion('9.8.1')
+      ->modifyPackage('drupal/core', [
+        'extra' => [
+          'drupal-scaffold' => [
+            'file-mapping' => $staged_scaffold_files,
+          ],
+        ],
+      ])
+      ->setReadyToCommit();
     // Create fake scaffold files so we can test scenarios in which a scaffold
     // file that exists in the active directory is deleted in the stage
     // directory.
@@ -302,31 +325,6 @@ class ScaffoldFilePermissionsValidatorTest extends AutomaticUpdatesKernelTestBas
     $updater = $this->container->get('automatic_updates.updater');
     $updater->begin(['drupal' => '9.8.1']);
     $updater->stage();
-
-    // Rewrite the active and staged installed.json files, inserting the given
-    // lists of scaffold files.
-    $installed = [
-      'packages' => [
-        [
-          'name' => 'drupal/core',
-          'version' => \Drupal::VERSION,
-          'extra' => [
-            'drupal-scaffold' => [
-              'file_mapping' => [],
-            ],
-          ],
-        ],
-      ],
-    ];
-    // Since the list of scaffold files is in a deeply nested array, reference
-    // it for readability.
-    $scaffold_files = &$installed['packages'][0]['extra']['drupal-scaffold']['file-mapping'];
-
-    // Change the list of scaffold files in the active and stage directories.
-    $scaffold_files = $active_scaffold_files;
-    file_put_contents($this->activeDir . '/vendor/composer/installed.json', json_encode($installed));
-    $scaffold_files = $staged_scaffold_files;
-    file_put_contents($updater->getStageDirectory() . '/vendor/composer/installed.json', json_encode($installed));
 
     $this->writeProtect($write_protected_paths);
 

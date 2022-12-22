@@ -190,7 +190,7 @@ class FixtureManipulator {
       // If we're going to be updating the package data, merge the incoming data
       // into what we already have.
       if ($package) {
-        $install_json_package = NestedArray::mergeDeep($data['packages'][$position], $install_json_package);
+        $install_json_package = $install_json_package + $data['packages'][$position];
       }
 
       // Remove the existing package; the array will be re-keyed by
@@ -280,6 +280,19 @@ class FixtureManipulator {
       $file_name = "$project_name.info.yml";
     }
     file_put_contents("$path/$file_name", Yaml::encode(['project' => $project_name]));
+    return $this;
+  }
+
+  /**
+   * Modifies core packages.
+   *
+   * @param string $version
+   *   Target version.
+   */
+  public function setCorePackageVersion(string $version): self {
+    $this->setVersion('drupal/core', $version);
+    $this->setVersion('drupal/core-recommended', $version);
+    $this->setVersion('drupal/core-dev', $version);
     return $this;
   }
 

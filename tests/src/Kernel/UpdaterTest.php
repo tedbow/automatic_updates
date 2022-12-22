@@ -6,6 +6,7 @@ namespace Drupal\Tests\automatic_updates\Kernel;
 
 use Drupal\automatic_updates\Exception\UpdateException;
 use Drupal\automatic_updates_test\EventSubscriber\TestSubscriber1;
+use Drupal\fixture_manipulator\StageFixtureManipulator;
 use Drupal\package_manager\Event\PreApplyEvent;
 use Drupal\package_manager\Event\PreCreateEvent;
 use Drupal\package_manager\Event\PreRequireEvent;
@@ -179,6 +180,10 @@ class UpdaterTest extends AutomaticUpdatesKernelTestBase {
    * @dataProvider providerCommitException
    */
   public function testCommitException(string $thrown_class, string $expected_class = NULL): void {
+    (new StageFixtureManipulator())
+      ->setCorePackageVersion('9.8.1')
+      ->setReadyToCommit();
+
     $updater = $this->container->get('automatic_updates.updater');
     $updater->begin([
       'drupal' => '9.8.1',

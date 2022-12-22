@@ -5,6 +5,7 @@ declare(strict_types = 1);
 namespace Drupal\Tests\automatic_updates\Functional;
 
 use Drupal\automatic_updates_test\Datetime\TestTime;
+use Drupal\fixture_manipulator\StageFixtureManipulator;
 use Drupal\package_manager_test_validation\StagedDatabaseUpdateValidator;
 use Drupal\package_manager\Event\PostRequireEvent;
 use Drupal\package_manager\Event\PreApplyEvent;
@@ -390,6 +391,9 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
    * Tests that an exception is thrown if a previous apply failed.
    */
   public function testMarkerFileFailure(): void {
+    (new StageFixtureManipulator())
+      ->setCorePackageVersion('9.8.1')
+      ->setReadyToCommit();
     $session = $this->getSession();
     $assert_session = $this->assertSession();
     $page = $session->getPage();

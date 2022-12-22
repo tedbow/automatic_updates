@@ -5,6 +5,7 @@ declare(strict_types = 1);
 namespace Drupal\Tests\automatic_updates\Kernel\StatusCheck;
 
 use Drupal\Core\Logger\RfcLogLevel;
+use Drupal\fixture_manipulator\StageFixtureManipulator;
 use Drupal\package_manager\Event\PreApplyEvent;
 use Drupal\Tests\automatic_updates\Kernel\AutomaticUpdatesKernelTestBase;
 use ColinODell\PsrTestLogger\TestLogger;
@@ -93,6 +94,9 @@ class StagedDatabaseUpdateValidatorTest extends AutomaticUpdatesKernelTestBase {
    * Tests that no errors are raised if the stage has no DB updates.
    */
   public function testNoUpdates(): void {
+    (new StageFixtureManipulator())
+      ->setCorePackageVersion('9.8.1')
+      ->setReadyToCommit();
     $this->container->get('cron')->run();
     $this->assertFalse($this->logger->hasRecords((string) RfcLogLevel::ERROR));
   }
@@ -106,6 +110,9 @@ class StagedDatabaseUpdateValidatorTest extends AutomaticUpdatesKernelTestBase {
    * @dataProvider providerSuffixes
    */
   public function testFileDeleted(string $suffix): void {
+    (new StageFixtureManipulator())
+      ->setCorePackageVersion('9.8.1')
+      ->setReadyToCommit();
     $listener = function (PreApplyEvent $event) use ($suffix): void {
       $stage_dir = $event->getStage()->getStageDirectory();
       foreach ($this->extensions as $name => $path) {
@@ -114,7 +121,6 @@ class StagedDatabaseUpdateValidatorTest extends AutomaticUpdatesKernelTestBase {
     };
     $this->container->get('event_dispatcher')
       ->addListener(PreApplyEvent::class, $listener, PHP_INT_MAX);
-
     $this->container->get('cron')->run();
     $expected_message = "The update cannot proceed because possible database updates have been detected in the following extensions.\nSystem\nStark\n";
     $this->assertTrue($this->logger->hasRecord($expected_message, (string) RfcLogLevel::ERROR));
@@ -129,6 +135,9 @@ class StagedDatabaseUpdateValidatorTest extends AutomaticUpdatesKernelTestBase {
    * @dataProvider providerSuffixes
    */
   public function testFileChanged(string $suffix): void {
+    (new StageFixtureManipulator())
+      ->setCorePackageVersion('9.8.1')
+      ->setReadyToCommit();
     $listener = function (PreApplyEvent $event) use ($suffix): void {
       $stage_dir = $event->getStage()->getStageDirectory();
       foreach ($this->extensions as $name => $path) {
@@ -137,7 +146,6 @@ class StagedDatabaseUpdateValidatorTest extends AutomaticUpdatesKernelTestBase {
     };
     $this->container->get('event_dispatcher')
       ->addListener(PreApplyEvent::class, $listener, PHP_INT_MAX);
-
     $this->container->get('cron')->run();
     $expected_message = "The update cannot proceed because possible database updates have been detected in the following extensions.\nSystem\nStark\n";
     $this->assertTrue($this->logger->hasRecord($expected_message, (string) RfcLogLevel::ERROR));
@@ -152,6 +160,9 @@ class StagedDatabaseUpdateValidatorTest extends AutomaticUpdatesKernelTestBase {
    * @dataProvider providerSuffixes
    */
   public function testFileAdded(string $suffix): void {
+    (new StageFixtureManipulator())
+      ->setCorePackageVersion('9.8.1')
+      ->setReadyToCommit();
     $listener = function () use ($suffix): void {
       $active_dir = $this->container->get('package_manager.path_locator')
         ->getProjectRoot();

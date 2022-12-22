@@ -106,6 +106,7 @@ class StagedProjectsValidatorTest extends AutomaticUpdatesKernelTestBase {
 
     $stage_manipulator = new StageFixtureManipulator();
     $stage_manipulator
+      ->setCorePackageVersion('9.8.1')
       ->addPackage([
         'name' => 'drupal/test_module2',
         'version' => '1.3.1',
@@ -165,6 +166,7 @@ class StagedProjectsValidatorTest extends AutomaticUpdatesKernelTestBase {
    */
   public function testProjectsRemoved(): void {
     (new ActiveFixtureManipulator())
+      ->setCorePackageVersion('9.8.0')
       ->addPackage([
         'name' => 'drupal/test_theme',
         'version' => '1.3.0',
@@ -217,6 +219,7 @@ class StagedProjectsValidatorTest extends AutomaticUpdatesKernelTestBase {
     // since it only cares about Drupal modules and themes.
       ->removePackage('other/removed')
       ->removePackage('other/dev-removed')
+      ->setCorePackageVersion('9.8.1')
       ->setReadyToCommit();
 
     $messages = [
@@ -241,6 +244,7 @@ class StagedProjectsValidatorTest extends AutomaticUpdatesKernelTestBase {
    */
   public function testVersionsChanged(): void {
     (new ActiveFixtureManipulator())
+      ->setCorePackageVersion('9.8.0')
       ->addPackage([
         'name' => 'drupal/test_module',
         'version' => '1.3.0',
@@ -278,6 +282,7 @@ class StagedProjectsValidatorTest extends AutomaticUpdatesKernelTestBase {
     // because it only cares about Drupal modules and themes.
       ->setVersion('other/changed', '1.3.2')
       ->setVersion('other/dev-changed', '1.3.2')
+      ->setCorePackageVersion('9.8.1')
       ->setReadyToCommit();
 
     $messages = [
@@ -303,6 +308,7 @@ class StagedProjectsValidatorTest extends AutomaticUpdatesKernelTestBase {
    */
   public function testNoErrors(): void {
     (new ActiveFixtureManipulator())
+      ->setCorePackageVersion('9.8.0')
       ->addPackage([
         'name' => 'drupal/test_module',
         'version' => '1.3.0',
@@ -347,7 +353,7 @@ class StagedProjectsValidatorTest extends AutomaticUpdatesKernelTestBase {
       ->commitChanges();
 
     $stage_manipulator = new StageFixtureManipulator();
-    $stage_manipulator->setVersion('drupal/core', '9.8.1')
+    $stage_manipulator->setCorePackageVersion('9.8.1')
     // The validator shouldn't care what happens to these packages, since it
     // only concerns itself with Drupal modules and themes.
       ->addPackage([

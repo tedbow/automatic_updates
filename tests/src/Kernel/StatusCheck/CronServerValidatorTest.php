@@ -8,6 +8,7 @@ use Drupal\automatic_updates\CronUpdater;
 use Drupal\automatic_updates\Validator\CronServerValidator;
 use Drupal\Core\Logger\RfcLogLevel;
 use Drupal\Core\Url;
+use Drupal\fixture_manipulator\StageFixtureManipulator;
 use Drupal\package_manager\Event\PreApplyEvent;
 use Drupal\package_manager\Exception\StageValidationException;
 use Drupal\package_manager\ValidationResult;
@@ -98,6 +99,9 @@ class CronServerValidatorTest extends AutomaticUpdatesKernelTestBase {
    * @dataProvider providerCronServerValidation
    */
   public function testCronServerValidationDuringPreCreate(bool $alternate_port, string $server_api, string $cron_mode, array $expected_results): void {
+    (new StageFixtureManipulator())
+      ->setCorePackageVersion('9.8.1')
+      ->setReadyToCommit();
     $request = $this->container->get('request_stack')->getCurrentRequest();
     $this->assertNotEmpty($request);
     $this->assertSame(80, $request->getPort());
@@ -150,6 +154,9 @@ class CronServerValidatorTest extends AutomaticUpdatesKernelTestBase {
    * @dataProvider providerCronServerValidation
    */
   public function testCronServerValidationDuringPreApply(bool $alternate_port, string $server_api, string $cron_mode, array $expected_results): void {
+    (new StageFixtureManipulator())
+      ->setCorePackageVersion('9.8.1')
+      ->setReadyToCommit();
     $request = $this->container->get('request_stack')->getCurrentRequest();
     $this->assertNotEmpty($request);
     $this->assertSame(80, $request->getPort());
