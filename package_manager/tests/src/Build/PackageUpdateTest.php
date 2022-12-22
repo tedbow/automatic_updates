@@ -57,8 +57,6 @@ class PackageUpdateTest extends TemplateProjectTestBase {
     $mink = $this->getMink();
     $mink->assertSession()->statusCodeEquals(200);
 
-
-
     $file_contents = $mink->getSession()->getPage()->getContent();
     $file_contents = json_decode($file_contents, TRUE);
 

@@ -54,7 +54,6 @@ class PendingUpdatesValidatorTest extends PackageManagerKernelTestBase {
    * Tests that an error is raised if there are pending post-updates.
    */
   public function testPendingPostUpdate(): void {
-    $this->registerPostUpdateFunctions();
     // Make an additional post-update function available; the update registry
     // will think it's pending.
     require_once __DIR__ . '/../../fixtures/post_update.php';
@@ -69,8 +68,6 @@ class PendingUpdatesValidatorTest extends PackageManagerKernelTestBase {
    * Tests that pending updates stop an operation from being applied.
    */
   public function testPendingUpdateAfterStaged(): void {
-    $this->registerPostUpdateFunctions();
-
     $stage = $this->createStage();
     $stage->create();
     $stage->require(['drupal/core:9.8.1']);
