@@ -404,8 +404,7 @@ class VersionPolicyValidatorTest extends AutomaticUpdatesKernelTestBase {
    *   known.
    */
   private function assertTargetVersionNotDiscoverable(\Closure $listener): void {
-    $this->container->get('event_dispatcher')
-      ->addListener(PreCreateEvent::class, $listener, PHP_INT_MAX);
+    $this->addEventTestListener($listener, PreCreateEvent::class);
 
     $this->expectException(StageException::class);
     $this->expectExceptionMessage('The target version of Drupal core could not be determined.');

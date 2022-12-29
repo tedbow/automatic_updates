@@ -84,7 +84,7 @@ class ComposerExecutableValidatorTest extends PackageManagerKernelTestBase {
     $listener = function () use ($exception): void {
       TestComposerExecutableValidator::setCommandOutput($exception);
     };
-    $this->container->get('event_dispatcher')->addListener(PreApplyEvent::class, $listener, PHP_INT_MAX);
+    $this->addEventTestListener($listener);
 
     // The validator should translate that exception into an error.
     $error = ValidationResult::createError([
@@ -96,7 +96,7 @@ class ComposerExecutableValidatorTest extends PackageManagerKernelTestBase {
     // Setting command output which doesn't raise error for pre-create event.
     TestComposerExecutableValidator::setCommandOutput("Composer version 2.2.12");
     $this->enableModules(['help']);
-    $this->container->get('event_dispatcher')->addListener(PreApplyEvent::class, $listener, PHP_INT_MAX);
+    $this->addEventTestListener($listener);
     $this->assertResultsWithHelp([$error], PreApplyEvent::class, FALSE);
   }
 
@@ -224,7 +224,7 @@ class ComposerExecutableValidatorTest extends PackageManagerKernelTestBase {
     $listener = function () use ($reported_version): void {
       TestComposerExecutableValidator::setCommandOutput("Composer version $reported_version");
     };
-    $this->container->get('event_dispatcher')->addListener(PreApplyEvent::class, $listener, PHP_INT_MAX);
+    $this->addEventTestListener($listener);
 
     // If the validator can't find a recognized, supported version of Composer,
     // it should produce errors.
@@ -234,7 +234,7 @@ class ComposerExecutableValidatorTest extends PackageManagerKernelTestBase {
     // Setting command output which doesn't raise error for pre-create event.
     TestComposerExecutableValidator::setCommandOutput("Composer version 2.2.12");
     $this->enableModules(['help']);
-    $this->container->get('event_dispatcher')->addListener(PreApplyEvent::class, $listener, PHP_INT_MAX);
+    $this->addEventTestListener($listener);
     $this->assertResultsWithHelp($expected_results, PreApplyEvent::class, FALSE);
   }
 

@@ -171,16 +171,12 @@ class DiskSpaceValidatorTest extends PackageManagerKernelTestBase {
    * @dataProvider providerDiskSpaceValidation
    */
   public function testDiskSpaceValidationDuringPreApply(bool $shared_disk, array $free_space, array $expected_results): void {
-    $this->container->get('event_dispatcher')->addListener(
-      PreApplyEvent::class,
-      function () use ($shared_disk, $free_space): void {
-        /** @var \Drupal\Tests\package_manager\Kernel\TestDiskSpaceValidator $validator */
-        $validator = $this->container->get('package_manager.validator.disk_space');
-        $validator->sharedDisk = $shared_disk;
-        $validator->freeSpace = array_map([Bytes::class, 'toNumber'], $free_space);
-      },
-      PHP_INT_MAX
-    );
+    $this->addEventTestListener(function () use ($shared_disk, $free_space): void {
+      /** @var \Drupal\Tests\package_manager\Kernel\TestDiskSpaceValidator $validator */
+      $validator = $this->container->get('package_manager.validator.disk_space');
+      $validator->sharedDisk = $shared_disk;
+      $validator->freeSpace = array_map([Bytes::class, 'toNumber'], $free_space);
+    });
 
     $this->assertResults($expected_results, PreApplyEvent::class);
   }

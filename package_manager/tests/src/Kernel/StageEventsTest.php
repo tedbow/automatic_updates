@@ -151,8 +151,7 @@ class StageEventsTest extends PackageManagerKernelTestBase implements EventSubsc
         }
       }
     };
-    $this->container->get('event_dispatcher')
-      ->addListener($event_class, $handler);
+    $this->addEventTestListener($handler, $event_class);
 
     $result = ValidationResult::createError($error_messages);
     $this->assertResults([$result], $event_class);
@@ -170,10 +169,8 @@ class StageEventsTest extends PackageManagerKernelTestBase implements EventSubsc
       $this->assertSame($expected_runtime, $event->getRuntimePackages());
       $this->assertSame($expected_dev, $event->getDevPackages());
     };
-    /** @var \Symfony\Component\EventDispatcher\EventDispatcherInterface $event_dispatcher */
-    $event_dispatcher = $this->container->get('event_dispatcher');
-    $event_dispatcher->addListener(PreRequireEvent::class, $listener);
-    $event_dispatcher->addListener(PostRequireEvent::class, $listener);
+    $this->addEventTestListener($listener, PreRequireEvent::class);
+    $this->addEventTestListener($listener, PostRequireEvent::class);
 
     $this->stage->create();
     $this->stage->require(['drupal/core:9.8.2'], ['drupal/core-dev:9.8.2']);

@@ -21,19 +21,16 @@ class StatusCheckTraitTest extends PackageManagerKernelTestBase {
    * Tests that StatusCheckTrait will collect ignored paths.
    */
   public function testIgnoredPathsCollected(): void {
-    /** @var \Symfony\Component\EventDispatcher\EventDispatcherInterface $event_dispatcher */
-    $event_dispatcher = $this->container->get('event_dispatcher');
-
-    $event_dispatcher->addListener(CollectIgnoredPathsEvent::class, function (CollectIgnoredPathsEvent $event): void {
+    $this->addEventTestListener(function (CollectIgnoredPathsEvent $event): void {
       $event->add(['/junk/drawer']);
-    });
+    }, CollectIgnoredPathsEvent::class);
 
     $status_check_called = FALSE;
-    $event_dispatcher->addListener(StatusCheckEvent::class, function (StatusCheckEvent $event) use (&$status_check_called): void {
+    $this->addEventTestListener(function (StatusCheckEvent $event) use (&$status_check_called): void {
       $this->assertContains('/junk/drawer', $event->getExcludedPaths());
       $status_check_called = TRUE;
-    });
-    $this->runStatusCheck($this->createStage(), $event_dispatcher);
+    }, StatusCheckEvent::class);
+    $this->runStatusCheck($this->createStage(), $this->container->get('event_dispatcher'));
     $this->assertTrue($status_check_called);
   }
 

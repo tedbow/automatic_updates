@@ -205,8 +205,7 @@ class StatusCheckerTest extends AutomaticUpdatesKernelTestBase {
     $listener = function (StatusCheckEvent $event) use (&$stage): void {
       $stage = $event->getStage();
     };
-    $event_dispatcher = $this->container->get('event_dispatcher');
-    $event_dispatcher->addListener(StatusCheckEvent::class, $listener);
+    $this->addEventTestListener($listener, StatusCheckEvent::class);
     $this->container->get('automatic_updates.status_checker')->run();
     // By default, updates will be enabled on cron.
     $this->assertInstanceOf(CronUpdater::class, $stage);

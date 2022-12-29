@@ -74,9 +74,9 @@ class LockFileValidatorTest extends PackageManagerKernelTestBase {
     // should raise the validation error. Because the validator uses the default
     // priority of 0, this listener changes lock file before the validator
     // runs.
-    $this->addListener($event_class, function () {
+    $this->addEventTestListener(function () {
       file_put_contents($this->activeDir . '/composer.lock', 'changed');
-    });
+    }, $event_class);
     $result = ValidationResult::createError([
       'Unexpected changes were detected in composer.lock, which indicates that other Composer operations were performed since this Package Manager operation started. This can put the code base into an unreliable state and therefore is not allowed.',
     ]);
@@ -95,9 +95,9 @@ class LockFileValidatorTest extends PackageManagerKernelTestBase {
     // should raise the validation error. Because the validator uses the default
     // priority of 0, this listener deletes lock file before the validator
     // runs.
-    $this->addListener($event_class, function () {
+    $this->addEventTestListener(function () {
       unlink($this->activeDir . '/composer.lock');
-    });
+    }, $event_class);
     $result = ValidationResult::createError([
       'Could not hash the active lock file.',
     ]);
@@ -119,9 +119,9 @@ class LockFileValidatorTest extends PackageManagerKernelTestBase {
     // should raise the validation error. Because the validator uses the default
     // priority of 0, this listener deletes stored hash before the validator
     // runs.
-    $this->addListener($event_class, function () use ($state_key) {
+    $this->addEventTestListener(function () use ($state_key) {
       $this->container->get('state')->delete($state_key);
-    });
+    }, $event_class);
     $result = ValidationResult::createError([
       'Could not retrieve stored hash of the active lock file.',
     ]);
@@ -169,19 +169,6 @@ class LockFileValidatorTest extends PackageManagerKernelTestBase {
         PreApplyEvent::class,
       ],
     ];
-  }
-
-  /**
-   * Adds an event listener with the highest possible priority.
-   *
-   * @param string $event_class
-   *   The event class to listen for.
-   * @param callable $listener
-   *   The listener to add.
-   */
-  private function addListener(string $event_class, callable $listener): void {
-    $this->container->get('event_dispatcher')
-      ->addListener($event_class, $listener, PHP_INT_MAX);
   }
 
 }

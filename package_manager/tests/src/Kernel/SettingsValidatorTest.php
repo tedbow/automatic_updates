@@ -57,13 +57,9 @@ class SettingsValidatorTest extends PackageManagerKernelTestBase {
    * @dataProvider providerSettingsValidation
    */
   public function testSettingsValidationDuringPreApply(bool $setting, array $expected_results): void {
-    $this->container->get('event_dispatcher')->addListener(
-      PreApplyEvent::class,
-      function () use ($setting): void {
-        $this->setSetting('update_fetch_with_http_fallback', $setting);
-      },
-      PHP_INT_MAX
-    );
+    $this->addEventTestListener(function () use ($setting): void {
+      $this->setSetting('update_fetch_with_http_fallback', $setting);
+    });
     $this->assertResults($expected_results, PreApplyEvent::class);
   }
 

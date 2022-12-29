@@ -119,8 +119,8 @@ class StagedDatabaseUpdateValidatorTest extends AutomaticUpdatesKernelTestBase {
         unlink("$stage_dir/$path/$name.$suffix");
       }
     };
-    $this->container->get('event_dispatcher')
-      ->addListener(PreApplyEvent::class, $listener, PHP_INT_MAX);
+    $this->addEventTestListener($listener);
+
     $this->container->get('cron')->run();
     $expected_message = "The update cannot proceed because possible database updates have been detected in the following extensions.\nSystem\nStark\n";
     $this->assertTrue($this->logger->hasRecord($expected_message, (string) RfcLogLevel::ERROR));
@@ -144,8 +144,8 @@ class StagedDatabaseUpdateValidatorTest extends AutomaticUpdatesKernelTestBase {
         file_put_contents("$stage_dir/$path/$name.$suffix", $this->randomString());
       }
     };
-    $this->container->get('event_dispatcher')
-      ->addListener(PreApplyEvent::class, $listener, PHP_INT_MAX);
+    $this->addEventTestListener($listener);
+
     $this->container->get('cron')->run();
     $expected_message = "The update cannot proceed because possible database updates have been detected in the following extensions.\nSystem\nStark\n";
     $this->assertTrue($this->logger->hasRecord($expected_message, (string) RfcLogLevel::ERROR));
@@ -171,8 +171,7 @@ class StagedDatabaseUpdateValidatorTest extends AutomaticUpdatesKernelTestBase {
         unlink("$active_dir/$path/$name.$suffix");
       }
     };
-    $this->container->get('event_dispatcher')
-      ->addListener(PreApplyEvent::class, $listener, PHP_INT_MAX);
+    $this->addEventTestListener($listener);
 
     $this->container->get('cron')->run();
     $expected_message = "The update cannot proceed because possible database updates have been detected in the following extensions.\nSystem\nStark\n";

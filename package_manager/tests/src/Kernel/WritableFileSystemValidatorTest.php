@@ -104,8 +104,7 @@ class WritableFileSystemValidatorTest extends PackageManagerKernelTestBase {
    * @dataProvider providerWritable
    */
   public function testWritableDuringPreApply(int $root_permissions, int $vendor_permissions, array $expected_results): void {
-    $this->container->get('event_dispatcher')->addListener(
-      PreApplyEvent::class,
+    $this->addEventTestListener(
       function () use ($root_permissions, $vendor_permissions): void {
         $path_locator = $this->container->get('package_manager.path_locator');
 
@@ -117,7 +116,6 @@ class WritableFileSystemValidatorTest extends PackageManagerKernelTestBase {
         // During pre-apply we don't care whether the staging root is writable.
         $this->assertTrue(chmod($path_locator->getStagingRoot(), 0444));
       },
-      PHP_INT_MAX
     );
 
     $this->assertResults($expected_results, PreApplyEvent::class);

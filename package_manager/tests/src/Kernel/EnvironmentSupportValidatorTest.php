@@ -27,16 +27,7 @@ class EnvironmentSupportValidatorTest extends PackageManagerKernelTestBase {
       'Package Manager is not supported by your environment.',
     ]);
     foreach ([PreCreateEvent::class, StatusCheckEvent::class] as $event_class) {
-      $this->container->get('event_dispatcher')->addListener(
-        $event_class,
-        function () use ($event_class): void {
-          $this->fail('Event propagation should have been stopped during ' . $event_class . '.');
-        },
-        // Execute this listener immediately after the tested validator, which
-        // uses priority 200. This ensures informative test failures.
-        // @see \Drupal\package_manager\Validator\EnvironmentSupportValidator::getSubscribedEvents()
-        199
-      );
+      $this->assertEventPropagationStopped($event_class, [$this->container->get('package_manager.validator.environment_support'), 'validateStagePreOperation']);
     }
     $this->assertStatusCheckResults([$result]);
     $this->assertResults([$result], PreCreateEvent::class);
@@ -46,28 +37,15 @@ class EnvironmentSupportValidatorTest extends PackageManagerKernelTestBase {
    * Tests an invalid URL in the environment support variable during pre-apply.
    */
   public function testInvalidUrlDuringPreApply(): void {
-    $this->container->get('event_dispatcher')->addListener(
-      PreApplyEvent::class,
-      function (): void {
-        putenv(EnvironmentSupportValidator::VARIABLE_NAME . '=broken/url.org');
-      },
-      PHP_INT_MAX
-    );
+    $this->addEventTestListener(function (): void {
+      putenv(EnvironmentSupportValidator::VARIABLE_NAME . '=broken/url.org');
+    });
 
     $result = ValidationResult::createError([
       'Package Manager is not supported by your environment.',
     ]);
 
-    $this->container->get('event_dispatcher')->addListener(
-      PreApplyEvent::class,
-      function (): void {
-        $this->fail('Event propagation should have been stopped during ' . PreApplyEvent::class . '.');
-      },
-      // Execute this listener immediately after the tested validator, which
-      // uses priority 200. This ensures informative test failures.
-      // @see \Drupal\package_manager\Validator\EnvironmentSupportValidator::getSubscribedEvents()
-      199
-    );
+    $this->assertEventPropagationStopped(PreApplyEvent::class, [$this->container->get('package_manager.validator.environment_support'), 'validateStagePreOperation']);
     $this->assertResults([$result], PreApplyEvent::class);
   }
 
@@ -90,13 +68,9 @@ class EnvironmentSupportValidatorTest extends PackageManagerKernelTestBase {
    */
   public function testValidUrlDuringPreApply(): void {
     $url = 'http://www.example.com';
-    $this->container->get('event_dispatcher')->addListener(
-      PreApplyEvent::class,
-      function () use ($url): void {
-        putenv(EnvironmentSupportValidator::VARIABLE_NAME . '=' . $url);
-      },
-      PHP_INT_MAX
-    );
+    $this->addEventTestListener(function () use ($url): void {
+      putenv(EnvironmentSupportValidator::VARIABLE_NAME . '=' . $url);
+    });
 
     $result = ValidationResult::createError([
       '<a href="' . $url . '">Package Manager is not supported by your environment.</a>',

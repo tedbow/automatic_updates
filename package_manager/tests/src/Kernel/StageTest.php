@@ -180,8 +180,7 @@ class StageTest extends PackageManagerKernelTestBase {
       // testing purposes.
       $event->getStage()->destroy($force);
     };
-    $this->container->get('event_dispatcher')
-      ->addListener($event_class, $listener);
+    $this->addEventTestListener($listener, $event_class, 0);
 
     $stage = $this->createStage();
     $stage->create();
@@ -220,8 +219,7 @@ class StageTest extends PackageManagerKernelTestBase {
         $this->assertStringContainsString('Modules cannot be uninstalled while Package Manager is applying staged changes to the active code base.', $e->getMessage());
       }
     };
-    $this->container->get('event_dispatcher')
-      ->addListener(PreApplyEvent::class, $listener);
+    $this->addEventTestListener($listener);
 
     $stage = $this->createStage();
     $stage->create();
@@ -492,12 +490,9 @@ class StageTest extends PackageManagerKernelTestBase {
    * Tests that ignored paths are collected before create and apply.
    */
   public function testCollectIgnoredPaths(): void {
-    /** @var \Symfony\Component\EventDispatcher\EventDispatcherInterface $event_dispatcher */
-    $event_dispatcher = $this->container->get('event_dispatcher');
-
-    $event_dispatcher->addListener(CollectIgnoredPathsEvent::class, function (CollectIgnoredPathsEvent $event): void {
+    $this->addEventTestListener(function (CollectIgnoredPathsEvent $event): void {
       $event->add(['ignore/me']);
-    });
+    }, CollectIgnoredPathsEvent::class);
 
     // On pre-create and pre-apply, ensure that the ignored path is known to
     // the event.
@@ -507,8 +502,8 @@ class StageTest extends PackageManagerKernelTestBase {
       // Use this to confirm that this listener was actually called.
       $asserted = TRUE;
     };
-    $event_dispatcher->addListener(PreCreateEvent::class, $assert_ignored);
-    $event_dispatcher->addListener(PreApplyEvent::class, $assert_ignored);
+    $this->addEventTestListener($assert_ignored, PreCreateEvent::class);
+    $this->addEventTestListener($assert_ignored);
 
     $stage = $this->createStage();
     $stage->create();

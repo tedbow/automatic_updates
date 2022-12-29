@@ -72,20 +72,16 @@ class MultisiteValidatorTest extends PackageManagerKernelTestBase {
    * @dataProvider providerMultisite
    */
   public function testMultisiteDuringPreApply(bool $is_multisite, array $expected_results = []): void {
-    $this->container->get('event_dispatcher')->addListener(
-      PreApplyEvent::class,
-      function () use ($is_multisite): void {
-        // If we should simulate a multisite, ensure there is a sites.php in the
-        // test project.
-        // @see \Drupal\package_manager\Validator\MultisiteValidator::isMultisite()
-        if ($is_multisite) {
-          $project_root = $this->container->get('package_manager.path_locator')
-            ->getProjectRoot();
-          touch($project_root . '/sites/sites.php');
-        }
-      },
-      PHP_INT_MAX
-    );
+    $this->addEventTestListener(function () use ($is_multisite): void {
+      // If we should simulate a multisite, ensure there is a sites.php in the
+      // test project.
+      // @see \Drupal\package_manager\Validator\MultisiteValidator::isMultisite()
+      if ($is_multisite) {
+        $project_root = $this->container->get('package_manager.path_locator')
+          ->getProjectRoot();
+        touch($project_root . '/sites/sites.php');
+      }
+    });
     $this->assertResults($expected_results, PreApplyEvent::class);
   }
 

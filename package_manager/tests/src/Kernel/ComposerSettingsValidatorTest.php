@@ -80,15 +80,11 @@ class ComposerSettingsValidatorTest extends PackageManagerKernelTestBase {
    * @dataProvider providerSecureHttpValidation
    */
   public function testSecureHttpValidationDuringPreApply(string $contents, array $expected_results): void {
-    $this->container->get('event_dispatcher')->addListener(
-      PreApplyEvent::class,
-      function () use ($contents): void {
-        $active_dir = $this->container->get('package_manager.path_locator')
-          ->getProjectRoot();
-        file_put_contents("$active_dir/composer.json", $contents);
-      },
-      PHP_INT_MAX
-    );
+    $this->addEventTestListener(function () use ($contents): void {
+      $active_dir = $this->container->get('package_manager.path_locator')
+        ->getProjectRoot();
+      file_put_contents("$active_dir/composer.json", $contents);
+    });
     $this->assertResults($expected_results, PreApplyEvent::class);
   }
 

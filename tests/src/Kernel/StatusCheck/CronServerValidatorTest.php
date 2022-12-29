@@ -9,7 +9,6 @@ use Drupal\automatic_updates\Validator\CronServerValidator;
 use Drupal\Core\Logger\RfcLogLevel;
 use Drupal\Core\Url;
 use Drupal\fixture_manipulator\StageFixtureManipulator;
-use Drupal\package_manager\Event\PreApplyEvent;
 use Drupal\package_manager\Exception\StageValidationException;
 use Drupal\package_manager\ValidationResult;
 use Drupal\Tests\automatic_updates\Kernel\AutomaticUpdatesKernelTestBase;
@@ -173,8 +172,7 @@ class CronServerValidatorTest extends AutomaticUpdatesKernelTestBase {
     // Add a listener to change the $server_api and $alternate_port settings
     // during PreApplyEvent. We set $cron_mode above because this determines
     // whether updates will actually be run in cron.
-    $this->container->get('event_dispatcher')->addListener(
-      PreApplyEvent::class,
+    $this->addEventTestListener(
       function () use ($alternate_port, $server_api): void {
         $property = new \ReflectionProperty(CronServerValidator::class, 'serverApi');
         $property->setAccessible(TRUE);
@@ -182,8 +180,7 @@ class CronServerValidatorTest extends AutomaticUpdatesKernelTestBase {
         $this->config('automatic_updates.settings')
           ->set('cron_port', $alternate_port ? 2501 : 0)
           ->save();
-      },
-      PHP_INT_MAX
+      }
     );
     // If errors were expected, cron should not have run.
     $this->container->get('cron')->run();

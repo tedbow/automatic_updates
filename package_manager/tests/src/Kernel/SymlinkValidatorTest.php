@@ -83,8 +83,7 @@ class SymlinkValidatorTest extends PackageManagerKernelTestBase {
     $add_ignored_path = function (CollectIgnoredPathsEvent $event): void {
       $event->add(['ignore/me']);
     };
-    $this->container->get('event_dispatcher')
-      ->addListener(CollectIgnoredPathsEvent::class, $add_ignored_path);
+    $this->addEventTestListener($add_ignored_path, CollectIgnoredPathsEvent::class);
 
     $arguments = [
       Argument::type(PathInterface::class),
@@ -107,8 +106,7 @@ class SymlinkValidatorTest extends PackageManagerKernelTestBase {
     $this->enableModules(['help']);
     // Enabling Help rebuilt the container, so we need to re-add our event
     // listener.
-    $this->container->get('event_dispatcher')
-      ->addListener(CollectIgnoredPathsEvent::class, $add_ignored_path);
+    $this->addEventTestListener($add_ignored_path, CollectIgnoredPathsEvent::class);
 
     $url = Url::fromRoute('help.page', ['name' => 'package_manager'])
       ->setOption('fragment', 'package-manager-faq-symlinks-found')

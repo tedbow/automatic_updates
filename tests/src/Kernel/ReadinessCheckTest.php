@@ -28,8 +28,7 @@ class ReadinessCheckTest extends AutomaticUpdatesKernelTestBase {
   protected function setUp(): void {
     parent::setUp();
 
-    $this->container->get('event_dispatcher')
-      ->addListener(ReadinessCheckEvent::class, function () {});
+    $this->addEventTestListener(function () {}, ReadinessCheckEvent::class);
   }
 
   /**

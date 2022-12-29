@@ -46,13 +46,9 @@ class ComposerPatchesValidatorTest extends PackageManagerKernelTestBase {
     $dir = $this->container->get('package_manager.path_locator')
       ->getProjectRoot();
 
-    $this->container->get('event_dispatcher')->addListener(
-      PreApplyEvent::class,
-      function () use ($dir): void {
-        $this->installPatcherInActive($dir);
-      },
-      PHP_INT_MAX
-    );
+    $this->addEventTestListener(function () use ($dir): void {
+      $this->installPatcherInActive($dir);
+    });
     // Because ComposerUtility reads composer.json and passes it to the Composer
     // factory as an array, Composer will assume that the configuration is
     // coming from a config.json file, even if one doesn't exist.

@@ -6,6 +6,7 @@ namespace Drupal\Tests\package_manager\Kernel;
 
 use Drupal\Core\DependencyInjection\ContainerBuilder;
 use Drupal\KernelTests\KernelTestBase;
+use Drupal\package_manager\Event\PreApplyEvent;
 use Drupal\package_manager\Event\StageEvent;
 use Drupal\package_manager\StatusCheckTrait;
 use Drupal\package_manager\UnusedConfigFactory;
@@ -321,6 +322,44 @@ abstract class PackageManagerKernelTestBase extends KernelTestBase {
       'handler' => HandlerStack::create($handler),
     ]);
     $this->container->set('http_client', $this->client);
+  }
+
+  /**
+   * Adds an event listener on an event for testing purposes.
+   *
+   * @param callable $listener
+   *   The listener to add.
+   * @param string $event_class
+   *   (optional) The event to listen to. Defaults to PreApplyEvent.
+   * @param int $priority
+   *   (optional) The priority. Defaults to PHP_INT_MAX.
+   */
+  protected function addEventTestListener(callable $listener, string $event_class = PreApplyEvent::class, int $priority = PHP_INT_MAX): void {
+    $this->container->get('event_dispatcher')
+      ->addListener($event_class, $listener, $priority);
+  }
+
+  /**
+   * Asserts event propagation is stopped by a certain event subscriber.
+   *
+   * @param string $event_class
+   *   The event during which propagation is expected to stop.
+   * @param callable $expected_propagation_stopper
+   *   The event subscriber (which subscribes to the given event class) which is
+   *   expected to stop propagation. This event subscriber must have been
+   *   registered by one of the installed Drupal module.
+   */
+  protected function assertEventPropagationStopped(string $event_class, callable $expected_propagation_stopper): void {
+    $priority = $this->container->get('event_dispatcher')->getListenerPriority($event_class, $expected_propagation_stopper);
+    // Ensure the event subscriber was actually a listener for the event.
+    $this->assertIsInt($priority);
+    // Add a listener with a priority that is 1 less than priority of the
+    // event subscriber. This listener would be called after
+    // $expected_propagation_stopper if the event propagation was not stopped
+    // and cause the test to fail.
+    $this->addEventTestListener(function () use ($event_class): void {
+      $this->fail('Event propagation should have been stopped during ' . $event_class . '.');
+    }, $event_class, $priority - 1);
   }
 
 }

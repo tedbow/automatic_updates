@@ -98,8 +98,7 @@ class XdebugValidatorTest extends AutomaticUpdatesKernelTestBase {
     $listener = function (): void {
       $this->simulateXdebugEnabled();
     };
-    $this->container->get('event_dispatcher')
-      ->addListener(PreApplyEvent::class, $listener, PHP_INT_MAX);
+    $this->addEventTestListener($listener);
     $message = "Xdebug is enabled, currently Cron Updates are not allowed while it is enabled. If Xdebug is not disabled you will not receive security and other updates during cron.";
 
     // The parent class' setUp() method simulates an available security

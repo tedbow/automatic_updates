@@ -294,10 +294,9 @@ class StageOwnershipTest extends PackageManagerKernelTestBase {
     // Listen to the post-destroy event so we can confirm that it was fired, and
     // the stage was made available, despite the file system error.
     $stage_available = NULL;
-    $this->container->get('event_dispatcher')
-      ->addListener(PostDestroyEvent::class, function (PostDestroyEvent $event) use (&$stage_available): void {
-        $stage_available = $event->getStage()->isAvailable();
-      });
+    $this->addEventTestListener(function (PostDestroyEvent $event) use (&$stage_available): void {
+      $stage_available = $event->getStage()->isAvailable();
+    }, PostDestroyEvent::class);
     $stage->destroy();
     $this->assertTrue($stage_available);
 

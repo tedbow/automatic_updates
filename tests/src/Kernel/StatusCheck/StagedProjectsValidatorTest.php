@@ -51,8 +51,7 @@ class StagedProjectsValidatorTest extends AutomaticUpdatesKernelTestBase {
       // to read the file we just deleted.
       $event->stopPropagation();
     };
-    $this->container->get('event_dispatcher')
-      ->addListener(PreApplyEvent::class, $listener, PHP_INT_MAX);
+    $this->addEventTestListener($listener);
 
     /** @var \Drupal\automatic_updates\Updater $updater */
     $updater = $this->container->get('automatic_updates.updater');
