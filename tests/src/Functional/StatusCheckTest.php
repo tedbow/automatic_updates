@@ -11,6 +11,7 @@ use Drupal\automatic_updates_test\Datetime\TestTime;
 use Drupal\automatic_updates_test\EventSubscriber\TestSubscriber1;
 use Drupal\automatic_updates_test2\EventSubscriber\TestSubscriber2;
 use Drupal\Core\Url;
+use Drupal\fixture_manipulator\StageFixtureManipulator;
 use Drupal\package_manager\Event\StatusCheckEvent;
 use Drupal\package_manager_test_validation\EventSubscriber\TestSubscriber;
 use Drupal\system\SystemManager;
@@ -469,6 +470,9 @@ class StatusCheckTest extends AutomaticUpdatesFunctionalTestBase {
    * Tests that stored validation results are deleted after an update.
    */
   public function testStoredResultsClearedAfterUpdate(): void {
+    (new StageFixtureManipulator())
+      ->setCorePackageVersion('9.8.1')
+      ->setReadyToCommit();
     $assert_session = $this->assertSession();
     $page = $this->getSession()->getPage();
     $this->drupalLogin($this->checkerRunnerUser);
@@ -500,7 +504,6 @@ class StatusCheckTest extends AutomaticUpdatesFunctionalTestBase {
     // status check (without storing the results), and the checker is no
     // longer raising an error.
     $this->drupalGet('/admin/modules/update');
-    $this->setCoreUpdate('9.8.1');
     $assert_session->buttonExists('Update to 9.8.1');
     // Ensure that the previous results are still displayed on another admin
     // page, to confirm that the updater form is not discarding the previous

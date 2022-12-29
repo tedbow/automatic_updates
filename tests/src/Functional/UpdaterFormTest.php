@@ -452,6 +452,9 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
    * Tests deleting an existing update.
    */
   public function testDeleteExistingUpdate(): void {
+    (new StageFixtureManipulator())
+      ->setCorePackageVersion('9.8.1')
+      ->setReadyToCommit();
     $conflict_message = 'Cannot begin an update because another Composer operation is currently in progress.';
     $cancelled_message = 'The update was successfully cancelled.';
 
@@ -461,7 +464,6 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
     $this->checkForUpdates();
 
     $this->drupalGet('/admin/modules/update');
-    $this->setCoreUpdate('9.8.1');
     $page->pressButton('Update to 9.8.1');
     $this->checkForMetaRefresh();
     $this->assertUpdateStagedTimes(1);
@@ -580,6 +582,9 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
    * @requires PHP >= 8.0
    */
   public function testStagedDatabaseUpdates(bool $maintenance_mode_on): void {
+    (new StageFixtureManipulator())
+      ->setCorePackageVersion('9.8.1')
+      ->setReadyToCommit();
     $this->setCoreVersion('9.8.0');
     $this->checkForUpdates();
     $this->container->get('theme_installer')->install(['automatic_updates_theme_with_updates']);
@@ -598,7 +603,6 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
 
     $page = $this->getSession()->getPage();
     $this->drupalGet('/admin/modules/update');
-    $this->setCoreUpdate('9.8.1');
     // The warning should be visible.
     $assert_session = $this->assertSession();
     $assert_session->pageTextContains(reset($messages));
@@ -698,6 +702,9 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
    * @dataProvider providerSuccessfulUpdate
    */
   public function testSuccessfulUpdate(string $update_form_url, bool $maintenance_mode_on): void {
+    (new StageFixtureManipulator())
+      ->setCorePackageVersion('9.8.1')
+      ->setReadyToCommit();
     $assert_session = $this->assertSession();
     $this->setCoreVersion('9.8.0');
     $this->checkForUpdates();
@@ -707,7 +714,6 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
     $cached_message = $this->setAndAssertCachedMessage();
 
     $this->drupalGet($update_form_url);
-    $this->setCoreUpdate('9.8.1');
     $assert_session->pageTextNotContains($cached_message);
     $page->pressButton('Update to 9.8.1');
     $this->checkForMetaRefresh();
@@ -759,13 +765,15 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
    * @requires PHP >= 8.0
    */
   public function testStatusCheckerRunAfterUpdate(bool $has_database_updates) {
+    (new StageFixtureManipulator())
+      ->setCorePackageVersion('9.8.1')
+      ->setReadyToCommit();
     $assert_session = $this->assertSession();
     $this->setCoreVersion('9.8.0');
     $this->checkForUpdates();
     $page = $this->getSession()->getPage();
     // Navigate to the automatic updates form.
     $this->drupalGet('/admin/modules/update');
-    $this->setCoreUpdate('9.8.1');
     $page->pressButton('Update to 9.8.1');
     $this->checkForMetaRefresh();
     $this->assertUpdateStagedTimes(1);
@@ -837,6 +845,9 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
    * @dataProvider providerUpdateCompleteMessage
    */
   public function testUpdateCompleteMessage(bool $maintenance_mode_on): void {
+    (new StageFixtureManipulator())
+      ->setCorePackageVersion('9.8.1')
+      ->setReadyToCommit();
     $assert_session = $this->assertSession();
     $this->setCoreVersion('9.8.0');
     $this->checkForUpdates();
@@ -845,7 +856,6 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
     $page = $this->getSession()->getPage();
 
     $this->drupalGet('/admin/modules/automatic-update');
-    $this->setCoreUpdate('9.8.1');
     $page->pressButton('Update to 9.8.1');
     $this->checkForMetaRefresh();
     // Confirm that the site was put into maintenance mode if needed.
@@ -861,12 +871,14 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
    * Tests what happens when a staged update is deleted without being destroyed.
    */
   public function testStagedUpdateDeletedImproperly(): void {
+    (new StageFixtureManipulator())
+      ->setCorePackageVersion('9.8.1')
+      ->setReadyToCommit();
     $this->setCoreVersion('9.8.0');
     $this->checkForUpdates();
 
     $page = $this->getSession()->getPage();
     $this->drupalGet('/admin/modules/update');
-    $this->setCoreUpdate('9.8.1');
     $page->pressButton('Update to 9.8.1');
     $this->checkForMetaRefresh();
     $this->assertUpdateStagedTimes(1);

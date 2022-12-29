@@ -34,18 +34,6 @@ abstract class AutomaticUpdatesFunctionalTestBase extends BrowserTestBase {
   ];
 
   /**
-   * Set the core update version.
-   *
-   * @param string $version
-   *   The core version.
-   */
-  protected function setCoreUpdate(string $version): void {
-    $stage_manipulator = new StageFixtureManipulator();
-    $stage_manipulator->setCorePackageVersion($version)
-      ->setReadyToCommit();
-  }
-
-  /**
    * The service IDs of any validators to disable.
    *
    * @var string[]
