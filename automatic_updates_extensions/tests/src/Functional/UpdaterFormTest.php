@@ -317,7 +317,7 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
       // PendingUpdatesValidator prevented the update to complete, so the status
       // checks weren't run.
       $this->drupalGet('/admin');
-      $assert_session->pageTextContains('Your site has not recently run an update readiness check. Run readiness checks now.');
+      $assert_session->pageTextContains('Your site has not recently run an update readiness check. Rerun readiness checks now.');
     }
     else {
       $page->pressButton('Continue');
@@ -329,7 +329,7 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
       // Confirm that the status checks were run and the new error is displayed.
       $assert_session->statusMessageContains('Error before continue.', 'error');
       $assert_session->statusMessageContains(static::$errorsExplanation, 'error');
-      $assert_session->pageTextNotContains('Your site has not recently run an update readiness check. Run readiness checks now.');
+      $assert_session->pageTextNotContains('Your site has not recently run an update readiness check. Rerun readiness checks now.');
     }
   }
 

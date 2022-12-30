@@ -133,7 +133,7 @@ final class AdminStatusCheckMessages implements ContainerInjectionInterface {
     if ($this->statusChecker->getResults() === NULL) {
       $checker_url = Url::fromRoute('automatic_updates.status_check')->setOption('query', $this->getDestinationArray());
       if ($checker_url->access()) {
-        $this->messenger()->addError($this->t('Your site has not recently run an update readiness check. <a href=":url">Run readiness checks now.</a>', [
+        $this->messenger()->addError($this->t('Your site has not recently run an update readiness check. <a href=":url">Rerun readiness checks now.</a>', [
           ':url' => $checker_url->toString(),
         ]));
       }

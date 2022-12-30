@@ -165,7 +165,7 @@ final class StatusCheckRequirements implements ContainerInjectionInterface {
     $status_check_url = Url::fromRoute('automatic_updates.status_check');
     if ($status_check_url->access()) {
       return $this->t(
-        '<a href=":link">Run readiness checks</a> now.',
+        '<a href=":link">Rerun readiness checks</a> now.',
         [':link' => $status_check_url->toString()]
       );
     }

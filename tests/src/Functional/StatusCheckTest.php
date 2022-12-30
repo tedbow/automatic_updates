@@ -171,7 +171,7 @@ class StatusCheckTest extends AutomaticUpdatesFunctionalTestBase {
     TestSubscriber1::setTestResult($expected_results, StatusCheckEvent::class);
 
     // Run the status checks.
-    $this->clickLink('Run readiness checks');
+    $this->clickLink('Rerun readiness checks');
     $assert->statusCodeEquals(200);
     // Confirm redirect back to status report page.
     $assert->addressEquals('/admin/reports/status');
@@ -291,8 +291,8 @@ class StatusCheckTest extends AutomaticUpdatesFunctionalTestBase {
     $this->drupalLogin($this->checkerRunnerUser);
     $this->drupalGet(Url::fromRoute($admin_route));
     $assert->elementExists('css', $messages_section_selector);
-    $assert->pageTextContainsOnce('Your site has not recently run an update readiness check. Run readiness checks now.');
-    $this->clickLink('Run readiness checks now.');
+    $assert->pageTextContainsOnce('Your site has not recently run an update readiness check. Rerun readiness checks now.');
+    $this->clickLink('Rerun readiness checks now.');
     $assert->addressEquals(Url::fromRoute($admin_route));
     $assert->pageTextContainsOnce($expected_results[0]->getMessages()[0]);
 
@@ -567,7 +567,7 @@ class StatusCheckTest extends AutomaticUpdatesFunctionalTestBase {
     // If we flag an error again, and keep notifications enabled but change
     // their sensitivity level, the stored results should be cleared.
     TestSubscriber1::setTestResult([$result], StatusCheckEvent::class);
-    $session->getPage()->clickLink('Run readiness checks now');
+    $session->getPage()->clickLink('Rerun readiness checks now');
     $this->drupalGet('/admin/structure');
     $assert_session->pageTextContains($message);
     $config->set('status_check_mail', StatusCheckMailer::ALL)->save();
@@ -654,7 +654,7 @@ class StatusCheckTest extends AutomaticUpdatesFunctionalTestBase {
     // The results should appear in the given order.
     $this->assertSame($expected_messages, $this->getMessagesFromRequirement($requirement));
     // Check for the presence or absence of a link to run the checks.
-    $this->assertSame($run_link, $requirement->hasLink('Run readiness checks'));
+    $this->assertSame($run_link, $requirement->hasLink('Rerun readiness checks'));
   }
 
   /**

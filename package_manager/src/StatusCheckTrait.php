@@ -27,7 +27,7 @@ trait StatusCheckTrait {
    * @param \Symfony\Component\EventDispatcher\EventDispatcherInterface $event_dispatcher
    *   (optional) The event dispatcher service.
    * @param bool $do_readiness_check
-   *   (optional) Whether to also run readiness checks for the stage
+   *   (optional) Whether to also Rerun readiness checks for the stage
    *   (deprecated). Defaults to FALSE.
    *
    * @return \Drupal\package_manager\ValidationResult[]
