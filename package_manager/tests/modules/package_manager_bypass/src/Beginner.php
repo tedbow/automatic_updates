@@ -37,6 +37,9 @@ class Beginner extends BypassedStagerServiceBase implements BeginnerInterface {
    *   The manipulator.
    */
   public static function setStageManipulator(StageFixtureManipulator $manipulator): void {
+    if (\Drupal::state()->get(__CLASS__ . '-stage-manipulator')) {
+      throw new \Exception('Stage manipulator already set.');
+    }
     \Drupal::state()->set(__CLASS__ . '-stage-manipulator', $manipulator);
   }
 
