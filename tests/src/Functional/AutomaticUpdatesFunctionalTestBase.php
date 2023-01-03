@@ -6,7 +6,6 @@ namespace Drupal\Tests\automatic_updates\Functional;
 
 use Drupal\automatic_updates\CronUpdater;
 use Drupal\Core\Site\Settings;
-use Drupal\fixture_manipulator\StageFixtureManipulator;
 use Drupal\package_manager_bypass\Beginner;
 use Drupal\package_manager_bypass\Stager;
 use Drupal\Tests\BrowserTestBase;
