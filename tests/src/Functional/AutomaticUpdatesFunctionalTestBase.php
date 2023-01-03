@@ -7,7 +7,6 @@ namespace Drupal\Tests\automatic_updates\Functional;
 use Drupal\automatic_updates\CronUpdater;
 use Drupal\Core\Site\Settings;
 use Drupal\package_manager_bypass\Beginner;
-use Drupal\package_manager_bypass\Stager;
 use Drupal\Tests\BrowserTestBase;
 use Drupal\Tests\package_manager\Traits\AssertPreconditionsTrait;
 use Drupal\Tests\package_manager\Traits\FixtureUtilityTrait;
@@ -204,20 +203,6 @@ abstract class AutomaticUpdatesFunctionalTestBase extends BrowserTestBase {
     Beginner::setFixturePath($active_dir);
     $this->container->get('package_manager.path_locator')
       ->setPaths($active_dir, $active_dir . '/vendor', '', NULL);
-  }
-
-  /**
-   * Sets a fixture directory to use as the staged directory.
-   *
-   * @param string $fixture_directory
-   *   The fixture directory.
-   */
-  protected function useFixtureDirectoryAsStaged(string $fixture_directory): void {
-    // Create a temporary directory from our fixture directory that will be
-    // unique for each test run. This will enable changing files in the
-    // directory and not affect other tests.
-    $staged_dir = $this->copyFixtureToTempDirectory($fixture_directory);
-    Stager::setFixturePath($staged_dir);
   }
 
 }

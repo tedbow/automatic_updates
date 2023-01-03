@@ -1,8 +1,0 @@
-{
-  "extra": {
-    "_readme": [
-        "This fixture assumes that ../../two_projects is active directory for the test.",
-        "Simulates a stage directory in which aaa_update_test is updated."
-    ]
-  }
-}

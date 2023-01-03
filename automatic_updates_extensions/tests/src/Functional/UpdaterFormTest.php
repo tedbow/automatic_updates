@@ -6,12 +6,12 @@ namespace Drupal\Tests\automatic_updates_extensions\Functional;
 
 use Drupal\automatic_updates_test\EventSubscriber\TestSubscriber1;
 use Drupal\fixture_manipulator\ActiveFixtureManipulator;
+use Drupal\fixture_manipulator\StageFixtureManipulator;
 use Drupal\package_manager_test_validation\StagedDatabaseUpdateValidator;
 use Drupal\package_manager\Event\PreApplyEvent;
 use Drupal\package_manager\Event\StatusCheckEvent;
 use Drupal\package_manager\ValidationResult;
 use Drupal\package_manager_bypass\Committer;
-use Drupal\package_manager_bypass\Stager;
 use Drupal\package_manager_test_validation\EventSubscriber\TestSubscriber;
 use Drupal\Tests\automatic_updates\Functional\AutomaticUpdatesFunctionalTestBase;
 use Drupal\Tests\automatic_updates\Traits\ValidationTestTrait;
@@ -188,7 +188,6 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
     // modules and themes. The two modules we're testing here (semver_test and
     // aaa_update_test) are already installed by static::$modules.
     $this->container->get('theme_installer')->install(['automatic_updates_extensions_test_theme']);
-    $this->useFixtureDirectoryAsStaged(__DIR__ . '/../../fixtures/stage_composer/' . $project_name);
     $this->setReleaseMetadata(__DIR__ . '/../../../../package_manager/tests/fixtures/release-history/drupal.9.8.2.xml');
     $path_to_fixtures_folder = $project_name === 'aaa_update_test' ? '/../../../../package_manager/tests' : '/../..';
     $this->setReleaseMetadata(__DIR__ . $path_to_fixtures_folder . '/fixtures/release-history/' . $project_name . '.1.1.xml');
@@ -271,7 +270,6 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
    * @requires PHP >= 8.0
    */
   public function testStatusCheckerRunAfterUpdate(bool $has_database_updates): void {
-    $this->useFixtureDirectoryAsStaged(__DIR__ . '/../../fixtures/stage_composer/semver_test');
     $this->setReleaseMetadata(__DIR__ . '/../../fixtures/release-history/semver_test.1.1.xml');
     $this->setProjectInstalledVersion(['semver_test' => '8.1.0']);
     $this->checkForUpdates();
@@ -400,7 +398,6 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
     $this->setReleaseMetadata(__DIR__ . '/../../../../package_manager/tests/fixtures/release-history/drupal.9.8.2.xml');
     $this->setReleaseMetadata(__DIR__ . "/../../fixtures/release-history/semver_test.1.1.xml");
     $this->setReleaseMetadata(__DIR__ . "/../../../../package_manager/tests/fixtures/release-history/aaa_update_test.1.1.xml");
-    Stager::setFixturePath(__DIR__ . '/../../fixtures/stage_composer/two_projects');
     $this->setProjectInstalledVersion([
       'semver_test' => '8.1.0',
       'aaa_update_test' => '8.x-2.0',
@@ -429,6 +426,10 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
       $page->checkField('projects[aaa_update_test]');
     }
     $page->checkField('projects[semver_test]');
+    $stage_manipulator = new StageFixtureManipulator();
+    $stage_manipulator->setVersion('drupal/aaa_update_test', '2.1.0')
+      ->setVersion('drupal/semver_test', '8.1.1')
+      ->setReadyToCommit();
     $page->pressButton('Update');
     $this->checkForMetaRefresh();
     $this->assertUpdateStagedTimes(1);
