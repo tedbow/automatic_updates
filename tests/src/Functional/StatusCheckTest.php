@@ -68,7 +68,7 @@ class StatusCheckTest extends AutomaticUpdatesFunctionalTestBase {
   protected function setUp(): void {
     parent::setUp();
     $this->setReleaseMetadata(__DIR__ . '/../../../package_manager/tests/fixtures/release-history/drupal.9.8.1-security.xml');
-    $this->setCoreVersion('9.8.1');
+    $this->mockActiveCoreVersion('9.8.1');
 
     $this->reportViewerUser = $this->createUser([
       'administer site configuration',
@@ -479,7 +479,7 @@ class StatusCheckTest extends AutomaticUpdatesFunctionalTestBase {
 
     // The current release is 9.8.1 (see ::setUp()), so ensure we're on an older
     // version.
-    $this->setCoreVersion('9.8.0');
+    $this->mockActiveCoreVersion('9.8.0');
 
     // Flag a validation error, which will be displayed in the messages area.
     $results = [$this->createValidationResult(SystemManager::REQUIREMENT_ERROR)];

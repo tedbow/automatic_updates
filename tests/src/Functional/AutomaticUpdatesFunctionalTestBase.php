@@ -120,12 +120,12 @@ abstract class AutomaticUpdatesFunctionalTestBase extends BrowserTestBase {
   }
 
   /**
-   * Sets the current (running) version of core, as known to the Update module.
+   * Mocks the current (running) version of core, as known to the Update module.
    *
    * @param string $version
-   *   The current version of core.
+   *   The version of core to mock.
    */
-  protected function setCoreVersion(string $version): void {
+  protected function mockActiveCoreVersion(string $version): void {
     $this->config('update_test.settings')
       ->set('system_info.#all.version', $version)
       ->save();

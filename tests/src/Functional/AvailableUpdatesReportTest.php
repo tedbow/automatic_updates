@@ -52,14 +52,14 @@ class AvailableUpdatesReportTest extends AutomaticUpdatesFunctionalTestBase {
     $this->config('automatic_updates.settings')->set('allow_core_minor_updates', TRUE)->save();
     $fixture_directory = __DIR__ . '/../../../package_manager/tests/fixtures/release-history';
     $this->setReleaseMetadata("$fixture_directory/drupal.9.8.1-security.xml");
-    $this->setCoreVersion('9.8.0');
+    $this->mockActiveCoreVersion('9.8.0');
     $this->checkForUpdates();
     $assert->pageTextContains('Security update required! Update now');
     $assert->elementAttributeContains('named', ['link', 'Update now'], 'href', $form_url);
     $this->assertVersionLink('9.8.1', $form_url);
 
     $this->setReleaseMetadata("$fixture_directory/drupal.9.8.2-older-sec-release.xml");
-    $this->setCoreVersion('9.7.0');
+    $this->mockActiveCoreVersion('9.7.0');
     $this->checkForUpdates();
     $assert->pageTextContains('Security update required! Update now');
 

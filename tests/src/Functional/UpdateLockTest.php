@@ -49,7 +49,7 @@ class UpdateLockTest extends AutomaticUpdatesFunctionalTestBase {
       ->setReadyToCommit();
     $page = $this->getSession()->getPage();
     $assert_session = $this->assertSession();
-    $this->setCoreVersion('9.8.0');
+    $this->mockActiveCoreVersion('9.8.0');
     $this->checkForUpdates();
     $permissions = ['administer software updates'];
     $user_1 = $this->createUser($permissions);

@@ -108,7 +108,7 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
    * @dataProvider providerUpdateFormReferringUrl
    */
   public function testFormNotDisplayedIfAlreadyCurrent(string $update_form_url): void {
-    $this->setCoreVersion('9.8.1');
+    $this->mockActiveCoreVersion('9.8.1');
     $this->checkForUpdates();
 
     $this->drupalGet($update_form_url);
@@ -141,7 +141,7 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
 
     $page = $this->getSession()->getPage();
     $this->drupalPlaceBlock('local_tasks_block', ['primary' => TRUE]);
-    $this->setCoreVersion('9.8.0');
+    $this->mockActiveCoreVersion('9.8.0');
     $this->checkForUpdates();
 
     // Navigate to the automatic updates form.
@@ -165,7 +165,7 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
 
     // Check the form when there is an update in the next minor only.
     $this->config('automatic_updates.settings')->set('allow_core_minor_updates', TRUE)->save();
-    $this->setCoreVersion('9.7.0');
+    $this->mockActiveCoreVersion('9.7.0');
     $page->clickLink('Check manually');
     $this->checkForMetaRefresh();
     $this->checkReleaseTable('#edit-next-minor-1', '.update-update-recommended', '9.8.1', TRUE, 'Latest version of Drupal 9.8 (next minor) (Release notes):');
@@ -194,7 +194,7 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
     $this->assertReleaseNotesLink(9, 8, '#edit-next-minor-1');
     $assert_minor_update_help();
 
-    $this->setCoreVersion('9.7.1');
+    $this->mockActiveCoreVersion('9.7.1');
     $page->clickLink('Check manually');
     $this->checkForMetaRefresh();
     $assert_session->pageTextContainsOnce('Currently installed: 9.7.1 (Update available)');
@@ -207,7 +207,7 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
     // are visible.
     $this->config('automatic_updates.settings')->set('allow_core_minor_updates', TRUE)->save();
     $this->setReleaseMetadata(__DIR__ . '/../../../package_manager/tests/fixtures/release-history/drupal.10.0.0.xml');
-    $this->setCoreVersion('9.5.0');
+    $this->mockActiveCoreVersion('9.5.0');
     $page->clickLink('Check manually');
     $this->checkForMetaRefresh();
     $assert_session->pageTextNotContains('10.0.0');
@@ -221,7 +221,7 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
 
     // Check that if installed version is unsupported and minor updates are
     // enabled then updates in the next minors are visible.
-    $this->setCoreVersion('9.4.0');
+    $this->mockActiveCoreVersion('9.4.0');
     $page->clickLink('Check manually');
     $this->checkForMetaRefresh();
     $assert_session->pageTextNotContains('10.0.0');
@@ -251,7 +251,7 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
    */
   public function testStatusCheckFailureWhenNoUpdateExists() {
     $assert_session = $this->assertSession();
-    $this->setCoreVersion('9.8.1');
+    $this->mockActiveCoreVersion('9.8.1');
     $message = "You've not experienced Shakespeare until you have read him in the original Klingon.";
     $result = ValidationResult::createError([$message]);
     TestSubscriber1::setTestResult([$result], StatusCheckEvent::class);
@@ -266,7 +266,7 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
    */
   public function testNextMinorPreRelease(): void {
     $this->setReleaseMetadata(__DIR__ . '/../../../package_manager/tests/fixtures/release-history/drupal.9.8.0-beta1.xml');
-    $this->setCoreVersion('9.7.0');
+    $this->mockActiveCoreVersion('9.7.0');
     $this->config('automatic_updates.settings')
       ->set('allow_core_minor_updates', TRUE)
       ->save();
@@ -326,7 +326,7 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
     $session->reload();
     $assert_session->pageTextContainsOnce($cached_message);
 
-    $this->setCoreVersion('9.8.0');
+    $this->mockActiveCoreVersion('9.8.0');
     $this->checkForUpdates();
 
     // Set up a new fake error. Use an error with multiple messages so we can
@@ -397,7 +397,7 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
     $session = $this->getSession();
     $assert_session = $this->assertSession();
     $page = $session->getPage();
-    $this->setCoreVersion('9.8.0');
+    $this->mockActiveCoreVersion('9.8.0');
     $this->checkForUpdates();
 
     $this->drupalGet('/admin/modules/automatic-update');
@@ -436,7 +436,7 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
    * @dataProvider providerUpdateFormReferringUrl
    */
   public function testMinorVersionUpdateNotSupported(string $update_form_url): void {
-    $this->setCoreVersion('9.7.1');
+    $this->mockActiveCoreVersion('9.7.1');
     $this->checkForUpdates();
 
     $this->drupalGet($update_form_url);
@@ -460,7 +460,7 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
 
     $assert_session = $this->assertSession();
     $page = $this->getSession()->getPage();
-    $this->setCoreVersion('9.8.0');
+    $this->mockActiveCoreVersion('9.8.0');
     $this->checkForUpdates();
 
     $this->drupalGet('/admin/modules/update');
@@ -585,7 +585,7 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
     (new StageFixtureManipulator())
       ->setCorePackageVersion('9.8.1')
       ->setReadyToCommit();
-    $this->setCoreVersion('9.8.0');
+    $this->mockActiveCoreVersion('9.8.0');
     $this->checkForUpdates();
     $this->container->get('theme_installer')->install(['automatic_updates_theme_with_updates']);
     $cached_message = $this->setAndAssertCachedMessage();
@@ -706,7 +706,7 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
       ->setCorePackageVersion('9.8.1')
       ->setReadyToCommit();
     $assert_session = $this->assertSession();
-    $this->setCoreVersion('9.8.0');
+    $this->mockActiveCoreVersion('9.8.0');
     $this->checkForUpdates();
     $state = $this->container->get('state');
     $state->set('system.maintenance_mode', $maintenance_mode_on);
@@ -769,7 +769,7 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
       ->setCorePackageVersion('9.8.1')
       ->setReadyToCommit();
     $assert_session = $this->assertSession();
-    $this->setCoreVersion('9.8.0');
+    $this->mockActiveCoreVersion('9.8.0');
     $this->checkForUpdates();
     $page = $this->getSession()->getPage();
     // Navigate to the automatic updates form.
@@ -849,7 +849,7 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
       ->setCorePackageVersion('9.8.1')
       ->setReadyToCommit();
     $assert_session = $this->assertSession();
-    $this->setCoreVersion('9.8.0');
+    $this->mockActiveCoreVersion('9.8.0');
     $this->checkForUpdates();
     $state = $this->container->get('state');
     $state->set('system.maintenance_mode', $maintenance_mode_on);
@@ -874,7 +874,7 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
     (new StageFixtureManipulator())
       ->setCorePackageVersion('9.8.1')
       ->setReadyToCommit();
-    $this->setCoreVersion('9.8.0');
+    $this->mockActiveCoreVersion('9.8.0');
     $this->checkForUpdates();
 
     $page = $this->getSession()->getPage();
@@ -911,7 +911,7 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
     $session = $this->getSession();
     $assert_session = $this->assertSession();
     $page = $session->getPage();
-    $this->setCoreVersion('9.8.0');
+    $this->mockActiveCoreVersion('9.8.0');
     $this->checkForUpdates();
 
     $this->drupalGet('/admin/modules/update');
@@ -938,7 +938,7 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
     $session = $this->getSession();
     $assert_session = $this->assertSession();
     $page = $session->getPage();
-    $this->setCoreVersion('9.8.0');
+    $this->mockActiveCoreVersion('9.8.0');
     $this->checkForUpdates();
     $this->drupalGet('/admin/modules/automatic-update');
     $page->pressButton('Update to 9.8.1');
@@ -968,7 +968,7 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
   public function testContinueOnWarning(): void {
     $session = $this->getSession();
 
-    $this->setCoreVersion('9.8.0');
+    $this->mockActiveCoreVersion('9.8.0');
     $this->checkForUpdates();
     $this->drupalGet('/admin/modules/automatic-update');
     $session->getPage()->pressButton('Update to 9.8.1');

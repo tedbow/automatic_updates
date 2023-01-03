@@ -85,7 +85,7 @@ class UpdaterFormNoRecommendedReleaseMessageTest extends AutomaticUpdatesFunctio
    */
   public function testMessages(string $release_metadata, string $installed_version, bool $updates_available, string $expected_message_type): void {
     $this->setReleaseMetadata($release_metadata);
-    $this->setCoreVersion($installed_version);
+    $this->mockActiveCoreVersion($installed_version);
     $this->checkForUpdates();
     $this->drupalGet('/admin/reports/updates/update');
 
