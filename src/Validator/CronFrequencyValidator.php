@@ -171,12 +171,12 @@ class CronFrequencyValidator implements EventSubscriberInterface {
     // installed, defaulting to the beginning of the Unix epoch.
     $cron_last = $this->state->get('system.cron_last', $this->state->get('install_time', 0));
 
-    // Since 'system.cron_last' is not set until the end of the cron run, allow
-    // a little extra time (600 seconds) in case one cron run takes longer than
-    // the previous cron run. This could result in the value of
-    // 'system.cron_last' being older than `WARNING_INTERVAL` even if the cron
-    // frequency is exactly the same as `WARNING_INTERVAL`.
-    if ($this->time->getRequestTime() - $cron_last > (static::WARNING_INTERVAL + 600)) {
+    // @todo Should we allow a little extra time in case the server job takes
+    //   longer than expected? Otherwise a server setup with a 3-hour cron job
+    //   will always give this warning. Maybe this isn't necessary because the
+    //   last cron run time is recorded after cron runs. Address this in
+    //   https://www.drupal.org/project/automatic_updates/issues/3248544.
+    if ($this->time->getRequestTime() - $cron_last > static::WARNING_INTERVAL) {
       $event->addError([
         $this->t('Cron has not run recently. For more information, see the online handbook entry for <a href=":cron-handbook">configuring cron jobs</a> to run at least every @frequency hours.', [
           ':cron-handbook' => 'https://www.drupal.org/cron',
