@@ -8,7 +8,6 @@ use Drupal\automatic_updates\CronUpdater;
 use Drupal\Core\Logger\RfcLogLevel;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\package_manager\StatusCheckTrait;
-use Drupal\package_manager\Event\PreApplyEvent;
 use Drupal\package_manager\ValidationResult;
 use Drupal\Tests\automatic_updates\Kernel\AutomaticUpdatesKernelTestBase;
 use Drupal\Tests\package_manager\Traits\PackageManagerBypassTestTrait;
