@@ -61,6 +61,10 @@ class SqliteDatabaseExcluder implements EventSubscriberInterface {
     // and we should ignore it. Always treat it as relative to the project root.
     if ($this->database->driver() === 'sqlite') {
       $options = $this->database->getConnectionOptions();
+      // Nothing to exclude if the database lives outside the project root.
+      if (str_starts_with($options['database'], '/') && !str_starts_with($options['database'], $this->pathLocator->getProjectRoot())) {
+        return;
+      }
       $this->excludeInProjectRoot($event, [
         $options['database'],
         $options['database'] . '-shm',

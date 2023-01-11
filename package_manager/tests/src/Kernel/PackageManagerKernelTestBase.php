@@ -5,6 +5,7 @@ declare(strict_types = 1);
 namespace Drupal\Tests\package_manager\Kernel;
 
 use Drupal\Core\DependencyInjection\ContainerBuilder;
+use Drupal\Core\Site\Settings;
 use Drupal\KernelTests\KernelTestBase;
 use Drupal\package_manager\Event\PreApplyEvent;
 use Drupal\package_manager\Event\StageEvent;
@@ -236,7 +237,19 @@ abstract class PackageManagerKernelTestBase extends KernelTestBase {
     $active_dir = vfsStream::newDirectory('active');
     $this->vfsRoot->addChild($active_dir);
     $active_dir = $active_dir->url();
+    // Move vfs://root/sites to vfs://root/active/sites.
+    $sites_in_vfs = vfsStream::url('root/sites');
+    rename($sites_in_vfs, $sites_in_vfs . '/active');
     static::copyFixtureFilesTo($source_dir, $active_dir);
+
+    // Override siteDirectory to point to root/active/... instead of root/... .
+    $test_site_path = str_replace('vfs://root/', '', $this->siteDirectory);
+    $this->siteDirectory = vfsStream::url('root/active/' . $test_site_path);
+    // Override KernelTestBase::setUpFilesystem's Settings object.
+    $settings = Settings::getInstance() ? Settings::getAll() : [];
+    $settings['file_public_path'] = $this->siteDirectory . '/files';
+    $settings['config_sync_directory'] = $this->siteDirectory . '/files/config/sync';
+    new Settings($settings);
 
     // Create a stage root directory alongside the active directory.
     $stage_dir = vfsStream::newDirectory('stage');

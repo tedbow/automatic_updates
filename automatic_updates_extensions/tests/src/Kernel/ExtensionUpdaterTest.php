@@ -45,8 +45,6 @@ class ExtensionUpdaterTest extends AutomaticUpdatesExtensionsKernelTestBase {
     // Create a user who will own the stage even after the container is rebuilt.
     $user = $this->createUser([], NULL, TRUE, ['uid' => 2]);
     $this->setCurrentUser($user);
-
-    $this->createVirtualProject(__DIR__ . '/../../fixtures/fake-site');
   }
 
   /**
@@ -162,7 +160,6 @@ class ExtensionUpdaterTest extends AutomaticUpdatesExtensionsKernelTestBase {
    * @dataProvider providerUpdateException
    */
   public function testUpdateException(string $event_class): void {
-    $this->createVirtualProject(__DIR__ . '/../../fixtures/fake-site');
     $extension_updater = $this->container->get('automatic_updates_extensions.updater');
     $results = [
       ValidationResult::createError(['An error of some sorts.']),
