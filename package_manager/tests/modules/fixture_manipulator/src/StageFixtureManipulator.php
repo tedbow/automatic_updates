@@ -30,6 +30,18 @@ final class StageFixtureManipulator extends FixtureManipulator {
     }
     parent::doCommitChanges($dir);
     $this->committed = TRUE;
+
+    // In a kernel test, the Beginner runs in the same PHP process as the test,
+    // so there's no need for extra logic to inform the test runner that the
+    // queued stage fixture manipulations have been committed. In functional
+    // tests, however, we do need to pass information back from the system under
+    // test to the test runner.
+    // @see \Drupal\Core\CoreServiceProvider::registerTest()
+    $in_functional_test = defined('DRUPAL_TEST_IN_CHILD_SITE');
+    if ($in_functional_test) {
+      // Relay "committed" state to the test runner by re-serializing to state.
+      Beginner::setStageManipulator($this);
+    }
   }
 
   /**
@@ -47,6 +59,23 @@ final class StageFixtureManipulator extends FixtureManipulator {
     if (!$this->ready) {
       throw new \LogicException('This fixture manipulator was not yet ready to commit! Please call setReadyToCommit() to signal all necessary changes are queued.');
     }
+
+    // Update the state to match reality, because ::commitChanges() *should*
+    // have been called by \Drupal\package_manager_bypass\Beginner::begin(). The
+    // "committed" flag will already be set in kernel tests, because there the
+    // test runner and the system under test live in the same PHP process.
+    // Note that this will never run for the system under test, because
+    // $this->committed will always be set. Ensure we do this only
+    // functional tests by checking for the presence of a container.
+    if (!$this->committed && \Drupal::hasContainer()) {
+      $sut = \Drupal::state()->get(Beginner::class . '-stage-manipulator', NULL);
+      if ($sut) {
+        $this->committed = $sut->committed;
+      }
+    }
+
+    // Proceed regular destruction (which will complain if it's not committed).
+    parent::__destruct();
   }
 
 }

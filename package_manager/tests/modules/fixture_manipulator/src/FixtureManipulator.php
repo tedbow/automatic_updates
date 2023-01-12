@@ -67,6 +67,9 @@ class FixtureManipulator {
         throw new \UnexpectedValueException("The '$required_key' is required when calling ::addPackage().");
       }
     }
+    if (!preg_match('/\w+\/\w+/', $package['name'])) {
+      throw new \UnexpectedValueException(sprintf("'%s' is not a valid package name.", $package['name']));
+    }
     $this->setPackage($package['name'], $package, FALSE, $is_dev_requirement);
     $drupal_project_types = [
       'drupal-module',

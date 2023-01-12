@@ -79,11 +79,19 @@ abstract class AutomaticUpdatesFunctionalTestBase extends BrowserTestBase {
    * {@inheritdoc}
    */
   protected function tearDown(): void {
-    // If automatic_updates is installed, ensure any stage directory created
-    // during the test is cleaned up.
-    $service_id = 'automatic_updates.updater';
-    if ($this->container->has($service_id)) {
-      $this->container->get($service_id)->destroy(TRUE);
+    $service_ids = [
+      // If automatic_updates is installed, ensure any stage directory created
+      // during the test is cleaned up.
+      'automatic_updates.updater',
+      // Ensure that \Drupal\package_manager_bypass\Beginner's ::commitChanges()
+      // call makes its way back to the test.
+      // @see \Drupal\fixture_manipulator\StageFixtureManipulator::__destruct()
+      'package_manager.beginner',
+    ];
+    foreach ($service_ids as $service_id) {
+      if ($this->container->has($service_id)) {
+        $this->container->get($service_id)->destroy(TRUE);
+      }
     }
     parent::tearDown();
   }

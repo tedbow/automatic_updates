@@ -146,9 +146,11 @@ class CronUpdaterTest extends AutomaticUpdatesKernelTestBase {
    */
   public function testUpdaterCalled(string $setting, array $release_data, bool $will_update): void {
     $version = strpos($release_data['drupal'], '9.8.2') ? '9.8.2' : '9.8.1';
-    (new StageFixtureManipulator())
-      ->setCorePackageVersion($version)
-      ->setReadyToCommit();
+    if ($will_update) {
+      (new StageFixtureManipulator())
+        ->setCorePackageVersion($version)
+        ->setReadyToCommit();
+    }
     // Our form alter does not refresh information on available updates, so
     // ensure that the appropriate update data is loaded beforehand.
     $this->setReleaseMetadata($release_data);
@@ -251,9 +253,13 @@ class CronUpdaterTest extends AutomaticUpdatesKernelTestBase {
    * @dataProvider providerStageDestroyedOnError
    */
   public function testStageDestroyedOnError(string $event_class, string $exception_class): void {
-    (new StageFixtureManipulator())
-      ->setCorePackageVersion('9.8.1')
-      ->setReadyToCommit();
+    // If the failure happens before the stage is even created, the stage
+    // fixture need not be manipulated.
+    if ($event_class !== PreCreateEvent::class) {
+      (new StageFixtureManipulator())
+        ->setCorePackageVersion('9.8.1')
+        ->setReadyToCommit();
+    }
     $this->installConfig('automatic_updates');
     // @todo Remove in https://www.drupal.org/project/automatic_updates/issues/3284443
     $this->config('automatic_updates.settings')->set('cron', CronUpdater::SECURITY)->save();
@@ -489,9 +495,13 @@ END;
    * @dataProvider providerEmailOnFailure
    */
   public function testNonUrgentFailureEmail(string $event_class): void {
-    (new StageFixtureManipulator())
-      ->setCorePackageVersion('9.8.2')
-      ->setReadyToCommit();
+    // If the failure happens before the stage is even created, the stage
+    // fixture need not be manipulated.
+    if ($event_class !== PreCreateEvent::class) {
+      (new StageFixtureManipulator())
+        ->setCorePackageVersion('9.8.2')
+        ->setReadyToCommit();
+    }
     $this->setReleaseMetadata([
       'drupal' => __DIR__ . '/../../../package_manager/tests/fixtures/release-history/drupal.9.8.2.xml',
     ]);
@@ -533,9 +543,13 @@ END;
    * @dataProvider providerEmailOnFailure
    */
   public function testSecurityUpdateFailureEmail(string $event_class): void {
-    (new StageFixtureManipulator())
-      ->setCorePackageVersion('9.8.1')
-      ->setReadyToCommit();
+    // If the failure happens before the stage is even created, the stage
+    // fixture need not be manipulated.
+    if ($event_class !== PreCreateEvent::class) {
+      (new StageFixtureManipulator())
+        ->setCorePackageVersion('9.8.1')
+        ->setReadyToCommit();
+    }
     $results = [
       ValidationResult::createError([t('Error while updating!')]),
     ];

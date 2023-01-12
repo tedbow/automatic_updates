@@ -483,7 +483,13 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
     $assert_session->addressEquals('/admin/reports/updates/update');
     $assert_session->pageTextContains($cancelled_message);
     $assert_session->pageTextNotContains($conflict_message);
+    // Ensure that all traces of the manipulator for the first stage are erased.
+    $this->container->get('package_manager.beginner')->destroy();
+
     // Ensure we can start another update after deleting the existing one.
+    (new StageFixtureManipulator())
+      ->setCorePackageVersion('9.8.1')
+      ->setReadyToCommit();
     $page->pressButton('Update to 9.8.1');
     $this->checkForMetaRefresh();
 
@@ -503,6 +509,12 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
     $page->pressButton('Delete existing update');
     $assert_session->pageTextContains('Staged update deleted');
     $assert_session->pageTextNotContains($conflict_message);
+    // Ensure that all traces of the manipulator for the 2nd stage are erased.
+    $this->container->get('package_manager.beginner')->destroy();
+    // Before pressing the button, create a new stage fixture manipulator.
+    (new StageFixtureManipulator())
+      ->setCorePackageVersion('9.8.1')
+      ->setReadyToCommit();
     $page->pressButton('Update to 9.8.1');
     $this->checkForMetaRefresh();
     $this->assertUpdateReady('9.8.1');
@@ -543,11 +555,17 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
     $page->pressButton('Delete existing update');
     $assert_session->statusCodeEquals(200);
     $assert_session->pageTextContains('Staged update deleted');
+    // Ensure that all traces of the manipulator for the 3rd stage are erased.
+    $this->container->get('package_manager.beginner')->destroy();
 
     // If a legitimate error is raised during pre-apply, we should be able to
     // delete the staged update right away.
     $results = [$this->createValidationResult(SystemManager::REQUIREMENT_ERROR)];
     TestSubscriber1::setTestResult($results, PreApplyEvent::class);
+    // Before pressing the button, create a new stage fixture manipulator.
+    (new StageFixtureManipulator())
+      ->setCorePackageVersion('9.8.1')
+      ->setReadyToCommit();
     $page->pressButton('Update to 9.8.1');
     $this->checkForMetaRefresh();
     $this->assertUpdateReady('9.8.1');

@@ -7,6 +7,7 @@ namespace Drupal\Tests\package_manager\Kernel;
 use Drupal\fixture_manipulator\ActiveFixtureManipulator;
 use Drupal\fixture_manipulator\FixtureManipulator;
 use Drupal\fixture_manipulator\StageFixtureManipulator;
+use Drupal\package_manager_bypass\Beginner;
 use Symfony\Component\Filesystem\Filesystem;
 
 /**
@@ -96,6 +97,20 @@ class FixtureManipulatorTest extends PackageManagerKernelTestBase {
       catch (\UnexpectedValueException $e) {
         $this->assertSame("The '$require_key' is required when calling ::addPackage().", $e->getMessage());
       }
+    }
+
+    // We should get a helpful error if the name is not a valid package name.
+    try {
+      $manipulator = new ActiveFixtureManipulator();
+      $manipulator->addPackage([
+        'name' => 'my_drupal_module',
+        'type' => 'drupal-module',
+      ])
+        ->commitChanges();
+      $this->fail('Trying to add a package with an invalid name should raise an error.');
+    }
+    catch (\UnexpectedValueException $e) {
+      $this->assertSame("'my_drupal_module' is not a valid package name.", $e->getMessage());
     }
 
     // We should not be able to add an existing package.
@@ -297,7 +312,7 @@ class FixtureManipulatorTest extends PackageManagerKernelTestBase {
   /**
    * Test that an exception is thrown if ::commitChanges() is not called.
    */
-  public function testNoCommitError(): void {
+  public function testActiveManipulatorNoCommitError(): void {
     $this->expectException(\LogicException::class);
     $this->expectExceptionMessage('commitChanges() must be called.');
     (new ActiveFixtureManipulator())
@@ -305,13 +320,78 @@ class FixtureManipulatorTest extends PackageManagerKernelTestBase {
   }
 
   /**
-   * Test that no exception is thrown if ::setReadyToCommit() is called.
+   * Test that an exception is thrown if ::readyToCommit() is not called.
    */
-  public function testNoCommitExpected(): void {
+  public function testStageManipulatorSetReadyToCommitExpected(): void {
+    $this->expectException(\LogicException::class);
+    $this->expectExceptionMessage('This fixture manipulator was not yet ready to commit! Please call setReadyToCommit() to signal all necessary changes are queued.');
+
     $manipulator = new StageFixtureManipulator();
     $manipulator->setVersion('drupal/core', '1.2.3');
-    $manipulator->setReadyToCommit();
-    $this->assertTrue(TRUE);
+  }
+
+  /**
+   * Test that an exception is thrown if ::commitChanges() is not called.
+   *
+   * @dataProvider stageManipulatorUsageStyles
+   */
+  public function testStageManipulatorNoCommitError(bool $immediately_destroyed): void {
+    $this->expectException(\LogicException::class);
+    $this->expectExceptionMessage('commitChanges() must be called.');
+
+    if ($immediately_destroyed) {
+      (new StageFixtureManipulator())
+        ->setCorePackageVersion('9.8.1')
+        ->setReadyToCommit();
+    }
+    else {
+      $manipulator = new StageFixtureManipulator();
+      $manipulator->setVersion('drupal/core', '1.2.3');
+      $manipulator->setReadyToCommit();
+    }
+
+    // Ensure \Drupal\fixture_manipulator\StageFixtureManipulator::__destruct()
+    // is triggered.
+    $this->container->get('state')->delete(Beginner::class . '-stage-manipulator');
+    $this->container->get('package_manager.beginner')->destroy();
+  }
+
+  /**
+   * Test no exceptions are thrown if StageFixtureManipulator is used correctly.
+   *
+   * @dataProvider stageManipulatorUsageStyles
+   */
+  public function testStageManipulatorSatisfied(bool $immediately_destroyed): void {
+    if ($immediately_destroyed) {
+      (new StageFixtureManipulator())
+        ->setCorePackageVersion('9.8.1')
+        ->setReadyToCommit();
+    }
+    else {
+      $manipulator = new StageFixtureManipulator();
+      $manipulator->setVersion('drupal/core', '1.2.3');
+      $manipulator->setReadyToCommit();
+    }
+
+    $path_locator = $this->container->get('package_manager.path_locator');
+    // We need to set the vendor directory's permissions first because, in the
+    // virtual project, it's located inside the project root.
+    $this->assertTrue(chmod($path_locator->getVendorDirectory(), 0777));
+    $this->assertTrue(chmod($path_locator->getProjectRoot(), 0777));
+
+    // Simulate a stage beginning, which would commit the changes.
+    // @see \Drupal\package_manager_bypass\Beginner::begin()
+    $this->container->get('package_manager.beginner')->begin(
+      new TestPath($path_locator->getProjectRoot()),
+      new TestPath($path_locator->getStagingRoot()),
+    );
+  }
+
+  public function stageManipulatorUsageStyles() {
+    return [
+      'immediately destroyed' => [TRUE],
+      'variable' => [FALSE],
+    ];
   }
 
 }
