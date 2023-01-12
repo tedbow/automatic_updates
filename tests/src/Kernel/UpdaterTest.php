@@ -13,6 +13,7 @@ use Drupal\package_manager\Event\PreRequireEvent;
 use Drupal\package_manager\Exception\StageException;
 use Drupal\package_manager\ValidationResult;
 use Drupal\package_manager_bypass\Committer;
+use Drupal\Tests\package_manager\Kernel\TestStageValidationException;
 use Drupal\Tests\user\Traits\UserCreationTrait;
 use PhpTuf\ComposerStager\Domain\Exception\InvalidArgumentException;
 
@@ -228,9 +229,10 @@ class UpdaterTest extends AutomaticUpdatesKernelTestBase {
       $updater->apply();
       $this->fail('Expected an exception, but none was raised.');
     }
-    catch (UpdateException $e) {
+    catch (TestStageValidationException $e) {
       $this->assertStringStartsWith('An error of some sorts.', $e->getMessage());
-      $this->assertInstanceOf($event_class, $e->event);
+      $this->assertInstanceOf(UpdateException::class, $e->getOriginalException());
+      $this->assertInstanceOf($event_class, $e->getEvent());
     }
   }
 

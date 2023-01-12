@@ -4,13 +4,14 @@ declare(strict_types = 1);
 
 namespace Drupal\Tests\automatic_updates_extensions\Kernel;
 
+use Drupal\automatic_updates\Exception\UpdateException;
 use Drupal\automatic_updates_extensions\ExtensionUpdater;
 use Drupal\Core\DependencyInjection\ContainerBuilder;
-use Drupal\package_manager\Exception\StageValidationException;
 use Drupal\package_manager\UnusedConfigFactory;
 use Drupal\Tests\automatic_updates\Kernel\AutomaticUpdatesKernelTestBase;
 use Drupal\Tests\package_manager\Kernel\TestPathFactory;
 use Drupal\Tests\package_manager\Kernel\TestStageTrait;
+use Drupal\Tests\package_manager\Kernel\TestStageValidationException;
 
 /**
  * Base class for kernel tests of the Automatic Updates Extensions module.
@@ -92,13 +93,14 @@ abstract class AutomaticUpdatesExtensionsKernelTestBase extends AutomaticUpdates
       // If we did not get an exception, ensure we didn't expect any results.
       $this->assertEmpty($expected_results);
     }
-    catch (StageValidationException $e) {
+    catch (TestStageValidationException $e) {
       $this->assertNotEmpty($expected_results);
       $this->assertValidationResultsEqual($expected_results, $e->getResults());
-      // TestStage::dispatch() attaches the event object to the exception so
-      // that we can analyze it.
+      // TestStage::dispatch() throws TestUpdateException with event object
+      // so that we can analyze it.
+      $this->assertInstanceOf(UpdateException::class, $e->getOriginalException());
       $this->assertNotEmpty($event_class);
-      $this->assertInstanceOf($event_class, $e->event);
+      $this->assertInstanceOf($event_class, $e->getEvent());
     }
   }
 

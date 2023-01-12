@@ -10,6 +10,7 @@ use Drupal\package_manager\Event\PreApplyEvent;
 use Drupal\package_manager\Event\PreCreateEvent;
 use Drupal\package_manager\Event\PreRequireEvent;
 use Drupal\package_manager\ValidationResult;
+use Drupal\Tests\package_manager\Kernel\TestStageValidationException;
 use Drupal\Tests\user\Traits\UserCreationTrait;
 
 /**
@@ -171,9 +172,10 @@ class ExtensionUpdaterTest extends AutomaticUpdatesExtensionsKernelTestBase {
       $extension_updater->apply();
       $this->fail('Expected an exception, but none was raised.');
     }
-    catch (UpdateException $e) {
+    catch (TestStageValidationException $e) {
       $this->assertStringStartsWith('An error of some sorts.', $e->getMessage());
-      $this->assertInstanceOf($event_class, $e->event);
+      $this->assertInstanceOf(UpdateException::class, $e->getOriginalException());
+      $this->assertInstanceOf($event_class, $e->getEvent());
     }
   }
 
