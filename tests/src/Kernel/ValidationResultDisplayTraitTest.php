@@ -35,10 +35,10 @@ class ValidationResultDisplayTraitTest extends AutomaticUpdatesKernelTestBase {
     // An error and a warning should display the error preamble, and the result
     // messages as errors and warnings, respectively.
     $results = [
-      ValidationResult::createError(['Boo!']),
-      ValidationResult::createError(['Wednesday', 'Lurch'], $this->t('The Addams Family')),
-      ValidationResult::createWarning(['Moo!']),
-      ValidationResult::createWarning(['Shaggy', 'The dog'], $this->t('Mystery Mobile')),
+      ValidationResult::createError([t('Boo!')]),
+      ValidationResult::createError([t('Wednesday'), t('Lurch')], $this->t('The Addams Family')),
+      ValidationResult::createWarning([t('Moo!')]),
+      ValidationResult::createWarning([t('Shaggy'), t('The dog')], $this->t('Mystery Mobile')),
     ];
     $this->displayResults($results, $messenger, $renderer);
 

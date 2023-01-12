@@ -50,7 +50,7 @@ class VersionPolicyValidatorTest extends AutomaticUpdatesKernelTestBase {
         [CronUpdater::DISABLED, CronUpdater::SECURITY, CronUpdater::ALL],
         [
           $this->createVersionPolicyValidationResult('9.8.0-dev', NULL, [
-            'Drupal cannot be automatically updated from the installed version, 9.8.0-dev, because automatic updates from a dev version to any other version are not supported.',
+            t('Drupal cannot be automatically updated from the installed version, 9.8.0-dev, because automatic updates from a dev version to any other version are not supported.'),
           ]),
         ],
       ],
@@ -68,7 +68,7 @@ class VersionPolicyValidatorTest extends AutomaticUpdatesKernelTestBase {
         [CronUpdater::SECURITY, CronUpdater::ALL],
         [
           $this->createVersionPolicyValidationResult('9.8.0-alpha1', NULL, [
-            'Drupal cannot be automatically updated during cron from its current version, 9.8.0-alpha1, because it is not a stable version.',
+            t('Drupal cannot be automatically updated during cron from its current version, 9.8.0-alpha1, because it is not a stable version.'),
           ]),
         ],
       ],
@@ -84,7 +84,7 @@ class VersionPolicyValidatorTest extends AutomaticUpdatesKernelTestBase {
         [CronUpdater::SECURITY, CronUpdater::ALL],
         [
           $this->createVersionPolicyValidationResult('9.8.0-beta2', NULL, [
-            'Drupal cannot be automatically updated during cron from its current version, 9.8.0-beta2, because it is not a stable version.',
+            t('Drupal cannot be automatically updated during cron from its current version, 9.8.0-beta2, because it is not a stable version.'),
           ]),
         ],
       ],
@@ -100,7 +100,7 @@ class VersionPolicyValidatorTest extends AutomaticUpdatesKernelTestBase {
         [CronUpdater::SECURITY, CronUpdater::ALL],
         [
           $this->createVersionPolicyValidationResult('9.8.0-rc3', NULL, [
-            'Drupal cannot be automatically updated during cron from its current version, 9.8.0-rc3, because it is not a stable version.',
+            t('Drupal cannot be automatically updated during cron from its current version, 9.8.0-rc3, because it is not a stable version.'),
           ]),
         ],
       ],
@@ -134,8 +134,8 @@ class VersionPolicyValidatorTest extends AutomaticUpdatesKernelTestBase {
         [CronUpdater::SECURITY, CronUpdater::ALL],
         [
           $this->createVersionPolicyValidationResult('9.7.1', NULL, [
-            'The currently installed version of Drupal core, 9.7.1, is not in a supported minor version. Your site will not be automatically updated during cron until it is updated to a supported minor version.',
-            'See the <a href="/admin/reports/updates">available updates page</a> for available updates.',
+            t('The currently installed version of Drupal core, 9.7.1, is not in a supported minor version. Your site will not be automatically updated during cron until it is updated to a supported minor version.'),
+            t('See the <a href="/admin/reports/updates">available updates page</a> for available updates.'),
           ]),
         ],
       ],
@@ -145,8 +145,8 @@ class VersionPolicyValidatorTest extends AutomaticUpdatesKernelTestBase {
         [CronUpdater::SECURITY, CronUpdater::ALL],
         [
           $this->createVersionPolicyValidationResult('9.7.1', NULL, [
-            'The currently installed version of Drupal core, 9.7.1, is not in a supported minor version. Your site will not be automatically updated during cron until it is updated to a supported minor version.',
-            'Use the <a href="/admin/modules/update">update form</a> to update to a supported version.',
+            t('The currently installed version of Drupal core, 9.7.1, is not in a supported minor version. Your site will not be automatically updated during cron until it is updated to a supported minor version.'),
+            t('Use the <a href="/admin/modules/update">update form</a> to update to a supported version.'),
           ]),
         ],
         TRUE,
@@ -204,7 +204,7 @@ class VersionPolicyValidatorTest extends AutomaticUpdatesKernelTestBase {
         ['drupal' => '9.8.1'],
         [
           $this->createVersionPolicyValidationResult('9.8.0-dev', '9.8.1', [
-            'Drupal cannot be automatically updated from the installed version, 9.8.0-dev, because automatic updates from a dev version to any other version are not supported.',
+            t('Drupal cannot be automatically updated from the installed version, 9.8.0-dev, because automatic updates from a dev version to any other version are not supported.'),
           ]),
         ],
       ],
@@ -216,7 +216,7 @@ class VersionPolicyValidatorTest extends AutomaticUpdatesKernelTestBase {
         ['drupal' => '9.8.0'],
         [
           $this->createVersionPolicyValidationResult('9.8.1', '9.8.0', [
-            'Update version 9.8.0 is lower than 9.8.1, downgrading is not supported.',
+            t('Update version 9.8.0 is lower than 9.8.1, downgrading is not supported.'),
           ]),
         ],
       ],
@@ -226,7 +226,7 @@ class VersionPolicyValidatorTest extends AutomaticUpdatesKernelTestBase {
         ['drupal' => '9.8.2'],
         [
           $this->createVersionPolicyValidationResult('8.9.1', '9.8.2', [
-            'Drupal cannot be automatically updated from 8.9.1 to 9.8.2 because automatic updates from one major version to another are not supported.',
+            t('Drupal cannot be automatically updated from 8.9.1 to 9.8.2 because automatic updates from one major version to another are not supported.'),
           ]),
         ],
       ],
@@ -236,7 +236,7 @@ class VersionPolicyValidatorTest extends AutomaticUpdatesKernelTestBase {
         ['drupal' => '9.8.1'],
         [
           $this->createVersionPolicyValidationResult('9.8.0', '9.8.1', [
-            'Cannot update Drupal core to 9.8.1 because it is not in the list of installable releases.',
+            t('Cannot update Drupal core to 9.8.1 because it is not in the list of installable releases.'),
           ]),
         ],
       ],
@@ -257,7 +257,7 @@ class VersionPolicyValidatorTest extends AutomaticUpdatesKernelTestBase {
         ['drupal' => '9.8.2'],
         [
           $this->createVersionPolicyValidationResult('9.7.9', '9.8.2', [
-            'Drupal cannot be automatically updated from 9.7.9 to 9.8.2 because automatic updates from one minor version to another are not supported.',
+            t('Drupal cannot be automatically updated from 9.7.9 to 9.8.2 because automatic updates from one minor version to another are not supported.'),
           ]),
         ],
       ],

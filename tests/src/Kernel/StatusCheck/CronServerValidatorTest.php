@@ -37,7 +37,7 @@ class CronServerValidatorTest extends AutomaticUpdatesKernelTestBase {
    */
   public function providerCronServerValidation(): array {
     $error = ValidationResult::createError([
-      'Your site appears to be running on the built-in PHP web server on port 80. Drupal cannot be automatically updated with this configuration unless the site can also be reached on an alternate port.',
+      t('Your site appears to be running on the built-in PHP web server on port 80. Drupal cannot be automatically updated with this configuration unless the site can also be reached on an alternate port.'),
     ]);
     // Add all the test cases where there no expected results for all cron
     // modes.

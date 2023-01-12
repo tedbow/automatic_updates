@@ -48,7 +48,7 @@ trait ValidationTestTrait {
     $messages = [];
     $random = $this->randomMachineName(64);
     for ($i = 0; $i < $message_count; $i++) {
-      $messages[] = "Message $i $random";
+      $messages[] = t("Message @i @random", ['@i' => $i, '@random' => $random]);
     }
     $summary = t('Summary @random', ['@random' => $random]);
     switch ($severity) {

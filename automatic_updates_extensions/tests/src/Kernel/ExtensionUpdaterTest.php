@@ -163,7 +163,7 @@ class ExtensionUpdaterTest extends AutomaticUpdatesExtensionsKernelTestBase {
   public function testUpdateException(string $event_class): void {
     $extension_updater = $this->container->get('automatic_updates_extensions.updater');
     $results = [
-      ValidationResult::createError(['An error of some sorts.']),
+      ValidationResult::createError([t('An error of some sorts.')]),
     ];
     TestSubscriber1::setTestResult($results, $event_class);
     try {

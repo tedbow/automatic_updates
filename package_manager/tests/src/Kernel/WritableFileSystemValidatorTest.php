@@ -31,8 +31,8 @@ class WritableFileSystemValidatorTest extends PackageManagerKernelTestBase {
    */
   public function providerWritable(): array {
     // The root and vendor paths are defined by ::createVirtualProject().
-    $root_error = 'The Drupal directory "vfs://root/active" is not writable.';
-    $vendor_error = 'The vendor directory "vfs://root/active/vendor" is not writable.';
+    $root_error = t('The Drupal directory "vfs://root/active" is not writable.');
+    $vendor_error = t('The vendor directory "vfs://root/active/vendor" is not writable.');
     $summary = t('The file system is not writable.');
     $writable_permission = 0777;
     $non_writable_permission = 0444;

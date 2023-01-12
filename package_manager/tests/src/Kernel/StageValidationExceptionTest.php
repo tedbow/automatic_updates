@@ -31,10 +31,11 @@ class StageValidationExceptionTest extends PackageManagerKernelTestBase {
    */
   public function providerResultsAsText(): array {
     $messages = ['Bang!', 'Pow!'];
+    $translated_messages = [t('Bang!'), t('Pow!')];
     $summary = t('There was sadness.');
 
-    $result_no_summary = ValidationResult::createError([$messages[0]]);
-    $result_with_summary = ValidationResult::createError($messages, $summary);
+    $result_no_summary = ValidationResult::createError([$translated_messages[0]]);
+    $result_with_summary = ValidationResult::createError($translated_messages, $summary);
     $result_with_summary_message = "{$summary->getUntranslatedString()}\n{$messages[0]}\n{$messages[1]}\n";
 
     return [

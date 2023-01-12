@@ -80,7 +80,7 @@ class ScaffoldFilePermissionsValidatorTest extends AutomaticUpdatesKernelTestBas
       'write-protected scaffold file, writable site directory' => [
         ['sites/default/default.settings.php'],
         [
-          ValidationResult::createError(['sites/default/default.settings.php']),
+          ValidationResult::createError([t('sites/default/default.settings.php')]),
         ],
       ],
       // Whether the site directory is write-protected only matters during
@@ -93,7 +93,7 @@ class ScaffoldFilePermissionsValidatorTest extends AutomaticUpdatesKernelTestBas
           'sites/default',
         ],
         [
-          ValidationResult::createError(['sites/default/default.settings.php']),
+          ValidationResult::createError([t('sites/default/default.settings.php')]),
         ],
       ],
       'write-protected site directory' => [
@@ -167,7 +167,7 @@ class ScaffoldFilePermissionsValidatorTest extends AutomaticUpdatesKernelTestBas
           '[web-root]/sites/default/new.txt' => '',
         ],
         [
-          ValidationResult::createError(['sites/default']),
+          ValidationResult::createError([t('sites/default')]),
         ],
       ],
       'new scaffold file added to writable site directory' => [
@@ -185,7 +185,7 @@ class ScaffoldFilePermissionsValidatorTest extends AutomaticUpdatesKernelTestBas
         ],
         [],
         [
-          ValidationResult::createError(['sites/default']),
+          ValidationResult::createError([t('sites/default')]),
         ],
       ],
       'writable scaffold file removed from writable site directory' => [
@@ -208,7 +208,10 @@ class ScaffoldFilePermissionsValidatorTest extends AutomaticUpdatesKernelTestBas
         ],
         [],
         [
-          ValidationResult::createError(['sites/default', 'sites/default/deleted.txt'], $summary),
+          ValidationResult::createError([
+            t('sites/default'),
+            t('sites/default/deleted.txt'),
+          ], $summary),
         ],
       ],
       'non-writable scaffold file removed from writable site directory' => [
@@ -218,7 +221,7 @@ class ScaffoldFilePermissionsValidatorTest extends AutomaticUpdatesKernelTestBas
         ],
         [],
         [
-          ValidationResult::createError(['sites/default/deleted.txt']),
+          ValidationResult::createError([t('sites/default/deleted.txt')]),
         ],
       ],
       // If only scaffold files outside the site directory changed, the

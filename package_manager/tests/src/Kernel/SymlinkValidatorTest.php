@@ -67,7 +67,7 @@ class SymlinkValidatorTest extends PackageManagerKernelTestBase {
       $test_cases["$event event with symlinks"] = [
         TRUE,
         [
-          ValidationResult::createError(['Symlinks were found.']),
+          ValidationResult::createError([t('Symlinks were found.')]),
         ],
         $event,
       ];

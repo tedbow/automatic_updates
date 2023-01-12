@@ -51,9 +51,7 @@ final class StagedProjectsValidator implements EventSubscriberInterface {
       $stage = $stage->getStageComposer();
     }
     catch (\Throwable $e) {
-      $event->addError([
-        $e->getMessage(),
-      ]);
+      $event->addErrorFromThrowable($e);
       return;
     }
 

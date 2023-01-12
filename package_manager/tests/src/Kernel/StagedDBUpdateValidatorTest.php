@@ -96,7 +96,7 @@ class StagedDBUpdateValidatorTest extends PackageManagerKernelTestBase {
       unlink("$stage_dir/$path/$name.$suffix");
     }
 
-    $result = ValidationResult::createWarning(['System', 'Stark'], t('Possible database updates have been detected in the following extensions.'));
+    $result = ValidationResult::createWarning([t('System'), t('Stark')], t('Possible database updates have been detected in the following extensions.'));
     $this->assertStatusCheckResults([$result], $stage);
   }
 
@@ -117,7 +117,7 @@ class StagedDBUpdateValidatorTest extends PackageManagerKernelTestBase {
       file_put_contents("$stage_dir/$path/$name.$suffix", $this->randomString());
     }
 
-    $result = ValidationResult::createWarning(['System', 'Stark'], t('Possible database updates have been detected in the following extensions.'));
+    $result = ValidationResult::createWarning([t('System'), t('Stark')], t('Possible database updates have been detected in the following extensions.'));
     $this->assertStatusCheckResults([$result], $stage);
   }
 
@@ -139,7 +139,7 @@ class StagedDBUpdateValidatorTest extends PackageManagerKernelTestBase {
       unlink("$active_dir/$path/$name.$suffix");
     }
 
-    $result = ValidationResult::createWarning(['System', 'Stark'], t('Possible database updates have been detected in the following extensions.'));
+    $result = ValidationResult::createWarning([t('System'), t('Stark')], t('Possible database updates have been detected in the following extensions.'));
     $this->assertStatusCheckResults([$result], $stage);
   }
 

@@ -42,7 +42,7 @@ class LockFileValidatorTest extends PackageManagerKernelTestBase {
   public function testCreateWithNoLock(): void {
     unlink($this->activeDir . '/composer.lock');
 
-    $no_lock = ValidationResult::createError(['Could not hash the active lock file.']);
+    $no_lock = ValidationResult::createError([t('Could not hash the active lock file.')]);
     $stage = $this->assertResults([$no_lock], PreCreateEvent::class);
     // The stage was not created successfully, so the status check should be
     // clear.
@@ -78,7 +78,7 @@ class LockFileValidatorTest extends PackageManagerKernelTestBase {
       file_put_contents($this->activeDir . '/composer.lock', 'changed');
     }, $event_class);
     $result = ValidationResult::createError([
-      'Unexpected changes were detected in composer.lock, which indicates that other Composer operations were performed since this Package Manager operation started. This can put the code base into an unreliable state and therefore is not allowed.',
+      t('Unexpected changes were detected in composer.lock, which indicates that other Composer operations were performed since this Package Manager operation started. This can put the code base into an unreliable state and therefore is not allowed.'),
     ]);
     $stage = $this->assertResults([$result], $event_class);
     // A status check should agree that there is an error here.
@@ -99,7 +99,7 @@ class LockFileValidatorTest extends PackageManagerKernelTestBase {
       unlink($this->activeDir . '/composer.lock');
     }, $event_class);
     $result = ValidationResult::createError([
-      'Could not hash the active lock file.',
+      t('Could not hash the active lock file.'),
     ]);
     $stage = $this->assertResults([$result], $event_class);
     // A status check should agree that there is an error here.
@@ -123,7 +123,7 @@ class LockFileValidatorTest extends PackageManagerKernelTestBase {
       $this->container->get('state')->delete($state_key);
     }, $event_class);
     $result = ValidationResult::createError([
-      'Could not retrieve stored hash of the active lock file.',
+      t('Could not retrieve stored hash of the active lock file.'),
     ]);
     $stage = $this->assertResults([$result], $event_class);
     // A status check should agree that there is an error here.
@@ -138,7 +138,7 @@ class LockFileValidatorTest extends PackageManagerKernelTestBase {
     Stager::setLockFileShouldChange(FALSE);
 
     $result = ValidationResult::createError([
-      'There are no pending Composer operations.',
+      t('There are no pending Composer operations.'),
     ]);
     $stage = $this->assertResults([$result], PreApplyEvent::class);
     // A status check shouldn't produce raise any errors, because it's only

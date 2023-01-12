@@ -24,7 +24,7 @@ class XdebugValidatorTest extends PackageManagerKernelTestBase {
     }
 
     $result = ValidationResult::createWarning([
-      'Xdebug is enabled, which may have a negative performance impact on Package Manager and any modules that use it.',
+      t('Xdebug is enabled, which may have a negative performance impact on Package Manager and any modules that use it.'),
     ]);
     $this->assertStatusCheckResults([$result]);
   }

@@ -92,7 +92,7 @@ class SupportedReleaseValidatorTest extends PackageManagerKernelTestBase {
           'install_path' => NULL,
         ],
         [
-          ValidationResult::createError(['semver_test (drupal/semver_test) 8.2.0'], $summary),
+          ValidationResult::createError([t('semver_test (drupal/semver_test) 8.2.0')], $summary),
         ],
       ],
       'legacy, supported update' => [
@@ -120,7 +120,7 @@ class SupportedReleaseValidatorTest extends PackageManagerKernelTestBase {
           'install_path' => NULL,
         ],
         [
-          ValidationResult::createError(['aaa_update_test (drupal/aaa_update_test) 3.0.0'], $summary),
+          ValidationResult::createError([t('aaa_update_test (drupal/aaa_update_test) 3.0.0')], $summary),
         ],
       ],
       'aaa_automatic_updates_test(not in active), update to unsupported branch' => [
@@ -135,7 +135,7 @@ class SupportedReleaseValidatorTest extends PackageManagerKernelTestBase {
           'install_path' => '../../modules/aaa_automatic_updates_test',
         ],
         [
-          ValidationResult::createError(['aaa_automatic_updates_test (drupal/aaa_automatic_updates_test) 7.0.1-dev'], $summary),
+          ValidationResult::createError([t('aaa_automatic_updates_test (drupal/aaa_automatic_updates_test) 7.0.1-dev')], $summary),
         ],
       ],
       'aaa_automatic_updates_test(not in active), update to supported branch' => [

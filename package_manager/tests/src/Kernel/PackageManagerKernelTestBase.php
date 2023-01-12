@@ -193,9 +193,9 @@ abstract class PackageManagerKernelTestBase extends KernelTestBase {
    *
    * @param \Drupal\package_manager\ValidationResult[] $expected_results
    *   The expected validation results.
-   * @param \Drupal\package_manager\Stage|null $stage
-   *   (optional) The stage to use to create the status check event. If none is
-   *   provided a new stage will be created.
+   * @param \Drupal\Tests\package_manager\Kernel\TestStage|null $stage
+   *   (optional) The test stage to use to create the status check event. If
+   *   none is provided a new stage will be created.
    */
   protected function assertStatusCheckResults(array $expected_results, Stage $stage = NULL): void {
     $actual_results = $this->runStatusCheck($stage ?? $this->createStage(), $this->container->get('event_dispatcher'));
@@ -487,6 +487,19 @@ class TestPathFactory implements PathFactoryInterface {
 class TestStage extends Stage {
 
   use TestStageTrait;
+
+  /**
+   * {@inheritdoc}
+   *
+   * TRICKY: without this, any failed ::assertStatusCheckResults()
+   * will fail, because PHPUnit will want to serialize all arguments in the call
+   * stack.
+   *
+   * @see https://www.drupal.org/project/automatic_updates/issues/3312619#comment-14801308
+   */
+  public function __sleep(): array {
+    return [];
+  }
 
 }
 

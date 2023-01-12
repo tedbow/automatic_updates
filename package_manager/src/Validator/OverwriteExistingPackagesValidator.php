@@ -73,7 +73,10 @@ final class OverwriteExistingPackagesValidator implements EventSubscriberInterfa
     $missing_new_packages = array_diff_key($new_packages, $installed_packages_data);
     if ($missing_new_packages) {
       $missing_new_packages = array_keys($missing_new_packages);
-      $event->addError($missing_new_packages, $this->t('Package Manager could not get the data for the following packages:'));
+      foreach ($missing_new_packages as &$missing_new_package) {
+        $missing_new_package = $this->t('@missing_new_package', ['@missing_new_package' => $missing_new_package]);
+      }
+      $event->addError(array_values($missing_new_packages), $this->t('Package Manager could not get the data for the following packages.'));
       return;
     }
 

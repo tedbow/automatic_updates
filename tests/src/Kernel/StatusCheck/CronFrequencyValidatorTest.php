@@ -80,7 +80,7 @@ class CronFrequencyValidatorTest extends AutomaticUpdatesKernelTestBase {
    */
   public function providerLastCronRunValidation(): array {
     $error = ValidationResult::createError([
-      'Cron has not run recently. For more information, see the online handbook entry for <a href="https://www.drupal.org/cron">configuring cron jobs</a> to run at least every 3 hours.',
+      t('Cron has not run recently. For more information, see the online handbook entry for <a href="https://www.drupal.org/cron">configuring cron jobs</a> to run at least every 3 hours.'),
     ]);
 
     return [
@@ -134,7 +134,7 @@ class CronFrequencyValidatorTest extends AutomaticUpdatesKernelTestBase {
         21600,
         [
           ValidationResult::createWarning([
-            'Cron is not set to run frequently enough. <a href="/admin/config/system/cron">Configure it</a> to run at least every 3 hours or disable automated cron and run it via an external scheduling system.',
+            t('Cron is not set to run frequently enough. <a href="/admin/config/system/cron">Configure it</a> to run at least every 3 hours or disable automated cron and run it via an external scheduling system.'),
           ]),
         ],
       ],
@@ -142,7 +142,7 @@ class CronFrequencyValidatorTest extends AutomaticUpdatesKernelTestBase {
         90000,
         [
           ValidationResult::createError([
-            'Cron is not set to run frequently enough. <a href="/admin/config/system/cron">Configure it</a> to run at least every 3 hours or disable automated cron and run it via an external scheduling system.',
+            t('Cron is not set to run frequently enough. <a href="/admin/config/system/cron">Configure it</a> to run at least every 3 hours or disable automated cron and run it via an external scheduling system.'),
           ]),
         ],
       ],

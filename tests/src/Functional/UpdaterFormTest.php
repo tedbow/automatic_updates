@@ -6,6 +6,7 @@ namespace Drupal\Tests\automatic_updates\Functional;
 
 use Drupal\automatic_updates_test\Datetime\TestTime;
 use Drupal\fixture_manipulator\StageFixtureManipulator;
+use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\package_manager_test_validation\StagedDatabaseUpdateValidator;
 use Drupal\package_manager\Event\PostRequireEvent;
 use Drupal\package_manager\Event\PreApplyEvent;
@@ -252,7 +253,7 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
   public function testStatusCheckFailureWhenNoUpdateExists() {
     $assert_session = $this->assertSession();
     $this->mockActiveCoreVersion('9.8.1');
-    $message = "You've not experienced Shakespeare until you have read him in the original Klingon.";
+    $message = t("You've not experienced Shakespeare until you have read him in the original Klingon.");
     $result = ValidationResult::createError([$message]);
     TestSubscriber1::setTestResult([$result], StatusCheckEvent::class);
     $this->checkForUpdates();
@@ -781,7 +782,7 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
     // Set an error before completing the update. This error should be visible
     // on admin pages after completing the update without having to explicitly
     // run the status checks.
-    TestSubscriber1::setTestResult([ValidationResult::createError(['Error before continue.'])], StatusCheckEvent::class);
+    TestSubscriber1::setTestResult([ValidationResult::createError([t('Error before continue.')])], StatusCheckEvent::class);
     if ($has_database_updates) {
       // Simulate a staged database update in the automatic_updates_test module.
       // We must do this after the update has started, because the pending
@@ -946,9 +947,9 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
     $this->assertUpdateStagedTimes(1);
 
     $error_messages = [
-      "The only thing we're allowed to do is to",
-      "believe that we won't regret the choice",
-      "we made.",
+      t("The only thing we're allowed to do is to"),
+      t("believe that we won't regret the choice"),
+      t("we made."),
     ];
     $summary = t('some generic summary');
     $error = ValidationResult::createError($error_messages, $summary);
@@ -976,9 +977,9 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
     $this->assertUpdateStagedTimes(1);
 
     $messages = [
-      "The only thing we're allowed to do is to",
-      "believe that we won't regret the choice",
-      "we made.",
+      t("The only thing we're allowed to do is to"),
+      t("believe that we won't regret the choice"),
+      t("we made."),
     ];
     $summary = t('some generic summary');
     $warning = ValidationResult::createWarning($messages, $summary);
@@ -996,12 +997,12 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
   /**
    * Sets an error message, runs status checks, and asserts it is displayed.
    *
-   * @return string
+   * @return \Drupal\Core\StringTranslation\TranslatableMarkup
    *   The cached error check message.
    */
-  private function setAndAssertCachedMessage(): string {
+  private function setAndAssertCachedMessage(): TranslatableMarkup {
     // Store a status error, which will be cached.
-    $message = "You've not experienced Shakespeare until you have read him in the original Klingon.";
+    $message = t("You've not experienced Shakespeare until you have read him in the original Klingon.");
     $result = ValidationResult::createError([$message]);
     TestSubscriber1::setTestResult([$result], StatusCheckEvent::class);
     // Run the status checks a visit an admin page the message will be

@@ -166,7 +166,7 @@ class StagedDBUpdateValidator implements EventSubscriberInterface {
    * @param string $stage_dir
    *   The path of the stage directory.
    *
-   * @return string[]
+   * @return \Drupal\Core\StringTranslation\TranslatableMarkup[]
    *   The names of the extensions that have possible database updates.
    */
   public function getExtensionsWithDatabaseUpdates(string $stage_dir): array {

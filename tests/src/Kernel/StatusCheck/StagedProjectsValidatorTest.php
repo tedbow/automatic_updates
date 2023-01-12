@@ -58,7 +58,7 @@ class StagedProjectsValidatorTest extends AutomaticUpdatesKernelTestBase {
     $updater->begin(['drupal' => '9.8.1']);
     $updater->stage();
 
-    $error = ValidationResult::createError(["Composer could not find the config file: $composer_json\n"]);
+    $error = ValidationResult::createError([t("Composer could not find the config file: @composer_json\n", ["@composer_json" => $composer_json])]);
     try {
       $updater->apply();
       $this->fail('Expected an error, but none was raised.');
@@ -143,8 +143,8 @@ class StagedProjectsValidatorTest extends AutomaticUpdatesKernelTestBase {
       ->setReadyToCommit();
 
     $messages = [
-      "module 'drupal/test_module2' installed.",
-      "custom module 'drupal/dev-test_module2' installed.",
+      t("module 'drupal/test_module2' installed."),
+      t("custom module 'drupal/dev-test_module2' installed."),
     ];
     $error = ValidationResult::createError($messages, t('The update cannot proceed because the following Drupal projects were installed during the update.'));
 
@@ -222,8 +222,8 @@ class StagedProjectsValidatorTest extends AutomaticUpdatesKernelTestBase {
       ->setReadyToCommit();
 
     $messages = [
-      "theme 'drupal/test_theme' removed.",
-      "custom theme 'drupal/dev-test_theme' removed.",
+      t("theme 'drupal/test_theme' removed."),
+      t("custom theme 'drupal/dev-test_theme' removed."),
     ];
     $error = ValidationResult::createError($messages, t('The update cannot proceed because the following Drupal projects were removed during the update.'));
     $updater = $this->container->get('automatic_updates.updater');
@@ -285,8 +285,8 @@ class StagedProjectsValidatorTest extends AutomaticUpdatesKernelTestBase {
       ->setReadyToCommit();
 
     $messages = [
-      "module 'drupal/test_module' from 1.3.0 to 1.3.1.",
-      "module 'drupal/dev-test_module' from 1.3.0 to 1.3.1.",
+      t("module 'drupal/test_module' from 1.3.0 to 1.3.1."),
+      t("module 'drupal/dev-test_module' from 1.3.0 to 1.3.1."),
     ];
     $error = ValidationResult::createError($messages, t('The update cannot proceed because the following Drupal projects were unexpectedly updated. Only Drupal Core updates are currently supported.'));
     $updater = $this->container->get('automatic_updates.updater');

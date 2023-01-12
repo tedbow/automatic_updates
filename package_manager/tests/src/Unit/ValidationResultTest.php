@@ -33,8 +33,8 @@ class ValidationResultTest extends UnitTestCase {
   public function testOverallSeverity(): void {
     // An error and a warning should be counted as an error.
     $results = [
-      ValidationResult::createError(['Boo!']),
-      ValidationResult::createWarning(['Moo!']),
+      ValidationResult::createError([t('Boo!')]),
+      ValidationResult::createWarning([t('Moo!')]),
     ];
     $this->assertSame(SystemManager::REQUIREMENT_ERROR, ValidationResult::getOverallSeverity($results));
 
@@ -100,7 +100,7 @@ class ValidationResultTest extends UnitTestCase {
   public function providerCreateExceptions(): array {
     return [
       '2 messages, no summary' => [
-        ['Something is wrong', 'Something else is also wrong'],
+        [t('Something is wrong'), t('Something else is also wrong')],
         'If more than one message is provided, a summary is required.',
       ],
       'no messages' => [
@@ -119,11 +119,14 @@ class ValidationResultTest extends UnitTestCase {
   public function providerValidConstructorArguments(): array {
     return [
       '1 message no summary' => [
-        'messages' => ['Something is wrong'],
+        'messages' => [t('Something is wrong')],
         'summary' => NULL,
       ],
       '2 messages has summary' => [
-        'messages' => ['Something is wrong', 'Something else is also wrong'],
+        'messages' => [
+          t('Something is wrong'),
+          t('Something else is also wrong'),
+        ],
         'summary' => 'This sums it up.',
       ],
     ];

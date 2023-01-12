@@ -22,7 +22,7 @@ final class ValidationResult {
   /**
    * The error messages.
    *
-   * @var \Drupal\Core\StringTranslation\TranslatableMarkup[]
+   * @var \Drupal\Core\StringTranslation\TranslatableMarkup[]|string[]
    */
   protected $messages;
 
@@ -39,7 +39,7 @@ final class ValidationResult {
    * @param int $severity
    *   The severity of the result. Should be one of the
    *   SystemManager::REQUIREMENT_* constants.
-   * @param \Drupal\Core\StringTranslation\TranslatableMarkup[] $messages
+   * @param \Drupal\Core\StringTranslation\TranslatableMarkup[]|string[] $messages
    *   The error messages.
    * @param \Drupal\Core\StringTranslation\TranslatableMarkup|null $summary
    *   The errors summary.
@@ -54,6 +54,20 @@ final class ValidationResult {
     $this->summary = $summary;
     $this->messages = $messages;
     $this->severity = $severity;
+  }
+
+  /**
+   * Creates an error ValidationResult object from a throwable.
+   *
+   * @param \Throwable $throwable
+   *   The throwable.
+   * @param \Drupal\Core\StringTranslation\TranslatableMarkup|null $summary
+   *   The errors summary.
+   *
+   * @return static
+   */
+  public static function createErrorFromThrowable(\Throwable $throwable, ?TranslatableMarkup $summary = NULL): self {
+    return new static(SystemManager::REQUIREMENT_ERROR, [$throwable->getMessage()], $summary);
   }
 
   /**
@@ -97,7 +111,7 @@ final class ValidationResult {
   /**
    * Gets the messages.
    *
-   * @return \Drupal\Core\StringTranslation\TranslatableMarkup[]
+   * @return \Drupal\Core\StringTranslation\TranslatableMarkup[]|string[]
    *   The error or warning messages.
    */
   public function getMessages(): array {

@@ -280,7 +280,7 @@ class CronUpdaterTest extends AutomaticUpdatesKernelTestBase {
     // (if the exception class is StageValidationException).
     if ($exception_class === StageValidationException::class) {
       $results = [
-        ValidationResult::createError(['Destroy the stage!']),
+        ValidationResult::createError([t('Destroy the stage!')]),
       ];
       TestSubscriber1::setTestResult($results, $event_class);
       $exception = new StageValidationException($results);
@@ -500,7 +500,7 @@ END;
       ->save();
 
     $results = [
-      ValidationResult::createError(['Error while updating!']),
+      ValidationResult::createError([t('Error while updating!')]),
     ];
     TestSubscriber1::setTestResult($results, $event_class);
     $exception = new StageValidationException($results);
@@ -537,7 +537,7 @@ END;
       ->setCorePackageVersion('9.8.1')
       ->setReadyToCommit();
     $results = [
-      ValidationResult::createError(['Error while updating!']),
+      ValidationResult::createError([t('Error while updating!')]),
     ];
     TestSubscriber1::setTestResult($results, $event_class);
     $exception = new StageValidationException($results);

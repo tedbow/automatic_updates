@@ -141,7 +141,7 @@ class StageEventsTest extends PackageManagerKernelTestBase implements EventSubsc
    * @dataProvider providerValidationResults
    */
   public function testValidationResults(string $event_class): void {
-    $error_messages = ['Burn, baby, burn'];
+    $error_messages = [t('Burn, baby, burn')];
     // Set up an event listener which will only flag an error for the event
     // class under test.
     $handler = function (StageEvent $event) use ($event_class, $error_messages): void {

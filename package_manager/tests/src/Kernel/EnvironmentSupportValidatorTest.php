@@ -24,7 +24,7 @@ class EnvironmentSupportValidatorTest extends PackageManagerKernelTestBase {
     putenv(EnvironmentSupportValidator::VARIABLE_NAME . '=broken/url.org');
 
     $result = ValidationResult::createError([
-      'Package Manager is not supported by your environment.',
+      t('Package Manager is not supported by your environment.'),
     ]);
     foreach ([PreCreateEvent::class, StatusCheckEvent::class] as $event_class) {
       $this->assertEventPropagationStopped($event_class, [$this->container->get('package_manager.validator.environment_support'), 'validateStagePreOperation']);

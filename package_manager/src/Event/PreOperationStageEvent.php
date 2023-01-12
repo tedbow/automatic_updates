@@ -51,4 +51,16 @@ abstract class PreOperationStageEvent extends StageEvent {
     $this->results[] = ValidationResult::createError($messages, $summary);
   }
 
+  /**
+   * Adds an error from a throwable.
+   *
+   * @param \Throwable $throwable
+   *   The throwable.
+   * @param \Drupal\Core\StringTranslation\TranslatableMarkup|null $summary
+   *   (optional) The summary of error messages.
+   */
+  public function addErrorFromThrowable(\Throwable $throwable, ?TranslatableMarkup $summary = NULL): void {
+    $this->results[] = ValidationResult::createErrorFromThrowable($throwable, $summary);
+  }
+
 }

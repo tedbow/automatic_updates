@@ -67,7 +67,12 @@ class UpdateReleaseValidatorTest extends AutomaticUpdatesExtensionsKernelTestBas
     if ($error_expected) {
       $expected_results = [
         ValidationResult::createError(
-          ["Project $project to version " . LegacyVersionUtility::convertToSemanticVersion($target_version)],
+          [
+            t('Project @project to version @target_version', [
+              '@project' => $project,
+              '@target_version' => LegacyVersionUtility::convertToSemanticVersion($target_version),
+            ]),
+          ],
           t('Cannot update because the following project version is not in the list of installable releases.')
         ),
       ];

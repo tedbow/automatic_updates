@@ -195,7 +195,10 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
     $this->checkForUpdates();
     $state = $this->container->get('state');
     $state->set('system.maintenance_mode', $maintenance_mode_on);
-    StagedDatabaseUpdateValidator::setExtensionsWithUpdates(['system', 'automatic_updates_theme_with_updates']);
+    StagedDatabaseUpdateValidator::setExtensionsWithUpdates([
+      'system',
+      'automatic_updates_theme_with_updates',
+    ]);
 
     $page = $this->getSession()->getPage();
     // Navigate to the automatic updates form.
@@ -289,7 +292,7 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
     // Set an error before completing the update. This error should be visible
     // on admin pages after completing the update without having to explicitly
     // run the status checks.
-    TestSubscriber1::setTestResult([ValidationResult::createError(['Error before continue.'])], StatusCheckEvent::class);
+    TestSubscriber1::setTestResult([ValidationResult::createError([t('Error before continue.')])], StatusCheckEvent::class);
     if ($has_database_updates) {
       // Simulate a staged database update in the automatic_updates_test module.
       // We must do this after the update has started, because the pending
@@ -588,9 +591,9 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
     // Add warnings from StatusCheckEvent.
     $summary_status_check_event = t('Some summary');
     $messages_status_check_event = [
-      "The only thing we're allowed to do is to",
-      "believe that we won't regret the choice",
-      "we made.",
+      t("The only thing we're allowed to do is to"),
+      t("believe that we won't regret the choice"),
+      t("we made."),
     ];
     $warning_status_check_event = ValidationResult::createWarning($messages_status_check_event, $summary_status_check_event);
     TestSubscriber::setTestResult([$warning_status_check_event], StatusCheckEvent::class);
@@ -619,9 +622,9 @@ class UpdaterFormTest extends AutomaticUpdatesFunctionalTestBase {
     $assert->checkboxChecked('edit-projects-semver-test');
     $assert->buttonExists('Update');
     $messages = [
-      "The only thing we're allowed to do is to",
-      "believe that we won't regret the choice",
-      "we made.",
+      t("The only thing we're allowed to do is to"),
+      t("believe that we won't regret the choice"),
+      t("we made."),
     ];
     $summary = t('Some summary');
     $error = ValidationResult::createError($messages, $summary);

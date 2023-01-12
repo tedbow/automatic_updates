@@ -24,7 +24,7 @@ class ComposerSettingsValidatorTest extends PackageManagerKernelTestBase {
    */
   public function providerSecureHttpValidation(): array {
     $error = ValidationResult::createError([
-      'HTTPS must be enabled for Composer downloads. See <a href="https://getcomposer.org/doc/06-config.md#secure-http">the Composer documentation</a> for more information.',
+      t('HTTPS must be enabled for Composer downloads. See <a href="https://getcomposer.org/doc/06-config.md#secure-http">the Composer documentation</a> for more information.'),
     ]);
 
     return [

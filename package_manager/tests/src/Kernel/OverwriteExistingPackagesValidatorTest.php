@@ -113,13 +113,13 @@ class OverwriteExistingPackagesValidatorTest extends PackageManagerKernelTestBas
 
     $expected_results = [
       ValidationResult::createError([
-        'The new package drupal/module_1 will be installed in the directory /vendor/composer/../../modules/module_1, which already exists but is not managed by Composer.',
+        t('The new package drupal/module_1 will be installed in the directory /vendor/composer/../../modules/module_1, which already exists but is not managed by Composer.'),
       ]),
       ValidationResult::createError([
-        'The new package drupal/module_2 will be installed in the directory /vendor/composer/../../modules/module_2, which already exists but is not managed by Composer.',
+        t('The new package drupal/module_2 will be installed in the directory /vendor/composer/../../modules/module_2, which already exists but is not managed by Composer.'),
       ]),
       ValidationResult::createError([
-        'The new package drupal/module_4 will be installed in the directory /vendor/composer/../../modules/module_1, which already exists but is not managed by Composer.',
+        t('The new package drupal/module_4 will be installed in the directory /vendor/composer/../../modules/module_1, which already exists but is not managed by Composer.'),
       ]),
     ];
     $this->assertResults($expected_results, PreApplyEvent::class);

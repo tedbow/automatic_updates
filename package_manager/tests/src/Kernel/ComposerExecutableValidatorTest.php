@@ -109,7 +109,7 @@ class ComposerExecutableValidatorTest extends PackageManagerKernelTestBase {
   public function providerComposerVersionValidation(): array {
     // Invalid or undetectable Composer versions will always produce the same
     // error.
-    $invalid_version = ValidationResult::createError(['The Composer version could not be detected.']);
+    $invalid_version = ValidationResult::createError([t('The Composer version could not be detected.')]);
 
     // Unsupported Composer versions will report the detected version number
     // in the validation result, so we need a function to churn out those fake
@@ -118,7 +118,10 @@ class ComposerExecutableValidatorTest extends PackageManagerKernelTestBase {
       $minimum_version = ComposerExecutableValidator::MINIMUM_COMPOSER_VERSION_CONSTRAINT;
 
       return ValidationResult::createError([
-        "A Composer version which satisfies <code>$minimum_version</code> is required, but version $version was detected.",
+        t('A Composer version which satisfies <code>@minimum_version</code> is required, but version @version was detected.', [
+          '@minimum_version' => $minimum_version,
+          '@version' => $version,
+        ]),
       ]);
     };
 
