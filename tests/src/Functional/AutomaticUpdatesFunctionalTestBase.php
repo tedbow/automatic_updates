@@ -44,8 +44,6 @@ abstract class AutomaticUpdatesFunctionalTestBase extends BrowserTestBase {
     // package_manager_bypass is disabling those operations.
     // @todo https://www.drupal.org/project/automatic_updates/issues/3320755.
     'package_manager.validator.composer_executable',
-    // Always allow tests to run with Xdebug on.
-    'package_manager.validator.xdebug',
   ];
 
   /**

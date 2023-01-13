@@ -30,18 +30,6 @@ class XdebugValidatorTest extends AutomaticUpdatesKernelTestBase {
   protected static $modules = ['automatic_updates'];
 
   /**
-   * {@inheritdoc}
-   */
-  protected function setUp(): void {
-    parent::setUp();
-
-    // The parent class unconditionally disables the Xdebug validator we're
-    // testing, so undo that here.
-    $validator = $this->container->get('package_manager.validator.xdebug');
-    $this->container->get('event_dispatcher')->addSubscriber($validator);
-  }
-
-  /**
    * Tests warnings and/or errors if Xdebug is enabled.
    */
   public function testXdebugValidation(): void {
@@ -121,6 +109,9 @@ class XdebugValidatorTest extends AutomaticUpdatesKernelTestBase {
     if (!function_exists('xdebug_break')) {
       // @codingStandardsIgnoreLine
       eval('function xdebug_break() {}');
+      // @see \Drupal\package_manager\Validator\XdebugValidator::checkForXdebug()
+      // @codingStandardsIgnoreLine
+      eval('function xdebug_break_TESTED() {}');
     }
   }
 

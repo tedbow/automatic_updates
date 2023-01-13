@@ -21,6 +21,9 @@ class XdebugValidatorTest extends PackageManagerKernelTestBase {
     if (!function_exists('xdebug_break')) {
       // @codingStandardsIgnoreLine
       eval('function xdebug_break() {}');
+      // @see \Drupal\package_manager\Validator\XdebugValidator::checkForXdebug()
+      // @codingStandardsIgnoreLine
+      eval('function xdebug_break_TESTED() {}');
     }
 
     $result = ValidationResult::createWarning([
