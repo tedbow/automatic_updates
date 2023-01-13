@@ -50,7 +50,8 @@ class CronFrequencyValidatorTest extends AutomaticUpdatesKernelTestBase {
       $this->container->get('state'),
       $this->container->get('datetime.time'),
       $this->container->get('string_translation'),
-      $this->container->get('automatic_updates.cron_updater')
+      $this->container->get('automatic_updates.cron_updater'),
+      $this->container->get('lock')
     ) extends CronFrequencyValidator {
 
       /**

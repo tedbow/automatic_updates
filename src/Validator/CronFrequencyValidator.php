@@ -8,6 +8,7 @@ use Drupal\automatic_updates\CronUpdater;
 use Drupal\Component\Datetime\TimeInterface;
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Extension\ModuleHandlerInterface;
+use Drupal\Core\Lock\LockBackendInterface;
 use Drupal\Core\State\StateInterface;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\Core\StringTranslation\TranslationInterface;
@@ -90,6 +91,13 @@ class CronFrequencyValidator implements EventSubscriberInterface {
   protected $cronUpdater;
 
   /**
+   * The lock service.
+   *
+   * @var \Drupal\Core\Lock\LockBackendInterface
+   */
+  protected $lock;
+
+  /**
    * CronFrequencyValidator constructor.
    *
    * @param \Drupal\Core\Config\ConfigFactoryInterface $config_factory
@@ -104,14 +112,17 @@ class CronFrequencyValidator implements EventSubscriberInterface {
    *   The translation service.
    * @param \Drupal\automatic_updates\CronUpdater $cron_updater
    *   The cron updater service.
+   * @param \Drupal\Core\Lock\LockBackendInterface $lock
+   *   The lock service.
    */
-  public function __construct(ConfigFactoryInterface $config_factory, ModuleHandlerInterface $module_handler, StateInterface $state, TimeInterface $time, TranslationInterface $translation, CronUpdater $cron_updater) {
+  public function __construct(ConfigFactoryInterface $config_factory, ModuleHandlerInterface $module_handler, StateInterface $state, TimeInterface $time, TranslationInterface $translation, CronUpdater $cron_updater, LockBackendInterface $lock) {
     $this->configFactory = $config_factory;
     $this->moduleHandler = $module_handler;
     $this->state = $state;
     $this->time = $time;
     $this->setStringTranslation($translation);
     $this->cronUpdater = $cron_updater;
+    $this->lock = $lock;
   }
 
   /**
@@ -167,15 +178,14 @@ class CronFrequencyValidator implements EventSubscriberInterface {
    *   The event object.
    */
   protected function validateLastCronRun(StatusCheckEvent $event): void {
+    // If cron is running right now, cron is clearly being run recently enough!
+    if (!$this->lock->lockMayBeAvailable('cron')) {
+      return;
+    }
+
     // Determine when cron last ran. If not known, use the time that Drupal was
     // installed, defaulting to the beginning of the Unix epoch.
     $cron_last = $this->state->get('system.cron_last', $this->state->get('install_time', 0));
-
-    // @todo Should we allow a little extra time in case the server job takes
-    //   longer than expected? Otherwise a server setup with a 3-hour cron job
-    //   will always give this warning. Maybe this isn't necessary because the
-    //   last cron run time is recorded after cron runs. Address this in
-    //   https://www.drupal.org/project/automatic_updates/issues/3248544.
     if ($this->time->getRequestTime() - $cron_last > static::WARNING_INTERVAL) {
       $event->addError([
         $this->t('Cron has not run recently. For more information, see the online handbook entry for <a href=":cron-handbook">configuring cron jobs</a> to run at least every @frequency hours.', [

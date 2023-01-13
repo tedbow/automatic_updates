@@ -87,6 +87,7 @@ services:
       - '@datetime.time'
       - '@string_translation'
       - '@automatic_updates.cron_updater'
+      - '@lock'
     tags:
       - { name: event_subscriber }
   automatic_updates.validator.staged_database_updates:
