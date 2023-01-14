@@ -7,6 +7,7 @@ namespace Drupal\Tests\package_manager\Kernel;
 use Drupal\package_manager\Event\CollectIgnoredPathsEvent;
 use Drupal\package_manager\Event\StatusCheckEvent;
 use Drupal\package_manager\StatusCheckTrait;
+use Drupal\package_manager\ValidationResult;
 
 /**
  * @covers \Drupal\package_manager\StatusCheckTrait
@@ -32,6 +33,27 @@ class StatusCheckTraitTest extends PackageManagerKernelTestBase {
     }, StatusCheckEvent::class);
     $this->runStatusCheck($this->createStage(), $this->container->get('event_dispatcher'));
     $this->assertTrue($status_check_called);
+  }
+
+  /**
+   * Tests StatusCheckTrait returns an error when unable to get ignored paths.
+   */
+  public function testErrorIgnoredPathsCollected(): void {
+    $composer_json_path = $this->container->get('package_manager.path_locator')->getProjectRoot() . '/composer.json';
+    // Delete composer.json, so we won't be able to get excluded paths.
+    unlink($composer_json_path);
+    $this->addEventTestListener(function (CollectIgnoredPathsEvent $event): void {
+      // Try to get composer.
+      $event->getStage()->getActiveComposer();
+    }, CollectIgnoredPathsEvent::class);
+    $results = $this->runStatusCheck($this->createStage(), $this->container->get('event_dispatcher'));
+    $expected_results = [
+      ValidationResult::createErrorFromThrowable(
+        new \Exception("Composer could not find the config file: $composer_json_path\n"),
+        t("Unable to collect ignored paths, therefore can't perform status checks."),
+      ),
+    ];
+    $this->assertValidationResultsEqual($expected_results, $results);
   }
 
 }

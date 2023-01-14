@@ -36,9 +36,14 @@ trait StatusCheckTrait {
    */
   protected function runStatusCheck(Stage $stage, EventDispatcherInterface $event_dispatcher = NULL, bool $do_readiness_check = FALSE): array {
     $event_dispatcher ??= \Drupal::service('event_dispatcher');
-
-    $ignored_paths = new CollectIgnoredPathsEvent($stage);
-    $event_dispatcher->dispatch($ignored_paths);
+    try {
+      $ignored_paths = new CollectIgnoredPathsEvent($stage);
+      $event_dispatcher->dispatch($ignored_paths);
+    }
+    catch (\Exception $e) {
+      // We can't dispatch the status check event without the ignored paths.
+      return [ValidationResult::createErrorFromThrowable($e, t("Unable to collect ignored paths, therefore can't perform status checks."))];
+    }
 
     $event = new StatusCheckEvent($stage, $ignored_paths->getAll());
     $event_dispatcher->dispatch($event);
