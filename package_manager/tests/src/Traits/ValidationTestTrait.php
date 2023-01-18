@@ -4,7 +4,9 @@ declare(strict_types = 1);
 
 namespace Drupal\Tests\package_manager\Traits;
 
+use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\package_manager\ValidationResult;
+use Drupal\Tests\UnitTestCase;
 
 /**
  * Contains helpful methods for testing stage validators.
@@ -44,8 +46,16 @@ trait ValidationTestTrait {
    *   - summary: (string|null) A summary string if there is one or NULL if not.
    */
   protected function getValidationResultsAsArray(array $results): array {
-    return array_values(array_map(static function (ValidationResult $result) {
-      $messages = array_map(static function ($message): string {
+    $string_translation_stub = NULL;
+    if (is_a(get_called_class(), UnitTestCase::class, TRUE)) {
+      $string_translation_stub = $this->getStringTranslationStub();
+    }
+    return array_values(array_map(static function (ValidationResult $result) use ($string_translation_stub) {
+      $messages = array_map(static function ($message) use ($string_translation_stub): string {
+        // Support data providers in unit tests using TranslatableMarkup.
+        if ($message instanceof TranslatableMarkup && is_a(get_called_class(), UnitTestCase::class, TRUE)) {
+          $message = new TranslatableMarkup($message->getUntranslatedString(), $message->getArguments(), $message->getOptions(), $string_translation_stub);
+        }
         return (string) $message;
       }, $result->getMessages());
 

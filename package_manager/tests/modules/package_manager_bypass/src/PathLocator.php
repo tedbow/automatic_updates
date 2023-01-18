@@ -6,6 +6,7 @@ namespace Drupal\package_manager_bypass;
 
 use Drupal\Core\State\StateInterface;
 use Drupal\package_manager\PathLocator as BasePathLocator;
+use Drupal\package_manager\Path;
 
 /**
  * Overrides the path locator to return pre-set values for testing purposes.
@@ -83,10 +84,16 @@ class PathLocator extends BasePathLocator {
    *   parent class.
    */
   public function setPaths(?string $project_root, ?string $vendor_dir, ?string $web_root, ?string $staging_root): void {
-    $this->state->set(static::class . ' root', $project_root);
-    $this->state->set(static::class . ' vendor', $vendor_dir);
-    $this->state->set(static::class . ' web', $web_root);
-    $this->state->set(static::class . ' stage', $staging_root);
+    foreach ([$project_root, $staging_root] as $path) {
+      // @todo Remove the VFS check in https://www.drupal.org/i/3328234.
+      if (!empty($path) && !str_starts_with($path, 'vfs://') && !str_starts_with($path, 'sites/') && !Path::isAbsolute($path)) {
+        throw new \InvalidArgumentException('project_root and staging_root need to be absolute paths.');
+      }
+    }
+    $this->state->set(static::class . ' root', is_null($project_root) ? NULL : Path::canonicalize($project_root));
+    $this->state->set(static::class . ' vendor', is_null($vendor_dir) ? NULL : Path::canonicalize($vendor_dir));
+    $this->state->set(static::class . ' web', is_null($web_root) ? NULL : Path::canonicalize($web_root));
+    $this->state->set(static::class . ' stage', is_null($staging_root) ? NULL : Path::canonicalize($staging_root));
   }
 
 }

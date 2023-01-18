@@ -218,6 +218,12 @@ services:
     class: Drupal\package_manager\Validator\SupportedReleaseValidator
     tags:
       - { name: event_subscriber }
+  package_manager.validator.stage_not_in_active:
+    class: Drupal\package_manager\Validator\StageNotInActiveValidator
+    arguments:
+      - '@package_manager.path_locator'
+    tags:
+      - { name: event_subscriber }
   package_manager.validator.xdebug:
     class: Drupal\package_manager\Validator\XdebugValidator
     tags:
