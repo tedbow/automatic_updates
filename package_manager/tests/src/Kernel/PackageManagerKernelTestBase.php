@@ -4,6 +4,7 @@ declare(strict_types = 1);
 
 namespace Drupal\Tests\package_manager\Kernel;
 
+use Drupal\Component\FileSystem\FileSystem as DrupalFileSystem;
 use Drupal\Core\DependencyInjection\ContainerBuilder;
 use Drupal\Core\Site\Settings;
 use Drupal\KernelTests\KernelTestBase;
@@ -23,12 +24,9 @@ use GuzzleHttp\Handler\MockHandler;
 use GuzzleHttp\HandlerStack;
 use GuzzleHttp\Psr7\Response;
 use GuzzleHttp\Psr7\Utils;
-use org\bovigo\vfs\vfsStream;
-use PhpTuf\ComposerStager\Domain\Value\Path\PathInterface;
-use PhpTuf\ComposerStager\Infrastructure\Factory\Path\PathFactoryInterface;
-use PhpTuf\ComposerStager\Infrastructure\Value\Path\AbstractPath;
+use PhpTuf\ComposerStager\Infrastructure\Factory\Path\PathFactory;
 use Psr\Http\Message\RequestInterface;
-use Symfony\Component\DependencyInjection\Definition;
+use Symfony\Component\Filesystem\Filesystem;
 
 /**
  * Base class for kernel tests of Package Manager's functionality.
@@ -53,7 +51,6 @@ abstract class PackageManagerKernelTestBase extends KernelTestBase {
    * @see ::register()
    */
   private $client;
-
 
   /**
    * {@inheritdoc}
@@ -81,7 +78,7 @@ abstract class PackageManagerKernelTestBase extends KernelTestBase {
     parent::setUp();
     $this->installConfig('package_manager');
 
-    $this->createVirtualProject();
+    $this->createTestProject();
 
     // The Update module's default configuration must be installed for our
     // fake release metadata to be fetched, and the System module's to ensure
@@ -105,19 +102,12 @@ abstract class PackageManagerKernelTestBase extends KernelTestBase {
       $container->set('http_client', $this->client);
     }
 
-    // Ensure that Composer Stager uses the test path factory, which is aware
-    // of the virtual file system.
-    $definition = new Definition(TestPathFactory::class);
-    $class = $definition->getClass();
-    $container->setDefinition($class, $definition->setPublic(FALSE));
-    $container->setAlias(PathFactoryInterface::class, $class);
-
-    // When a virtual project is used, the disk space validator is replaced with
+    // When the test project is used, the disk space validator is replaced with
     // a mock. When staged changes are applied, the container is rebuilt, which
     // destroys the mocked service and can cause unexpected side effects. The
     // 'persist' tag prevents the mock from being destroyed during a container
     // rebuild.
-    // @see ::createVirtualProject()
+    // @see ::createTestProject()
     $container->getDefinition('package_manager.validator.disk_space')
       ->addTag('persist');
 
@@ -146,7 +136,7 @@ abstract class PackageManagerKernelTestBase extends KernelTestBase {
       $this->container->get('event_dispatcher'),
       $this->container->get('tempstore.shared'),
       $this->container->get('datetime.time'),
-      new TestPathFactory(),
+      new PathFactory(),
       $this->container->get('package_manager.failure_marker')
     );
   }
@@ -219,32 +209,42 @@ abstract class PackageManagerKernelTestBase extends KernelTestBase {
   }
 
   /**
-   * Creates a test project in a virtual file system.
+   * Creates a test project.
    *
-   * This will create two directories at the root of the virtual file system:
+   * This will create a temporary uniques root directory and then creates two
+   * directories in it:
    * 'active', which is the active directory containing a fake Drupal code base,
    * and 'stage', which is the root directory used to stage changes. The path
    * locator service will also be mocked so that it points to the test project.
    *
    * @param string|null $source_dir
    *   (optional) The path of a directory which should be copied into the
-   *   virtual file system and used as the active directory.
+   *   test project and used as the active directory.
    */
-  protected function createVirtualProject(?string $source_dir = NULL): void {
+  protected function createTestProject(?string $source_dir = NULL): void {
     $source_dir = $source_dir ?? __DIR__ . '/../../fixtures/fake_site';
+    $root = DrupalFileSystem::getOsTemporaryDirectory() . DIRECTORY_SEPARATOR . 'package_manager_testing_root' . $this->databasePrefix;
+    $fs = new Filesystem();
+    if (is_dir($root)) {
+      $fs->remove($root);
+    }
+    $fs->mkdir($root);
 
     // Create the active directory and copy its contents from a fixture.
-    $active_dir = vfsStream::newDirectory('active');
-    $this->vfsRoot->addChild($active_dir);
-    $active_dir = $active_dir->url();
-    // Move vfs://root/sites to vfs://root/active/sites.
-    $sites_in_vfs = vfsStream::url('root/sites');
-    rename($sites_in_vfs, $sites_in_vfs . '/active');
+    $active_dir = $root . DIRECTORY_SEPARATOR . 'active';
+    $this->assertTrue(mkdir($active_dir));
     static::copyFixtureFilesTo($source_dir, $active_dir);
 
-    // Override siteDirectory to point to root/active/... instead of root/... .
+    // Removing 'vfs://root/' from site path set in
+    // \Drupal\KernelTests\KernelTestBase::setUpFilesystem as we don't use vfs.
     $test_site_path = str_replace('vfs://root/', '', $this->siteDirectory);
-    $this->siteDirectory = vfsStream::url('root/active/' . $test_site_path);
+
+    // Copy directory structure from vfs site directory to our site directory.
+    (new Filesystem())->mirror($this->siteDirectory, $active_dir . DIRECTORY_SEPARATOR . $test_site_path);
+
+    // Override siteDirectory to point to root/active/... instead of root/... .
+    $this->siteDirectory = $active_dir . DIRECTORY_SEPARATOR . $test_site_path;
+
     // Override KernelTestBase::setUpFilesystem's Settings object.
     $settings = Settings::getInstance() ? Settings::getAll() : [];
     $settings['file_public_path'] = $this->siteDirectory . '/files';
@@ -252,24 +252,20 @@ abstract class PackageManagerKernelTestBase extends KernelTestBase {
     new Settings($settings);
 
     // Create a stage root directory alongside the active directory.
-    $stage_dir = vfsStream::newDirectory('stage');
-    $this->vfsRoot->addChild($stage_dir);
+    $staging_root = $root . DIRECTORY_SEPARATOR . 'stage';
+    $this->assertTrue(mkdir($staging_root));
 
-    // Ensure the path locator points to the virtual active directory. We assume
-    // that is its own web root and that the vendor directory is at its top
-    // level.
+    // Ensure the path locator points to the test project. We assume that is its
+    // own web root and the vendor directory is at its top level.
     /** @var \Drupal\package_manager_bypass\PathLocator $path_locator */
     $path_locator = $this->container->get('package_manager.path_locator');
-    $path_locator->setPaths($active_dir, $active_dir . '/vendor', '', $stage_dir->url());
+    $path_locator->setPaths($active_dir, $active_dir . '/vendor', '', $staging_root);
 
-    // Ensure the active directory will be copied into the virtual stage
+    // Ensure the active directory will be copied into the test project's stage
     // directory.
     Beginner::setFixturePath($active_dir);
 
-    // Since the path locator now points to a virtual file system, we need to
-    // replace the disk space validator with a test-only version that bypasses
-    // system calls, like disk_free_space() and stat(), which aren't supported
-    // by vfsStream. This validator will persist through container rebuilds.
+    // This validator will persist through container rebuilds.
     // @see ::register()
     $validator = new TestDiskSpaceValidator(
       $path_locator,
@@ -446,37 +442,6 @@ trait TestStageTrait {
       // dispatched.
       throw new TestStageValidationException($e, $event);
     }
-  }
-
-}
-
-/**
- * Defines a path value object that is aware of the virtual file system.
- */
-class TestPath extends AbstractPath {
-
-  /**
-   * {@inheritdoc}
-   */
-  protected function doResolve(string $basePath): string {
-    if (str_starts_with($this->path, vfsStream::SCHEME . '://')) {
-      return $this->path;
-    }
-    return implode(DIRECTORY_SEPARATOR, [$basePath, $this->path]);
-  }
-
-}
-
-/**
- * Defines a path factory that is aware of the virtual file system.
- */
-class TestPathFactory implements PathFactoryInterface {
-
-  /**
-   * {@inheritdoc}
-   */
-  public static function create(string $path): PathInterface {
-    return new TestPath($path);
   }
 
 }

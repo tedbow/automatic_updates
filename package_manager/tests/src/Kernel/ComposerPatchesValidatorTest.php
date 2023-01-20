@@ -31,8 +31,8 @@ class ComposerPatchesValidatorTest extends PackageManagerKernelTestBase {
     // factory as an array, Composer will assume that the configuration is
     // coming from a config.json file, even if one doesn't exist.
     $error = ValidationResult::createError([
-      t('The <code>cweagans/composer-patches</code> plugin is installed, but the <code>composer-exit-on-patch-failure</code> key is not set to <code>true</code> in the <code>extra</code> section of @dir/config.json.', [
-        '@dir' => $dir,
+      t('The <code>cweagans/composer-patches</code> plugin is installed, but the <code>composer-exit-on-patch-failure</code> key is not set to <code>true</code> in the <code>extra</code> section of @dir/composer.json.', [
+        '@dir' => realpath($dir),
       ]),
     ]);
     $this->assertStatusCheckResults([$error]);
@@ -55,7 +55,7 @@ class ComposerPatchesValidatorTest extends PackageManagerKernelTestBase {
     // factory as an array, Composer will assume that the configuration is
     // coming from a config.json file, even if one doesn't exist.
     $error = ValidationResult::createError([
-      "The <code>cweagans/composer-patches</code> plugin is installed, but the <code>composer-exit-on-patch-failure</code> key is not set to <code>true</code> in the <code>extra</code> section of $dir/config.json.",
+      "The <code>cweagans/composer-patches</code> plugin is installed, but the <code>composer-exit-on-patch-failure</code> key is not set to <code>true</code> in the <code>extra</code> section of $dir/composer.json.",
     ]);
     $this->assertResults([$error], PreApplyEvent::class);
   }

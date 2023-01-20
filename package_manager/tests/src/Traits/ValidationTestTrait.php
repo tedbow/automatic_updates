@@ -5,6 +5,7 @@ declare(strict_types = 1);
 namespace Drupal\Tests\package_manager\Traits;
 
 use Drupal\Core\StringTranslation\TranslatableMarkup;
+use Drupal\package_manager\PathLocator;
 use Drupal\package_manager\ValidationResult;
 use Drupal\Tests\UnitTestCase;
 
@@ -25,12 +26,47 @@ trait ValidationTestTrait {
    *   The expected validation results.
    * @param \Drupal\package_manager\ValidationResult[] $actual_results
    *   The actual validation results.
+   * @param \Drupal\package_manager\PathLocator|null $path_locator
+   *   (optional) The path locator (when this trait is used in unit tests).
    */
-  protected function assertValidationResultsEqual(array $expected_results, array $actual_results): void {
-    $expected_results = $this->getValidationResultsAsArray($expected_results);
+  protected function assertValidationResultsEqual(array $expected_results, array $actual_results, ?PathLocator $path_locator = NULL): void {
+    if ($path_locator) {
+      assert(is_a(get_called_class(), UnitTestCase::class, TRUE));
+    }
+    $expected_results = array_map(
+      function (array $result) use ($path_locator): array {
+        $result['messages'] = $this->resolvePlaceholdersInArrayValuesWithRealPaths($result['messages'], $path_locator);
+        return $result;
+      },
+      $this->getValidationResultsAsArray($expected_results)
+    );
     $actual_results = $this->getValidationResultsAsArray($actual_results);
 
     self::assertSame($expected_results, $actual_results);
+  }
+
+  /**
+   * Resolves <PROJECT_ROOT>, <VENDOR_DIR>, <STAGE_ROOT>, <STAGE_ROOT_PARENT>.
+   *
+   * @param array $subject
+   *   An array with arbitrary keys, and values potentially containing the
+   *   placeholders <PROJECT_ROOT>, <VENDOR_DIR>, <STAGE_ROOT>, or
+   *   <STAGE_ROOT_PARENT>.
+   * @param \Drupal\package_manager\PathLocator|null $path_locator
+   *   (optional) The path locator (when this trait is used in unit tests).
+   *
+   * @return array
+   *   The same array, with unchanged keys, and with the placeholders resolved.
+   */
+  protected function resolvePlaceholdersInArrayValuesWithRealPaths(array $subject, ?PathLocator $path_locator = NULL): array {
+    if (!$path_locator) {
+      $path_locator = $this->container->get('package_manager.path_locator');
+    }
+    return str_replace(
+      ['<PROJECT_ROOT>', '<VENDOR_DIR>', '<STAGE_ROOT>', '<STAGE_ROOT_PARENT>'],
+      [$path_locator->getProjectRoot(), $path_locator->getVendorDirectory(), $path_locator->getStagingRoot(), dirname($path_locator->getStagingRoot())],
+      $subject
+    );
   }
 
   /**

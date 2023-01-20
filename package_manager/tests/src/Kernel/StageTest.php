@@ -5,6 +5,7 @@ declare(strict_types = 1);
 namespace Drupal\Tests\package_manager\Kernel;
 
 use Drupal\Component\Datetime\Time;
+use Drupal\Component\FileSystem\FileSystem;
 use Drupal\Core\DependencyInjection\ContainerBuilder;
 use Drupal\Core\Extension\ModuleUninstallValidatorException;
 use Drupal\Core\Logger\RfcLogLevel;
@@ -16,10 +17,10 @@ use Drupal\package_manager\Event\StageEvent;
 use Drupal\package_manager\Exception\ApplyFailedException;
 use Drupal\package_manager\Exception\StageException;
 use Drupal\package_manager\Stage;
+use Drupal\package_manager_bypass\Beginner;
 use Drupal\package_manager_bypass\Committer;
 use PhpTuf\ComposerStager\Domain\Exception\InvalidArgumentException;
 use PhpTuf\ComposerStager\Domain\Exception\PreconditionException;
-use Drupal\package_manager_bypass\Beginner;
 use PhpTuf\ComposerStager\Domain\Service\Precondition\PreconditionInterface;
 use Psr\Log\LogLevel;
 use ColinODell\PsrTestLogger\TestLogger;
@@ -57,8 +58,7 @@ class StageTest extends PackageManagerKernelTestBase {
     $validator = $this->container->get('package_manager.validator.file_system');
     $this->container->get('event_dispatcher')->removeSubscriber($validator);
 
-    // Don't mirror the active directory from the virtual project into the
-    // real file system.
+    // Don't mirror the active directory from the test project.
     Beginner::setFixturePath(NULL);
 
     /** @var \Drupal\package_manager_bypass\PathLocator $path_locator */
@@ -72,7 +72,11 @@ class StageTest extends PackageManagerKernelTestBase {
     // If the stage root directory is changed, the existing stage shouldn't be
     // affected...
     $active_dir = $path_locator->getProjectRoot();
-    $path_locator->setPaths($active_dir, "$active_dir/vendor", '', '/junk/drawer');
+    $new_staging_root = FileSystem::getOsTemporaryDirectory() . DIRECTORY_SEPARATOR . 'junk';
+    if (!is_dir($new_staging_root)) {
+      mkdir($new_staging_root);
+    }
+    $path_locator->setPaths($active_dir, "$active_dir/vendor", '', $new_staging_root);
     $this->assertSame($stage_dir, $stage->getStageDirectory());
     $stage->destroy();
     // ...but a new stage should be.
@@ -80,7 +84,7 @@ class StageTest extends PackageManagerKernelTestBase {
     $another_id = $stage->create();
     $this->assertNotSame($id, $another_id);
     $stage_dir = $stage->getStageDirectory();
-    $this->assertStringStartsWith('/junk/drawer/', $stage_dir);
+    $this->assertStringStartsWith(realpath($new_staging_root), $stage_dir);
     $this->assertStringEndsWith("/$another_id", $stage_dir);
   }
 

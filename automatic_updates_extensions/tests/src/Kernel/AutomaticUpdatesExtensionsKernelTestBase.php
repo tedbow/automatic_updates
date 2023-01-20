@@ -9,9 +9,9 @@ use Drupal\automatic_updates_extensions\ExtensionUpdater;
 use Drupal\Core\DependencyInjection\ContainerBuilder;
 use Drupal\package_manager\UnusedConfigFactory;
 use Drupal\Tests\automatic_updates\Kernel\AutomaticUpdatesKernelTestBase;
-use Drupal\Tests\package_manager\Kernel\TestPathFactory;
 use Drupal\Tests\package_manager\Kernel\TestStageTrait;
 use Drupal\Tests\package_manager\Kernel\TestStageValidationException;
+use PhpTuf\ComposerStager\Infrastructure\Factory\Path\PathFactory;
 
 /**
  * Base class for kernel tests of the Automatic Updates Extensions module.
@@ -42,14 +42,14 @@ abstract class AutomaticUpdatesExtensionsKernelTestBase extends AutomaticUpdates
   }
 
   /**
-   * Create Virtual Project.
+   * Create Test Project.
    *
    * @param string|null $source_dir
    *   Source directory.
    */
-  protected function createVirtualProject(?string $source_dir = NULL): void {
+  protected function createTestProject(?string $source_dir = NULL): void {
     $source_dir = $source_dir ?? __DIR__ . '/../../fixtures/fake-site';
-    parent::createVirtualProject($source_dir);
+    parent::createTestProject($source_dir);
   }
 
   /**
@@ -122,7 +122,7 @@ abstract class AutomaticUpdatesExtensionsKernelTestBase extends AutomaticUpdates
       $this->container->get('event_dispatcher'),
       $this->container->get('tempstore.shared'),
       $this->container->get('datetime.time'),
-      new TestPathFactory(),
+      new PathFactory(),
       $this->container->get('package_manager.failure_marker')
     );
   }

@@ -30,12 +30,12 @@ class WritableFileSystemValidatorTest extends PackageManagerKernelTestBase {
    *   The test cases.
    */
   public function providerWritable(): array {
-    // The root and vendor paths are defined by ::createVirtualProject().
-    $root_error = t('The Drupal directory "vfs://root/active" is not writable.');
-    $vendor_error = t('The vendor directory "vfs://root/active/vendor" is not writable.');
+    // @see \Drupal\Tests\package_manager\Traits\ValidationTestTrait::resolvePlaceholdersInArrayValuesWithRealPaths()
+    $root_error = t('The Drupal directory "<PROJECT_ROOT>" is not writable.');
+    $vendor_error = t('The vendor directory "<VENDOR_DIR>" is not writable.');
     $summary = t('The file system is not writable.');
     $writable_permission = 0777;
-    $non_writable_permission = 0444;
+    $non_writable_permission = 0550;
 
     return [
       'root and vendor are writable' => [
@@ -83,7 +83,7 @@ class WritableFileSystemValidatorTest extends PackageManagerKernelTestBase {
     $path_locator = $this->container->get('package_manager.path_locator');
 
     // We need to set the vendor directory's permissions first because, in the
-    // virtual project, it's located inside the project root.
+    // test project, it's located inside the project root.
     $this->assertTrue(chmod($path_locator->getVendorDirectory(), $vendor_permissions));
     $this->assertTrue(chmod($path_locator->getProjectRoot(), $root_permissions));
 
@@ -109,12 +109,12 @@ class WritableFileSystemValidatorTest extends PackageManagerKernelTestBase {
         $path_locator = $this->container->get('package_manager.path_locator');
 
         // We need to set the vendor directory's permissions first because, in
-        // the virtual project, it's located inside the project root.
+        // the test project, it's located inside the project root.
         $this->assertTrue(chmod($path_locator->getVendorDirectory(), $vendor_permissions));
         $this->assertTrue(chmod($path_locator->getProjectRoot(), $root_permissions));
 
         // During pre-apply we don't care whether the staging root is writable.
-        $this->assertTrue(chmod($path_locator->getStagingRoot(), 0444));
+        $this->assertTrue(chmod($path_locator->getStagingRoot(), 0550));
       },
     );
 
@@ -129,7 +129,7 @@ class WritableFileSystemValidatorTest extends PackageManagerKernelTestBase {
    */
   public function providerStagingRootPermissions(): array {
     $writable_permission = 0777;
-    $non_writable_permission = 0444;
+    $non_writable_permission = 0550;
     $summary = t('The file system is not writable.');
     return [
       'writable stage root exists' => [
@@ -140,14 +140,14 @@ class WritableFileSystemValidatorTest extends PackageManagerKernelTestBase {
       'write-protected stage root exists' => [
         $non_writable_permission,
         [
-          ValidationResult::createError(['The stage root directory "vfs://root/stage" is not writable.'], $summary),
+          ValidationResult::createError(['The stage root directory "<STAGE_ROOT>" is not writable.'], $summary),
         ],
         FALSE,
       ],
       'stage root directory does not exist, parent directory not writable' => [
         $non_writable_permission,
         [
-          ValidationResult::createError(['The stage root directory will not able to be created at "vfs://root".'], $summary),
+          ValidationResult::createError(['The stage root directory will not able to be created at "<STAGE_ROOT_PARENT>".'], $summary),
         ],
         TRUE,
       ],

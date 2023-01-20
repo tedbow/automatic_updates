@@ -7,6 +7,7 @@ namespace Drupal\Tests\automatic_updates\Kernel\StatusCheck;
 use Drupal\fixture_manipulator\ActiveFixtureManipulator;
 use Drupal\fixture_manipulator\StageFixtureManipulator;
 use Drupal\package_manager\Exception\StageValidationException;
+use Drupal\package_manager\PathLocator;
 use Drupal\package_manager\ValidationResult;
 use Drupal\Tests\automatic_updates\Kernel\AutomaticUpdatesKernelTestBase;
 
@@ -23,7 +24,7 @@ class ScaffoldFilePermissionsValidatorTest extends AutomaticUpdatesKernelTestBas
   protected static $modules = ['automatic_updates'];
 
   /**
-   * The active directory of the virtual project.
+   * The active directory of the test project.
    *
    * @var string
    */
@@ -42,7 +43,7 @@ class ScaffoldFilePermissionsValidatorTest extends AutomaticUpdatesKernelTestBas
   /**
    * {@inheritdoc}
    */
-  protected function assertValidationResultsEqual(array $expected_results, array $actual_results): void {
+  protected function assertValidationResultsEqual(array $expected_results, array $actual_results, ?PathLocator $path_locator = NULL): void {
     $map = function (string $path): string {
       return $this->activeDir . '/' . $path;
     };
@@ -52,7 +53,7 @@ class ScaffoldFilePermissionsValidatorTest extends AutomaticUpdatesKernelTestBas
       $messages = array_map($map, $result->getMessages());
       $expected_results[$i] = ValidationResult::createError($messages, t('The following paths must be writable in order to update default site configuration files.'));
     }
-    parent::assertValidationResultsEqual($expected_results, $actual_results);
+    parent::assertValidationResultsEqual($expected_results, $actual_results, $path_locator);
   }
 
   /**
@@ -64,7 +65,7 @@ class ScaffoldFilePermissionsValidatorTest extends AutomaticUpdatesKernelTestBas
   private function writeProtect(array $paths): void {
     foreach ($paths as $path) {
       $path = $this->activeDir . '/' . $path;
-      chmod($path, 0400);
+      chmod($path, 0500);
       $this->assertFileIsNotWritable($path, "Failed to write-protect $path.");
     }
   }

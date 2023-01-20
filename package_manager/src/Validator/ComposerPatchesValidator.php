@@ -32,9 +32,7 @@ class ComposerPatchesValidator implements EventSubscriberInterface {
       if (empty($extra['composer-exit-on-patch-failure'])) {
         $event->addError([
           $this->t('The <code>cweagans/composer-patches</code> plugin is installed, but the <code>composer-exit-on-patch-failure</code> key is not set to <code>true</code> in the <code>extra</code> section of @file.', [
-            // If composer.json is in a virtual file system, Composer will not
-            // be able to resolve a real path for it.
-            '@file' => $composer->getConfig()->getConfigSource()->getName() ?: 'composer.json',
+            '@file' => $composer->getConfig()->getConfigSource()->getName(),
           ]),
         ]);
       }

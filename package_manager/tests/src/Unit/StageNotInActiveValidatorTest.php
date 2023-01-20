@@ -37,6 +37,7 @@ class StageNotInActiveValidatorTest extends UnitTestCase {
     $path_locator_prophecy = $this->prophesize(PathLocator::class);
     $path_locator_prophecy->getProjectRoot()->willReturn(Path::canonicalize($project_root));
     $path_locator_prophecy->getStagingRoot()->willReturn(Path::canonicalize($staging_root));
+    $path_locator_prophecy->getVendorDirectory()->willReturn('not used');
     $path_locator = $path_locator_prophecy->reveal();
     $stage = $this->prophesize(Stage::class)->reveal();
 
@@ -44,7 +45,7 @@ class StageNotInActiveValidatorTest extends UnitTestCase {
     $stage_not_in_active_validator->setStringTranslation($this->getStringTranslationStub());
     $event = new PreCreateEvent($stage, ['some/path']);
     $stage_not_in_active_validator->checkNotInActive($event);
-    $this->assertValidationResultsEqual($expected, $event->getResults());
+    $this->assertValidationResultsEqual($expected, $event->getResults(), $path_locator);
   }
 
   /**
@@ -69,47 +70,45 @@ class StageNotInActiveValidatorTest extends UnitTestCase {
         "/var/root",
         "/home/var/root",
       ],
-
-      // @todo Replace `vfs://` with `/var/ in https://www.drupal.org/i/3328234.
       'Stage with .. segments, outside active' => [
         [],
-        "vfs://root/active",
-        "vfs://root/active/../stage",
+        "/var/root/active",
+        "/var/root/active/../stage",
       ],
       'Stage without .. segments, outside active' => [
         [],
-        "vfs://root/active",
-        "vfs://root/stage",
+        "/var/root/active",
+        "/var/root/stage",
       ],
       'Stage with .. segments, inside active' => [
         [$expected_symlink_validation_error],
-        "vfs://root/active",
-        "vfs://root/active/../active/stage",
+        "/var/root/active",
+        "/var/root/active/../active/stage",
       ],
       'Stage without .. segments, inside active' => [
         [$expected_symlink_validation_error],
-        "vfs://root/active",
-        "vfs://root/active/stage",
+        "/var/root/active",
+        "/var/root/active/stage",
       ],
       'Stage with .. segments, outside active, active with .. segments' => [
         [],
-        "vfs://root/active",
-        "vfs://root/active/../stage",
+        "/var/root/active",
+        "/var/root/active/../stage",
       ],
       'Stage without .. segments, outside active, active with .. segments' => [
         [],
-        "vfs://root/random/../active",
-        "vfs://root/stage",
+        "/var/root/random/../active",
+        "/var/root/stage",
       ],
       'Stage with .. segments, inside active, active with .. segments' => [
         [$expected_symlink_validation_error],
-        "vfs://root/random/../active",
-        "vfs://root/active/../active/stage",
+        "/var/root/random/../active",
+        "/var/root/active/../active/stage",
       ],
       'Stage without .. segments, inside active, active with .. segments' => [
         [$expected_symlink_validation_error],
-        "vfs://root/random/../active",
-        "vfs://root/active/stage",
+        "/var/root/random/../active",
+        "/var/root/active/stage",
       ],
     ];
   }

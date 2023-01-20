@@ -398,7 +398,7 @@ class VersionPolicyValidatorTest extends AutomaticUpdatesKernelTestBase {
    *
    * @param \Closure $listener
    *   A pre-create event listener to run before all validators. This should put
-   *   the virtual project and/or updater into a state which will cause
+   *   the test project and/or updater into a state which will cause
    *   \Drupal\automatic_updates\Validator\VersionPolicyValidator::getTargetVersion()
    *   to throw an exception because the target version of Drupal core is not
    *   known.

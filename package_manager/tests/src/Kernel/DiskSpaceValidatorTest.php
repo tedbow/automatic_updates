@@ -23,9 +23,9 @@ class DiskSpaceValidatorTest extends PackageManagerKernelTestBase {
    *   The test cases.
    */
   public function providerDiskSpaceValidation(): array {
-    // These are defined by ::createVirtualProject().
-    $root = 'vfs://root/active';
-    $vendor = "$root/vendor";
+    // @see \Drupal\Tests\package_manager\Traits\ValidationTestTrait::resolvePlaceholdersInArrayValuesWithRealPaths()
+    $root = '<PROJECT_ROOT>';
+    $vendor = '<VENDOR_DIR>';
 
     $root_insufficient = "Drupal root filesystem \"$root\" has insufficient space. There must be at least 1024 megabytes free.";
     $vendor_insufficient = "Vendor filesystem \"$vendor\" has insufficient space. There must be at least 1024 megabytes free.";
@@ -146,6 +146,8 @@ class DiskSpaceValidatorTest extends PackageManagerKernelTestBase {
    * @dataProvider providerDiskSpaceValidation
    */
   public function testDiskSpaceValidation(bool $shared_disk, array $free_space, array $expected_results): void {
+    $free_space = array_flip($this->resolvePlaceholdersInArrayValuesWithRealPaths(array_flip($free_space)));
+
     /** @var \Drupal\Tests\package_manager\Kernel\TestDiskSpaceValidator $validator */
     $validator = $this->container->get('package_manager.validator.disk_space');
     $validator->sharedDisk = $shared_disk;
@@ -171,6 +173,8 @@ class DiskSpaceValidatorTest extends PackageManagerKernelTestBase {
    * @dataProvider providerDiskSpaceValidation
    */
   public function testDiskSpaceValidationDuringPreApply(bool $shared_disk, array $free_space, array $expected_results): void {
+    $free_space = array_flip($this->resolvePlaceholdersInArrayValuesWithRealPaths(array_flip($free_space)));
+
     $this->addEventTestListener(function () use ($shared_disk, $free_space): void {
       /** @var \Drupal\Tests\package_manager\Kernel\TestDiskSpaceValidator $validator */
       $validator = $this->container->get('package_manager.validator.disk_space');

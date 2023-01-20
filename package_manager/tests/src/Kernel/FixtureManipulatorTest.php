@@ -8,6 +8,7 @@ use Drupal\fixture_manipulator\ActiveFixtureManipulator;
 use Drupal\fixture_manipulator\FixtureManipulator;
 use Drupal\fixture_manipulator\StageFixtureManipulator;
 use Drupal\package_manager_bypass\Beginner;
+use PhpTuf\ComposerStager\Infrastructure\Factory\Path\PathFactory;
 use Symfony\Component\Filesystem\Filesystem;
 
 /**
@@ -18,7 +19,7 @@ use Symfony\Component\Filesystem\Filesystem;
 class FixtureManipulatorTest extends PackageManagerKernelTestBase {
 
   /**
-   * The root directory of the virtual project.
+   * The root directory of the test project.
    *
    * @var string
    */
@@ -375,15 +376,16 @@ class FixtureManipulatorTest extends PackageManagerKernelTestBase {
 
     $path_locator = $this->container->get('package_manager.path_locator');
     // We need to set the vendor directory's permissions first because, in the
-    // virtual project, it's located inside the project root.
+    // test project, it's located inside the project root.
     $this->assertTrue(chmod($path_locator->getVendorDirectory(), 0777));
     $this->assertTrue(chmod($path_locator->getProjectRoot(), 0777));
 
     // Simulate a stage beginning, which would commit the changes.
     // @see \Drupal\package_manager_bypass\Beginner::begin()
+    $path_factory = new PathFactory();
     $this->container->get('package_manager.beginner')->begin(
-      new TestPath($path_locator->getProjectRoot()),
-      new TestPath($path_locator->getStagingRoot()),
+      $path_factory->create($path_locator->getProjectRoot()),
+      $path_factory->create($path_locator->getStagingRoot()),
     );
   }
 

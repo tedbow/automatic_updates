@@ -90,15 +90,7 @@ class ComposerUtility {
    */
   public static function createForDirectory(string $dir): self {
     $io = new NullIO();
-
-    // Pre-load the contents of composer.json so that Factory::createComposer()
-    // won't try to call realpath(), which will fail if composer.json is in a
-    // virtual file system.
     $configuration = $dir . DIRECTORY_SEPARATOR . 'composer.json';
-    if (file_exists($configuration)) {
-      $configuration = file_get_contents($configuration);
-      $configuration = json_decode($configuration, TRUE, 512, JSON_THROW_ON_ERROR);
-    }
 
     // The Composer factory requires that either the HOME or COMPOSER_HOME
     // environment variables be set, so momentarily set the COMPOSER_HOME

@@ -65,7 +65,7 @@ trait PathExclusionsTrait {
     $project_root = $this->pathLocator->getProjectRoot();
 
     foreach ($paths as $path) {
-      if (str_starts_with($path, '/') || str_starts_with($path, 'vfs:')) {
+      if (str_starts_with($path, '/')) {
         if (!str_starts_with($path, $project_root)) {
           throw new \LogicException("$path is not inside the project root: $project_root.");
         }

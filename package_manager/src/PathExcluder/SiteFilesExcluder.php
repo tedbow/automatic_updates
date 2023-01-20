@@ -79,7 +79,7 @@ final class SiteFilesExcluder implements EventSubscriberInterface {
         $path = $wrapper->getDirectoryPath();
 
         if ($this->fileSystem->isAbsolutePath($path)) {
-          $this->excludeInProjectRoot($event, [$path]);
+          $this->excludeInProjectRoot($event, [realpath($path)]);
         }
         else {
           $this->excludeInWebRoot($event, [$path]);

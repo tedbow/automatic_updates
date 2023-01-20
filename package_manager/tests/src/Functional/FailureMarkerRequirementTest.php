@@ -42,15 +42,16 @@ class FailureMarkerRequirementTest extends BrowserTestBase {
     ]);
     $this->drupalLogin($account);
 
+    $fake_project_root = $this->root . DIRECTORY_SEPARATOR . $this->publicFilesDirectory;
     $this->container->get('package_manager.path_locator')
-      ->setPaths($this->publicFilesDirectory, NULL, NULL, NULL);
+      ->setPaths($fake_project_root, NULL, NULL, NULL);
 
     $failure_marker = $this->container->get('package_manager.failure_marker');
     $message = $this->t('Package Manager is here to wreck your day.');
     $failure_marker->write($this->createMock(Stage::class), $message);
     $path = $failure_marker->getPath();
     $this->assertFileExists($path);
-    $this->assertStringStartsWith($this->publicFilesDirectory, $path);
+    $this->assertStringStartsWith($fake_project_root, $path);
 
     $this->drupalGet('/admin/reports/status');
     $assert_session = $this->assertSession();

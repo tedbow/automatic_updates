@@ -19,7 +19,7 @@ use Drupal\package_manager_bypass\Stager;
 class LockFileValidatorTest extends PackageManagerKernelTestBase {
 
   /**
-   * The path of the active directory in the virtual file system.
+   * The path of the active directory in the test project.
    *
    * @var string
    */

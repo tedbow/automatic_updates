@@ -262,6 +262,7 @@ class StageOwnershipTest extends PackageManagerKernelTestBase {
       $this->container->get('settings'),
       $logger_channel,
     ];
+    $this->assertSame(E_ALL, error_reporting());
     $this->container->set('file_system', new class (...$arguments) extends FileSystem {
 
       /**
@@ -275,6 +276,40 @@ class StageOwnershipTest extends PackageManagerKernelTestBase {
         // write-protected files.
       }
 
+      /**
+       * {@inheritdoc}
+       */
+      public function unlink($uri, $context = NULL) {
+        // PHP's unlink() will generate a warning upon failure, which PHPUnit's
+        // error handler will convert to an exception. This happens because all
+        // tests run with E_ALL. But production sites either have E_ALL disabled
+        // or they catch and log it. So: match that behavior in the test, but
+        // only for this single method, to still maximally catch errors.
+        // @see https://www.php.net/manual/en/function.unlink.php,
+        // @see \ERROR_REPORTING_HIDE
+        error_reporting(E_ALL & ~E_WARNING);
+        $result = parent::unlink($uri, $context);
+        error_reporting(E_ALL);
+        return $result;
+      }
+
+      /**
+       * {@inheritdoc}
+       */
+      public function rmdir($uri, $context = NULL) {
+        // PHP's rmdir() will generate a warning upon failure, which PHPUnit's
+        // error handler will convert to an exception. This happens because all
+        // tests run with E_ALL. But production sites either have E_ALL disabled
+        // or they catch and log it. So: match that behavior in the test, but
+        // only for this single method, to still maximally catch errors.
+        // @see https://php.net/manual/en/function.rmdir.php,
+        // @see \ERROR_REPORTING_HIDE
+        error_reporting(E_ALL & ~E_WARNING);
+        $result = parent::rmdir($uri, $context);
+        error_reporting(E_ALL);
+        return $result;
+      }
+
     });
 
     $stage = $this->createStage();
@@ -285,7 +320,7 @@ class StageOwnershipTest extends PackageManagerKernelTestBase {
     // Write-protect the stage directory, which should prevent files in it from
     // being deleted.
     $dir = $stage->getStageDirectory();
-    chmod($dir, 0400);
+    chmod($dir, 0500);
     $this->assertDirectoryIsNotWritable($dir);
 
     $logger = new TestLogger();

@@ -4,12 +4,13 @@ declare(strict_types = 1);
 
 namespace Drupal\Tests\package_manager\Kernel;
 
+use Drupal\Component\FileSystem\FileSystem as DrupalFileSystem;
 use Drupal\fixture_manipulator\FixtureManipulator;
 use Drupal\KernelTests\KernelTestBase;
 use Drupal\package_manager\ComposerUtility;
 use Drupal\Tests\package_manager\Traits\AssertPreconditionsTrait;
 use Drupal\Tests\package_manager\Traits\FixtureUtilityTrait;
-use org\bovigo\vfs\vfsStream;
+use Symfony\Component\Filesystem\Filesystem;
 
 /**
  * @coversDefaultClass \Drupal\package_manager\ComposerUtility
@@ -22,6 +23,13 @@ class ComposerUtilityTest extends KernelTestBase {
   use FixtureUtilityTrait;
 
   /**
+   * The temporary root directory for testing.
+   *
+   * @var string
+   */
+  protected string $rootDir;
+
+  /**
    * {@inheritdoc}
    */
   protected static $modules = ['package_manager', 'update'];
@@ -32,9 +40,14 @@ class ComposerUtilityTest extends KernelTestBase {
   protected function setUp(): void {
     parent::setUp();
 
-    $fixture = vfsStream::newDirectory('fixture');
-    $this->vfsRoot->addChild($fixture);
-    static::copyFixtureFilesTo(__DIR__ . '/../../fixtures/fake_site', $fixture->url());
+    $this->rootDir = DrupalFileSystem::getOsTemporaryDirectory() . DIRECTORY_SEPARATOR . 'composer_utility_testing_root' . $this->databasePrefix;
+    $fs = new Filesystem();
+    if (is_dir($this->rootDir)) {
+      $fs->remove($this->rootDir);
+    }
+    $fs->mkdir($this->rootDir);
+    $fixture = $this->rootDir . DIRECTORY_SEPARATOR . 'fixture' . DIRECTORY_SEPARATOR;
+    static::copyFixtureFilesTo(__DIR__ . '/../../fixtures/fake_site', $fixture);
     $relative_projects_dir = '../../web/projects';
     (new FixtureManipulator())
       ->addPackage(
@@ -88,17 +101,17 @@ class ComposerUtilityTest extends KernelTestBase {
       // not match the project or package. Only the project key in this file
       // need to match.
       ->addProjectAtPath("web/projects/any_folder_name/any_sub_folder", 'nested_no_match_project', 'any_yml_file.info.yml')
-      ->commitChanges($fixture->url());
+      ->commitChanges($fixture);
   }
 
   /**
    * Tests that ComposerUtility::CreateForDirectory() validates the directory.
    */
   public function testCreateForDirectoryValidation(): void {
+    $dir = $this->rootDir;
     $this->expectException(\InvalidArgumentException::class);
-    $this->expectExceptionMessage('Composer could not find the config file: vfs://root/composer.json');
+    $this->expectExceptionMessage('Composer could not find the config file: ' . $dir . DIRECTORY_SEPARATOR . 'composer.json');
 
-    $dir = vfsStream::setup()->url();
     ComposerUtility::createForDirectory($dir);
   }
 
@@ -106,7 +119,7 @@ class ComposerUtilityTest extends KernelTestBase {
    * Tests that ComposerUtility disables automatic creation of .htaccess files.
    */
   public function testHtaccessProtectionDisabled(): void {
-    $dir = vfsStream::setup()->url();
+    $dir = $this->rootDir;
     file_put_contents($dir . '/composer.json', '{}');
 
     ComposerUtility::createForDirectory($dir);
@@ -124,7 +137,7 @@ class ComposerUtilityTest extends KernelTestBase {
    * @dataProvider providerGetProjectForPackage
    */
   public function testGetProjectForPackage(string $package, ?string $expected_project): void {
-    $dir = $this->vfsRoot->getChild('fixture')->url();
+    $dir = $this->rootDir . DIRECTORY_SEPARATOR . 'fixture';
     $this->assertSame($expected_project, ComposerUtility::createForDirectory($dir)->getProjectForPackage($package));
   }
 
@@ -174,7 +187,7 @@ class ComposerUtilityTest extends KernelTestBase {
    * @dataProvider providerGetPackageForProject
    */
   public function testGetPackageForProject(string $project, ?string $expected_package): void {
-    $dir = $this->vfsRoot->getChild('fixture')->url();
+    $dir = $this->rootDir . DIRECTORY_SEPARATOR . 'fixture';
     $this->assertSame($expected_package, ComposerUtility::createForDirectory($dir)->getPackageForProject($project));
   }
 
