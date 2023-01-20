@@ -17,7 +17,7 @@ trait PackageManagerBypassTestTrait {
    * @param int $attempted_times
    *   The expected number of times an update was staged.
    */
-  private function assertUpdateStagedTimes(int $attempted_times): void {
+  protected function assertUpdateStagedTimes(int $attempted_times): void {
     /** @var \Drupal\package_manager_bypass\BypassedStagerServiceBase $beginner */
     $beginner = $this->container->get('package_manager.beginner');
     $this->assertCount($attempted_times, $beginner->getInvocationArguments());

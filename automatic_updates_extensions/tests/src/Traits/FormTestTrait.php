@@ -40,7 +40,7 @@ trait FormTestTrait {
    * @param int $expected_update_count
    *   The no of rows in table.
    */
-  private function assertUpdatesCount(int $expected_update_count): void {
+  protected function assertUpdatesCount(int $expected_update_count): void {
     $this->assertSession()->elementsCount('css', '.update-recommended tbody tr', $expected_update_count);
   }
 
