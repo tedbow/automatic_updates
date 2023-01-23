@@ -5,3 +5,7 @@ services:
       - '@state'
     tags:
       - { name: event_subscriber }
+  package_manager.validator.collect_ignored_paths_fail:
+    class: Drupal\package_manager_test_validation\CollectIgnoredPathsFailValidator
+    tags:
+      - { name: event_subscriber }

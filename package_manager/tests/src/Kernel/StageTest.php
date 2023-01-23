@@ -35,6 +35,11 @@ class StageTest extends PackageManagerKernelTestBase {
   /**
    * {@inheritdoc}
    */
+  protected static $modules = ['package_manager_test_validation'];
+
+  /**
+   * {@inheritdoc}
+   */
   public function register(ContainerBuilder $container) {
     parent::register($container);
 
@@ -521,6 +526,32 @@ class StageTest extends PackageManagerKernelTestBase {
     $stage->require(['ext-json:*']);
     $stage->apply();
     $this->assertTrue($asserted);
+  }
+
+  /**
+   * Tests that if a stage fails to get ignored paths, throws a stage exception.
+   */
+  public function testFailureCollectIgnoredPaths(): void {
+    $project_root = $this->container->get('package_manager.path_locator')
+      ->getProjectRoot();
+    unlink($project_root . '/composer.json');
+    $this->expectException(StageException::class);
+    $this->expectExceptionMessage("Composer could not find the config file: $project_root/composer.json\n");
+    $stage = $this->createStage();
+    $stage->create();
+  }
+
+  /**
+   * Tests that if apply fails to get ignored paths, throws a stage exception.
+   */
+  public function testFailureCollectIgnoredPathsOnApply(): void {
+    $stage = $this->createStage();
+    $stage->create();
+    $stage->require(['drupal/random']);
+    $this->expectException(StageException::class);
+    $this->expectExceptionMessage("Composer could not find the config file: " . $stage->getStageDirectory() . "/composer.json\n");
+    unlink($stage->getStageDirectory() . '/composer.json');
+    $stage->apply();
   }
 
 }

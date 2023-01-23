@@ -370,7 +370,13 @@ class Stage implements LoggerAwareInterface {
     $active_dir = $this->pathFactory->create($this->pathLocator->getProjectRoot());
     $stage_dir = $this->pathFactory->create($this->getStageDirectory());
 
-    $event = new PreCreateEvent($this, $this->getIgnoredPaths());
+    try {
+      $ignored_paths = $this->getIgnoredPaths();
+    }
+    catch (\Exception $e) {
+      throw new StageException($e->getMessage());
+    }
+    $event = new PreCreateEvent($this, $ignored_paths);
     // If an error occurs and we won't be able to create the stage, mark it as
     // available.
     $this->dispatch($event, [$this, 'markAsAvailable']);
@@ -449,10 +455,17 @@ class Stage implements LoggerAwareInterface {
     $active_dir = $this->pathFactory->create($this->pathLocator->getProjectRoot());
     $stage_dir = $this->pathFactory->create($this->getStageDirectory());
 
+    try {
+      $ignored_paths = $this->getIgnoredPaths();
+    }
+    catch (\Exception $e) {
+      throw new StageException($e->getMessage());
+    }
+
     // If an error occurs while dispatching the events, ensure that ::destroy()
     // doesn't think we're in the middle of applying the staged changes to the
     // active directory.
-    $event = new PreApplyEvent($this, $this->getIgnoredPaths());
+    $event = new PreApplyEvent($this, $ignored_paths);
     $this->tempStore->set(self::TEMPSTORE_APPLY_TIME_KEY, $this->time->getRequestTime());
     $this->dispatch($event, $this->setNotApplying());
 
