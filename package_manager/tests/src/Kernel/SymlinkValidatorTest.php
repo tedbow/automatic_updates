@@ -93,16 +93,23 @@ class SymlinkValidatorTest extends PackageManagerKernelTestBase {
     };
     $this->addEventTestListener($add_ignored_path, CollectIgnoredPathsEvent::class);
 
+    // Expected argument types for active directory, stage directory and ignored
+    // paths passed while checking if precondition is fulfilled.
+    // @see \PhpTuf\ComposerStager\Domain\Service\Precondition\PreconditionInterface::assertIsFulfilled()
     $arguments = [
       Argument::type(PathInterface::class),
       Argument::type(PathInterface::class),
       Argument::type(PathListInterface::class),
     ];
     $listener = function () use ($arguments, $symlinks_exist): void {
+      // Ensure that the Composer Stager's symlink precondition is invoked.
       $this->precondition->assertIsFulfilled(...$arguments)
         ->will(function (array $arguments) use ($symlinks_exist): void {
+          // Ensure that 'ignore/me' is present in ignored paths.
           Assert::assertContains('ignore/me', $arguments[2]->getAll());
 
+          // Whether to simulate or not that a symlink is found in the active
+          // or staging directory (but outside the ignored paths).
           if ($symlinks_exist) {
             throw new PreconditionException($this->reveal(), 'Symlinks were found.');
           }
