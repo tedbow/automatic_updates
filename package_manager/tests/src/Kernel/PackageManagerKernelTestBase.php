@@ -221,6 +221,14 @@ abstract class PackageManagerKernelTestBase extends KernelTestBase {
    *   test project and used as the active directory.
    */
   protected function createTestProject(?string $source_dir = NULL): void {
+    static $called;
+    if (isset($called)) {
+      throw new \LogicException('Only one test project should be created per kernel test method!');
+    }
+    else {
+      $called = TRUE;
+    }
+
     $source_dir = $source_dir ?? __DIR__ . '/../../fixtures/fake_site';
     $root = DrupalFileSystem::getOsTemporaryDirectory() . DIRECTORY_SEPARATOR . 'package_manager_testing_root' . $this->databasePrefix;
     $fs = new Filesystem();
