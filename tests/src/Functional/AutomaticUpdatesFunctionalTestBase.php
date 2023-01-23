@@ -6,7 +6,6 @@ namespace Drupal\Tests\automatic_updates\Functional;
 
 use Drupal\automatic_updates\CronUpdater;
 use Drupal\Core\Site\Settings;
-use Drupal\package_manager_bypass\Beginner;
 use Drupal\Tests\BrowserTestBase;
 use Drupal\Tests\package_manager\Traits\AssertPreconditionsTrait;
 use Drupal\Tests\package_manager\Traits\FixtureUtilityTrait;
@@ -206,7 +205,6 @@ abstract class AutomaticUpdatesFunctionalTestBase extends BrowserTestBase {
     // unique for each test run. This will enable changing files in the
     // directory and not affect other tests.
     $active_dir = $this->copyFixtureToTempDirectory($fixture_directory);
-    Beginner::setFixturePath($active_dir);
     $this->container->get('package_manager.path_locator')
       ->setPaths($active_dir, $active_dir . '/vendor', '', NULL);
   }

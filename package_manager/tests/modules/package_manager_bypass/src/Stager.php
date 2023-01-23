@@ -5,6 +5,7 @@ declare(strict_types = 1);
 namespace Drupal\package_manager_bypass;
 
 use Composer\Json\JsonFile;
+use Drupal\Core\State\StateInterface;
 use PhpTuf\ComposerStager\Domain\Core\Stager\StagerInterface;
 use PhpTuf\ComposerStager\Domain\Service\ProcessOutputCallback\ProcessOutputCallbackInterface;
 use PhpTuf\ComposerStager\Domain\Service\ProcessRunner\ProcessRunnerInterface;
@@ -16,11 +17,20 @@ use PhpTuf\ComposerStager\Domain\Value\Path\PathInterface;
 class Stager extends BypassedStagerServiceBase implements StagerInterface {
 
   /**
+   * Constructs a Stager object.
+   *
+   * @param \Drupal\Core\State\StateInterface $state
+   *   The state service.
+   */
+  public function __construct(StateInterface $state) {
+    $this->state = $state;
+  }
+
+  /**
    * {@inheritdoc}
    */
   public function stage(array $composerCommand, PathInterface $activeDir, PathInterface $stagingDir, ?ProcessOutputCallbackInterface $callback = NULL, ?int $timeout = ProcessRunnerInterface::DEFAULT_TIMEOUT): void {
     $this->saveInvocationArguments($composerCommand, $stagingDir, $timeout);
-    $this->copyFixtureFilesTo($stagingDir);
 
     // If desired, simulate a change to the lock file (e.g., as a result of
     // running `composer update`).

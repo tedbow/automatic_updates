@@ -379,13 +379,14 @@ class FixtureManipulatorTest extends PackageManagerKernelTestBase {
     // test project, it's located inside the project root.
     $this->assertTrue(chmod($path_locator->getVendorDirectory(), 0777));
     $this->assertTrue(chmod($path_locator->getProjectRoot(), 0777));
+    $stage_path = $path_locator->getStagingRoot() . '/stage' . $this->databasePrefix;
 
     // Simulate a stage beginning, which would commit the changes.
     // @see \Drupal\package_manager_bypass\Beginner::begin()
     $path_factory = new PathFactory();
     $this->container->get('package_manager.beginner')->begin(
       $path_factory->create($path_locator->getProjectRoot()),
-      $path_factory->create($path_locator->getStagingRoot()),
+      $path_factory->create($stage_path),
     );
   }
 

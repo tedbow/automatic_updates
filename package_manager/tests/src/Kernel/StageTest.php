@@ -17,7 +17,6 @@ use Drupal\package_manager\Event\StageEvent;
 use Drupal\package_manager\Exception\ApplyFailedException;
 use Drupal\package_manager\Exception\StageException;
 use Drupal\package_manager\Stage;
-use Drupal\package_manager_bypass\Beginner;
 use Drupal\package_manager_bypass\Committer;
 use PhpTuf\ComposerStager\Domain\Exception\InvalidArgumentException;
 use PhpTuf\ComposerStager\Domain\Exception\PreconditionException;
@@ -57,9 +56,6 @@ class StageTest extends PackageManagerKernelTestBase {
     // is writable when creating stages.
     $validator = $this->container->get('package_manager.validator.file_system');
     $this->container->get('event_dispatcher')->removeSubscriber($validator);
-
-    // Don't mirror the active directory from the test project.
-    Beginner::setFixturePath(NULL);
 
     /** @var \Drupal\package_manager_bypass\PathLocator $path_locator */
     $path_locator = $this->container->get('package_manager.path_locator');
@@ -104,54 +100,55 @@ class StageTest extends PackageManagerKernelTestBase {
    *   The test cases.
    */
   public function providerDestroyDuringApply(): array {
+    $error_message_while_being_applied = 'Cannot destroy the stage directory while it is being applied to the active directory.';
     return [
       'force destroy on pre-apply, fresh' => [
         PreApplyEvent::class,
         TRUE,
         1,
-        TRUE,
+        $error_message_while_being_applied,
       ],
       'destroy on pre-apply, fresh' => [
         PreApplyEvent::class,
         FALSE,
         1,
-        TRUE,
+        $error_message_while_being_applied,
       ],
       'force destroy on pre-apply, stale' => [
         PreApplyEvent::class,
         TRUE,
         7200,
-        FALSE,
+        'Stage directory does not exist',
       ],
       'destroy on pre-apply, stale' => [
         PreApplyEvent::class,
         FALSE,
         7200,
-        FALSE,
+        'Stage directory does not exist',
       ],
       'force destroy on post-apply, fresh' => [
         PostApplyEvent::class,
         TRUE,
         1,
-        TRUE,
+        $error_message_while_being_applied,
       ],
       'destroy on post-apply, fresh' => [
         PostApplyEvent::class,
         FALSE,
         1,
-        TRUE,
+        $error_message_while_being_applied,
       ],
       'force destroy on post-apply, stale' => [
         PostApplyEvent::class,
         TRUE,
         7200,
-        FALSE,
+        NULL,
       ],
       'destroy on post-apply, stale' => [
         PostApplyEvent::class,
         FALSE,
         7200,
-        FALSE,
+        NULL,
       ],
     ];
   }
@@ -166,12 +163,13 @@ class StageTest extends PackageManagerKernelTestBase {
    * @param int $time_offset
    *   How many simulated seconds should have elapsed between the PreApplyEvent
    *   being dispatched and the attempt to destroy the stage.
-   * @param bool $expect_exception
-   *   Whether or not destroying the stage will raise an exception.
+   * @param string|null $expected_exception_message
+   *   The expected exception message string if an exception is expected, or
+   *   NULL if no exception message was expected.
    *
    * @dataProvider providerDestroyDuringApply
    */
-  public function testDestroyDuringApply(string $event_class, bool $force, int $time_offset, bool $expect_exception): void {
+  public function testDestroyDuringApply(string $event_class, bool $force, int $time_offset, ?string $expected_exception_message): void {
     $listener = function (StageEvent $event) use ($force, $time_offset): void {
       // Simulate that a certain amount of time has passed since we started
       // applying staged changes. After a point, it should be possible to
@@ -183,15 +181,22 @@ class StageTest extends PackageManagerKernelTestBase {
       // simulate an attempt to destroy the stage while it's being applied, for
       // testing purposes.
       $event->getStage()->destroy($force);
+      // @see \PhpTuf\ComposerStager\Infrastructure\Service\Precondition\StagingDirDoesNotExist
+      Committer::setException(
+        new PreconditionException(
+          $this->prophesize(PreconditionInterface::class)->reveal(),
+          'Stage directory does not exist',
+        )
+      );
     };
     $this->addEventTestListener($listener, $event_class, 0);
 
     $stage = $this->createStage();
     $stage->create();
     $stage->require(['ext-json:*']);
-    if ($expect_exception) {
+    if ($expected_exception_message) {
       $this->expectException(StageException::class);
-      $this->expectExceptionMessage('Cannot destroy the stage directory while it is being applied to the active directory.');
+      $this->expectExceptionMessage($expected_exception_message);
     }
     $stage->apply();
 

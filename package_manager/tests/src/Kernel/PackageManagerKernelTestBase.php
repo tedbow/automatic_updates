@@ -15,7 +15,6 @@ use Drupal\package_manager\UnusedConfigFactory;
 use Drupal\package_manager\Validator\DiskSpaceValidator;
 use Drupal\package_manager\Exception\StageValidationException;
 use Drupal\package_manager\Stage;
-use Drupal\package_manager_bypass\Beginner;
 use Drupal\Tests\package_manager\Traits\AssertPreconditionsTrait;
 use Drupal\Tests\package_manager\Traits\FixtureUtilityTrait;
 use Drupal\Tests\package_manager\Traits\ValidationTestTrait;
@@ -260,10 +259,6 @@ abstract class PackageManagerKernelTestBase extends KernelTestBase {
     /** @var \Drupal\package_manager_bypass\PathLocator $path_locator */
     $path_locator = $this->container->get('package_manager.path_locator');
     $path_locator->setPaths($active_dir, $active_dir . '/vendor', '', $staging_root);
-
-    // Ensure the active directory will be copied into the test project's stage
-    // directory.
-    Beginner::setFixturePath($active_dir);
 
     // This validator will persist through container rebuilds.
     // @see ::register()
