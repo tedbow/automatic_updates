@@ -21,7 +21,7 @@ class PackageInstallTest extends TemplateProjectTestBase {
     $this->setReleaseMetadata([
       'alpha' => __DIR__ . '/../../fixtures/release-history/alpha.1.1.0.xml',
     ]);
-    $this->addRepository('alpha', $this->copyFixtureToTempDirectory(__DIR__ . '/../../fixtures/alpha/1.0.0'));
+    $this->addRepository('alpha', $this->copyFixtureToTempDirectory(__DIR__ . '/../../fixtures/build_test_projects/alpha/1.0.0'));
 
     // Use the API endpoint to create a stage and install alpha 1.0.0. We ask
     // the API to return the contents of composer.json file of installed module,
