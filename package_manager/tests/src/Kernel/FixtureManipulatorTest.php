@@ -390,6 +390,35 @@ class FixtureManipulatorTest extends PackageManagerKernelTestBase {
     );
   }
 
+  /**
+   * @covers ::addDotGitFolder
+   */
+  public function testAddDotGitFolder() {
+    $project_root = $this->container->get('package_manager.path_locator')->getProjectRoot();
+    $this->assertFalse(is_dir($project_root . "/relative/path/.git"));
+    $fixture_manipulator = (new FixtureManipulator())
+      ->addPackage([
+        'name' => 'relative/project_path',
+        'install_path' => '../../relative/project_path',
+        'type' => 'drupal-module',
+      ])
+      ->addDotGitFolder($project_root . "/relative/project_path")
+      ->addDotGitFolder($project_root . "/relative/path");
+    $this->assertTrue(!is_dir($project_root . "/relative/project_path/.git"));
+    $fixture_manipulator->commitChanges($project_root);
+    $this->assertTrue(is_dir($project_root . "/relative/path/.git"));
+    // We should not be able to create already existing directory.
+    try {
+      (new FixtureManipulator())
+        ->addDotGitFolder($project_root . "/relative/path")
+        ->commitChanges($project_root);
+      $this->fail('Trying to create a .git directory that already exists should raise an error.');
+    }
+    catch (\LogicException $e) {
+      $this->assertStringContainsString("A .git directory already exists at " . $project_root, $e->getMessage());
+    }
+  }
+
   public function stageManipulatorUsageStyles() {
     return [
       'immediately destroyed' => [TRUE],

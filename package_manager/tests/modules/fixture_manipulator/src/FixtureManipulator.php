@@ -351,4 +351,23 @@ class FixtureManipulator {
     }
   }
 
+  /**
+   * Creates an empty .git folder after being provided a path.
+   */
+  public function addDotGitFolder(string $path): self {
+    if (!$this->committingChanges) {
+      $this->manipulatorArguments['addDotGitFolder'][] = func_get_args();
+      return $this;
+    }
+    $fs = new Filesystem();
+    $git_directory_path = $path . "/.git";
+    if (!is_dir($git_directory_path)) {
+      $fs->mkdir($git_directory_path);
+    }
+    else {
+      throw new \LogicException("A .git directory already exists at $path.");
+    }
+    return $this;
+  }
+
 }
