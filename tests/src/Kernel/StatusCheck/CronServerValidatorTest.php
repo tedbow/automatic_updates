@@ -8,7 +8,6 @@ use Drupal\automatic_updates\CronUpdater;
 use Drupal\automatic_updates\Validator\CronServerValidator;
 use Drupal\Core\Logger\RfcLogLevel;
 use Drupal\Core\Url;
-use Drupal\fixture_manipulator\StageFixtureManipulator;
 use Drupal\package_manager\Exception\StageValidationException;
 use Drupal\package_manager\ValidationResult;
 use Drupal\Tests\automatic_updates\Kernel\AutomaticUpdatesKernelTestBase;
@@ -102,9 +101,7 @@ class CronServerValidatorTest extends AutomaticUpdatesKernelTestBase {
     // validation results happen before the stage is even created: in either
     // case the stage fixture need not be manipulated.
     if ($cron_mode !== CronUpdater::DISABLED && empty($expected_results)) {
-      (new StageFixtureManipulator())
-        ->setCorePackageVersion('9.8.1')
-        ->setReadyToCommit();
+      $this->getStageFixtureManipulator()->setCorePackageVersion('9.8.1');
     }
     $request = $this->container->get('request_stack')->getCurrentRequest();
     $this->assertNotEmpty($request);
@@ -161,9 +158,7 @@ class CronServerValidatorTest extends AutomaticUpdatesKernelTestBase {
     // If CronUpdater is disabled, a stage will never be created, hence
     // stage fixture need not be manipulated.
     if ($cron_mode !== CronUpdater::DISABLED) {
-      (new StageFixtureManipulator())
-        ->setCorePackageVersion('9.8.1')
-        ->setReadyToCommit();
+      $this->getStageFixtureManipulator()->setCorePackageVersion('9.8.1');
     }
     $request = $this->container->get('request_stack')->getCurrentRequest();
     $this->assertNotEmpty($request);

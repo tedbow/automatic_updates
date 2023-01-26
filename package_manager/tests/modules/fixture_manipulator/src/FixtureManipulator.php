@@ -59,7 +59,7 @@ class FixtureManipulator {
    */
   public function addPackage(array $package, bool $is_dev_requirement = FALSE, bool $create_project = TRUE): self {
     if (!$this->committingChanges) {
-      $this->manipulatorArguments['addPackage'][] = func_get_args();
+      $this->queueManipulation('addPackage', func_get_args());
       return $this;
     }
     foreach (['name', 'type'] as $required_key) {
@@ -102,7 +102,7 @@ class FixtureManipulator {
    */
   public function modifyPackage(string $name, array $package): self {
     if (!$this->committingChanges) {
-      $this->manipulatorArguments['modifyPackage'][] = func_get_args();
+      $this->queueManipulation('modifyPackage', func_get_args());
       return $this;
     }
     $this->setPackage($name, $package, TRUE);
@@ -131,7 +131,7 @@ class FixtureManipulator {
    */
   public function removePackage(string $name): self {
     if (!$this->committingChanges) {
-      $this->manipulatorArguments['removePackage'][] = func_get_args();
+      $this->queueManipulation('removePackage', func_get_args());
       return $this;
     }
     $this->setPackage($name, NULL, TRUE);
@@ -267,7 +267,7 @@ class FixtureManipulator {
    */
   public function addProjectAtPath(string $path, ?string $project_name = NULL, ?string $file_name = NULL): self {
     if (!$this->committingChanges) {
-      $this->manipulatorArguments['addProjectAtPath'][] = func_get_args();
+      $this->queueManipulation('addProjectAtPath', func_get_args());
       return $this;
     }
     $path = $this->dir . "/$path";
@@ -319,8 +319,8 @@ class FixtureManipulator {
     }
     $this->dir = $dir;
     $this->committingChanges = TRUE;
-    $manipulator_arguments = $this->manipulatorArguments;
-    $this->manipulatorArguments = [];
+    $manipulator_arguments = $this->getQueuedManipulationItems();
+    $this->clearQueuedManipulationItems();
     foreach ($manipulator_arguments as $method => $argument_sets) {
       foreach ($argument_sets as $argument_set) {
         $this->{$method}(...$argument_set);
@@ -356,7 +356,7 @@ class FixtureManipulator {
    */
   public function addDotGitFolder(string $path): self {
     if (!$this->committingChanges) {
-      $this->manipulatorArguments['addDotGitFolder'][] = func_get_args();
+      $this->queueManipulation('addDotGitFolder', func_get_args());
       return $this;
     }
     $fs = new Filesystem();
@@ -368,6 +368,35 @@ class FixtureManipulator {
       throw new \LogicException("A .git directory already exists at $path.");
     }
     return $this;
+  }
+
+  /**
+   * Queues manipulation arguments to be called in ::doCommitChanges().
+   *
+   * @param string $method
+   *   The method name.
+   * @param array $arguments
+   *   The arguments.
+   */
+  protected function queueManipulation(string $method, array $arguments): void {
+    $this->manipulatorArguments[$method][] = $arguments;
+  }
+
+  /**
+   * Clears all queued manipulation items.
+   */
+  protected function clearQueuedManipulationItems(): void {
+    $this->manipulatorArguments = [];
+  }
+
+  /**
+   * Gets all queued manipulation items.
+   *
+   * @return array
+   *   The queued manipulation items as set by calls to ::queueManipulation().
+   */
+  protected function getQueuedManipulationItems(): array {
+    return $this->manipulatorArguments;
   }
 
 }

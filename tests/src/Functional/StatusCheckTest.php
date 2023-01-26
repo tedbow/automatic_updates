@@ -11,7 +11,6 @@ use Drupal\automatic_updates_test\Datetime\TestTime;
 use Drupal\automatic_updates_test\EventSubscriber\TestSubscriber1;
 use Drupal\automatic_updates_test2\EventSubscriber\TestSubscriber2;
 use Drupal\Core\Url;
-use Drupal\fixture_manipulator\StageFixtureManipulator;
 use Drupal\package_manager\Event\StatusCheckEvent;
 use Drupal\package_manager_test_validation\EventSubscriber\TestSubscriber;
 use Drupal\system\SystemManager;
@@ -470,9 +469,7 @@ class StatusCheckTest extends AutomaticUpdatesFunctionalTestBase {
    * Tests that stored validation results are deleted after an update.
    */
   public function testStoredResultsClearedAfterUpdate(): void {
-    (new StageFixtureManipulator())
-      ->setCorePackageVersion('9.8.1')
-      ->setReadyToCommit();
+    $this->getStageFixtureManipulator()->setCorePackageVersion('9.8.1');
     $assert_session = $this->assertSession();
     $page = $this->getSession()->getPage();
     $this->drupalLogin($this->checkerRunnerUser);

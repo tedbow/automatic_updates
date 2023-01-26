@@ -5,7 +5,6 @@ declare(strict_types = 1);
 namespace Drupal\Tests\automatic_updates\Functional;
 
 use Drupal\automatic_updates_test\EventSubscriber\TestSubscriber1;
-use Drupal\fixture_manipulator\StageFixtureManipulator;
 use Drupal\package_manager\Event\PreApplyEvent;
 use Drupal\package_manager\Event\StatusCheckEvent;
 use Drupal\package_manager_test_validation\StagedDatabaseUpdateValidator;
@@ -43,9 +42,7 @@ class StagedDatabaseUpdateTest extends UpdaterFormTestBase {
    * @requires PHP >= 8.0
    */
   public function testStagedDatabaseUpdates(bool $maintenance_mode_on): void {
-    (new StageFixtureManipulator())
-      ->setCorePackageVersion('9.8.1')
-      ->setReadyToCommit();
+    $this->getStageFixtureManipulator()->setCorePackageVersion('9.8.1');
     $this->mockActiveCoreVersion('9.8.0');
     $this->checkForUpdates();
     $this->container->get('theme_installer')

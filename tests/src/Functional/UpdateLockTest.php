@@ -4,8 +4,6 @@ declare(strict_types = 1);
 
 namespace Drupal\Tests\automatic_updates\Functional;
 
-use Drupal\fixture_manipulator\StageFixtureManipulator;
-
 /**
  * Tests that only one Automatic Update operation can be performed at a time.
  *
@@ -44,9 +42,7 @@ class UpdateLockTest extends AutomaticUpdatesFunctionalTestBase {
    * Tests that only user who started an update can continue through it.
    */
   public function testLock(): void {
-    (new StageFixtureManipulator())
-      ->setCorePackageVersion('9.8.1')
-      ->setReadyToCommit();
+    $this->getStageFixtureManipulator()->setCorePackageVersion('9.8.1');
     $page = $this->getSession()->getPage();
     $assert_session = $this->assertSession();
     $this->mockActiveCoreVersion('9.8.0');

@@ -5,7 +5,6 @@ declare(strict_types = 1);
 namespace Drupal\Tests\package_manager\Kernel;
 
 use Drupal\fixture_manipulator\ActiveFixtureManipulator;
-use Drupal\fixture_manipulator\StageFixtureManipulator;
 use Drupal\package_manager\Event\PreApplyEvent;
 use Drupal\package_manager\ValidationResult;
 use Drupal\Tests\package_manager\Traits\FixtureUtilityTrait;
@@ -213,7 +212,7 @@ class SupportedReleaseValidatorTest extends PackageManagerKernelTestBase {
   public function testException(array $release_metadata, bool $project_in_active, array $package, array $expected_results): void {
     $this->setReleaseMetadata(['drupal' => __DIR__ . '/../../fixtures/release-history/drupal.9.8.2.xml'] + $release_metadata);
 
-    $stage_manipulator = new StageFixtureManipulator();
+    $stage_manipulator = $this->getStageFixtureManipulator();
     if ($project_in_active) {
       $stage_manipulator->setVersion($package['name'], $package['version']);
     }
@@ -224,7 +223,6 @@ class SupportedReleaseValidatorTest extends PackageManagerKernelTestBase {
     // module as it's of type 'drupal-library'.
     // @see \Drupal\package_manager\Validator\SupportedReleaseValidator::checkStagedReleases()
     $stage_manipulator->setVersion('drupal/dependency', '9.8.1');
-    $stage_manipulator->setReadyToCommit();
     $this->assertResults($expected_results, PreApplyEvent::class);
   }
 

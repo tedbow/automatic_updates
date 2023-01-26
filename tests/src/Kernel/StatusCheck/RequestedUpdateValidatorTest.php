@@ -4,7 +4,6 @@ declare(strict_types = 1);
 
 namespace Drupal\Tests\automatic_updates\Kernel\StatusCheck;
 
-use Drupal\fixture_manipulator\StageFixtureManipulator;
 use Drupal\package_manager\Exception\StageValidationException;
 use Drupal\package_manager\ValidationResult;
 use Drupal\Tests\automatic_updates\Kernel\AutomaticUpdatesKernelTestBase;
@@ -33,9 +32,7 @@ class RequestedUpdateValidatorTest extends AutomaticUpdatesKernelTestBase {
     // are expected to be updated when updating Drupal core.
     // @see \Drupal\automatic_updates\Updater::begin()
     // @see \Drupal\package_manager\ComposerUtility::getCorePackages()
-    (new StageFixtureManipulator())
-      ->setVersion('drupal/core-recommended', '9.8.2')
-      ->setReadyToCommit();
+    $this->getStageFixtureManipulator()->setVersion('drupal/core-recommended', '9.8.2');
     $this->setCoreVersion('9.8.0');
     $this->setReleaseMetadata([
       'drupal' => __DIR__ . '/../../../../package_manager/tests/fixtures/release-history/drupal.9.8.1-security.xml',
@@ -64,11 +61,10 @@ class RequestedUpdateValidatorTest extends AutomaticUpdatesKernelTestBase {
    * Tests error message is shown if there are no core packages in stage.
    */
   public function testErrorMessageOnEmptyCorePackages(): void {
-    (new StageFixtureManipulator())
+    $this->getStageFixtureManipulator()
       ->removePackage('drupal/core')
       ->removePackage('drupal/core-recommended')
-      ->removePackage('drupal/core-dev')
-      ->setReadyToCommit();
+      ->removePackage('drupal/core-dev');
 
     $this->setCoreVersion('9.8.0');
     $this->setReleaseMetadata([

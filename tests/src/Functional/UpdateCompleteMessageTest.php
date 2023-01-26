@@ -5,7 +5,6 @@ declare(strict_types = 1);
 namespace Drupal\Tests\automatic_updates\Functional;
 
 use Drupal\automatic_updates_test\EventSubscriber\TestSubscriber1;
-use Drupal\fixture_manipulator\StageFixtureManipulator;
 use Drupal\package_manager\Event\PostApplyEvent;
 
 /**
@@ -37,9 +36,7 @@ class UpdateCompleteMessageTest extends UpdaterFormTestBase {
    * @dataProvider providerUpdateCompleteMessage
    */
   public function testUpdateCompleteMessage(bool $maintenance_mode_on): void {
-    (new StageFixtureManipulator())
-      ->setCorePackageVersion('9.8.1')
-      ->setReadyToCommit();
+    $this->getStageFixtureManipulator()->setCorePackageVersion('9.8.1');
     $assert_session = $this->assertSession();
     $this->mockActiveCoreVersion('9.8.0');
     $this->checkForUpdates();

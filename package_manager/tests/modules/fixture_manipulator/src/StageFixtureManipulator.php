@@ -4,78 +4,106 @@ declare(strict_types = 1);
 
 namespace Drupal\fixture_manipulator;
 
-use Drupal\package_manager_bypass\Beginner;
+use Drupal\Core\State\StateInterface;
+use PhpTuf\ComposerStager\Domain\Core\Beginner\BeginnerInterface;
+use PhpTuf\ComposerStager\Domain\Service\ProcessOutputCallback\ProcessOutputCallbackInterface;
+use PhpTuf\ComposerStager\Domain\Service\ProcessRunner\ProcessRunnerInterface;
+use PhpTuf\ComposerStager\Domain\Value\Path\PathInterface;
+use PhpTuf\ComposerStager\Domain\Value\PathList\PathListInterface;
 
 /**
- * A fixture manipulator for the stage directory.
+ * A fixture manipulator service that commits changes after begin.
  */
-final class StageFixtureManipulator extends FixtureManipulator {
+final class StageFixtureManipulator extends FixtureManipulator implements BeginnerInterface {
 
   /**
-   * Whether the fixture is ready to commit.
-   *
-   * @var bool
+   * The state key to use.
    */
-  private $ready = FALSE;
+  private const STATE_KEY = __CLASS__ . 'MANIPULATOR_ARGUMENTS';
+
+  /**
+   * The state service.
+   *
+   * @var \Drupal\Core\State\StateInterface
+   */
+  private StateInterface $state;
+
+  /**
+   * The decorated service.
+   *
+   * @var \PhpTuf\ComposerStager\Domain\Core\Beginner\BeginnerInterface
+   */
+  private BeginnerInterface $inner;
+
+  /**
+   * Constructions a StageFixtureManipulator object.
+   *
+   * @param \Drupal\Core\State\StateInterface $state
+   *   The state service.
+   * @param \PhpTuf\ComposerStager\Domain\Core\Beginner\BeginnerInterface $inner
+   *   The decorated beginner service.
+   */
+  public function __construct(StateInterface $state, BeginnerInterface $inner) {
+    $this->state = $state;
+    $this->inner = $inner;
+  }
 
   /**
    * {@inheritdoc}
    */
-  public function commitChanges(string $dir = NULL): void {
-    if (!$this->ready) {
-      throw new \LogicException("::setReadyToCommit must be called before ::commitChanges");
-    }
-    if (!$dir) {
-      throw new \UnexpectedValueException("$dir must be specific for a StageFixtureManipulator");
-    }
-    parent::doCommitChanges($dir);
-    $this->committed = TRUE;
-
-    // In a kernel test, the Beginner runs in the same PHP process as the test,
-    // so there's no need for extra logic to inform the test runner that the
-    // queued stage fixture manipulations have been committed. In functional
-    // tests, however, we do need to pass information back from the system under
-    // test to the test runner.
-    // @see \Drupal\Core\CoreServiceProvider::registerTest()
-    $in_functional_test = defined('DRUPAL_TEST_IN_CHILD_SITE');
-    if ($in_functional_test) {
-      // Relay "committed" state to the test runner by re-serializing to state.
-      Beginner::setStageManipulator($this);
+  public function begin(PathInterface $activeDir, PathInterface $stagingDir, ?PathListInterface $exclusions = NULL, ?ProcessOutputCallbackInterface $callback = NULL, ?int $timeout = ProcessRunnerInterface::DEFAULT_TIMEOUT): void {
+    $this->inner->begin($activeDir, $stagingDir, $exclusions, $callback, $timeout);
+    if ($this->getQueuedManipulationItems()) {
+      $this->doCommitChanges($stagingDir->resolve());
     }
   }
 
   /**
-   * Sets the manipulator as ready to commit.
+   * {@inheritdoc}
    */
-  public function setReadyToCommit(): void {
-    $this->ready = TRUE;
-    Beginner::setStageManipulator($this);
+  public function commitChanges(string $dir): void {
+    throw new \BadMethodCallException('::commitChanges() should not be called directly in StageFixtureManipulator().');
   }
 
   /**
    * {@inheritdoc}
    */
   public function __destruct() {
-    if (!$this->ready) {
-      throw new \LogicException('This fixture manipulator was not yet ready to commit! Please call setReadyToCommit() to signal all necessary changes are queued.');
-    }
+    // Overrides `__destruct` because the staged fixture manipulator service
+    // will be destroyed after every request.
+    // @see \Drupal\fixture_manipulator\StageFixtureManipulator::handleTearDown()
+  }
 
-    // Update the state to match reality, because ::commitChanges() *should*
-    // have been called by \Drupal\package_manager_bypass\Beginner::begin(). The
-    // "committed" flag will already be set in kernel tests, because there the
-    // test runner and the system under test live in the same PHP process.
-    // Note that this will never run for the system under test, because
-    // $this->committed will always be set. Ensure we do this only
-    // functional tests by checking for the presence of a container.
-    if (!$this->committed && \Drupal::hasContainer()) {
-      $sut = \Drupal::state()->get(Beginner::class . '-stage-manipulator', NULL);
-      if ($sut) {
-        $this->committed = $sut->committed;
-      }
+  /**
+   * Handles test tear down to ensure all changes were committed.
+   */
+  public static function handleTearDown() {
+    if (!empty(\Drupal::state()->get(self::STATE_KEY))) {
+      throw new \LogicException('The StageFixtureManipulator has arguments that were not cleared. This likely means that the PostCreateEvent was never fired.');
     }
+  }
 
-    // Proceed regular destruction (which will complain if it's not committed).
-    parent::__destruct();
+  /**
+   * {@inheritdoc}
+   */
+  protected function queueManipulation(string $method, array $arguments): void {
+    $stored_arguments = $this->getQueuedManipulationItems();
+    $stored_arguments[$method][] = $arguments;
+    $this->state->set(self::STATE_KEY, $stored_arguments);
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  protected function clearQueuedManipulationItems(): void {
+    $this->state->delete(self::STATE_KEY);
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  protected function getQueuedManipulationItems(): array {
+    return $this->state->get(self::STATE_KEY, []);
   }
 
 }

@@ -7,6 +7,7 @@ namespace Drupal\Tests\package_manager\Kernel;
 use Drupal\Component\FileSystem\FileSystem as DrupalFileSystem;
 use Drupal\Core\DependencyInjection\ContainerBuilder;
 use Drupal\Core\Site\Settings;
+use Drupal\fixture_manipulator\StageFixtureManipulator;
 use Drupal\KernelTests\KernelTestBase;
 use Drupal\package_manager\Event\PreApplyEvent;
 use Drupal\package_manager\Event\StageEvent;
@@ -16,6 +17,7 @@ use Drupal\package_manager\Validator\DiskSpaceValidator;
 use Drupal\package_manager\Exception\StageValidationException;
 use Drupal\package_manager\Stage;
 use Drupal\Tests\package_manager\Traits\AssertPreconditionsTrait;
+use Drupal\Tests\package_manager\Traits\FixtureManipulatorTrait;
 use Drupal\Tests\package_manager\Traits\FixtureUtilityTrait;
 use Drupal\Tests\package_manager\Traits\ValidationTestTrait;
 use GuzzleHttp\Client;
@@ -35,6 +37,7 @@ use Symfony\Component\Filesystem\Filesystem;
 abstract class PackageManagerKernelTestBase extends KernelTestBase {
 
   use AssertPreconditionsTrait;
+  use FixtureManipulatorTrait;
   use FixtureUtilityTrait;
   use StatusCheckTrait;
   use ValidationTestTrait;
@@ -372,6 +375,13 @@ abstract class PackageManagerKernelTestBase extends KernelTestBase {
     $this->addEventTestListener(function () use ($event_class): void {
       $this->fail('Event propagation should have been stopped during ' . $event_class . '.');
     }, $event_class, $priority - 1);
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  protected function tearDown(): void {
+    StageFixtureManipulator::handleTearDown();
   }
 
 }

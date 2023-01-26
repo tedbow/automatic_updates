@@ -4,7 +4,6 @@ declare(strict_types = 1);
 
 namespace Drupal\Tests\automatic_updates\Functional;
 
-use Drupal\fixture_manipulator\StageFixtureManipulator;
 use Drupal\package_manager\Event\PreApplyEvent;
 
 /**
@@ -52,9 +51,7 @@ class SuccessfulUpdateTest extends UpdaterFormTestBase {
    * @dataProvider providerSuccessfulUpdate
    */
   public function testSuccessfulUpdate(string $update_form_url, bool $maintenance_mode_on): void {
-    (new StageFixtureManipulator())
-      ->setCorePackageVersion('9.8.1')
-      ->setReadyToCommit();
+    $this->getStageFixtureManipulator()->setCorePackageVersion('9.8.1');
     $assert_session = $this->assertSession();
     $this->mockActiveCoreVersion('9.8.0');
     $this->checkForUpdates();

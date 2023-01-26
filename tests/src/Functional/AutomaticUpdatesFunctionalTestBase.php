@@ -6,8 +6,10 @@ namespace Drupal\Tests\automatic_updates\Functional;
 
 use Drupal\automatic_updates\CronUpdater;
 use Drupal\Core\Site\Settings;
+use Drupal\fixture_manipulator\StageFixtureManipulator;
 use Drupal\Tests\BrowserTestBase;
 use Drupal\Tests\package_manager\Traits\AssertPreconditionsTrait;
+use Drupal\Tests\package_manager\Traits\FixtureManipulatorTrait;
 use Drupal\Tests\package_manager\Traits\FixtureUtilityTrait;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
@@ -19,6 +21,7 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
 abstract class AutomaticUpdatesFunctionalTestBase extends BrowserTestBase {
 
   use AssertPreconditionsTrait;
+  use FixtureManipulatorTrait;
   use FixtureUtilityTrait;
 
   /**
@@ -76,14 +79,11 @@ abstract class AutomaticUpdatesFunctionalTestBase extends BrowserTestBase {
    * {@inheritdoc}
    */
   protected function tearDown(): void {
+    StageFixtureManipulator::handleTearDown();
     $service_ids = [
       // If automatic_updates is installed, ensure any stage directory created
       // during the test is cleaned up.
       'automatic_updates.updater',
-      // Ensure that \Drupal\package_manager_bypass\Beginner's ::commitChanges()
-      // call makes its way back to the test.
-      // @see \Drupal\fixture_manipulator\StageFixtureManipulator::__destruct()
-      'package_manager.beginner',
     ];
     foreach ($service_ids as $service_id) {
       if ($this->container->has($service_id)) {

@@ -5,7 +5,6 @@ declare(strict_types = 1);
 namespace Drupal\Tests\automatic_updates\Kernel\StatusCheck;
 
 use Drupal\fixture_manipulator\ActiveFixtureManipulator;
-use Drupal\fixture_manipulator\StageFixtureManipulator;
 use Drupal\package_manager\Exception\StageValidationException;
 use Drupal\package_manager\PathLocator;
 use Drupal\package_manager\ValidationResult;
@@ -310,7 +309,7 @@ class ScaffoldFilePermissionsValidatorTest extends AutomaticUpdatesKernelTestBas
         ],
       ])
       ->commitChanges();
-    (new StageFixtureManipulator())
+    $this->getStageFixtureManipulator()
       ->setCorePackageVersion('9.8.1')
       ->modifyPackage('drupal/core', [
         'extra' => [
@@ -318,8 +317,8 @@ class ScaffoldFilePermissionsValidatorTest extends AutomaticUpdatesKernelTestBas
             'file-mapping' => $staged_scaffold_files,
           ],
         ],
-      ])
-      ->setReadyToCommit();
+      ]);
+
     // Create fake scaffold files so we can test scenarios in which a scaffold
     // file that exists in the active directory is deleted in the stage
     // directory.

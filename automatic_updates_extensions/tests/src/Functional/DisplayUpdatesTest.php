@@ -4,8 +4,6 @@ declare(strict_types = 1);
 
 namespace Drupal\Tests\automatic_updates_extensions\Functional;
 
-use Drupal\fixture_manipulator\StageFixtureManipulator;
-
 /**
  * @covers \Drupal\automatic_updates_extensions\Form\UpdaterForm
  * @group automatic_updates_extensions
@@ -67,10 +65,9 @@ class DisplayUpdatesTest extends UpdaterFormTestBase {
       $page->checkField('projects[aaa_update_test]');
     }
     $page->checkField('projects[semver_test]');
-    $stage_manipulator = new StageFixtureManipulator();
-    $stage_manipulator->setVersion('drupal/aaa_update_test', '2.1.0')
-      ->setVersion('drupal/semver_test', '8.1.1')
-      ->setReadyToCommit();
+    $this->getStageFixtureManipulator()
+      ->setVersion('drupal/aaa_update_test', '2.1.0')
+      ->setVersion('drupal/semver_test', '8.1.1');
     $page->pressButton('Update');
     $this->checkForMetaRefresh();
     $this->assertUpdateStagedTimes(1);

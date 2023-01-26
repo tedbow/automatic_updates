@@ -5,7 +5,6 @@ declare(strict_types = 1);
 namespace Drupal\Tests\automatic_updates\Kernel\StatusCheck;
 
 use Drupal\Core\Logger\RfcLogLevel;
-use Drupal\fixture_manipulator\StageFixtureManipulator;
 use Drupal\package_manager\Event\PreApplyEvent;
 use Drupal\Tests\automatic_updates\Kernel\AutomaticUpdatesKernelTestBase;
 use ColinODell\PsrTestLogger\TestLogger;
@@ -94,9 +93,7 @@ class StagedDatabaseUpdateValidatorTest extends AutomaticUpdatesKernelTestBase {
    * Tests that no errors are raised if the stage has no DB updates.
    */
   public function testNoUpdates(): void {
-    (new StageFixtureManipulator())
-      ->setCorePackageVersion('9.8.1')
-      ->setReadyToCommit();
+    $this->getStageFixtureManipulator()->setCorePackageVersion('9.8.1');
     $this->container->get('cron')->run();
     $this->assertFalse($this->logger->hasRecords((string) RfcLogLevel::ERROR));
   }
@@ -110,9 +107,7 @@ class StagedDatabaseUpdateValidatorTest extends AutomaticUpdatesKernelTestBase {
    * @dataProvider providerSuffixes
    */
   public function testFileDeleted(string $suffix): void {
-    (new StageFixtureManipulator())
-      ->setCorePackageVersion('9.8.1')
-      ->setReadyToCommit();
+    $this->getStageFixtureManipulator()->setCorePackageVersion('9.8.1');
     $listener = function (PreApplyEvent $event) use ($suffix): void {
       $stage_dir = $event->getStage()->getStageDirectory();
       foreach ($this->extensions as $name => $path) {
@@ -135,9 +130,7 @@ class StagedDatabaseUpdateValidatorTest extends AutomaticUpdatesKernelTestBase {
    * @dataProvider providerSuffixes
    */
   public function testFileChanged(string $suffix): void {
-    (new StageFixtureManipulator())
-      ->setCorePackageVersion('9.8.1')
-      ->setReadyToCommit();
+    $this->getStageFixtureManipulator()->setCorePackageVersion('9.8.1');
     $listener = function (PreApplyEvent $event) use ($suffix): void {
       $stage_dir = $event->getStage()->getStageDirectory();
       foreach ($this->extensions as $name => $path) {
@@ -160,9 +153,7 @@ class StagedDatabaseUpdateValidatorTest extends AutomaticUpdatesKernelTestBase {
    * @dataProvider providerSuffixes
    */
   public function testFileAdded(string $suffix): void {
-    (new StageFixtureManipulator())
-      ->setCorePackageVersion('9.8.1')
-      ->setReadyToCommit();
+    $this->getStageFixtureManipulator()->setCorePackageVersion('9.8.1');
     $listener = function () use ($suffix): void {
       $active_dir = $this->container->get('package_manager.path_locator')
         ->getProjectRoot();

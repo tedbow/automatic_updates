@@ -6,9 +6,6 @@ namespace Drupal\Tests\package_manager\Kernel;
 
 use Drupal\fixture_manipulator\ActiveFixtureManipulator;
 use Drupal\fixture_manipulator\FixtureManipulator;
-use Drupal\fixture_manipulator\StageFixtureManipulator;
-use Drupal\package_manager_bypass\Beginner;
-use PhpTuf\ComposerStager\Infrastructure\Factory\Path\PathFactory;
 use Symfony\Component\Filesystem\Filesystem;
 
 /**
@@ -24,6 +21,13 @@ class FixtureManipulatorTest extends PackageManagerKernelTestBase {
    * @var string
    */
   private string $dir;
+
+  /**
+   * The exception expected in ::tearDown() of this test.
+   *
+   * @var \Exception
+   */
+  private \Exception $expectedTearDownException;
 
   /**
    * The existing packages in the fixture.
@@ -321,76 +325,6 @@ class FixtureManipulatorTest extends PackageManagerKernelTestBase {
   }
 
   /**
-   * Test that an exception is thrown if ::readyToCommit() is not called.
-   */
-  public function testStageManipulatorSetReadyToCommitExpected(): void {
-    $this->expectException(\LogicException::class);
-    $this->expectExceptionMessage('This fixture manipulator was not yet ready to commit! Please call setReadyToCommit() to signal all necessary changes are queued.');
-
-    $manipulator = new StageFixtureManipulator();
-    $manipulator->setVersion('drupal/core', '1.2.3');
-  }
-
-  /**
-   * Test that an exception is thrown if ::commitChanges() is not called.
-   *
-   * @dataProvider stageManipulatorUsageStyles
-   */
-  public function testStageManipulatorNoCommitError(bool $immediately_destroyed): void {
-    $this->expectException(\LogicException::class);
-    $this->expectExceptionMessage('commitChanges() must be called.');
-
-    if ($immediately_destroyed) {
-      (new StageFixtureManipulator())
-        ->setCorePackageVersion('9.8.1')
-        ->setReadyToCommit();
-    }
-    else {
-      $manipulator = new StageFixtureManipulator();
-      $manipulator->setVersion('drupal/core', '1.2.3');
-      $manipulator->setReadyToCommit();
-    }
-
-    // Ensure \Drupal\fixture_manipulator\StageFixtureManipulator::__destruct()
-    // is triggered.
-    $this->container->get('state')->delete(Beginner::class . '-stage-manipulator');
-    $this->container->get('package_manager.beginner')->destroy();
-  }
-
-  /**
-   * Test no exceptions are thrown if StageFixtureManipulator is used correctly.
-   *
-   * @dataProvider stageManipulatorUsageStyles
-   */
-  public function testStageManipulatorSatisfied(bool $immediately_destroyed): void {
-    if ($immediately_destroyed) {
-      (new StageFixtureManipulator())
-        ->setCorePackageVersion('9.8.1')
-        ->setReadyToCommit();
-    }
-    else {
-      $manipulator = new StageFixtureManipulator();
-      $manipulator->setVersion('drupal/core', '1.2.3');
-      $manipulator->setReadyToCommit();
-    }
-
-    $path_locator = $this->container->get('package_manager.path_locator');
-    // We need to set the vendor directory's permissions first because, in the
-    // test project, it's located inside the project root.
-    $this->assertTrue(chmod($path_locator->getVendorDirectory(), 0777));
-    $this->assertTrue(chmod($path_locator->getProjectRoot(), 0777));
-    $stage_path = $path_locator->getStagingRoot() . '/stage' . $this->databasePrefix;
-
-    // Simulate a stage beginning, which would commit the changes.
-    // @see \Drupal\package_manager_bypass\Beginner::begin()
-    $path_factory = new PathFactory();
-    $this->container->get('package_manager.beginner')->begin(
-      $path_factory->create($path_locator->getProjectRoot()),
-      $path_factory->create($stage_path),
-    );
-  }
-
-  /**
    * @covers ::addDotGitFolder
    */
   public function testAddDotGitFolder() {
@@ -419,11 +353,26 @@ class FixtureManipulatorTest extends PackageManagerKernelTestBase {
     }
   }
 
-  public function stageManipulatorUsageStyles() {
-    return [
-      'immediately destroyed' => [TRUE],
-      'variable' => [FALSE],
-    ];
+  /**
+   * Tests that the stage manipulator throws an exception if not committed.
+   */
+  public function testStagedFixtureNotCommitted(): void {
+    $this->expectedTearDownException = new \LogicException('The StageFixtureManipulator has arguments that were not cleared. This likely means that the PostCreateEvent was never fired.');
+    $this->getStageFixtureManipulator()->setVersion('any-org/any-package', '3.2.1');
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  protected function tearDown(): void {
+    try {
+      parent::tearDown();
+    }
+    catch (\Exception $exception) {
+      if (!(get_class($exception) === get_class($this->expectedTearDownException) && $exception->getMessage() === $this->expectedTearDownException->getMessage())) {
+        throw $exception;
+      }
+    }
   }
 
 }

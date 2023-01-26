@@ -5,7 +5,6 @@ declare(strict_types = 1);
 namespace Drupal\Tests\package_manager\Kernel;
 
 use Drupal\fixture_manipulator\ActiveFixtureManipulator;
-use Drupal\fixture_manipulator\StageFixtureManipulator;
 use Drupal\package_manager\Event\PreApplyEvent;
 use Drupal\package_manager\ValidationResult;
 use Drupal\Tests\package_manager\Traits\FixtureUtilityTrait;
@@ -43,7 +42,7 @@ class OverwriteExistingPackagesValidatorTest extends PackageManagerKernelTestBas
       ->addProjectAtPath('modules/module_2')
       ->addProjectAtPath('modules/module_5')
       ->commitChanges();
-    $stage_manipulator = new StageFixtureManipulator();
+    $stage_manipulator = $this->getStageFixtureManipulator();
 
     // module_1 and module_2 will raise errors because they would overwrite
     // non-Composer managed paths in the active directory.
@@ -109,7 +108,6 @@ class OverwriteExistingPackagesValidatorTest extends PackageManagerKernelTestBas
       'version' => '1.3.0',
       'type' => 'metapackage',
     ]);
-    $stage_manipulator->setReadyToCommit();
 
     $expected_results = [
       ValidationResult::createError([

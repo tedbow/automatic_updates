@@ -8,7 +8,6 @@ use Drupal\automatic_updates\CronUpdater;
 use Drupal\automatic_updates\Updater;
 use Drupal\automatic_updates_test\EventSubscriber\TestSubscriber1;
 use Drupal\automatic_updates_test2\EventSubscriber\TestSubscriber2;
-use Drupal\fixture_manipulator\StageFixtureManipulator;
 use Drupal\package_manager\Event\StatusCheckEvent;
 use Drupal\system\SystemManager;
 use Drupal\Tests\automatic_updates\Kernel\AutomaticUpdatesKernelTestBase;
@@ -220,9 +219,7 @@ class StatusCheckerTest extends AutomaticUpdatesKernelTestBase {
    * Tests that stored validation results are deleted after an update.
    */
   public function testStoredResultsDeletedPostApply(): void {
-    (new StageFixtureManipulator())
-      ->setCorePackageVersion('9.8.1')
-      ->setReadyToCommit();
+    $this->getStageFixtureManipulator()->setCorePackageVersion('9.8.1');
     $this->setCoreVersion('9.8.0');
     $this->setReleaseMetadata([
       'drupal' => __DIR__ . '/../../../../package_manager/tests/fixtures/release-history/drupal.9.8.1-security.xml',

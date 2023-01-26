@@ -4,7 +4,6 @@ declare(strict_types = 1);
 
 namespace Drupal\Tests\automatic_updates\Functional;
 
-use Drupal\fixture_manipulator\StageFixtureManipulator;
 use Drupal\package_manager_bypass\Committer;
 
 /**
@@ -18,9 +17,7 @@ class UpdateFailedTest extends UpdaterFormTestBase {
    * Tests that an exception is thrown if a previous apply failed.
    */
   public function testMarkerFileFailure(): void {
-    (new StageFixtureManipulator())
-      ->setCorePackageVersion('9.8.1')
-      ->setReadyToCommit();
+    $this->getStageFixtureManipulator()->setCorePackageVersion('9.8.1');
     $session = $this->getSession();
     $assert_session = $this->assertSession();
     $page = $session->getPage();
@@ -58,9 +55,7 @@ class UpdateFailedTest extends UpdaterFormTestBase {
    * Tests what happens when a staged update is deleted without being destroyed.
    */
   public function testStagedUpdateDeletedImproperly(): void {
-    (new StageFixtureManipulator())
-      ->setCorePackageVersion('9.8.1')
-      ->setReadyToCommit();
+    $this->getStageFixtureManipulator()->setCorePackageVersion('9.8.1');
     $this->mockActiveCoreVersion('9.8.0');
     $this->checkForUpdates();
 

@@ -6,7 +6,6 @@ namespace Drupal\Tests\automatic_updates\Functional;
 
 use Drupal\automatic_updates_test\Datetime\TestTime;
 use Drupal\automatic_updates_test\EventSubscriber\TestSubscriber1;
-use Drupal\fixture_manipulator\StageFixtureManipulator;
 use Drupal\package_manager\Event\PreApplyEvent;
 use Drupal\system\SystemManager;
 
@@ -21,9 +20,7 @@ class DeleteExistingUpdateTest extends UpdaterFormTestBase {
    * Tests deleting an existing update.
    */
   public function testDeleteExistingUpdate(): void {
-    (new StageFixtureManipulator())
-      ->setCorePackageVersion('9.8.1')
-      ->setReadyToCommit();
+    $this->getStageFixtureManipulator()->setCorePackageVersion('9.8.1');
     $conflict_message = 'Cannot begin an update because another Composer operation is currently in progress.';
     $cancelled_message = 'The update was successfully cancelled.';
 
@@ -51,13 +48,9 @@ class DeleteExistingUpdateTest extends UpdaterFormTestBase {
     $assert_session->addressEquals('/admin/reports/updates/update');
     $assert_session->pageTextContains($cancelled_message);
     $assert_session->pageTextNotContains($conflict_message);
-    // Ensure that all traces of the manipulator for the first stage are erased.
-    $this->container->get('package_manager.beginner')->destroy();
 
     // Ensure we can start another update after deleting the existing one.
-    (new StageFixtureManipulator())
-      ->setCorePackageVersion('9.8.1')
-      ->setReadyToCommit();
+    $this->getStageFixtureManipulator()->setCorePackageVersion('9.8.1');
     $page->pressButton('Update to 9.8.1');
     $this->checkForMetaRefresh();
 
@@ -77,12 +70,8 @@ class DeleteExistingUpdateTest extends UpdaterFormTestBase {
     $page->pressButton('Delete existing update');
     $assert_session->pageTextContains('Staged update deleted');
     $assert_session->pageTextNotContains($conflict_message);
-    // Ensure that all traces of the manipulator for the 2nd stage are erased.
-    $this->container->get('package_manager.beginner')->destroy();
     // Before pressing the button, create a new stage fixture manipulator.
-    (new StageFixtureManipulator())
-      ->setCorePackageVersion('9.8.1')
-      ->setReadyToCommit();
+    $this->getStageFixtureManipulator()->setCorePackageVersion('9.8.1');
     $page->pressButton('Update to 9.8.1');
     $this->checkForMetaRefresh();
     $this->assertUpdateReady('9.8.1');
@@ -123,17 +112,13 @@ class DeleteExistingUpdateTest extends UpdaterFormTestBase {
     $page->pressButton('Delete existing update');
     $assert_session->statusCodeEquals(200);
     $assert_session->pageTextContains('Staged update deleted');
-    // Ensure that all traces of the manipulator for the 3rd stage are erased.
-    $this->container->get('package_manager.beginner')->destroy();
 
     // If a legitimate error is raised during pre-apply, we should be able to
     // delete the staged update right away.
     $results = [$this->createValidationResult(SystemManager::REQUIREMENT_ERROR)];
     TestSubscriber1::setTestResult($results, PreApplyEvent::class);
     // Before pressing the button, create a new stage fixture manipulator.
-    (new StageFixtureManipulator())
-      ->setCorePackageVersion('9.8.1')
-      ->setReadyToCommit();
+    $this->getStageFixtureManipulator()->setCorePackageVersion('9.8.1');
     $page->pressButton('Update to 9.8.1');
     $this->checkForMetaRefresh();
     $this->assertUpdateReady('9.8.1');

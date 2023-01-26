@@ -5,7 +5,6 @@ declare(strict_types = 1);
 namespace Drupal\Tests\automatic_updates\Kernel\StatusCheck;
 
 use Drupal\fixture_manipulator\ActiveFixtureManipulator;
-use Drupal\fixture_manipulator\StageFixtureManipulator;
 use Drupal\package_manager\Event\PreApplyEvent;
 use Drupal\package_manager\Exception\StageValidationException;
 use Drupal\package_manager\ValidationResult;
@@ -103,7 +102,7 @@ class StagedProjectsValidatorTest extends AutomaticUpdatesKernelTestBase {
       )
       ->commitChanges();
 
-    $stage_manipulator = new StageFixtureManipulator();
+    $stage_manipulator = $this->getStageFixtureManipulator();
     $stage_manipulator
       ->setCorePackageVersion('9.8.1')
       ->addPackage([
@@ -139,8 +138,7 @@ class StagedProjectsValidatorTest extends AutomaticUpdatesKernelTestBase {
         TRUE
       )
       ->removePackage('other/removed')
-      ->removePackage('other/dev-removed')
-      ->setReadyToCommit();
+      ->removePackage('other/dev-removed');
 
     $messages = [
       t("module 'drupal/test_module2' installed."),
@@ -211,15 +209,14 @@ class StagedProjectsValidatorTest extends AutomaticUpdatesKernelTestBase {
       )
       ->commitChanges();
 
-    $stage_manipulator = new StageFixtureManipulator();
+    $stage_manipulator = $this->getStageFixtureManipulator();
     $stage_manipulator->removePackage('drupal/test_theme')
       ->removePackage('drupal/dev-test_theme')
     // The validator shouldn't complain about these packages being removed,
     // since it only cares about Drupal modules and themes.
       ->removePackage('other/removed')
       ->removePackage('other/dev-removed')
-      ->setCorePackageVersion('9.8.1')
-      ->setReadyToCommit();
+      ->setCorePackageVersion('9.8.1');
 
     $messages = [
       t("theme 'drupal/test_theme' removed."),
@@ -274,15 +271,14 @@ class StagedProjectsValidatorTest extends AutomaticUpdatesKernelTestBase {
       )
       ->commitChanges();
 
-    $stage_manipulator = new StageFixtureManipulator();
+    $stage_manipulator = $this->getStageFixtureManipulator();
     $stage_manipulator->setVersion('drupal/test_module', '1.3.1')
       ->setVersion('drupal/dev-test_module', '1.3.1')
     // The validator shouldn't complain about these packages being updated,
     // because it only cares about Drupal modules and themes.
       ->setVersion('other/changed', '1.3.2')
       ->setVersion('other/dev-changed', '1.3.2')
-      ->setCorePackageVersion('9.8.1')
-      ->setReadyToCommit();
+      ->setCorePackageVersion('9.8.1');
 
     $messages = [
       t("module 'drupal/test_module' from 1.3.0 to 1.3.1."),
@@ -351,7 +347,7 @@ class StagedProjectsValidatorTest extends AutomaticUpdatesKernelTestBase {
       )
       ->commitChanges();
 
-    $stage_manipulator = new StageFixtureManipulator();
+    $stage_manipulator = $this->getStageFixtureManipulator();
     $stage_manipulator->setCorePackageVersion('9.8.1')
     // The validator shouldn't care what happens to these packages, since it
     // only concerns itself with Drupal modules and themes.
@@ -373,8 +369,7 @@ class StagedProjectsValidatorTest extends AutomaticUpdatesKernelTestBase {
       ->setVersion('other/changed', '1.3.2')
       ->setVersion('other/dev-changed', '1.3.2')
       ->removePackage('other/removed')
-      ->removePackage('other/dev-removed')
-      ->setReadyToCommit();
+      ->removePackage('other/dev-removed');
 
     $updater = $this->container->get('automatic_updates.updater');
     $updater->begin(['drupal' => '9.8.1']);

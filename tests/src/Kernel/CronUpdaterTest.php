@@ -9,7 +9,6 @@ use Drupal\automatic_updates_test\EventSubscriber\TestSubscriber1;
 use Drupal\Core\DependencyInjection\ContainerBuilder;
 use Drupal\Core\Logger\RfcLogLevel;
 use Drupal\Core\Url;
-use Drupal\fixture_manipulator\StageFixtureManipulator;
 use Drupal\package_manager\Event\PostApplyEvent;
 use Drupal\package_manager\Event\PostCreateEvent;
 use Drupal\package_manager\Event\PostDestroyEvent;
@@ -147,9 +146,7 @@ class CronUpdaterTest extends AutomaticUpdatesKernelTestBase {
   public function testUpdaterCalled(string $setting, array $release_data, bool $will_update): void {
     $version = strpos($release_data['drupal'], '9.8.2') ? '9.8.2' : '9.8.1';
     if ($will_update) {
-      (new StageFixtureManipulator())
-        ->setCorePackageVersion($version)
-        ->setReadyToCommit();
+      $this->getStageFixtureManipulator()->setCorePackageVersion($version);
     }
     // Our form alter does not refresh information on available updates, so
     // ensure that the appropriate update data is loaded beforehand.
@@ -256,9 +253,7 @@ class CronUpdaterTest extends AutomaticUpdatesKernelTestBase {
     // If the failure happens before the stage is even created, the stage
     // fixture need not be manipulated.
     if ($event_class !== PreCreateEvent::class) {
-      (new StageFixtureManipulator())
-        ->setCorePackageVersion('9.8.1')
-        ->setReadyToCommit();
+      $this->getStageFixtureManipulator()->setCorePackageVersion('9.8.1');
     }
     $this->installConfig('automatic_updates');
     // @todo Remove in https://www.drupal.org/project/automatic_updates/issues/3284443
@@ -448,9 +443,7 @@ class CronUpdaterTest extends AutomaticUpdatesKernelTestBase {
    * Tests that email is sent when an unattended update succeeds.
    */
   public function testEmailOnSuccess(): void {
-    (new StageFixtureManipulator())
-      ->setCorePackageVersion('9.8.1')
-      ->setReadyToCommit();
+    $this->getStageFixtureManipulator()->setCorePackageVersion('9.8.1');
     $this->container->get('cron')->run();
 
     // Ensure we sent a success message to all recipients.
@@ -498,9 +491,7 @@ END;
     // If the failure happens before the stage is even created, the stage
     // fixture need not be manipulated.
     if ($event_class !== PreCreateEvent::class) {
-      (new StageFixtureManipulator())
-        ->setCorePackageVersion('9.8.2')
-        ->setReadyToCommit();
+      $this->getStageFixtureManipulator()->setCorePackageVersion('9.8.2');
     }
     $this->setReleaseMetadata([
       'drupal' => __DIR__ . '/../../../package_manager/tests/fixtures/release-history/drupal.9.8.2.xml',
@@ -546,9 +537,7 @@ END;
     // If the failure happens before the stage is even created, the stage
     // fixture need not be manipulated.
     if ($event_class !== PreCreateEvent::class) {
-      (new StageFixtureManipulator())
-        ->setCorePackageVersion('9.8.1')
-        ->setReadyToCommit();
+      $this->getStageFixtureManipulator()->setCorePackageVersion('9.8.1');
     }
     $results = [
       ValidationResult::createError([t('Error while updating!')]),
@@ -579,9 +568,7 @@ END;
    * Tests the failure e-mail when an unattended update fails to apply.
    */
   public function testApplyFailureEmail(): void {
-    (new StageFixtureManipulator())
-      ->setCorePackageVersion('9.8.1')
-      ->setReadyToCommit();
+    $this->getStageFixtureManipulator()->setCorePackageVersion('9.8.1');
     $error = new \Exception('I drink your milkshake!');
     Committer::setException($error);
 
