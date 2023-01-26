@@ -181,6 +181,7 @@ services:
     class: Drupal\package_manager\PathExcluder\GitExcluder
     arguments:
       - '@package_manager.path_locator'
+      - '@file_system'
     tags:
       - { name: event_subscriber }
   package_manager.site_configuration_excluder:
