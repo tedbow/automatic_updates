@@ -194,4 +194,19 @@ class StageEventsTest extends PackageManagerKernelTestBase implements EventSubsc
     (new PreApplyEvent($stage))->excludePath('/junk/drawer');
   }
 
+  /**
+   * Tests exception is thrown if error is not added before stopPropagation().
+   */
+  public function testExceptionIfNoErrorBeforeStopPropagation(): void {
+    $listener = function (PreCreateEvent $event): void {
+      $event->stopPropagation();
+    };
+    $this->addEventTestListener($listener, PreCreateEvent::class);
+
+    $this->expectException(TestStageValidationException::class);
+    $this->expectExceptionMessage('Event propagation stopped without any errors added to the event. This bypasses the package_manager validation system.');
+    $stage = $this->createStage();
+    $stage->create();
+  }
+
 }
