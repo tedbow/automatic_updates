@@ -169,8 +169,8 @@ abstract class PackageManagerKernelTestBase extends KernelTestBase {
       $this->assertValidationResultsEqual([], $expected_results);
     }
     catch (TestStageValidationException $e) {
-      $this->assertNotEmpty($expected_results);
       $this->assertValidationResultsEqual($expected_results, $e->getResults());
+      $this->assertNotEmpty($expected_results);
       // TestStage::dispatch() throws TestStageValidationException with the
       // event object so that we can analyze it.
       $this->assertNotEmpty($event_class);
