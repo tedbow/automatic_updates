@@ -166,7 +166,7 @@ abstract class PackageManagerKernelTestBase extends KernelTestBase {
       $stage->destroy();
 
       // If we did not get an exception, ensure we didn't expect any results.
-      $this->assertEmpty($expected_results);
+      $this->assertValidationResultsEqual([], $expected_results);
     }
     catch (TestStageValidationException $e) {
       $this->assertNotEmpty($expected_results);
