@@ -4,5 +4,17 @@
   },
   "require-dev": {
     "drupal/core-dev": "^9"
+  },
+  "extra": {
+    "boo": "boo boo",
+    "foo": {
+        "dev": "2.x-dev"
+    },
+    "foo-bar": true,
+    "boo-far": {
+        "foo": 1.23,
+        "bar": 134,
+        "foo-bar": null
+    }
   }
 }

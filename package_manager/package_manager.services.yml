@@ -55,6 +55,10 @@ services:
       - '@update.manager'
     tags:
       - { name: event_subscriber }
+  package_manager.composer_inspector:
+    class: Drupal\package_manager\ComposerInspector
+    autowire: true
+    public: false
 
   # Validators.
   package_manager.validator.environment_support:
@@ -105,6 +109,8 @@ services:
     class: Drupal\package_manager\Validator\ComposerSettingsValidator
     arguments:
       - '@string_translation'
+      - '@package_manager.composer_inspector'
+      - '@package_manager.path_locator'
     tags:
       - { name: event_subscriber }
   package_manager.validator.multisite:

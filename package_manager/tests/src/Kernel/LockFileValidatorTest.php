@@ -75,7 +75,9 @@ class LockFileValidatorTest extends PackageManagerKernelTestBase {
     // priority of 0, this listener changes lock file before the validator
     // runs.
     $this->addEventTestListener(function () {
-      file_put_contents($this->activeDir . '/composer.lock', 'changed');
+      $lock = json_decode(file_get_contents($this->activeDir . '/composer.lock'), TRUE);
+      $lock['extra']['key'] = 'value';
+      file_put_contents($this->activeDir . '/composer.lock', json_encode($lock, JSON_THROW_ON_ERROR));
     }, $event_class);
     $result = ValidationResult::createError([
       t('Unexpected changes were detected in composer.lock, which indicates that other Composer operations were performed since this Package Manager operation started. This can put the code base into an unreliable state and therefore is not allowed.'),
