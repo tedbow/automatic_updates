@@ -27,21 +27,17 @@ class PackageInstallTest extends TemplateProjectTestBase {
     // the API to return the contents of composer.json file of installed module,
     // so we can assert that the module was installed with the expected version.
     // @see \Drupal\package_manager_test_api\ApiController::run()
-    $query = http_build_query([
-      'runtime' => [
-        'drupal/alpha:1.0.0',
-      ],
-      'files_to_return' => [
-        'web/modules/contrib/alpha/composer.json',
-      ],
-    ]);
-    $this->visit("/package-manager-test-api?$query");
-    $mink = $this->getMink();
-    $mink->assertSession()->statusCodeEquals(200);
-
-    $file_contents = $mink->getSession()->getPage()->getContent();
-    $file_contents = json_decode($file_contents, TRUE);
-
+    $file_contents = $this->getPackageManagerTestApiResponse(
+      '/package-manager-test-api',
+      [
+        'runtime' => [
+          'drupal/alpha:1.0.0',
+        ],
+        'files_to_return' => [
+          'web/modules/contrib/alpha/composer.json',
+        ],
+      ]
+    );
     $this->assertArrayHasKey('web/modules/contrib/alpha/composer.json', $file_contents);
   }
 

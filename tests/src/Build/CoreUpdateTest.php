@@ -84,6 +84,8 @@ class CoreUpdateTest extends UpdateTestBase {
     $this->visit('/admin/modules/update');
     $this->getMink()->assertSession()->pageTextContains('9.8.1');
 
+    $this->assertStatusReportChecksSuccessful();
+
     // Ensure that Drupal has write-protected the site directory.
     $this->assertDirectoryIsNotWritable($this->getWebRoot() . '/sites/default');
   }
@@ -126,7 +128,8 @@ class CoreUpdateTest extends UpdateTestBase {
         PostApplyEvent::class,
         PreDestroyEvent::class,
         PostDestroyEvent::class,
-      ]
+      ],
+      'Error response: ' . $file_contents
     );
     // Even though the response is what we expect, assert the status code as
     // well, to be extra-certain that there was no kind of server-side error.
@@ -179,8 +182,6 @@ class CoreUpdateTest extends UpdateTestBase {
     $mink = $this->getMink();
     $page = $mink->getSession()->getPage();
     $assert_session = $mink->assertSession();
-
-    $assert_session->pageTextContains('Your site is ready for automatic updates.');
     $page->clickLink('Run cron');
     $cron_run_status_code = $mink->getSession()->getStatusCode();
     $this->assertExpectedStageEventsFired(CronUpdater::class);
@@ -396,6 +397,13 @@ class CoreUpdateTest extends UpdateTestBase {
     $session->reload();
 
     $assert_session->pageTextNotContains('There is a security update available for your version of Drupal.');
+    // Ensure test failures provide helpful debug output when failing readiness
+    // checks prevent updates.
+    // @see \Drupal\Tests\WebAssert::buildStatusMessageSelector()
+    if ($error_message = $session->getPage()->find('xpath', '//div[@data-drupal-messages]//div[@aria-label="Error message"]')) {
+      /** @var \Behat\Mink\Element\NodeElement $error_message */
+      $this->assertSame('', $error_message->getText());
+    }
     $page->pressButton('Update to 9.8.1');
     $this->waitForBatchJob();
     $assert_session->pageTextContains('Ready to update');

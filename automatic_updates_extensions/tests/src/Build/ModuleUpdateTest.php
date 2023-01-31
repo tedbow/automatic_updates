@@ -79,20 +79,17 @@ END;
     // composer.json file, so we can assert that they were updated to the
     // version we expect.
     // @see \Drupal\automatic_updates_extensions_test_api\ApiController::run()
-    $query = http_build_query([
-      'projects' => [
-        'alpha' => '1.1.0',
-      ],
-      'files_to_return' => [
-        'web/modules/contrib/alpha/composer.json',
-      ],
-    ]);
-    $this->visit("/automatic-updates-extensions-test-api?$query");
-    $mink = $this->getMink();
-    $mink->assertSession()->statusCodeEquals(200);
-
-    $file_contents = $mink->getSession()->getPage()->getContent();
-    $file_contents = json_decode($file_contents, TRUE);
+    $file_contents = $this->getPackageManagerTestApiResponse(
+      '/automatic-updates-extensions-test-api',
+      [
+        'projects' => [
+          'alpha' => '1.1.0',
+        ],
+        'files_to_return' => [
+          'web/modules/contrib/alpha/composer.json',
+        ],
+      ]
+    );
 
     $module_composer_json = json_decode($file_contents['web/modules/contrib/alpha/composer.json']);
     $this->assertSame('1.1.0', $module_composer_json->version);
@@ -118,6 +115,13 @@ END;
     // Confirm that a 'New Module' project does not appear on the form.
     $assert_session->pageTextContains('Other updates were found, but they must be performed manually.');
     $assert_session->fieldNotExists('projects[new_module]');
+    // Ensure test failures provide helpful debug output when failing readiness
+    // checks prevent updates.
+    // @see \Drupal\Tests\WebAssert::buildStatusMessageSelector()
+    if ($error_message = $session->getPage()->find('xpath', '//div[@data-drupal-messages]//div[@aria-label="Error message"]')) {
+      /** @var \Behat\Mink\Element\NodeElement $error_message */
+      $this->assertSame('', $error_message->getText());
+    }
     $page->checkField('projects[alpha]');
     $page->pressButton('Update');
     $this->waitForBatchJob();

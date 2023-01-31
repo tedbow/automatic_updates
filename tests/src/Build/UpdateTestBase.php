@@ -62,4 +62,32 @@ END;
     }
   }
 
+  /**
+   * Asserts the status report does not have any readiness errors or warnings.
+   */
+  protected function assertStatusReportChecksSuccessful(): void {
+    $this->visit('/admin/reports/status');
+    $mink = $this->getMink();
+    $page = $mink->getSession()->getPage();
+
+    $readiness_check_summaries = $page->findAll('css', 'summary:contains("Update readiness checks")');
+    // There should always either be the summary section indicating the site is
+    // ready for automatic updates or the error or warning sections.
+    $this->assertNotEmpty($readiness_check_summaries);
+    $ready_text_found = FALSE;
+    $status_checks_text = '';
+    foreach ($readiness_check_summaries as $readiness_check_summary) {
+      $parent_element = $readiness_check_summary->getParent();
+      if (str_contains($parent_element->getText(), 'Your site is ready for automatic updates.')) {
+        $ready_text_found = TRUE;
+        continue;
+      }
+      $description_list = $parent_element->find('css', 'div.description ul');
+      $this->assertNotEmpty($description_list);
+      $status_checks_text .= "\n" . $description_list->getText();
+    }
+    $this->assertSame('', $status_checks_text);
+    $this->assertTrue($ready_text_found);
+  }
+
 }

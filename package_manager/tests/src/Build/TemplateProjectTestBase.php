@@ -488,10 +488,12 @@ END;
    *   that once if they will be fired multiple times. If there are no events
    *   specified all life cycle events from PreCreateEvent to PostDestroyEvent
    *   will be asserted.
+   * @param string|null $message
+   *   (optional) A message to display with the assertion.
    *
    * @see \Drupal\package_manager_test_event_logger\EventSubscriber\EventLogSubscriber::logEventInfo
    */
-  protected function assertExpectedStageEventsFired(string $expected_stage_class, ?array $expected_events = NULL): void {
+  protected function assertExpectedStageEventsFired(string $expected_stage_class, ?array $expected_events = NULL, ?string $message = NULL): void {
     if ($expected_events === NULL) {
       $expected_events = [
         PreCreateEvent::class,
@@ -535,7 +537,37 @@ END;
     foreach ($expected_events as $event) {
       $expected_titles[] = "package_manager_test_event_logger-start: Event: $event, Stage instance of: $expected_stage_class:package_manager_test_event_logger-end";
     }
-    $this->assertSame($expected_titles, $actual_titles);
+    $this->assertSame($expected_titles, $actual_titles, $message ?? '');
+  }
+
+  /**
+   * Gets a /package-manager-test-api response.
+   *
+   * @param string $url
+   *   The package manager test API URL to fetch.
+   * @param array $query_data
+   *   The query data.
+   *
+   * @return array
+   *   The received JSON.
+   */
+  protected function getPackageManagerTestApiResponse(string $url, array $query_data): array {
+    $url .= '?' . http_build_query($query_data);
+    $this->visit($url);
+    $mink = $this->getMink();
+    $session = $mink->getSession();
+    $file_contents = $session->getPage()->getContent();
+
+    // Ensure test failures provide helpful debug output when there's a fatal
+    // PHP error: don't use \Behat\Mink\WebAssert::statusCodeEquals().
+    if ($session->getStatusCode() == 500) {
+      $this->assertEquals(200, 500, 'Error response: ' . $file_contents);
+    }
+    else {
+      $mink->assertSession()->statusCodeEquals(200);
+    }
+
+    return json_decode($file_contents, TRUE);
   }
 
   // BEGIN: DELETE FROM CORE MERGE REQUEST.
