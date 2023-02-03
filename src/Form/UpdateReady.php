@@ -117,7 +117,7 @@ final class UpdateReady extends UpdateFormBase {
       $this->updater->claim($stage_id);
     }
     catch (StageOwnershipException $e) {
-      $this->messenger()->addError($this->t('Cannot continue the update because another Composer operation is currently in progress.'));
+      $this->messenger()->addError($e->getMessage());
       return $form;
     }
     catch (ApplyFailedException $e) {

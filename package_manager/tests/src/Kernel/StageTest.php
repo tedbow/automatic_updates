@@ -9,6 +9,7 @@ use Drupal\Component\FileSystem\FileSystem;
 use Drupal\Core\DependencyInjection\ContainerBuilder;
 use Drupal\Core\Extension\ModuleUninstallValidatorException;
 use Drupal\Core\Logger\RfcLogLevel;
+use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\package_manager\Event\CollectIgnoredPathsEvent;
 use Drupal\package_manager\Event\PostApplyEvent;
 use Drupal\package_manager\Event\PreApplyEvent;
@@ -401,6 +402,111 @@ class StageTest extends PackageManagerKernelTestBase {
 
     $this->container->get('package_manager.failure_marker')
       ->assertNotExists();
+  }
+
+  /**
+   * Data provider for testStoreDestroyInfo().
+   *
+   * @return \string[][]
+   *   The test cases.
+   */
+  public function providerStoreDestroyInfo(): array {
+    return [
+      'Changes applied' => [
+        FALSE,
+        TRUE,
+        NULL,
+        'This operation has already been applied.',
+      ],
+      'Changes not applied and forced' => [
+        TRUE,
+        FALSE,
+        NULL,
+        'This operation was canceled by another user.',
+      ],
+      'Changes not applied and not forced' => [
+        FALSE,
+        FALSE,
+        NULL,
+        'This operation was already canceled.',
+      ],
+      'Changes applied, with a custom exception message.' => [
+        FALSE,
+        TRUE,
+        t('Stage destroyed with a custom message.'),
+        'Stage destroyed with a custom message.',
+      ],
+      'Changes not applied and forced, with a custom exception message.' => [
+        TRUE,
+        FALSE,
+        t('Stage destroyed with a custom message.'),
+        'Stage destroyed with a custom message.',
+      ],
+      'Changes not applied and not forced, with a custom exception message.' => [
+        FALSE,
+        FALSE,
+        t('Stage destroyed with a custom message.'),
+        'Stage destroyed with a custom message.',
+      ],
+    ];
+  }
+
+  /**
+   * Tests exceptions thrown because of previously destroyed stage.
+   *
+   * @param bool $force
+   *   Whether the stage was forcefully destroyed.
+   * @param bool $changes_applied
+   *   Whether the changes are applied.
+   * @param \Drupal\Core\StringTranslation\TranslatableMarkup|null $message
+   *   A message about why the stage was destroyed or null.
+   * @param string $expected_exception_message
+   *   The expected exception message string.
+   *
+   * @dataProvider providerStoreDestroyInfo()
+   */
+  public function testStoreDestroyInfo(bool $force, bool $changes_applied, ?TranslatableMarkup $message, string $expected_exception_message) {
+    $stage = $this->createStage();
+    $stage_id = $stage->create();
+    $stage->require(['drupal/core:9.8.1']);
+    $tempstore = $this->container->get('tempstore.shared');
+    // Simulate whether ::apply() has run or not.
+    // @see \Drupal\package_manager\Stage::TEMPSTORE_CHANGES_APPLIED
+    $tempstore->get('package_manager_stage')->set('changes_applied', $changes_applied);
+    $stage->destroy($force, $message);
+
+    // Prove the first stage was destroyed: a second stage can be created
+    // without an exception being thrown.
+    $stage2 = $this->createStage();
+    $stage2->create();
+
+    // Claiming the first stage always fails in this test because it was
+    // destroyed, but the exception message depends on why it was destroyed.
+    $this->expectException(StageException::class);
+    $this->expectExceptionMessage($expected_exception_message);
+    $stage->claim($stage_id);
+  }
+
+  /**
+   * Tests exception message once temp store message has expired.
+   */
+  public function testTempStoreMessageExpired() {
+    $stage = $this->createStage();
+    $stage_id = $stage->create();
+    $stage->require(['drupal/core:9.8.1']);
+    $stage->destroy(TRUE, t('Force destroy stage.'));
+
+    // Delete the tempstore message stored for the previously destroyed stage.
+    $tempstore = $this->container->get('tempstore.shared');
+    // @see \Drupal\package_manager\Stage::TEMPSTORE_DESTROYED_STAGES_INFO_PREFIX
+    $tempstore->get('package_manager_stage')->delete('TEMPSTORE_DESTROYED_STAGES_INFO' . $stage_id);
+
+    // Claiming the stage will fail, but we won't get the message we set in
+    // \Drupal\package_manager\Stage::storeDestroyInfo() as we are deleting it
+    // above.
+    $this->expectException(StageException::class);
+    $this->expectExceptionMessage('Cannot claim the stage because no stage has been created.');
+    $stage->claim($stage_id);
   }
 
   /**

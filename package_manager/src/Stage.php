@@ -103,6 +103,26 @@ class Stage implements LoggerAwareInterface {
   private const TEMPSTORE_APPLY_TIME_KEY = 'apply_time';
 
   /**
+   * The tempstore key for whether staged operations have been applied.
+   *
+   * @var string
+   *
+   * @see ::apply()
+   * @see ::destroy()
+   */
+  private const TEMPSTORE_CHANGES_APPLIED = 'changes_applied';
+
+  /**
+   * The tempstore key for information about previously destroyed stages.
+   *
+   * @var string
+   *
+   * @see ::apply()
+   * @see ::destroy()
+   */
+  private const TEMPSTORE_DESTROYED_STAGES_INFO_PREFIX = 'TEMPSTORE_DESTROYED_STAGES_INFO';
+
+  /**
    * The config factory service.
    *
    * @var \Drupal\Core\Config\ConfigFactoryInterface
@@ -495,6 +515,7 @@ class Stage implements LoggerAwareInterface {
       throw new ApplyFailedException($throwable->getMessage(), $throwable->getCode(), $throwable);
     }
     $this->failureMarker->clear();
+    $this->setMetadata(self::TEMPSTORE_CHANGES_APPLIED, TRUE);
   }
 
   /**
@@ -538,11 +559,14 @@ class Stage implements LoggerAwareInterface {
    * @param bool $force
    *   (optional) If TRUE, the stage directory will be destroyed even if it is
    *   not owned by the current user or session. Defaults to FALSE.
+   * @param \Drupal\Core\StringTranslation\TranslatableMarkup|null $message
+   *   (optional) A message about why the stage was destroyed.
    *
    * @throws \Drupal\package_manager\Exception\StageException
    *   If the staged changes are being applied to the active directory.
+   * @throws \Drupal\Core\TempStore\TempStoreException
    */
-  public function destroy(bool $force = FALSE): void {
+  public function destroy(bool $force = FALSE, ?TranslatableMarkup $message = NULL): void {
     if (!$force) {
       $this->checkOwnership();
     }
@@ -567,6 +591,7 @@ class Stage implements LoggerAwareInterface {
       }
     }
 
+    $this->storeDestroyInfo($force, $message);
     $this->markAsAvailable();
     $this->dispatch(new PostDestroyEvent($this));
   }
@@ -658,7 +683,7 @@ class Stage implements LoggerAwareInterface {
    *
    * @return $this
    *
-   * @throws \Drupal\package_manager\Exception\StageException
+   * @throws \Drupal\package_manager\Exception\StageOwnershipException
    *   If the stage cannot be claimed. This can happen if the current user or
    *   session did not originally create the stage, if $unique_id doesn't match
    *   the unique ID that was generated when the stage was created, or the
@@ -670,19 +695,51 @@ class Stage implements LoggerAwareInterface {
     $this->failureMarker->assertNotExists();
 
     if ($this->isAvailable()) {
-      throw new StageException('Cannot claim the stage because no stage has been created.');
+      // phpcs:disable DrupalPractice.General.ExceptionT.ExceptionT
+      // @see https://www.drupal.org/project/automatic_updates/issues/3338651
+      throw new StageException($this->computeDestroyMessage(
+        $unique_id,
+        $this->t('Cannot claim the stage because no stage has been created.')
+      )->render());
     }
 
     $stored_lock = $this->tempStore->getIfOwner(static::TEMPSTORE_LOCK_KEY);
     if (!$stored_lock) {
-      throw new StageOwnershipException('Cannot claim the stage because it is not owned by the current user or session.');
+      throw new StageOwnershipException($this->computeDestroyMessage(
+        $unique_id,
+        $this->t('Cannot claim the stage because it is not owned by the current user or session.')
+      )->render());
     }
 
     if ($stored_lock === [$unique_id, static::class]) {
       $this->lock = $stored_lock;
       return $this;
     }
-    throw new StageOwnershipException('Cannot claim the stage because the current lock does not match the stored lock.');
+
+    throw new StageOwnershipException($this->computeDestroyMessage(
+      $unique_id,
+      $this->t('Cannot claim the stage because the current lock does not match the stored lock.')
+    )->render());
+    // phpcs:enable DrupalPractice.General.ExceptionT.ExceptionT
+  }
+
+  /**
+   * Returns the specific destroy message for the ID.
+   *
+   * @param string $unique_id
+   *   The unique ID that was returned by ::create().
+   * @param \Drupal\Core\StringTranslation\TranslatableMarkup $fallback_message
+   *   A fallback message, in case no specific message was stored.
+   *
+   * @return \Drupal\Core\StringTranslation\TranslatableMarkup
+   *   A message describing why the stage with the given ID was destroyed, or if
+   *   no message was associated with that destroyed stage, the provided
+   *   fallback message.
+   */
+  private function computeDestroyMessage(string $unique_id, TranslatableMarkup $fallback_message): TranslatableMarkup {
+    // Check to see if we have a specific message about a stage with a
+    // specific ID that was given.
+    return $this->tempStore->get(self::TEMPSTORE_DESTROYED_STAGES_INFO_PREFIX . $unique_id) ?? $fallback_message;
   }
 
   /**
@@ -792,6 +849,34 @@ class Stage implements LoggerAwareInterface {
         throw new \InvalidArgumentException("Invalid package name '$package_name'.");
       }
     }
+  }
+
+  /**
+   * Stores information about the stage when it is destroyed.
+   *
+   * @param bool $force
+   *   Whether the stage was force destroyed.
+   * @param \Drupal\Core\StringTranslation\TranslatableMarkup|null $message
+   *   A message about why the stage was destroyed or null.
+   *
+   * @throws \Drupal\Core\TempStore\TempStoreException
+   */
+  protected function storeDestroyInfo(bool $force, ?TranslatableMarkup $message): void {
+    if (!$message) {
+      if ($this->tempStore->get(self::TEMPSTORE_CHANGES_APPLIED) === TRUE) {
+        $message = $this->t('This operation has already been applied.');
+      }
+      else {
+        if ($force) {
+          $message = $this->t('This operation was canceled by another user.');
+        }
+        else {
+          $message = $this->t('This operation was already canceled.');
+        }
+      }
+    }
+    [$id] = $this->tempStore->get(static::TEMPSTORE_LOCK_KEY);
+    $this->tempStore->set(self::TEMPSTORE_DESTROYED_STAGES_INFO_PREFIX . $id, $message);
   }
 
 }

@@ -178,9 +178,9 @@ class CronUpdater extends Updater {
     // Delete the existing staging area if not available and the site is
     // currently on an insecure version.
     if (!$project_info->isInstalledVersionSafe() && !$this->isAvailable() && !$this->isApplying()) {
-      // @todo Improve this in https://www.drupal.org/i/3325654.
-      $this->logger->notice('The existing stage was not in the process of being applied, so it was destroyed to allow updating the site to a secure version during cron.');
-      $this->destroy(TRUE);
+      $destroy_message = $this->t('The existing stage was not in the process of being applied, so it was destroyed to allow updating the site to a secure version during cron.');
+      $this->destroy(TRUE, $destroy_message);
+      $this->logger->notice($destroy_message->getUntranslatedString());
     }
 
     $installed_version = $project_info->getInstalledVersion();

@@ -70,7 +70,7 @@ class UpdateLockTest extends AutomaticUpdatesFunctionalTestBase {
     // If the current user did not start the update, they should not be able to
     // continue it, either.
     $this->drupalGet($url);
-    $assert_session->pageTextContains('Cannot continue the update because another Composer operation is currently in progress.');
+    $assert_session->pageTextContains('Cannot claim the stage because it is not owned by the current user or session.');
     $assert_session->buttonNotExists('Continue');
 
     // The user who started the update should be able to continue it.

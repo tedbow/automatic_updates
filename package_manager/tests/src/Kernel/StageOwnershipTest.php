@@ -208,7 +208,7 @@ class StageOwnershipTest extends PackageManagerKernelTestBase {
       $this->fail('Was able to claim an owned stage after it was destroyed.');
     }
     catch (StageException $exception) {
-      $this->assertSame('Cannot claim the stage because no stage has been created.', $exception->getMessage());
+      $this->assertSame('This operation was already canceled.', $exception->getMessage());
     }
 
     // Create a new stage and then log in as a different user.

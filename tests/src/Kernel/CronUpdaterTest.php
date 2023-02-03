@@ -17,6 +17,7 @@ use Drupal\package_manager\Event\PreApplyEvent;
 use Drupal\package_manager\Event\PreDestroyEvent;
 use Drupal\package_manager\Event\PreRequireEvent;
 use Drupal\package_manager\Event\PreCreateEvent;
+use Drupal\package_manager\Exception\StageOwnershipException;
 use Drupal\package_manager\Exception\StageValidationException;
 use Drupal\package_manager\ValidationResult;
 use Drupal\package_manager_bypass\Committer;
@@ -351,7 +352,7 @@ class CronUpdaterTest extends AutomaticUpdatesKernelTestBase {
    */
   public function testStageDestroyedIfNotAvailable(): void {
     $stage = $this->createStage();
-    $stage->create();
+    $stage_id = $stage->create();
     $original_stage_directory = $stage->getStageDirectory();
     $this->assertDirectoryExists($original_stage_directory);
 
@@ -368,6 +369,12 @@ class CronUpdaterTest extends AutomaticUpdatesKernelTestBase {
     $this->assertNotEquals($original_stage_directory, $cron_stage_dir);
     $this->assertDirectoryDoesNotExist($cron_stage_dir);
     $this->assertTrue($this->logger->hasRecord('The existing stage was not in the process of being applied, so it was destroyed to allow updating the site to a secure version during cron.', (string) RfcLogLevel::NOTICE));
+
+    $stage2 = $this->createStage();
+    $stage2->create();
+    $this->expectException(StageOwnershipException::class);
+    $this->expectExceptionMessage('The existing stage was not in the process of being applied, so it was destroyed to allow updating the site to a secure version during cron.');
+    $stage->claim($stage_id);
   }
 
   /**
