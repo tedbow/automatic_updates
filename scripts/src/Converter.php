@@ -2,7 +2,7 @@
 
 declare(strict_types = 1);
 
-namespace Drupal\automatic_updates\CoreCovert;
+namespace Drupal\automatic_updates\Development;
 
 use Composer\Script\Event;
 use Symfony\Component\Filesystem\Filesystem;

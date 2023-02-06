@@ -30,27 +30,23 @@ class FixtureManipulatorTest extends PackageManagerKernelTestBase {
   private \Exception $expectedTearDownException;
 
   /**
-   * The existing packages in the fixture.
+   * The original 'installed.php' data before any manipulation.
    *
-   * @var \string[][]
+   * @var array
    */
-  private array $existingCorePackages = [
-    'drupal/core' => [
-      'name' => 'drupal/core',
-      'version' => '9.8.0',
-      'type' => 'drupal-core',
-    ],
-    'drupal/core-recommended' => [
-      'name' => 'drupal/core-recommended',
-      'version' => '9.8.0',
-      'type' => 'drupal-core',
-    ],
-    'drupal/core-dev' => [
-      'name' => 'drupal/core-dev',
-      'version' => '9.8.0',
-      'type' => 'drupal-core',
-    ],
-  ];
+  private array $originalInstalledPhp;
+
+  /**
+   * Ensures the original fixture packages in 'installed.php' are unchanged.
+   *
+   * @param array $installed_php
+   *   The current 'installed.php' data.
+   */
+  private function assertOriginalFixturePackagesUnchanged(array $installed_php): void {
+    $original_package_names = array_keys($this->originalInstalledPhp);
+    $installed_php_core_packages = array_intersect_key($installed_php, array_flip($original_package_names));
+    $this->assertSame($this->originalInstalledPhp, $installed_php_core_packages);
+  }
 
   /**
    * {@inheritdoc}
@@ -60,6 +56,8 @@ class FixtureManipulatorTest extends PackageManagerKernelTestBase {
 
     $this->dir = $this->container->get('package_manager.path_locator')
       ->getProjectRoot();
+
+    [, $this->originalInstalledPhp] = $this->getData();
 
     $manipulator = new ActiveFixtureManipulator();
     $manipulator
@@ -157,9 +155,13 @@ class FixtureManipulatorTest extends PackageManagerKernelTestBase {
         'name' => 'my/dev-package',
         'version' => '2.1.0',
         'type' => 'library',
+        'version_normalized' => '2.1.0.0',
       ],
     ];
     $installed_php_expected_packages = $installed_json_expected_packages;
+    // Composer stores `version_normalized`in 'installed.json' but not
+    // 'installed.php'.
+    unset($installed_php_expected_packages['my/dev-package']['version_normalized']);
     [$installed_json, $installed_php] = $this->getData();
     $installed_json['packages'] = array_intersect_key($installed_json['packages'], $installed_json_expected_packages);
     $this->assertSame($installed_json_expected_packages, $installed_json['packages']);
@@ -169,7 +171,13 @@ class FixtureManipulatorTest extends PackageManagerKernelTestBase {
     // have been prefixed with the __DIR__ constant, which should be interpreted
     // when installed.php is loaded by the PHP runtime.
     $installed_php_expected_packages['my/dev-package']['install_path'] = "$this->dir/vendor/composer/../relative/path";
-    $installed_php_expected_packages = $this->existingCorePackages + $installed_php_expected_packages;
+
+    // None of the operations should have changed the original packages.
+    $this->assertOriginalFixturePackagesUnchanged($installed_php);
+
+    // Remove the original packages since we have confirmed that they have not
+    // changed.
+    $installed_php = array_diff_key($installed_php, $this->originalInstalledPhp);
     $this->assertSame($installed_php_expected_packages, $installed_php);
   }
 
@@ -241,6 +249,7 @@ class FixtureManipulatorTest extends PackageManagerKernelTestBase {
       'my/dev-package' => [
         'name' => 'my/dev-package',
         'version' => '3.2.1',
+        'version_normalized' => '3.2.1.0',
         'type' => 'library',
       ],
       'my/other-package' => [
@@ -249,6 +258,9 @@ class FixtureManipulatorTest extends PackageManagerKernelTestBase {
       ],
     ];
     $installed_php_expected_packages = $install_json_expected_packages;
+    // Composer stores `version_normalized`in 'installed.json' but not
+    // 'installed.php'.
+    unset($installed_php_expected_packages['my/dev-package']['version_normalized']);
     $installed_php_expected_packages['my/dev-package']['install_path'] = "$this->dir/vendor/composer/../relative/path";
     [$installed_json, $installed_php] = $this->getData();
     $installed_json['packages'] = array_intersect_key($installed_json['packages'], $install_json_expected_packages);
@@ -256,8 +268,13 @@ class FixtureManipulatorTest extends PackageManagerKernelTestBase {
     $this->assertContains('my/dev-package', $installed_json['dev-package-names']);
     $this->assertNotContains('my/other-package', $installed_json['dev-package-names']);
     $this->assertNotContains('my/package', $installed_json['dev-package-names']);
-    $installed_php_expected_packages = $this->existingCorePackages + $installed_php_expected_packages;
-    // @see ::testAddPackage()
+
+    // None of the operations should have changed the original packages.
+    $this->assertOriginalFixturePackagesUnchanged($installed_php);
+
+    // Remove the original packages since we have confirmed that they have not
+    // changed.
+    $installed_php = array_diff_key($installed_php, $this->originalInstalledPhp);
     $this->assertSame($installed_php_expected_packages, $installed_php);
   }
 

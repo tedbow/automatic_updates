@@ -6,6 +6,7 @@ namespace Drupal\Tests\package_manager\Kernel;
 
 use Drupal\fixture_manipulator\ActiveFixtureManipulator;
 use Drupal\package_manager\ComposerUtility;
+use Symfony\Component\Process\Process;
 
 /**
  * Test that the 'fake-site' fixture is a valid starting point.
@@ -111,6 +112,21 @@ class FakeSiteFixtureTest extends PackageManagerKernelTestBase {
     ];
     sort($packages);
     return $packages;
+  }
+
+  /**
+   * Tests that Composer show command can be used on the fixture.
+   */
+  public function testComposerShow(): void {
+    $process = new Process(['composer', 'show', '--format=json'], $this->container->get('package_manager.path_locator')->getProjectRoot());
+    $process->run();
+    if ($error = $process->getErrorOutput()) {
+      $this->fail('Process error: ' . $error);
+    }
+    $output = json_decode($process->getOutput(), TRUE);
+    $package_names = array_map(fn (array $package) => $package['name'], $output['installed']);
+    $this->assertTrue(asort($package_names));
+    $this->assertSame(['drupal/core', 'drupal/core-dev', 'drupal/core-recommended'], $package_names);
   }
 
 }

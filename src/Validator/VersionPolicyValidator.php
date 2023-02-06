@@ -196,7 +196,8 @@ final class VersionPolicyValidator implements EventSubscriberInterface {
     $unknown_target = new \LogicException('The target version of Drupal core could not be determined.');
 
     if (isset($package_versions)) {
-      $core_package_name = key($updater->getActiveComposer()->getCorePackages());
+      // Get the first non-dev core package.
+      $core_package_name = key(array_diff_key($updater->getActiveComposer()->getCorePackages(), ['drupal/core-dev' => '']));
 
       if ($core_package_name && array_key_exists($core_package_name, $package_versions)) {
         return $package_versions[$core_package_name];

@@ -2,6 +2,7 @@
 
 namespace Drupal\fixture_manipulator;
 
+use Composer\Semver\VersionParser;
 use Drupal\Component\Utility\NestedArray;
 use Drupal\Core\Serialization\Yaml;
 use Symfony\Component\Filesystem\Filesystem;
@@ -190,6 +191,12 @@ class FixtureManipulator {
     if ($package) {
       $package = ['name' => $pretty_name] + $package;
       $install_json_package = array_diff_key($package, array_flip(['install_path']));
+      // Composer will use 'version_normalized', if present, to determine the
+      // version number.
+      if (isset($install_json_package['version']) && !isset($install_json_package['version_normalized'])) {
+        $parser = new VersionParser();
+        $install_json_package['version_normalized'] = $parser->normalize($install_json_package['version']);
+      }
     }
 
     if (isset($position)) {
