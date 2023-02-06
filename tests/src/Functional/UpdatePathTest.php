@@ -61,6 +61,8 @@ class UpdatePathTest extends UpdatePathTestBase {
 
     $this->assertSame(CronUpdater::SECURITY, $this->config('automatic_updates.settings')->get('cron'));
 
+    $this->assertSame(NULL, $this->config('package_manager.settings')->get('additional_trusted_composer_plugins'));
+
     $this->runUpdates();
 
     $this->assertSame(CronUpdater::DISABLED, $this->config('automatic_updates.settings')->get('cron'));
@@ -74,6 +76,8 @@ class UpdatePathTest extends UpdatePathTestBase {
     unset($expected_values['status_check_last_run']);
     $this->assertSame($expected_values, $key_value->getMultiple(array_values($map)));
     $this->assertSame(StatusCheckMailer::ERRORS_ONLY, $this->config('automatic_updates.settings')->get('status_check_mail'));
+
+    $this->assertSame([], $this->config('package_manager.settings')->get('additional_trusted_composer_plugins'));
 
     // Ensure that the router was rebuilt and routes have the expected changes.
     $routes = $this->container->get('router')->getRouteCollection();

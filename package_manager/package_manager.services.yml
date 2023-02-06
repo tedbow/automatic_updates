@@ -217,6 +217,14 @@ services:
       - '@string_translation'
     tags:
       - { name: event_subscriber }
+  package_manager.validator.composer_plugins:
+    class: Drupal\package_manager\Validator\ComposerPluginsValidator
+    arguments:
+      - '@config.factory'
+      - '@package_manager.composer_inspector'
+      - '@package_manager.path_locator'
+    tags:
+      - { name: event_subscriber }
   package_manager.validator.patches:
     class: Drupal\package_manager\Validator\ComposerPatchesValidator
     tags:

@@ -144,7 +144,7 @@ class FixtureManipulator {
    * This function is internal and should not be called directly. Use
    * ::addPackage(), ::modifyPackage(), and ::removePackage() instead.
    *
-   * @param string $name
+   * @param string $pretty_name
    *   The name of the package to add, update, or remove.
    * @param array|null $package
    *   The package information to be set in installed.json and installed.php, or
@@ -155,7 +155,10 @@ class FixtureManipulator {
    * @param bool|null $is_dev_requirement
    *   Whether or not the package is a developer requirement.
    */
-  private function setPackage(string $name, ?array $package, bool $should_exist, ?bool $is_dev_requirement = NULL): void {
+  private function setPackage(string $pretty_name, ?array $package, bool $should_exist, ?bool $is_dev_requirement = NULL): void {
+    // @see \Composer\Package\BasePackage::__construct()
+    $name = strtolower($pretty_name);
+
     if ($should_exist && isset($is_dev_requirement)) {
       throw new \LogicException('Changing an existing project to a dev requirement is not supported');
     }
@@ -178,14 +181,14 @@ class FixtureManipulator {
     // Ensure that we actually expect to find the package already installed (or
     // not).
     $expected_package_message = $should_exist
-      ? "Expected package '$name' to be installed, but it wasn't."
-      : "Expected package '$name' to not be installed, but it was.";
+      ? "Expected package '$pretty_name' to be installed, but it wasn't."
+      : "Expected package '$pretty_name' to not be installed, but it was.";
     if ($should_exist !== isset($position)) {
       throw new \LogicException($expected_package_message);
     }
 
     if ($package) {
-      $package = ['name' => $name] + $package;
+      $package = ['name' => $pretty_name] + $package;
       $install_json_package = array_diff_key($package, array_flip(['install_path']));
     }
 
@@ -296,6 +299,40 @@ class FixtureManipulator {
     $this->setVersion('drupal/core', $version);
     $this->setVersion('drupal/core-recommended', $version);
     $this->setVersion('drupal/core-dev', $version);
+    return $this;
+  }
+
+  /**
+   * Modifies a package's installed info.
+   *
+   * See ::addPackage() for information on how the `install_path` key is
+   * handled, if $package has it.
+   *
+   * @param array $additional_config
+   *   The configuration to add.
+   */
+  public function addConfig(array $additional_config): self {
+    if (empty($additional_config)) {
+      throw new \InvalidArgumentException('No config to add.');
+    }
+
+    if (!$this->committingChanges) {
+      $this->queueManipulation('addConfig', func_get_args());
+      return $this;
+    }
+
+    $file = $this->dir . '/composer.json';
+    self::ensureFilePathIsWritable($file);
+
+    $data = file_get_contents($file);
+    $data = json_decode($data, TRUE, 512, JSON_THROW_ON_ERROR);
+
+    $config = $data['config'] ?? [];
+    $data['config'] = NestedArray::mergeDeep($config, $additional_config);
+
+    file_put_contents($file, json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
+    self::ensureFilePathIsWritable($file);
+
     return $this;
   }
 

@@ -135,6 +135,14 @@
  *   package) in the active directory after a stage directory has been created
  *   ,Package Manager will refuse to make any further changes to the stage
  *   directory or apply the staged changes to the active directory.
+ * - Composer plugins are able to perform arbitrary file system operations, and
+ *   hence could perform actions that make it impossible for Package Manager to
+ *   guarantee the Drupal site will continue to work correctly. For that reason,
+ *   Package Manager will refuse to make any further changes if untrusted
+ *   composer plugins are installed or staged. Additional composer plugins are
+ *   vetted over time. If you know what you are doing, it is possible to trust
+ *   additional composer plugins by modifying package_manager.settings's
+ *   "additional_trusted_composer_plugins" setting.
  * - The Drupal site must not have any pending database updates.
  * - Composer must use HTTPS to download packages and metadata (i.e., Composer's
  *   secure-http configuration option must be enabled). This is the default

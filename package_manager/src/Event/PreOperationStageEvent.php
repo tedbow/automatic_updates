@@ -49,7 +49,7 @@ abstract class PreOperationStageEvent extends StageEvent {
    *   is more than one message.
    */
   public function addError(array $messages, ?TranslatableMarkup $summary = NULL): void {
-    $this->results[] = ValidationResult::createError($messages, $summary);
+    $this->results[] = ValidationResult::createError(array_values($messages), $summary);
   }
 
   /**
