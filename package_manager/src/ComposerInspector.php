@@ -76,7 +76,9 @@ final class ComposerInspector {
        * {@inheritdoc}
        */
       public function __invoke(string $type, string $buffer): void {
-        $this->output .= trim($buffer);
+        if ($type === ProcessOutputCallbackInterface::OUT) {
+          $this->output .= trim($buffer);
+        }
       }
 
     };
