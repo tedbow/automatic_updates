@@ -4,6 +4,8 @@ declare(strict_types = 1);
 
 namespace Drupal\package_manager;
 
+use PhpTuf\ComposerStager\Domain\Exception\RuntimeException;
+use PhpTuf\ComposerStager\Domain\Service\ProcessOutputCallback\ProcessOutputCallbackInterface;
 use PhpTuf\ComposerStager\Domain\Service\ProcessRunner\ComposerRunnerInterface;
 
 /**
@@ -49,12 +51,54 @@ final class ComposerInspector {
    * @param string $working_dir
    *   The working directory in which to run Composer.
    *
-   * @return mixed|null
-   *   The output data.
+   * @return string|null
+   *   The output data. Note that the caller must know the shape of the
+   *   requested key's value: if it's a string, no further processing is needed,
+   *   but if it is a boolean, an array or a map, JSON decoding should be
+   *   applied.
+   *
+   * @see \Composer\Command\ConfigCommand::execute()
    */
-  public function getConfig(string $key, string $working_dir) {
-    $this->runner->run(['config', $key, "--working-dir=$working_dir", '--json'], $this->jsonCallback);
-    return $this->jsonCallback->getOutputData();
+  public function getConfig(string $key, string $working_dir) : ?string {
+    // For whatever reason, PHPCS thinks that $output is not used, even though
+    // it very clearly *is*. So, shut PHPCS up for the duration of this method.
+    // phpcs:disable DrupalPractice.CodeAnalysis.VariableAnalysis.UnusedVariable
+    $callback = new class () implements ProcessOutputCallbackInterface {
+
+      /**
+       * The command output.
+       *
+       * @var string
+       */
+      public string $output = '';
+
+      /**
+       * {@inheritdoc}
+       */
+      public function __invoke(string $type, string $buffer): void {
+        $this->output .= trim($buffer);
+      }
+
+    };
+    // phpcs:enable
+    try {
+      $this->runner->run(['config', $key, "--working-dir=$working_dir"], $callback);
+    }
+    catch (RuntimeException $e) {
+      // Assume any error from `composer config` is about an undefined key-value
+      // pair which may have a known default value.
+      // @todo Remove this once https://github.com/composer/composer/issues/11302 lands and ships in a composer release.
+      switch ($key) {
+        // @see https://getcomposer.org/doc/04-schema.md#minimum-stability
+        case 'minimum-stability':
+          return 'stable';
+
+        default:
+          // Otherwise, re-throw the exception.
+          throw $e;
+      }
+    }
+    return $callback->output;
   }
 
   /**

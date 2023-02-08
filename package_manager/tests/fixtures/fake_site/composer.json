@@ -17,7 +17,8 @@
         "foo": 1.23,
         "bar": 134,
         "foo-bar": null
-    }
+    },
+    "baz": null
   },
   "repositories": {
     "packagist.org": false,

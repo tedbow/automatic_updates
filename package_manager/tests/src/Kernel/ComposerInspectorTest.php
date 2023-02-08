@@ -4,6 +4,7 @@ declare(strict_types = 1);
 
 namespace Drupal\Tests\package_manager\Kernel;
 
+use Drupal\Component\Serialization\Json;
 use Drupal\Core\DependencyInjection\ContainerBuilder;
 use Drupal\KernelTests\KernelTestBase;
 use PhpTuf\ComposerStager\Domain\Exception\RuntimeException;
@@ -26,7 +27,7 @@ class ComposerInspectorTest extends KernelTestBase {
   public function testConfig(): void {
     $dir = __DIR__ . '/../../fixtures/fake_site';
     $inspector = $this->container->get('package_manager.composer_inspector');
-    $this->assertSame(1, $inspector->getConfig('secure-http', $dir));
+    $this->assertSame(1, Json::decode($inspector->getConfig('secure-http', $dir)));
 
     $this->assertSame([
       'boo' => 'boo boo',
@@ -37,7 +38,8 @@ class ComposerInspectorTest extends KernelTestBase {
         "bar" => 134,
         "foo-bar" => NULL,
       ],
-    ], $inspector->getConfig('extra', $dir));
+      'baz' => NULL,
+    ], Json::decode($inspector->getConfig('extra', $dir)));
 
     $this->expectException(RuntimeException::class);
     $inspector->getConfig('non-existent-config', $dir);

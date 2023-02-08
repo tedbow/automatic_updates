@@ -113,6 +113,13 @@ services:
       - '@package_manager.path_locator'
     tags:
       - { name: event_subscriber }
+  package_manger.validator.composer_minimum_stability:
+    class: Drupal\package_manager\Validator\ComposerMinimumStabilityValidator
+    arguments:
+      - '@package_manager.path_locator'
+      - '@package_manager.composer_inspector'
+    tags:
+      - { name: event_subscriber }
   package_manager.validator.multisite:
     class: Drupal\package_manager\Validator\MultisiteValidator
     arguments:

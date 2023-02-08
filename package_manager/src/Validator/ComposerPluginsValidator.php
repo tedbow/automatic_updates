@@ -6,6 +6,7 @@ namespace Drupal\package_manager\Validator;
 
 use Composer\Package\Package;
 use Drupal\Component\Render\FormattableMarkup;
+use Drupal\Component\Serialization\Json;
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\package_manager\ComposerInspector;
@@ -15,6 +16,7 @@ use Drupal\package_manager\Event\PreOperationStageEvent;
 use Drupal\package_manager\Event\StatusCheckEvent;
 use Drupal\package_manager\PathExcluder\VendorHardeningExcluder;
 use Drupal\package_manager\PathLocator;
+use PhpTuf\ComposerStager\Domain\Exception\RuntimeException;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 /**
@@ -172,10 +174,10 @@ final class ComposerPluginsValidator implements EventSubscriberInterface {
       : $this->pathLocator->getProjectRoot();
     try {
       // @see https://getcomposer.org/doc/06-config.md#allow-plugins
-      $value = $this->inspector->getConfig('allow-plugins', $dir);
+      $value = Json::decode($this->inspector->getConfig('allow-plugins', $dir));
     }
-    catch (\Exception $exception) {
-      $event->addErrorFromThrowable($exception, $this->t('Unable to determine Composer <code>allow-plugins/code> setting.'));
+    catch (RuntimeException $exception) {
+      $event->addErrorFromThrowable($exception, $this->t('Unable to determine Composer <code>allow-plugins</code> setting.'));
       return;
     }
 
