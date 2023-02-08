@@ -76,7 +76,8 @@ class RequestedUpdateValidatorTest extends AutomaticUpdatesKernelTestBase {
     $updater = $this->container->get('automatic_updates.updater');
     $updater->begin(['drupal' => '9.8.1']);
     $updater->stage();
-    $this->expectErrorMessage('No updates detected in the staging area.');
+    $this->expectException(StageValidationException::class);
+    $this->expectExceptionMessage('No updates detected in the staging area.');
     $updater->apply();
   }
 
