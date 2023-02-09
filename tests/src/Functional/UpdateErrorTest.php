@@ -69,10 +69,15 @@ class UpdateErrorTest extends UpdaterFormTestBase {
     $error = ValidationResult::createError($error_messages, $summary);
     TestSubscriber::setTestResult([$error], StatusCheckEvent::class);
     $this->getSession()->reload();
-    $assert_session->pageTextContains($summary);
-    foreach ($error_messages as $message) {
-      $assert_session->pageTextContains($message);
-    }
+    $this->assertStatusMessageContainsResult($error);
+    $assert_session->buttonNotExists('Continue');
+    $assert_session->buttonExists('Cancel update');
+
+    // An error with only one message should also show the summary.
+    $error = ValidationResult::createError([t('Yet another smarmy error.')], $summary);
+    TestSubscriber::setTestResult([$error], StatusCheckEvent::class);
+    $this->getSession()->reload();
+    $this->assertStatusMessageContainsResult($error);
     $assert_session->buttonNotExists('Continue');
     $assert_session->buttonExists('Cancel update');
   }
@@ -106,9 +111,19 @@ class UpdateErrorTest extends UpdaterFormTestBase {
     // thanks to automatic_updates_page_top(). The status checks were re-run
     // during the form build, which means the new error should be cached and
     // displayed instead of the previously cached error.
-    $assert_session->pageTextContainsOnce((string) $expected_results[0]->getMessages()[0]);
-    $assert_session->pageTextContainsOnce((string) $expected_results[0]->getMessages()[1]);
-    $assert_session->pageTextContainsOnce((string) $expected_results[0]->getSummary());
+    $this->assertStatusMessageContainsResult($expected_results[0]);
+    $assert_session->pageTextContainsOnce(static::$errorsExplanation);
+    $assert_session->pageTextNotContains(static::$warningsExplanation);
+    $assert_session->pageTextNotContains($cached_message);
+    TestSubscriber1::setTestResult(NULL, StatusCheckEvent::class);
+
+    // Set up an error with one message and a summary. We should see both when
+    // we refresh the form.
+    $expected_result = $this->createValidationResult(SystemManager::REQUIREMENT_ERROR, 1);
+    TestSubscriber1::setTestResult([$expected_result], StatusCheckEvent::class);
+    $this->getSession()->reload();
+    $this->assertNoUpdateButtons();
+    $this->assertStatusMessageContainsResult($expected_result);
     $assert_session->pageTextContainsOnce(static::$errorsExplanation);
     $assert_session->pageTextNotContains(static::$warningsExplanation);
     $assert_session->pageTextNotContains($cached_message);
@@ -145,9 +160,7 @@ class UpdateErrorTest extends UpdaterFormTestBase {
     $this->assertUpdateStagedTimes(0);
     $assert_session->pageTextContainsOnce('An error has occurred.');
     $page->clickLink('the error page');
-    $assert_session->pageTextContainsOnce($expected_results[0]->getSummary());
-    $assert_session->pageTextContainsOnce((string) $expected_results[0]->getMessages()[0]);
-    $assert_session->pageTextContainsOnce((string) $expected_results[0]->getMessages()[1]);
+    $this->assertStatusMessageContainsResult($expected_results[0]);
     $assert_session->pageTextNotContains($cached_message);
   }
 

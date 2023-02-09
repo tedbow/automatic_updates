@@ -66,10 +66,13 @@ abstract class UpdateFormBase extends FormBase {
     foreach ($results as $result) {
       $messages = $result->getMessages();
 
-      if (count($messages) > 1) {
+      // If there's a summary, there's guaranteed to be at least one message,
+      // so render the result as a nested list.
+      $summary = $result->getSummary();
+      if ($summary) {
         $build['#items'][] = [
           '#theme' => $build['#theme'],
-          '#prefix' => $result->getSummary(),
+          '#prefix' => $summary,
           '#items' => $messages,
         ];
       }

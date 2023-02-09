@@ -14,6 +14,7 @@ use Drupal\Core\Routing\CurrentRouteMatch;
 use Drupal\Core\Routing\RedirectDestinationTrait;
 use Drupal\Core\Session\AccountProxyInterface;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
+use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\Core\StringTranslation\TranslationInterface;
 use Drupal\Core\Url;
 use Drupal\package_manager\ValidationResult;
@@ -219,6 +220,47 @@ final class AdminStatusCheckMessages implements ContainerInjectionInterface {
       ]),
       $message_type,
       );
+    }
+  }
+
+  /**
+   * Adds a set of validation results to the messages.
+   *
+   * @param \Drupal\package_manager\ValidationResult[] $results
+   *   The validation results.
+   * @param \Drupal\Core\Messenger\MessengerInterface $messenger
+   *   The messenger service.
+   * @param \Drupal\Core\Render\RendererInterface $renderer
+   *   The renderer service.
+   */
+  protected function displayResults(array $results, MessengerInterface $messenger, RendererInterface $renderer): void {
+    $severity = ValidationResult::getOverallSeverity($results);
+
+    if ($severity === SystemManager::REQUIREMENT_OK) {
+      return;
+    }
+
+    // Display a single message for each validation result, even if it has
+    // multiple messages. This is because, on regular admin pages, we merely
+    // want to alert users that problems exist, but not burden them with the
+    // details. They can get those on the status report and updater form.
+    $format_result = function (ValidationResult $result): TranslatableMarkup {
+      $messages = $result->getMessages();
+      return $result->getSummary() ?: reset($messages);
+    };
+    // Format the results as a single item list prefixed by a preamble message.
+    $build = [
+      '#theme' => 'item_list__automatic_updates_validation_results',
+      '#prefix' => $this->getFailureMessageForSeverity($severity),
+      '#items' => array_map($format_result, $results),
+    ];
+    $message = $renderer->renderRoot($build);
+
+    if ($severity === SystemManager::REQUIREMENT_ERROR) {
+      $messenger->addError($message);
+    }
+    else {
+      $messenger->addWarning($message);
     }
   }
 

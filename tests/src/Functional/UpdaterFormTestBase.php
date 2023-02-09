@@ -8,6 +8,7 @@ use Drupal\automatic_updates_test\EventSubscriber\TestSubscriber1;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\package_manager\Event\StatusCheckEvent;
 use Drupal\package_manager\ValidationResult;
+use Drupal\system\SystemManager;
 use Drupal\Tests\automatic_updates\Traits\ValidationTestTrait;
 use Drupal\Tests\package_manager\Traits\PackageManagerBypassTestTrait;
 
@@ -126,6 +127,23 @@ abstract class UpdaterFormTestBase extends AutomaticUpdatesFunctionalTestBase {
     $this->assertSame("Release notes for Drupal core $version", $release_notes->getAttribute('title'));
     $button = $assert_session->buttonExists("Update to $version", $container);
     $this->assertSame($is_primary, $button->hasClass('button--primary'));
+  }
+
+  /**
+   * Asserts that a status message containing a given validation result exists.
+   *
+   * @param \Drupal\package_manager\ValidationResult $result
+   *   A validation result.
+   */
+  protected function assertStatusMessageContainsResult(ValidationResult $result): void {
+    $assert_session = $this->assertSession();
+    $type = $result->getSeverity() === SystemManager::REQUIREMENT_ERROR ? 'error' : 'warning';
+    $assert_session->statusMessageContains((string) $result->getSummary(), $type);
+    $assert_session->pageTextContainsOnce((string) $result->getSummary());
+    foreach ($result->getMessages() as $message) {
+      $assert_session->statusMessageContains((string) $message, $type);
+      $assert_session->pageTextContainsOnce((string) $message);
+    }
   }
 
 }

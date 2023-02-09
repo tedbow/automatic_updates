@@ -12,6 +12,7 @@ use Drupal\automatic_updates_test\EventSubscriber\TestSubscriber1;
 use Drupal\automatic_updates_test2\EventSubscriber\TestSubscriber2;
 use Drupal\Core\Url;
 use Drupal\package_manager\Event\StatusCheckEvent;
+use Drupal\package_manager\ValidationResult;
 use Drupal\package_manager_test_validation\EventSubscriber\TestSubscriber;
 use Drupal\system\SystemManager;
 use Drupal\Tests\automatic_updates\Traits\ValidationTestTrait;
@@ -194,12 +195,17 @@ class StatusCheckTest extends AutomaticUpdatesFunctionalTestBase {
     TestSubscriber1::setTestResult($expected_results, StatusCheckEvent::class);
     // Confirm a new message is displayed if the page is reloaded.
     $this->getSession()->reload();
-    // Confirm that on the status page if there is only 1 warning or error the
-    // summaries will not be displayed.
+    // On the status page, we should see the summaries and messages, even if
+    // there is only 1 message.
     $this->assertErrors([$expected_results['error']]);
     $this->assertWarnings([$expected_results['warning']]);
-    $assert->pageTextNotContains($expected_results['error']->getSummary());
-    $assert->pageTextNotContains($expected_results['warning']->getSummary());
+
+    // If there's a result with only one message, but no summary, ensure that
+    // message is displayed.
+    $result = ValidationResult::createError([t('A lone message, with no summary.')]);
+    TestSubscriber1::setTestResult([$result], StatusCheckEvent::class);
+    $this->getSession()->reload();
+    $this->assertErrors([$result]);
 
     $expected_results = [
       'error' => $this->createValidationResult(SystemManager::REQUIREMENT_ERROR, 2),
@@ -293,7 +299,7 @@ class StatusCheckTest extends AutomaticUpdatesFunctionalTestBase {
     $assert->pageTextContainsOnce('Your site has not recently run an update readiness check. Rerun readiness checks now.');
     $this->clickLink('Rerun readiness checks now.');
     $assert->addressEquals(Url::fromRoute($admin_route));
-    $assert->pageTextContainsOnce($expected_results[0]->getMessages()[0]);
+    $assert->pageTextContainsOnce($expected_results[0]->getSummary());
 
     $expected_results = [
       '1 error' => $this->createValidationResult(SystemManager::REQUIREMENT_ERROR),
@@ -305,11 +311,10 @@ class StatusCheckTest extends AutomaticUpdatesFunctionalTestBase {
     $this->cronRun();
     $this->drupalGet(Url::fromRoute($admin_route));
     $assert->pageTextContainsOnce(static::$errorsExplanation);
-    // Confirm on admin pages that a single error will be displayed instead of a
-    // summary.
+    // Confirm on admin pages that the summary will be displayed.
     $this->assertSame(SystemManager::REQUIREMENT_ERROR, $expected_results['1 error']->getSeverity());
-    $assert->pageTextContainsOnce($expected_results['1 error']->getMessages()[0]);
-    $assert->pageTextNotContains($expected_results['1 error']->getSummary());
+    $assert->pageTextContainsOnce((string) $expected_results['1 error']->getSummary());
+    $assert->pageTextNotContains($expected_results['1 error']->getMessages()[0]);
     // Warnings are not displayed on admin pages if there are any errors.
     $this->assertSame(SystemManager::REQUIREMENT_WARNING, $expected_results['1 warning']->getSeverity());
     $assert->pageTextNotContains($expected_results['1 warning']->getMessages()[0]);
@@ -326,7 +331,7 @@ class StatusCheckTest extends AutomaticUpdatesFunctionalTestBase {
     $this->cronRun();
     $this->drupalGet(Url::fromRoute($admin_route));
     $assert->pageTextNotContains($unexpected_results['2 errors']->getSummary());
-    $assert->pageTextContainsOnce($expected_results['1 error']->getMessages()[0]);
+    $assert->pageTextContainsOnce((string) $expected_results['1 error']->getSummary());
     $assert->pageTextNotContains($unexpected_results['2 warnings']->getSummary());
     $assert->pageTextNotContains($expected_results['1 warning']->getMessages()[0]);
 
@@ -373,8 +378,8 @@ class StatusCheckTest extends AutomaticUpdatesFunctionalTestBase {
     // pages if there is only 1 warning and there are no errors.
     $this->assertSame(SystemManager::REQUIREMENT_WARNING, $expected_results[0]->getSeverity());
     $assert->pageTextContainsOnce(static::$warningsExplanation);
-    $assert->pageTextContainsOnce($expected_results[0]->getMessages()[0]);
-    $assert->pageTextNotContains($expected_results[0]->getSummary());
+    $assert->pageTextContainsOnce((string) $expected_results[0]->getSummary());
+    $assert->pageTextNotContains($expected_results[0]->getMessages()[0]);
 
     // Confirm status check messages are not displayed when cron updates are
     // disabled.
@@ -408,7 +413,7 @@ class StatusCheckTest extends AutomaticUpdatesFunctionalTestBase {
     TestSubscriber2::setTestResult($expected_results, StatusCheckEvent::class);
     $this->container->get('module_installer')->install(['automatic_updates_test2']);
     $this->drupalGet('admin/structure');
-    $assert->pageTextContainsOnce($expected_results[0]->getMessages()[0]);
+    $assert->pageTextContainsOnce((string) $expected_results[0]->getSummary());
 
     // Confirm that installing a module runs the checkers, even if the new
     // module does not provide any validators.
@@ -447,15 +452,15 @@ class StatusCheckTest extends AutomaticUpdatesFunctionalTestBase {
     // Check for message on 'admin/structure' instead of the status report
     // because checkers will be run if needed on the status report.
     $this->drupalGet('admin/structure');
-    $assert->pageTextContainsOnce($expected_results_1[0]->getMessages()[0]);
-    $assert->pageTextContainsOnce($expected_results_2[0]->getMessages()[0]);
+    $assert->pageTextContainsOnce($expected_results_1[0]->getSummary());
+    $assert->pageTextContainsOnce($expected_results_2[0]->getSummary());
 
     // Confirm that when on of the module is uninstalled the other module's
     // checker result is still displayed.
     $this->container->get('module_installer')->uninstall(['automatic_updates_test2']);
     $this->drupalGet('admin/structure');
-    $assert->pageTextNotContains($expected_results_2[0]->getMessages()[0]);
-    $assert->pageTextContainsOnce($expected_results_1[0]->getMessages()[0]);
+    $assert->pageTextNotContains($expected_results_2[0]->getSummary());
+    $assert->pageTextContainsOnce($expected_results_1[0]->getSummary());
 
     // Confirm that when on of the module is uninstalled the other module's
     // checker result is still displayed.
@@ -478,10 +483,11 @@ class StatusCheckTest extends AutomaticUpdatesFunctionalTestBase {
     // version.
     $this->mockActiveCoreVersion('9.8.0');
 
-    // Flag a validation error, which will be displayed in the messages area.
+    // Flag a validation error, whose summary will be displayed in the messages
+    // area.
     $results = [$this->createValidationResult(SystemManager::REQUIREMENT_ERROR)];
     TestSubscriber1::setTestResult($results, StatusCheckEvent::class);
-    $message = $results[0]->getMessages()[0];
+    $message = $results[0]->getSummary();
 
     $this->container->get('module_installer')->install([
       'automatic_updates',
@@ -527,10 +533,11 @@ class StatusCheckTest extends AutomaticUpdatesFunctionalTestBase {
   public function testStoredResultsClearedAfterConfigChanges(): void {
     $this->drupalLogin($this->checkerRunnerUser);
 
-    // Flag a validation error, which will be displayed in the messages area.
+    // Flag a validation error, whose summary will be displayed in the messages
+    // area.
     $result = $this->createValidationResult(SystemManager::REQUIREMENT_ERROR);
     TestSubscriber1::setTestResult([$result], StatusCheckEvent::class);
-    $message = $result->getMessages()[0];
+    $message = $result->getSummary();
 
     $this->container->get('module_installer')->install([
       'automatic_updates',
@@ -641,8 +648,9 @@ class StatusCheckTest extends AutomaticUpdatesFunctionalTestBase {
     $expected_messages = [];
     foreach ($expected_results as $result) {
       $messages = $result->getMessages();
-      if (count($messages) > 1) {
-        $expected_messages[] = $result->getSummary();
+      $summary = $result->getSummary();
+      if ($summary) {
+        $expected_messages[] = $summary;
       }
       $expected_messages = array_merge($expected_messages, $messages);
     }

@@ -40,10 +40,14 @@ class UpdateWarningTest extends UpdaterFormTestBase {
 
     $assert_session = $this->assertSession();
     $assert_session->buttonExists('Continue');
-    $assert_session->pageTextContains($summary);
-    foreach ($messages as $message) {
-      $assert_session->pageTextContains($message);
-    }
+    $this->assertStatusMessageContainsResult($warning);
+
+    // A warning with only one message should also show its summary.
+    $warning = ValidationResult::createWarning([t("I'm still warning you.")], $summary);
+    TestSubscriber::setTestResult([$warning], StatusCheckEvent::class);
+    $session->reload();
+    $this->assertStatusMessageContainsResult($warning);
+    $assert_session->buttonExists('Continue');
   }
 
 }

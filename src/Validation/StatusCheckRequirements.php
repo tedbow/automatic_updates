@@ -119,13 +119,14 @@ final class StatusCheckRequirements implements ContainerInjectionInterface {
     }
     foreach ($results as $result) {
       $checker_messages = $result->getMessages();
-      if (count($checker_messages) === 1) {
+      $summary = $result->getSummary();
+      if (empty($summary)) {
         $severity_messages[] = ['#markup' => array_pop($checker_messages)];
       }
       else {
         $severity_messages[] = [
           '#type' => 'details',
-          '#title' => $result->getSummary(),
+          '#title' => $summary,
           '#open' => FALSE,
           'messages' => [
             '#theme' => 'item_list',
