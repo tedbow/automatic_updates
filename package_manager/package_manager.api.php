@@ -50,6 +50,11 @@
  *
  * The stage dispatches the following events during its life cycle:
  *
+ * - \Drupal\package_manager\Event\CollectIgnoredPathsEvent
+ *   Dispatched before the stage directory is created and also before changes in
+ *   the stage directory are copied to the active directory. This event may be
+ *   dispatched multiple times during a stage's life cycle.
+ *
  * - \Drupal\package_manager\Event\PreCreateEvent
  *   Dispatched before the stage directory is created. At this point, the
  *   stage will have recorded which user or session owns it, so another stage
@@ -96,6 +101,17 @@
  *   Dispatched after the temporary stage directory is deleted and the stage
  *   has released its ownership. This event is dispatched only once during a
  *   stage's life cycle.
+ *
+ *  There are some cases where there is no point for an event to trigger further
+ *  event subscribers, in which case the event propagation should be stopped.
+ *  For example, in a situation where Composer or Composer Stager cannot work
+ *  at all, or a security vulnerability is detected, the event propagation must
+ *  be stopped to prevent further event subscribers from breaking. For example,
+ *  Package Manager stops event propagation if:
+ * - The stage directory is a subdirectory of the active directory.
+ * - No composer.json file exists in active directory.
+ * - Package Manager has been deliberately disabled in the current environment.
+ *   See \Drupal\package_manager\Validator\EnvironmentSupportValidator
  *
  * The public API of any stage consists of the following methods:
  *
@@ -155,9 +171,13 @@
  *   irrelevant to Composer or Package Manager. Examples include settings.php
  *   and related files, public and private files, SQLite databases, and git
  *   repositories. Custom code can use
- *   \Drupal\package_manager\Event\PreCreateEvent::excludePath() to exclude a
- *   specific path from being copied from the active directory into the stage
- *   directory, or \Drupal\package_manager\Event\PreApplyEvent::excludePath() to
- *   exclude a specific path from being copied from the stage directory back
- *   into the active directory.
+ *   \Drupal\package_manager\Stage::getIgnoredPaths() which dispatches the
+ *   CollectIgnoredPathsEvent to collect ignored paths that are excluded from
+ *   being copied from the active directory into the stage directory, and also
+ *   from being copied from the stage directory back into the active directory.
+ *
+ * \Drupal\package_manager\Event\StatusCheckEvent
+ * Dispatched to check the status of the Drupal site and whether Package Manager
+ * can function properly. These checks can be performed anytime, so this event
+ * may be dispatched multiple times.
  */
