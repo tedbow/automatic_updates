@@ -20,7 +20,7 @@ use Drupal\package_manager\Event\PreCreateEvent;
 use Drupal\package_manager\Exception\StageOwnershipException;
 use Drupal\package_manager\Exception\StageValidationException;
 use Drupal\package_manager\ValidationResult;
-use Drupal\package_manager_bypass\Committer;
+use Drupal\package_manager_bypass\LoggingCommitter;
 use Drupal\Tests\automatic_updates\Traits\EmailNotificationsTestTrait;
 use Drupal\Tests\package_manager\Kernel\TestStage;
 use Drupal\Tests\package_manager\Traits\PackageManagerBypassTestTrait;
@@ -577,7 +577,7 @@ END;
   public function testApplyFailureEmail(): void {
     $this->getStageFixtureManipulator()->setCorePackageVersion('9.8.1');
     $error = new \Exception('I drink your milkshake!');
-    Committer::setException($error);
+    LoggingCommitter::setException($error);
 
     $this->container->get('cron')->run();
     $expected_body = <<<END

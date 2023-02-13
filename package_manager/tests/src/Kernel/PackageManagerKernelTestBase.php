@@ -267,7 +267,7 @@ abstract class PackageManagerKernelTestBase extends KernelTestBase {
 
     // Ensure the path locator points to the test project. We assume that is its
     // own web root and the vendor directory is at its top level.
-    /** @var \Drupal\package_manager_bypass\PathLocator $path_locator */
+    /** @var \Drupal\package_manager_bypass\MockPathLocator $path_locator */
     $path_locator = $this->container->get('package_manager.path_locator');
     $path_locator->setPaths($active_dir, $active_dir . '/vendor', '', $staging_root);
 

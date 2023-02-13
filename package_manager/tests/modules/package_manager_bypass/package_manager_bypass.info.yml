@@ -1,5 +1,5 @@
 name: 'Package Manager Bypass'
-description: 'Mocks Package Manager services for functional testing.'
+description: 'Mocks PathLocator service, decorates Beginner & Committer services (adds logging) and by default bypasses the Stager service (to minimize I/O during tests).'
 type: module
 package: Testing
 dependencies:

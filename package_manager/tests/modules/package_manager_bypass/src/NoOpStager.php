@@ -12,9 +12,22 @@ use PhpTuf\ComposerStager\Domain\Service\ProcessRunner\ProcessRunnerInterface;
 use PhpTuf\ComposerStager\Domain\Value\Path\PathInterface;
 
 /**
- * Defines an update stager which doesn't actually do anything.
+ * A composer-stager Stager implementation that does nothing, except logging.
+ *
+ * By default, it will modify composer.lock in the stage directory, to fool the
+ * \Drupal\package_manager\Validator\LockFileValidator into thinking that there
+ * are pending composer operations.
+ *
+ * Opt out of this by calling @code setLockFileShouldChange(FALSE) @endcode.
+ *
+ * @see ::setLockFileShouldChange()
+ * @see \Drupal\package_manager\Validator\LockFileValidator
+ *
+ * @internal
  */
-class Stager extends BypassedStagerServiceBase implements StagerInterface {
+final class NoOpStager implements StagerInterface {
+
+  use LoggingDecoratorTrait;
 
   /**
    * Constructs a Stager object.

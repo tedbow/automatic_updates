@@ -12,9 +12,13 @@ use PhpTuf\ComposerStager\Domain\Value\Path\PathInterface;
 use PhpTuf\ComposerStager\Domain\Value\PathList\PathListInterface;
 
 /**
- * Defines a service that decorates the Composer Stager beginner service.
+ * A composer-stager Beginner decorator that adds logging.
+ *
+ * @internal
  */
-class Beginner extends BypassedStagerServiceBase implements BeginnerInterface {
+final class LoggingBeginner implements BeginnerInterface {
+
+  use LoggingDecoratorTrait;
 
   /**
    * The decorated service.

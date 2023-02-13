@@ -9,9 +9,11 @@ use Drupal\package_manager\PathLocator as BasePathLocator;
 use Drupal\package_manager\Path;
 
 /**
- * Overrides the path locator to return pre-set values for testing purposes.
+ * Mock path locator: allows specifying paths instead of discovering paths.
+ *
+ * @internal
  */
-class PathLocator extends BasePathLocator {
+final class MockPathLocator extends BasePathLocator {
 
   /**
    * The state service.

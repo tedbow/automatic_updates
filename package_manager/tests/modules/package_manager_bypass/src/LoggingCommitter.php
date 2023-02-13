@@ -12,9 +12,13 @@ use PhpTuf\ComposerStager\Domain\Value\Path\PathInterface;
 use PhpTuf\ComposerStager\Domain\Value\PathList\PathListInterface;
 
 /**
- * Defines a service that decorates the Composer Stager committer service.
+ * A composer-stager Committer decorator that adds logging.
+ *
+ * @internal
  */
-class Committer extends BypassedStagerServiceBase implements CommitterInterface {
+final class LoggingCommitter implements CommitterInterface {
+
+  use LoggingDecoratorTrait;
 
   /**
    * The decorated service.

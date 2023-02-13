@@ -4,7 +4,7 @@ declare(strict_types = 1);
 
 namespace Drupal\Tests\automatic_updates\Functional;
 
-use Drupal\package_manager_bypass\Committer;
+use Drupal\package_manager_bypass\LoggingCommitter;
 
 /**
  * @covers \Drupal\automatic_updates\Form\UpdaterForm
@@ -31,7 +31,7 @@ class UpdateFailedTest extends UpdaterFormTestBase {
     $this->checkForMetaRefresh();
     $this->assertUpdateStagedTimes(1);
 
-    Committer::setException(new \Exception('failed at committer'));
+    LoggingCommitter::setException(new \Exception('failed at committer'));
     $page->pressButton('Continue');
     $this->checkForMetaRefresh();
     $assert_session->pageTextContainsOnce('An error has occurred.');

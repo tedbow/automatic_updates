@@ -9,7 +9,7 @@ use Drupal\package_manager\Event\PreCreateEvent;
 use Drupal\package_manager\Event\PreRequireEvent;
 use Drupal\package_manager\Validator\LockFileValidator;
 use Drupal\package_manager\ValidationResult;
-use Drupal\package_manager_bypass\Stager;
+use Drupal\package_manager_bypass\NoOpStager;
 
 /**
  * @coversDefaultClass \Drupal\package_manager\Validator\LockFileValidator
@@ -137,7 +137,7 @@ class LockFileValidatorTest extends PackageManagerKernelTestBase {
    */
   public function testApplyWithNoChange(): void {
     // Leave the staged lock file alone.
-    Stager::setLockFileShouldChange(FALSE);
+    NoOpStager::setLockFileShouldChange(FALSE);
 
     $result = ValidationResult::createError([
       t('There are no pending Composer operations.'),

@@ -18,7 +18,7 @@ use Drupal\package_manager\Event\StageEvent;
 use Drupal\package_manager\Exception\ApplyFailedException;
 use Drupal\package_manager\Exception\StageException;
 use Drupal\package_manager\Stage;
-use Drupal\package_manager_bypass\Committer;
+use Drupal\package_manager_bypass\LoggingCommitter;
 use PhpTuf\ComposerStager\Domain\Exception\InvalidArgumentException;
 use PhpTuf\ComposerStager\Domain\Exception\PreconditionException;
 use PhpTuf\ComposerStager\Domain\Service\Precondition\PreconditionInterface;
@@ -63,7 +63,7 @@ class StageTest extends PackageManagerKernelTestBase {
     $validator = $this->container->get('package_manager.validator.file_system');
     $this->container->get('event_dispatcher')->removeSubscriber($validator);
 
-    /** @var \Drupal\package_manager_bypass\PathLocator $path_locator */
+    /** @var \Drupal\package_manager_bypass\MockPathLocator $path_locator */
     $path_locator = $this->container->get('package_manager.path_locator');
 
     $stage = $this->createStage();
@@ -188,7 +188,7 @@ class StageTest extends PackageManagerKernelTestBase {
       // testing purposes.
       $event->getStage()->destroy($force);
       // @see \PhpTuf\ComposerStager\Infrastructure\Service\Precondition\StagingDirDoesNotExist
-      Committer::setException(
+      LoggingCommitter::setException(
         new PreconditionException(
           $this->prophesize(PreconditionInterface::class)->reveal(),
           'Stage directory does not exist',
@@ -327,7 +327,7 @@ class StageTest extends PackageManagerKernelTestBase {
     else {
       $throwable = new $thrown_class($thrown_message, 123);
     }
-    Committer::setException($throwable);
+    LoggingCommitter::setException($throwable);
 
     try {
       $stage->apply();
@@ -360,7 +360,7 @@ class StageTest extends PackageManagerKernelTestBase {
     // Make the committer throw an exception, which should cause the failure
     // marker to be present.
     $thrown = new \Exception('Disastrous catastrophe!');
-    Committer::setException($thrown);
+    LoggingCommitter::setException($thrown);
     try {
       $stage->apply();
       $this->fail('Expected an exception.');

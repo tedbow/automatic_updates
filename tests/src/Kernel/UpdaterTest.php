@@ -11,7 +11,7 @@ use Drupal\package_manager\Event\PreCreateEvent;
 use Drupal\package_manager\Event\PreRequireEvent;
 use Drupal\package_manager\Exception\StageException;
 use Drupal\package_manager\ValidationResult;
-use Drupal\package_manager_bypass\Committer;
+use Drupal\package_manager_bypass\LoggingCommitter;
 use Drupal\Tests\package_manager\Kernel\TestStageValidationException;
 use Drupal\Tests\user\Traits\UserCreationTrait;
 use PhpTuf\ComposerStager\Domain\Exception\InvalidArgumentException;
@@ -188,7 +188,7 @@ class UpdaterTest extends AutomaticUpdatesKernelTestBase {
     ]);
     $updater->stage();
     $thrown_message = 'A very bad thing happened';
-    Committer::setException(new $thrown_class($thrown_message, 123));
+    LoggingCommitter::setException(new $thrown_class($thrown_message, 123));
     $this->expectException($expected_class);
     $expected_message = $expected_class === UpdateException::class ?
       "The update operation failed to apply completely. All the files necessary to run Drupal correctly and securely are probably not present. It is strongly recommended to restore your site's code and database from a backup."

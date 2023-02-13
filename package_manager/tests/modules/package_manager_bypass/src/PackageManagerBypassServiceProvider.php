@@ -11,8 +11,10 @@ use Symfony\Component\DependencyInjection\Reference;
 
 /**
  * Defines services to bypass Package Manager's core functionality.
+ *
+ * @internal
  */
-class PackageManagerBypassServiceProvider extends ServiceProviderBase {
+final class PackageManagerBypassServiceProvider extends ServiceProviderBase {
 
   /**
    * {@inheritdoc}
@@ -21,12 +23,13 @@ class PackageManagerBypassServiceProvider extends ServiceProviderBase {
     parent::alter($container);
 
     $state = new Reference('state');
+    // By default, \Drupal\package_manager_bypass\Stager
     if (Settings::get('package_manager_bypass_composer_stager', TRUE)) {
-      $container->getDefinition('package_manager.stager')->setClass(Stager::class)->setArguments([$state]);
+      $container->getDefinition('package_manager.stager')->setClass(NoOpStager::class)->setArguments([$state]);
     }
 
     $definition = $container->getDefinition('package_manager.path_locator')
-      ->setClass(PathLocator::class);
+      ->setClass(MockPathLocator::class);
     $arguments = $definition->getArguments();
     array_unshift($arguments, $state);
     $definition->setArguments($arguments);

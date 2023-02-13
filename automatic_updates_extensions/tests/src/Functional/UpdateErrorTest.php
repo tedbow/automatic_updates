@@ -7,7 +7,7 @@ namespace Drupal\Tests\automatic_updates_extensions\Functional;
 use Drupal\automatic_updates_test\EventSubscriber\TestSubscriber1;
 use Drupal\package_manager\Event\StatusCheckEvent;
 use Drupal\package_manager\ValidationResult;
-use Drupal\package_manager_bypass\Committer;
+use Drupal\package_manager_bypass\LoggingCommitter;
 use Drupal\package_manager_test_validation\EventSubscriber\TestSubscriber;
 
 /**
@@ -38,7 +38,7 @@ class UpdateErrorTest extends UpdaterFormTestBase {
     $this->checkForMetaRefresh();
     $this->assertUpdateStagedTimes(1);
     $assert_session->pageTextNotContains('The following dependencies will also be updated:');
-    Committer::setException(new \Exception('failed at committer'));
+    LoggingCommitter::setException(new \Exception('failed at committer'));
     $page->pressButton('Continue');
     $this->checkForMetaRefresh();
     $assert_session->pageTextContainsOnce('An error has occurred.');

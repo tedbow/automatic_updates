@@ -10,8 +10,10 @@ namespace Drupal\package_manager_bypass;
  * This can be used by functional tests to ensure that the bypassed Composer
  * Stager services were called as expected. Kernel and unit tests should use
  * regular mocks instead.
+ *
+ * @internal
  */
-abstract class BypassedStagerServiceBase {
+trait LoggingDecoratorTrait {
 
   /**
    * The state service.
