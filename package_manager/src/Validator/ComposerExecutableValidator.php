@@ -105,7 +105,11 @@ class ComposerExecutableValidator implements EventSubscriberInterface {
       $this->composerIsAvailable->assertIsFulfilled($active_dir, $stage_dir);
     }
     catch (PreconditionException $e) {
-      $event->addError([$e->getMessage()]);
+      if (!$this->moduleHandler->moduleExists('help')) {
+        $event->addErrorFromThrowable($e);
+        return;
+      }
+      $this->setError($e->getMessage(), $event);
       return;
     }
 
@@ -113,6 +117,10 @@ class ComposerExecutableValidator implements EventSubscriberInterface {
       $output = $this->runCommand();
     }
     catch (ExceptionInterface $e) {
+      if (!$this->moduleHandler->moduleExists('help')) {
+        $event->addErrorFromThrowable($e);
+        return;
+      }
       $this->setError($e->getMessage(), $event);
       return;
     }
