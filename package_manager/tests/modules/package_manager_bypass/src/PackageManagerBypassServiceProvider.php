@@ -23,7 +23,9 @@ final class PackageManagerBypassServiceProvider extends ServiceProviderBase {
     parent::alter($container);
 
     $state = new Reference('state');
-    // By default, \Drupal\package_manager_bypass\Stager
+    // By default, \Drupal\package_manager_bypass\NoOpStager is applied, except
+    // when a test opts out by setting this setting to FALSE.
+    // @see \Drupal\package_manager_bypass\NoOpStager::setLockFileShouldChange()
     if (Settings::get('package_manager_bypass_composer_stager', TRUE)) {
       $container->getDefinition('package_manager.stager')->setClass(NoOpStager::class)->setArguments([$state]);
     }
