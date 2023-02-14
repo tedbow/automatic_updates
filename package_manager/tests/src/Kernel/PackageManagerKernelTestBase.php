@@ -245,6 +245,12 @@ abstract class PackageManagerKernelTestBase extends KernelTestBase {
     $this->assertTrue(mkdir($active_dir));
     static::copyFixtureFilesTo($source_dir, $active_dir);
 
+    // Make sure that the path repositories exist in the test project too.
+    (new Filesystem())->mirror(__DIR__ . '/../../fixtures/path_repos', $root . DIRECTORY_SEPARATOR . 'path_repos', NULL, [
+      'override' => TRUE,
+      'delete' => FALSE,
+    ]);
+
     // Removing 'vfs://root/' from site path set in
     // \Drupal\KernelTests\KernelTestBase::setUpFilesystem as we don't use vfs.
     $test_site_path = str_replace('vfs://root/', '', $this->siteDirectory);

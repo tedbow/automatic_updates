@@ -240,6 +240,8 @@ services:
       - { name: event_subscriber }
   package_manager.validator.patches:
     class: Drupal\package_manager\Validator\ComposerPatchesValidator
+    arguments:
+      - '@module_handler'
     tags:
       - { name: event_subscriber }
   package_manager.validator.supported_releases:

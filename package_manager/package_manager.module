@@ -33,7 +33,7 @@ function package_manager_help($route_name, RouteMatchInterface $route_match) {
       $output .= '<ul>';
       $output .= '  <li>' . t('It does not support Drupal multi-site installations.') . '</li>';
       $output .= '  <li>' . t('It does not support symlinks. If you have any, see <a href="#package-manager-faq-composer-not-found">What if it says I have symlinks in my codebase?</a>.') . '</li>';
-      $output .= '  <li>' . t('It only allows supported composer plugins. If you have any, see <a href="#package-manager-faq-unsupported-composer-plugin">What if it says I have unsupported composer plugins in my codebase?</a>.') . '</li>';
+      $output .= '  <li>' . t('It only allows supported Composer plugins. If you have any, see <a href="#package-manager-faq-unsupported-composer-plugin">What if it says I have unsupported Composer plugins in my codebase?</a>.') . '</li>';
       $output .= '  <li>' . t('It does not automatically perform version control operations, e.g., with Git. Site administrators are responsible for committing updates.') . '</li>';
       $output .= '  <li>' . t('It can only maintain one copy of the site at any given time. If a copy of the site already exists, another one cannot be created until the existing copy is destroyed.') . '</li>';
       $output .= '  <li>' . t('It associates the temporary copy of the site with the user or session that originally created it, and only that user or session can make changes to it.') . '</li>';
@@ -81,11 +81,22 @@ function package_manager_help($route_name, RouteMatchInterface $route_match) {
       $output .= '<p>' . t('The new configuration will take effect on the next Composer install or update event. Do this to apply it immediately:') . '</p>';
       $output .= '<pre><code>composer install</code></pre>';
 
-      $output .= '<h4 id="package-manager-faq-unsupported-composer-plugin">' . t('What if it says I have unsupported composer plugins in my codebase?') . '</h4>';
-      $output .= '<p>' . t('A fresh Drupal installation only uses supported composer plugins, but some modules or themes may depend on additional composer plugins. Please <a href=":new-issue">create a new issue</a> when you encounter this.', [
+      $output .= '<h4 id="package-manager-faq-unsupported-composer-plugin">' . t('What if it says I have unsupported Composer plugins in my codebase?') . '</h4>';
+      $output .= '<p>' . t('A fresh Drupal installation only uses supported Composer plugins, but some modules or themes may depend on additional Composer plugins. Please <a href=":new-issue">create a new issue</a> when you encounter this.', [
         ':new-issue' => 'https://www.drupal.org/node/add/project-issue/automatic_updates',
       ]) . '</p>';
-      $output .= '<p>' . t('It is possible to <em>trust</em> additional composer plugins, but this requires significant expertise: understanding the code of that composer plugin, what the effects on the file system are and how it affects the Package Manager module. Some composer plugins could result in a broken site!') . '</p>';
+      $output .= '<p>' . t('It is possible to <em>trust</em> additional Composer plugins, but this requires significant expertise: understanding the code of that Composer plugin, what the effects on the file system are and how it affects the Package Manager module. Some Composer plugins could result in a broken site!') . '</p>';
+
+      $output .= '<h4 id="package-manager-faq-composer-patches-installed-or-removed">' . t('What if it says <code>cweagans/composer-patches</code> cannot be installed/removed?') . '</h4>';
+      $output .= '<p>' . t('Installation or removal of <code>cweagans/composer-patches</code> via Package Manager is not support it. You can install or remove it manually by running Composer commands in your site root.') . '</p>';
+      $output .= '<p>' . t('To install it:') . '</p>';
+      $output .= '<pre><code>composer require cweagans/composer-patches</code></pre>';
+      $output .= '<p>' . t('To remove it:') . '</p>';
+      $output .= '<pre><code>composer remove cweagans/composer-patches</code></pre>';
+
+      $output .= '<h4 id="package-manager-faq-composer-patches-not-a-root-dependency">' . t('What if it says <code>cweagans/composer-patches</code> must be a root dependency?') . '</h4>';
+      $output .= '<p>' . t('If <code>cweagans/composer-patches</code> is installed, it must be defined as a dependency of the main project (i.e., it must be listed in the <code>require</code> or <code>require-dev</code> section of <code>composer.json</code>). You can run the following command in your site root to add it as a dependency of the main project:') . '</p>';
+      $output .= "<pre><code>composer require cweagans/composer-patches</code></pre>";
 
       $output .= '<h5>' . t('Custom code') . '</h5>';
       $output .= '<p>' . t('Symlinks are seldom truly necessary and should be avoided in your own code. No solution currently exists to get around them--they must be removed in order to use Automatic Updates.') . '</p>';

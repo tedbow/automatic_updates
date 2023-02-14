@@ -28,14 +28,16 @@ trait ValidationTestTrait {
    *   The actual validation results.
    * @param \Drupal\package_manager\PathLocator|null $path_locator
    *   (optional) The path locator (when this trait is used in unit tests).
+   * @param string|null $stage_dir
+   *   (optional) The stage directory.
    */
-  protected function assertValidationResultsEqual(array $expected_results, array $actual_results, ?PathLocator $path_locator = NULL): void {
+  protected function assertValidationResultsEqual(array $expected_results, array $actual_results, ?PathLocator $path_locator = NULL, ?string $stage_dir = NULL): void {
     if ($path_locator) {
       assert(is_a(get_called_class(), UnitTestCase::class, TRUE));
     }
     $expected_results = array_map(
-      function (array $result) use ($path_locator): array {
-        $result['messages'] = $this->resolvePlaceholdersInArrayValuesWithRealPaths($result['messages'], $path_locator);
+      function (array $result) use ($path_locator, $stage_dir): array {
+        $result['messages'] = $this->resolvePlaceholdersInArrayValuesWithRealPaths($result['messages'], $path_locator, $stage_dir);
         return $result;
       },
       $this->getValidationResultsAsArray($expected_results)
@@ -54,19 +56,30 @@ trait ValidationTestTrait {
    *   <STAGE_ROOT_PARENT>.
    * @param \Drupal\package_manager\PathLocator|null $path_locator
    *   (optional) The path locator (when this trait is used in unit tests).
+   * @param string|null $stage_dir
+   *   (optional) The stage directory.
    *
    * @return array
    *   The same array, with unchanged keys, and with the placeholders resolved.
    */
-  protected function resolvePlaceholdersInArrayValuesWithRealPaths(array $subject, ?PathLocator $path_locator = NULL): array {
+  protected function resolvePlaceholdersInArrayValuesWithRealPaths(array $subject, ?PathLocator $path_locator = NULL, ?string $stage_dir = NULL): array {
     if (!$path_locator) {
       $path_locator = $this->container->get('package_manager.path_locator');
     }
-    return str_replace(
+    $subject = str_replace(
       ['<PROJECT_ROOT>', '<VENDOR_DIR>', '<STAGE_ROOT>', '<STAGE_ROOT_PARENT>'],
       [$path_locator->getProjectRoot(), $path_locator->getVendorDirectory(), $path_locator->getStagingRoot(), dirname($path_locator->getStagingRoot())],
       $subject
     );
+    if ($stage_dir) {
+      $subject = str_replace(['<STAGE_DIR>'], [$stage_dir], $subject);
+    }
+    foreach ($subject as $message) {
+      if (str_contains($message, '<STAGE_DIR>')) {
+        throw new \LogicException("No stage directory passed to replace '<STAGE_DIR>' in message '$message'");
+      }
+    }
+    return $subject;
   }
 
   /**

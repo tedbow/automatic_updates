@@ -45,6 +45,14 @@
       "options": {
         "symlink": false
       }
+    },
+    "cweagans/composer-patches": {
+      "type": "path",
+      "version": "24.12.1999",
+      "url": "../path_repos/cweagans--composer-patches",
+      "options": {
+        "symlink": false
+      }
     }
   },
   "minimum-stability": "stable",

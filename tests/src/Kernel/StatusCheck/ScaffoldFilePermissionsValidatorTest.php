@@ -42,7 +42,7 @@ class ScaffoldFilePermissionsValidatorTest extends AutomaticUpdatesKernelTestBas
   /**
    * {@inheritdoc}
    */
-  protected function assertValidationResultsEqual(array $expected_results, array $actual_results, ?PathLocator $path_locator = NULL): void {
+  protected function assertValidationResultsEqual(array $expected_results, array $actual_results, ?PathLocator $path_locator = NULL, ?string $stage_dir = NULL): void {
     $map = function (string $path): string {
       return $this->activeDir . '/' . $path;
     };
