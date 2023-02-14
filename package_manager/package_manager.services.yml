@@ -197,6 +197,12 @@ services:
       - '@file_system'
     tags:
       - { name: event_subscriber }
+  package_manager.unknown_path_excluder:
+    class: Drupal\package_manager\PathExcluder\UnknownPathExcluder
+    arguments:
+      - '@package_manager.path_locator'
+    tags:
+      - { name: event_subscriber }
   package_manager.site_configuration_excluder:
     class: Drupal\package_manager\PathExcluder\SiteConfigurationExcluder
     arguments:
