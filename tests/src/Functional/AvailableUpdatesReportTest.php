@@ -56,7 +56,7 @@ class AvailableUpdatesReportTest extends AutomaticUpdatesFunctionalTestBase {
     $this->checkForUpdates();
     $assert->pageTextContains('Security update required! Update now');
     $assert->elementAttributeContains('named', ['link', 'Update now'], 'href', $form_url);
-    $this->assertVersionLink('9.8.1', $form_url);
+    $this->assertVersionIsListed('9.8.1');
 
     $this->setReleaseMetadata("$fixture_directory/drupal.9.8.2-older-sec-release.xml");
     $this->mockActiveCoreVersion('9.7.0');
@@ -65,17 +65,17 @@ class AvailableUpdatesReportTest extends AutomaticUpdatesFunctionalTestBase {
 
     $assert->elementAttributeContains('named', ['link', 'Update now'], 'href', $form_url);
     // Releases that will available on the form should link to the form.
-    $this->assertVersionLink('9.8.2', $form_url);
-    $this->assertVersionLink('9.7.1', $form_url);
+    $this->assertVersionIsListed('9.8.2');
+    $this->assertVersionIsListed('9.7.1');
     // Releases that will not be available in the form should link to the
     // project release page.
-    $this->assertVersionLink('9.8.1', 'http://example.com/drupal-9-8-1-release');
+    $this->assertVersionIsListed('9.8.1');
 
     $this->setReleaseMetadata("$fixture_directory/drupal.9.8.2.xml");
     $this->checkForUpdates();
     $assert->pageTextContains('Update available Update now');
     $assert->elementAttributeContains('named', ['link', 'Update now'], 'href', $form_url);
-    $this->assertVersionLink('9.8.2', $form_url);
+    $this->assertVersionIsListed('9.8.2');
   }
 
   /**
@@ -83,19 +83,9 @@ class AvailableUpdatesReportTest extends AutomaticUpdatesFunctionalTestBase {
    *
    * @param string $version
    *   The version.
-   * @param string $url
-   *   The expected URL.
    */
-  private function assertVersionLink(string $version, string $url): void {
-    $assert = $this->assertSession();
-    $row = $assert->elementExists('css', "table.update .project-update__version:contains(\"$version\")");
-    // In Drupal 9.5 and later, the "Download" link does not exist. We can drop
-    // this assertion (and likely this entire method) when Drupal 9.5 is the
-    // minimum supported version of core.
-    $link = $row->findLink('Download');
-    if ($link) {
-      $this->assertStringEndsWith($url, $link->getAttribute('href'));
-    }
+  private function assertVersionIsListed(string $version): void {
+    $this->assertSession()->elementExists('css', "table.update .project-update__version:contains(\"$version\")");
   }
 
 }

@@ -12,18 +12,12 @@
   },
   "require": {
     "ext-json": "*",
-    "drupal/core": "^9.3 || ^10",
+    "drupal/core": "^9.7 || ^10",
     "php-tuf/composer-stager": "^1.2",
     "composer/composer": "^2.2.12 || ^2.3.5",
     "composer-runtime-api": "^2.1",
     "symfony/config": "^4.4 || ^6.1",
-    "php": ">=7.4.0",
     "symfony/finder": "^4.4 || ^6.1"
-  },
-  "config": {
-    "platform": {
-      "php": "7.4.0"
-    }
   },
   "scripts": {
     "phpcbf": "scripts/phpcbf.sh",

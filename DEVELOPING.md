@@ -26,7 +26,7 @@ That's it. The success message will display next steps.
 
 ### System requirements
 * A *nix-based operating system, such as Linux or macOS.
-* PHP 7.4 or later.
+* Drupal 10 or later.
 * Composer 2 or later. (Automatic Updates is not compatible with Composer 1.)
 * Git must be installed.
 
@@ -39,7 +39,7 @@ That's it. The success message will display next steps.
 Several details of your setup can be customized via environment variables. Set these before running [the installation command above](#local-development-environment-setup).
 
 ```shell
-DRUPAL_CORE_BRANCH="9.5.x" # The branch of Drupal core that will be installed.
+DRUPAL_CORE_BRANCH="10.0.x" # The branch of Drupal core that will be installed.
 DRUPAL_CORE_SHALLOW_CLONE="TRUE" # Whether or not to do a "shallow clone" of Drupal core. (Defaults to TRUE.) See note below.
 AUTOMATIC_UPDATES_BRANCH="8.x-2.x" # The branch of the Automatic Updates module that will be installed.
 SITE_DIRECTORY="auto_updates_dev" # The path to the directory where the dev environment will be installed.
@@ -48,10 +48,12 @@ SITE_HOST=".test" # The path for Drupal's TRUSTED_HOST_PATTERN.
 
 Note: A shallow Git clone is much smaller and therefore faster, but it removes the ability to do debugging operations such as `git bisect` or `git blame`. To recover these abilities, [you can convert your repository to a full clone after the fact](https://stackoverflow.com/questions/6802145/how-to-convert-a-git-shallow-clone-to-a-full-clone):
 
+// cSpell:disable
 ```shell
 cd auto-updates-dev
 git fetch --unshallow
 ```
+// cSpell:enable
 
 ### Alternative setup options
 You can download the setup script first to review its contents or modify it before running it:

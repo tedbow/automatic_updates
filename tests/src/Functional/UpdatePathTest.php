@@ -21,14 +21,8 @@ class UpdatePathTest extends UpdatePathTestBase {
    * {@inheritdoc}
    */
   protected function setDatabaseDumpFiles() {
-    // phpcs on 9.5 expects one thing, on 10.0 another. 🤷
-    // @see https://www.drupal.org/project/automatic_updates/issues/3314137#comment-14771510
-    // phpcs:disable
-    [$version] = explode('.', \Drupal::VERSION, 2);
     $this->databaseDumpFiles = [
-      $version == 9
-        ? $this->getDrupalRoot() . '/core/modules/system/tests/fixtures/update/drupal-9.3.0.filled.standard.php.gz'
-        : $this->getDrupalRoot() . '/core/modules/system/tests/fixtures/update/drupal-9.4.0.filled.standard.php.gz',
+      $this->getDrupalRoot() . '/core/modules/system/tests/fixtures/update/drupal-9.4.0.filled.standard.php.gz',
       __DIR__ . '/../../fixtures/automatic_updates-installed.php',
     ];
   }

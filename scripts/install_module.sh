@@ -52,12 +52,6 @@ composer config \
 # Prevent Composer from symlinking path repositories.
 export COMPOSER_MIRROR_PATH_REPOS=1
 
-# Remove the Composer platform PHP requirement, but only on Drupal 9.
-CORE_BRANCH=$(git rev-parse --abbrev-ref HEAD)
-if [[ "$CORE_BRANCH" =~ 9.* ]]; then
-  composer config --unset platform.php
-fi
-
 # Prevent Composer from installing symlinks from common packages known to
 # contain them.
 # @see https://www.drupal.org/docs/develop/using-composer/using-drupals-vendor-hardening-composer-plugin
