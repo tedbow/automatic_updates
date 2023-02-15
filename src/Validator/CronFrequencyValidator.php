@@ -11,7 +11,6 @@ use Drupal\Core\Extension\ModuleHandlerInterface;
 use Drupal\Core\Lock\LockBackendInterface;
 use Drupal\Core\State\StateInterface;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
-use Drupal\Core\StringTranslation\TranslationInterface;
 use Drupal\Core\Url;
 use Drupal\package_manager\Event\StatusCheckEvent;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
@@ -56,74 +55,29 @@ class CronFrequencyValidator implements EventSubscriberInterface {
   protected const SUGGESTED_INTERVAL = self::WARNING_INTERVAL / 3600;
 
   /**
-   * The config factory service.
-   *
-   * @var \Drupal\Core\Config\ConfigFactoryInterface
-   */
-  protected $configFactory;
-
-  /**
-   * The module handler.
-   *
-   * @var \Drupal\Core\Extension\ModuleHandlerInterface
-   */
-  protected $moduleHandler;
-
-  /**
-   * The state service.
-   *
-   * @var \Drupal\Core\State\StateInterface
-   */
-  protected $state;
-
-  /**
-   * The time service.
-   *
-   * @var \Drupal\Component\Datetime\TimeInterface
-   */
-  protected $time;
-
-  /**
-   * The cron updater service.
-   *
-   * @var \Drupal\automatic_updates\CronUpdater
-   */
-  protected $cronUpdater;
-
-  /**
-   * The lock service.
-   *
-   * @var \Drupal\Core\Lock\LockBackendInterface
-   */
-  protected $lock;
-
-  /**
    * CronFrequencyValidator constructor.
    *
-   * @param \Drupal\Core\Config\ConfigFactoryInterface $config_factory
+   * @param \Drupal\Core\Config\ConfigFactoryInterface $configFactory
    *   The config factory service.
-   * @param \Drupal\Core\Extension\ModuleHandlerInterface $module_handler
+   * @param \Drupal\Core\Extension\ModuleHandlerInterface $moduleHandler
    *   The module handler.
    * @param \Drupal\Core\State\StateInterface $state
    *   The state service.
    * @param \Drupal\Component\Datetime\TimeInterface $time
    *   The time service.
-   * @param \Drupal\Core\StringTranslation\TranslationInterface $translation
-   *   The translation service.
-   * @param \Drupal\automatic_updates\CronUpdater $cron_updater
+   * @param \Drupal\automatic_updates\CronUpdater $cronUpdater
    *   The cron updater service.
    * @param \Drupal\Core\Lock\LockBackendInterface $lock
    *   The lock service.
    */
-  public function __construct(ConfigFactoryInterface $config_factory, ModuleHandlerInterface $module_handler, StateInterface $state, TimeInterface $time, TranslationInterface $translation, CronUpdater $cron_updater, LockBackendInterface $lock) {
-    $this->configFactory = $config_factory;
-    $this->moduleHandler = $module_handler;
-    $this->state = $state;
-    $this->time = $time;
-    $this->setStringTranslation($translation);
-    $this->cronUpdater = $cron_updater;
-    $this->lock = $lock;
-  }
+  public function __construct(
+    protected ConfigFactoryInterface $configFactory,
+    protected ModuleHandlerInterface $moduleHandler,
+    protected StateInterface $state,
+    protected TimeInterface $time,
+    protected CronUpdater $cronUpdater,
+    protected LockBackendInterface $lock,
+  ) {}
 
   /**
    * Validates that cron runs frequently enough to perform automatic updates.

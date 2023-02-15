@@ -4,14 +4,13 @@ declare(strict_types = 1);
 
 namespace Drupal\automatic_updates;
 
-use Drupal\Core\Logger\LoggerChannelFactoryInterface;
+use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Mail\MailManagerInterface;
 use Drupal\Core\State\StateInterface;
 use Drupal\Core\Url;
 use Drupal\package_manager\Exception\ApplyFailedException;
 use Drupal\package_manager\Exception\StageValidationException;
 use Drupal\package_manager\ProjectInfo;
-use Drupal\package_manager\UnusedConfigFactory;
 use Drupal\update\ProjectRelease;
 use GuzzleHttp\Psr7\Uri as GuzzleUri;
 use Symfony\Component\HttpFoundation\Response;
@@ -49,60 +48,30 @@ class CronUpdater extends Updater {
   public const ALL = 'patch';
 
   /**
-   * The cron release chooser service.
-   *
-   * @var \Drupal\automatic_updates\ReleaseChooser
-   */
-  protected $releaseChooser;
-
-  /**
-   * The mail manager service.
-   *
-   * @var \Drupal\Core\Mail\MailManagerInterface
-   */
-  protected $mailManager;
-
-  /**
-   * The status check mailer service.
-   *
-   * @var \Drupal\automatic_updates\StatusCheckMailer
-   */
-  protected $statusCheckMailer;
-
-  /**
-   * The state service.
-   *
-   * @var \Drupal\Core\State\StateInterface
-   */
-  protected $state;
-
-  /**
    * Constructs a CronUpdater object.
    *
-   * @param \Drupal\automatic_updates\ReleaseChooser $release_chooser
+   * @param \Drupal\automatic_updates\ReleaseChooser $releaseChooser
    *   The cron release chooser service.
-   * @param \Drupal\Core\Logger\LoggerChannelFactoryInterface $logger_factory
-   *   The logger channel factory.
-   * @param \Drupal\Core\Mail\MailManagerInterface $mail_manager
+   * @param \Drupal\Core\Mail\MailManagerInterface $mailManager
    *   The mail manager service.
-   * @param \Drupal\automatic_updates\StatusCheckMailer $status_check_mailer
+   * @param \Drupal\automatic_updates\StatusCheckMailer $statusCheckMailer
    *   The status check mailer service.
    * @param \Drupal\Core\State\StateInterface $state
    *   The state service.
+   * @param \Drupal\Core\Config\ConfigFactoryInterface $configFactory
+   *   The config factory service.
    * @param mixed ...$arguments
    *   Additional arguments to pass to the parent constructor.
    */
-  public function __construct(ReleaseChooser $release_chooser, LoggerChannelFactoryInterface $logger_factory, MailManagerInterface $mail_manager, StatusCheckMailer $status_check_mailer, StateInterface $state, ...$arguments) {
-    $config_factory = $arguments[0];
-    $arguments[0] = new UnusedConfigFactory();
+  public function __construct(
+    protected ReleaseChooser $releaseChooser,
+    protected MailManagerInterface $mailManager,
+    protected StatusCheckMailer $statusCheckMailer,
+    protected StateInterface $state,
+    protected ConfigFactoryInterface $configFactory,
+    mixed ...$arguments,
+  ) {
     parent::__construct(...$arguments);
-    // @todo Remove this in https://www.drupal.org/i/3303167
-    $this->configFactory = $config_factory;
-    $this->releaseChooser = $release_chooser;
-    $this->logger = $logger_factory->get('automatic_updates');
-    $this->mailManager = $mail_manager;
-    $this->statusCheckMailer = $status_check_mailer;
-    $this->state = $state;
   }
 
   /**

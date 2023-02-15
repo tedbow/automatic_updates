@@ -23,7 +23,7 @@ class UpdateWarningTest extends UpdaterFormTestBase {
 
     $this->mockActiveCoreVersion('9.8.0');
     $this->checkForUpdates();
-    $this->drupalGet('/admin/modules/automatic-update');
+    $this->drupalGet('/admin/modules/update');
     $session->getPage()->pressButton('Update to 9.8.1');
     $this->checkForMetaRefresh();
     $this->assertUpdateStagedTimes(1);

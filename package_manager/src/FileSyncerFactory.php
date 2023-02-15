@@ -26,46 +26,27 @@ final class FileSyncerFactory {
    *
    * @var \PhpTuf\ComposerStager\Infrastructure\Factory\FileSyncer\FileSyncerFactory
    */
-  protected $decorated;
-
-  /**
-   * The PHP file syncer service.
-   *
-   * @var \PhpTuf\ComposerStager\Infrastructure\Service\FileSyncer\PhpFileSyncer
-   */
-  protected $phpFileSyncer;
-
-  /**
-   * The rsync file syncer service.
-   *
-   * @var \PhpTuf\ComposerStager\Infrastructure\Service\FileSyncer\RsyncFileSyncer
-   */
-  protected $rsyncFileSyncer;
-
-  /**
-   * The config factory service.
-   *
-   * @var \Drupal\Core\Config\ConfigFactoryInterface
-   */
-  protected $configFactory;
+  private $decorated;
 
   /**
    * Constructs a FileCopierFactory object.
    *
    * @param \Symfony\Component\Process\ExecutableFinder $executable_finder
    *   The Symfony executable finder.
-   * @param \PhpTuf\ComposerStager\Infrastructure\Service\FileSyncer\PhpFileSyncer $php_file_syncer
+   * @param \PhpTuf\ComposerStager\Infrastructure\Service\FileSyncer\PhpFileSyncer $phpFileSyncer
    *   The PHP file syncer service.
-   * @param \PhpTuf\ComposerStager\Infrastructure\Service\FileSyncer\RsyncFileSyncer $rsync_file_syncer
+   * @param \PhpTuf\ComposerStager\Infrastructure\Service\FileSyncer\RsyncFileSyncer $rsyncFileSyncer
    *   The rsync file syncer service.
-   * @param \Drupal\Core\Config\ConfigFactoryInterface $config_factory
+   * @param \Drupal\Core\Config\ConfigFactoryInterface $configFactory
    *   The config factory service.
    */
-  public function __construct(ExecutableFinder $executable_finder, PhpFileSyncer $php_file_syncer, RsyncFileSyncer $rsync_file_syncer, ConfigFactoryInterface $config_factory) {
-    $this->decorated = new StagerFileSyncerFactory($executable_finder, $php_file_syncer, $rsync_file_syncer);
-    $this->phpFileSyncer = $php_file_syncer;
-    $this->rsyncFileSyncer = $rsync_file_syncer;
-    $this->configFactory = $config_factory;
+  public function __construct(
+    ExecutableFinder $executable_finder,
+    private PhpFileSyncer $phpFileSyncer,
+    private RsyncFileSyncer $rsyncFileSyncer,
+    private ConfigFactoryInterface $configFactory,
+  ) {
+    $this->decorated = new StagerFileSyncerFactory($executable_finder, $phpFileSyncer, $rsyncFileSyncer);
   }
 
   /**

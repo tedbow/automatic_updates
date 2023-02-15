@@ -25,41 +25,20 @@ class StagedDBUpdateValidator implements EventSubscriberInterface {
   use StringTranslationTrait;
 
   /**
-   * The path locator service.
-   *
-   * @var \Drupal\package_manager\PathLocator
-   */
-  protected $pathLocator;
-
-  /**
-   * The module list service.
-   *
-   * @var \Drupal\Core\Extension\ModuleExtensionList
-   */
-  protected $moduleList;
-
-  /**
-   * The theme list service.
-   *
-   * @var \Drupal\Core\Extension\ThemeExtensionList
-   */
-  protected $themeList;
-
-  /**
    * Constructs a StagedDBUpdateValidator object.
    *
-   * @param \Drupal\package_manager\PathLocator $path_locator
+   * @param \Drupal\package_manager\PathLocator $pathLocator
    *   The path locator service.
-   * @param \Drupal\Core\Extension\ModuleExtensionList $module_list
+   * @param \Drupal\Core\Extension\ModuleExtensionList $moduleList
    *   The module list service.
-   * @param \Drupal\Core\Extension\ThemeExtensionList $theme_list
+   * @param \Drupal\Core\Extension\ThemeExtensionList $themeList
    *   The theme list service.
    */
-  public function __construct(PathLocator $path_locator, ModuleExtensionList $module_list, ThemeExtensionList $theme_list) {
-    $this->pathLocator = $path_locator;
-    $this->moduleList = $module_list;
-    $this->themeList = $theme_list;
-  }
+  public function __construct(
+    protected PathLocator $pathLocator,
+    protected ModuleExtensionList $moduleList,
+    protected ThemeExtensionList $themeList,
+  ) {}
 
   /**
    * Checks that the staged update does not have changes to its install files.
@@ -71,7 +50,7 @@ class StagedDBUpdateValidator implements EventSubscriberInterface {
     try {
       $stage_dir = $event->getStage()->getStageDirectory();
     }
-    catch (\LogicException $e) {
+    catch (\LogicException) {
       // Stage directory can't be determined, so there's nothing to validate.
       return;
     }

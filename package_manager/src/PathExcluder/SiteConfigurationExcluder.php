@@ -21,22 +21,14 @@ class SiteConfigurationExcluder implements EventSubscriberInterface {
   use PathExclusionsTrait;
 
   /**
-   * The current site path, relative to the Drupal root.
-   *
-   * @var string
-   */
-  protected $sitePath;
-
-  /**
    * Constructs an ExcludedPathsSubscriber.
    *
-   * @param string $site_path
+   * @param string $sitePath
    *   The current site path, relative to the Drupal root.
    * @param \Drupal\package_manager\PathLocator $path_locator
    *   The path locator service.
    */
-  public function __construct(string $site_path, PathLocator $path_locator) {
-    $this->sitePath = $site_path;
+  public function __construct(protected string $sitePath, PathLocator $path_locator) {
     $this->pathLocator = $path_locator;
   }
 

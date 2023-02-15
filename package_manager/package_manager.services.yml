@@ -14,12 +14,12 @@ services:
     public: false
   Drupal\package_manager\ExecutableFinder:
     arguments:
-      $config_factory: '@config.factory'
+      $configFactory: '@config.factory'
     autowire: true
     public: false
   Drupal\package_manager\FileSyncerFactory:
     arguments:
-      $config_factory: '@config.factory'
+      $configFactory: '@config.factory'
     autowire: true
     public: false
   PhpTuf\ComposerStager\Infrastructure\Service\Finder\ExecutableFinderInterface:
@@ -70,7 +70,6 @@ services:
     arguments:
       - '@PhpTuf\ComposerStager\Domain\Service\ProcessRunner\ComposerRunnerInterface'
       - '@module_handler'
-      - '@string_translation'
       - '@PhpTuf\ComposerStager\Domain\Service\Precondition\ComposerIsAvailableInterface'
       - '@PhpTuf\ComposerStager\Infrastructure\Factory\Path\PathFactoryInterface'
     tags:
@@ -79,7 +78,6 @@ services:
     class: Drupal\package_manager\Validator\DiskSpaceValidator
     arguments:
       - '@package_manager.path_locator'
-      - '@string_translation'
     tags:
       - { name: event_subscriber }
   package_manager.validator.pending_updates:
@@ -87,7 +85,6 @@ services:
     arguments:
       - '%app.root%'
       - '@update.post_update_registry'
-      - '@string_translation'
     tags:
       - { name: event_subscriber }
   package_manager.validator.lock_file:
@@ -95,20 +92,17 @@ services:
     arguments:
       - '@state'
       - '@package_manager.path_locator'
-      - '@string_translation'
     tags:
       - { name: event_subscriber }
   package_manager.validator.file_system:
     class: Drupal\package_manager\Validator\WritableFileSystemValidator
     arguments:
       - '@package_manager.path_locator'
-      - '@string_translation'
     tags:
       - { name: event_subscriber }
   package_manager.validator.composer_settings:
     class: Drupal\package_manager\Validator\ComposerSettingsValidator
     arguments:
-      - '@string_translation'
       - '@package_manager.composer_inspector'
       - '@package_manager.path_locator'
     tags:
@@ -124,7 +118,6 @@ services:
     class: Drupal\package_manager\Validator\MultisiteValidator
     arguments:
       - '@package_manager.path_locator'
-      - '@string_translation'
     tags:
       - { name: event_subscriber }
   package_manager.validator.symlink:
@@ -160,7 +153,6 @@ services:
     class: Drupal\package_manager\Validator\ComposerJsonExistsValidator
     arguments:
       - '@package_manager.path_locator'
-      - '@string_translation'
     tags:
       - { name: event_subscriber }
   package_manager.test_site_excluder:
@@ -179,7 +171,7 @@ services:
     class: Drupal\package_manager\PathExcluder\SiteFilesExcluder
     arguments:
       $path_locator: '@package_manager.path_locator'
-      $stream_wrapper_manager: '@stream_wrapper_manager'
+      $streamWrapperManager: '@stream_wrapper_manager'
     tags:
       - { name: event_subscriber }
     autowire: true
@@ -226,8 +218,6 @@ services:
     lazy: true
   package_manager.validator.settings:
     class: Drupal\package_manager\Validator\SettingsValidator
-    arguments:
-      - '@string_translation'
     tags:
       - { name: event_subscriber }
   package_manager.validator.composer_plugins:

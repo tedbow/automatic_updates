@@ -6,7 +6,7 @@ namespace Drupal\package_manager_bypass;
 
 use Drupal\Core\State\StateInterface;
 use Drupal\package_manager\PathLocator as BasePathLocator;
-use Drupal\package_manager\Path;
+use Symfony\Component\Filesystem\Path;
 
 /**
  * Mock path locator: allows specifying paths instead of discovering paths.

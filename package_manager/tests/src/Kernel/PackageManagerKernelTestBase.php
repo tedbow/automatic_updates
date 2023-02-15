@@ -12,7 +12,6 @@ use Drupal\KernelTests\KernelTestBase;
 use Drupal\package_manager\Event\PreApplyEvent;
 use Drupal\package_manager\Event\StageEvent;
 use Drupal\package_manager\StatusCheckTrait;
-use Drupal\package_manager\UnusedConfigFactory;
 use Drupal\package_manager\Validator\DiskSpaceValidator;
 use Drupal\package_manager\Exception\StageValidationException;
 use Drupal\package_manager\Stage;
@@ -128,8 +127,6 @@ abstract class PackageManagerKernelTestBase extends KernelTestBase {
    */
   protected function createStage(): TestStage {
     return new TestStage(
-      // @todo Remove this in https://www.drupal.org/i/3303167
-      new UnusedConfigFactory(),
       $this->container->get('package_manager.path_locator'),
       $this->container->get('package_manager.beginner'),
       $this->container->get('package_manager.stager'),

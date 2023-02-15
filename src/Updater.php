@@ -5,23 +5,11 @@ declare(strict_types = 1);
 namespace Drupal\automatic_updates;
 
 use Drupal\automatic_updates\Exception\UpdateException;
-use Drupal\Component\Datetime\TimeInterface;
-use Drupal\Core\Config\ConfigFactoryInterface;
-use Drupal\Core\File\FileSystemInterface;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
-use Drupal\Core\TempStore\SharedTempStoreFactory;
 use Drupal\package_manager\Event\StageEvent;
 use Drupal\package_manager\Exception\ApplyFailedException;
 use Drupal\package_manager\Exception\StageValidationException;
-use Drupal\package_manager\FailureMarker;
-use Drupal\package_manager\PathLocator;
 use Drupal\package_manager\Stage;
-use Drupal\package_manager\UnusedConfigFactory;
-use PhpTuf\ComposerStager\Domain\Core\Beginner\BeginnerInterface;
-use PhpTuf\ComposerStager\Domain\Core\Committer\CommitterInterface;
-use PhpTuf\ComposerStager\Domain\Core\Stager\StagerInterface;
-use PhpTuf\ComposerStager\Infrastructure\Factory\Path\PathFactoryInterface;
-use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 
 /**
  * Defines a service to perform updates.
@@ -32,15 +20,6 @@ use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
  * in the project-level composer.json, a requirement will be added.
  */
 class Updater extends Stage {
-
-  /**
-   * {@inheritdoc}
-   *
-   * @todo Remove this in https://www.drupal.org/i/3303167
-   */
-  public function __construct(ConfigFactoryInterface $config_factory, PathLocator $path_locator, BeginnerInterface $beginner, StagerInterface $stager, CommitterInterface $committer, FileSystemInterface $file_system, EventDispatcherInterface $event_dispatcher, SharedTempStoreFactory $temp_store_factory, TimeInterface $time, PathFactoryInterface $path_factory = NULL, FailureMarker $failure_marker = NULL) {
-    parent::__construct(new UnusedConfigFactory(), $path_locator, $beginner, $stager, $committer, $file_system, $event_dispatcher, $temp_store_factory, $time, $path_factory, $failure_marker);
-  }
 
   /**
    * Begins the update.

@@ -4,7 +4,6 @@ declare(strict_types = 1);
 
 namespace Drupal\package_manager;
 
-use Drupal\automatic_updates\Event\ReadinessCheckEvent;
 use Drupal\package_manager\Event\CollectIgnoredPathsEvent;
 use Drupal\package_manager\Event\StatusCheckEvent;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
@@ -26,15 +25,12 @@ trait StatusCheckTrait {
    *   The stage to run the status check for.
    * @param \Symfony\Component\EventDispatcher\EventDispatcherInterface $event_dispatcher
    *   (optional) The event dispatcher service.
-   * @param bool $do_readiness_check
-   *   (optional) Whether to also Rerun readiness checks for the stage
-   *   (deprecated). Defaults to FALSE.
    *
    * @return \Drupal\package_manager\ValidationResult[]
    *   The results of the status check. If a readiness check was also done,
    *   its results will be included.
    */
-  protected function runStatusCheck(Stage $stage, EventDispatcherInterface $event_dispatcher = NULL, bool $do_readiness_check = FALSE): array {
+  protected function runStatusCheck(Stage $stage, EventDispatcherInterface $event_dispatcher = NULL): array {
     $event_dispatcher ??= \Drupal::service('event_dispatcher');
     try {
       $ignored_paths = new CollectIgnoredPathsEvent($stage);
@@ -47,14 +43,7 @@ trait StatusCheckTrait {
 
     $event = new StatusCheckEvent($stage, $ignored_paths->getAll());
     $event_dispatcher->dispatch($event);
-    $results = $event->getResults();
-
-    if ($do_readiness_check && class_exists(ReadinessCheckEvent::class) && $event_dispatcher->hasListeners(ReadinessCheckEvent::class)) {
-      $event = new ReadinessCheckEvent($stage);
-      $event_dispatcher->dispatch($event);
-      $results = array_merge($results, $event->getResults());
-    }
-    return $results;
+    return $event->getResults();
   }
 
 }

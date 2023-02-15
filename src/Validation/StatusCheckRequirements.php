@@ -8,7 +8,6 @@ use Drupal\Core\Datetime\DateFormatterInterface;
 use Drupal\Core\DependencyInjection\ContainerInjectionInterface;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
-use Drupal\Core\StringTranslation\TranslationInterface;
 use Drupal\Core\Url;
 use Drupal\system\SystemManager;
 use Symfony\Component\DependencyInjection\ContainerInterface;
@@ -28,33 +27,14 @@ final class StatusCheckRequirements implements ContainerInjectionInterface {
   use ValidationResultDisplayTrait;
 
   /**
-   * The status checker service.
-   *
-   * @var \Drupal\automatic_updates\Validation\StatusChecker
-   */
-  protected $statusChecker;
-
-  /**
-   * The date formatter service.
-   *
-   * @var \Drupal\Core\Datetime\DateFormatterInterface
-   */
-  protected $dateFormatter;
-
-  /**
    * Constructs a StatusCheckRequirements object.
    *
-   * @param \Drupal\automatic_updates\Validation\StatusChecker $status_checker
+   * @param \Drupal\automatic_updates\Validation\StatusChecker $statusChecker
    *   The status checker service.
-   * @param \Drupal\Core\StringTranslation\TranslationInterface $translation
-   *   The translation service.
-   * @param \Drupal\Core\Datetime\DateFormatterInterface $date_formatter
+   * @param \Drupal\Core\Datetime\DateFormatterInterface $dateFormatter
    *   The date formatter service.
    */
-  public function __construct(StatusChecker $status_checker, TranslationInterface $translation, DateFormatterInterface $date_formatter) {
-    $this->statusChecker = $status_checker;
-    $this->setStringTranslation($translation);
-    $this->dateFormatter = $date_formatter;
+  public function __construct(protected StatusChecker $statusChecker, protected DateFormatterInterface $dateFormatter) {
   }
 
   /**
@@ -63,7 +43,6 @@ final class StatusCheckRequirements implements ContainerInjectionInterface {
   public static function create(ContainerInterface $container): self {
     return new static(
       $container->get('automatic_updates.status_checker'),
-      $container->get('string_translation'),
       $container->get('date.formatter')
     );
   }

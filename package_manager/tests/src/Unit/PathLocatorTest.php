@@ -4,7 +4,6 @@ declare(strict_types = 1);
 
 namespace Drupal\Tests\package_manager\Unit;
 
-use Drupal\Core\DependencyInjection\ContainerBuilder;
 use Drupal\Core\File\FileSystemInterface;
 use Drupal\package_manager\PathLocator;
 use Drupal\Tests\UnitTestCase;
@@ -119,24 +118,6 @@ class PathLocatorTest extends UnitTestCase {
 
     $path_locator->method('getProjectRoot')->willReturn($project_root);
     $this->assertSame($expected_web_root, $path_locator->getWebRoot());
-  }
-
-  /**
-   * Tests that deprecations are raised for missing constructor arguments.
-   *
-   * @group legacy
-   */
-  public function testConstructorDeprecations(): void {
-    $container = new ContainerBuilder();
-    $container->set('config.factory', $this->getConfigFactoryStub());
-    $container->set('file_system', $this->createMock(FileSystemInterface::class));
-    \Drupal::setContainer($container);
-
-    $this->expectDeprecation('Calling ' . PathLocator::class . '::__construct() without the $config_factory argument is deprecated in automatic_updates:8.x-2.1 and will be required before automatic_updates:3.0.0. See https://www.drupal.org/node/3300008.');
-    new PathLocator('/path/to/drupal', NULL, $container->get('file_system'));
-
-    $this->expectDeprecation('Calling ' . PathLocator::class . '::__construct() without the $file_system argument is deprecated in automatic_updates:8.x-2.1 and will be required before automatic_updates:3.0.0. See https://www.drupal.org/node/3300008.');
-    new PathLocator('/path/to/drupal', $container->get('config.factory'));
   }
 
 }

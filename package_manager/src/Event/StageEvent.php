@@ -13,20 +13,12 @@ use Symfony\Contracts\EventDispatcher\Event;
 abstract class StageEvent extends Event {
 
   /**
-   * The stage which fired this event.
-   *
-   * @var \Drupal\package_manager\Stage
-   */
-  protected $stage;
-
-  /**
    * Constructs a StageEvent object.
    *
    * @param \Drupal\package_manager\Stage $stage
    *   The stage which fired this event.
    */
-  public function __construct(Stage $stage) {
-    $this->stage = $stage;
+  public function __construct(protected readonly Stage $stage) {
   }
 
   /**

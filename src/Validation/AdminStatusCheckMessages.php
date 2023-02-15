@@ -15,7 +15,6 @@ use Drupal\Core\Routing\RedirectDestinationTrait;
 use Drupal\Core\Session\AccountProxyInterface;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
-use Drupal\Core\StringTranslation\TranslationInterface;
 use Drupal\Core\Url;
 use Drupal\package_manager\ValidationResult;
 use Drupal\system\SystemManager;
@@ -36,77 +35,29 @@ final class AdminStatusCheckMessages implements ContainerInjectionInterface {
   use ValidationResultDisplayTrait;
 
   /**
-   * The status checker service.
-   *
-   * @var \Drupal\automatic_updates\Validation\StatusChecker
-   */
-  protected $statusChecker;
-
-  /**
-   * The admin context service.
-   *
-   * @var \Drupal\Core\Routing\AdminContext
-   */
-  protected $adminContext;
-
-  /**
-   * The current user.
-   *
-   * @var \Drupal\Core\Session\AccountProxyInterface
-   */
-  protected $currentUser;
-
-  /**
-   * The current route match.
-   *
-   * @var \Drupal\Core\Routing\CurrentRouteMatch
-   */
-  protected $currentRouteMatch;
-
-  /**
-   * The cron updater service.
-   *
-   * @var \Drupal\automatic_updates\CronUpdater
-   */
-  protected $cronUpdater;
-
-  /**
-   * The renderer service.
-   *
-   * @var \Drupal\Core\Render\RendererInterface
-   */
-  protected $renderer;
-
-  /**
    * Constructs an AdminStatusCheckMessages object.
    *
-   * @param \Drupal\automatic_updates\Validation\StatusChecker $status_checker
+   * @param \Drupal\automatic_updates\Validation\StatusChecker $statusChecker
    *   The status checker service.
-   * @param \Drupal\Core\Messenger\MessengerInterface $messenger
-   *   The messenger service.
-   * @param \Drupal\Core\Routing\AdminContext $admin_context
+   * @param \Drupal\Core\Routing\AdminContext $adminContext
    *   The admin context service.
-   * @param \Drupal\Core\Session\AccountProxyInterface $current_user
+   * @param \Drupal\Core\Session\AccountProxyInterface $currentUser
    *   The current user.
-   * @param \Drupal\Core\StringTranslation\TranslationInterface $translation
-   *   The translation service.
-   * @param \Drupal\Core\Routing\CurrentRouteMatch $current_route_match
+   * @param \Drupal\Core\Routing\CurrentRouteMatch $currentRouteMatch
    *   The current route match.
-   * @param \Drupal\automatic_updates\CronUpdater $cron_updater
+   * @param \Drupal\automatic_updates\CronUpdater $cronUpdater
    *   The cron updater service.
    * @param \Drupal\Core\Render\RendererInterface $renderer
    *   The renderer service.
    */
-  public function __construct(StatusChecker $status_checker, MessengerInterface $messenger, AdminContext $admin_context, AccountProxyInterface $current_user, TranslationInterface $translation, CurrentRouteMatch $current_route_match, CronUpdater $cron_updater, RendererInterface $renderer) {
-    $this->statusChecker = $status_checker;
-    $this->setMessenger($messenger);
-    $this->adminContext = $admin_context;
-    $this->currentUser = $current_user;
-    $this->setStringTranslation($translation);
-    $this->currentRouteMatch = $current_route_match;
-    $this->cronUpdater = $cron_updater;
-    $this->renderer = $renderer;
-  }
+  public function __construct(
+    protected StatusChecker $statusChecker,
+    protected AdminContext $adminContext,
+    protected AccountProxyInterface $currentUser,
+    protected CurrentRouteMatch $currentRouteMatch,
+    protected CronUpdater $cronUpdater,
+    protected RendererInterface $renderer
+  ) {}
 
   /**
    * {@inheritdoc}
@@ -114,10 +65,8 @@ final class AdminStatusCheckMessages implements ContainerInjectionInterface {
   public static function create(ContainerInterface $container): self {
     return new static(
       $container->get('automatic_updates.status_checker'),
-      $container->get('messenger'),
       $container->get('router.admin_context'),
       $container->get('current_user'),
-      $container->get('string_translation'),
       $container->get('current_route_match'),
       $container->get('automatic_updates.cron_updater'),
       $container->get('renderer')
@@ -162,14 +111,8 @@ final class AdminStatusCheckMessages implements ContainerInjectionInterface {
     }
 
     if ($this->adminContext->isAdminRoute() && $this->currentUser->hasPermission('administer site configuration')) {
-      $route = $this->currentRouteMatch->getRouteObject();
-      if ($route) {
-        if ($route->hasOption('_automatic_updates_readiness_messages')) {
-          @trigger_error('The _automatic_updates_readiness_messages route option is deprecated in automatic_updates:8.x-2.5 and will be removed in automatic_updates:3.0.0. Use _automatic_updates_status_messages route option instead. See https://www.drupal.org/node/3316086.', E_USER_DEPRECATED);
-          $route->setOption('_automatic_updates_status_messages', $route->getOption('_automatic_updates_readiness_messages'));
-        }
-        return $route->getOption('_automatic_updates_status_messages') !== 'skip';
-      }
+      return $this->currentRouteMatch->getRouteObject()
+        ?->getOption('_automatic_updates_status_messages') !== 'skip';
     }
     return FALSE;
   }

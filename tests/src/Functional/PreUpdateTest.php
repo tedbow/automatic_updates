@@ -25,7 +25,7 @@ class PreUpdateTest extends UpdaterFormTestBase {
     $result = ValidationResult::createError([$message]);
     TestSubscriber1::setTestResult([$result], StatusCheckEvent::class);
     $this->checkForUpdates();
-    $this->drupalGet('/admin/reports/updates/automatic-update');
+    $this->drupalGet('/admin/reports/updates/update');
     $assert_session->pageTextContains('No update available');
     $assert_session->pageTextContains($message);
   }
@@ -40,7 +40,7 @@ class PreUpdateTest extends UpdaterFormTestBase {
       ->set('allow_core_minor_updates', TRUE)
       ->save();
     $this->checkForUpdates();
-    $this->drupalGet('/admin/reports/updates/automatic-update');
+    $this->drupalGet('/admin/reports/updates/update');
     $assert_session = $this->assertSession();
     $this->checkReleaseTable('#edit-next-minor-1', '.update-update-recommended', '9.8.0-beta1', FALSE, 'Latest version of Drupal 9.8 (next minor):');
     $assert_session->pageTextContainsOnce('Currently installed: 9.7.0 (Up to date)');

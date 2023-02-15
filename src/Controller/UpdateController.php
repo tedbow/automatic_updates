@@ -9,7 +9,6 @@ use Drupal\automatic_updates\Validation\StatusChecker;
 use Drupal\Core\Controller\ControllerBase;
 use Drupal\Core\Messenger\MessengerInterface;
 use Drupal\Core\Routing\RouteMatchInterface;
-use Drupal\Core\State\StateInterface;
 use Drupal\Core\Url;
 use Drupal\package_manager\Validator\PendingUpdatesValidator;
 use Symfony\Component\DependencyInjection\ContainerInterface;
@@ -25,44 +24,20 @@ use Symfony\Component\HttpFoundation\Request;
 final class UpdateController extends ControllerBase {
 
   /**
-   * The pending updates validator.
-   *
-   * @var \Drupal\package_manager\Validator\PendingUpdatesValidator
-   */
-  protected $pendingUpdatesValidator;
-
-  /**
-   * The current route match.
-   *
-   * @var \Drupal\Core\Routing\RouteMatchInterface
-   */
-  protected $routeMatch;
-
-  /**
-   * The status checker.
-   *
-   * @var \Drupal\automatic_updates\Validation\StatusChecker
-   */
-  protected $statusChecker;
-
-  /**
    * Constructs an UpdateController object.
    *
-   * @param \Drupal\package_manager\Validator\PendingUpdatesValidator $pending_updates_validator
+   * @param \Drupal\package_manager\Validator\PendingUpdatesValidator $pendingUpdatesValidator
    *   The pending updates validator.
-   * @param \Drupal\Core\State\StateInterface $state
-   *   The state service.
-   * @param \Drupal\Core\Routing\RouteMatchInterface $route_match
+   * @param \Drupal\Core\Routing\RouteMatchInterface $routeMatch
    *   The current route match.
-   * @param \Drupal\automatic_updates\Validation\StatusChecker $status_checker
+   * @param \Drupal\automatic_updates\Validation\StatusChecker $statusChecker
    *   The status checker service.
    */
-  public function __construct(PendingUpdatesValidator $pending_updates_validator, StateInterface $state, RouteMatchInterface $route_match, StatusChecker $status_checker) {
-    $this->pendingUpdatesValidator = $pending_updates_validator;
-    $this->stateService = $state;
-    $this->routeMatch = $route_match;
-    $this->statusChecker = $status_checker;
-  }
+  public function __construct(
+    protected PendingUpdatesValidator $pendingUpdatesValidator,
+    protected RouteMatchInterface $routeMatch,
+    protected StatusChecker $statusChecker,
+  ) {}
 
   /**
    * {@inheritdoc}
@@ -70,7 +45,6 @@ final class UpdateController extends ControllerBase {
   public static function create(ContainerInterface $container) {
     return new static(
       $container->get('package_manager.validator.pending_updates'),
-      $container->get('state'),
       $container->get('current_route_match'),
       $container->get('automatic_updates.status_checker')
     );
@@ -117,50 +91,6 @@ final class UpdateController extends ControllerBase {
     }
     $this->messenger()->addStatus($message);
     return new RedirectResponse($url->setAbsolute()->toString());
-  }
-
-  /**
-   * Redirects deprecated routes and sets an informative message.
-   *
-   * @param \Symfony\Component\HttpFoundation\Request $request
-   *   The current request.
-   *
-   * @return \Symfony\Component\HttpFoundation\RedirectResponse
-   *   A redirect response.
-   */
-  public function redirectDeprecatedRoute(Request $request): RedirectResponse {
-    $route_name = $this->routeMatch->getRouteName();
-
-    switch ($route_name) {
-      case 'automatic_updates.module_update':
-        $destination = 'update.module_update';
-        break;
-
-      case 'automatic_updates.theme_update':
-        $destination = 'update.theme_update';
-        break;
-
-      case 'automatic_updates.report_update':
-        $destination = 'update.report_update';
-        break;
-
-      default:
-        throw new \InvalidArgumentException("Unknown route: '$route_name'");
-    }
-    $destination = Url::fromRoute($destination)
-      ->setAbsolute()
-      ->toString();
-
-    $message = $this->t('This page was accessed from @deprecated_url, which is deprecated and will not work in the next major version of Automatic Updates. Please use <a href=":correct_url">@correct_url</a> instead.', [
-      '@deprecated_url' => $request->getUri(),
-      ':correct_url' => $destination,
-      '@correct_url' => $destination,
-    ]);
-    $this->messenger()->addStatus($message);
-
-    // 308 is a permanent redirect regardless of HTTP method.
-    // @see https://developer.mozilla.org/en-US/docs/Web/HTTP/Redirections
-    return new RedirectResponse($destination, 308);
   }
 
 }

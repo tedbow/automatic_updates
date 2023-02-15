@@ -18,13 +18,6 @@ final class ReleaseChooser {
   use VersionParsingTrait;
 
   /**
-   * The version policy validator service.
-   *
-   * @var \Drupal\automatic_updates\Validator\VersionPolicyValidator
-   */
-  protected $versionPolicyValidator;
-
-  /**
    * The project information fetcher.
    *
    * @var \Drupal\package_manager\ProjectInfo
@@ -34,11 +27,10 @@ final class ReleaseChooser {
   /**
    * Constructs an ReleaseChooser object.
    *
-   * @param \Drupal\automatic_updates\Validator\VersionPolicyValidator $version_policy_validator
+   * @param \Drupal\automatic_updates\Validator\VersionPolicyValidator $versionPolicyValidator
    *   The version validator.
    */
-  public function __construct(VersionPolicyValidator $version_policy_validator) {
-    $this->versionPolicyValidator = $version_policy_validator;
+  public function __construct(protected VersionPolicyValidator $versionPolicyValidator) {
     $this->projectInfo = new ProjectInfo('drupal');
   }
 

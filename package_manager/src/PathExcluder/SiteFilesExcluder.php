@@ -24,33 +24,17 @@ final class SiteFilesExcluder implements EventSubscriberInterface {
   use PathExclusionsTrait;
 
   /**
-   * The stream wrapper manager service.
-   *
-   * @var \Drupal\Core\StreamWrapper\StreamWrapperManagerInterface
-   */
-  protected $streamWrapperManager;
-
-  /**
-   * The Symfony file system service.
-   *
-   * @var \Symfony\Component\Filesystem\Filesystem
-   */
-  protected $fileSystem;
-
-  /**
    * Constructs a SiteFilesExcluder object.
    *
    * @param \Drupal\package_manager\PathLocator $path_locator
    *   The path locator service.
-   * @param \Drupal\Core\StreamWrapper\StreamWrapperManagerInterface $stream_wrapper_manager
+   * @param \Drupal\Core\StreamWrapper\StreamWrapperManagerInterface $streamWrapperManager
    *   The stream wrapper manager service.
-   * @param \Symfony\Component\Filesystem\Filesystem $file_system
+   * @param \Symfony\Component\Filesystem\Filesystem $fileSystem
    *   The Symfony file system service.
    */
-  public function __construct(PathLocator $path_locator, StreamWrapperManagerInterface $stream_wrapper_manager, Filesystem $file_system) {
+  public function __construct(PathLocator $path_locator, protected StreamWrapperManagerInterface $streamWrapperManager, protected Filesystem $fileSystem) {
     $this->pathLocator = $path_locator;
-    $this->streamWrapperManager = $stream_wrapper_manager;
-    $this->fileSystem = $file_system;
   }
 
   /**

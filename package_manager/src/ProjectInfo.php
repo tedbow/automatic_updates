@@ -22,20 +22,12 @@ use Drupal\update\UpdateManagerInterface;
 final class ProjectInfo {
 
   /**
-   * The project name.
-   *
-   * @var string
-   */
-  protected $name;
-
-  /**
    * Constructs a ProjectInfo object.
    *
    * @param string $name
    *   The project name.
    */
-  public function __construct(string $name) {
-    $this->name = $name;
+  public function __construct(protected string $name) {
   }
 
   /**

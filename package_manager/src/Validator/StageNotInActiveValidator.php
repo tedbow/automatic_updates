@@ -20,23 +20,16 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
  *   class.
  */
 class StageNotInActiveValidator implements EventSubscriberInterface {
-  use StringTranslationTrait;
 
-  /**
-   * The path locator service.
-   *
-   * @var \Drupal\package_manager\PathLocator
-   */
-  protected $pathLocator;
+  use StringTranslationTrait;
 
   /**
    * Constructs a new StageNotInActiveValidator object.
    *
-   * @param \Drupal\package_manager\PathLocator $path_locator
+   * @param \Drupal\package_manager\PathLocator $pathLocator
    *   The path locator service.
    */
-  public function __construct(PathLocator $path_locator) {
-    $this->pathLocator = $path_locator;
+  public function __construct(protected PathLocator $pathLocator) {
   }
 
   /**

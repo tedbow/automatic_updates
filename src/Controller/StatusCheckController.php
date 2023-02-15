@@ -7,12 +7,9 @@ namespace Drupal\automatic_updates\Controller;
 use Drupal\automatic_updates\Validation\ValidationResultDisplayTrait;
 use Drupal\automatic_updates\Validation\StatusChecker;
 use Drupal\Core\Controller\ControllerBase;
-use Drupal\Core\StringTranslation\TranslationInterface;
-use Drupal\Core\Url;
 use Drupal\system\SystemManager;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\HttpFoundation\RedirectResponse;
-use Symfony\Component\HttpFoundation\Request;
 
 /**
  * A controller for running status checks.
@@ -25,23 +22,12 @@ final class StatusCheckController extends ControllerBase {
   use ValidationResultDisplayTrait;
 
   /**
-   * The status checker service.
-   *
-   * @var \Drupal\automatic_updates\Validation\StatusChecker
-   */
-  protected $statusChecker;
-
-  /**
    * Constructs a StatusCheckController object.
    *
-   * @param \Drupal\automatic_updates\Validation\StatusChecker $status_checker
+   * @param \Drupal\automatic_updates\Validation\StatusChecker $statusChecker
    *   The status checker service.
-   * @param \Drupal\Core\StringTranslation\TranslationInterface $string_translation
-   *   The string translation service.
    */
-  public function __construct(StatusChecker $status_checker, TranslationInterface $string_translation) {
-    $this->statusChecker = $status_checker;
-    $this->setStringTranslation($string_translation);
+  public function __construct(protected StatusChecker $statusChecker) {
   }
 
   /**
@@ -49,35 +35,8 @@ final class StatusCheckController extends ControllerBase {
    */
   public static function create(ContainerInterface $container): self {
     return new static(
-      $container->get('automatic_updates.status_checker'),
-      $container->get('string_translation'),
+      $container->get('automatic_updates.status_checker')
     );
-  }
-
-  /**
-   * Redirects deprecated readiness check route.
-   *
-   * @param \Symfony\Component\HttpFoundation\Request $request
-   *   The current request.
-   *
-   * @return \Symfony\Component\HttpFoundation\RedirectResponse
-   *   A redirect response.
-   */
-  public function runReadiness(Request $request): RedirectResponse {
-    $destination = Url::fromRoute('automatic_updates.status_check')
-      ->setAbsolute()
-      ->toString();
-
-    $message = $this->t('This page was accessed from @deprecated_url, which is deprecated and will not work in the next major version of Automatic Updates. Please use <a href=":correct_url">@correct_url</a> instead.', [
-      '@deprecated_url' => $request->getUri(),
-      ':correct_url' => $destination,
-      '@correct_url' => $destination,
-    ]);
-    $this->messenger()->addStatus($message);
-
-    // 308 is a permanent redirect regardless of HTTP method.
-    // @see https://developer.mozilla.org/en-US/docs/Web/HTTP/Redirections
-    return new RedirectResponse($destination, 308);
   }
 
   /**

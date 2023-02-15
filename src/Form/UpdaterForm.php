@@ -37,81 +37,32 @@ use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 final class UpdaterForm extends UpdateFormBase {
 
   /**
-   * The updater service.
-   *
-   * @var \Drupal\automatic_updates\Updater
-   */
-  protected $updater;
-
-  /**
-   * The state service.
-   *
-   * @var \Drupal\Core\State\StateInterface
-   */
-  protected $state;
-
-  /**
-   * The event dispatcher service.
-   *
-   * @var \Symfony\Component\EventDispatcher\EventDispatcherInterface
-   */
-  protected $eventDispatcher;
-
-  /**
-   * The release chooser service.
-   *
-   * @var \Drupal\automatic_updates\ReleaseChooser
-   */
-  protected $releaseChooser;
-
-  /**
-   * The renderer service.
-   *
-   * @var \Drupal\Core\Render\RendererInterface
-   */
-  protected $renderer;
-
-  /**
-   * Failure marker service.
-   *
-   * @var \Drupal\package_manager\FailureMarker
-   */
-  protected $failureMarker;
-
-  /**
-   * The module handler service.
-   *
-   * @var \Drupal\Core\Extension\ModuleHandlerInterface
-   */
-  protected $moduleHandler;
-
-  /**
    * Constructs a new UpdaterForm object.
    *
    * @param \Drupal\Core\State\StateInterface $state
    *   The state service.
    * @param \Drupal\automatic_updates\Updater $updater
    *   The updater service.
-   * @param \Symfony\Component\EventDispatcher\EventDispatcherInterface $event_dispatcher
+   * @param \Symfony\Component\EventDispatcher\EventDispatcherInterface $eventDispatcher
    *   The event dispatcher service.
-   * @param \Drupal\automatic_updates\ReleaseChooser $release_chooser
+   * @param \Drupal\automatic_updates\ReleaseChooser $releaseChooser
    *   The release chooser service.
    * @param \Drupal\Core\Render\RendererInterface $renderer
    *   The renderer service.
-   * @param \Drupal\package_manager\FailureMarker $failure_marker
+   * @param \Drupal\package_manager\FailureMarker $failureMarker
    *   The failure marker service.
-   * @param \Drupal\Core\Extension\ModuleHandlerInterface $module_handler
+   * @param \Drupal\Core\Extension\ModuleHandlerInterface $moduleHandler
    *   The module handler service.
    */
-  public function __construct(StateInterface $state, Updater $updater, EventDispatcherInterface $event_dispatcher, ReleaseChooser $release_chooser, RendererInterface $renderer, FailureMarker $failure_marker, ModuleHandlerInterface $module_handler) {
-    $this->updater = $updater;
-    $this->state = $state;
-    $this->eventDispatcher = $event_dispatcher;
-    $this->releaseChooser = $release_chooser;
-    $this->renderer = $renderer;
-    $this->failureMarker = $failure_marker;
-    $this->moduleHandler = $module_handler;
-  }
+  public function __construct(
+    protected StateInterface $state,
+    protected Updater $updater,
+    protected EventDispatcherInterface $eventDispatcher,
+    protected ReleaseChooser $releaseChooser,
+    protected RendererInterface $renderer,
+    protected FailureMarker $failureMarker,
+    protected ModuleHandlerInterface $moduleHandler,
+  ) {}
 
   /**
    * {@inheritdoc}
@@ -163,7 +114,7 @@ final class UpdaterForm extends UpdateFormBase {
             'stage_id' => $stage_id,
           ]);
         }
-        catch (StageOwnershipException $e) {
+        catch (StageOwnershipException) {
           // We already know a stage exists, even if it's not ours, so we don't
           // have to do anything else here.
         }

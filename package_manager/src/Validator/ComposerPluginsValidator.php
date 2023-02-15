@@ -100,37 +100,25 @@ final class ComposerPluginsValidator implements EventSubscriberInterface {
   protected array $additionalTrustedComposerPlugins;
 
   /**
-   * The Composer inspector service.
-   *
-   * @var \Drupal\package_manager\ComposerInspector
-   */
-  protected ComposerInspector $inspector;
-
-  /**
-   * The path locator service.
-   *
-   * @var \Drupal\package_manager\PathLocator
-   */
-  protected PathLocator $pathLocator;
-
-  /**
    * Constructs a new ComposerPluginsValidator.
    *
    * @param \Drupal\Core\Config\ConfigFactoryInterface $config_factory
    *   The config factory.
    * @param \Drupal\package_manager\ComposerInspector $inspector
    *   The Composer inspector service.
-   * @param \Drupal\package_manager\PathLocator $path_locator
+   * @param \Drupal\package_manager\PathLocator $pathLocator
    *   The path locator service.
    */
-  public function __construct(ConfigFactoryInterface $config_factory, ComposerInspector $inspector, PathLocator $path_locator) {
+  public function __construct(
+    ConfigFactoryInterface $config_factory,
+    protected ComposerInspector $inspector,
+    protected PathLocator $pathLocator,
+  ) {
     $settings = $config_factory->get('package_manager.settings');
     $this->additionalTrustedComposerPlugins = array_map(
       [__CLASS__, 'normalizePackageName'],
       $settings->get('additional_trusted_composer_plugins')
     );
-    $this->inspector = $inspector;
-    $this->pathLocator = $path_locator;
   }
 
   /**

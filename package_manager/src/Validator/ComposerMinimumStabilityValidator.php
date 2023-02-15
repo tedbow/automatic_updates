@@ -25,30 +25,14 @@ final class ComposerMinimumStabilityValidator implements EventSubscriberInterfac
   use StringTranslationTrait;
 
   /**
-   * The path locator service.
-   *
-   * @var \Drupal\package_manager\PathLocator
-   */
-  protected PathLocator $pathLocator;
-
-  /**
-   * The Composer inspector service.
-   *
-   * @var \Drupal\package_manager\ComposerInspector
-   */
-  protected ComposerInspector $inspector;
-
-  /**
    * Constructs a ComposerMinimumStabilityValidator object.
    *
-   * @param \Drupal\package_manager\PathLocator $path_locator
+   * @param \Drupal\package_manager\PathLocator $pathLocator
    *   The path locator service.
    * @param \Drupal\package_manager\ComposerInspector $inspector
    *   The Composer inspector service.
    */
-  public function __construct(PathLocator $path_locator, ComposerInspector $inspector) {
-    $this->pathLocator = $path_locator;
-    $this->inspector = $inspector;
+  public function __construct(protected PathLocator $pathLocator, protected ComposerInspector $inspector) {
   }
 
   /**

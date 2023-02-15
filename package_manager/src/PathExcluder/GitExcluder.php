@@ -23,23 +23,15 @@ final class GitExcluder implements EventSubscriberInterface {
   use PathExclusionsTrait;
 
   /**
-   * The file system service.
-   *
-   * @var \Drupal\Core\File\FileSystemInterface
-   */
-  protected $fileSystem;
-
-  /**
    * Constructs a GitExcluder object.
    *
    * @param \Drupal\package_manager\PathLocator $path_locator
    *   The path locator service.
-   * @param \Drupal\Core\File\FileSystemInterface $file_system
+   * @param \Drupal\Core\File\FileSystemInterface $fileSystem
    *   The file system service.
    */
-  public function __construct(PathLocator $path_locator, FileSystemInterface $file_system) {
+  public function __construct(PathLocator $path_locator, protected FileSystemInterface $fileSystem) {
     $this->pathLocator = $path_locator;
-    $this->fileSystem = $file_system;
   }
 
   /**

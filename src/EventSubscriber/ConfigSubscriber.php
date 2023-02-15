@@ -25,20 +25,13 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 final class ConfigSubscriber implements EventSubscriberInterface {
 
   /**
-   * The status checker service.
-   *
-   * @var \Drupal\automatic_updates\Validation\StatusChecker
-   */
-  protected $statusChecker;
-
-  /**
    * Constructs a ConfigSubscriber object.
    *
-   * @param \Drupal\automatic_updates\Validation\StatusChecker $status_checker
+   * @param \Drupal\automatic_updates\Validation\StatusChecker $statusChecker
    *   The status checker service.
    */
-  public function __construct(StatusChecker $status_checker) {
-    $this->statusChecker = $status_checker;
+  public function __construct(protected StatusChecker $statusChecker) {
+    $this->statusChecker = $statusChecker;
   }
 
   /**

@@ -5,13 +5,13 @@ declare(strict_types = 1);
 namespace Drupal\Tests\package_manager\Unit;
 
 use Drupal\package_manager\Event\PreCreateEvent;
-use Drupal\package_manager\Path;
 use Drupal\package_manager\PathLocator;
 use Drupal\package_manager\Stage;
 use Drupal\package_manager\ValidationResult;
 use Drupal\package_manager\Validator\StageNotInActiveValidator;
 use Drupal\Tests\package_manager\Traits\ValidationTestTrait;
 use Drupal\Tests\UnitTestCase;
+use Symfony\Component\Filesystem\Path;
 
 /**
  * @coversDefaultClass \Drupal\package_manager\Validator\StageNotInActiveValidator

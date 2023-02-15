@@ -14,49 +14,20 @@ use Drupal\Core\File\FileSystemInterface;
 class PathLocator {
 
   /**
-   * The absolute path of the running Drupal code base.
-   *
-   * @var string
-   */
-  protected $appRoot;
-
-  /**
-   * The config factory service.
-   *
-   * @var \Drupal\Core\Config\ConfigFactoryInterface
-   */
-  protected $configFactory;
-
-  /**
-   * The file system service.
-   *
-   * @var \Drupal\Core\File\FileSystemInterface
-   */
-  protected $fileSystem;
-
-  /**
    * Constructs a PathLocator object.
    *
-   * @param string $app_root
+   * @param string $appRoot
    *   The absolute path of the running Drupal code base.
-   * @param \Drupal\Core\Config\ConfigFactoryInterface $config_factory
+   * @param \Drupal\Core\Config\ConfigFactoryInterface $configFactory
    *   The config factory service.
-   * @param \Drupal\Core\File\FileSystemInterface $file_system
+   * @param \Drupal\Core\File\FileSystemInterface $fileSystem
    *   The file system service.
    */
-  public function __construct(string $app_root, ConfigFactoryInterface $config_factory = NULL, FileSystemInterface $file_system = NULL) {
-    $this->appRoot = $app_root;
-    if (empty($config_factory)) {
-      @trigger_error('Calling ' . __METHOD__ . '() without the $config_factory argument is deprecated in automatic_updates:8.x-2.1 and will be required before automatic_updates:3.0.0. See https://www.drupal.org/node/3300008.', E_USER_DEPRECATED);
-      $config_factory = \Drupal::configFactory();
-    }
-    $this->configFactory = $config_factory;
-    if (empty($file_system)) {
-      @trigger_error('Calling ' . __METHOD__ . '() without the $file_system argument is deprecated in automatic_updates:8.x-2.1 and will be required before automatic_updates:3.0.0. See https://www.drupal.org/node/3300008.', E_USER_DEPRECATED);
-      $file_system = \Drupal::service('file_system');
-    }
-    $this->fileSystem = $file_system;
-  }
+  public function __construct(
+    protected string $appRoot,
+    protected ConfigFactoryInterface $configFactory,
+    protected FileSystemInterface $fileSystem,
+  ) {}
 
   /**
    * Returns the absolute path of the project root.

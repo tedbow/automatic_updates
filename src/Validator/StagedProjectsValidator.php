@@ -8,7 +8,6 @@ use Composer\Package\PackageInterface;
 use Drupal\automatic_updates\Updater;
 use Drupal\package_manager\Event\PreApplyEvent;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
-use Drupal\Core\StringTranslation\TranslationInterface;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 /**
@@ -22,16 +21,6 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 final class StagedProjectsValidator implements EventSubscriberInterface {
 
   use StringTranslationTrait;
-
-  /**
-   * Constructs a StagedProjectsValidation object.
-   *
-   * @param \Drupal\Core\StringTranslation\TranslationInterface $translation
-   *   The translation service.
-   */
-  public function __construct(TranslationInterface $translation) {
-    $this->setStringTranslation($translation);
-  }
 
   /**
    * Validates the staged packages.

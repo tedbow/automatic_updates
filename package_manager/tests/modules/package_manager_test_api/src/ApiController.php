@@ -8,7 +8,6 @@ use Drupal\Core\Controller\ControllerBase;
 use Drupal\Core\Url;
 use Drupal\package_manager\PathLocator;
 use Drupal\package_manager\Stage;
-use Drupal\package_manager\UnusedConfigFactory;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\RedirectResponse;
@@ -58,8 +57,6 @@ class ApiController extends ControllerBase {
    */
   public static function create(ContainerInterface $container) {
     $stage = new Stage(
-      // @todo Remove this in https://www.drupal.org/i/3303167
-      new UnusedConfigFactory(),
       $container->get('package_manager.path_locator'),
       $container->get('package_manager.beginner'),
       $container->get('package_manager.stager'),
@@ -67,7 +64,9 @@ class ApiController extends ControllerBase {
       $container->get('file_system'),
       $container->get('event_dispatcher'),
       $container->get('tempstore.shared'),
-      $container->get('datetime.time')
+      $container->get('datetime.time'),
+      $container->get('PhpTuf\ComposerStager\Infrastructure\Factory\Path\PathFactoryInterface'),
+      $container->get('package_manager.failure_marker')
     );
     return new static(
       $stage,

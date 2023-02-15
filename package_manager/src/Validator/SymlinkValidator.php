@@ -34,51 +34,23 @@ class SymlinkValidator implements EventSubscriberInterface {
   use StringTranslationTrait;
 
   /**
-   * The path locator service.
-   *
-   * @var \Drupal\package_manager\PathLocator
-   */
-  protected $pathLocator;
-
-  /**
-   * The Composer Stager precondition that this validator wraps.
-   *
-   * @var \PhpTuf\ComposerStager\Domain\Service\Precondition\CodebaseContainsNoSymlinksInterface
-   */
-  protected $precondition;
-
-  /**
-   * The path factory service.
-   *
-   * @var \PhpTuf\ComposerStager\Infrastructure\Factory\Path\PathFactoryInterface
-   */
-  protected $pathFactory;
-
-  /**
-   * The module handler service.
-   *
-   * @var \Drupal\Core\Extension\ModuleHandlerInterface
-   */
-  protected $moduleHandler;
-
-  /**
    * Constructs a SymlinkValidator object.
    *
-   * @param \Drupal\package_manager\PathLocator $path_locator
+   * @param \Drupal\package_manager\PathLocator $pathLocator
    *   The path locator service.
    * @param \PhpTuf\ComposerStager\Domain\Service\Precondition\CodebaseContainsNoSymlinksInterface $precondition
    *   The Composer Stager precondition that this validator wraps.
-   * @param \PhpTuf\ComposerStager\Infrastructure\Factory\Path\PathFactoryInterface $path_factory
+   * @param \PhpTuf\ComposerStager\Infrastructure\Factory\Path\PathFactoryInterface $pathFactory
    *   The path factory service.
-   * @param \Drupal\Core\Extension\ModuleHandlerInterface $module_handler
+   * @param \Drupal\Core\Extension\ModuleHandlerInterface $moduleHandler
    *   The module handler service.
    */
-  public function __construct(PathLocator $path_locator, CodebaseContainsNoSymlinksInterface $precondition, PathFactoryInterface $path_factory, ModuleHandlerInterface $module_handler) {
-    $this->pathLocator = $path_locator;
-    $this->precondition = $precondition;
-    $this->pathFactory = $path_factory;
-    $this->moduleHandler = $module_handler;
-  }
+  public function __construct(
+    protected PathLocator $pathLocator,
+    protected CodebaseContainsNoSymlinksInterface $precondition,
+    protected PathFactoryInterface $pathFactory,
+    protected ModuleHandlerInterface $moduleHandler,
+  ) {}
 
   /**
    * {@inheritdoc}
@@ -94,7 +66,7 @@ class SymlinkValidator implements EventSubscriberInterface {
     try {
       $stage_dir = $event->getStage()->getStageDirectory();
     }
-    catch (\LogicException $e) {
+    catch (\LogicException) {
       $stage_dir = __DIR__;
     }
     $stage_dir = $this->pathFactory->create($stage_dir);

@@ -5,8 +5,6 @@ declare(strict_types = 1);
 namespace Drupal\Tests\package_manager\Kernel;
 
 use Drupal\Core\DependencyInjection\ContainerBuilder;
-use Drupal\package_manager\Event\CollectIgnoredPathsEvent;
-use Drupal\package_manager\Event\ExcludedPathsTrait;
 use Drupal\package_manager\Event\PostApplyEvent;
 use Drupal\package_manager\Event\PostCreateEvent;
 use Drupal\package_manager\Event\PostDestroyEvent;
@@ -17,7 +15,6 @@ use Drupal\package_manager\Event\PreDestroyEvent;
 use Drupal\package_manager\Event\PreOperationStageEvent;
 use Drupal\package_manager\Event\PreRequireEvent;
 use Drupal\package_manager\Event\StageEvent;
-use Drupal\package_manager\Event\StatusCheckEvent;
 use Drupal\package_manager\ValidationResult;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
@@ -174,24 +171,6 @@ class StageEventsTest extends PackageManagerKernelTestBase implements EventSubsc
 
     $this->stage->create();
     $this->stage->require(['drupal/core:9.8.2'], ['drupal/core-dev:9.8.2']);
-  }
-
-  /**
-   * @group legacy
-   */
-  public function testDeprecations(): void {
-    $stage = $this->createStage();
-    $this->expectDeprecation('Calling ' . StatusCheckEvent::class . '::__construct() without the $ignored_paths argument is deprecated in automatic_updates:8.x-2.5 and will be removed in automatic_updates:3.0.0. See https://www.drupal.org/node/3317862.');
-    $this->expectDeprecation(ExcludedPathsTrait::class . '::excludePath() is deprecated in automatic_updates:8.x-2.5 and removed in automatic_updates:3.0.0. Use ' . CollectIgnoredPathsEvent::class . ' instead. See https://www.drupal.org/node/3317862.');
-    (new StatusCheckEvent($stage))->excludePath('/junk/drawer');
-
-    $this->expectDeprecation('Calling ' . PreCreateEvent::class . '::__construct() without the $ignored_paths argument is deprecated in automatic_updates:8.x-2.5 and will be removed in automatic_updates:3.0.0. See https://www.drupal.org/node/3317862.');
-    $this->expectDeprecation(ExcludedPathsTrait::class . '::excludePath() is deprecated in automatic_updates:8.x-2.5 and removed in automatic_updates:3.0.0. Use ' . CollectIgnoredPathsEvent::class . ' instead. See https://www.drupal.org/node/3317862.');
-    (new PreCreateEvent($stage))->excludePath('/junk/drawer');
-
-    $this->expectDeprecation('Calling ' . PreApplyEvent::class . '::__construct() without the $ignored_paths argument is deprecated in automatic_updates:8.x-2.5 and will be removed in automatic_updates:3.0.0. See https://www.drupal.org/node/3317862.');
-    $this->expectDeprecation(ExcludedPathsTrait::class . '::excludePath() is deprecated in automatic_updates:8.x-2.5 and removed in automatic_updates:3.0.0. Use ' . CollectIgnoredPathsEvent::class . ' instead. See https://www.drupal.org/node/3317862.');
-    (new PreApplyEvent($stage))->excludePath('/junk/drawer');
   }
 
   /**

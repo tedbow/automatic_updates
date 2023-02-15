@@ -37,20 +37,12 @@ final class VersionPolicyValidator implements EventSubscriberInterface {
   use StringTranslationTrait;
 
   /**
-   * The class resolver service.
-   *
-   * @var \Drupal\Core\DependencyInjection\ClassResolverInterface
-   */
-  private $classResolver;
-
-  /**
    * Constructs a VersionPolicyValidator object.
    *
-   * @param \Drupal\Core\DependencyInjection\ClassResolverInterface $class_resolver
+   * @param \Drupal\Core\DependencyInjection\ClassResolverInterface $classResolver
    *   The class resolver service.
    */
-  public function __construct(ClassResolverInterface $class_resolver) {
-    $this->classResolver = $class_resolver;
+  public function __construct(private ClassResolverInterface $classResolver) {
   }
 
   /**

@@ -7,7 +7,6 @@ namespace Drupal\automatic_updates\Validator;
 use Composer\Semver\Semver;
 use Drupal\automatic_updates\Updater;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
-use Drupal\Core\StringTranslation\TranslationInterface;
 use Drupal\package_manager\Event\PreApplyEvent;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
@@ -17,16 +16,6 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 class RequestedUpdateValidator implements EventSubscriberInterface {
 
   use StringTranslationTrait;
-
-  /**
-   * Constructs a RequestedUpdateValidator object.
-   *
-   * @param \Drupal\Core\StringTranslation\TranslationInterface $translation
-   *   The translation service.
-   */
-  public function __construct(TranslationInterface $translation) {
-    $this->setStringTranslation($translation);
-  }
 
   /**
    * Validates that requested packages have been updated to the right version.

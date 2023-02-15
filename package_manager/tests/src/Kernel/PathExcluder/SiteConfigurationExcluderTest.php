@@ -101,6 +101,6 @@ class TestSiteConfigurationExcluder extends SiteConfigurationExcluder {
   /**
    * {@inheritdoc}
    */
-  public $sitePath;
+  public string $sitePath;
 
 }

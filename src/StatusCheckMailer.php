@@ -42,41 +42,20 @@ final class StatusCheckMailer {
   public const ERRORS_ONLY = 'errors_only';
 
   /**
-   * The config factory service.
-   *
-   * @var \Drupal\Core\Config\ConfigFactoryInterface
-   */
-  protected ConfigFactoryInterface $configFactory;
-
-  /**
-   * The mail manager service.
-   *
-   * @var \Drupal\Core\Mail\MailManagerInterface
-   */
-  protected MailManagerInterface $mailManager;
-
-  /**
-   * The language manager service.
-   *
-   * @var \Drupal\Core\Language\LanguageManagerInterface
-   */
-  protected LanguageManagerInterface $languageManager;
-
-  /**
    * Constructs a StatusCheckNotifier object.
    *
-   * @param \Drupal\Core\Config\ConfigFactoryInterface $config_factory
+   * @param \Drupal\Core\Config\ConfigFactoryInterface $configFactory
    *   The config factory service.
-   * @param \Drupal\Core\Mail\MailManagerInterface $mail_manager
+   * @param \Drupal\Core\Mail\MailManagerInterface $mailManager
    *   The mail manager service.
-   * @param \Drupal\Core\Language\LanguageManagerInterface $language_manager
+   * @param \Drupal\Core\Language\LanguageManagerInterface $languageManager
    *   The language manager service.
    */
-  public function __construct(ConfigFactoryInterface $config_factory, MailManagerInterface $mail_manager, LanguageManagerInterface $language_manager) {
-    $this->configFactory = $config_factory;
-    $this->mailManager = $mail_manager;
-    $this->languageManager = $language_manager;
-  }
+  public function __construct(
+    protected ConfigFactoryInterface $configFactory,
+    protected MailManagerInterface $mailManager,
+    protected LanguageManagerInterface $languageManager,
+  ) {}
 
   /**
    * Sends status check failure notifications if necessary.

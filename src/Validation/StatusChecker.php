@@ -28,63 +28,30 @@ final class StatusChecker implements EventSubscriberInterface {
   protected $keyValueExpirable;
 
   /**
-   * The time service.
-   *
-   * @var \Drupal\Component\Datetime\TimeInterface
-   */
-  protected $time;
-
-  /**
-   * The event dispatcher service.
-   *
-   * @var \Symfony\Component\EventDispatcher\EventDispatcherInterface
-   */
-  protected $eventDispatcher;
-
-  /**
-   * The number of hours to store results.
-   *
-   * @var int
-   */
-  protected $resultsTimeToLive;
-
-  /**
-   * The updater service.
-   *
-   * @var \Drupal\automatic_updates\Updater
-   */
-  protected $updater;
-
-  /**
-   * The cron updater service.
-   *
-   * @var \Drupal\automatic_updates\CronUpdater
-   */
-  protected $cronUpdater;
-
-  /**
    * Constructs a StatusChecker.
    *
    * @param \Drupal\Core\KeyValueStore\KeyValueExpirableFactoryInterface $key_value_expirable_factory
    *   The key/value expirable factory.
    * @param \Drupal\Component\Datetime\TimeInterface $time
    *   The time service.
-   * @param \Symfony\Component\EventDispatcher\EventDispatcherInterface $dispatcher
+   * @param \Symfony\Component\EventDispatcher\EventDispatcherInterface $eventDispatcher
    *   The event dispatcher service.
    * @param \Drupal\automatic_updates\Updater $updater
    *   The updater service.
-   * @param \Drupal\automatic_updates\CronUpdater $cron_updater
+   * @param \Drupal\automatic_updates\CronUpdater $cronUpdater
    *   The cron updater service.
-   * @param int $results_time_to_live
+   * @param int $resultsTimeToLive
    *   The number of hours to store results.
    */
-  public function __construct(KeyValueExpirableFactoryInterface $key_value_expirable_factory, TimeInterface $time, EventDispatcherInterface $dispatcher, Updater $updater, CronUpdater $cron_updater, int $results_time_to_live) {
+  public function __construct(
+    KeyValueExpirableFactoryInterface $key_value_expirable_factory,
+    protected TimeInterface $time,
+    protected EventDispatcherInterface $eventDispatcher,
+    protected Updater $updater,
+    protected CronUpdater $cronUpdater,
+    protected int $resultsTimeToLive,
+  ) {
     $this->keyValueExpirable = $key_value_expirable_factory->get('automatic_updates');
-    $this->time = $time;
-    $this->eventDispatcher = $dispatcher;
-    $this->updater = $updater;
-    $this->cronUpdater = $cron_updater;
-    $this->resultsTimeToLive = $results_time_to_live;
   }
 
   /**

@@ -19,13 +19,6 @@ use PhpTuf\ComposerStager\Domain\Service\ProcessRunner\ComposerRunnerInterface;
 final class ComposerInspector {
 
   /**
-   * The Composer runner service from Composer Stager.
-   *
-   * @var \PhpTuf\ComposerStager\Domain\Service\ProcessRunner\ComposerRunnerInterface
-   */
-  protected ComposerRunnerInterface $runner;
-
-  /**
    * The JSON process output callback.
    *
    * @var \Drupal\package_manager\JsonProcessOutputCallback
@@ -38,8 +31,7 @@ final class ComposerInspector {
    * @param \PhpTuf\ComposerStager\Domain\Service\ProcessRunner\ComposerRunnerInterface $runner
    *   The Composer runner service from Composer Stager.
    */
-  public function __construct(ComposerRunnerInterface $runner) {
-    $this->runner = $runner;
+  public function __construct(private ComposerRunnerInterface $runner) {
     $this->jsonCallback = new JsonProcessOutputCallback();
   }
 

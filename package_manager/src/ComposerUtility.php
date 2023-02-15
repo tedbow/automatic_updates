@@ -334,7 +334,7 @@ class ComposerUtility {
     try {
       $version_parser->parseConstraints($version);
     }
-    catch (\UnexpectedValueException $e) {
+    catch (\UnexpectedValueException) {
       return FALSE;
     }
 

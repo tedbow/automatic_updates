@@ -6,7 +6,6 @@ namespace Drupal\package_manager;
 
 use Drupal\Component\Datetime\TimeInterface;
 use Drupal\Component\Utility\Crypt;
-use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\File\Exception\FileException;
 use Drupal\Core\File\FileSystemInterface;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
@@ -32,7 +31,6 @@ use PhpTuf\ComposerStager\Domain\Core\Committer\CommitterInterface;
 use PhpTuf\ComposerStager\Domain\Core\Stager\StagerInterface;
 use PhpTuf\ComposerStager\Domain\Exception\InvalidArgumentException;
 use PhpTuf\ComposerStager\Domain\Exception\PreconditionException;
-use PhpTuf\ComposerStager\Infrastructure\Factory\Path\PathFactory;
 use PhpTuf\ComposerStager\Infrastructure\Factory\Path\PathFactoryInterface;
 use PhpTuf\ComposerStager\Infrastructure\Value\PathList\PathList;
 use Psr\Log\LoggerAwareInterface;
@@ -74,14 +72,14 @@ class Stage implements LoggerAwareInterface {
    *
    * @var string
    */
-  protected const TEMPSTORE_LOCK_KEY = 'lock';
+  final protected const TEMPSTORE_LOCK_KEY = 'lock';
 
   /**
    * The tempstore key under which to store arbitrary metadata for this stage.
    *
    * @var string
    */
-  protected const TEMPSTORE_METADATA_KEY = 'metadata';
+  final protected const TEMPSTORE_METADATA_KEY = 'metadata';
 
   /**
    * The tempstore key under which to store the path of stage root directory.
@@ -123,83 +121,6 @@ class Stage implements LoggerAwareInterface {
   private const TEMPSTORE_DESTROYED_STAGES_INFO_PREFIX = 'TEMPSTORE_DESTROYED_STAGES_INFO';
 
   /**
-   * The config factory service.
-   *
-   * @var \Drupal\Core\Config\ConfigFactoryInterface
-   */
-  protected $configFactory;
-
-  /**
-   * The path locator service.
-   *
-   * @var \Drupal\package_manager\PathLocator
-   */
-  protected $pathLocator;
-
-  /**
-   * The beginner service.
-   *
-   * @var \PhpTuf\ComposerStager\Domain\Core\Beginner\BeginnerInterface
-   */
-  protected $beginner;
-
-  /**
-   * The stager service.
-   *
-   * @var \PhpTuf\ComposerStager\Domain\Core\Stager\StagerInterface
-   */
-  protected $stager;
-
-  /**
-   * The committer service.
-   *
-   * @var \PhpTuf\ComposerStager\Domain\Core\Committer\CommitterInterface
-   */
-  protected $committer;
-
-  /**
-   * The file system service.
-   *
-   * @var \Drupal\Core\File\FileSystemInterface
-   */
-  protected $fileSystem;
-
-  /**
-   * The event dispatcher service.
-   *
-   * @var \Symfony\Contracts\EventDispatcher\EventDispatcherInterface
-   */
-  protected $eventDispatcher;
-
-  /**
-   * The shared temp store factory.
-   *
-   * @var \Drupal\Core\TempStore\SharedTempStoreFactory
-   */
-  protected $tempStoreFactory;
-
-  /**
-   * The shared temp store.
-   *
-   * @var \Drupal\Core\TempStore\SharedTempStore
-   */
-  protected $tempStore;
-
-  /**
-   * The time service.
-   *
-   * @var \Drupal\Component\Datetime\TimeInterface
-   */
-  protected $time;
-
-  /**
-   * The path factory service.
-   *
-   * @var \PhpTuf\ComposerStager\Infrastructure\Factory\Path\PathFactoryInterface
-   */
-  protected $pathFactory;
-
-  /**
    * The lock info for the stage.
    *
    * Consists of a unique random string and the current class name.
@@ -209,18 +130,9 @@ class Stage implements LoggerAwareInterface {
   private $lock;
 
   /**
-   * The failure marker service.
-   *
-   * @var \Drupal\package_manager\FailureMarker
-   */
-  protected $failureMarker;
-
-  /**
    * Constructs a new Stage object.
    *
-   * @param \Drupal\Core\Config\ConfigFactoryInterface $config_factory
-   *   The config factory service.
-   * @param \Drupal\package_manager\PathLocator $path_locator
+   * @param \Drupal\package_manager\PathLocator $pathLocator
    *   The path locator service.
    * @param \PhpTuf\ComposerStager\Domain\Core\Beginner\BeginnerInterface $beginner
    *   The beginner service.
@@ -228,55 +140,33 @@ class Stage implements LoggerAwareInterface {
    *   The stager service.
    * @param \PhpTuf\ComposerStager\Domain\Core\Committer\CommitterInterface $committer
    *   The committer service.
-   * @param \Drupal\Core\File\FileSystemInterface $file_system
+   * @param \Drupal\Core\File\FileSystemInterface $fileSystem
    *   The file system service.
-   * @param \Symfony\Contracts\EventDispatcher\EventDispatcherInterface $event_dispatcher
+   * @param \Symfony\Contracts\EventDispatcher\EventDispatcherInterface $eventDispatcher
    *   The event dispatcher service.
-   * @param \Drupal\Core\TempStore\SharedTempStoreFactory $temp_store_factory
+   * @param \Drupal\Core\TempStore\SharedTempStoreFactory $tempStoreFactory
    *   The shared tempstore factory.
    * @param \Drupal\Component\Datetime\TimeInterface $time
    *   The time service.
-   * @param \PhpTuf\ComposerStager\Infrastructure\Factory\Path\PathFactoryInterface $path_factory
+   * @param \PhpTuf\ComposerStager\Infrastructure\Factory\Path\PathFactoryInterface $pathFactory
    *   The path factory service.
-   * @param \Drupal\package_manager\FailureMarker $failure_marker
+   * @param \Drupal\package_manager\FailureMarker $failureMarker
    *   The failure marker service.
    */
-  public function __construct(ConfigFactoryInterface $config_factory, PathLocator $path_locator, BeginnerInterface $beginner, StagerInterface $stager, CommitterInterface $committer, FileSystemInterface $file_system, EventDispatcherInterface $event_dispatcher, SharedTempStoreFactory $temp_store_factory, TimeInterface $time, PathFactoryInterface $path_factory = NULL, FailureMarker $failure_marker = NULL) {
-    $this->configFactory = $config_factory;
-    $this->pathLocator = $path_locator;
-    $this->beginner = $beginner;
-    $this->stager = $stager;
-    $this->committer = $committer;
-    $this->fileSystem = $file_system;
-    $this->eventDispatcher = $event_dispatcher;
-    $this->time = $time;
-    $this->tempStoreFactory = $temp_store_factory;
-    $this->tempStore = $temp_store_factory->get('package_manager_stage');
-    if (!$config_factory instanceof UnusedConfigFactory) {
-      // @todo Remove this in https://www.drupal.org/i/3303167
-      @trigger_error('Calling ' . __METHOD__ . '() with the $config_factory argument is deprecated in automatic_updates:8.x-2.6 and will be removed in automatic_updates:3.0.0. See https://www.drupal.org/node/3325718.', E_USER_DEPRECATED);
-    }
-    if (empty($path_factory)) {
-      @trigger_error('Calling ' . __METHOD__ . '() without the $path_factory argument is deprecated in automatic_updates:8.x-2.3 and will be required before automatic_updates:3.0.0. See https://www.drupal.org/node/3310706.', E_USER_DEPRECATED);
-      $path_factory = new PathFactory();
-    }
-    $this->pathFactory = $path_factory;
-    if (empty($failure_marker)) {
-      @trigger_error('Calling ' . __METHOD__ . '() without the $failure_marker argument is deprecated in automatic_updates:8.x-2.3 and will be required before automatic_updates:3.0.0. See https://www.drupal.org/node/3311257.', E_USER_DEPRECATED);
-      $failure_marker = \Drupal::service('package_manager.failure_marker');
-    }
-    $this->failureMarker = $failure_marker;
+  public function __construct(
+    protected PathLocator $pathLocator,
+    protected BeginnerInterface $beginner,
+    protected StagerInterface $stager,
+    protected CommitterInterface $committer,
+    protected FileSystemInterface $fileSystem,
+    protected EventDispatcherInterface $eventDispatcher,
+    protected SharedTempStoreFactory $tempStoreFactory,
+    protected TimeInterface $time,
+    protected PathFactoryInterface $pathFactory,
+    protected FailureMarker $failureMarker,
+  ) {
+    $this->tempStore = $tempStoreFactory->get('package_manager_stage');
     $this->setLogger(new NullLogger());
-    if (self::TEMPSTORE_METADATA_KEY !== static::TEMPSTORE_METADATA_KEY) {
-      @trigger_error('Overriding ' . __CLASS__ . '::TEMPSTORE_METADATA_KEY is deprecated in automatic_updates:8.x-2.5 and will not be possible in automatic_updates:3.0.0. There is no replacement. See https://www.drupal.org/node/3317450.', E_USER_DEPRECATED);
-      \Drupal::logger('package_manager')
-        ->error(__CLASS__ . '::TEMPSTORE_METADATA_KEY is overridden by ' . static::class . '. This is deprecated because it can cause errors or other unexpected behavior. It is strongly recommended to stop overriding this constant. See https://www.drupal.org/node/3317450 for more information.');
-    }
-    if (self::TEMPSTORE_LOCK_KEY !== static::TEMPSTORE_LOCK_KEY) {
-      @trigger_error('Overriding ' . __CLASS__ . '::TEMPSTORE_LOCK_KEY is deprecated in automatic_updates:8.x-2.5 and will not be possible in automatic_updates:3.0.0. There is no replacement. See https://www.drupal.org/node/3317450.', E_USER_DEPRECATED);
-      \Drupal::logger('package_manager')
-        ->error(__CLASS__ . '::TEMPSTORE_LOCK_KEY is overridden by ' . static::class . '. This is deprecated because it can cause errors or other unexpected behavior. It is strongly recommended to stop overriding this constant. See https://www.drupal.org/node/3317450 for more information.');
-    }
   }
 
   /**
@@ -583,7 +473,7 @@ class Stage implements LoggerAwareInterface {
           $this->fileSystem->chmod($path, 0777);
         });
       }
-      catch (FileException $e) {
+      catch (FileException) {
         // Deliberately swallow the exception so that the stage will be marked
         // as available and the post-destroy event will be fired, even if the
         // stage directory can't actually be deleted. The file system service

@@ -13,27 +13,6 @@ use Drupal\system\SystemManager;
 final class ValidationResult {
 
   /**
-   * A succinct summary of the results.
-   *
-   * @var \Drupal\Core\StringTranslation\TranslatableMarkup
-   */
-  protected $summary;
-
-  /**
-   * The error messages.
-   *
-   * @var \Drupal\Core\StringTranslation\TranslatableMarkup[]|string[]
-   */
-  protected $messages;
-
-  /**
-   * The severity of the result.
-   *
-   * @var int
-   */
-  protected $severity;
-
-  /**
    * Creates a ValidationResult object.
    *
    * @param int $severity
@@ -44,16 +23,13 @@ final class ValidationResult {
    * @param \Drupal\Core\StringTranslation\TranslatableMarkup|null $summary
    *   The errors summary.
    */
-  private function __construct(int $severity, array $messages, ?TranslatableMarkup $summary = NULL) {
+  private function __construct(protected int $severity, protected array $messages, protected ?TranslatableMarkup $summary = NULL) {
     if (empty($messages)) {
       throw new \InvalidArgumentException('At least one message is required.');
     }
     if (count($messages) > 1 && !$summary) {
       throw new \InvalidArgumentException('If more than one message is provided, a summary is required.');
     }
-    $this->summary = $summary;
-    $this->messages = $messages;
-    $this->severity = $severity;
   }
 
   /**

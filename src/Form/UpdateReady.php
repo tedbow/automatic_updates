@@ -29,64 +29,26 @@ use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 final class UpdateReady extends UpdateFormBase {
 
   /**
-   * The updater service.
-   *
-   * @var \Drupal\automatic_updates\Updater
-   */
-  protected $updater;
-
-  /**
-   * The state service.
-   *
-   * @var \Drupal\Core\State\StateInterface
-   */
-  protected $state;
-
-  /**
-   * The module list service.
-   *
-   * @var \Drupal\Core\Extension\ModuleExtensionList
-   */
-  protected $moduleList;
-
-  /**
-   * The renderer service.
-   *
-   * @var \Drupal\Core\Render\RendererInterface
-   */
-  protected $renderer;
-
-  /**
-   * The event dispatcher.
-   *
-   * @var \Symfony\Component\EventDispatcher\EventDispatcherInterface
-   */
-  protected $eventDispatcher;
-
-  /**
    * Constructs a new UpdateReady object.
    *
    * @param \Drupal\automatic_updates\Updater $updater
    *   The updater service.
-   * @param \Drupal\Core\Messenger\MessengerInterface $messenger
-   *   The messenger service.
    * @param \Drupal\Core\State\StateInterface $state
    *   The state service.
-   * @param \Drupal\Core\Extension\ModuleExtensionList $module_list
+   * @param \Drupal\Core\Extension\ModuleExtensionList $moduleList
    *   The module list service.
    * @param \Drupal\Core\Render\RendererInterface $renderer
    *   The renderer service.
-   * @param \Symfony\Component\EventDispatcher\EventDispatcherInterface $event_dispatcher
+   * @param \Symfony\Component\EventDispatcher\EventDispatcherInterface $eventDispatcher
    *   Event dispatcher service.
    */
-  public function __construct(Updater $updater, MessengerInterface $messenger, StateInterface $state, ModuleExtensionList $module_list, RendererInterface $renderer, EventDispatcherInterface $event_dispatcher) {
-    $this->updater = $updater;
-    $this->setMessenger($messenger);
-    $this->state = $state;
-    $this->moduleList = $module_list;
-    $this->renderer = $renderer;
-    $this->eventDispatcher = $event_dispatcher;
-  }
+  public function __construct(
+    protected Updater $updater,
+    protected StateInterface $state,
+    protected ModuleExtensionList $moduleList,
+    protected RendererInterface $renderer,
+    protected EventDispatcherInterface $eventDispatcher,
+  ) {}
 
   /**
    * {@inheritdoc}
@@ -101,7 +63,6 @@ final class UpdateReady extends UpdateFormBase {
   public static function create(ContainerInterface $container) {
     return new static(
       $container->get('automatic_updates.updater'),
-      $container->get('messenger'),
       $container->get('state'),
       $container->get('extension.list.module'),
       $container->get('renderer'),
@@ -131,7 +92,7 @@ final class UpdateReady extends UpdateFormBase {
       $staged_core_packages = $this->updater->getStageComposer()
         ->getCorePackages();
     }
-    catch (\Throwable $exception) {
+    catch (\Throwable) {
       $messages[MessengerInterface::TYPE_ERROR][] = $this->t('There was an error loading the pending update. Press the <em>Cancel update</em> button to start over.');
     }
 

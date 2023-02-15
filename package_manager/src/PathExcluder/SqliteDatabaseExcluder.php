@@ -22,13 +22,6 @@ class SqliteDatabaseExcluder implements EventSubscriberInterface {
   use PathExclusionsTrait;
 
   /**
-   * The database connection.
-   *
-   * @var \Drupal\Core\Database\Connection
-   */
-  protected $database;
-
-  /**
    * Constructs a SqliteDatabaseExcluder object.
    *
    * @param \Drupal\package_manager\PathLocator $path_locator
@@ -36,9 +29,8 @@ class SqliteDatabaseExcluder implements EventSubscriberInterface {
    * @param \Drupal\Core\Database\Connection $database
    *   The database connection.
    */
-  public function __construct(PathLocator $path_locator, Connection $database) {
+  public function __construct(PathLocator $path_locator, protected Connection $database) {
     $this->pathLocator = $path_locator;
-    $this->database = $database;
   }
 
   /**

@@ -52,7 +52,7 @@ final class EnvironmentSupportValidator implements EventSubscriberInterface {
       $message = Link::fromTextAndUrl($message, Url::fromUri($help_url))
         ->toString();
     }
-    catch (\InvalidArgumentException $e) {
+    catch (\InvalidArgumentException) {
       // No need to do anything here. The message just won't be a link.
     }
     $event->addError([$message]);

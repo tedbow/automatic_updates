@@ -8,7 +8,6 @@ use Drupal\Component\Datetime\Time;
 use Drupal\Component\FileSystem\FileSystem;
 use Drupal\Core\DependencyInjection\ContainerBuilder;
 use Drupal\Core\Extension\ModuleUninstallValidatorException;
-use Drupal\Core\Logger\RfcLogLevel;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\package_manager\Event\CollectIgnoredPathsEvent;
 use Drupal\package_manager\Event\PostApplyEvent;
@@ -17,7 +16,6 @@ use Drupal\package_manager\Event\PreCreateEvent;
 use Drupal\package_manager\Event\StageEvent;
 use Drupal\package_manager\Exception\ApplyFailedException;
 use Drupal\package_manager\Exception\StageException;
-use Drupal\package_manager\Stage;
 use Drupal\package_manager_bypass\LoggingCommitter;
 use PhpTuf\ComposerStager\Domain\Exception\InvalidArgumentException;
 use PhpTuf\ComposerStager\Domain\Exception\PreconditionException;
@@ -510,37 +508,6 @@ class StageTest extends PackageManagerKernelTestBase {
   }
 
   /**
-   * Tests enforcing that certain services must be passed to the constructor.
-   *
-   * @group legacy
-   */
-  public function testConstructorDeprecations(): void {
-    $logger = new TestLogger();
-    $this->container->get('logger.factory')
-      ->get('package_manager')
-      ->addLogger($logger);
-
-    $this->expectDeprecation('Calling Drupal\package_manager\Stage::__construct() with the $config_factory argument is deprecated in automatic_updates:8.x-2.6 and will be removed in automatic_updates:3.0.0. See https://www.drupal.org/node/3325718.');
-    $this->expectDeprecation('Calling Drupal\package_manager\Stage::__construct() without the $path_factory argument is deprecated in automatic_updates:8.x-2.3 and will be required before automatic_updates:3.0.0. See https://www.drupal.org/node/3310706.');
-    $this->expectDeprecation('Calling Drupal\package_manager\Stage::__construct() without the $failure_marker argument is deprecated in automatic_updates:8.x-2.3 and will be required before automatic_updates:3.0.0. See https://www.drupal.org/node/3311257.');
-    $this->expectDeprecation('Overriding Drupal\package_manager\Stage::TEMPSTORE_METADATA_KEY is deprecated in automatic_updates:8.x-2.5 and will not be possible in automatic_updates:3.0.0. There is no replacement. See https://www.drupal.org/node/3317450.');
-    $this->expectDeprecation('Overriding Drupal\package_manager\Stage::TEMPSTORE_LOCK_KEY is deprecated in automatic_updates:8.x-2.5 and will not be possible in automatic_updates:3.0.0. There is no replacement. See https://www.drupal.org/node/3317450.');
-    new TestStageOverriddenConstants(
-      $this->container->get('config.factory'),
-      $this->container->get('package_manager.path_locator'),
-      $this->container->get('package_manager.beginner'),
-      $this->container->get('package_manager.stager'),
-      $this->container->get('package_manager.committer'),
-      $this->container->get('file_system'),
-      $this->container->get('event_dispatcher'),
-      $this->container->get('tempstore.shared'),
-      $this->container->get('datetime.time')
-    );
-    $this->assertTrue($logger->hasRecord('Drupal\package_manager\Stage::TEMPSTORE_METADATA_KEY is overridden by ' . TestStageOverriddenConstants::class . '. This is deprecated because it can cause errors or other unexpected behavior. It is strongly recommended to stop overriding this constant. See https://www.drupal.org/node/3317450 for more information.', (string) RfcLogLevel::ERROR));
-    $this->assertTrue($logger->hasRecord('Drupal\package_manager\Stage::TEMPSTORE_LOCK_KEY is overridden by ' . TestStageOverriddenConstants::class . '. This is deprecated because it can cause errors or other unexpected behavior. It is strongly recommended to stop overriding this constant. See https://www.drupal.org/node/3317450 for more information.', (string) RfcLogLevel::ERROR));
-  }
-
-  /**
    * Tests running apply and post-apply in the same request.
    */
   public function testApplyAndPostApplyInSameRequest(): void {
@@ -680,19 +647,5 @@ class TestTime extends Time {
   public function getRequestTime() {
     return parent::getRequestTime() + static::$offset;
   }
-
-}
-
-class TestStageOverriddenConstants extends Stage {
-
-  /**
-   * {@inheritdoc}
-   */
-  protected const TEMPSTORE_LOCK_KEY = 'overridden_lock';
-
-  /**
-   * {@inheritdoc}
-   */
-  protected const TEMPSTORE_METADATA_KEY = 'overridden_metadata';
 
 }

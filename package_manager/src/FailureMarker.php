@@ -20,20 +20,12 @@ use Drupal\package_manager\Exception\ApplyFailedException;
 final class FailureMarker {
 
   /**
-   * The path locator service.
-   *
-   * @var \Drupal\package_manager\PathLocator
-   */
-  protected $pathLocator;
-
-  /**
    * Constructs a FailureMarker object.
    *
    * @param \Drupal\package_manager\PathLocator $pathLocator
    *   The path locator service.
    */
-  public function __construct(PathLocator $pathLocator) {
-    $this->pathLocator = $pathLocator;
+  public function __construct(private PathLocator $pathLocator) {
   }
 
   /**

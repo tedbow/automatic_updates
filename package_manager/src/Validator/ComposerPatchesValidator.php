@@ -46,20 +46,12 @@ final class ComposerPatchesValidator implements EventSubscriberInterface {
   private const PLUGIN_NAME = 'cweagans/composer-patches';
 
   /**
-   * The module handler service.
-   *
-   * @var \Drupal\Core\Extension\ModuleHandlerInterface
-   */
-  private ModuleHandlerInterface $moduleHandler;
-
-  /**
    * Constructs a ComposerPatchesValidator object.
    *
-   * @param \Drupal\Core\Extension\ModuleHandlerInterface $module_handler
+   * @param \Drupal\Core\Extension\ModuleHandlerInterface $moduleHandler
    *   The module handler service.
    */
-  public function __construct(ModuleHandlerInterface $module_handler) {
-    $this->moduleHandler = $module_handler;
+  public function __construct(private ModuleHandlerInterface $moduleHandler) {
   }
 
   /**
@@ -77,7 +69,7 @@ final class ComposerPatchesValidator implements EventSubscriberInterface {
       [$plugin_installed_in_stage, $is_stage_root_requirement, $stage_configuration_ok] = $this->computePatcherStatus($stage->getStageComposer());
       $has_staged_update = TRUE;
     }
-    catch (\LogicException $e) {
+    catch (\LogicException) {
       // No staged update exists.
       $has_staged_update = FALSE;
     }

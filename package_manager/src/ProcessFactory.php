@@ -30,31 +30,15 @@ final class ProcessFactory implements ProcessFactoryInterface {
   private $decorated;
 
   /**
-   * The file system service.
-   *
-   * @var \Drupal\Core\File\FileSystemInterface
-   */
-  private $fileSystem;
-
-  /**
-   * The config factory service.
-   *
-   * @var \Drupal\Core\Config\ConfigFactoryInterface
-   */
-  private $configFactory;
-
-  /**
    * Constructs a ProcessFactory object.
    *
-   * @param \Drupal\Core\File\FileSystemInterface $file_system
+   * @param \Drupal\Core\File\FileSystemInterface $fileSystem
    *   The file system service.
-   * @param \Drupal\Core\Config\ConfigFactoryInterface $config_factory
+   * @param \Drupal\Core\Config\ConfigFactoryInterface $configFactory
    *   The config factory service.
    */
-  public function __construct(FileSystemInterface $file_system, ConfigFactoryInterface $config_factory) {
+  public function __construct(private FileSystemInterface $fileSystem, private ConfigFactoryInterface $configFactory) {
     $this->decorated = new StagerProcessFactory();
-    $this->fileSystem = $file_system;
-    $this->configFactory = $config_factory;
   }
 
   /**

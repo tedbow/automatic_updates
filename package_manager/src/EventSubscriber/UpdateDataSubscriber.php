@@ -19,20 +19,12 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 final class UpdateDataSubscriber implements EventSubscriberInterface {
 
   /**
-   * The update manager service.
+   * Constructs an UpdateDataSubscriber object.
    *
-   * @var \Drupal\update\UpdateManagerInterface
-   */
-  protected $updateManager;
-
-  /**
-   * Constructs an UpdateRefreshSubscriber object.
-   *
-   * @param \Drupal\update\UpdateManagerInterface $update_manager
+   * @param \Drupal\update\UpdateManagerInterface $updateManager
    *   The update manager service.
    */
-  public function __construct(UpdateManagerInterface $update_manager) {
-    $this->updateManager = $update_manager;
+  public function __construct(protected UpdateManagerInterface $updateManager) {
   }
 
   /**

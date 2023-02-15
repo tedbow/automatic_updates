@@ -2,7 +2,6 @@ services:
   automatic_updates_extensions.updater:
     class: Drupal\automatic_updates_extensions\ExtensionUpdater
     arguments:
-      - '@config.factory'
       - '@package_manager.path_locator'
       - '@package_manager.beginner'
       - '@package_manager.stager'

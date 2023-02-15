@@ -36,20 +36,6 @@ final class CronServerValidator implements EventSubscriberInterface {
   protected $request;
 
   /**
-   * The config factory service.
-   *
-   * @var \Drupal\Core\Config\ConfigFactoryInterface
-   */
-  protected $configFactory;
-
-  /**
-   * The module handler service.
-   *
-   * @var \Drupal\Core\Extension\ModuleHandlerInterface
-   */
-  protected $moduleHandler;
-
-  /**
    * The type of interface between the web server and the PHP runtime.
    *
    * @var string
@@ -64,15 +50,17 @@ final class CronServerValidator implements EventSubscriberInterface {
    *
    * @param \Symfony\Component\HttpFoundation\RequestStack $request_stack
    *   The request stack service.
-   * @param \Drupal\Core\Config\ConfigFactoryInterface $config_factory
+   * @param \Drupal\Core\Config\ConfigFactoryInterface $configFactory
    *   The config factory service.
-   * @param \Drupal\Core\Extension\ModuleHandlerInterface $module_handler
+   * @param \Drupal\Core\Extension\ModuleHandlerInterface $moduleHandler
    *   The module handler service.
    */
-  public function __construct(RequestStack $request_stack, ConfigFactoryInterface $config_factory, ModuleHandlerInterface $module_handler) {
+  public function __construct(
+    RequestStack $request_stack,
+    protected ConfigFactoryInterface $configFactory,
+    protected ModuleHandlerInterface $moduleHandler,
+  ) {
     $this->request = $request_stack->getCurrentRequest();
-    $this->configFactory = $config_factory;
-    $this->moduleHandler = $module_handler;
   }
 
   /**

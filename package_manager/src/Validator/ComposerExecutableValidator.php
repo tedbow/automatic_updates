@@ -11,7 +11,6 @@ use Drupal\package_manager\Event\PreApplyEvent;
 use Drupal\package_manager\Event\PreCreateEvent;
 use Drupal\package_manager\Event\PreOperationStageEvent;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
-use Drupal\Core\StringTranslation\TranslationInterface;
 use Drupal\package_manager\Event\StatusCheckEvent;
 use PhpTuf\ComposerStager\Domain\Exception\ExceptionInterface;
 use PhpTuf\ComposerStager\Domain\Exception\PreconditionException;
@@ -41,54 +40,23 @@ class ComposerExecutableValidator implements EventSubscriberInterface {
   public const MINIMUM_COMPOSER_VERSION_CONSTRAINT = '~2.2.12 || ^2.3.5';
 
   /**
-   * The Composer runner.
-   *
-   * @var \PhpTuf\ComposerStager\Domain\Service\ProcessRunner\ComposerRunnerInterface
-   */
-  protected $composer;
-
-  /**
-   * The "Composer is available" precondition service.
-   *
-   * @var \PhpTuf\ComposerStager\Domain\Service\Precondition\ComposerIsAvailableInterface
-   */
-  protected $composerIsAvailable;
-
-  /**
-   * The module handler service.
-   *
-   * @var \Drupal\Core\Extension\ModuleHandlerInterface
-   */
-  protected $moduleHandler;
-
-  /**
-   * The path factory service.
-   *
-   * @var \PhpTuf\ComposerStager\Infrastructure\Factory\Path\PathFactoryInterface
-   */
-  protected $pathFactory;
-
-  /**
    * Constructs a ComposerExecutableValidator object.
    *
    * @param \PhpTuf\ComposerStager\Domain\Service\ProcessRunner\ComposerRunnerInterface $composer
    *   The Composer runner.
-   * @param \Drupal\Core\Extension\ModuleHandlerInterface $module_handler
+   * @param \Drupal\Core\Extension\ModuleHandlerInterface $moduleHandler
    *   The module handler service.
-   * @param \Drupal\Core\StringTranslation\TranslationInterface $translation
-   *   The translation service.
-   * @param \PhpTuf\ComposerStager\Domain\Service\Precondition\ComposerIsAvailableInterface $composer_is_available
+   * @param \PhpTuf\ComposerStager\Domain\Service\Precondition\ComposerIsAvailableInterface $composerIsAvailable
    *   The "Composer is available" precondition service.
-   * @param \PhpTuf\ComposerStager\Infrastructure\Factory\Path\PathFactoryInterface $path_factory
+   * @param \PhpTuf\ComposerStager\Infrastructure\Factory\Path\PathFactoryInterface $pathFactory
    *   The path factory service.
    */
-  public function __construct(ComposerRunnerInterface $composer, ModuleHandlerInterface $module_handler, TranslationInterface $translation, ComposerIsAvailableInterface $composer_is_available, PathFactoryInterface $path_factory) {
-    $this->composer = $composer;
-    $this->moduleHandler = $module_handler;
-    $this->setStringTranslation($translation);
-    $this->composerIsAvailable = $composer_is_available;
-    $this->pathFactory = $path_factory;
-  }
+  public function __construct(
+    protected ComposerRunnerInterface $composer,
+    protected ModuleHandlerInterface $moduleHandler,
+    protected ComposerIsAvailableInterface $composerIsAvailable,
+    protected PathFactoryInterface $pathFactory,
+  ) {}
 
   /**
    * {@inheritdoc}

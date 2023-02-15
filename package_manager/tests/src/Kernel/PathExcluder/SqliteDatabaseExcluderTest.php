@@ -182,6 +182,6 @@ class TestSqliteDatabaseExcluder extends SqliteDatabaseExcluder {
   /**
    * {@inheritdoc}
    */
-  public $database;
+  public Connection $database;
 
 }

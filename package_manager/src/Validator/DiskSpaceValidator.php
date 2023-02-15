@@ -10,7 +10,6 @@ use Drupal\package_manager\Event\PreOperationStageEvent;
 use Drupal\Component\FileSystem\FileSystem;
 use Drupal\Component\Utility\Bytes;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
-use Drupal\Core\StringTranslation\TranslationInterface;
 use Drupal\package_manager\Event\StatusCheckEvent;
 use Drupal\package_manager\PathLocator;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
@@ -28,23 +27,12 @@ class DiskSpaceValidator implements EventSubscriberInterface {
   use StringTranslationTrait;
 
   /**
-   * The path locator service.
-   *
-   * @var \Drupal\package_manager\PathLocator
-   */
-  protected $pathLocator;
-
-  /**
    * Constructs a DiskSpaceValidator object.
    *
-   * @param \Drupal\package_manager\PathLocator $path_locator
+   * @param \Drupal\package_manager\PathLocator $pathLocator
    *   The path locator service.
-   * @param \Drupal\Core\StringTranslation\TranslationInterface $translation
-   *   The translation service.
    */
-  public function __construct(PathLocator $path_locator, TranslationInterface $translation) {
-    $this->pathLocator = $path_locator;
-    $this->setStringTranslation($translation);
+  public function __construct(protected PathLocator $pathLocator) {
   }
 
   /**
