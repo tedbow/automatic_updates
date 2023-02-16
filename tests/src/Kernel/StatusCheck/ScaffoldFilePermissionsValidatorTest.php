@@ -137,12 +137,6 @@ class ScaffoldFilePermissionsValidatorTest extends AutomaticUpdatesKernelTestBas
    *   The test cases.
    */
   public function providerScaffoldFilesChanged(): array {
-    // The summary is always replaced by ::assertValidationResultsEqual(), so
-    // if there's more than one message in a result, just give it a mocked
-    // summary object to prevent an exception.
-    $summary = $this->prophesize('\Drupal\Core\StringTranslation\TranslatableMarkup')
-      ->reveal();
-
     return [
       // If no scaffold files are changed, it doesn't matter if the site
       // directory is writable.
@@ -211,7 +205,7 @@ class ScaffoldFilePermissionsValidatorTest extends AutomaticUpdatesKernelTestBas
           ValidationResult::createError([
             t('sites/default'),
             t('sites/default/deleted.txt'),
-          ], $summary),
+          ], t('I summarize thee!')),
         ],
       ],
       'non-writable scaffold file removed from writable site directory' => [
