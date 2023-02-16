@@ -10,6 +10,7 @@ use Drupal\Core\File\Exception\FileException;
 use Drupal\Core\File\FileSystemInterface;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
+use Drupal\Core\TempStore\SharedTempStore;
 use Drupal\Core\TempStore\SharedTempStoreFactory;
 use Drupal\package_manager\Event\CollectIgnoredPathsEvent;
 use Drupal\package_manager\Event\PostApplyEvent;
@@ -128,6 +129,13 @@ class Stage implements LoggerAwareInterface {
    * @var string[]
    */
   private $lock;
+
+  /**
+   * The shared temp store.
+   *
+   * @var \Drupal\Core\TempStore\SharedTempStore
+   */
+  protected SharedTempStore $tempStore;
 
   /**
    * Constructs a new Stage object.
