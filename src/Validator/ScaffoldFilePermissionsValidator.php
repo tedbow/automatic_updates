@@ -40,7 +40,7 @@ final class ScaffoldFilePermissionsValidator implements EventSubscriberInterface
    */
   public function validateStagePreOperation(PreOperationStageEvent $event): void {
     // We only want to do this check if the stage belongs to Automatic Updates.
-    if (!$event->getStage() instanceof Updater) {
+    if (!$event->stage instanceof Updater) {
       return;
     }
     $paths = [];
@@ -53,7 +53,7 @@ final class ScaffoldFilePermissionsValidator implements EventSubscriberInterface
     }
     $site_dir .= '/sites/default';
 
-    $stage = $event->getStage();
+    $stage = $event->stage;
     $active_scaffold_files = $this->getDefaultSiteFilesFromScaffold($stage->getActiveComposer());
 
     // If the active directory and stage directory have different files

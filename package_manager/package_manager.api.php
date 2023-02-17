@@ -46,7 +46,7 @@
  * All stage events extend \Drupal\package_manager\Event\StageEvent, and all
  * pre-operation events extend
  * \Drupal\package_manager\Event\PreOperationStageEvent. All events have a
- * getStage() method which allows access to the stage object itself.
+ * $stage property which allows access to the stage object itself.
  *
  * The stage dispatches the following events during its life cycle:
  *

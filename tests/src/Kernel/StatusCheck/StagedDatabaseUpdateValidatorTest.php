@@ -109,7 +109,7 @@ class StagedDatabaseUpdateValidatorTest extends AutomaticUpdatesKernelTestBase {
   public function testFileDeleted(string $suffix): void {
     $this->getStageFixtureManipulator()->setCorePackageVersion('9.8.1');
     $listener = function (PreApplyEvent $event) use ($suffix): void {
-      $stage_dir = $event->getStage()->getStageDirectory();
+      $stage_dir = $event->stage->getStageDirectory();
       foreach ($this->extensions as $name => $path) {
         unlink("$stage_dir/$path/$name.$suffix");
       }
@@ -132,7 +132,7 @@ class StagedDatabaseUpdateValidatorTest extends AutomaticUpdatesKernelTestBase {
   public function testFileChanged(string $suffix): void {
     $this->getStageFixtureManipulator()->setCorePackageVersion('9.8.1');
     $listener = function (PreApplyEvent $event) use ($suffix): void {
-      $stage_dir = $event->getStage()->getStageDirectory();
+      $stage_dir = $event->stage->getStageDirectory();
       foreach ($this->extensions as $name => $path) {
         file_put_contents("$stage_dir/$path/$name.$suffix", $this->randomString());
       }

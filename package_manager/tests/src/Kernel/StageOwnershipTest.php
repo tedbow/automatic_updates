@@ -323,7 +323,7 @@ class StageOwnershipTest extends PackageManagerKernelTestBase {
     // the stage was made available, despite the file system error.
     $stage_available = NULL;
     $this->addEventTestListener(function (PostDestroyEvent $event) use (&$stage_available): void {
-      $stage_available = $event->getStage()->isAvailable();
+      $stage_available = $event->stage->isAvailable();
     }, PostDestroyEvent::class);
     $stage->destroy();
     $this->assertTrue($stage_available);

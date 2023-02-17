@@ -63,7 +63,7 @@ final class ComposerPatchesValidator implements EventSubscriberInterface {
   public function validatePatcher(PreOperationStageEvent $event): void {
     $messages = [];
 
-    $stage = $event->getStage();
+    $stage = $event->stage;
     [$plugin_installed_in_active, $is_active_root_requirement, $active_configuration_ok] = $this->computePatcherStatus($stage->getActiveComposer());
     try {
       [$plugin_installed_in_stage, $is_stage_root_requirement, $stage_configuration_ok] = $this->computePatcherStatus($stage->getStageComposer());

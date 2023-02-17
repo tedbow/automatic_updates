@@ -44,7 +44,7 @@ class StatusCheckTraitTest extends PackageManagerKernelTestBase {
     unlink($composer_json_path);
     $this->addEventTestListener(function (CollectIgnoredPathsEvent $event): void {
       // Try to get composer.
-      $event->getStage()->getActiveComposer();
+      $event->stage->getActiveComposer();
     }, CollectIgnoredPathsEvent::class);
     $results = $this->runStatusCheck($this->createStage(), $this->container->get('event_dispatcher'));
     $expected_results = [

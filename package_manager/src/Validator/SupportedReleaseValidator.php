@@ -69,8 +69,8 @@ final class SupportedReleaseValidator implements EventSubscriberInterface {
    *   The event object.
    */
   public function checkStagedReleases(PreApplyEvent $event): void {
-    $active = $event->getStage()->getActiveComposer();
-    $staged = $event->getStage()->getStageComposer();
+    $active = $event->stage->getActiveComposer();
+    $staged = $event->stage->getStageComposer();
     $updated_packages = array_merge(
       $staged->getPackagesNotIn($active),
       $staged->getPackagesWithDifferentVersionsIn($active)

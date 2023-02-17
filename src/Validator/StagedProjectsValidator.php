@@ -29,7 +29,7 @@ final class StagedProjectsValidator implements EventSubscriberInterface {
    *   The event object.
    */
   public function validateStagedProjects(PreApplyEvent $event): void {
-    $stage = $event->getStage();
+    $stage = $event->stage;
     // We only want to do this check if the stage belongs to Automatic Updates.
     if (!$stage instanceof Updater) {
       return;

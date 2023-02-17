@@ -24,7 +24,7 @@ class RequestedUpdateValidator implements EventSubscriberInterface {
    *   The pre-apply event.
    */
   public function checkRequestedStagedVersion(PreApplyEvent $event): void {
-    $stage = $event->getStage();
+    $stage = $event->stage;
     if (!($stage instanceof Updater)) {
       return;
     }

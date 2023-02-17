@@ -62,7 +62,7 @@ final class UnknownPathExcluder implements EventSubscriberInterface {
     }
     $vendor_dir = $this->pathLocator->getVendorDirectory();
     // @todo Refactor in https://www.drupal.org/project/automatic_updates/issues/3334994.
-    $core_packages = $event->getStage()->getActiveComposer()->getCorePackages();
+    $core_packages = $event->stage->getActiveComposer()->getCorePackages();
     $scaffold_files_paths = $this->getScaffoldFiles($core_packages);
     $paths_in_project_root = glob("$project_root/*");
     $paths = [];

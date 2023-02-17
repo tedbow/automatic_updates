@@ -202,7 +202,7 @@ class StatusCheckerTest extends AutomaticUpdatesKernelTestBase {
     $this->enableModules(['automatic_updates']);
     $stage = NULL;
     $listener = function (StatusCheckEvent $event) use (&$stage): void {
-      $stage = $event->getStage();
+      $stage = $event->stage;
     };
     $this->addEventTestListener($listener, StatusCheckEvent::class);
     $this->container->get('automatic_updates.status_checker')->run();

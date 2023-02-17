@@ -27,7 +27,7 @@ final class EventLogSubscriber implements EventSubscriberInterface {
    *   The event object.
    */
   public function logEventInfo(StageEvent $event): void {
-    \Drupal::logger('package_manager_test_event_logger')->info('package_manager_test_event_logger-start: Event: ' . get_class($event) . ', Stage instance of: ' . get_class($event->getStage()) . ':package_manager_test_event_logger-end');
+    \Drupal::logger('package_manager_test_event_logger')->info('package_manager_test_event_logger-start: Event: ' . get_class($event) . ', Stage instance of: ' . get_class($event->stage) . ':package_manager_test_event_logger-end');
   }
 
   /**

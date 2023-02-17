@@ -29,7 +29,7 @@ final class XdebugValidator extends PackageManagerXdebugValidator implements Eve
    *   The event object.
    */
   public function validateXdebugOff(PreOperationStageEvent $event): void {
-    $stage = $event->getStage();
+    $stage = $event->stage;
     $warning = $this->checkForXdebug();
 
     if ($warning) {

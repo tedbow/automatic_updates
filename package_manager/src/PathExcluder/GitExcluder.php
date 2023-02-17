@@ -64,7 +64,7 @@ final class GitExcluder implements EventSubscriberInterface {
 
     $installed_paths = [];
     // Collect the paths of every installed package.
-    $installed_packages = $event->getStage()->getActiveComposer()->getInstalledPackagesData();
+    $installed_packages = $event->stage->getActiveComposer()->getInstalledPackagesData();
     foreach ($installed_packages as $package_data) {
       if (array_key_exists('install_path', $package_data) && !empty($package_data['install_path'])) {
         $installed_paths[] = $this->fileSystem->realpath($package_data['install_path']);

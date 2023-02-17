@@ -38,7 +38,7 @@ class StagedDatabaseUpdateValidator implements EventSubscriberInterface {
    *   The event object.
    */
   public function checkUpdateHooks(PreApplyEvent $event): void {
-    $stage = $event->getStage();
+    $stage = $event->stage;
     if (!$stage instanceof CronUpdater) {
       return;
     }

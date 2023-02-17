@@ -362,7 +362,7 @@ class VersionPolicyValidatorTest extends AutomaticUpdatesKernelTestBase {
     // Remove the stored package versions from the updater's metadata.
     $listener = function (PreCreateEvent $event): void {
       /** @var \Drupal\Tests\automatic_updates\Kernel\TestUpdater $updater */
-      $updater = $event->getStage();
+      $updater = $event->stage;
       $updater->setMetadata('packages', [
         'production' => [],
       ]);
@@ -381,7 +381,7 @@ class VersionPolicyValidatorTest extends AutomaticUpdatesKernelTestBase {
     $listener = function (PreCreateEvent $event): void {
       // We should have staged package versions.
       /** @var \Drupal\automatic_updates\Updater $updater */
-      $updater = $event->getStage();
+      $updater = $event->stage;
       $this->assertNotEmpty($updater->getPackageVersions());
 
       $active_dir = $this->container->get('package_manager.path_locator')

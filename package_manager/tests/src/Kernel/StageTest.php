@@ -184,7 +184,7 @@ class StageTest extends PackageManagerKernelTestBase {
       // handling another event. The only reason we're doing it here is to
       // simulate an attempt to destroy the stage while it's being applied, for
       // testing purposes.
-      $event->getStage()->destroy($force);
+      $event->stage->destroy($force);
       // @see \PhpTuf\ComposerStager\Infrastructure\Service\Precondition\StagingDirDoesNotExist
       LoggingCommitter::setException(
         new PreconditionException(
@@ -219,7 +219,7 @@ class StageTest extends PackageManagerKernelTestBase {
    */
   public function testUninstallModuleDuringApply(): void {
     $listener = function (PreApplyEvent $event): void {
-      $this->assertTrue($event->getStage()->isApplying());
+      $this->assertTrue($event->stage->isApplying());
 
       // Trying to uninstall any module while the stage is being applied should
       // result in a module uninstall validation error.

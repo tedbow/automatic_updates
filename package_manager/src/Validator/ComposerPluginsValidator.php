@@ -150,7 +150,7 @@ final class ComposerPluginsValidator implements EventSubscriberInterface {
    * {@inheritdoc}
    */
   public function validateStagePreOperation(PreOperationStageEvent $event): void {
-    $stage = $event->getStage();
+    $stage = $event->stage;
 
     // When about to copy the changes from the stage directory to the active
     // directory, use the stage directory's composer instead of the active.

@@ -18,17 +18,7 @@ abstract class StageEvent extends Event {
    * @param \Drupal\package_manager\Stage $stage
    *   The stage which fired this event.
    */
-  public function __construct(protected readonly Stage $stage) {
-  }
-
-  /**
-   * Returns the stage which fired this event.
-   *
-   * @return \Drupal\package_manager\Stage
-   *   The stage which fired this event.
-   */
-  public function getStage(): Stage {
-    return $this->stage;
+  public function __construct(public readonly Stage $stage) {
   }
 
 }

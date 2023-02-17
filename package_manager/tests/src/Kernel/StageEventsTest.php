@@ -87,7 +87,7 @@ class StageEventsTest extends PackageManagerKernelTestBase implements EventSubsc
     array_push($this->events, get_class($event));
 
     // The event should have a reference to the stage which fired it.
-    $this->assertSame($event->getStage(), $this->stage);
+    $this->assertSame($event->stage, $this->stage);
   }
 
   /**

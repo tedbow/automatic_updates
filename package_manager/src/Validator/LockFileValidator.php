@@ -89,7 +89,7 @@ final class LockFileValidator implements EventSubscriberInterface {
    */
   public function validateStagePreOperation(PreOperationStageEvent $event): void {
     // Early return if the stage is not already created.
-    if ($event instanceof StatusCheckEvent && $event->getStage()->isAvailable()) {
+    if ($event instanceof StatusCheckEvent && $event->stage->isAvailable()) {
       return;
     }
 
@@ -113,7 +113,7 @@ final class LockFileValidator implements EventSubscriberInterface {
     // Don't allow staged changes to be applied if the staged lock file has no
     // apparent changes.
     if (empty($error) && $event instanceof PreApplyEvent) {
-      $stage_hash = $this->getLockFileHash($event->getStage()->getStageDirectory());
+      $stage_hash = $this->getLockFileHash($event->stage->getStageDirectory());
       if ($stage_hash && hash_equals($active_hash, $stage_hash)) {
         $error = $this->t('There are no pending Composer operations.');
       }

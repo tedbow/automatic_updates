@@ -70,7 +70,7 @@ final class CronServerValidator implements EventSubscriberInterface {
    *   The event object.
    */
   public function checkServer(PreOperationStageEvent $event): void {
-    if (!$event->getStage() instanceof CronUpdater) {
+    if (!$event->stage instanceof CronUpdater) {
       return;
     }
 

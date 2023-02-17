@@ -25,7 +25,7 @@ class CollectIgnoredPathsFailValidator implements EventSubscriberInterface {
    * Fails when composer.json is deleted to simulate failure on excluders.
    */
   public function callToComposer(CollectIgnoredPathsEvent $event) {
-    $event->getStage()->getActiveComposer();
+    $event->stage->getActiveComposer();
   }
 
 }

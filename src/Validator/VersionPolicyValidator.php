@@ -132,7 +132,7 @@ final class VersionPolicyValidator implements EventSubscriberInterface {
    *   The event object.
    */
   public function checkVersion(StageEvent $event): void {
-    $stage = $event->getStage();
+    $stage = $event->stage;
 
     // Only do these checks for automatic updates.
     if (!$stage instanceof Updater) {
@@ -177,7 +177,7 @@ final class VersionPolicyValidator implements EventSubscriberInterface {
    *   Drupal core packages.
    */
   private function getTargetVersion(StageEvent $event): ?string {
-    $updater = $event->getStage();
+    $updater = $event->stage;
 
     // If we're not doing a status check, we expect the stage to have been
     // created, and the requested package versions recorded.

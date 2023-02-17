@@ -36,7 +36,7 @@ class DuplicateInfoFileValidator implements EventSubscriberInterface {
    */
   public function validateDuplicateInfoFileInStage(PreApplyEvent $event): void {
     $active_dir = $this->pathLocator->getProjectRoot();
-    $stage_dir = $event->getStage()->getStageDirectory();
+    $stage_dir = $event->stage->getStageDirectory();
     $active_info_files = $this->findInfoFiles($active_dir);
     $stage_info_files = $this->findInfoFiles($stage_dir);
 

@@ -71,7 +71,7 @@ final class UpdateReleaseValidator implements EventSubscriberInterface {
    *   The event object.
    */
   public function checkRelease(PreCreateEvent $event): void {
-    $stage = $event->getStage();
+    $stage = $event->stage;
     // This check only works with Automatic Updates Extensions.
     if (!$stage instanceof ExtensionUpdater) {
       return;

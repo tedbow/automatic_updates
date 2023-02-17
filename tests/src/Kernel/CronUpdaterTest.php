@@ -359,7 +359,7 @@ class CronUpdaterTest extends AutomaticUpdatesKernelTestBase {
     $listener = function (PostRequireEvent $event) use (&$cron_stage_dir, $original_stage_directory): void {
       $this->assertDirectoryDoesNotExist($original_stage_directory);
       $cron_stage_dir = $this->container->get('package_manager.stager')->getInvocationArguments()[0][1]->resolve();
-      $this->assertSame($event->getStage()->getStageDirectory(), $cron_stage_dir);
+      $this->assertSame($event->stage->getStageDirectory(), $cron_stage_dir);
       $this->assertDirectoryExists($cron_stage_dir);
     };
     $this->addEventTestListener($listener, PostRequireEvent::class);
@@ -396,7 +396,7 @@ class CronUpdaterTest extends AutomaticUpdatesKernelTestBase {
     $this->addEventTestListener(function (PreApplyEvent $event) use ($stop_error) {
       // Ensure the stage that is applying the operation is not the cron
       // updater.
-      $this->assertInstanceOf(TestStage::class, $event->getStage());
+      $this->assertInstanceOf(TestStage::class, $event->stage);
       $this->container->get('cron')->run();
       // We do not actually want to apply this operation it was just invoked to
       // allow cron to be  attempted.

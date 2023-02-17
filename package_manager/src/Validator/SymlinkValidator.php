@@ -64,7 +64,7 @@ class SymlinkValidator implements EventSubscriberInterface {
     // as the stage directory. The precondition itself doesn't care if the
     // directory actually exists or not.
     try {
-      $stage_dir = $event->getStage()->getStageDirectory();
+      $stage_dir = $event->stage->getStageDirectory();
     }
     catch (\LogicException) {
       $stage_dir = __DIR__;
