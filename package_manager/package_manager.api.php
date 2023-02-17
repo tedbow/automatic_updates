@@ -143,6 +143,15 @@
  *   information from Composer's API, such as what packages are installed and
  *   where.
  *
+ * If problems occur during any point of the stage life cycle, a
+ * \Drupal\package_manager\Exception\StageException is thrown. If problems were
+ * detected during one of the "pre" operations, a subclass of that is thrown:
+ * \Drupal\package_manager\Exception\StageValidationException. This will contain
+ * \Drupal\package_manager\ValidationResult objects.
+ * The Package Manager module does not catch or handle these exceptions: they
+ * provide the foundation for other modules to build user experiences for
+ * installing, updating and removing packages.
+ *
  * Package Manager automatically enforces certain constraints at various points
  * of the stage life cycle, to ensure that both the active directory and stage
  * directory are kept in a safe, consistent state:
@@ -180,4 +189,19 @@
  * Dispatched to check the status of the Drupal site and whether Package Manager
  * can function properly. These checks can be performed anytime, so this event
  * may be dispatched multiple times.
+ *
+ * The above constraints are enforced by services that subscribe to events
+ * dispatched during the life cycle of stage. These event subscribers are either
+ * labeled "validator" (validate the state at a certain point in the life cycle)
+ * or "exclude" (to exclude files from being copied from the active to the stage
+ * directory or vice versa).
+ * To be able to do enforce those constraints, these event subscribers need to
+ * know where to look: \Drupal\package_manager\PathLocator informs them where
+ * the project root, the vendor directory, et cetera are.
+ * Whenever a problem is encountered, an event subscriber should generate one or
+ * more messages (with a summary if there's multiple) to explain it to the user
+ * and call \Drupal\package_manager\Event\PreOperationStageEvent::addError() or
+ * \Drupal\package_manager\Event\StatusCheckEvent::addWarning(). If the
+ * subscriber catches an unexpected exception it should use
+ * \Drupal\package_manager\Event\PreOperationStageEvent::addErrorFromThrowable().
  */

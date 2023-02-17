@@ -16,6 +16,11 @@ use Drupal\package_manager\Exception\ApplyFailedException;
  * know if a commit operation failed midway through, which could leave the site
  * code base in an indeterminate state -- which, in the worst case scenario,
  * might render Drupal being unable to boot.
+ *
+ * @internal
+ *   This is an internal part of Package Manager and may be changed or removed
+ *   at any time without warning. External code should not interact with this
+ *   class.
  */
 final class FailureMarker {
 
