@@ -64,7 +64,8 @@ final class UnknownPathExcluder implements EventSubscriberInterface {
     // @todo Refactor in https://www.drupal.org/project/automatic_updates/issues/3334994.
     $core_packages = $event->stage->getActiveComposer()->getCorePackages();
     $scaffold_files_paths = $this->getScaffoldFiles($core_packages);
-    $paths_in_project_root = glob("$project_root/*");
+    // Search for all files (including hidden ones) in project root.
+    $paths_in_project_root = glob("$project_root/{,.}*", GLOB_BRACE);
     $paths = [];
     $known_paths = array_merge([$vendor_dir, $web_root, "$project_root/composer.json", "$project_root/composer.lock"], $scaffold_files_paths);
     foreach ($paths_in_project_root as $path_in_project_root) {

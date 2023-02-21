@@ -94,6 +94,16 @@ class UnknownPathExcluderTest extends PackageManagerKernelTestBase {
         NULL,
         ['unknown_file.txt'],
       ],
+      'unknown hidden file where web and project root same' => [
+        FALSE,
+        NULL,
+        ['.unknown_file'],
+      ],
+      'unknown hidden file where web and project root different' => [
+        TRUE,
+        NULL,
+        ['.unknown_file'],
+      ],
       'unknown directory where web and project root same' => [
         FALSE,
         'unknown_dir',
@@ -103,6 +113,16 @@ class UnknownPathExcluderTest extends PackageManagerKernelTestBase {
         TRUE,
         'unknown_dir',
         ['unknown_dir/unknown_dir.README.md', 'unknown_dir/unknown_file.txt'],
+      ],
+      'unknown hidden directory where web and project root same' => [
+        FALSE,
+        '.unknown_dir',
+        ['.unknown_dir/unknown_dir.README.md', '.unknown_dir/unknown_file.txt'],
+      ],
+      'unknown hidden directory where web and project root different' => [
+        TRUE,
+        '.unknown_dir',
+        ['.unknown_dir/unknown_dir.README.md', '.unknown_dir/unknown_file.txt'],
       ],
     ];
   }
