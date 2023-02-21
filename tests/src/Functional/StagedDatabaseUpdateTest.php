@@ -38,8 +38,6 @@ class StagedDatabaseUpdateTest extends UpdaterFormTestBase {
    *   update process.
    *
    * @dataProvider providerStagedDatabaseUpdates
-   *
-   * @requires PHP >= 8.0
    */
   public function testStagedDatabaseUpdates(bool $maintenance_mode_on): void {
     $this->getStageFixtureManipulator()->setCorePackageVersion('9.8.1');

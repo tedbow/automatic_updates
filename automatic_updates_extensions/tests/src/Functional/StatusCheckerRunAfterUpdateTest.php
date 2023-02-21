@@ -35,8 +35,6 @@ class StatusCheckerRunAfterUpdateTest extends UpdaterFormTestBase {
    *   Whether the site has database updates or not.
    *
    * @dataProvider providerStatusCheckerRunAfterUpdate
-   *
-   * @requires PHP >= 8.0
    */
   public function testStatusCheckerRunAfterUpdate(bool $has_database_updates): void {
     $this->setReleaseMetadata(__DIR__ . '/../../fixtures/release-history/semver_test.1.1.xml');
