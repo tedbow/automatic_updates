@@ -34,14 +34,14 @@ class WritableFileSystemValidator implements EventSubscriberInterface {
   }
 
   /**
-   * {@inheritdoc}
+   * Checks that the file system is writable.
    *
    * @todo It might make sense to use a more sophisticated method of testing
    *   writability than is_writable(), since it's not clear if that can return
    *   false negatives/positives due to things like SELinux, exotic file
    *   systems, and so forth.
    */
-  public function validateStagePreOperation(PreOperationStageEvent $event): void {
+  public function validate(PreOperationStageEvent $event): void {
     $messages = [];
 
     $drupal_root = $this->pathLocator->getProjectRoot();
@@ -94,9 +94,9 @@ class WritableFileSystemValidator implements EventSubscriberInterface {
    */
   public static function getSubscribedEvents(): array {
     return [
-      PreCreateEvent::class => 'validateStagePreOperation',
-      PreApplyEvent::class => 'validateStagePreOperation',
-      StatusCheckEvent::class => 'validateStagePreOperation',
+      PreCreateEvent::class => 'validate',
+      PreApplyEvent::class => 'validate',
+      StatusCheckEvent::class => 'validate',
     ];
   }
 

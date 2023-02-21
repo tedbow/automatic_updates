@@ -53,9 +53,9 @@ class SymlinkValidator implements EventSubscriberInterface {
   ) {}
 
   /**
-   * {@inheritdoc}
+   * Flags errors if the project root or stage directory contain symbolic links.
    */
-  public function validateStagePreOperation(PreOperationStageEvent $event): void {
+  public function validate(PreOperationStageEvent $event): void {
     $active_dir = $this->pathFactory->create($this->pathLocator->getProjectRoot());
 
     // The precondition requires us to pass both an active and stage directory,
@@ -100,9 +100,9 @@ class SymlinkValidator implements EventSubscriberInterface {
    */
   public static function getSubscribedEvents(): array {
     return [
-      PreCreateEvent::class => 'validateStagePreOperation',
-      PreApplyEvent::class => 'validateStagePreOperation',
-      StatusCheckEvent::class => 'validateStagePreOperation',
+      PreCreateEvent::class => 'validate',
+      PreApplyEvent::class => 'validate',
+      StatusCheckEvent::class => 'validate',
     ];
   }
 

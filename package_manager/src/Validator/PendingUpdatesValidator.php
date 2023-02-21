@@ -37,9 +37,9 @@ final class PendingUpdatesValidator implements EventSubscriberInterface {
   }
 
   /**
-   * {@inheritdoc}
+   * Validates that there are no pending database updates.
    */
-  public function validateStagePreOperation(PreOperationStageEvent $event): void {
+  public function validate(PreOperationStageEvent $event): void {
     if ($this->updatesExist()) {
       $message = $this->t('Some modules have database schema updates to install. You should run the <a href=":update">database update script</a> immediately.', [
         ':update' => Url::fromRoute('system.db_update')->toString(),
@@ -71,9 +71,9 @@ final class PendingUpdatesValidator implements EventSubscriberInterface {
    */
   public static function getSubscribedEvents(): array {
     return [
-      PreCreateEvent::class => 'validateStagePreOperation',
-      StatusCheckEvent::class => 'validateStagePreOperation',
-      PreApplyEvent::class => 'validateStagePreOperation',
+      PreCreateEvent::class => 'validate',
+      StatusCheckEvent::class => 'validate',
+      PreApplyEvent::class => 'validate',
     ];
   }
 

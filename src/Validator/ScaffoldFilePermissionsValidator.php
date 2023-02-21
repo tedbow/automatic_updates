@@ -36,9 +36,9 @@ final class ScaffoldFilePermissionsValidator implements EventSubscriberInterface
   }
 
   /**
-   * {@inheritdoc}
+   * Validates that scaffold files have the appropriate permissions.
    */
-  public function validateStagePreOperation(PreOperationStageEvent $event): void {
+  public function validate(PreOperationStageEvent $event): void {
     // We only want to do this check if the stage belongs to Automatic Updates.
     if (!$event->stage instanceof Updater) {
       return;
@@ -123,9 +123,9 @@ final class ScaffoldFilePermissionsValidator implements EventSubscriberInterface
    */
   public static function getSubscribedEvents(): array {
     return [
-      PreCreateEvent::class => 'validateStagePreOperation',
-      PreApplyEvent::class => 'validateStagePreOperation',
-      StatusCheckEvent::class => 'validateStagePreOperation',
+      PreCreateEvent::class => 'validate',
+      PreApplyEvent::class => 'validate',
+      StatusCheckEvent::class => 'validate',
     ];
   }
 

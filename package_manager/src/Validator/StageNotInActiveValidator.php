@@ -35,7 +35,7 @@ class StageNotInActiveValidator implements EventSubscriberInterface {
   /**
    * Check if staging root is a subdirectory of active.
    */
-  public function checkNotInActive(PreOperationStageEvent $event) {
+  public function validate(PreOperationStageEvent $event) {
     $project_root = $this->pathLocator->getProjectRoot();
     $staging_root = $this->pathLocator->getStagingRoot();
     if (str_starts_with($staging_root, $project_root)) {
@@ -51,8 +51,8 @@ class StageNotInActiveValidator implements EventSubscriberInterface {
    */
   public static function getSubscribedEvents(): array {
     return [
-      PreCreateEvent::class => 'checkNotInActive',
-      StatusCheckEvent::class => 'checkNotInActive',
+      PreCreateEvent::class => 'validate',
+      StatusCheckEvent::class => 'validate',
     ];
   }
 

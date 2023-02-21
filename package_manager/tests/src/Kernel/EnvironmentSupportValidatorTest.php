@@ -27,7 +27,7 @@ class EnvironmentSupportValidatorTest extends PackageManagerKernelTestBase {
       t('Package Manager is not supported by your environment.'),
     ]);
     foreach ([PreCreateEvent::class, StatusCheckEvent::class] as $event_class) {
-      $this->assertEventPropagationStopped($event_class, [$this->container->get('package_manager.validator.environment_support'), 'validateStagePreOperation']);
+      $this->assertEventPropagationStopped($event_class, [$this->container->get('package_manager.validator.environment_support'), 'validate']);
     }
     $this->assertStatusCheckResults([$result]);
     $this->assertResults([$result], PreCreateEvent::class);
@@ -45,7 +45,7 @@ class EnvironmentSupportValidatorTest extends PackageManagerKernelTestBase {
       'Package Manager is not supported by your environment.',
     ]);
 
-    $this->assertEventPropagationStopped(PreApplyEvent::class, [$this->container->get('package_manager.validator.environment_support'), 'validateStagePreOperation']);
+    $this->assertEventPropagationStopped(PreApplyEvent::class, [$this->container->get('package_manager.validator.environment_support'), 'validate']);
     $this->assertResults([$result], PreApplyEvent::class);
   }
 

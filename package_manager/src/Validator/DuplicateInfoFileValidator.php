@@ -34,7 +34,7 @@ class DuplicateInfoFileValidator implements EventSubscriberInterface {
   /**
    * Validates the stage does not have duplicate info.yml not present in active.
    */
-  public function validateDuplicateInfoFileInStage(PreApplyEvent $event): void {
+  public function validate(PreApplyEvent $event): void {
     $active_dir = $this->pathLocator->getProjectRoot();
     $stage_dir = $event->stage->getStageDirectory();
     $active_info_files = $this->findInfoFiles($active_dir);
@@ -72,7 +72,7 @@ class DuplicateInfoFileValidator implements EventSubscriberInterface {
    */
   public static function getSubscribedEvents(): array {
     return [
-      PreApplyEvent::class => 'validateDuplicateInfoFileInStage',
+      PreApplyEvent::class => 'validate',
     ];
   }
 

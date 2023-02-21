@@ -147,9 +147,9 @@ final class ComposerPluginsValidator implements EventSubscriberInterface {
   }
 
   /**
-   * {@inheritdoc}
+   * Validates the allowed Composer plugins, both in active and stage.
    */
-  public function validateStagePreOperation(PreOperationStageEvent $event): void {
+  public function validate(PreOperationStageEvent $event): void {
     $stage = $event->stage;
 
     // When about to copy the changes from the stage directory to the active
@@ -208,9 +208,9 @@ final class ComposerPluginsValidator implements EventSubscriberInterface {
    */
   public static function getSubscribedEvents(): array {
     return [
-      PreCreateEvent::class => 'validateStagePreOperation',
-      PreApplyEvent::class => 'validateStagePreOperation',
-      StatusCheckEvent::class => 'validateStagePreOperation',
+      PreCreateEvent::class => 'validate',
+      PreApplyEvent::class => 'validate',
+      StatusCheckEvent::class => 'validate',
     ];
   }
 

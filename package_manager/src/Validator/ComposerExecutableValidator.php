@@ -59,9 +59,9 @@ class ComposerExecutableValidator implements EventSubscriberInterface {
   ) {}
 
   /**
-   * {@inheritdoc}
+   * Validates that the Composer executable is the correct version.
    */
-  public function validateStagePreOperation(PreOperationStageEvent $event): void {
+  public function validate(PreOperationStageEvent $event): void {
     // Return early if Composer is not available.
     try {
       // The "Composer is available" precondition requires active and stage
@@ -143,9 +143,9 @@ class ComposerExecutableValidator implements EventSubscriberInterface {
    */
   public static function getSubscribedEvents(): array {
     return [
-      PreCreateEvent::class => 'validateStagePreOperation',
-      PreApplyEvent::class => 'validateStagePreOperation',
-      StatusCheckEvent::class => 'validateStagePreOperation',
+      PreCreateEvent::class => 'validate',
+      PreApplyEvent::class => 'validate',
+      StatusCheckEvent::class => 'validate',
     ];
   }
 

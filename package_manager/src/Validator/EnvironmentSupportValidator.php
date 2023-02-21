@@ -37,9 +37,9 @@ final class EnvironmentSupportValidator implements EventSubscriberInterface {
   public const VARIABLE_NAME = 'DRUPAL_PACKAGE_MANAGER_NOT_SUPPORTED_HELP_URL';
 
   /**
-   * {@inheritdoc}
+   * Checks that this environment supports Package Manager.
    */
-  public function validateStagePreOperation(PreOperationStageEvent $event): void {
+  public function validate(PreOperationStageEvent $event): void {
     $message = $this->t('Package Manager is not supported by your environment.');
 
     $help_url = getenv(static::VARIABLE_NAME);
@@ -66,9 +66,9 @@ final class EnvironmentSupportValidator implements EventSubscriberInterface {
    */
   public static function getSubscribedEvents(): array {
     return [
-      PreCreateEvent::class => ['validateStagePreOperation', 200],
-      PreApplyEvent::class => ['validateStagePreOperation', 200],
-      StatusCheckEvent::class => ['validateStagePreOperation', 200],
+      PreCreateEvent::class => ['validate', 200],
+      PreApplyEvent::class => ['validate', 200],
+      StatusCheckEvent::class => ['validate', 200],
     ];
   }
 

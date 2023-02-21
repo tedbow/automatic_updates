@@ -25,9 +25,9 @@ final class SettingsValidator implements EventSubscriberInterface {
   use StringTranslationTrait;
 
   /**
-   * {@inheritdoc}
+   * Checks that Drupal's settings are valid for Package Manager.
    */
-  public function validateStagePreOperation(PreOperationStageEvent $event): void {
+  public function validate(PreOperationStageEvent $event): void {
     if (Settings::get('update_fetch_with_http_fallback')) {
       $event->addError([
         $this->t('The <code>update_fetch_with_http_fallback</code> setting must be disabled.'),
@@ -40,9 +40,9 @@ final class SettingsValidator implements EventSubscriberInterface {
    */
   public static function getSubscribedEvents(): array {
     return [
-      PreCreateEvent::class => 'validateStagePreOperation',
-      PreApplyEvent::class => 'validateStagePreOperation',
-      StatusCheckEvent::class => 'validateStagePreOperation',
+      PreCreateEvent::class => 'validate',
+      PreApplyEvent::class => 'validate',
+      StatusCheckEvent::class => 'validate',
     ];
   }
 

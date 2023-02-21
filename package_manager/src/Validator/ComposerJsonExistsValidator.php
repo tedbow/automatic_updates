@@ -40,9 +40,9 @@ final class ComposerJsonExistsValidator implements EventSubscriberInterface {
     // Set priority to 190 which puts it just after EnvironmentSupportValidator.
     // @see \Drupal\package_manager\Validator\EnvironmentSupportValidator
     return [
-      PreCreateEvent::class => ['validateComposerJson', 190],
-      PreApplyEvent::class => ['validateComposerJson', 190],
-      StatusCheckEvent::class => ['validateComposerJson', 190],
+      PreCreateEvent::class => ['validate', 190],
+      PreApplyEvent::class => ['validate', 190],
+      StatusCheckEvent::class => ['validate', 190],
     ];
   }
 
@@ -52,7 +52,7 @@ final class ComposerJsonExistsValidator implements EventSubscriberInterface {
    * @param \Drupal\package_manager\Event\PreOperationStageEvent $event
    *   The event.
    */
-  public function validateComposerJson(PreOperationStageEvent $event): void {
+  public function validate(PreOperationStageEvent $event): void {
     $project_root = $this->pathLocator->getProjectRoot();
     if (!file_exists($project_root . '/composer.json')) {
       $event->addError([$this->t('No composer.json file can be found at @project_root', ['@project_root' => $project_root])]);

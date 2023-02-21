@@ -34,7 +34,7 @@ class ComposerJsonExistsValidatorTest extends PackageManagerKernelTestBase {
       'No composer.json file can be found at <PROJECT_ROOT>'),
     ]);
     foreach ([PreCreateEvent::class, StatusCheckEvent::class] as $event_class) {
-      $this->assertEventPropagationStopped($event_class, [$this->container->get('package_manager.validator.composer_json_exists'), 'validateComposerJson']);
+      $this->assertEventPropagationStopped($event_class, [$this->container->get('package_manager.validator.composer_json_exists'), 'validate']);
     }
     $this->assertResults([$result], PreCreateEvent::class);
     $result = ValidationResult::createError(
@@ -58,7 +58,7 @@ class ComposerJsonExistsValidatorTest extends PackageManagerKernelTestBase {
       unlink($this->container->get('package_manager.path_locator')
         ->getProjectRoot() . '/composer.json');
     });
-    $this->assertEventPropagationStopped(PreApplyEvent::class, [$this->container->get('package_manager.validator.composer_json_exists'), 'validateComposerJson']);
+    $this->assertEventPropagationStopped(PreApplyEvent::class, [$this->container->get('package_manager.validator.composer_json_exists'), 'validate']);
     $this->assertResults([$result], PreApplyEvent::class);
   }
 

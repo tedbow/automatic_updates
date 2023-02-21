@@ -94,9 +94,9 @@ class DiskSpaceValidator implements EventSubscriberInterface {
   }
 
   /**
-   * {@inheritdoc}
+   * Validates that there is enough free disk space to do stage operations.
    */
-  public function validateStagePreOperation(PreOperationStageEvent $event): void {
+  public function validate(PreOperationStageEvent $event): void {
     $root_path = $this->pathLocator->getProjectRoot();
     $vendor_path = $this->pathLocator->getVendorDirectory();
     $messages = [];
@@ -157,9 +157,9 @@ class DiskSpaceValidator implements EventSubscriberInterface {
    */
   public static function getSubscribedEvents(): array {
     return [
-      PreCreateEvent::class => 'validateStagePreOperation',
-      PreApplyEvent::class => 'validateStagePreOperation',
-      StatusCheckEvent::class => 'validateStagePreOperation',
+      PreCreateEvent::class => 'validate',
+      PreApplyEvent::class => 'validate',
+      StatusCheckEvent::class => 'validate',
     ];
   }
 

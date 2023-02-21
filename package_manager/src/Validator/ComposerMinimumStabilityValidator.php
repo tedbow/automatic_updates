@@ -41,7 +41,7 @@ final class ComposerMinimumStabilityValidator implements EventSubscriberInterfac
    * @param \Drupal\package_manager\Event\PreRequireEvent $event
    *   The stage event.
    */
-  public function validateMinimumStability(PreRequireEvent $event): void {
+  public function validate(PreRequireEvent $event): void {
     $dir = $this->pathLocator->getProjectRoot();
     $minimum_stability = $this->inspector->getConfig('minimum-stability', $dir);
     $requested_packages = $event->getRuntimePackages();
@@ -81,7 +81,7 @@ final class ComposerMinimumStabilityValidator implements EventSubscriberInterfac
    */
   public static function getSubscribedEvents(): array {
     return [
-      PreRequireEvent::class => 'validateMinimumStability',
+      PreRequireEvent::class => 'validate',
     ];
   }
 

@@ -44,7 +44,7 @@ class StageNotInActiveValidatorTest extends UnitTestCase {
     $stage_not_in_active_validator = new StageNotInActiveValidator($path_locator);
     $stage_not_in_active_validator->setStringTranslation($this->getStringTranslationStub());
     $event = new PreCreateEvent($stage, ['some/path']);
-    $stage_not_in_active_validator->checkNotInActive($event);
+    $stage_not_in_active_validator->validate($event);
     $this->assertValidationResultsEqual($expected, $event->getResults(), $path_locator);
   }
 

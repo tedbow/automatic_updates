@@ -85,9 +85,9 @@ final class LockFileValidator implements EventSubscriberInterface {
   }
 
   /**
-   * {@inheritdoc}
+   * Checks that the active lock file is unchanged during stage operations.
    */
-  public function validateStagePreOperation(PreOperationStageEvent $event): void {
+  public function validate(PreOperationStageEvent $event): void {
     // Early return if the stage is not already created.
     if ($event instanceof StatusCheckEvent && $event->stage->isAvailable()) {
       return;
@@ -139,9 +139,9 @@ final class LockFileValidator implements EventSubscriberInterface {
   public static function getSubscribedEvents(): array {
     return [
       PreCreateEvent::class => 'storeHash',
-      PreRequireEvent::class => 'validateStagePreOperation',
-      PreApplyEvent::class => 'validateStagePreOperation',
-      StatusCheckEvent::class => 'validateStagePreOperation',
+      PreRequireEvent::class => 'validate',
+      PreApplyEvent::class => 'validate',
+      StatusCheckEvent::class => 'validate',
       PostDestroyEvent::class => 'deleteHash',
     ];
   }

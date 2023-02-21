@@ -37,9 +37,9 @@ final class ComposerSettingsValidator implements EventSubscriberInterface {
   }
 
   /**
-   * {@inheritdoc}
+   * Validates Composer settings.
    */
-  public function validateStagePreOperation(PreOperationStageEvent $event): void {
+  public function validate(PreOperationStageEvent $event): void {
     $dir = $this->pathLocator->getProjectRoot();
 
     try {
@@ -63,9 +63,9 @@ final class ComposerSettingsValidator implements EventSubscriberInterface {
    */
   public static function getSubscribedEvents(): array {
     return [
-      PreCreateEvent::class => 'validateStagePreOperation',
-      PreApplyEvent::class => 'validateStagePreOperation',
-      StatusCheckEvent::class => 'validateStagePreOperation',
+      PreCreateEvent::class => 'validate',
+      PreApplyEvent::class => 'validate',
+      StatusCheckEvent::class => 'validate',
     ];
   }
 

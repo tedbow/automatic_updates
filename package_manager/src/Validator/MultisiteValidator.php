@@ -34,9 +34,9 @@ final class MultisiteValidator implements EventSubscriberInterface {
   }
 
   /**
-   * {@inheritdoc}
+   * Validates that the current site is not part of a multisite.
    */
-  public function validateStagePreOperation(PreOperationStageEvent $event): void {
+  public function validate(PreOperationStageEvent $event): void {
     if ($this->isMultisite()) {
       $event->addError([
         $this->t('Drupal multisite is not supported by Package Manager.'),
@@ -65,9 +65,9 @@ final class MultisiteValidator implements EventSubscriberInterface {
    */
   public static function getSubscribedEvents(): array {
     return [
-      PreCreateEvent::class => 'validateStagePreOperation',
-      PreApplyEvent::class => 'validateStagePreOperation',
-      StatusCheckEvent::class => 'validateStagePreOperation',
+      PreCreateEvent::class => 'validate',
+      PreApplyEvent::class => 'validate',
+      StatusCheckEvent::class => 'validate',
     ];
   }
 

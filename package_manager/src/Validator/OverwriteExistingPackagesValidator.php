@@ -51,7 +51,7 @@ final class OverwriteExistingPackagesValidator implements EventSubscriberInterfa
   /**
    * Validates that new installed packages don't overwrite existing directories.
    */
-  public function validateStagePreOperation(PreOperationStageEvent $event): void {
+  public function validate(PreOperationStageEvent $event): void {
     $stage = $event->stage;
     $active_composer = $stage->getActiveComposer();
     $stage_composer = $stage->getStageComposer();
@@ -96,7 +96,7 @@ final class OverwriteExistingPackagesValidator implements EventSubscriberInterfa
    */
   public static function getSubscribedEvents(): array {
     return [
-      PreApplyEvent::class => 'validateStagePreOperation',
+      PreApplyEvent::class => 'validate',
     ];
   }
 
