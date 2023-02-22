@@ -7,7 +7,6 @@ namespace Drupal\Tests\package_manager\Kernel;
 use Composer\Json\JsonFile;
 use Drupal\Component\Serialization\Json;
 use Drupal\Core\DependencyInjection\ContainerBuilder;
-use Drupal\KernelTests\KernelTestBase;
 use Drupal\package_manager\InstalledPackage;
 use PhpTuf\ComposerStager\Domain\Exception\RuntimeException;
 
