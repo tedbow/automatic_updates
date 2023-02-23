@@ -28,7 +28,7 @@ return [
     'drupal/core' => [
       'pretty_version' => '9.8.0',
       'version' => '9.8.0.0',
-      'reference' => '5aeab06c3087477e20e617328f2fa9f3ed18373d',
+      'reference' => 'ab929a52b18b5423cc35d14db5cb035c2d2a679c',
       'type' => 'drupal-core',
       'install_path' => __DIR__ . '/../drupal/core',
       'aliases' => [],

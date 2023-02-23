@@ -4,6 +4,8 @@ declare(strict_types = 1);
 
 namespace Drupal\automatic_updates\Development;
 
+use Composer\Json\JsonFile;
+use Composer\Script\Event;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\Process\Exception\ProcessFailedException;
 use Symfony\Component\Process\Process;
@@ -17,8 +19,27 @@ final class ComposerFixtureCreator {
 
   /**
    * Creates the fixture.
+   *
+   * @param \Composer\Script\Event $event
+   *   The Composer event.
    */
-  public static function createFixture(): void {
+  public static function createFixture(Event $event): void {
+    $args = $event->getArguments();
+    if (count($args) !== 1) {
+      throw new \Exception("This script requires 1 argument: a directory that is a core clone.");
+    }
+    $core_dir = $args[0];
+    if (!is_dir($core_dir)) {
+      throw new \Exception("$core_dir is not a directory.");
+    }
+    // Copy drupal scaffold file mapping from core/composer.json to
+    // fixtures' core/composer.json.
+    $core_composer_json = new JsonFile("$core_dir/composer.json");
+    $core_composer_data = $core_composer_json->read();
+    $fixture_core_composer_file = new JsonFile(static::FIXTURE_PATH . "/../path_repos/drupal--core/composer.json");
+    $fixture_core_composer_data = $fixture_core_composer_file->read();
+    $fixture_core_composer_data['extra']['drupal-scaffold']['file-mapping'] = $core_composer_data['extra']['drupal-scaffold']['file-mapping'];
+    $fixture_core_composer_file->write($fixture_core_composer_data);
     $fs = new Filesystem();
     $fs->remove(static::FIXTURE_PATH . "/composer.lock");
     // Remove all the vendor folders but leave our 2 test files.
