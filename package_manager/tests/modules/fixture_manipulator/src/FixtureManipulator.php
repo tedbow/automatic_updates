@@ -214,7 +214,7 @@ class FixtureManipulator {
       $data['dev-package-names'] = array_values($data['dev-package-names']);
     }
     // Add the package back to the list, if we have data for it.
-    if (isset($package)) {
+    if (isset($install_json_package)) {
       $data['packages'][] = $install_json_package;
 
       if ($is_dev_requirement || !empty($is_existing_dev_package)) {

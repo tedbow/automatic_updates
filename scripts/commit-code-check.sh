@@ -95,10 +95,9 @@ print_title "[1/4] PHPCS"
 $CORE_DIRECTORY/vendor/bin/phpcs $MODULE_DIRECTORY -ps --standard="$CORE_DIRECTORY/core/phpcs.xml.dist"
 print_results $? "PHPCS"
 
-# @todo Uncomment in https://drupal.org/i/3342120
-# print_title "[2/4] PHPStan"
-# php -d apc.enabled=0 -d apc.enable_cli=0 $CORE_DIRECTORY/vendor/bin/phpstan analyze --no-progress --configuration="$CORE_DIRECTORY/core/phpstan.neon.dist" $MODULE_DIRECTORY
-# print_results $? "PHPStan"
+print_title "[2/4] PHPStan"
+php -d apc.enabled=0 -d apc.enable_cli=0 $CORE_DIRECTORY/vendor/bin/phpstan analyze --no-progress --configuration="$MODULE_DIRECTORY/phpstan.neon.dist" $MODULE_DIRECTORY
+print_results $? "PHPStan"
 
 print_title "[3/4] CSpell"
 cd $CORE_DIRECTORY/core && yarn run -s spellcheck --no-progress --root $MODULE_DIRECTORY -c .cspell.json "**" && cd -

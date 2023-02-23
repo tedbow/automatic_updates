@@ -50,7 +50,7 @@ class XdebugValidatorTest extends AutomaticUpdatesKernelTestBase {
     $stage->require(['drupal/random']);
     $this->assertUpdateStagedTimes(1);
     $event_dispatcher = \Drupal::service('event_dispatcher');
-    $result = $this->runStatusCheck($stage, $event_dispatcher, TRUE);
+    $result = $this->runStatusCheck($stage, $event_dispatcher);
     $this->assertSame($message->getUntranslatedString(), $result[0]->getMessages()[0]->getUntranslatedString());
     $stage->destroy(TRUE);
 

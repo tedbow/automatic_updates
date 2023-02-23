@@ -276,10 +276,7 @@ abstract class PackageManagerKernelTestBase extends KernelTestBase {
 
     // This validator will persist through container rebuilds.
     // @see ::register()
-    $validator = new TestDiskSpaceValidator(
-      $path_locator,
-      $this->container->get('string_translation')
-    );
+    $validator = new TestDiskSpaceValidator($path_locator);
     // By default, the validator should report that the root, vendor, and
     // temporary directories have basically infinite free space.
     $validator->freeSpace = [

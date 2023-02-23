@@ -69,7 +69,7 @@ final class StatusChecker implements EventSubscriberInterface {
     else {
       $stage = $this->cronUpdater;
     }
-    $results = $this->runStatusCheck($stage, $this->eventDispatcher, TRUE);
+    $results = $this->runStatusCheck($stage, $this->eventDispatcher);
 
     $this->keyValueExpirable->setWithExpire(
       'status_check_last_run',

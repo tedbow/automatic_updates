@@ -152,7 +152,7 @@ final class UpdaterForm extends UpdateFormBase {
       $results = [];
     }
     else {
-      $results = $this->runStatusCheck($this->updater, $this->eventDispatcher, TRUE);
+      $results = $this->runStatusCheck($this->updater, $this->eventDispatcher);
     }
     $this->displayResults($results, $this->renderer);
     $project = $project_info->getProjectInfo();

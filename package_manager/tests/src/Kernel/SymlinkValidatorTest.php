@@ -17,6 +17,7 @@ use PhpTuf\ComposerStager\Domain\Value\Path\PathInterface;
 use PhpTuf\ComposerStager\Domain\Value\PathList\PathListInterface;
 use PHPUnit\Framework\Assert;
 use Prophecy\Argument;
+use Prophecy\Prophecy\ObjectProphecy;
 
 /**
  * @covers \Drupal\package_manager\Validator\SymlinkValidator
@@ -105,6 +106,7 @@ class SymlinkValidatorTest extends PackageManagerKernelTestBase {
       // Ensure that the Composer Stager's symlink precondition is invoked.
       $this->precondition->assertIsFulfilled(...$arguments)
         ->will(function (array $arguments) use ($symlinks_exist): void {
+          assert($this instanceof ObjectProphecy);
           // Ensure that 'ignore/me' is present in ignored paths.
           Assert::assertContains('ignore/me', $arguments[2]->getAll());
 

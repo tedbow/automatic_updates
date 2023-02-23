@@ -106,8 +106,8 @@ final class BatchProcessor {
    * @see \Drupal\automatic_updates\Updater::stage()
    */
   public static function stage(array &$context): void {
+    $stage_id = \Drupal::service('session')->get(static::STAGE_ID_SESSION_KEY);
     try {
-      $stage_id = \Drupal::service('session')->get(static::STAGE_ID_SESSION_KEY);
       static::getUpdater()->claim($stage_id)->stage();
     }
     catch (\Throwable $e) {

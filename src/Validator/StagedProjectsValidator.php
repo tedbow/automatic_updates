@@ -103,6 +103,7 @@ final class StagedProjectsValidator implements EventSubscriberInterface {
     if ($updated_packages = array_filter($updated_packages, $filter)) {
       $staged_packages = $stage->getInstalledPackages();
 
+      $version_change_messages = [];
       foreach ($updated_packages as $name => $updated_package) {
         $version_change_messages[] = $this->t(
           "@type '@name' from @active_version to @staged_version.",
@@ -114,14 +115,12 @@ final class StagedProjectsValidator implements EventSubscriberInterface {
           ]
         );
       }
-      if (!empty($version_change_messages)) {
-        $version_change_summary = $this->formatPlural(
-          count($version_change_messages),
-          'The update cannot proceed because the following Drupal project was unexpectedly updated. Only Drupal Core updates are currently supported.',
-          'The update cannot proceed because the following Drupal projects were unexpectedly updated. Only Drupal Core updates are currently supported.'
-        );
-        $event->addError($version_change_messages, $version_change_summary);
-      }
+      $version_change_summary = $this->formatPlural(
+        count($version_change_messages),
+        'The update cannot proceed because the following Drupal project was unexpectedly updated. Only Drupal Core updates are currently supported.',
+        'The update cannot proceed because the following Drupal projects were unexpectedly updated. Only Drupal Core updates are currently supported.'
+      );
+      $event->addError($version_change_messages, $version_change_summary);
     }
   }
 

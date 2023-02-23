@@ -5,8 +5,10 @@ declare(strict_types = 1);
 namespace Drupal\Tests\package_manager\Traits;
 
 use Drupal\Core\StringTranslation\TranslatableMarkup;
+use Drupal\KernelTests\KernelTestBase;
 use Drupal\package_manager\PathLocator;
 use Drupal\package_manager\ValidationResult;
+use Drupal\Tests\BrowserTestBase;
 use Drupal\Tests\UnitTestCase;
 
 /**
@@ -64,6 +66,8 @@ trait ValidationTestTrait {
    */
   protected function resolvePlaceholdersInArrayValuesWithRealPaths(array $subject, ?PathLocator $path_locator = NULL, ?string $stage_dir = NULL): array {
     if (!$path_locator) {
+      // Only kernel and browser tests have $this->container.
+      assert($this instanceof KernelTestBase || $this instanceof BrowserTestBase);
       $path_locator = $this->container->get('package_manager.path_locator');
     }
     $subject = str_replace(
@@ -97,6 +101,7 @@ trait ValidationTestTrait {
   protected function getValidationResultsAsArray(array $results): array {
     $string_translation_stub = NULL;
     if (is_a(get_called_class(), UnitTestCase::class, TRUE)) {
+      assert($this instanceof UnitTestCase);
       $string_translation_stub = $this->getStringTranslationStub();
     }
     return array_values(array_map(static function (ValidationResult $result) use ($string_translation_stub) {

@@ -5,6 +5,7 @@ declare(strict_types = 1);
 namespace Drupal\Tests\automatic_updates_extensions\Traits;
 
 use Behat\Mink\WebAssert;
+use Drupal\Tests\BrowserTestBase;
 
 /**
  * Common methods for testing the update form.
@@ -41,6 +42,7 @@ trait FormTestTrait {
    *   The no of rows in table.
    */
   protected function assertUpdatesCount(int $expected_update_count): void {
+    assert($this instanceof BrowserTestBase);
     $this->assertSession()->elementsCount('css', '.update-recommended tbody tr', $expected_update_count);
   }
 

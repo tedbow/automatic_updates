@@ -267,6 +267,7 @@ class StageOwnershipTest extends PackageManagerKernelTestBase {
         // don't wan't to do that in this test, since we're specifically testing
         // what happens when we try to delete a stage directory with
         // write-protected files.
+        return TRUE;
       }
 
       /**

@@ -164,7 +164,7 @@ final class UpdaterForm extends UpdateFormBase {
       $results = [];
     }
     else {
-      $results = $this->runStatusCheck($this->extensionUpdater, $this->eventDispatcher, TRUE);
+      $results = $this->runStatusCheck($this->extensionUpdater, $this->eventDispatcher);
     }
     $this->displayResults($results, $this->renderer);
     $security_level = ValidationResult::getOverallSeverity($results);

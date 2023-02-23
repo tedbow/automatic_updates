@@ -32,16 +32,15 @@ class ClickableHelpTest extends AutomaticUpdatesFunctionalTestBase {
     unset($this->disableValidators[array_search('package_manager.validator.composer_executable', $this->disableValidators)]);
     parent::setUp();
     $this->setReleaseMetadata(__DIR__ . '/../../../package_manager/tests/fixtures/release-history/drupal.9.8.1-security.xml');
-    $this->checkerRunnerUser = $this->createUser([
-      'administer site configuration',
-    ]);
   }
 
   /**
    * Tests if composer executable is not present then the help link clickable.
    */
   public function testHelpLinkClickable(): void {
-    $this->drupalLogin($this->checkerRunnerUser);
+    $this->drupalLogin($this->createUser([
+      'administer site configuration',
+    ]));
     $this->config('package_manager.settings')
       ->set('executables.composer', '/not/matching/path/to/composer')
       ->save();
