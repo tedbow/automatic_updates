@@ -1,5 +1,6 @@
 {
     "name": "cweagans/composer-patches",
+    "description": "A fake version of cweagans/composer-patches",
     "type": "composer-plugin",
     "extra": {
         "class": "\\cweagans\\Fake\\ComposerPatches"

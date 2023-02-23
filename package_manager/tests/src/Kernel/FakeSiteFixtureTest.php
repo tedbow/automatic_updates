@@ -129,4 +129,21 @@ class FakeSiteFixtureTest extends PackageManagerKernelTestBase {
     $this->assertSame(['drupal/core', 'drupal/core-dev', 'drupal/core-recommended'], $package_names);
   }
 
+  /**
+   * Tests that the fixture passes `composer validate`.
+   */
+  public function testComposerValidate(): void {
+    $active_dir = $this->container->get('package_manager.path_locator')->getProjectRoot();
+    $process = new Process([
+      'composer',
+      'validate',
+      '--check-lock',
+      '--with-dependencies',
+      '--no-interaction',
+      '--ansi',
+      '--no-cache',
+    ], $active_dir);
+    $process->mustRun();
+  }
+
 }

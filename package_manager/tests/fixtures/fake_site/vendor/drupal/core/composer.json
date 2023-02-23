@@ -1,6 +1,7 @@
 {
     "name": "drupal/core",
     "type": "drupal-core",
+    "description": "A fake version of drupal/core",
     "version": "9.8.0",
     "extra": {
         "_readme": [

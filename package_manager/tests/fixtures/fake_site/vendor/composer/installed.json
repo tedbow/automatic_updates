@@ -7,7 +7,7 @@
             "dist": {
                 "type": "path",
                 "url": "../path_repos/drupal--core",
-                "reference": "ab929a52b18b5423cc35d14db5cb035c2d2a679c"
+                "reference": "31fd2270701526555acae45a3601c777e35508d5"
             },
             "type": "drupal-core",
             "extra": {
@@ -46,6 +46,7 @@
                 }
             },
             "installation-source": "dist",
+            "description": "A fake version of drupal/core",
             "transport-options": {
                 "symlink": false,
                 "relative": true
@@ -59,10 +60,11 @@
             "dist": {
                 "type": "path",
                 "url": "../path_repos/drupal--core-dev",
-                "reference": "6a8d7df3a5650a5d3bce6e478114064b176f7104"
+                "reference": "b99a99a11ff2779b5e4c5787dc43575382a3548c"
             },
             "type": "package",
             "installation-source": "dist",
+            "description": "A fake version of drupal/core-dev",
             "transport-options": {
                 "symlink": false,
                 "relative": true
@@ -76,10 +78,11 @@
             "dist": {
                 "type": "path",
                 "url": "../path_repos/drupal--core-recommended",
-                "reference": "c9babad9851edc2b7b4b43c778bc30db09f14946"
+                "reference": "112e4f7cfe8312457cd0eb58dcbffebc148850d8"
             },
             "type": "project",
             "installation-source": "dist",
+            "description": "A fake version of drupal/core-recommended",
             "transport-options": {
                 "symlink": false,
                 "relative": true
