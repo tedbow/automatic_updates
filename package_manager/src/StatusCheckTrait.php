@@ -36,9 +36,9 @@ trait StatusCheckTrait {
       $ignored_paths = new CollectIgnoredPathsEvent($stage);
       $event_dispatcher->dispatch($ignored_paths);
     }
-    catch (\Exception $e) {
+    catch (\Throwable $throwable) {
       // We can't dispatch the status check event without the ignored paths.
-      return [ValidationResult::createErrorFromThrowable($e, t("Unable to collect ignored paths, therefore can't perform status checks."))];
+      return [ValidationResult::createErrorFromThrowable($throwable, t("Unable to collect ignored paths, therefore can't perform status checks."))];
     }
 
     $event = new StatusCheckEvent($stage, $ignored_paths->getAll());

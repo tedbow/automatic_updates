@@ -291,8 +291,8 @@ class Stage implements LoggerAwareInterface {
     try {
       $ignored_paths = $this->getIgnoredPaths();
     }
-    catch (\Exception $e) {
-      throw new StageException($e->getMessage());
+    catch (\Throwable $throwable) {
+      throw new StageException($throwable->getMessage(), $throwable->getCode(), $throwable);
     }
     $event = new PreCreateEvent($this, $ignored_paths);
     // If an error occurs and we won't be able to create the stage, mark it as
@@ -376,8 +376,8 @@ class Stage implements LoggerAwareInterface {
     try {
       $ignored_paths = $this->getIgnoredPaths();
     }
-    catch (\Exception $e) {
-      throw new StageException($e->getMessage());
+    catch (\Throwable $throwable) {
+      throw new StageException($throwable->getMessage(), $throwable->getCode(), $throwable);
     }
 
     // If an error occurs while dispatching the events, ensure that ::destroy()
