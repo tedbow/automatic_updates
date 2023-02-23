@@ -23,16 +23,40 @@ class MultisiteValidatorTest extends PackageManagerKernelTestBase {
    */
   public function providerMultisite(): array {
     return [
-      'multisite' => [
-        TRUE,
+      'sites.php present and listing multiple sites' => [
+        <<<'PHP'
+<?php
+// Site 1: the main site.
+$sites['example.com'] = 'default';
+// Site 2: the shop.
+$sites['shop.example.com'] = 'shop';
+PHP,
         [
           ValidationResult::createError([
             t('Drupal multisite is not supported by Package Manager.'),
           ]),
         ],
       ],
-      'not multisite' => [
-        FALSE,
+      'sites.php present and listing single site' => [
+        <<<'PHP'
+<?php
+// Site 1: the main site.
+$sites['example.com'] = 'default';
+PHP,
+        [],
+      ],
+      'sites.php present and listing multiple aliases for a single site' => [
+        <<<'PHP'
+<?php
+// Site 1: the main site.
+$sites['example.com'] = 'example';
+// Alias for site 1!
+$sites['example.dev'] = 'example';
+PHP,
+        [],
+      ],
+      'sites.php absent' => [
+        NULL,
         [],
       ],
     ];
@@ -41,21 +65,18 @@ class MultisiteValidatorTest extends PackageManagerKernelTestBase {
   /**
    * Tests that Package Manager flags an error if run in a multisite.
    *
-   * @param bool $is_multisite
-   *   Whether the validator will be in a multisite.
+   * @param string|null $sites_php
+   *   The sites.php contents to write, if any. If NULL, no sites.php will be
+   *   created.
    * @param \Drupal\package_manager\ValidationResult[] $expected_results
    *   The expected validation results.
    *
    * @dataProvider providerMultisite
    */
-  public function testMultisite(bool $is_multisite, array $expected_results = []): void {
-    // If we should simulate a multisite, ensure there is a sites.php in the
-    // test project.
-    // @see \Drupal\package_manager\Validator\MultisiteValidator::isMultisite()
-    if ($is_multisite) {
-      $project_root = $this->container->get('package_manager.path_locator')
-        ->getProjectRoot();
-      touch($project_root . '/sites/sites.php');
+  public function testMultisite(?string $sites_php, array $expected_results = []): void {
+    if ($sites_php) {
+      $project_root = $this->container->get('package_manager.path_locator')->getProjectRoot();
+      file_put_contents($project_root . '/sites/sites.php', $sites_php);
     }
     $this->assertStatusCheckResults($expected_results);
     $this->assertResults($expected_results, PreCreateEvent::class);
@@ -64,22 +85,19 @@ class MultisiteValidatorTest extends PackageManagerKernelTestBase {
   /**
    * Tests that an error is flagged if run in a multisite during pre-apply.
    *
-   * @param bool $is_multisite
-   *   Whether the validator will be in a multisite.
+   * @param string|null $sites_php
+   *   The sites.php contents to write, if any. If NULL, no sites.php will be
+   *   created.
    * @param \Drupal\package_manager\ValidationResult[] $expected_results
    *   The expected validation results.
    *
    * @dataProvider providerMultisite
    */
-  public function testMultisiteDuringPreApply(bool $is_multisite, array $expected_results = []): void {
-    $this->addEventTestListener(function () use ($is_multisite): void {
-      // If we should simulate a multisite, ensure there is a sites.php in the
-      // test project.
-      // @see \Drupal\package_manager\Validator\MultisiteValidator::isMultisite()
-      if ($is_multisite) {
-        $project_root = $this->container->get('package_manager.path_locator')
-          ->getProjectRoot();
-        touch($project_root . '/sites/sites.php');
+  public function testMultisiteDuringPreApply(?string $sites_php, array $expected_results = []): void {
+    $this->addEventTestListener(function () use ($sites_php): void {
+      if ($sites_php) {
+        $project_root = $this->container->get('package_manager.path_locator')->getProjectRoot();
+        file_put_contents($project_root . '/sites/sites.php', $sites_php);
       }
     });
     $this->assertResults($expected_results, PreApplyEvent::class);

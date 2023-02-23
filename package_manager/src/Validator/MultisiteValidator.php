@@ -49,15 +49,23 @@ final class MultisiteValidator implements EventSubscriberInterface {
    *
    * @return bool
    *   TRUE if the current site is part of a multisite, otherwise FALSE.
-   *
-   * @todo Make this smarter in https://www.drupal.org/node/3267646.
    */
   protected function isMultisite(): bool {
     $web_root = $this->pathLocator->getWebRoot();
     if ($web_root) {
       $web_root .= '/';
     }
-    return file_exists($this->pathLocator->getProjectRoot() . '/' . $web_root . 'sites/sites.php');
+    $sites_php_path = $this->pathLocator->getProjectRoot() . '/' . $web_root . 'sites/sites.php';
+
+    if (!file_exists($sites_php_path)) {
+      return FALSE;
+    }
+
+    // @see \Drupal\Core\DrupalKernel::findSitePath()
+    $sites = [];
+    include $sites_php_path;
+    // @see example.sites.php
+    return count(array_unique($sites)) > 1;
   }
 
   /**
