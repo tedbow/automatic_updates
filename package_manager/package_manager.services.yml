@@ -68,10 +68,9 @@ services:
   package_manager.validator.composer_executable:
     class: Drupal\package_manager\Validator\ComposerExecutableValidator
     arguments:
-      - '@PhpTuf\ComposerStager\Domain\Service\ProcessRunner\ComposerRunnerInterface'
+      - '@package_manager.composer_inspector'
+      - '@package_manager.path_locator'
       - '@module_handler'
-      - '@PhpTuf\ComposerStager\Domain\Service\Precondition\ComposerIsAvailableInterface'
-      - '@PhpTuf\ComposerStager\Infrastructure\Factory\Path\PathFactoryInterface'
     tags:
       - { name: event_subscriber }
   package_manager.validator.disk_space:
@@ -147,12 +146,6 @@ services:
       - '@package_manager.path_locator'
       - '@extension.list.module'
       - '@extension.list.theme'
-    tags:
-      - { name: event_subscriber }
-  package_manager.validator.composer_json_exists:
-    class: Drupal\package_manager\Validator\ComposerJsonExistsValidator
-    arguments:
-      - '@package_manager.path_locator'
     tags:
       - { name: event_subscriber }
   package_manager.test_site_excluder:

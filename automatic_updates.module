@@ -12,8 +12,8 @@ use Drupal\automatic_updates\CronUpdater;
 use Drupal\Core\Routing\RouteMatchInterface;
 use Drupal\automatic_updates\Validation\AdminStatusCheckMessages;
 use Drupal\Core\Url;
+use Drupal\package_manager\ComposerInspector;
 use Drupal\system\Controller\DbUpdateController;
-use Drupal\package_manager\Validator\ComposerExecutableValidator;
 
 /**
  * Implements hook_help().
@@ -31,7 +31,7 @@ function automatic_updates_help($route_name, RouteMatchInterface $route_match) {
       $output .= '</p>';
       $output .= '<p>' . t('Additionally, Automatic Updates periodically runs checks to ensure that updates can be installed, and will warn site administrators if problems are detected.') . '</p>';
       $output .= '<h3>' . t('Requirements') . '</h3>';
-      $output .= '<p>' . t('Automatic Updates requires a Composer executable whose version satisfies <code>@version</code>, and PHP must have permission to run it. The path to the executable may be set in the <code>package_manager.settings:executables.composer</code> config setting, or it will be automatically detected.', ['@version' => ComposerExecutableValidator::MINIMUM_COMPOSER_VERSION_CONSTRAINT]) . '</p>';
+      $output .= '<p>' . t('Automatic Updates requires a Composer executable whose version satisfies <code>@version</code>, and PHP must have permission to run it. The path to the executable may be set in the <code>package_manager.settings:executables.composer</code> config setting, or it will be automatically detected.', ['@version' => ComposerInspector::SUPPORTED_VERSION]) . '</p>';
       $output .= '<p id="cron-alternate-port">' . t('If your site is running on the built-in PHP web server, unattended (i.e., cron) updates may not work without one of the following workarounds:') . '</p>';
       $output .= '<ul>';
       $output .= '<li>' . t('Use a multithreaded web server, such as Apache, NGINX, or on Windows, IIS.') . '</li>';

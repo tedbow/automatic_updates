@@ -4,12 +4,15 @@ declare(strict_types = 1);
 
 namespace Drupal\Tests\package_manager\Kernel;
 
+use Drupal\Core\DependencyInjection\ContainerBuilder;
+use Drupal\package_manager\ComposerInspector;
 use Drupal\package_manager\Event\PreApplyEvent;
 use Drupal\package_manager\Event\PreCreateEvent;
 use Drupal\package_manager\Event\PreRequireEvent;
 use Drupal\package_manager\Validator\LockFileValidator;
 use Drupal\package_manager\ValidationResult;
 use Drupal\package_manager_bypass\NoOpStager;
+use Prophecy\Argument;
 
 /**
  * @coversDefaultClass \Drupal\package_manager\Validator\LockFileValidator
@@ -32,6 +35,26 @@ class LockFileValidatorTest extends PackageManagerKernelTestBase {
     parent::setUp();
     $this->activeDir = $this->container->get('package_manager.path_locator')
       ->getProjectRoot();
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function register(ContainerBuilder $container) {
+    parent::register($container);
+
+    $service_id = 'package_manager.composer_inspector';
+    $container->getDefinition($service_id)->setPublic(TRUE);
+
+    // Temporarily mock the Composer inspector to prevent it from complaining
+    // over the lack of a lock file if it's invoked by other validators.
+    $inspector = $this->prophesize(ComposerInspector::class);
+    $arguments = Argument::cetera();
+    $inspector->getConfig('allow-plugins', $arguments)->willReturn('[]');
+    $inspector->getConfig('secure-http', $arguments)->willReturn('1');
+    $inspector->getConfig('minimum-stability', $arguments)->willReturn('stable');
+    $inspector->validate($arguments);
+    $container->set($service_id, $inspector->reveal());
   }
 
   /**

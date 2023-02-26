@@ -4,9 +4,14 @@ declare(strict_types = 1);
 
 namespace Drupal\package_manager;
 
+use Composer\Semver\Semver;
+use Drupal\Core\StringTranslation\StringTranslationTrait;
+use PhpTuf\ComposerStager\Domain\Exception\PreconditionException;
 use PhpTuf\ComposerStager\Domain\Exception\RuntimeException;
+use PhpTuf\ComposerStager\Domain\Service\Precondition\ComposerIsAvailableInterface;
 use PhpTuf\ComposerStager\Domain\Service\ProcessOutputCallback\ProcessOutputCallbackInterface;
 use PhpTuf\ComposerStager\Domain\Service\ProcessRunner\ComposerRunnerInterface;
+use PhpTuf\ComposerStager\Infrastructure\Factory\Path\PathFactoryInterface;
 
 /**
  * Defines a class to get information from Composer.
@@ -16,7 +21,9 @@ use PhpTuf\ComposerStager\Domain\Service\ProcessRunner\ComposerRunnerInterface;
  *   at any time without warning. External code should not interact with this
  *   class.
  */
-final class ComposerInspector {
+class ComposerInspector {
+
+  use StringTranslationTrait;
 
   /**
    * The JSON process output callback.
@@ -40,13 +47,113 @@ final class ComposerInspector {
   private array $lockFileHashes = [];
 
   /**
+   * A semantic version constraint for the supported version(s) of Composer.
+   *
+   * @var string
+   */
+  final public const SUPPORTED_VERSION = '~2.2.12 || ^2.3.5';
+
+  /**
    * Constructs a ComposerInspector object.
    *
    * @param \PhpTuf\ComposerStager\Domain\Service\ProcessRunner\ComposerRunnerInterface $runner
    *   The Composer runner service from Composer Stager.
+   * @param \PhpTuf\ComposerStager\Domain\Service\Precondition\ComposerIsAvailableInterface $composerIsAvailable
+   *   The Composer Stager precondition to ensure that Composer is available.
+   * @param \PhpTuf\ComposerStager\Infrastructure\Factory\Path\PathFactoryInterface $pathFactory
+   *   The path factory service from Composer Stager.
    */
-  public function __construct(private ComposerRunnerInterface $runner) {
+  public function __construct(private ComposerRunnerInterface $runner, private ComposerIsAvailableInterface $composerIsAvailable, private PathFactoryInterface $pathFactory) {
     $this->jsonCallback = new JsonProcessOutputCallback();
+  }
+
+  /**
+   * Checks that Composer commands can be run.
+   *
+   * @param string $working_dir
+   *   The directory in which Composer will be run.
+   *
+   * @throws \Exception
+   *   If any of the following are true:
+   *   - The Composer executable is not available.
+   *   - composer.json does not exist in the given directory.
+   *   - composer.lock does not exist in the given directory.
+   *   - The detected version of Composer is not supported.
+   */
+  public function validate(string $working_dir): void {
+    $messages = [];
+
+    // Ensure the Composer executable is available. For performance reasons,
+    // statically cache the result, since it's unlikely to change during the
+    // current request. If $unavailable_message is NULL, it means we haven't
+    // done this check yet. If it's FALSE, it means we did the check and there
+    // were no errors; and, if it's a string, it's the error message we received
+    // the last time we did this check.
+    static $unavailable_message;
+    if ($unavailable_message === NULL) {
+      try {
+        // The "Composer is available" precondition requires active and stage
+        // directories, but they don't actually matter to it, nor do path
+        // exclusions, so dummies can be passed for simplicity.
+        $active_dir = $this->pathFactory::create($working_dir);
+        $stage_dir = $active_dir;
+
+        $this->composerIsAvailable->assertIsFulfilled($active_dir, $stage_dir);
+        $unavailable_message = FALSE;
+      }
+      catch (PreconditionException $e) {
+        $unavailable_message = $e->getMessage();
+      }
+    }
+    if ($unavailable_message) {
+      $messages[] = $unavailable_message;
+    }
+
+    // The detected version of Composer is unlikely to change during the
+    // current request, so statically cache it. If $unsupported_message is NULL,
+    // it means we haven't done this check yet. If it's FALSE, it means we did
+    // the check and there were no errors; and, if it's a string, it's the error
+    // message we received the last time we did this check.
+    static $unsupported_message;
+    if ($unsupported_message === NULL) {
+      try {
+        $detected_version = $this->getVersion($working_dir);
+
+        if (Semver::satisfies($detected_version, static::SUPPORTED_VERSION)) {
+          // We did the version check, and it did not produce an error message.
+          $unsupported_message = FALSE;
+        }
+        else {
+          $unsupported_message = $this->t('The detected Composer version, @version, does not satisfy <code>@constraint</code>.', [
+            '@version' => $detected_version,
+            '@constraint' => static::SUPPORTED_VERSION,
+          ]);
+        }
+      }
+      catch (\UnexpectedValueException $e) {
+        $unsupported_message = $e->getMessage();
+      }
+    }
+    if ($unsupported_message) {
+      $messages[] = $unsupported_message;
+    }
+
+    // Check for the presence of composer.json and composer.lock.
+    foreach (['json', 'lock'] as $suffix) {
+      $filename = 'composer.' . $suffix;
+
+      if (file_exists($working_dir . DIRECTORY_SEPARATOR . $filename)) {
+        continue;
+      }
+      $messages[] = $this->t('@filename not found in @dir.', [
+        '@filename' => $filename,
+        '@dir' => $working_dir,
+      ]);
+    }
+
+    if ($messages) {
+      throw new \Exception(implode("\n", $messages));
+    }
   }
 
   /**
@@ -66,6 +173,8 @@ final class ComposerInspector {
    * @see \Composer\Command\ConfigCommand::execute()
    */
   public function getConfig(string $key, string $working_dir) : ?string {
+    $this->validate($working_dir);
+
     // For whatever reason, PHPCS thinks that $output is not used, even though
     // it very clearly *is*. So, shut PHPCS up for the duration of this method.
     // phpcs:disable DrupalPractice.CodeAnalysis.VariableAnalysis.UnusedVariable
@@ -120,6 +229,8 @@ final class ComposerInspector {
    *
    * @throws \UnexpectedValueException
    *   Thrown if the expect data format is not found.
+   *
+   * @todo Make this method private in https://drupal.org/i/3344556.
    */
   public function getVersion(string $working_dir): string {
     $this->runner->run(['--format=json', "--working-dir=$working_dir"], $this->jsonCallback);
@@ -144,6 +255,8 @@ final class ComposerInspector {
    *   The installed packages list for the directory.
    */
   public function getInstalledPackagesList(string $working_dir): InstalledPackagesList {
+    $this->validate($working_dir);
+
     $working_dir = realpath($working_dir);
     $lock_file_path = $working_dir . DIRECTORY_SEPARATOR . 'composer.lock';
 

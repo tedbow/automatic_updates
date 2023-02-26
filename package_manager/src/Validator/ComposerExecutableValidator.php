@@ -4,20 +4,15 @@ declare(strict_types = 1);
 
 namespace Drupal\package_manager\Validator;
 
-use Composer\Semver\Semver;
 use Drupal\Core\Extension\ModuleHandlerInterface;
 use Drupal\Core\Url;
+use Drupal\package_manager\ComposerInspector;
 use Drupal\package_manager\Event\PreApplyEvent;
 use Drupal\package_manager\Event\PreCreateEvent;
 use Drupal\package_manager\Event\PreOperationStageEvent;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\package_manager\Event\StatusCheckEvent;
-use PhpTuf\ComposerStager\Domain\Exception\ExceptionInterface;
-use PhpTuf\ComposerStager\Domain\Exception\PreconditionException;
-use PhpTuf\ComposerStager\Domain\Service\Precondition\ComposerIsAvailableInterface;
-use PhpTuf\ComposerStager\Domain\Service\ProcessOutputCallback\ProcessOutputCallbackInterface;
-use PhpTuf\ComposerStager\Domain\Service\ProcessRunner\ComposerRunnerInterface;
-use PhpTuf\ComposerStager\Infrastructure\Factory\Path\PathFactoryInterface;
+use Drupal\package_manager\PathLocator;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 /**
@@ -33,109 +28,45 @@ class ComposerExecutableValidator implements EventSubscriberInterface {
   use StringTranslationTrait;
 
   /**
-   * The minimum required version of Composer.
-   *
-   * @var string
-   */
-  public const MINIMUM_COMPOSER_VERSION_CONSTRAINT = '~2.2.12 || ^2.3.5';
-
-  /**
    * Constructs a ComposerExecutableValidator object.
    *
-   * @param \PhpTuf\ComposerStager\Domain\Service\ProcessRunner\ComposerRunnerInterface $composer
-   *   The Composer runner.
+   * @param \Drupal\package_manager\ComposerInspector $composerInspector
+   *   The Composer inspector service.
+   * @param \Drupal\package_manager\PathLocator $pathLocator
+   *   The path locator service.
    * @param \Drupal\Core\Extension\ModuleHandlerInterface $moduleHandler
    *   The module handler service.
-   * @param \PhpTuf\ComposerStager\Domain\Service\Precondition\ComposerIsAvailableInterface $composerIsAvailable
-   *   The "Composer is available" precondition service.
-   * @param \PhpTuf\ComposerStager\Infrastructure\Factory\Path\PathFactoryInterface $pathFactory
-   *   The path factory service.
    */
   public function __construct(
-    protected ComposerRunnerInterface $composer,
+    protected ComposerInspector $composerInspector,
+    protected PathLocator $pathLocator,
     protected ModuleHandlerInterface $moduleHandler,
-    protected ComposerIsAvailableInterface $composerIsAvailable,
-    protected PathFactoryInterface $pathFactory,
   ) {}
 
   /**
    * Validates that the Composer executable is the correct version.
    */
   public function validate(PreOperationStageEvent $event): void {
-    // Return early if Composer is not available.
     try {
-      // The "Composer is available" precondition requires active and stage
-      // directories, but they don't actually matter to it, nor do path
-      // exclusions, so dummies can be passed for simplicity.
-      $active_dir = $this->pathFactory::create(__DIR__);
-      $stage_dir = $active_dir;
+      $this->composerInspector->validate($this->pathLocator->getProjectRoot());
+    }
+    catch (\Throwable $e) {
+      if ($this->moduleHandler->moduleExists('help')) {
+        $url = Url::fromRoute('help.page', ['name' => 'package_manager'])
+          ->setOption('fragment', 'package-manager-faq-composer-not-found')
+          ->toString();
 
-      $this->composerIsAvailable->assertIsFulfilled($active_dir, $stage_dir);
-    }
-    catch (PreconditionException $e) {
-      if (!$this->moduleHandler->moduleExists('help')) {
-        $event->addErrorFromThrowable($e);
-        return;
-      }
-      $this->setError($e->getMessage(), $event);
-      return;
-    }
-
-    try {
-      $output = $this->runCommand();
-    }
-    catch (ExceptionInterface $e) {
-      if (!$this->moduleHandler->moduleExists('help')) {
-        $event->addErrorFromThrowable($e);
-        return;
-      }
-      $this->setError($e->getMessage(), $event);
-      return;
-    }
-
-    $matched = [];
-    // Search for a semantic version number and optional stability flag.
-    if (preg_match('/([0-9]+\.?){3}-?((alpha|beta|rc)[0-9]*)?/i', $output, $matched)) {
-      $version = $matched[0];
-    }
-
-    if (isset($version)) {
-      if (!Semver::satisfies($version, static::MINIMUM_COMPOSER_VERSION_CONSTRAINT)) {
-        $message = $this->t('A Composer version which satisfies <code>@minimum_version</code> is required, but version @detected_version was detected.', [
-          '@minimum_version' => static::MINIMUM_COMPOSER_VERSION_CONSTRAINT,
-          '@detected_version' => $version,
+        $message = $this->t('@message See <a href=":package-manager-help">the help page</a> for information on how to configure the path to Composer.', [
+          '@message' => $e->getMessage(),
+          ':package-manager-help' => $url,
         ]);
-        $this->setError($message, $event);
+        $event->addError([$message]);
       }
-    }
-    else {
-      $this->setError($this->t('The Composer version could not be detected.'), $event);
-    }
-  }
+      else {
+        $event->addErrorFromThrowable($e);
+      }
 
-  /**
-   * Flags a validation error.
-   *
-   * @param string|\Drupal\Core\StringTranslation\TranslatableMarkup $message
-   *   The error message. If the Help module is enabled, a link to Package
-   *   Manager's online documentation will be appended.
-   * @param \Drupal\package_manager\Event\PreOperationStageEvent $event
-   *   The event object.
-   *
-   * @see package_manager_help()
-   */
-  protected function setError($message, PreOperationStageEvent $event): void {
-    if ($this->moduleHandler->moduleExists('help')) {
-      $url = Url::fromRoute('help.page', ['name' => 'package_manager'])
-        ->setOption('fragment', 'package-manager-faq-composer-not-found')
-        ->toString();
-
-      $message = $this->t('@message See <a href=":package-manager-help">the help page</a> for information on how to configure the path to Composer.', [
-        '@message' => $message,
-        ':package-manager-help' => $url,
-      ]);
     }
-    $event->addError([$message]);
   }
 
   /**
@@ -147,38 +78,6 @@ class ComposerExecutableValidator implements EventSubscriberInterface {
       PreApplyEvent::class => 'validate',
       StatusCheckEvent::class => 'validate',
     ];
-  }
-
-  /**
-   * Runs `composer --version` and returns its output.
-   *
-   * @return string
-   *   The output of `composer --version`.
-   */
-  protected function runCommand(): string {
-    // For whatever reason, PHPCS thinks that $output is not used, even though
-    // it very clearly *is*. So, shut PHPCS up for the duration of this method.
-    // phpcs:disable
-    $callback = new class () implements ProcessOutputCallbackInterface {
-
-      /**
-       * The command output.
-       *
-       * @var string
-       */
-      public string $output = '';
-
-      /**
-       * {@inheritdoc}
-       */
-      public function __invoke(string $type, string $buffer): void {
-        $this->output .= $buffer;
-      }
-
-    };
-    $this->composer->run(['--version'], $callback);
-    return $callback->output;
-    // phpcs:enable
   }
 
 }
