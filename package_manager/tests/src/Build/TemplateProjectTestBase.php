@@ -343,17 +343,14 @@ END;
           $package['source'],
           // Don't notify anybody that we're installing this package.
           $package['notification-url'],
-          // Since Drupal 9 requires PHP 7.3 or later, these polyfills won't be
+          // Since Drupal 10 requires PHP 8.1 or later, these polyfills won't be
           // installed, so we should make sure that they're not required by
           // anything.
           $package['require']['symfony/polyfill-php72'],
-          $package['require']['symfony/polyfill-php73']
+          $package['require']['symfony/polyfill-php73'],
+          $package['require']['symfony/polyfill-php80'],
+          $package['require']['symfony/polyfill-php81']
         );
-        // If we're running on Drupal 10, which requires PHP 8.1 or later, this
-        // polyfill won't be installed, so make sure it's not required.
-        if (str_starts_with(\Drupal::VERSION, '10.')) {
-          unset($package['require']['symfony/polyfill-php80']);
-        }
         // Disabling symlinks in the transport options doesn't seem to have an
         // effect, so we use the COMPOSER_MIRROR_PATH_REPOS environment variable
         // to force mirroring in ::createTestProject().
