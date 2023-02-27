@@ -5,7 +5,6 @@ declare(strict_types = 1);
 namespace Drupal\Tests\automatic_updates\Functional;
 
 use Drupal\automatic_updates\CronUpdater;
-use Drupal\Core\Site\Settings;
 use Drupal\fixture_manipulator\StageFixtureManipulator;
 use Drupal\Tests\BrowserTestBase;
 use Drupal\Tests\package_manager\Traits\AssertPreconditionsTrait;
@@ -29,23 +28,7 @@ abstract class AutomaticUpdatesFunctionalTestBase extends BrowserTestBase {
    */
   protected static $modules = [
     'automatic_updates',
-    'automatic_updates_test_disable_validators',
     'package_manager_bypass',
-  ];
-
-  /**
-   * The service IDs of any validators to disable.
-   *
-   * @var string[]
-   */
-  protected $disableValidators = [
-    // Disable the Composer executable validator, since it may cause the tests
-    // to fail if a supported version of Composer is unavailable to the web
-    // server. This should be okay in most situations because, apart from the
-    // validator, only Composer Stager needs run Composer, and
-    // package_manager_bypass is disabling those operations.
-    // @todo https://www.drupal.org/project/automatic_updates/issues/3320755.
-    'package_manager.validator.composer_executable',
   ];
 
   /**
@@ -53,7 +36,6 @@ abstract class AutomaticUpdatesFunctionalTestBase extends BrowserTestBase {
    */
   protected function setUp(): void {
     parent::setUp();
-    $this->disableValidators($this->disableValidators);
     $this->useFixtureDirectoryAsActive(__DIR__ . '/../../../package_manager/tests/fixtures/fake_site');
     // @todo Remove in https://www.drupal.org/project/automatic_updates/issues/3284443
     $this->config('automatic_updates.settings')->set('cron', CronUpdater::SECURITY)->save();
@@ -91,36 +73,6 @@ abstract class AutomaticUpdatesFunctionalTestBase extends BrowserTestBase {
       }
     }
     parent::tearDown();
-  }
-
-  /**
-   * Disables validators in the test site's settings.
-   *
-   * This modifies the service container such that the disabled validators are
-   * not defined at all. This method will have no effect unless the
-   * automatic_updates_test_disable_validators module is installed.
-   *
-   * @param string[] $validators
-   *   The service IDs of the validators to disable.
-   *
-   * @see \Drupal\automatic_updates_test_disable_validators\AutomaticUpdatesTestDisableValidatorsServiceProvider::alter()
-   */
-  protected function disableValidators(array $validators): void {
-    $key = 'automatic_updates_test_disable_validators';
-    $disabled_validators = Settings::get($key, []);
-
-    foreach ($validators as $service_id) {
-      $disabled_validators[] = $service_id;
-    }
-    $this->writeSettings([
-      'settings' => [
-        $key => (object) [
-          'value' => $disabled_validators,
-          'required' => TRUE,
-        ],
-      ],
-    ]);
-    $this->rebuildContainer();
   }
 
   /**
