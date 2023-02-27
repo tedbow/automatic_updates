@@ -65,8 +65,8 @@ services:
     class: Drupal\package_manager\Validator\EnvironmentSupportValidator
     tags:
       - { name: event_subscriber }
-  package_manager.validator.composer_executable:
-    class: Drupal\package_manager\Validator\ComposerExecutableValidator
+  package_manager.validator.composer:
+    class: Drupal\package_manager\Validator\ComposerValidator
     arguments:
       - '@package_manager.composer_inspector'
       - '@package_manager.path_locator'

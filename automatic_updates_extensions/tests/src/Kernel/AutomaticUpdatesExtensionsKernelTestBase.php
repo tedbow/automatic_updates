@@ -36,7 +36,7 @@ abstract class AutomaticUpdatesExtensionsKernelTestBase extends AutomaticUpdates
     // server. This should be okay in most situations because, apart from the
     // validator, only Composer Stager needs run Composer, and
     // package_manager_bypass is disabling those operations.
-    $this->disableValidators[] = 'package_manager.validator.composer_executable';
+    $this->disableValidators[] = 'package_manager.validator.composer';
     parent::setUp();
   }
 

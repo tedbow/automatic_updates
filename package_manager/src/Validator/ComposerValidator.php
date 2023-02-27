@@ -16,14 +16,14 @@ use Drupal\package_manager\PathLocator;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 /**
- * Validates the Composer executable is the correct version.
+ * Validates the project can be used by the Composer Inspector.
  *
  * @internal
  *   This is an internal part of Package Manager and may be changed or removed
  *   at any time without warning. External code should not interact with this
  *   class.
  */
-class ComposerExecutableValidator implements EventSubscriberInterface {
+class ComposerValidator implements EventSubscriberInterface {
 
   use StringTranslationTrait;
 
