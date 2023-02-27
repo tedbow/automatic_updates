@@ -33,18 +33,11 @@ class ComposerInspector {
   private JsonProcessOutputCallback $jsonCallback;
 
   /**
-   * An array of installed packages lists, keyed by `composer.lock` file path.
+   * Statically cached installed package lists, keyed by directory.
    *
    * @var \Drupal\package_manager\InstalledPackagesList[]
    */
   private array $packageLists = [];
-
-  /**
-   * The hashes of composer.lock files, keyed by directory path.
-   *
-   * @var string[]
-   */
-  private array $lockFileHashes = [];
 
   /**
    * A semantic version constraint for the supported version(s) of Composer.
@@ -138,15 +131,31 @@ class ComposerInspector {
       $messages[] = $unsupported_message;
     }
 
-    // Check for the presence of composer.json and composer.lock.
-    foreach (['json', 'lock'] as $suffix) {
-      $filename = 'composer.' . $suffix;
-
-      if (file_exists($working_dir . DIRECTORY_SEPARATOR . $filename)) {
-        continue;
+    // If either composer.json or composer.lock have changed, ensure the
+    // directory is in a completely valid state, according to Composer.
+    if ($this->invalidateCacheIfNeeded($working_dir)) {
+      try {
+        $this->runner->run([
+          'validate',
+          // @todo Check the lock file in https://drupal.org/i/3343827.
+          '--no-check-lock',
+          '--no-check-publish',
+          '--with-dependencies',
+          '--no-interaction',
+          '--ansi',
+          '--no-cache',
+          "--working-dir=$working_dir",
+        ]);
       }
-      $messages[] = $this->t('@filename not found in @dir.', [
-        '@filename' => $filename,
+      catch (RuntimeException $e) {
+        $messages[] = $e->getMessage();
+      }
+    }
+
+    // Check for the presence of composer.lock, because `composer validate`
+    // doesn't expect it to exist, but we do (see ::getInstalledPackagesList()).
+    if (!file_exists($working_dir . DIRECTORY_SEPARATOR . 'composer.lock')) {
+      $messages[] = $this->t('composer.lock not found in @dir.', [
         '@dir' => $working_dir,
       ]);
     }
@@ -255,40 +264,32 @@ class ComposerInspector {
   public function getInstalledPackagesList(string $working_dir): InstalledPackagesList {
     $this->validate($working_dir);
 
-    $working_dir = realpath($working_dir);
-    $lock_file_path = $working_dir . DIRECTORY_SEPARATOR . 'composer.lock';
-
-    // Computing the list of installed packages is an expensive operation, so
-    // only do it if the lock file has changed.
-    $lock_file_hash = hash_file('sha256', $lock_file_path);
-    if (array_key_exists($lock_file_path, $this->lockFileHashes) && $this->lockFileHashes[$lock_file_path] !== $lock_file_hash) {
-      unset($this->packageLists[$lock_file_path]);
+    if (array_key_exists($working_dir, $this->packageLists)) {
+      return $this->packageLists[$working_dir];
     }
-    $this->lockFileHashes[$lock_file_path] = $lock_file_hash;
 
-    if (!isset($this->packageLists[$lock_file_path])) {
-      $packages_data = $this->show($working_dir);
-
-      // The package type is not available using `composer show` for listing
-      // packages. To avoiding making many calls to `composer show package-name`
-      // load the lock file data to get the `type` key.
-      // @todo Remove all of this when
-      //   https://github.com/composer/composer/pull/11340 lands and we bump our
-      //   Composer requirement accordingly.
-      $lock_content = file_get_contents($lock_file_path);
-      $lock_data = json_decode($lock_content, TRUE, 512, JSON_THROW_ON_ERROR);
-      $lock_packages = array_merge($lock_data['packages'] ?? [], $lock_data['packages-dev'] ?? []);
-      foreach ($lock_packages as $lock_package) {
-        $name = $lock_package['name'];
-        if (isset($packages_data[$name]) && isset($lock_package['type'])) {
-          $packages_data[$name]['type'] = $lock_package['type'];
-        }
+    $packages_data = $this->show($working_dir);
+    // The package type is not available using `composer show` for listing
+    // packages. To avoiding making many calls to `composer show package-name`
+    // load the lock file data to get the `type` key.
+    // @todo Remove all of this when
+    //   https://github.com/composer/composer/pull/11340 lands and we bump our
+    //   Composer requirement accordingly.
+    $lock_content = file_get_contents($working_dir . DIRECTORY_SEPARATOR . 'composer.lock');
+    $lock_data = json_decode($lock_content, TRUE, 512, JSON_THROW_ON_ERROR);
+    $lock_packages = array_merge($lock_data['packages'] ?? [], $lock_data['packages-dev'] ?? []);
+    foreach ($lock_packages as $lock_package) {
+      $name = $lock_package['name'];
+      if (isset($packages_data[$name]) && isset($lock_package['type'])) {
+        $packages_data[$name]['type'] = $lock_package['type'];
       }
-
-      $packages_data = array_map(fn (array $data) => InstalledPackage::createFromArray($data), $packages_data);
-      $this->packageLists[$lock_file_path] = new InstalledPackagesList($packages_data);
     }
-    return $this->packageLists[$lock_file_path];
+    $packages_data = array_map(fn (array $data) => InstalledPackage::createFromArray($data), $packages_data);
+
+    $list = new InstalledPackagesList($packages_data);
+    $this->packageLists[$working_dir] = $list;
+
+    return $list;
   }
 
   /**
@@ -323,6 +324,41 @@ class ComposerInspector {
       $data[$installed_package['name']]['path'] = $installed_package['path'];
     }
     return $data;
+  }
+
+  /**
+   * Invalidates cached data if composer.json or composer.lock have changed.
+   *
+   * The following cached data may be invalidated:
+   * - Installed package lists (see ::getInstalledPackageList()).
+   *
+   * @param string $working_dir
+   *   A directory that contains a `composer.json` file, and optionally a
+   *   `composer.lock`. If either file has changed since the last time this
+   *   method was called, any cached data for the directory will be invalidated.
+   *
+   * @return bool
+   *   TRUE if the cached data was invalidated, otherwise FALSE.
+   */
+  private function invalidateCacheIfNeeded(string $working_dir): bool {
+    static $known_hashes = [];
+
+    $invalidate = FALSE;
+    foreach (['composer.json', 'composer.lock'] as $filename) {
+      $known_hash = $known_hashes[$working_dir][$filename] ?? '';
+      // If the file doesn't exist, hash_file() will return FALSE.
+      $current_hash = @hash_file('sha256', $working_dir . DIRECTORY_SEPARATOR . $filename);
+
+      if ($known_hash && $current_hash && hash_equals($known_hash, $current_hash)) {
+        continue;
+      }
+      $known_hashes[$working_dir][$filename] = $current_hash;
+      $invalidate = TRUE;
+    }
+    if ($invalidate) {
+      unset($this->packageLists[$working_dir]);
+    }
+    return $invalidate;
   }
 
 }

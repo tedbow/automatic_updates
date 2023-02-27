@@ -55,7 +55,7 @@ class ComposerInspectorTest extends PackageManagerKernelTestBase {
     // If composer.json is removed, we should get an exception because
     // getConfig() should validate that $dir is Composer-ready.
     unlink($dir . '/composer.json');
-    $this->expectExceptionMessage("composer.json not found in $dir.");
+    $this->expectExceptionMessage("composer.json not found.");
     $inspector->getConfig('extra', $dir);
   }
 
@@ -166,7 +166,7 @@ class ComposerInspectorTest extends PackageManagerKernelTestBase {
     $file_path = $project_root . '/' . $filename;
     unlink($file_path);
 
-    $this->expectExceptionMessage("$filename not found in $project_root.");
+    $this->expectExceptionMessage("$filename not found");
     $this->container->get('package_manager.composer_inspector')
       ->validate($project_root);
   }
@@ -222,6 +222,9 @@ class ComposerInspectorTest extends PackageManagerKernelTestBase {
       Argument::withEntry(0, '--format=json'),
       Argument::type(JsonProcessOutputCallback::class)
     )->will($pass_version_to_output_callback)->shouldBeCalledOnce();
+    // The runner should be called with `validate` as the first argument, but
+    // it won't affect the outcome of this test.
+    $runner->run(Argument::withEntry(0, 'validate'));
     $this->container->set(ComposerRunnerInterface::class, $runner->reveal());
 
     if ($expected_message === '<default>') {
@@ -246,6 +249,26 @@ class ComposerInspectorTest extends PackageManagerKernelTestBase {
       $this->expectExceptionMessage($expected_message);
     }
     $inspector->validate($project_root);
+  }
+
+  /**
+   * @covers ::validate
+   */
+  public function testComposerValidateIsCalled(): void {
+    $project_root = $this->container->get('package_manager.path_locator')
+      ->getProjectRoot();
+
+    // Put an invalid value into composer.json and ensure it gets surfaced as
+    // an exception.
+    $file = new JsonFile($project_root . '/composer.json');
+    $this->assertTrue($file->exists());
+    $data = $file->read();
+    $data['prefer-stable'] = 'truthy';
+    $file->write($data);
+
+    $this->expectExceptionMessage('composer.json" does not match the expected JSON schema');
+    $this->container->get('package_manager.composer_inspector')
+      ->validate($project_root);
   }
 
 }
