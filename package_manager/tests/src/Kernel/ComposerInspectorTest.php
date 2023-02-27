@@ -60,20 +60,6 @@ class ComposerInspectorTest extends PackageManagerKernelTestBase {
   }
 
   /**
-   * @covers ::getVersion
-   */
-  public function testGetVersion() {
-    $dir = __DIR__ . '/../../fixtures/fake_site';
-    $inspector = $this->container->get('package_manager.composer_inspector');
-    $version = $inspector->getVersion($dir);
-    // We can assert an exact version of Composer, but we can assert that the
-    // number is in the expected 'MAJOR.MINOR.PATCH' format.
-    $parts = explode('.', $version);
-    $this->assertCount(3, $parts);
-    $this->assertCount(3, array_filter($parts, 'is_numeric'));
-  }
-
-  /**
    * {@inheritdoc}
    */
   public function register(ContainerBuilder $container) {

@@ -229,10 +229,8 @@ class ComposerInspector {
    *
    * @throws \UnexpectedValueException
    *   Thrown if the expect data format is not found.
-   *
-   * @todo Make this method private in https://drupal.org/i/3344556.
    */
-  public function getVersion(string $working_dir): string {
+  private function getVersion(string $working_dir): string {
     $this->runner->run(['--format=json', "--working-dir=$working_dir"], $this->jsonCallback);
     $data = $this->jsonCallback->getOutputData();
     if (isset($data['application']['name'])
