@@ -136,11 +136,14 @@ class ComposerPatchesValidatorTest extends PackageManagerKernelTestBase {
     }
     if ($in_stage && !$in_active) {
       // Simulate a stage directory where the patcher is installed.
+      $package_data = json_decode(file_get_contents(__DIR__ . '/../../fixtures/path_repos/cweagans--composer-patches/composer.json'), TRUE);
+      $package_data['version'] = '24.12.1999';
       $this->getStageFixtureManipulator()
-        ->addPackage([
-          'name' => 'cweagans/composer-patches',
-          'version' => '24.12.1999',
-          'type' => 'composer-plugin',
+        ->addPackage($package_data)
+        ->addConfig([
+          'allow-plugins' => [
+            'cweagans/composer-patches' => TRUE,
+          ],
         ]);
     }
 

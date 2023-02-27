@@ -5,6 +5,7 @@ namespace Drupal\fixture_manipulator;
 use Composer\Semver\VersionParser;
 use Drupal\Component\Utility\NestedArray;
 use Drupal\Core\Serialization\Yaml;
+use PhpTuf\ComposerStager\Domain\Service\ProcessRunner\ComposerRunnerInterface;
 use Symfony\Component\Filesystem\Filesystem;
 
 /**
@@ -41,6 +42,25 @@ class FixtureManipulator {
   private string $dir;
 
   /**
+   * Validate the fixtures still passes `composer validate`.
+   */
+  private function validateComposer(): void {
+    /** @var \PhpTuf\ComposerStager\Domain\Service\ProcessRunner\ComposerRunnerInterface $runner */
+    $runner = \Drupal::service(ComposerRunnerInterface::class);
+    $runner->run([
+      'validate',
+      // @todo Check the lock file in https://drupal.org/i/3343827.
+      '--no-check-lock',
+      '--no-check-publish',
+      '--with-dependencies',
+      '--no-interaction',
+      '--ansi',
+      '--no-cache',
+      "--working-dir={$this->dir}",
+    ]);
+  }
+
+  /**
    * Adds a package.
    *
    * If $package contains an `install_path` key, it should be relative to the
@@ -60,7 +80,11 @@ class FixtureManipulator {
    */
   public function addPackage(array $package, bool $is_dev_requirement = FALSE, bool $create_project = TRUE): self {
     if (!$this->committingChanges) {
-      $this->queueManipulation('addPackage', func_get_args());
+      // To pass Composer validation all packages must have a version specified.
+      if (!isset($package['version'])) {
+        $package['version'] = '1.2.3';
+      }
+      $this->queueManipulation('addPackage', [$package, $is_dev_requirement, $create_project]);
       return $this;
     }
     foreach (['name', 'type'] as $required_key) {
@@ -357,7 +381,7 @@ class FixtureManipulator {
    * @param string $dir
    *   The directory to commit the changes to.
    */
-  protected function doCommitChanges(string $dir): void {
+  final protected function doCommitChanges(string $dir): void {
     if ($this->committed) {
       throw new \BadMethodCallException('Already committed.');
     }
@@ -372,6 +396,7 @@ class FixtureManipulator {
     }
     $this->committed = TRUE;
     $this->committingChanges = FALSE;
+    $this->validateComposer();
   }
 
   /**

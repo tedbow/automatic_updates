@@ -150,6 +150,9 @@ class FixtureManipulatorTest extends PackageManagerKernelTestBase {
       'my/package' => [
         'name' => 'my/package',
         'type' => 'library',
+        // If no version is specified in a new package it will be added.
+        'version' => '1.2.3',
+        'version_normalized' => '1.2.3.0',
       ],
       'my/dev-package' => [
         'name' => 'my/dev-package',
@@ -162,6 +165,7 @@ class FixtureManipulatorTest extends PackageManagerKernelTestBase {
     // Composer stores `version_normalized`in 'installed.json' but not
     // 'installed.php'.
     unset($installed_php_expected_packages['my/dev-package']['version_normalized']);
+    unset($installed_php_expected_packages['my/package']['version_normalized']);
     [$installed_json, $installed_php] = $this->getData();
     $installed_json['packages'] = array_intersect_key($installed_json['packages'], $installed_json_expected_packages);
     $this->assertSame($installed_json_expected_packages, $installed_json['packages']);
@@ -245,6 +249,8 @@ class FixtureManipulatorTest extends PackageManagerKernelTestBase {
       'my/package' => [
         'name' => 'my/package',
         'type' => 'metapackage',
+        'version' => '1.2.3',
+        'version_normalized' => '1.2.3.0',
       ],
       'my/dev-package' => [
         'name' => 'my/dev-package',
@@ -255,12 +261,16 @@ class FixtureManipulatorTest extends PackageManagerKernelTestBase {
       'my/other-package' => [
         'name' => 'my/other-package',
         'type' => 'library',
+        'version' => '1.2.3',
+        'version_normalized' => '1.2.3.0',
       ],
     ];
     $installed_php_expected_packages = $install_json_expected_packages;
     // Composer stores `version_normalized`in 'installed.json' but not
     // 'installed.php'.
     unset($installed_php_expected_packages['my/dev-package']['version_normalized']);
+    unset($installed_php_expected_packages['my/package']['version_normalized']);
+    unset($installed_php_expected_packages['my/other-package']['version_normalized']);
     $installed_php_expected_packages['my/dev-package']['install_path'] = "$this->dir/vendor/composer/../relative/path";
     [$installed_json, $installed_php] = $this->getData();
     $installed_json['packages'] = array_intersect_key($installed_json['packages'], $install_json_expected_packages);

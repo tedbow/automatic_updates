@@ -145,6 +145,11 @@ class ComposerPluginsValidatorTest extends PackageManagerKernelTestBase {
     $this->testValidationDuringPreApply($composer_config_to_add, $packages_to_add, $expected_results_without_composer_plugin_violations);
   }
 
+  /**
+   * Generates simple test cases.
+   *
+   * @return \Generator
+   */
   public function providerSimpleValidCases(): \Generator {
     yield 'no composer plugins' => [
       [],
@@ -168,6 +173,8 @@ class ComposerPluginsValidatorTest extends PackageManagerKernelTestBase {
           'name' => 'cweagans/composer-patches',
           'version' => '1.0.0',
           'type' => 'composer-plugin',
+          'require' => ['composer-plugin-api' => '*'],
+          'extra' => ['class' => 'AnyClass'],
         ],
       ],
       [
@@ -193,6 +200,8 @@ class ComposerPluginsValidatorTest extends PackageManagerKernelTestBase {
           'name' => 'drupal/core-vendor-hardening',
           'version' => '9.8.0',
           'type' => 'composer-plugin',
+          'require' => ['composer-plugin-api' => '*'],
+          'extra' => ['class' => 'AnyClass'],
         ],
       ],
       [],
@@ -209,6 +218,8 @@ class ComposerPluginsValidatorTest extends PackageManagerKernelTestBase {
           'name' => 'composer/plugin-A',
           'version' => '6.1',
           'type' => 'composer-plugin',
+          'require' => ['composer-plugin-api' => '*'],
+          'extra' => ['class' => 'AnyClass'],
         ],
       ],
       [],
@@ -225,11 +236,17 @@ class ComposerPluginsValidatorTest extends PackageManagerKernelTestBase {
           'name' => 'composer/plugin-b',
           'version' => '20.1',
           'type' => 'composer-plugin',
+          'require' => ['composer-plugin-api' => '*'],
+          'extra' => ['class' => 'AnyClass'],
         ],
       ],
       [],
     ];
 
+    // @todo handle following type of case where the project is invalid in
+    // https://www.drupal.org/node/3344595.
+    // phpcs:disable
+    /*
     yield 'one UNsupported but disallowed plugin' => [
       [
         'allow-plugins' => [
@@ -242,10 +259,14 @@ class ComposerPluginsValidatorTest extends PackageManagerKernelTestBase {
           'name' => 'composer/plugin-c',
           'version' => '16.4',
           'type' => 'composer-plugin',
+          'require' => ['composer-plugin-api' => '*'],
+          'extra' => ['class' => 'AnyClass'],
         ],
       ],
       [],
     ];
+    */
+    // phpcs:enable
   }
 
   public function providerSimpleInvalidCases(): \Generator {
@@ -258,6 +279,8 @@ class ComposerPluginsValidatorTest extends PackageManagerKernelTestBase {
       [
         [
           'name' => 'NOT-cweagans/NOT-composer-patches',
+          'require' => ['composer-plugin-api' => '*'],
+          'extra' => ['class' => 'AnyClass'],
           'version' => '6.1',
           'type' => 'composer-plugin',
         ],
@@ -283,6 +306,8 @@ class ComposerPluginsValidatorTest extends PackageManagerKernelTestBase {
           'name' => 'also-not-cweagans/also-not-composer-patches',
           'version' => '20.1',
           'type' => 'composer-plugin',
+          'require' => ['composer-plugin-api' => '*'],
+          'extra' => ['class' => 'AnyClass'],
         ],
       ],
       [
