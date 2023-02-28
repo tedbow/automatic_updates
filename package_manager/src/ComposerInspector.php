@@ -42,9 +42,19 @@ class ComposerInspector {
   /**
    * A semantic version constraint for the supported version(s) of Composer.
    *
+   * Only versions supported by Composer are supported: the LTS and the latest
+   * minor version. Those are currently 2.2 and 2.5.
+   *
+   * @see https://endoflife.date/composer
+   *
+   * Note that Composer <= 2.2.11 is not supported anymore due to a security
+   * vulnerability.
+   *
+   * @see https://blog.packagist.com/cve-2022-24828-composer-command-injection-vulnerability/
+   *
    * @var string
    */
-  final public const SUPPORTED_VERSION = '~2.2.12 || ^2.3.5';
+  final public const SUPPORTED_VERSION = '~2.2.12 || ^2.5';
 
   /**
    * Constructs a ComposerInspector object.
