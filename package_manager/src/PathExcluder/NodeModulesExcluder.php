@@ -7,7 +7,6 @@ namespace Drupal\package_manager\PathExcluder;
 use Drupal\package_manager\Event\CollectIgnoredPathsEvent;
 use Drupal\package_manager\PathLocator;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
-use Symfony\Component\Finder\Finder;
 
 /**
  * Excludes node_modules files from stage directories.
@@ -38,16 +37,7 @@ class NodeModulesExcluder implements EventSubscriberInterface {
    *   The event object.
    */
   public function excludeNodeModulesFiles(CollectIgnoredPathsEvent $event): void {
-    $finder = Finder::create()
-      ->in($this->pathLocator->getProjectRoot())
-      ->directories()
-      ->name('node_modules')
-      ->ignoreVCS(FALSE)
-      ->ignoreDotFiles(FALSE);
-    $paths = [];
-    foreach ($finder as $directory) {
-      $paths[] = $directory->getPathname();
-    }
+    $paths = $this->scanForDirectoriesByName('node_modules');
     $this->excludeInProjectRoot($event, $paths);
   }
 

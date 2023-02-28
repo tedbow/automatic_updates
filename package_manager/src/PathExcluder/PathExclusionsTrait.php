@@ -69,4 +69,24 @@ trait PathExclusionsTrait {
     }
   }
 
+  /**
+   * Finds all directories in the project root matching the given name.
+   *
+   * @param string $directory_name
+   *   The directory name to scan for.
+   *
+   * @return string[]
+   *   All discovered absolute paths matching the given directory name.
+   */
+  protected function scanForDirectoriesByName(string $directory_name): array {
+    $flags = \FilesystemIterator::UNIX_PATHS;
+    $flags |= \FilesystemIterator::CURRENT_AS_SELF;
+    $directories_tree = new \RecursiveDirectoryIterator($this->pathLocator->getProjectRoot(), $flags);
+    $filtered_directories = new \RecursiveIteratorIterator($directories_tree, \RecursiveIteratorIterator::SELF_FIRST);
+    $matched_directories = new \CallbackFilterIterator($filtered_directories,
+      fn (\RecursiveDirectoryIterator $current) => $current->isDir() && $current->getFilename() === $directory_name
+    );
+    return array_keys(iterator_to_array($matched_directories));
+  }
+
 }
