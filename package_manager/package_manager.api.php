@@ -97,7 +97,7 @@
  *   releases its ownership. This event is dispatched only once during a stage's
  *   life cycle.
  *
- * - \Drupal\package_manager\Event\PostDestroy
+ * - \Drupal\package_manager\Event\PostDestroyEvent
  *   Dispatched after the temporary stage directory is deleted and the stage
  *   has released its ownership. This event is dispatched only once during a
  *   stage's life cycle.
