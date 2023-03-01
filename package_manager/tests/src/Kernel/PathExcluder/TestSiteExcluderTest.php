@@ -14,17 +14,6 @@ use Drupal\Tests\package_manager\Kernel\PackageManagerKernelTestBase;
 class TestSiteExcluderTest extends PackageManagerKernelTestBase {
 
   /**
-   * {@inheritdoc}
-   */
-  protected function setUp(): void {
-    // In this test, we want to disable the lock file validator because, even
-    // though both the active and stage directories will have a valid lock file,
-    // this validator will complain because they don't differ at all.
-    $this->disableValidators[] = 'package_manager.validator.lock_file';
-    parent::setUp();
-  }
-
-  /**
    * Tests that test site directories are excluded from stage operations.
    */
   public function testTestSitesExcluded(): void {
@@ -39,6 +28,7 @@ class TestSiteExcluderTest extends PackageManagerKernelTestBase {
 
     $stage = $this->createStage();
     $stage->create();
+    $stage->require(['ext-json:*']);
     $stage_dir = $stage->getStageDirectory();
 
     $ignored = [
