@@ -15,8 +15,7 @@
     "drupal/core": "^9.7 || ^10",
     "php-tuf/composer-stager": "^1.2",
     "composer/composer": "^2.2.12 || ^2.3.5",
-    "composer-runtime-api": "^2.1",
-    "symfony/config": "^4.4 || ^6.1"
+    "composer-runtime-api": "^2.1"
   },
   "scripts": {
     "phpcbf": "scripts/phpcbf.sh",
