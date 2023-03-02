@@ -169,6 +169,7 @@ abstract class PackageManagerKernelTestBase extends KernelTestBase {
     }
     catch (StageEventException $e) {
       $this->assertNotEmpty($expected_results);
+      $this->assertInstanceOf($event_class, $e->event);
       $this->assertExpectedResultsFromException($expected_results, $e);
     }
     return $stage;
