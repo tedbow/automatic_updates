@@ -5,10 +5,8 @@ declare(strict_types = 1);
 namespace Drupal\package_manager\Validator;
 
 use Drupal\package_manager\Event\PreApplyEvent;
-use Drupal\package_manager\Event\PreCreateEvent;
 use Drupal\package_manager\Event\PreOperationStageEvent;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
-use Drupal\package_manager\Event\StatusCheckEvent;
 use Drupal\package_manager\PathLocator;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
@@ -22,6 +20,7 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
  */
 class WritableFileSystemValidator implements EventSubscriberInterface {
 
+  use BaseRequirementValidatorTrait;
   use StringTranslationTrait;
 
   /**
@@ -87,17 +86,6 @@ class WritableFileSystemValidator implements EventSubscriberInterface {
     if ($messages) {
       $event->addError($messages, $this->t('The file system is not writable.'));
     }
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public static function getSubscribedEvents(): array {
-    return [
-      PreCreateEvent::class => 'validate',
-      PreApplyEvent::class => 'validate',
-      StatusCheckEvent::class => 'validate',
-    ];
   }
 
 }

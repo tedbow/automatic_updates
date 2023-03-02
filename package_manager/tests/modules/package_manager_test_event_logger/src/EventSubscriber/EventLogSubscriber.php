@@ -34,15 +34,20 @@ final class EventLogSubscriber implements EventSubscriberInterface {
    * {@inheritdoc}
    */
   public static function getSubscribedEvents(): array {
+    // This subscriber should run before every other validator, because the
+    // purpose of this subscriber is to log all dispatched events.
+    // @see \Drupal\package_manager\Validator\BaseRequirementsFulfilledValidator
+    // @see \Drupal\package_manager\Validator\BaseRequirementValidatorTrait
+    // @see \Drupal\package_manager\Validator\EnvironmentSupportValidator
     return [
-      PreCreateEvent::class => ['logEventInfo'],
-      PostCreateEvent::class => ['logEventInfo'],
-      PreRequireEvent::class => ['logEventInfo'],
-      PostRequireEvent::class => ['logEventInfo'],
-      PreApplyEvent::class => ['logEventInfo'],
-      PostApplyEvent::class => ['logEventInfo'],
-      PreDestroyEvent::class => ['logEventInfo'],
-      PostDestroyEvent::class => ['logEventInfo'],
+      PreCreateEvent::class => ['logEventInfo', PHP_INT_MAX],
+      PostCreateEvent::class => ['logEventInfo', PHP_INT_MAX],
+      PreRequireEvent::class => ['logEventInfo', PHP_INT_MAX],
+      PostRequireEvent::class => ['logEventInfo', PHP_INT_MAX],
+      PreApplyEvent::class => ['logEventInfo', PHP_INT_MAX],
+      PostApplyEvent::class => ['logEventInfo', PHP_INT_MAX],
+      PreDestroyEvent::class => ['logEventInfo', PHP_INT_MAX],
+      PostDestroyEvent::class => ['logEventInfo', PHP_INT_MAX],
     ];
   }
 

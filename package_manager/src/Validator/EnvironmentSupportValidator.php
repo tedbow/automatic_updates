@@ -6,10 +6,7 @@ namespace Drupal\package_manager\Validator;
 
 use Drupal\Core\Link;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
-use Drupal\package_manager\Event\PreApplyEvent;
-use Drupal\package_manager\Event\PreCreateEvent;
 use Drupal\package_manager\Event\PreOperationStageEvent;
-use Drupal\package_manager\Event\StatusCheckEvent;
 use Drupal\Core\Url;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
@@ -23,6 +20,9 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
  */
 final class EnvironmentSupportValidator implements EventSubscriberInterface {
 
+  use BaseRequirementValidatorTrait {
+    getSubscribedEvents as protected getSubscribedEventsFromTrait;
+  }
   use StringTranslationTrait;
 
   /**
@@ -65,11 +65,10 @@ final class EnvironmentSupportValidator implements EventSubscriberInterface {
    * {@inheritdoc}
    */
   public static function getSubscribedEvents(): array {
-    return [
-      PreCreateEvent::class => ['validate', 200],
-      PreApplyEvent::class => ['validate', 200],
-      StatusCheckEvent::class => ['validate', 200],
-    ];
+    // Set priority to run before BaseRequirementsFulfilledValidator, and even
+    // before other base requirement validators.
+    // @see \Drupal\package_manager\Validator\BaseRequirementsFulfilledValidator
+    return array_map(fn () => ['validate', BaseRequirementsFulfilledValidator::PRIORITY + 1000], static::getSubscribedEventsFromTrait());
   }
 
 }

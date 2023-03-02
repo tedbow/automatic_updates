@@ -5,10 +5,7 @@ declare(strict_types = 1);
 namespace Drupal\package_manager\Validator;
 
 use Drupal\Core\StringTranslation\StringTranslationTrait;
-use Drupal\package_manager\Event\PreApplyEvent;
-use Drupal\package_manager\Event\PreCreateEvent;
 use Drupal\package_manager\Event\PreOperationStageEvent;
-use Drupal\package_manager\Event\StatusCheckEvent;
 use Drupal\package_manager\PathLocator;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
@@ -22,6 +19,7 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
  */
 final class MultisiteValidator implements EventSubscriberInterface {
 
+  use BaseRequirementValidatorTrait;
   use StringTranslationTrait;
 
   /**
@@ -66,17 +64,6 @@ final class MultisiteValidator implements EventSubscriberInterface {
     include $sites_php_path;
     // @see example.sites.php
     return count(array_unique($sites)) > 1;
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public static function getSubscribedEvents(): array {
-    return [
-      PreCreateEvent::class => 'validate',
-      PreApplyEvent::class => 'validate',
-      StatusCheckEvent::class => 'validate',
-    ];
   }
 
 }

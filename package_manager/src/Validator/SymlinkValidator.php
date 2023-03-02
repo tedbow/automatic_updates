@@ -7,10 +7,7 @@ namespace Drupal\package_manager\Validator;
 use Drupal\Core\Extension\ModuleHandlerInterface;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\Core\Url;
-use Drupal\package_manager\Event\PreApplyEvent;
-use Drupal\package_manager\Event\PreCreateEvent;
 use Drupal\package_manager\Event\PreOperationStageEvent;
-use Drupal\package_manager\Event\StatusCheckEvent;
 use Drupal\package_manager\PathLocator;
 use PhpTuf\ComposerStager\Domain\Exception\PreconditionException;
 use PhpTuf\ComposerStager\Domain\Service\Precondition\CodebaseContainsNoSymlinksInterface;
@@ -31,6 +28,7 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
  */
 class SymlinkValidator implements EventSubscriberInterface {
 
+  use BaseRequirementValidatorTrait;
   use StringTranslationTrait;
 
   /**
@@ -93,17 +91,6 @@ class SymlinkValidator implements EventSubscriberInterface {
       }
       $event->addError([$message]);
     }
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public static function getSubscribedEvents(): array {
-    return [
-      PreCreateEvent::class => 'validate',
-      PreApplyEvent::class => 'validate',
-      StatusCheckEvent::class => 'validate',
-    ];
   }
 
 }

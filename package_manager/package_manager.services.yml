@@ -163,6 +163,10 @@ services:
     class: Drupal\package_manager\Validator\ComposerPatchesValidator
     tags:
       - { name: event_subscriber }
+  package_manager.validator.base_requirements_fulfilled:
+    class: Drupal\package_manager\Validator\BaseRequirementsFulfilledValidator
+    tags:
+      - { name: event_subscriber }
   package_manager.validator.supported_releases:
     class: Drupal\package_manager\Validator\SupportedReleaseValidator
     tags:
