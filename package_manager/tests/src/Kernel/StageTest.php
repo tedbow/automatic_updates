@@ -16,6 +16,7 @@ use Drupal\package_manager\Event\PreCreateEvent;
 use Drupal\package_manager\Event\StageEvent;
 use Drupal\package_manager\Exception\ApplyFailedException;
 use Drupal\package_manager\Exception\StageException;
+use Drupal\package_manager\Exception\StageFailureMarkerException;
 use Drupal\package_manager_bypass\LoggingCommitter;
 use PhpTuf\ComposerStager\Domain\Exception\InvalidArgumentException;
 use PhpTuf\ComposerStager\Domain\Exception\PreconditionException;
@@ -332,6 +333,12 @@ class StageTest extends PackageManagerKernelTestBase {
       $this->fail('Expected an exception.');
     }
     catch (\Throwable $exception) {
+      // This needs to be done because we always use the message from
+      // \Drupal\package_manager\Stage::getFailureMarkerMessage() when throwing
+      // ApplyFailedException.
+      if ($expected_class == ApplyFailedException::class) {
+        $thrown_message = 'Staged changes failed to apply, and the site is in an indeterminate state. It is strongly recommended to restore the code and database from a backup.';
+      }
       $this->assertInstanceOf($expected_class, $exception);
       $this->assertSame($thrown_message, $exception->getMessage());
       $this->assertSame(123, $exception->getCode());
@@ -357,7 +364,7 @@ class StageTest extends PackageManagerKernelTestBase {
 
     // Make the committer throw an exception, which should cause the failure
     // marker to be present.
-    $thrown = new \Exception('Disastrous catastrophe!');
+    $thrown = new \Exception('Staged changes failed to apply, and the site is in an indeterminate state. It is strongly recommended to restore the code and database from a backup.');
     LoggingCommitter::setException($thrown);
     try {
       $stage->apply();
@@ -376,7 +383,7 @@ class StageTest extends PackageManagerKernelTestBase {
       $stage->create();
       $this->fail('Expected an exception.');
     }
-    catch (ApplyFailedException $e) {
+    catch (StageFailureMarkerException $e) {
       $this->assertSame('Staged changes failed to apply, and the site is in an indeterminate state. It is strongly recommended to restore the code and database from a backup.', $e->getMessage());
       $this->assertFalse($stage->isApplying());
     }

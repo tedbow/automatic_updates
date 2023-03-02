@@ -5,7 +5,7 @@ declare(strict_types = 1);
 namespace Drupal\Tests\package_manager\Kernel;
 
 use Drupal\Core\StringTranslation\StringTranslationTrait;
-use Drupal\package_manager\Exception\ApplyFailedException;
+use Drupal\package_manager\Exception\StageFailureMarkerException;
 
 /**
  * @coversDefaultClass \Drupal\package_manager\FailureMarker
@@ -22,7 +22,7 @@ class FailureMarkerTest extends PackageManagerKernelTestBase {
     $failure_marker = $this->container->get('package_manager.failure_marker');
     $failure_marker->write($this->createStage(), $this->t('Disastrous catastrophe!'));
 
-    $this->expectException(ApplyFailedException::class);
+    $this->expectException(StageFailureMarkerException::class);
     $this->expectExceptionMessage('Disastrous catastrophe!');
     $failure_marker->assertNotExists();
   }
@@ -37,7 +37,7 @@ class FailureMarkerTest extends PackageManagerKernelTestBase {
     // Write the failure marker with invalid JSON.
     file_put_contents($failure_marker->getPath(), '{}}');
 
-    $this->expectException(ApplyFailedException::class);
+    $this->expectException(StageFailureMarkerException::class);
     $this->expectExceptionMessage('Failure marker file exists but cannot be decoded.');
     $failure_marker->assertNotExists();
   }

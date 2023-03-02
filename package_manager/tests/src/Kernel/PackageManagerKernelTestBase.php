@@ -10,11 +10,13 @@ use Drupal\Core\Site\Settings;
 use Drupal\fixture_manipulator\StageFixtureManipulator;
 use Drupal\KernelTests\KernelTestBase;
 use Drupal\package_manager\Event\PreApplyEvent;
-use Drupal\package_manager\Event\StageEvent;
+use Drupal\package_manager\Event\PreCreateEvent;
+use Drupal\package_manager\Event\PreOperationStageEvent;
+use Drupal\package_manager\Exception\StageEventException;
 use Drupal\package_manager\StatusCheckTrait;
 use Drupal\package_manager\Validator\DiskSpaceValidator;
-use Drupal\package_manager\Exception\StageValidationException;
 use Drupal\package_manager\Stage;
+use Drupal\system\SystemManager;
 use Drupal\Tests\package_manager\Traits\AssertPreconditionsTrait;
 use Drupal\Tests\package_manager\Traits\FixtureManipulatorTrait;
 use Drupal\Tests\package_manager\Traits\FixtureUtilityTrait;
@@ -165,14 +167,9 @@ abstract class PackageManagerKernelTestBase extends KernelTestBase {
       // If we did not get an exception, ensure we didn't expect any results.
       $this->assertValidationResultsEqual([], $expected_results);
     }
-    catch (TestStageValidationException $e) {
-      $this->assertValidationResultsEqual($expected_results, $e->getResults());
+    catch (StageEventException $e) {
       $this->assertNotEmpty($expected_results);
-      // TestStage::dispatch() throws TestStageValidationException with the
-      // event object so that we can analyze it.
-      $this->assertNotEmpty($event_class);
-      $this->assertInstanceOf(StageValidationException::class, $e->getOriginalException());
-      $this->assertInstanceOf($event_class, $e->getEvent());
+      $this->assertExpectedResultsFromException($expected_results, $e);
     }
     return $stage;
   }
@@ -384,77 +381,44 @@ abstract class PackageManagerKernelTestBase extends KernelTestBase {
     StageFixtureManipulator::handleTearDown();
   }
 
-}
-
-/**
- * Test-only class to associate event with StageValidationException.
- *
- * @todo Remove this class in https://drupal.org/i/3331355 or if that issue is
- *   closed without adding the ability to associate events with exceptions
- *   remove this comment.
- */
-final class TestStageValidationException extends StageValidationException {
-
   /**
-   * The stage event.
+   * Asserts that a StageEventException has a particular set of results.
    *
-   * @var \Drupal\package_manager\Event\StageEvent
+   * @param array $expected_results
+   *   The expected results.
+   * @param \Drupal\package_manager\Exception\StageEventException $exception
+   *   The exception.
    */
-  private $event;
-
-  /**
-   * The original exception.
-   *
-   * @var \Drupal\package_manager\Exception\StageValidationException
-   */
-  private $originalException;
-
-  public function __construct(StageValidationException $original_exception, StageEvent $event) {
-    parent::__construct($original_exception->getResults(), $original_exception->getMessage(), $original_exception->getCode(), $original_exception);
-    $this->originalException = $original_exception;
-    $this->event = $event;
+  protected function assertExpectedResultsFromException(array $expected_results, StageEventException $exception): void {
+    $event = $exception->event;
+    $this->assertInstanceOf(PreOperationStageEvent::class, $event);
+    $this->assertValidationResultsEqual($expected_results, $event->getResults());
   }
 
   /**
-   * Gets the original exception which is triggered at the event.
+   * Creates a StageEventException from an array of validation results.
    *
-   * @return \Drupal\package_manager\Exception\StageValidationException
-   *   Exception triggered at event.
-   */
-  public function getOriginalException(): StageValidationException {
-    return $this->originalException;
-  }
-
-  /**
-   * Gets the stage event which triggers the exception.
+   * @param \Drupal\package_manager\ValidationResult[] $expected_results
+   *   The validation results. Note that only errors will be added to the event;
+   *   warnings will be ignored.
+   * @param string $event_class
+   *   (optional) The event which raised the exception. Defaults to
+   *   PreCreateEvent.
+   * @param \Drupal\package_manager\Stage $stage
+   *   (optional) The stage which caused the exception.
    *
-   * @return \Drupal\package_manager\Event\StageEvent
-   *   Event triggering stage exception.
+   * @return \Drupal\package_manager\Exception\StageEventException
+   *   An exception with the given validation results.
    */
-  public function getEvent(): StageEvent {
-    return $this->event;
-  }
+  protected function createStageEventExceptionFromResults(array $expected_results, string $event_class = PreCreateEvent::class, Stage $stage = NULL): StageEventException {
+    $event = new $event_class($stage ?? $this->createStage(), []);
 
-}
-
-/**
- * Common functions for test stages.
- */
-trait TestStageTrait {
-
-  /**
-   * {@inheritdoc}
-   */
-  protected function dispatch(StageEvent $event, callable $on_error = NULL): void {
-    try {
-      parent::dispatch($event, $on_error);
+    foreach ($expected_results as $result) {
+      if ($result->getSeverity() === SystemManager::REQUIREMENT_ERROR) {
+        $event->addError($result->getMessages(), $result->getSummary());
+      }
     }
-    catch (StageValidationException $e) {
-      // Throw TestStageValidationException with event object so that test
-      // code can verify that the exception was thrown when a specific event was
-      // dispatched.
-      throw new TestStageValidationException($e, $event);
-    }
+    return new StageEventException($event);
   }
 
 }
@@ -463,8 +427,6 @@ trait TestStageTrait {
  * Defines a stage specifically for testing purposes.
  */
 class TestStage extends Stage {
-
-  use TestStageTrait;
 
   /**
    * {@inheritdoc}

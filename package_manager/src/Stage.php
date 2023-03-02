@@ -24,9 +24,9 @@ use Drupal\package_manager\Event\PreOperationStageEvent;
 use Drupal\package_manager\Event\PreRequireEvent;
 use Drupal\package_manager\Event\StageEvent;
 use Drupal\package_manager\Exception\ApplyFailedException;
+use Drupal\package_manager\Exception\StageEventException;
 use Drupal\package_manager\Exception\StageException;
 use Drupal\package_manager\Exception\StageOwnershipException;
-use Drupal\package_manager\Exception\StageValidationException;
 use PhpTuf\ComposerStager\Domain\Core\Beginner\BeginnerInterface;
 use PhpTuf\ComposerStager\Domain\Core\Committer\CommitterInterface;
 use PhpTuf\ComposerStager\Domain\Core\Stager\StagerInterface;
@@ -267,7 +267,7 @@ class Stage implements LoggerAwareInterface {
     $this->failureMarker->assertNotExists();
 
     if (!$this->isAvailable()) {
-      throw new StageException('Cannot create a new stage because one already exists.');
+      throw new StageException($this, 'Cannot create a new stage because one already exists.');
     }
     // Mark the stage as unavailable as early as possible, before dispatching
     // the pre-create event. The idea is to prevent a race condition if the
@@ -292,7 +292,7 @@ class Stage implements LoggerAwareInterface {
       $ignored_paths = $this->getIgnoredPaths();
     }
     catch (\Throwable $throwable) {
-      throw new StageException($throwable->getMessage(), $throwable->getCode(), $throwable);
+      throw new StageException($this, $throwable->getMessage(), $throwable->getCode(), $throwable);
     }
     $event = new PreCreateEvent($this, $ignored_paths);
     // If an error occurs and we won't be able to create the stage, mark it as
@@ -377,7 +377,7 @@ class Stage implements LoggerAwareInterface {
       $ignored_paths = $this->getIgnoredPaths();
     }
     catch (\Throwable $throwable) {
-      throw new StageException($throwable->getMessage(), $throwable->getCode(), $throwable);
+      throw new StageException($this, $throwable->getMessage(), $throwable->getCode(), $throwable);
     }
 
     // If an error occurs while dispatching the events, ensure that ::destroy()
@@ -402,7 +402,7 @@ class Stage implements LoggerAwareInterface {
       // The commit operation has not started yet, so we can clear the failure
       // marker.
       $this->failureMarker->clear();
-      throw new StageException($e->getMessage(), $e->getCode(), $e);
+      throw new StageException($this, $e->getMessage(), $e->getCode(), $e);
     }
     catch (\Throwable $throwable) {
       // The commit operation may have failed midway through, and the site code
@@ -410,7 +410,7 @@ class Stage implements LoggerAwareInterface {
       // applying, because in this situation, the site owner should probably
       // restore everything from a backup.
       $this->setNotApplying()();
-      throw new ApplyFailedException($throwable->getMessage(), $throwable->getCode(), $throwable);
+      throw new ApplyFailedException($this, (string) $this->getFailureMarkerMessage(), $throwable->getCode(), $throwable);
     }
     $this->failureMarker->clear();
     $this->setMetadata(self::TEMPSTORE_CHANGES_APPLIED, TRUE);
@@ -469,7 +469,7 @@ class Stage implements LoggerAwareInterface {
       $this->checkOwnership();
     }
     if ($this->isApplying()) {
-      throw new StageException('Cannot destroy the stage directory while it is being applied to the active directory.');
+      throw new StageException($this, 'Cannot destroy the stage directory while it is being applied to the active directory.');
     }
 
     $this->dispatch(new PreDestroyEvent($this));
@@ -513,24 +513,21 @@ class Stage implements LoggerAwareInterface {
    *   (optional) A callback function to call if an error occurs, before any
    *   exceptions are thrown.
    *
-   * @throws \Drupal\package_manager\Exception\StageValidationException
+   * @throws \Drupal\package_manager\Exception\StageEventException
    *   If the event collects any validation errors.
-   * @throws \Drupal\package_manager\Exception\StageException
-   *   If any other sort of error occurs.
    */
   protected function dispatch(StageEvent $event, callable $on_error = NULL): void {
     try {
       $this->eventDispatcher->dispatch($event);
 
       if ($event instanceof PreOperationStageEvent) {
-        $results = $event->getResults();
-        if ($results) {
-          $error = new StageValidationException($results);
+        if ($event->getResults()) {
+          $error = new StageEventException($event);
         }
       }
     }
     catch (\Throwable $error) {
-      $error = new StageException($error->getMessage(), $error->getCode(), $error);
+      $error = new StageEventException($event, $error->getMessage(), $error->getCode(), $error);
     }
 
     if (isset($error)) {
@@ -595,7 +592,7 @@ class Stage implements LoggerAwareInterface {
     if ($this->isAvailable()) {
       // phpcs:disable DrupalPractice.General.ExceptionT.ExceptionT
       // @see https://www.drupal.org/project/automatic_updates/issues/3338651
-      throw new StageException($this->computeDestroyMessage(
+      throw new StageException($this, $this->computeDestroyMessage(
         $unique_id,
         $this->t('Cannot claim the stage because no stage has been created.')
       )->render());
@@ -603,7 +600,7 @@ class Stage implements LoggerAwareInterface {
 
     $stored_lock = $this->tempStore->getIfOwner(static::TEMPSTORE_LOCK_KEY);
     if (!$stored_lock) {
-      throw new StageOwnershipException($this->computeDestroyMessage(
+      throw new StageOwnershipException($this, $this->computeDestroyMessage(
         $unique_id,
         $this->t('Cannot claim the stage because it is not owned by the current user or session.')
       )->render());
@@ -614,7 +611,7 @@ class Stage implements LoggerAwareInterface {
       return $this;
     }
 
-    throw new StageOwnershipException($this->computeDestroyMessage(
+    throw new StageOwnershipException($this, $this->computeDestroyMessage(
       $unique_id,
       $this->t('Cannot claim the stage because the current lock does not match the stored lock.')
     )->render());
@@ -659,7 +656,7 @@ class Stage implements LoggerAwareInterface {
 
     $stored_lock = $this->tempStore->getIfOwner(static::TEMPSTORE_LOCK_KEY);
     if ($stored_lock !== $this->lock) {
-      throw new StageOwnershipException('Stage is not owned by the current user or session.');
+      throw new StageOwnershipException($this, 'Stage is not owned by the current user or session.');
     }
   }
 

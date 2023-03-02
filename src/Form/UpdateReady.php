@@ -6,6 +6,7 @@ namespace Drupal\automatic_updates\Form;
 
 use Drupal\automatic_updates\BatchProcessor;
 use Drupal\automatic_updates\Updater;
+use Drupal\package_manager\Exception\StageFailureMarkerException;
 use Drupal\package_manager\ValidationResult;
 use Drupal\Core\Batch\BatchBuilder;
 use Drupal\Core\Extension\ModuleExtensionList;
@@ -13,7 +14,6 @@ use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Messenger\MessengerInterface;
 use Drupal\Core\Render\RendererInterface;
 use Drupal\Core\State\StateInterface;
-use Drupal\package_manager\Exception\ApplyFailedException;
 use Drupal\package_manager\Exception\StageException;
 use Drupal\package_manager\Exception\StageOwnershipException;
 use Drupal\system\SystemManager;
@@ -81,7 +81,7 @@ final class UpdateReady extends UpdateFormBase {
       $this->messenger()->addError($e->getMessage());
       return $form;
     }
-    catch (ApplyFailedException $e) {
+    catch (StageFailureMarkerException $e) {
       $this->messenger()->addError($e->getMessage());
       return $form;
     }

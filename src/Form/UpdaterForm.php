@@ -6,11 +6,11 @@ namespace Drupal\automatic_updates\Form;
 
 use Drupal\automatic_updates\BatchProcessor;
 use Drupal\Core\Extension\ModuleHandlerInterface;
+use Drupal\package_manager\Exception\StageFailureMarkerException;
 use Drupal\package_manager\FailureMarker;
 use Drupal\package_manager\ProjectInfo;
 use Drupal\automatic_updates\ReleaseChooser;
 use Drupal\automatic_updates\Updater;
-use Drupal\package_manager\Exception\ApplyFailedException;
 use Drupal\update\ProjectRelease;
 use Drupal\Core\Batch\BatchBuilder;
 use Drupal\Core\Extension\ExtensionVersion;
@@ -93,7 +93,7 @@ final class UpdaterForm extends UpdateFormBase {
     try {
       $this->failureMarker->assertNotExists();
     }
-    catch (ApplyFailedException $e) {
+    catch (StageFailureMarkerException $e) {
       $this->messenger()->addError($e->getMessage());
       return $form;
     }

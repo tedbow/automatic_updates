@@ -34,11 +34,11 @@ class UpdateFailedTest extends UpdaterFormTestBase {
     LoggingCommitter::setException(new \Exception('failed at committer'));
     $page->pressButton('Continue');
     $this->checkForMetaRefresh();
+    $failure_message = 'Automatic updates failed to apply, and the site is in an indeterminate state. Consider restoring the code and database from a backup.';
     $assert_session->pageTextContainsOnce('An error has occurred.');
-    $assert_session->pageTextContains("The update operation failed to apply completely. All the files necessary to run Drupal correctly and securely are probably not present. It is strongly recommended to restore your site's code and database from a backup.");
+    $assert_session->pageTextContains($failure_message);
     $page->clickLink('the error page');
 
-    $failure_message = 'Automatic updates failed to apply, and the site is in an indeterminate state. Consider restoring the code and database from a backup.';
     // We should be on the form (i.e., 200 response code), but unable to
     // continue the update.
     $assert_session->statusCodeEquals(200);

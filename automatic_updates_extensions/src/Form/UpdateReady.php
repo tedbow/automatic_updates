@@ -5,7 +5,7 @@ declare(strict_types = 1);
 namespace Drupal\automatic_updates_extensions\Form;
 
 use Drupal\automatic_updates\Form\UpdateFormBase;
-use Drupal\package_manager\Exception\ApplyFailedException;
+use Drupal\package_manager\Exception\StageFailureMarkerException;
 use Drupal\package_manager\ProjectInfo;
 use Drupal\package_manager\ValidationResult;
 use Drupal\automatic_updates_extensions\BatchProcessor;
@@ -124,7 +124,7 @@ final class UpdateReady extends UpdateFormBase {
       $this->messenger()->addError($this->t('Cannot continue the update because another Composer operation is currently in progress.'));
       return $form;
     }
-    catch (ApplyFailedException $e) {
+    catch (StageFailureMarkerException $e) {
       $this->messenger()->addError($e->getMessage());
       return $form;
     }

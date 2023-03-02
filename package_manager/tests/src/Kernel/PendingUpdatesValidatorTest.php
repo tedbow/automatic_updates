@@ -5,7 +5,7 @@ declare(strict_types = 1);
 namespace Drupal\Tests\package_manager\Kernel;
 
 use Drupal\package_manager\Event\PreCreateEvent;
-use Drupal\package_manager\Exception\StageValidationException;
+use Drupal\package_manager\Exception\StageEventException;
 use Drupal\package_manager\ValidationResult;
 
 /**
@@ -81,8 +81,8 @@ class PendingUpdatesValidatorTest extends PackageManagerKernelTestBase {
       $stage->apply();
       $this->fail('Able to apply update even though there is pending update.');
     }
-    catch (StageValidationException $exception) {
-      $this->assertValidationResultsEqual([$result], $exception->getResults());
+    catch (StageEventException $exception) {
+      $this->assertExpectedResultsFromException([$result], $exception);
     }
   }
 

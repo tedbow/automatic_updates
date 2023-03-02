@@ -8,7 +8,6 @@ use Drupal\automatic_updates\CronUpdater;
 use Drupal\automatic_updates\Validator\CronServerValidator;
 use Drupal\Core\Logger\RfcLogLevel;
 use Drupal\Core\Url;
-use Drupal\package_manager\Exception\StageValidationException;
 use Drupal\package_manager\ValidationResult;
 use Drupal\Tests\automatic_updates\Kernel\AutomaticUpdatesKernelTestBase;
 use ColinODell\PsrTestLogger\TestLogger;
@@ -129,7 +128,7 @@ class CronServerValidatorTest extends AutomaticUpdatesKernelTestBase {
       // Assert the update was not staged to ensure the error was flagged in
       // PreCreateEvent and not PreApplyEvent.
       $this->assertUpdateStagedTimes(0);
-      $error = new StageValidationException($expected_results);
+      $error = $this->createStageEventExceptionFromResults($expected_results);
       $this->assertTrue($logger->hasRecord($error->getMessage(), (string) RfcLogLevel::ERROR));
     }
     else {
@@ -190,7 +189,7 @@ class CronServerValidatorTest extends AutomaticUpdatesKernelTestBase {
     $this->container->get('cron')->run();
     if ($expected_results) {
       $this->assertUpdateStagedTimes(1);
-      $error = new StageValidationException($expected_results);
+      $error = $this->createStageEventExceptionFromResults($expected_results);
       $this->assertTrue($logger->hasRecord($error->getMessage(), (string) RfcLogLevel::ERROR));
     }
     else {

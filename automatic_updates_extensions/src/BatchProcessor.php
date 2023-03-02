@@ -5,7 +5,6 @@ declare(strict_types = 1);
 namespace Drupal\automatic_updates_extensions;
 
 use Drupal\Core\Url;
-use Drupal\package_manager\Exception\StageValidationException;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 
 /**
@@ -47,23 +46,7 @@ final class BatchProcessor {
    *   have been recorded.
    */
   protected static function handleException(\Throwable $error, array &$context): void {
-    $error_messages = [
-      $error->getMessage(),
-    ];
-
-    if ($error instanceof StageValidationException) {
-      foreach ($error->getResults() as $result) {
-        $messages = $result->getMessages();
-        if (count($messages) > 1) {
-          array_unshift($messages, $result->getSummary());
-        }
-        $error_messages = array_merge($error_messages, $messages);
-      }
-    }
-
-    foreach ($error_messages as $error_message) {
-      $context['results']['errors'][] = $error_message;
-    }
+    $context['results']['errors'][] = $error->getMessage();
     throw $error;
   }
 

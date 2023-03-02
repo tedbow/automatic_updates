@@ -17,8 +17,8 @@ use Drupal\package_manager\Event\PreApplyEvent;
 use Drupal\package_manager\Event\PreDestroyEvent;
 use Drupal\package_manager\Event\PreRequireEvent;
 use Drupal\package_manager\Event\PreCreateEvent;
+use Drupal\package_manager\Exception\StageEventException;
 use Drupal\package_manager\Exception\StageOwnershipException;
-use Drupal\package_manager\Exception\StageValidationException;
 use Drupal\package_manager\ValidationResult;
 use Drupal\package_manager_bypass\LoggingCommitter;
 use Drupal\Tests\automatic_updates\Traits\EmailNotificationsTestTrait;
@@ -223,19 +223,19 @@ class CronUpdaterTest extends AutomaticUpdatesKernelTestBase {
       // @see \Drupal\package_manager\Stage::dispatch()
       'pre-create validation error' => [
         PreCreateEvent::class,
-        StageValidationException::class,
+        StageEventException::class,
       ],
       'pre-require validation error' => [
         PreRequireEvent::class,
-        StageValidationException::class,
+        StageEventException::class,
       ],
       'pre-apply validation error' => [
         PreApplyEvent::class,
-        StageValidationException::class,
+        StageEventException::class,
       ],
       'pre-destroy validation error' => [
         PreDestroyEvent::class,
-        StageValidationException::class,
+        StageEventException::class,
       ],
     ];
   }
@@ -277,15 +277,18 @@ class CronUpdaterTest extends AutomaticUpdatesKernelTestBase {
       ->get('cron')
       ->addLogger($cron_logger);
 
-    // When the event specified by $event_class is fired, either throw an
-    // exception directly from the event subscriber, or set a validation error
-    // (if the exception class is StageValidationException).
-    if ($exception_class === StageValidationException::class) {
-      $results = [
-        ValidationResult::createError([t('Destroy the stage!')]),
-      ];
-      TestSubscriber1::setTestResult($results, $event_class);
-      $exception = new StageValidationException($results);
+    /** @var \Drupal\automatic_updates\CronUpdater $updater */
+    $updater = $this->container->get('automatic_updates.cron_updater');
+
+    // When the event specified by $event_class is dispatched, either throw an
+    // exception directly from the event subscriber, or prepare a
+    // StageEventException which will format the validation errors its own way.
+    if ($exception_class === StageEventException::class) {
+      $error = ValidationResult::createError([
+        t('Destroy the stage!'),
+      ]);
+      $exception = $this->createStageEventExceptionFromResults([$error], $event_class, $updater);
+      TestSubscriber1::setTestResult($exception->event->getResults(), $event_class);
     }
     else {
       /** @var \Throwable $exception */
@@ -298,8 +301,6 @@ class CronUpdaterTest extends AutomaticUpdatesKernelTestBase {
     $this->assertEmpty($cron_logger->records);
     $this->assertEmpty($this->logger->records);
 
-    /** @var \Drupal\automatic_updates\CronUpdater $updater */
-    $updater = $this->container->get('automatic_updates.cron_updater');
     $this->assertTrue($updater->isAvailable());
     $this->container->get('cron')->run();
 
@@ -324,27 +325,16 @@ class CronUpdaterTest extends AutomaticUpdatesKernelTestBase {
     // won't try to catch it. Instead, it will be caught and logged by the main
     // cron service.
     if ($event_class === PreDestroyEvent::class || $event_class === PostDestroyEvent::class) {
-      if ($exception instanceof StageValidationException) {
-        $this->assertTrue($logged_by_updater);
-        $this->assertFalse($logged_by_cron);
-      }
-      else {
-        $this->assertFalse($logged_by_updater);
-        $this->assertTrue($logged_by_cron);
-      }
       // If the pre-destroy event throws an exception or flags a validation
       // error, the stage won't be destroyed. But, once the post-destroy event
       // is fired, the stage should be fully destroyed and marked as available.
       $this->assertSame($event_class === PostDestroyEvent::class, $updater->isAvailable());
     }
-    // For all other events, the error should be caught and logged by the cron
-    // updater, not the main cron service, and the stage should always be
-    // destroyed and marked as available.
     else {
-      $this->assertTrue($logged_by_updater);
-      $this->assertFalse($logged_by_cron);
       $this->assertTrue($updater->isAvailable());
     }
+    $this->assertTrue($logged_by_updater);
+    $this->assertFalse($logged_by_cron);
   }
 
   /**
@@ -407,8 +397,8 @@ class CronUpdaterTest extends AutomaticUpdatesKernelTestBase {
       $stage->apply();
       $this->fail('Expected update to fail');
     }
-    catch (StageValidationException $exception) {
-      $this->assertValidationResultsEqual([ValidationResult::createError([$stop_error])], $exception->getResults());
+    catch (StageEventException $exception) {
+      $this->assertExpectedResultsFromException([ValidationResult::createError([$stop_error])], $exception);
     }
 
     $this->assertTrue($this->logger->hasRecord("Cron will not perform any updates as an existing staged update is applying. The site is currently on an insecure version of Drupal core but will attempt to update to a secure version next time cron is run. This update may be applied manually at the <a href=\"%url\">update form</a>.", (string) RfcLogLevel::NOTICE));
@@ -507,11 +497,12 @@ END;
       ->set('cron', CronUpdater::ALL)
       ->save();
 
-    $results = [
-      ValidationResult::createError([t('Error while updating!')]),
-    ];
-    TestSubscriber1::setTestResult($results, $event_class);
-    $exception = new StageValidationException($results);
+    $error = ValidationResult::createError([
+      t('Error while updating!'),
+    ]);
+    $exception = $this->createStageEventExceptionFromResults([$error], $event_class, $this->container->get('automatic_updates.cron_updater'));
+    TestSubscriber1::setTestResult($exception->event->getResults(), $event_class);
+
     $this->container->get('cron')->run();
 
     $url = Url::fromRoute('update.report_update')
@@ -546,11 +537,13 @@ END;
     if ($event_class !== PreCreateEvent::class) {
       $this->getStageFixtureManipulator()->setCorePackageVersion('9.8.1');
     }
-    $results = [
-      ValidationResult::createError([t('Error while updating!')]),
-    ];
-    TestSubscriber1::setTestResult($results, $event_class);
-    $exception = new StageValidationException($results);
+
+    $error = ValidationResult::createError([
+      t('Error while updating!'),
+    ]);
+    TestSubscriber1::setTestResult([$error], $event_class);
+    $exception = $this->createStageEventExceptionFromResults([$error], $event_class, $this->container->get('automatic_updates.cron_updater'));
+
     $this->container->get('cron')->run();
 
     $url = Url::fromRoute('update.report_update')
@@ -583,7 +576,7 @@ END;
     $expected_body = <<<END
 Drupal core failed to update automatically from 9.8.0 to 9.8.1. The following error was logged:
 
-The update operation failed to apply completely. All the files necessary to run Drupal correctly and securely are probably not present. It is strongly recommended to restore your site's code and database from a backup.
+Automatic updates failed to apply, and the site is in an indeterminate state. Consider restoring the code and database from a backup.
 
 This e-mail was sent by the Automatic Updates module. Unattended updates are not yet fully supported.
 

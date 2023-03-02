@@ -13,7 +13,7 @@ use Drupal\Core\State\StateInterface;
 use Drupal\Core\Messenger\MessengerInterface;
 use Drupal\Core\Render\RendererInterface;
 use Drupal\Core\Url;
-use Drupal\package_manager\Exception\ApplyFailedException;
+use Drupal\package_manager\Exception\StageFailureMarkerException;
 use Drupal\package_manager\FailureMarker;
 use Drupal\package_manager\ProjectInfo;
 use Drupal\package_manager\ValidationResult;
@@ -114,7 +114,7 @@ final class UpdaterForm extends UpdateFormBase {
     try {
       $this->failureMarker->assertNotExists();
     }
-    catch (ApplyFailedException $e) {
+    catch (StageFailureMarkerException $e) {
       $this->messenger()->addError($e->getMessage());
       return $form;
     }

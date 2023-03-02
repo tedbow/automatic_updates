@@ -4,13 +4,6 @@ declare(strict_types = 1);
 
 namespace Drupal\Tests\automatic_updates_extensions\Kernel;
 
-use Drupal\automatic_updates\Exception\UpdateException;
-use Drupal\automatic_updates_test\EventSubscriber\TestSubscriber1;
-use Drupal\package_manager\Event\PreApplyEvent;
-use Drupal\package_manager\Event\PreCreateEvent;
-use Drupal\package_manager\Event\PreRequireEvent;
-use Drupal\package_manager\ValidationResult;
-use Drupal\Tests\package_manager\Kernel\TestStageValidationException;
 use Drupal\Tests\user\Traits\UserCreationTrait;
 
 /**
@@ -150,53 +143,6 @@ class ExtensionUpdaterTest extends AutomaticUpdatesExtensionsKernelTestBase {
     $this->container->get('automatic_updates_extensions.updater')->begin([
       'my_module_unknown' => '9.8.1',
     ]);
-  }
-
-  /**
-   * Tests UpdateException handling.
-   *
-   * @param string $event_class
-   *   The stage life cycle event which should raise an error.
-   *
-   * @dataProvider providerUpdateException
-   */
-  public function testUpdateException(string $event_class): void {
-    $extension_updater = $this->container->get('automatic_updates_extensions.updater');
-    $results = [
-      ValidationResult::createError([t('An error of some sorts.')]),
-    ];
-    TestSubscriber1::setTestResult($results, $event_class);
-    try {
-      $extension_updater->begin(['my_module' => '9.8.1']);
-      $extension_updater->stage();
-      $extension_updater->apply();
-      $this->fail('Expected an exception, but none was raised.');
-    }
-    catch (TestStageValidationException $e) {
-      $this->assertStringStartsWith('An error of some sorts.', $e->getMessage());
-      $this->assertInstanceOf(UpdateException::class, $e->getOriginalException());
-      $this->assertInstanceOf($event_class, $e->getEvent());
-    }
-  }
-
-  /**
-   * Data provider for testUpdateException().
-   *
-   * @return string[][]
-   *   The test cases.
-   */
-  public function providerUpdateException(): array {
-    return [
-      'pre-create exception' => [
-        PreCreateEvent::class,
-      ],
-      'pre-require exception' => [
-        PreRequireEvent::class,
-      ],
-      'pre-apply exception' => [
-        PreApplyEvent::class,
-      ],
-    ];
   }
 
 }

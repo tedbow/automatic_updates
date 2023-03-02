@@ -4,13 +4,9 @@ declare(strict_types = 1);
 
 namespace Drupal\Tests\automatic_updates_extensions\Kernel;
 
-use Drupal\automatic_updates\Exception\UpdateException;
-use Drupal\automatic_updates_extensions\ExtensionUpdater;
-use Drupal\Core\DependencyInjection\ContainerBuilder;
+use Drupal\package_manager\Event\PreOperationStageEvent;
+use Drupal\package_manager\Exception\StageEventException;
 use Drupal\Tests\automatic_updates\Kernel\AutomaticUpdatesKernelTestBase;
-use Drupal\Tests\package_manager\Kernel\TestStageTrait;
-use Drupal\Tests\package_manager\Kernel\TestStageValidationException;
-use PhpTuf\ComposerStager\Infrastructure\Factory\Path\PathFactory;
 
 /**
  * Base class for kernel tests of the Automatic Updates Extensions module.
@@ -52,23 +48,6 @@ abstract class AutomaticUpdatesExtensionsKernelTestBase extends AutomaticUpdates
   }
 
   /**
-   * {@inheritdoc}
-   */
-  public function register(ContainerBuilder $container) {
-    parent::register($container);
-
-    // Use the test-only implementations of the regular and cron updaters.
-    $overrides = [
-      'automatic_updates_extensions.updater' => TestExtensionUpdater::class,
-    ];
-    foreach ($overrides as $service_id => $class) {
-      if ($container->hasDefinition($service_id)) {
-        $container->getDefinition($service_id)->setClass($class);
-      }
-    }
-  }
-
-  /**
    * Asserts validation results are returned from a stage life cycle event.
    *
    * @param string[] $project_versions
@@ -80,7 +59,7 @@ abstract class AutomaticUpdatesExtensionsKernelTestBase extends AutomaticUpdates
    *   be passed if $expected_results is not empty.
    */
   protected function assertUpdateResults(array $project_versions, array $expected_results, string $event_class = NULL): void {
-    $updater = $this->createExtensionUpdater();
+    $updater = $this->container->get('automatic_updates_extensions.updater');
 
     try {
       $updater->begin($project_versions);
@@ -92,45 +71,13 @@ abstract class AutomaticUpdatesExtensionsKernelTestBase extends AutomaticUpdates
       // If we did not get an exception, ensure we didn't expect any results.
       $this->assertEmpty($expected_results);
     }
-    catch (TestStageValidationException $e) {
+    catch (StageEventException $e) {
       $this->assertNotEmpty($expected_results);
-      $this->assertValidationResultsEqual($expected_results, $e->getResults());
-      // TestStage::dispatch() throws TestUpdateException with event object
-      // so that we can analyze it.
-      $this->assertInstanceOf(UpdateException::class, $e->getOriginalException());
-      $this->assertNotEmpty($event_class);
-      $this->assertInstanceOf($event_class, $e->getEvent());
+      $exception_event = $e->event;
+      $this->assertInstanceOf($event_class, $exception_event);
+      $this->assertInstanceOf(PreOperationStageEvent::class, $exception_event);
+      $this->assertValidationResultsEqual($expected_results, $e->event->getResults());
     }
   }
-
-  /**
-   * Creates an extension updater object for testing purposes.
-   *
-   * @return \Drupal\Tests\automatic_updates_extensions\Kernel\TestExtensionUpdater
-   *   A extension updater object, with test-only modifications.
-   */
-  protected function createExtensionUpdater(): TestExtensionUpdater {
-    return new TestExtensionUpdater(
-      $this->container->get('package_manager.path_locator'),
-      $this->container->get('package_manager.beginner'),
-      $this->container->get('package_manager.stager'),
-      $this->container->get('package_manager.committer'),
-      $this->container->get('file_system'),
-      $this->container->get('event_dispatcher'),
-      $this->container->get('tempstore.shared'),
-      $this->container->get('datetime.time'),
-      new PathFactory(),
-      $this->container->get('package_manager.failure_marker')
-    );
-  }
-
-}
-
-/**
- * A test-only version of the regular extension updater to override internals.
- */
-class TestExtensionUpdater extends ExtensionUpdater {
-
-  use TestStageTrait;
 
 }

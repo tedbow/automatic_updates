@@ -41,11 +41,11 @@ class UpdateErrorTest extends UpdaterFormTestBase {
     LoggingCommitter::setException(new \Exception('failed at committer'));
     $page->pressButton('Continue');
     $this->checkForMetaRefresh();
+    $failure_message = 'Automatic updates failed to apply, and the site is in an indeterminate state. Consider restoring the code and database from a backup.';
     $assert_session->pageTextContainsOnce('An error has occurred.');
-    $assert_session->pageTextContains('The update operation failed to apply. The update may have been partially applied. It is recommended that the site be restored from a code backup.');
+    $assert_session->pageTextContains($failure_message);
     $page->clickLink('the error page');
 
-    $failure_message = 'Automatic updates failed to apply, and the site is in an indeterminate state. Consider restoring the code and database from a backup.';
     // We should be on the form (i.e., 200 response code), but unable to
     // continue the update.
     $assert_session->statusCodeEquals(200);

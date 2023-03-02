@@ -4,7 +4,7 @@ declare(strict_types = 1);
 
 namespace Drupal\Tests\package_manager\Kernel;
 
-use Drupal\package_manager\Exception\StageValidationException;
+use Drupal\package_manager\Exception\StageEventException;
 use Drupal\package_manager\ValidationResult;
 use Symfony\Component\Filesystem\Filesystem;
 
@@ -214,9 +214,9 @@ class DuplicateInfoFileValidatorTest extends PackageManagerKernelTestBase {
       $stage->apply();
       $this->assertEmpty($expected_results);
     }
-    catch (StageValidationException $e) {
+    catch (StageEventException $e) {
       $this->assertNotEmpty($expected_results);
-      $this->assertValidationResultsEqual($expected_results, $e->getResults());
+      $this->assertValidationResultsEqual($expected_results, $e->event->getResults());
     }
   }
 

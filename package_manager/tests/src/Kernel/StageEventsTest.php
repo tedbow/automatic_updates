@@ -15,6 +15,7 @@ use Drupal\package_manager\Event\PreDestroyEvent;
 use Drupal\package_manager\Event\PreOperationStageEvent;
 use Drupal\package_manager\Event\PreRequireEvent;
 use Drupal\package_manager\Event\StageEvent;
+use Drupal\package_manager\Exception\StageEventException;
 use Drupal\package_manager\ValidationResult;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
@@ -182,7 +183,7 @@ class StageEventsTest extends PackageManagerKernelTestBase implements EventSubsc
     };
     $this->addEventTestListener($listener, PreCreateEvent::class);
 
-    $this->expectException(TestStageValidationException::class);
+    $this->expectException(StageEventException::class);
     $this->expectExceptionMessage('Event propagation stopped without any errors added to the event. This bypasses the package_manager validation system.');
     $stage = $this->createStage();
     $stage->create();

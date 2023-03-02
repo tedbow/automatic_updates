@@ -4,7 +4,7 @@ declare(strict_types = 1);
 
 namespace Drupal\Tests\package_manager\Kernel;
 
-use Drupal\package_manager\Exception\StageValidationException;
+use Drupal\package_manager\Exception\StageEventException;
 use Drupal\package_manager\ValidationResult;
 
 /**
@@ -27,8 +27,8 @@ class ComposerMinimumStabilityValidatorTest extends PackageManagerKernelTestBase
       $stage->require(['drupal/core:9.8.1-beta1']);
       $this->fail('Able to require a package even though it did not meet minimum stability.');
     }
-    catch (StageValidationException $exception) {
-      $this->assertValidationResultsEqual([$result], $exception->getResults());
+    catch (StageEventException $exception) {
+      $this->assertValidationResultsEqual([$result], $exception->event->getResults());
     }
     $stage->destroy();
 

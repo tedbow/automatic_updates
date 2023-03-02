@@ -6,7 +6,7 @@ namespace Drupal\Tests\automatic_updates\Kernel\StatusCheck;
 
 use Drupal\fixture_manipulator\ActiveFixtureManipulator;
 use Drupal\package_manager\Event\PreApplyEvent;
-use Drupal\package_manager\Exception\StageValidationException;
+use Drupal\package_manager\Exception\StageEventException;
 use Drupal\package_manager\ValidationResult;
 use Drupal\Tests\automatic_updates\Kernel\AutomaticUpdatesKernelTestBase;
 
@@ -62,8 +62,8 @@ class StagedProjectsValidatorTest extends AutomaticUpdatesKernelTestBase {
       $updater->apply();
       $this->fail('Expected an error, but none was raised.');
     }
-    catch (StageValidationException $e) {
-      $this->assertValidationResultsEqual([$error], $e->getResults());
+    catch (StageEventException $e) {
+      $this->assertExpectedResultsFromException([$error], $e);
     }
   }
 
@@ -153,8 +153,8 @@ class StagedProjectsValidatorTest extends AutomaticUpdatesKernelTestBase {
       $updater->apply();
       $this->fail('Expected an error, but none was raised.');
     }
-    catch (StageValidationException $e) {
-      $this->assertValidationResultsEqual([$error], $e->getResults());
+    catch (StageEventException $e) {
+      $this->assertExpectedResultsFromException([$error], $e);
     }
   }
 
@@ -230,8 +230,8 @@ class StagedProjectsValidatorTest extends AutomaticUpdatesKernelTestBase {
       $updater->apply();
       $this->fail('Expected an error, but none was raised.');
     }
-    catch (StageValidationException $e) {
-      $this->assertValidationResultsEqual([$error], $e->getResults());
+    catch (StageEventException $e) {
+      $this->assertExpectedResultsFromException([$error], $e);
     }
   }
 
@@ -293,8 +293,8 @@ class StagedProjectsValidatorTest extends AutomaticUpdatesKernelTestBase {
       $updater->apply();
       $this->fail('Expected an error, but none was raised.');
     }
-    catch (StageValidationException $e) {
-      $this->assertValidationResultsEqual([$error], $e->getResults());
+    catch (StageEventException $e) {
+      $this->assertExpectedResultsFromException([$error], $e);
     }
   }
 

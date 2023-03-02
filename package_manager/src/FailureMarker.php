@@ -6,7 +6,7 @@ namespace Drupal\package_manager;
 
 use Drupal\Component\Serialization\Json;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
-use Drupal\package_manager\Exception\ApplyFailedException;
+use Drupal\package_manager\Exception\StageFailureMarkerException;
 
 /**
  * Handles failure marker file operation.
@@ -82,10 +82,10 @@ final class FailureMarker {
         $data = json_decode($data, TRUE, 512, JSON_THROW_ON_ERROR);
       }
       catch (\JsonException $exception) {
-        throw new ApplyFailedException('Failure marker file exists but cannot be decoded.', $exception->getCode(), $exception);
+        throw new StageFailureMarkerException('Failure marker file exists but cannot be decoded.', $exception->getCode(), $exception);
       }
 
-      throw new ApplyFailedException($data['message']);
+      throw new StageFailureMarkerException($data['message']);
     }
   }
 

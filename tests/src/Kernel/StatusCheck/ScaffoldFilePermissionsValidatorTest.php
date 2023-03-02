@@ -5,7 +5,8 @@ declare(strict_types = 1);
 namespace Drupal\Tests\automatic_updates\Kernel\StatusCheck;
 
 use Drupal\fixture_manipulator\ActiveFixtureManipulator;
-use Drupal\package_manager\Exception\StageValidationException;
+use Drupal\package_manager\Exception\ApplyFailedException;
+use Drupal\package_manager\Exception\StageEventException;
 use Drupal\package_manager\PathLocator;
 use Drupal\package_manager\ValidationResult;
 use Drupal\Tests\automatic_updates\Kernel\AutomaticUpdatesKernelTestBase;
@@ -125,8 +126,8 @@ class ScaffoldFilePermissionsValidatorTest extends AutomaticUpdatesKernelTestBas
       // If no exception was thrown, ensure that we weren't expecting an error.
       $this->assertEmpty($expected_results);
     }
-    catch (StageValidationException $e) {
-      $this->assertValidationResultsEqual($expected_results, $e->getResults());
+    catch (StageEventException $e) {
+      $this->assertExpectedResultsFromException($expected_results, $e);
     }
   }
 
@@ -331,8 +332,13 @@ class ScaffoldFilePermissionsValidatorTest extends AutomaticUpdatesKernelTestBas
       // If no exception was thrown, ensure that we weren't expecting an error.
       $this->assertEmpty($expected_results);
     }
-    catch (StageValidationException $e) {
-      $this->assertValidationResultsEqual($expected_results, $e->getResults());
+    // If we try to overwrite any write-protected paths, even if they're not
+    // scaffold files, we'll get an ApplyFailedException.
+    catch (ApplyFailedException $e) {
+      $this->assertSame("Automatic updates failed to apply, and the site is in an indeterminate state. Consider restoring the code and database from a backup.", $e->getMessage());
+    }
+    catch (StageEventException $e) {
+      $this->assertExpectedResultsFromException($expected_results, $e);
     }
   }
 

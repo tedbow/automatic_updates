@@ -4,7 +4,7 @@ declare(strict_types = 1);
 
 namespace Drupal\Tests\automatic_updates\Kernel\StatusCheck;
 
-use Drupal\package_manager\Exception\StageValidationException;
+use Drupal\package_manager\Exception\StageEventException;
 use Drupal\package_manager\ValidationResult;
 use Drupal\Tests\automatic_updates\Kernel\AutomaticUpdatesKernelTestBase;
 
@@ -52,8 +52,8 @@ class RequestedUpdateValidatorTest extends AutomaticUpdatesKernelTestBase {
       $updater->apply();
       $this->fail('Expecting an exception.');
     }
-    catch (StageValidationException $exception) {
-      $this->assertValidationResultsEqual($expected_results, $exception->getResults());
+    catch (StageEventException $exception) {
+      $this->assertExpectedResultsFromException($expected_results, $exception);
     }
   }
 
@@ -76,7 +76,7 @@ class RequestedUpdateValidatorTest extends AutomaticUpdatesKernelTestBase {
     $updater = $this->container->get('automatic_updates.updater');
     $updater->begin(['drupal' => '9.8.1']);
     $updater->stage();
-    $this->expectException(StageValidationException::class);
+    $this->expectException(StageEventException::class);
     $this->expectExceptionMessage('No updates detected in the staging area.');
     $updater->apply();
   }

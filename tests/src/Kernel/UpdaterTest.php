@@ -4,15 +4,9 @@ declare(strict_types = 1);
 
 namespace Drupal\Tests\automatic_updates\Kernel;
 
-use Drupal\automatic_updates\Exception\UpdateException;
-use Drupal\automatic_updates_test\EventSubscriber\TestSubscriber1;
-use Drupal\package_manager\Event\PreApplyEvent;
-use Drupal\package_manager\Event\PreCreateEvent;
-use Drupal\package_manager\Event\PreRequireEvent;
+use Drupal\package_manager\Exception\ApplyFailedException;
 use Drupal\package_manager\Exception\StageException;
-use Drupal\package_manager\ValidationResult;
 use Drupal\package_manager_bypass\LoggingCommitter;
-use Drupal\Tests\package_manager\Kernel\TestStageValidationException;
 use Drupal\Tests\user\Traits\UserCreationTrait;
 use PhpTuf\ComposerStager\Domain\Exception\InvalidArgumentException;
 
@@ -156,7 +150,7 @@ class UpdaterTest extends AutomaticUpdatesKernelTestBase {
     return [
       'RuntimeException' => [
         'RuntimeException',
-        UpdateException::class,
+        ApplyFailedException::class,
       ],
       'InvalidArgumentException' => [
         InvalidArgumentException::class,
@@ -164,7 +158,7 @@ class UpdaterTest extends AutomaticUpdatesKernelTestBase {
       ],
       'Exception' => [
         'Exception',
-        UpdateException::class,
+        ApplyFailedException::class,
       ],
     ];
   }
@@ -190,8 +184,8 @@ class UpdaterTest extends AutomaticUpdatesKernelTestBase {
     $thrown_message = 'A very bad thing happened';
     LoggingCommitter::setException(new $thrown_class($thrown_message, 123));
     $this->expectException($expected_class);
-    $expected_message = $expected_class === UpdateException::class ?
-      "The update operation failed to apply completely. All the files necessary to run Drupal correctly and securely are probably not present. It is strongly recommended to restore your site's code and database from a backup."
+    $expected_message = $expected_class === ApplyFailedException::class ?
+      "Automatic updates failed to apply, and the site is in an indeterminate state. Consider restoring the code and database from a backup."
       : $thrown_message;
     $this->expectExceptionMessage($expected_message);
     $this->expectExceptionCode(123);
@@ -204,53 +198,6 @@ class UpdaterTest extends AutomaticUpdatesKernelTestBase {
   public function testLoggerIsSetByContainer(): void {
     $updater_method_calls = $this->container->getDefinition('automatic_updates.updater')->getMethodCalls();
     $this->assertSame('setLogger', $updater_method_calls[0][0]);
-  }
-
-  /**
-   * Tests UpdateException handling.
-   *
-   * @param string $event_class
-   *   The stage life cycle event which should raise an error.
-   *
-   * @dataProvider providerUpdateException
-   */
-  public function testUpdateException(string $event_class) {
-    $updater = $this->container->get('automatic_updates.updater');
-    $results = [
-      ValidationResult::createError([t('An error of some sorts.')]),
-    ];
-    TestSubscriber1::setTestResult($results, $event_class);
-    try {
-      $updater->begin(['drupal' => '9.8.1']);
-      $updater->stage();
-      $updater->apply();
-      $this->fail('Expected an exception, but none was raised.');
-    }
-    catch (TestStageValidationException $e) {
-      $this->assertStringStartsWith('An error of some sorts.', $e->getMessage());
-      $this->assertInstanceOf(UpdateException::class, $e->getOriginalException());
-      $this->assertInstanceOf($event_class, $e->getEvent());
-    }
-  }
-
-  /**
-   * Data provider for testUpdateException().
-   *
-   * @return string[][]
-   *   The test cases.
-   */
-  public function providerUpdateException(): array {
-    return [
-      'pre-create exception' => [
-        PreCreateEvent::class,
-      ],
-      'pre-require exception' => [
-        PreRequireEvent::class,
-      ],
-      'pre-apply exception' => [
-        PreApplyEvent::class,
-      ],
-    ];
   }
 
 }

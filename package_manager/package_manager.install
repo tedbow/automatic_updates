@@ -7,7 +7,7 @@
 
 declare(strict_types = 1);
 
-use Drupal\package_manager\Exception\ApplyFailedException;
+use Drupal\package_manager\Exception\StageFailureMarkerException;
 
 /**
  * Implements hook_requirements().
@@ -29,9 +29,9 @@ function package_manager_requirements(string $phase) {
   $service_id = 'package_manager.failure_marker';
   if (\Drupal::hasService($service_id)) {
     try {
-      \Drupal::service($service_id)->assertNotExists();
+      \Drupal::service($service_id)->assertNotExists(NULL);
     }
-    catch (ApplyFailedException $exception) {
+    catch (StageFailureMarkerException $exception) {
       $requirements['package_manager_failure_marker'] = [
         'title' => t('Failed update detected'),
         'description' => $exception->getMessage(),

@@ -4,11 +4,7 @@ declare(strict_types = 1);
 
 namespace Drupal\automatic_updates;
 
-use Drupal\automatic_updates\Exception\UpdateException;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
-use Drupal\package_manager\Event\StageEvent;
-use Drupal\package_manager\Exception\ApplyFailedException;
-use Drupal\package_manager\Exception\StageValidationException;
 use Drupal\package_manager\Stage;
 
 /**
@@ -94,30 +90,6 @@ class Updater extends Stage {
     };
     $versions = array_map($map, $this->getPackageVersions());
     $this->require($versions['production'], $versions['dev'], $timeout);
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  protected function dispatch(StageEvent $event, callable $on_error = NULL): void {
-    try {
-      parent::dispatch($event, $on_error);
-    }
-    catch (StageValidationException $e) {
-      throw new UpdateException($e->getResults(), $e->getMessage(), $e->getCode(), $e);
-    }
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public function apply(?int $timeout = 600): void {
-    try {
-      parent::apply($timeout);
-    }
-    catch (ApplyFailedException $exception) {
-      throw new UpdateException([], "The update operation failed to apply completely. All the files necessary to run Drupal correctly and securely are probably not present. It is strongly recommended to restore your site's code and database from a backup.", $exception->getCode(), $exception);
-    }
   }
 
   /**

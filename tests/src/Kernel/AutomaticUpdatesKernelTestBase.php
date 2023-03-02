@@ -10,7 +10,6 @@ use Drupal\Core\DependencyInjection\ContainerBuilder;
 use Drupal\Core\Url;
 use Drupal\Tests\automatic_updates\Traits\ValidationTestTrait;
 use Drupal\Tests\package_manager\Kernel\PackageManagerKernelTestBase;
-use Drupal\Tests\package_manager\Kernel\TestStageTrait;
 
 /**
  * Base class for kernel tests of the Automatic Updates module.
@@ -91,8 +90,6 @@ abstract class AutomaticUpdatesKernelTestBase extends PackageManagerKernelTestBa
  */
 class TestUpdater extends Updater {
 
-  use TestStageTrait;
-
   /**
    * {@inheritdoc}
    */
@@ -106,8 +103,6 @@ class TestUpdater extends Updater {
  * A test-only version of the cron updater to override and expose internals.
  */
 class TestCronUpdater extends CronUpdater {
-
-  use TestStageTrait;
 
   /**
    * {@inheritdoc}

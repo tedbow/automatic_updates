@@ -8,6 +8,7 @@ use Drupal\Core\Url;
 use Drupal\fixture_manipulator\ActiveFixtureManipulator;
 use Drupal\package_manager\Event\PreCreateEvent;
 use Drupal\package_manager\Event\StatusCheckEvent;
+use Drupal\package_manager\Exception\StageEventException;
 use Drupal\package_manager\ValidationResult;
 use Symfony\Component\Process\Process;
 
@@ -162,12 +163,12 @@ class ComposerPatchesValidatorTest extends PackageManagerKernelTestBase {
 
     try {
       $stage->apply();
-      // If we didn't get an exception, ensure we didn't expect any errors
+      // If we didn't get an exception, ensure we didn't expect any errors.
       $this->assertSame([], $expected_results);
     }
-    catch (TestStageValidationException $e) {
+    catch (StageEventException $e) {
       $this->assertNotEmpty($expected_results);
-      $this->assertValidationResultsEqual($expected_results, $e->getResults(), NULL, $stage_dir);
+      $this->assertValidationResultsEqual($expected_results, $e->event->getResults(), NULL, $stage_dir);
     }
   }
 

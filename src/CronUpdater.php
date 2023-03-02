@@ -9,7 +9,7 @@ use Drupal\Core\Mail\MailManagerInterface;
 use Drupal\Core\State\StateInterface;
 use Drupal\Core\Url;
 use Drupal\package_manager\Exception\ApplyFailedException;
-use Drupal\package_manager\Exception\StageValidationException;
+use Drupal\package_manager\Exception\StageEventException;
 use Drupal\package_manager\ProjectInfo;
 use Drupal\update\ProjectRelease;
 use GuzzleHttp\Psr7\Uri as GuzzleUri;
@@ -174,7 +174,7 @@ class CronUpdater extends Updater {
         'target_version' => $target_version,
         'error_message' => $e->getMessage(),
       ];
-      if ($e instanceof ApplyFailedException || $e->getPrevious() instanceof ApplyFailedException) {
+      if ($e instanceof ApplyFailedException) {
         $mail_params['urgent'] = TRUE;
         $key = 'cron_failed_apply';
       }
@@ -304,7 +304,7 @@ class CronUpdater extends Updater {
     try {
       $this->destroy();
     }
-    catch (StageValidationException $e) {
+    catch (StageEventException $e) {
       $this->logger->error($e->getMessage());
     }
 

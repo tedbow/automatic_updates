@@ -146,7 +146,7 @@
  * If problems occur during any point of the stage life cycle, a
  * \Drupal\package_manager\Exception\StageException is thrown. If problems were
  * detected during one of the "pre" operations, a subclass of that is thrown:
- * \Drupal\package_manager\Exception\StageValidationException. This will contain
+ * \Drupal\package_manager\Exception\StageEventException. This will contain
  * \Drupal\package_manager\ValidationResult objects.
  * The Package Manager module does not catch or handle these exceptions: they
  * provide the foundation for other modules to build user experiences for

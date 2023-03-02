@@ -6,8 +6,8 @@ namespace Drupal\Tests\automatic_updates\Kernel\StatusCheck;
 
 use Drupal\automatic_updates\CronUpdater;
 use Drupal\package_manager\Event\PreCreateEvent;
+use Drupal\package_manager\Exception\StageEventException;
 use Drupal\package_manager\Exception\StageException;
-use Drupal\package_manager\Exception\StageValidationException;
 use Drupal\package_manager\ValidationResult;
 use Drupal\Tests\automatic_updates\Kernel\AutomaticUpdatesKernelTestBase;
 
@@ -315,8 +315,8 @@ class VersionPolicyValidatorTest extends AutomaticUpdatesKernelTestBase {
       // Reset the updater for the next iteration of the loop.
       $updater->destroy();
     }
-    catch (StageValidationException $e) {
-      $this->assertValidationResultsEqual($expected_results, $e->getResults());
+    catch (StageEventException $e) {
+      $this->assertExpectedResultsFromException($expected_results, $e);
     }
   }
 
