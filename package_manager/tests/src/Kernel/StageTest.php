@@ -629,7 +629,7 @@ class StageTest extends PackageManagerKernelTestBase {
     $stage->create();
     $stage->require(['drupal/random']);
     $this->expectException(StageException::class);
-    $this->expectExceptionMessage("Composer could not find the config file: " . $stage->getStageDirectory() . "/composer.json\n");
+    $this->expectExceptionMessage("composer.json not found.");
     unlink($stage->getStageDirectory() . '/composer.json');
     $stage->apply();
   }
