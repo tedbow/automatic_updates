@@ -4,6 +4,7 @@ declare(strict_types = 1);
 
 namespace Drupal\Tests\automatic_updates_extensions\Kernel;
 
+use Drupal\fixture_manipulator\ActiveFixtureManipulator;
 use Drupal\package_manager\Event\PreOperationStageEvent;
 use Drupal\package_manager\Exception\StageEventException;
 use Drupal\Tests\automatic_updates\Kernel\AutomaticUpdatesKernelTestBase;
@@ -34,17 +35,38 @@ abstract class AutomaticUpdatesExtensionsKernelTestBase extends AutomaticUpdates
     // package_manager_bypass is disabling those operations.
     $this->disableValidators[] = 'package_manager.validator.composer';
     parent::setUp();
-  }
-
-  /**
-   * Create Test Project.
-   *
-   * @param string|null $source_dir
-   *   Source directory.
-   */
-  protected function createTestProject(?string $source_dir = NULL): void {
-    $source_dir = $source_dir ?? __DIR__ . '/../../fixtures/fake-site';
-    parent::createTestProject($source_dir);
+    // Install additional packages that will be needed in tests.
+    (new ActiveFixtureManipulator())
+      ->addPackage([
+        "name" => "drupal/my_module",
+        "version" => "9.8.0",
+        "type" => "drupal-module",
+      ])
+      ->addPackage([
+        "name" => "drupal/contrib_profile1",
+        "version" => "1.0.0",
+        "type" => "drupal-profile",
+      ])
+      ->addPackage([
+        "name" => "drupal/my_dev_module",
+        "version" => "9.8.1",
+        "type" => "drupal-module",
+      ], TRUE)
+      ->addPackage([
+        "name" => "drupal/semver_test",
+        "version" => "1.0.0",
+        "type" => "drupal-module",
+      ])
+      ->addPackage([
+        "name" => "drupal/aaa_update_test",
+        "version" => "1.0.0",
+        "type" => "drupal-module",
+      ])
+      ->addPackage([
+        "name" => "drupal/aaa_automatic_updates_test",
+        "version" => "1.0.0",
+        "type" => "drupal-module",
+      ])->commitChanges();
   }
 
   /**
