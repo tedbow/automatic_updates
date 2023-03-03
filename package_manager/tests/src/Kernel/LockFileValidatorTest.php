@@ -9,6 +9,7 @@ use Drupal\package_manager\ComposerInspector;
 use Drupal\package_manager\Event\PreApplyEvent;
 use Drupal\package_manager\Event\PreCreateEvent;
 use Drupal\package_manager\Event\PreRequireEvent;
+use Drupal\package_manager\InstalledPackagesList;
 use Drupal\package_manager\Validator\LockFileValidator;
 use Drupal\package_manager\ValidationResult;
 use Drupal\package_manager_bypass\NoOpStager;
@@ -53,6 +54,7 @@ class LockFileValidatorTest extends PackageManagerKernelTestBase {
     $inspector->getConfig('allow-plugins', $arguments)->willReturn('[]');
     $inspector->getConfig('secure-http', $arguments)->willReturn('1');
     $inspector->getConfig('minimum-stability', $arguments)->willReturn('stable');
+    $inspector->getInstalledPackagesList($arguments)->willReturn(new InstalledPackagesList());
     $inspector->validate($arguments);
     $container->set($service_id, $inspector->reveal());
   }

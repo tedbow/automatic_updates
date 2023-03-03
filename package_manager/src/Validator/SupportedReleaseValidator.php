@@ -5,6 +5,8 @@ declare(strict_types = 1);
 namespace Drupal\package_manager\Validator;
 
 use Drupal\Component\Render\FormattableMarkup;
+use Drupal\package_manager\ComposerInspector;
+use Drupal\package_manager\PathLocator;
 use Drupal\package_manager\ProjectInfo;
 use Drupal\package_manager\LegacyVersionUtility;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
@@ -21,6 +23,17 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 final class SupportedReleaseValidator implements EventSubscriberInterface {
 
   use StringTranslationTrait;
+
+  /**
+   * Constructs a SupportedReleaseValidator object.
+   *
+   * @param \Drupal\package_manager\ComposerInspector $composerInspector
+   *   The Composer inspector service.
+   * @param \Drupal\package_manager\PathLocator $pathLocator
+   *   The path locator service.
+   */
+  public function __construct(private ComposerInspector $composerInspector, private PathLocator $pathLocator) {
+  }
 
   /**
    * Checks if the given version of a project is supported.
@@ -69,27 +82,27 @@ final class SupportedReleaseValidator implements EventSubscriberInterface {
    *   The event object.
    */
   public function validate(PreApplyEvent $event): void {
-    $active = $event->stage->getActiveComposer();
-    $staged = $event->stage->getStageComposer();
+    $active = $this->composerInspector->getInstalledPackagesList($this->pathLocator->getProjectRoot());
+    $staged = $this->composerInspector->getInstalledPackagesList($event->stage->getStageDirectory());
     $updated_packages = array_merge(
-      $staged->getPackagesNotIn($active),
-      $staged->getPackagesWithDifferentVersionsIn($active)
+      $staged->getPackagesNotIn($active)->getArrayCopy(),
+      $staged->getPackagesWithDifferentVersionsIn($active)->getArrayCopy()
     );
     $unknown_packages = [];
     $unsupported_packages = [];
     foreach ($updated_packages as $package_name => $staged_package) {
       // Only packages of the types 'drupal-module' or 'drupal-theme' that
       // start with 'drupal/' will have update XML from drupal.org.
-      if (!in_array($staged_package->getType(), ['drupal-module', 'drupal-theme'], TRUE)
+      if (!in_array($staged_package->type, ['drupal-module', 'drupal-theme'], TRUE)
          || !str_starts_with($package_name, 'drupal/')) {
         continue;
       }
-      $project_name = $staged->getProjectForPackage($package_name);
+      $project_name = $staged[$package_name]->getProjectName();
       if (empty($project_name)) {
         $unknown_packages[] = $package_name;
         continue;
       }
-      $semantic_version = $staged_package->getPrettyVersion();
+      $semantic_version = $staged_package->version;
       if (!$this->isSupportedRelease($project_name, $semantic_version)) {
         $unsupported_packages[] = new FormattableMarkup('@project_name (@package_name) @version', [
           '@project_name' => $project_name,
