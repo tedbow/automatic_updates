@@ -39,21 +39,18 @@ class StatusCheckTraitTest extends PackageManagerKernelTestBase {
    * Tests StatusCheckTrait returns an error when unable to get ignored paths.
    */
   public function testErrorIgnoredPathsCollected(): void {
-    $composer_json_path = $this->container->get('package_manager.path_locator')->getProjectRoot() . '/composer.json';
-    // Delete composer.json, so we won't be able to get excluded paths.
-    unlink($composer_json_path);
-    $this->addEventTestListener(function (CollectIgnoredPathsEvent $event): void {
-      // Try to get composer.
-      $event->stage->getActiveComposer();
+    $exception = new \Exception("Not a chance, friend.");
+
+    $expected_result = ValidationResult::createErrorFromThrowable(
+      $exception,
+      t("Unable to collect ignored paths, therefore can't perform status checks.")
+    );
+
+    $this->addEventTestListener(function () use ($exception): void {
+      throw $exception;
     }, CollectIgnoredPathsEvent::class);
-    $results = $this->runStatusCheck($this->createStage(), $this->container->get('event_dispatcher'));
-    $expected_results = [
-      ValidationResult::createErrorFromThrowable(
-        new \Exception("Composer could not find the config file: $composer_json_path\n"),
-        t("Unable to collect ignored paths, therefore can't perform status checks."),
-      ),
-    ];
-    $this->assertValidationResultsEqual($expected_results, $results);
+
+    $this->assertStatusCheckResults([$expected_result]);
   }
 
 }
