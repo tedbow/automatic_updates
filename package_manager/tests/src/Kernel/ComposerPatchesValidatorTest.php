@@ -136,9 +136,6 @@ class ComposerPatchesValidatorTest extends PackageManagerKernelTestBase {
           NULL,
         ],
       ],
-      // phpcs:disable
-      // @todo uncomment, figure out why this causes a failure on DrupalCI but not locally — see https://www.drupal.org/pift-ci-job/2606688
-      /*
       'composer-patches present due to non-root dependency in stage, but not present in active' => [
         static::CONFIG_ALLOWED_PLUGIN | static::EXTRA_EXIT_ON_PATCH_FAILURE,
         static::CONFIG_ALLOWED_PLUGIN | static::EXTRA_EXIT_ON_PATCH_FAILURE | static::REQUIRE_PACKAGE_INDIRECTLY,
@@ -154,8 +151,6 @@ class ComposerPatchesValidatorTest extends PackageManagerKernelTestBase {
           NULL,
         ],
       ],
-      */
-      // phpcs:enable
       'composer-patches removed in stage, but present in active' => [
         static::CONFIG_ALLOWED_PLUGIN | static::EXTRA_EXIT_ON_PATCH_FAILURE | static::REQUIRE_PACKAGE_FROM_ROOT,
         static::ABSENT,

@@ -454,9 +454,6 @@ class FixtureManipulator {
     $this->committingChanges = TRUE;
     $manipulator_arguments = $this->getQueuedManipulationItems();
     $this->clearQueuedManipulationItems();
-    // @todo The following line make InstalledPackagesListTest pass but causes
-    // other tests to fail, at least DeleteExistingUpdateTest.
-    // $this->runComposerCommand(['update']);
     foreach ($manipulator_arguments as $method => $argument_sets) {
       // @todo Attempt to make fewer Composer calls in
       //   https://drupal.org/i/3345639.
@@ -622,7 +619,6 @@ class FixtureManipulator {
     $fs = new SymfonyFileSystem();
     $path_repo_base = \Drupal::state()->get(self::PATH_REPO_STATE_KEY);
     if (empty($path_repo_base)) {
-      // @todo Is this better to setup in the base test class or trait?
       $path_repo_base = FileSystem::getOsTemporaryDirectory() . '/base-repo-' . microtime(TRUE) . rand(0, 10000);
       \Drupal::state()->set(self::PATH_REPO_STATE_KEY, $path_repo_base);
       // Copy the existing repos that were used to make the fixtures into the

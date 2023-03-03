@@ -52,24 +52,24 @@ class OverwriteExistingPackagesValidatorTest extends PackageManagerKernelTestBas
     // module_1 and module_2 will raise errors because they would overwrite
     // non-Composer managed paths in the active directory.
     $stage_manipulator->addPackage(
-        [
-          'name' => 'drupal/other_module_1',
-          'version' => '1.3.0',
-          'type' => 'drupal-module',
-        ],
-        FALSE,
-        TRUE
-      );
+      [
+        'name' => 'drupal/other_module_1',
+        'version' => '1.3.0',
+        'type' => 'drupal-module',
+      ],
+      FALSE,
+      TRUE
+    );
     $installer_paths['modules/module_1'] = ['drupal/other_module_1'];
     $stage_manipulator->addPackage(
-        [
-          'name' => 'drupal/other_module_2',
-          'version' => '1.3.0',
-          'type' => 'drupal-module',
-        ],
-        FALSE,
-        TRUE,
-      );
+      [
+        'name' => 'drupal/other_module_2',
+        'version' => '1.3.0',
+        'type' => 'drupal-module',
+      ],
+      FALSE,
+      TRUE,
+    );
     $installer_paths['modules/module_2'] = ['drupal/other_module_2'];
 
     // module_3 will cause no problems, since it doesn't exist in the active

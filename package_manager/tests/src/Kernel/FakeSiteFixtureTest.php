@@ -151,7 +151,6 @@ class FakeSiteFixtureTest extends PackageManagerKernelTestBase {
     $list = $this->container->get('package_manager.composer_inspector')->getInstalledPackagesList($active_dir);
     $list_packages_names = array_keys($list->getArrayCopy());
     $this->assertSame(['any-org/any-package', 'drupal/core', 'drupal/core-dev', 'drupal/core-recommended'], $list_packages_names);
-
   }
 
   /**
