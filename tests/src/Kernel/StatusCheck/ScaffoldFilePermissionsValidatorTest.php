@@ -295,6 +295,7 @@ class ScaffoldFilePermissionsValidatorTest extends AutomaticUpdatesKernelTestBas
   public function testScaffoldFilesChanged(array $write_protected_paths, array $active_scaffold_files, array $staged_scaffold_files, array $expected_results): void {
     // Rewrite the active and staged installed.json files, inserting the given
     // lists of scaffold files.
+    // @todo Remove the use of modifyPackage() in https://drupal.org/i/3345633.
     (new ActiveFixtureManipulator())
       ->modifyPackage('drupal/core', [
         'extra' => [

@@ -36,7 +36,6 @@ class GitExcluderTest extends PackageManagerKernelTestBase {
         'name' => 'foo/package_known_to_composer_removed_later',
         'type' => 'drupal-module',
         'version' => '1.0.0',
-        'install_path' => "../../modules/module_known_to_composer_removed_later",
       ])
       ->addProjectAtPath("modules/module_not_known_to_composer_in_active")
       ->addDotGitFolder($path_locator->getProjectRoot() . "/modules/module_not_known_to_composer_in_active")

@@ -57,7 +57,7 @@ class StagedProjectsValidatorTest extends AutomaticUpdatesKernelTestBase {
     $updater->begin(['drupal' => '9.8.1']);
     $updater->stage();
 
-    $error = ValidationResult::createError([t("Composer could not find the config file: @composer_json\n", ["@composer_json" => $composer_json])]);
+    $error = ValidationResult::createError([t('Unable to determine installed packages.')]);
     try {
       $updater->apply();
       $this->fail('Expected an error, but none was raised.');
@@ -73,10 +73,9 @@ class StagedProjectsValidatorTest extends AutomaticUpdatesKernelTestBase {
   public function testProjectsAdded(): void {
     (new ActiveFixtureManipulator())
       ->addPackage([
-        'name' => 'drupal/test_module',
+        'name' => 'drupal/test-module',
         'version' => '1.3.0',
-        'type' => 'drupal_module',
-        'install_path' => '../../modules/test_module',
+        'type' => 'drupal-module',
       ])
       ->addPackage([
         'name' => 'other/removed',
@@ -85,10 +84,9 @@ class StagedProjectsValidatorTest extends AutomaticUpdatesKernelTestBase {
       ])
       ->addPackage(
         [
-          'name' => 'drupal/dev-test_module',
+          'name' => 'drupal/dev-test-module',
           'version' => '1.3.0',
           'type' => 'drupal-module',
-          'install_path' => '../../modules/dev_test_module',
         ],
         TRUE
       )
@@ -106,17 +104,15 @@ class StagedProjectsValidatorTest extends AutomaticUpdatesKernelTestBase {
     $stage_manipulator
       ->setCorePackageVersion('9.8.1')
       ->addPackage([
-        'name' => 'drupal/test_module2',
+        'name' => 'drupal/test-module2',
         'version' => '1.3.1',
         'type' => 'drupal-module',
-        'install_path' => '../../modules/test_module2',
       ])
       ->addPackage(
         [
-          'name' => 'drupal/dev-test_module2',
+          'name' => 'drupal/dev-test-module2',
           'version' => '1.3.1',
           'type' => 'drupal-custom-module',
-          'install_path' => '../../modules/dev-test_module2',
         ],
         TRUE
       )
@@ -126,14 +122,12 @@ class StagedProjectsValidatorTest extends AutomaticUpdatesKernelTestBase {
         'name' => 'other/new_project',
         'version' => '1.3.1',
         'type' => 'library',
-        'install_path' => '../other/new_project',
       ])
       ->addPackage(
         [
           'name' => 'other/dev-new_project',
           'version' => '1.3.1',
           'type' => 'library',
-          'install_path' => '../other/dev-new_project',
         ],
         TRUE
       )
@@ -141,8 +135,8 @@ class StagedProjectsValidatorTest extends AutomaticUpdatesKernelTestBase {
       ->removePackage('other/dev-removed');
 
     $messages = [
-      t("module 'drupal/test_module2' installed."),
-      t("custom module 'drupal/dev-test_module2' installed."),
+      t("custom module 'drupal/dev-test-module2' installed."),
+      t("module 'drupal/test-module2' installed."),
     ];
     $error = ValidationResult::createError($messages, t('The update cannot proceed because the following Drupal projects were installed during the update.'));
 
@@ -168,13 +162,11 @@ class StagedProjectsValidatorTest extends AutomaticUpdatesKernelTestBase {
         'name' => 'drupal/test_theme',
         'version' => '1.3.0',
         'type' => 'drupal-theme',
-        'install_path' => '../../themes/test_theme',
       ])
       ->addPackage([
-        'name' => 'drupal/test_module2',
+        'name' => 'drupal/test-module2',
         'version' => '1.3.1',
         'type' => 'drupal-module',
-        'install_path' => '../../modules/test_module2',
       ])
       ->addPackage([
         'name' => 'other/removed',
@@ -186,16 +178,14 @@ class StagedProjectsValidatorTest extends AutomaticUpdatesKernelTestBase {
           'name' => 'drupal/dev-test_theme',
           'version' => '1.3.0',
           'type' => 'drupal-custom-theme',
-          'install_path' => '../../modules/dev_test_theme',
         ],
         TRUE
       )
       ->addPackage(
         [
-          'name' => 'drupal/dev-test_module2',
+          'name' => 'drupal/dev-test-module2',
           'version' => '1.3.1',
           'type' => 'drupal-module',
-          'install_path' => '../../modules/dev_test_module2',
         ],
         TRUE
       )
@@ -211,7 +201,7 @@ class StagedProjectsValidatorTest extends AutomaticUpdatesKernelTestBase {
 
     $stage_manipulator = $this->getStageFixtureManipulator();
     $stage_manipulator->removePackage('drupal/test_theme')
-      ->removePackage('drupal/dev-test_theme')
+      ->removePackage('drupal/dev-test_theme', TRUE)
     // The validator shouldn't complain about these packages being removed,
     // since it only cares about Drupal modules and themes.
       ->removePackage('other/removed')
@@ -219,8 +209,8 @@ class StagedProjectsValidatorTest extends AutomaticUpdatesKernelTestBase {
       ->setCorePackageVersion('9.8.1');
 
     $messages = [
-      t("theme 'drupal/test_theme' removed."),
       t("custom theme 'drupal/dev-test_theme' removed."),
+      t("theme 'drupal/test_theme' removed."),
     ];
     $error = ValidationResult::createError($messages, t('The update cannot proceed because the following Drupal projects were removed during the update.'));
     $updater = $this->container->get('automatic_updates.updater');
@@ -242,10 +232,9 @@ class StagedProjectsValidatorTest extends AutomaticUpdatesKernelTestBase {
     (new ActiveFixtureManipulator())
       ->setCorePackageVersion('9.8.0')
       ->addPackage([
-        'name' => 'drupal/test_module',
+        'name' => 'drupal/test-module',
         'version' => '1.3.0',
         'type' => 'drupal-module',
-        'install_path' => '../../modules/test_module',
       ])
       ->addPackage([
         'name' => 'other/changed',
@@ -254,10 +243,9 @@ class StagedProjectsValidatorTest extends AutomaticUpdatesKernelTestBase {
       ])
       ->addPackage(
         [
-          'name' => 'drupal/dev-test_module',
+          'name' => 'drupal/dev-test-module',
           'version' => '1.3.0',
           'type' => 'drupal-module',
-          'install_path' => '../../modules/dev_test_module',
         ],
         TRUE
       )
@@ -272,8 +260,8 @@ class StagedProjectsValidatorTest extends AutomaticUpdatesKernelTestBase {
       ->commitChanges();
 
     $stage_manipulator = $this->getStageFixtureManipulator();
-    $stage_manipulator->setVersion('drupal/test_module', '1.3.1')
-      ->setVersion('drupal/dev-test_module', '1.3.1')
+    $stage_manipulator->setVersion('drupal/test-module', '1.3.1')
+      ->setVersion('drupal/dev-test-module', '1.3.1')
     // The validator shouldn't complain about these packages being updated,
     // because it only cares about Drupal modules and themes.
       ->setVersion('other/changed', '1.3.2')
@@ -281,8 +269,8 @@ class StagedProjectsValidatorTest extends AutomaticUpdatesKernelTestBase {
       ->setCorePackageVersion('9.8.1');
 
     $messages = [
-      t("module 'drupal/test_module' from 1.3.0 to 1.3.1."),
-      t("module 'drupal/dev-test_module' from 1.3.0 to 1.3.1."),
+      t("module 'drupal/dev-test-module' from 1.3.0 to 1.3.1."),
+      t("module 'drupal/test-module' from 1.3.0 to 1.3.1."),
     ];
     $error = ValidationResult::createError($messages, t('The update cannot proceed because the following Drupal projects were unexpectedly updated. Only Drupal Core updates are currently supported.'));
     $updater = $this->container->get('automatic_updates.updater');
@@ -305,10 +293,9 @@ class StagedProjectsValidatorTest extends AutomaticUpdatesKernelTestBase {
     (new ActiveFixtureManipulator())
       ->setCorePackageVersion('9.8.0')
       ->addPackage([
-        'name' => 'drupal/test_module',
+        'name' => 'drupal/test-module',
         'version' => '1.3.0',
         'type' => 'drupal-module',
-        'install_path' => '../../modules/test_module',
       ])
       ->addPackage([
         'name' => 'other/removed',
@@ -322,10 +309,9 @@ class StagedProjectsValidatorTest extends AutomaticUpdatesKernelTestBase {
       ])
       ->addPackage(
         [
-          'name' => 'drupal/dev-test_module',
+          'name' => 'drupal/dev-test-module',
           'version' => '1.3.0',
           'type' => 'drupal-module',
-          'install_path' => '../../modules/dev_test_module',
         ],
         TRUE
       )
@@ -355,14 +341,12 @@ class StagedProjectsValidatorTest extends AutomaticUpdatesKernelTestBase {
         'name' => 'other/new_project',
         'version' => '1.3.1',
         'type' => 'library',
-        'install_path' => '../other/new_project',
       ])
       ->addPackage(
         [
           'name' => 'other/dev-new_project',
           'version' => '1.3.1',
           'type' => 'library',
-          'install_path' => '../other/dev-new_project',
         ],
         TRUE
       )

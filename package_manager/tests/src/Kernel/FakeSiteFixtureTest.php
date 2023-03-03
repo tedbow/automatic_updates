@@ -4,6 +4,7 @@ declare(strict_types = 1);
 
 namespace Drupal\Tests\package_manager\Kernel;
 
+use Drupal\Core\DependencyInjection\ContainerBuilder;
 use Drupal\fixture_manipulator\ActiveFixtureManipulator;
 use Drupal\package_manager\ComposerUtility;
 use Symfony\Component\Process\Process;
@@ -43,19 +44,24 @@ class FakeSiteFixtureTest extends PackageManagerKernelTestBase {
   }
 
   /**
-   * Tests if `modifyPackage` can be called on all packages in the fixture.
+   * Tests if `setVersion` can be called on all packages in the fixture.
    *
-   * @see \Drupal\fixture_manipulator\FixtureManipulator::modifyPackage()
+   * @see \Drupal\fixture_manipulator\FixtureManipulator::setVersion()
    */
-  public function testCallToModifyPackage(): void {
+  public function testCallToSetVersion(): void {
+    $active_dir = $this->container->get('package_manager.path_locator')->getProjectRoot();
     $stage = $this->createStage();
     $installed_packages = $stage->getActiveComposer()->getInstalledPackages();
     foreach (self::getExpectedFakeSitePackages() as $package_name) {
       $this->assertArrayHasKey($package_name, $installed_packages);
       $this->assertSame('9.8.0', $installed_packages[$package_name]->getPrettyVersion());
+      $list = $this->container->get('package_manager.composer_inspector')->getInstalledPackagesList($active_dir);
+      $this->assertSame($list[$package_name]->version, '9.8.0');
       (new ActiveFixtureManipulator())
-        ->modifyPackage($package_name, ['version' => '11.1.0'])
+        ->setVersion($package_name, '11.1.0')
         ->commitChanges();
+      $list = $this->container->get('package_manager.composer_inspector')->getInstalledPackagesList($active_dir);
+      $this->assertSame($list[$package_name]->version, '11.1.0');
     }
   }
 
@@ -65,6 +71,7 @@ class FakeSiteFixtureTest extends PackageManagerKernelTestBase {
    * @covers \Drupal\fixture_manipulator\FixtureManipulator::removePackage()
    */
   public function testCallToRemovePackage(): void {
+    $active_dir = $this->container->get('package_manager.path_locator')->getProjectRoot();
     $expected_packages = self::getExpectedFakeSitePackages();
     $stage = $this->createStage();
     $actual_packages = array_keys($stage->getActiveComposer()->getInstalledPackages());
@@ -72,9 +79,15 @@ class FakeSiteFixtureTest extends PackageManagerKernelTestBase {
     $this->assertSame($expected_packages, $actual_packages);
     foreach (self::getExpectedFakeSitePackages() as $package_name) {
       (new ActiveFixtureManipulator())
-        ->removePackage($package_name)
+        ->removePackage($package_name, $package_name === 'drupal/core-dev')
         ->commitChanges();
+      array_shift($expected_packages);
+      $list = $this->container->get('package_manager.composer_inspector')->getInstalledPackagesList($active_dir);
+      $actual_package_names = array_keys($list->getArrayCopy());
+      sort($actual_package_names);
+      $this->assertSame($expected_packages, $actual_package_names);
     }
+
   }
 
   /**
@@ -118,7 +131,15 @@ class FakeSiteFixtureTest extends PackageManagerKernelTestBase {
    * Tests that Composer show command can be used on the fixture.
    */
   public function testComposerShow(): void {
-    $process = new Process(['composer', 'show', '--format=json'], $this->container->get('package_manager.path_locator')->getProjectRoot());
+    $active_dir = $this->container->get('package_manager.path_locator')->getProjectRoot();
+    (new ActiveFixtureManipulator())
+      ->addPackage([
+        'type' => 'package',
+        'version' => '1.2.3',
+        'name' => 'any-org/any-package',
+      ])
+      ->commitChanges();
+    $process = new Process(['composer', 'show', '--format=json'], $active_dir);
     $process->run();
     if ($error = $process->getErrorOutput()) {
       $this->fail('Process error: ' . $error);
@@ -126,7 +147,19 @@ class FakeSiteFixtureTest extends PackageManagerKernelTestBase {
     $output = json_decode($process->getOutput(), TRUE);
     $package_names = array_map(fn (array $package) => $package['name'], $output['installed']);
     $this->assertTrue(asort($package_names));
-    $this->assertSame(['drupal/core', 'drupal/core-dev', 'drupal/core-recommended'], $package_names);
+    $this->assertSame(['any-org/any-package', 'drupal/core', 'drupal/core-dev', 'drupal/core-recommended'], $package_names);
+    $list = $this->container->get('package_manager.composer_inspector')->getInstalledPackagesList($active_dir);
+    $list_packages_names = array_keys($list->getArrayCopy());
+    $this->assertSame(['any-org/any-package', 'drupal/core', 'drupal/core-dev', 'drupal/core-recommended'], $list_packages_names);
+
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function register(ContainerBuilder $container) {
+    parent::register($container);
+    $container->getDefinition('package_manager.composer_inspector')->setPublic(TRUE);
   }
 
   /**

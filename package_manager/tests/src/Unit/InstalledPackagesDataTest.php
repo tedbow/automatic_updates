@@ -14,6 +14,8 @@ use Drupal\Tests\UnitTestCase;
  * certain operations. This test is intended as an early warning if the file's
  * internal structure changes in a way that would break our functionality.
  *
+ * @todo Delete this test in https://drupal.org/i/3316368.
+ *
  * @group package_manager
  * @internal
  */

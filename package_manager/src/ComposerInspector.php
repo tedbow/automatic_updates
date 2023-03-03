@@ -323,16 +323,20 @@ class ComposerInspector {
     // then merge the results together.
     $this->runner->run($options, $this->jsonCallback);
     $output = $this->jsonCallback->getOutputData();
-    foreach ($output['installed'] as $installed_package) {
-      $data[$installed_package['name']] = $installed_package;
+    // $output['installed'] will not be set if no packages are installed.
+    if (isset($output['installed'])) {
+      foreach ($output['installed'] as $installed_package) {
+        $data[$installed_package['name']] = $installed_package;
+      }
+
+      $options[] = '--path';
+      $this->runner->run($options, $this->jsonCallback);
+      $output = $this->jsonCallback->getOutputData();
+      foreach ($output['installed'] as $installed_package) {
+        $data[$installed_package['name']]['path'] = $installed_package['path'];
+      }
     }
 
-    $options[] = '--path';
-    $this->runner->run($options, $this->jsonCallback);
-    $output = $this->jsonCallback->getOutputData();
-    foreach ($output['installed'] as $installed_package) {
-      $data[$installed_package['name']]['path'] = $installed_package['path'];
-    }
     return $data;
   }
 

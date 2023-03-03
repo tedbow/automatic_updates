@@ -158,7 +158,6 @@ class ComposerPluginsValidatorTest extends PackageManagerKernelTestBase {
           'name' => "drupal/semver_test",
           'version' => '8.1.0',
           'type' => 'drupal-module',
-          'install_path' => '../../modules/semver_test',
         ],
       ],
       [],
@@ -191,9 +190,7 @@ class ComposerPluginsValidatorTest extends PackageManagerKernelTestBase {
 
     yield 'another supported composer plugin' => [
       [
-        'allow-plugins' => [
-          'drupal/core-vendor-hardening' => TRUE,
-        ],
+        'allow-plugins.drupal/core-vendor-hardening' => TRUE,
       ],
       [
         [
@@ -209,13 +206,11 @@ class ComposerPluginsValidatorTest extends PackageManagerKernelTestBase {
 
     yield 'one UNsupported but disallowed plugin — pretty package name' => [
       [
-        'allow-plugins' => [
-          'composer/plugin-A' => FALSE,
-        ],
+        'allow-plugins.composer/plugin-a' => FALSE,
       ],
       [
         [
-          'name' => 'composer/plugin-A',
+          'name' => 'composer/plugin-a',
           'version' => '6.1',
           'type' => 'composer-plugin',
           'require' => ['composer-plugin-api' => '*'],
@@ -227,9 +222,7 @@ class ComposerPluginsValidatorTest extends PackageManagerKernelTestBase {
 
     yield 'one UNsupported but disallowed plugin — normalized package name' => [
       [
-        'allow-plugins' => [
-          'composer/plugin-b' => FALSE,
-        ],
+        'allow-plugins.composer/plugin-b' => FALSE,
       ],
       [
         [
@@ -272,13 +265,11 @@ class ComposerPluginsValidatorTest extends PackageManagerKernelTestBase {
   public function providerSimpleInvalidCases(): \Generator {
     yield 'one UNsupported composer plugin — pretty package name' => [
       [
-        'allow-plugins' => [
-          'NOT-cweagans/NOT-composer-patches' => TRUE,
-        ],
+        'allow-plugins.not-cweagans/not-composer-patches' => TRUE,
       ],
       [
         [
-          'name' => 'NOT-cweagans/NOT-composer-patches',
+          'name' => 'not-cweagans/not-composer-patches',
           'require' => ['composer-plugin-api' => '*'],
           'extra' => ['class' => 'AnyClass'],
           'version' => '6.1',
@@ -288,7 +279,7 @@ class ComposerPluginsValidatorTest extends PackageManagerKernelTestBase {
       [
         ValidationResult::createError(
           [
-            new TranslatableMarkup('<code>NOT-cweagans/NOT-composer-patches</code>'),
+            new TranslatableMarkup('<code>not-cweagans/not-composer-patches</code>'),
           ],
           new TranslatableMarkup('An unsupported Composer plugin was detected.'),
         ),
@@ -297,9 +288,7 @@ class ComposerPluginsValidatorTest extends PackageManagerKernelTestBase {
 
     yield 'one UNsupported composer plugin — normalized package name' => [
       [
-        'allow-plugins' => [
-          'also-not-cweagans/also-not-composer-patches' => TRUE,
-        ],
+        'allow-plugins.also-not-cweagans/also-not-composer-patches' => TRUE,
       ],
       [
         [
@@ -344,7 +333,7 @@ class ComposerPluginsValidatorTest extends PackageManagerKernelTestBase {
       [
         ValidationResult::createError(
           [
-            new TranslatableMarkup('<code>NOT-cweagans/NOT-composer-patches</code>'),
+            new TranslatableMarkup('<code>not-cweagans/not-composer-patches</code>'),
             new TranslatableMarkup('<code>also-not-cweagans/also-not-composer-patches</code>'),
           ],
           new TranslatableMarkup('Unsupported Composer plugins were detected.'),

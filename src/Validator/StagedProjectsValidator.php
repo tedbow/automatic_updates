@@ -4,10 +4,12 @@ declare(strict_types = 1);
 
 namespace Drupal\automatic_updates\Validator;
 
-use Composer\Package\PackageInterface;
 use Drupal\automatic_updates\Updater;
+use Drupal\package_manager\ComposerInspector;
 use Drupal\package_manager\Event\PreApplyEvent;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
+use Drupal\package_manager\InstalledPackage;
+use Drupal\package_manager\PathLocator;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 /**
@@ -23,6 +25,17 @@ final class StagedProjectsValidator implements EventSubscriberInterface {
   use StringTranslationTrait;
 
   /**
+   * Constructs a StagedProjectsValidator object.
+   *
+   * @param \Drupal\package_manager\PathLocator $pathLocator
+   *   The path locator service.
+   * @param \Drupal\package_manager\ComposerInspector $composerInspector
+   *   The Composer inspector service.
+   */
+  public function __construct(private PathLocator $pathLocator, private ComposerInspector $composerInspector) {
+  }
+
+  /**
    * Validates the staged packages.
    *
    * @param \Drupal\package_manager\Event\PreApplyEvent $event
@@ -35,12 +48,14 @@ final class StagedProjectsValidator implements EventSubscriberInterface {
       return;
     }
 
+    // @todo Remove or update the try/catch blocks around these calls to
+    //   getInstalledPackagesList() in https://drupal.org/i/3344039.
     try {
-      $active = $stage->getActiveComposer();
-      $stage = $stage->getStageComposer();
+      $active_list = $this->composerInspector->getInstalledPackagesList($this->pathLocator->getProjectRoot());
+      $stage_list = $this->composerInspector->getInstalledPackagesList($stage->getStageDirectory());
     }
     catch (\Throwable $e) {
-      $event->addErrorFromThrowable($e);
+      $event->addError([$this->t('Unable to determine installed packages.')]);
       return;
     }
 
@@ -50,23 +65,23 @@ final class StagedProjectsValidator implements EventSubscriberInterface {
       'drupal-theme' => $this->t('theme'),
       'drupal-custom-theme' => $this->t('custom theme'),
     ];
-    $filter = function (PackageInterface $package) use ($type_map): bool {
-      return array_key_exists($package->getType(), $type_map);
+    $filter = function (InstalledPackage $package) use ($type_map): bool {
+      return array_key_exists($package->type, $type_map);
     };
-    $new_packages = $stage->getPackagesNotIn($active);
-    $removed_packages = $active->getPackagesNotIn($stage);
-    $updated_packages = $active->getPackagesWithDifferentVersionsIn($stage);
+    $new_packages = $stage_list->getPackagesNotIn($active_list);
+    $removed_packages = $active_list->getPackagesNotIn($stage_list);
+    $updated_packages = $active_list->getPackagesWithDifferentVersionsIn($stage_list);
 
     // Check if any new Drupal projects were installed.
-    if ($new_packages = array_filter($new_packages, $filter)) {
+    if ($new_packages = array_filter($new_packages->getArrayCopy(), $filter)) {
       $new_packages_messages = [];
 
       foreach ($new_packages as $new_package) {
         $new_packages_messages[] = $this->t(
           "@type '@name' installed.",
           [
-            '@type' => $type_map[$new_package->getType()],
-            '@name' => $new_package->getName(),
+            '@type' => $type_map[$new_package->type],
+            '@name' => $new_package->name,
           ]
         );
       }
@@ -79,14 +94,14 @@ final class StagedProjectsValidator implements EventSubscriberInterface {
     }
 
     // Check if any Drupal projects were removed.
-    if ($removed_packages = array_filter($removed_packages, $filter)) {
+    if ($removed_packages = array_filter($removed_packages->getArrayCopy(), $filter)) {
       $removed_packages_messages = [];
       foreach ($removed_packages as $removed_package) {
         $removed_packages_messages[] = $this->t(
           "@type '@name' removed.",
           [
-            '@type' => $type_map[$removed_package->getType()],
-            '@name' => $removed_package->getName(),
+            '@type' => $type_map[$removed_package->type],
+            '@name' => $removed_package->name,
           ]
         );
       }
@@ -100,18 +115,17 @@ final class StagedProjectsValidator implements EventSubscriberInterface {
 
     // Check if any Drupal projects were neither installed or removed, but had
     // their version numbers changed.
-    if ($updated_packages = array_filter($updated_packages, $filter)) {
-      $staged_packages = $stage->getInstalledPackages();
+    if ($updated_packages = array_filter($updated_packages->getArrayCopy(), $filter)) {
 
       $version_change_messages = [];
       foreach ($updated_packages as $name => $updated_package) {
         $version_change_messages[] = $this->t(
           "@type '@name' from @active_version to @staged_version.",
           [
-            '@type' => $type_map[$updated_package->getType()],
-            '@name' => $updated_package->getName(),
-            '@staged_version' => $staged_packages[$name]->getPrettyVersion(),
-            '@active_version' => $updated_package->getPrettyVersion(),
+            '@type' => $type_map[$updated_package->type],
+            '@name' => $updated_package->name,
+            '@staged_version' => $stage_list[$name]->version,
+            '@active_version' => $updated_package->version,
           ]
         );
       }

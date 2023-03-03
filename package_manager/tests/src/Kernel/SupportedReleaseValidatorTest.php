@@ -33,25 +33,21 @@ class SupportedReleaseValidatorTest extends PackageManagerKernelTestBase {
         'name' => "drupal/semver_test",
         'version' => '8.1.0',
         'type' => 'drupal-module',
-        'install_path' => '../../modules/semver_test',
       ])
       ->addPackage([
         'name' => "drupal/aaa_update_test",
         'version' => '2.0.0',
         'type' => 'drupal-module',
-        'install_path' => '../../modules/aaa_update_test',
       ])
       ->addPackage([
         'name' => "drupal/package_manager_theme",
         'version' => '8.1.0',
         'type' => 'drupal-theme',
-        'install_path' => '../../modules/package_manager_theme',
       ])
       ->addPackage([
         'name' => "somewhere/a_drupal_module",
         'version' => '8.1.0',
         'type' => 'drupal-module',
-        'install_path' => '../../modules/a_drupal_module',
       ])
       ->commitChanges();
   }
@@ -75,7 +71,6 @@ class SupportedReleaseValidatorTest extends PackageManagerKernelTestBase {
           'name' => "drupal/semver_test",
           'version' => '8.1.1',
           'type' => 'drupal-module',
-          'install_path' => NULL,
         ],
         [],
       ],
@@ -88,7 +83,6 @@ class SupportedReleaseValidatorTest extends PackageManagerKernelTestBase {
           'name' => "drupal/semver_test",
           'version' => '8.2.0',
           'type' => 'drupal-module',
-          'install_path' => NULL,
         ],
         [
           ValidationResult::createError([t('semver_test (drupal/semver_test) 8.2.0')], $summary),
@@ -103,7 +97,6 @@ class SupportedReleaseValidatorTest extends PackageManagerKernelTestBase {
           'name' => "drupal/aaa_update_test",
           'version' => '2.1.0',
           'type' => 'drupal-module',
-          'install_path' => NULL,
         ],
         [],
       ],
@@ -116,7 +109,6 @@ class SupportedReleaseValidatorTest extends PackageManagerKernelTestBase {
           'name' => "drupal/aaa_update_test",
           'version' => '3.0.0',
           'type' => 'drupal-module',
-          'install_path' => NULL,
         ],
         [
           ValidationResult::createError([t('aaa_update_test (drupal/aaa_update_test) 3.0.0')], $summary),
@@ -131,7 +123,6 @@ class SupportedReleaseValidatorTest extends PackageManagerKernelTestBase {
           'name' => "drupal/aaa_automatic_updates_test",
           'version' => '7.0.1-dev',
           'type' => 'drupal-module',
-          'install_path' => '../../modules/aaa_automatic_updates_test',
         ],
         [
           ValidationResult::createError([t('aaa_automatic_updates_test (drupal/aaa_automatic_updates_test) 7.0.1-dev')], $summary),
@@ -146,7 +137,6 @@ class SupportedReleaseValidatorTest extends PackageManagerKernelTestBase {
           'name' => "drupal/aaa_automatic_updates_test",
           'version' => '7.0.1',
           'type' => 'drupal-module',
-          'install_path' => '../../modules/aaa_automatic_updates_test',
         ],
         [],
       ],
@@ -159,7 +149,6 @@ class SupportedReleaseValidatorTest extends PackageManagerKernelTestBase {
           'name' => "drupal/package_manager_theme",
           'version' => '8.1.1',
           'type' => 'drupal-theme',
-          'install_path' => NULL,
         ],
         [],
       ],
@@ -172,7 +161,6 @@ class SupportedReleaseValidatorTest extends PackageManagerKernelTestBase {
           'name' => "drupal/package_manager_theme",
           'version' => '8.2.0',
           'type' => 'drupal-theme',
-          'install_path' => NULL,
         ],
         [
           ValidationResult::createError(['package_manager_theme (drupal/package_manager_theme) 8.2.0'], $summary),
@@ -188,7 +176,6 @@ class SupportedReleaseValidatorTest extends PackageManagerKernelTestBase {
           'name' => "somewhere/a_drupal_module",
           'version' => '8.1.1',
           'type' => 'drupal-module',
-          'install_path' => NULL,
         ],
         [],
       ],

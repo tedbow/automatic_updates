@@ -5,10 +5,12 @@ declare(strict_types = 1);
 namespace Drupal\Tests\package_manager\Kernel;
 
 use Drupal\Component\FileSystem\FileSystem as DrupalFileSystem;
+use Drupal\Core\Serialization\Yaml;
 use Drupal\fixture_manipulator\FixtureManipulator;
 use Drupal\KernelTests\KernelTestBase;
 use Drupal\package_manager\ComposerUtility;
 use Drupal\Tests\package_manager\Traits\AssertPreconditionsTrait;
+use Drupal\Tests\package_manager\Traits\ComposerInstallersTrait;
 use Drupal\Tests\package_manager\Traits\FixtureUtilityTrait;
 use Symfony\Component\Filesystem\Filesystem;
 
@@ -20,6 +22,7 @@ use Symfony\Component\Filesystem\Filesystem;
 class ComposerUtilityTest extends KernelTestBase {
 
   use AssertPreconditionsTrait;
+  use ComposerInstallersTrait;
   use FixtureUtilityTrait;
 
   /**
@@ -48,60 +51,77 @@ class ComposerUtilityTest extends KernelTestBase {
     $fs->mkdir($this->rootDir);
     $fixture = $this->rootDir . DIRECTORY_SEPARATOR . 'fixture' . DIRECTORY_SEPARATOR;
     static::copyFixtureFilesTo(__DIR__ . '/../../fixtures/fake_site', $fixture);
-    $relative_projects_dir = '../../web/projects';
-    (new FixtureManipulator())
-      ->addPackage(
+    $this->installComposerInstallers($fixture);
+    $projects_dir = 'web/projects';
+    $manipulator = new FixtureManipulator();
+    $manipulator->addPackage(
         [
           'name' => 'drupal/package_project_match',
           'type' => 'drupal-module',
-          'install_path' => "$relative_projects_dir/package_project_match",
-        ]
-      )
-      ->addPackage(
+        ],
+        FALSE,
+        TRUE
+      );
+    $installer_paths["$projects_dir/package_project_match"] = ['drupal/package_project_match'];
+
+    $manipulator->addPackage(
         [
           'name' => 'drupal/not_match_package',
           'type' => 'drupal-module',
-          'install_path' => "$relative_projects_dir/not_match_project",
-        ]
-      )
-      ->addPackage(
+        ],
+        FALSE,
+        TRUE,
+        // Create an info.yml file with a different project name from the
+        // package.
+        ['not_match_project.info.yml' => Yaml::encode(['project' => 'not_match_project'])],
+      );
+    $installer_paths["$projects_dir/not_match_project"] = ['drupal/not_match_package'];
+    $manipulator->addPackage(
         [
           'name' => 'drupal/not_match_path_project',
           'type' => 'drupal-module',
-          'install_path' => "$relative_projects_dir/not_match_project",
         ],
         FALSE,
-        FALSE,
-      )
-      ->addProjectAtPath("web/projects/not_match_path_project", 'not_match_path_project')
-      ->addPackage(
+        TRUE,
+        []
+      );
+    $installer_paths["$projects_dir/not_match_path_project"] = ['drupal/not_match_path_project'];
+    $manipulator->addPackage(
         [
           'name' => 'drupal/nested_no_match_package',
           'type' => 'drupal-module',
-          'install_path' => "$relative_projects_dir/any_folder_name",
         ],
         FALSE,
-        FALSE,
-      )
-      ->addPackage(
+        TRUE,
+        // A test info.yml file where the folder names and info.yml file names
+        // do not match the project or package. Only the project key in this
+        // file need to match.
+        ['any_sub_folder/any_yml_file.info.yml' => Yaml::encode(['project' => 'nested_no_match_project'])],
+      );
+    $installer_paths["$projects_dir/any_folder_name"] = ['drupal/nested_no_match_package'];
+    $manipulator->addPackage(
         [
           'name' => 'non_drupal/other_project',
           'type' => 'drupal-module',
-          'install_path' => "$relative_projects_dir/other_project",
-        ]
-      )
-      ->addPackage(
+        ],
+        FALSE,
+        TRUE
+      );
+    $installer_paths["$projects_dir/other_project"] = ['non_drupal/other_project'];
+    $manipulator->addPackage(
         [
           'name' => 'drupal/custom_module',
           'type' => 'drupal-custom-module',
-          'install_path' => "$relative_projects_dir/custom_module",
-        ]
-      )
-      // A test info.yml file where the folder names and info.yml file names do
-      // not match the project or package. Only the project key in this file
-      // need to match.
-      ->addProjectAtPath("web/projects/any_folder_name/any_sub_folder", 'nested_no_match_project', 'any_yml_file.info.yml')
-      ->commitChanges($fixture);
+        ],
+        FALSE,
+        TRUE
+      );
+    $installer_paths["$projects_dir/custom_module"] = ['drupal/custom_module'];
+
+    // Commit the changes to 'installer-paths' first so that all the packages
+    // will be installed at the correct paths.
+    $this->setInstallerPaths($installer_paths, $fixture);
+    $manipulator->commitChanges($fixture);
   }
 
   /**

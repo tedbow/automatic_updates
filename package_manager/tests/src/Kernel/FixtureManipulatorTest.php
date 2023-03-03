@@ -70,7 +70,6 @@ class FixtureManipulatorTest extends PackageManagerKernelTestBase {
           'name' => 'my/dev-package',
           'version' => '2.1.0',
           'type' => 'library',
-          'install_path' => '../relative/path',
         ],
         TRUE
       )
@@ -130,51 +129,39 @@ class FixtureManipulatorTest extends PackageManagerKernelTestBase {
       $this->assertStringContainsString("Expected package 'my/package' to not be installed, but it was.", $e->getMessage());
     }
 
-    // We should not be able to add a package with an absolute installation
-    // path.
-    try {
-      (new ActiveFixtureManipulator())
-        ->addPackage([
-          'name' => 'absolute/path',
-          'install_path' => '/absolute/path',
-          'type' => 'library',
-        ])
-        ->commitChanges();
-      $this->fail('Add package should have failed.');
-    }
-    catch (\UnexpectedValueException $e) {
-      $this->assertSame("'install_path' must start with '../'.", $e->getMessage());
-    }
-
     $installed_json_expected_packages = [
-      'my/package' => [
-        'name' => 'my/package',
-        'type' => 'library',
-        // If no version is specified in a new package it will be added.
-        'version' => '1.2.3',
-        'version_normalized' => '1.2.3.0',
-      ],
       'my/dev-package' => [
         'name' => 'my/dev-package',
         'version' => '2.1.0',
-        'type' => 'library',
         'version_normalized' => '2.1.0.0',
+        'type' => 'library',
+      ],
+      'my/package' => [
+        'name' => 'my/package',
+        // If no version is specified in a new package it will be added.
+        'version' => '1.2.3',
+        'version_normalized' => '1.2.3.0',
+        'type' => 'library',
       ],
     ];
     $installed_php_expected_packages = $installed_json_expected_packages;
-    // Composer stores `version_normalized`in 'installed.json' but not
-    // 'installed.php'.
-    unset($installed_php_expected_packages['my/dev-package']['version_normalized']);
-    unset($installed_php_expected_packages['my/package']['version_normalized']);
+    foreach ($installed_php_expected_packages as $package_name => &$expectation) {
+      // Composer stores `version_normalized`in 'installed.json' but in
+      // 'installed.php' that is just 'version', and 'version' is
+      // 'pretty_version'.
+      $expectation['pretty_version'] = $expectation['version'];
+      $expectation['version'] = $expectation['version_normalized'];
+      unset($expectation['version_normalized']);
+      // `name` is omitted in installed.php.
+      unset($expectation['name']);
+      // Compute the expected `install_path`.
+      $expectation['install_path'] = $expectation['type'] === 'metapackage' ? NULL : "$this->dir/vendor/composer/../$package_name";
+    }
     [$installed_json, $installed_php] = $this->getData();
     $installed_json['packages'] = array_intersect_key($installed_json['packages'], $installed_json_expected_packages);
-    $this->assertSame($installed_json_expected_packages, $installed_json['packages']);
+    $this->assertSame($installed_json_expected_packages, array_map(fn (array $package) => array_intersect_key($package, array_flip(['name', 'type', 'version', 'version_normalized'])), $installed_json['packages']));
     $this->assertContains('my/dev-package', $installed_json['dev-package-names']);
     $this->assertNotContains('my/package', $installed_json['dev-package-names']);
-    // In installed.php, the relative installation path of my/dev-package should
-    // have been prefixed with the __DIR__ constant, which should be interpreted
-    // when installed.php is loaded by the PHP runtime.
-    $installed_php_expected_packages['my/dev-package']['install_path'] = "$this->dir/vendor/composer/../relative/path";
 
     // None of the operations should have changed the original packages.
     $this->assertOriginalFixturePackagesUnchanged($installed_php);
@@ -182,7 +169,9 @@ class FixtureManipulatorTest extends PackageManagerKernelTestBase {
     // Remove the original packages since we have confirmed that they have not
     // changed.
     $installed_php = array_diff_key($installed_php, $this->originalInstalledPhp);
-    $this->assertSame($installed_php_expected_packages, $installed_php);
+    foreach ($installed_php_expected_packages as $package_name => $expected_data) {
+      $this->assertEquals($installed_php_expected_packages[$package_name], array_intersect_key($installed_php[$package_name], array_flip(['version', 'type', 'pretty_version', 'install_path'])), $package_name);
+    }
   }
 
   /**
@@ -192,17 +181,15 @@ class FixtureManipulatorTest extends PackageManagerKernelTestBase {
     $fs = (new Filesystem());
     // Assert ::modifyPackage() works with a package in an existing fixture not
     // created by ::addPackage().
-    $existing_fixture = __DIR__ . '/../../fixtures/FixtureUtilityTraitTest/existing_correct_fixture';
-    $temp_fixture = $this->siteDirectory . $this->randomMachineName('42');
-    $fs->mirror($existing_fixture, $temp_fixture);
-    $decode_installed_json = function () use ($temp_fixture) {
-      return json_decode(file_get_contents($temp_fixture . '/vendor/composer/installed.json'), TRUE, 512, JSON_THROW_ON_ERROR);
+    $decode_installed_json = function () {
+      return json_decode(file_get_contents($this->dir . '/vendor/composer/installed.json'), TRUE, 512, JSON_THROW_ON_ERROR);
     };
     $original_installed_json = $decode_installed_json();
     $this->assertIsArray($original_installed_json);
-    (new FixtureManipulator())
-      ->modifyPackage('the-org/the-package', ['install_path' => '../../a_new_path'])
-      ->commitChanges($temp_fixture);
+    (new ActiveFixtureManipulator())
+      // @see ::setUp()
+      ->modifyPackage('my/dev-package', ['version' => '2.1.0'])
+      ->commitChanges();
     $this->assertSame($original_installed_json, $decode_installed_json());
 
     // Assert that ::modifyPackage() throws an error if a package exists in the
@@ -214,7 +201,7 @@ class FixtureManipulatorTest extends PackageManagerKernelTestBase {
     $fs->mirror($existing_incorrect_fixture, $temp_fixture);
     try {
       (new FixtureManipulator())
-        ->modifyPackage('the-org/the-package', ['install_path' => '../../a_new_path'])
+        ->modifyPackage('the-org/the-package', ['irrelevant' => TRUE])
         ->commitChanges($temp_fixture);
       $this->fail('Modifying a non-existent package should raise an error.');
     }
@@ -237,7 +224,7 @@ class FixtureManipulatorTest extends PackageManagerKernelTestBase {
       // Add a key to an existing package.
       ->modifyPackage('my/package', ['type' => 'metapackage'])
       // Change a key in an existing package.
-      ->setVersion('my/dev-package', '3.2.1')
+      ->setVersion('my/dev-package', '3.2.1', TRUE)
       // Move an existing package to dev requirements.
       ->addPackage([
         'name' => 'my/other-package',
@@ -246,12 +233,6 @@ class FixtureManipulatorTest extends PackageManagerKernelTestBase {
       ->commitChanges();
 
     $install_json_expected_packages = [
-      'my/package' => [
-        'name' => 'my/package',
-        'type' => 'metapackage',
-        'version' => '1.2.3',
-        'version_normalized' => '1.2.3.0',
-      ],
       'my/dev-package' => [
         'name' => 'my/dev-package',
         'version' => '3.2.1',
@@ -260,21 +241,33 @@ class FixtureManipulatorTest extends PackageManagerKernelTestBase {
       ],
       'my/other-package' => [
         'name' => 'my/other-package',
-        'type' => 'library',
         'version' => '1.2.3',
         'version_normalized' => '1.2.3.0',
+        'type' => 'library',
+      ],
+      'my/package' => [
+        'name' => 'my/package',
+        'version' => '1.2.3',
+        'version_normalized' => '1.2.3.0',
+        'type' => 'metapackage',
       ],
     ];
     $installed_php_expected_packages = $install_json_expected_packages;
-    // Composer stores `version_normalized`in 'installed.json' but not
-    // 'installed.php'.
-    unset($installed_php_expected_packages['my/dev-package']['version_normalized']);
-    unset($installed_php_expected_packages['my/package']['version_normalized']);
-    unset($installed_php_expected_packages['my/other-package']['version_normalized']);
-    $installed_php_expected_packages['my/dev-package']['install_path'] = "$this->dir/vendor/composer/../relative/path";
+    foreach ($installed_php_expected_packages as $package_name => &$expectation) {
+      // Composer stores `version_normalized`in 'installed.json' but in
+      // 'installed.php' that is just 'version', and 'version' is
+      // 'pretty_version'.
+      $expectation['pretty_version'] = $expectation['version'];
+      $expectation['version'] = $expectation['version_normalized'];
+      unset($expectation['version_normalized']);
+      // `name` is omitted in installed.php.
+      unset($expectation['name']);
+      // Compute the expected `install_path`.
+      $expectation['install_path'] = $expectation['type'] === 'metapackage' ? NULL : "$this->dir/vendor/composer/../$package_name";
+    }
     [$installed_json, $installed_php] = $this->getData();
     $installed_json['packages'] = array_intersect_key($installed_json['packages'], $install_json_expected_packages);
-    $this->assertSame($install_json_expected_packages, $installed_json['packages']);
+    $this->assertSame($install_json_expected_packages, array_map(fn (array $package) => array_intersect_key($package, array_flip(['name', 'type', 'version', 'version_normalized'])), $installed_json['packages']));
     $this->assertContains('my/dev-package', $installed_json['dev-package-names']);
     $this->assertNotContains('my/other-package', $installed_json['dev-package-names']);
     $this->assertNotContains('my/package', $installed_json['dev-package-names']);
@@ -285,7 +278,9 @@ class FixtureManipulatorTest extends PackageManagerKernelTestBase {
     // Remove the original packages since we have confirmed that they have not
     // changed.
     $installed_php = array_diff_key($installed_php, $this->originalInstalledPhp);
-    $this->assertSame($installed_php_expected_packages, $installed_php);
+    foreach ($installed_php_expected_packages as $package_name => $expected_data) {
+      $this->assertEquals($installed_php_expected_packages[$package_name], array_intersect_key($installed_php[$package_name], array_flip(['version', 'type', 'pretty_version', 'install_path'])), $package_name);
+    }
   }
 
   /**
@@ -300,12 +295,12 @@ class FixtureManipulatorTest extends PackageManagerKernelTestBase {
       $this->fail('Removing a non-existent package should raise an error.');
     }
     catch (\LogicException $e) {
-      $this->assertStringContainsString("Expected package 'junk/drawer' to be installed, but it wasn't.", $e->getMessage());
+      $this->assertStringContainsString('junk/drawer is not required in your composer.json and has not been remove', $e->getMessage());
     }
 
     (new ActiveFixtureManipulator())
       ->removePackage('my/package')
-      ->removePackage('my/dev-package')
+      ->removePackage('my/dev-package', TRUE)
       ->commitChanges();
 
     foreach (['json', 'php'] as $extension) {
@@ -360,7 +355,6 @@ class FixtureManipulatorTest extends PackageManagerKernelTestBase {
     $fixture_manipulator = (new FixtureManipulator())
       ->addPackage([
         'name' => 'relative/project_path',
-        'install_path' => '../../relative/project_path',
         'type' => 'drupal-module',
       ])
       ->addDotGitFolder($project_root . "/relative/project_path")

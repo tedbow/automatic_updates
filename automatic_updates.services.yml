@@ -61,6 +61,9 @@ services:
       - { name: event_subscriber }
   automatic_updates.staged_projects_validator:
     class: Drupal\automatic_updates\Validator\StagedProjectsValidator
+    arguments:
+      - '@package_manager.path_locator'
+      - '@package_manager.composer_inspector'
     tags:
       - { name: event_subscriber }
   automatic_updates.release_chooser:

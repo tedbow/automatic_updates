@@ -3,15 +3,19 @@
 namespace Drupal\fixture_manipulator;
 
 use Composer\Semver\VersionParser;
+use Drupal\Component\FileSystem\FileSystem;
 use Drupal\Component\Utility\NestedArray;
-use Drupal\Core\Serialization\Yaml;
+use PhpTuf\ComposerStager\Domain\Service\ProcessOutputCallback\ProcessOutputCallbackInterface;
 use PhpTuf\ComposerStager\Domain\Service\ProcessRunner\ComposerRunnerInterface;
-use Symfony\Component\Filesystem\Filesystem;
+use Symfony\Component\Filesystem\Filesystem as SymfonyFileSystem;
+use Drupal\Component\Serialization\Yaml;
 
 /**
  * It manipulates.
  */
 class FixtureManipulator {
+
+  protected const PATH_REPO_STATE_KEY = self::class . '-path-repo-base';
 
   /**
    * Whether changes are currently being committed.
@@ -39,7 +43,7 @@ class FixtureManipulator {
    *
    * @var string
    */
-  private string $dir;
+  protected string $dir;
 
   /**
    * Validate the fixtures still passes `composer validate`.
@@ -49,44 +53,48 @@ class FixtureManipulator {
     $runner = \Drupal::service(ComposerRunnerInterface::class);
     $runner->run([
       'validate',
-      // @todo Check the lock file in https://drupal.org/i/3343827.
-      '--no-check-lock',
       '--no-check-publish',
       '--with-dependencies',
       '--no-interaction',
       '--ansi',
       '--no-cache',
       "--working-dir={$this->dir}",
+      // Unlike ComposerInspector::validate(), explicitly do NOT validate
+      // plugins, to allow for testing edge cases.
+      '--no-plugins',
+      // @todo remove this after FixtureManipulator uses composer commands exclusively!
+      '--no-check-lock',
+      // Dummy packages are not meant for publishing, so do not validate that.
+      '--no-check-publish',
+      '--no-check-version',
     ]);
   }
 
   /**
    * Adds a package.
    *
-   * If $package contains an `install_path` key, it should be relative to the
-   * location of `installed.json` and `installed.php`, which are in
-   * `vendor/composer`. For example, if the package would be installed at
-   * `vendor/kirk/enterprise`, the install path should be `../kirk/enterprise`.
-   * If the package would be installed outside of vendor (for example, a Drupal
-   * module in the `modules` directory), it would be `../../modules/my_module`.
-   *
    * @param array $package
    *   The package info that should be added to installed.json and
    *   installed.php. Must include the `name` and `type` keys.
    * @param bool $is_dev_requirement
    *   Whether or not the package is a development requirement.
-   * @param bool $create_project
-   *   Whether or not the project info.yml file should be created.
+   * @param bool $allow_plugins
+   *   Whether or not to use the '--no-plugins' option.
+   * @param array|null $extra_files
+   *   An array extra files to create in the package. The keys are the file
+   *   paths under package and values are the file contents.
    */
-  public function addPackage(array $package, bool $is_dev_requirement = FALSE, bool $create_project = TRUE): self {
+  public function addPackage(array $package, bool $is_dev_requirement = FALSE, bool $allow_plugins = FALSE, ?array $extra_files = NULL): self {
     if (!$this->committingChanges) {
       // To pass Composer validation all packages must have a version specified.
       if (!isset($package['version'])) {
         $package['version'] = '1.2.3';
       }
-      $this->queueManipulation('addPackage', [$package, $is_dev_requirement, $create_project]);
+      $this->queueManipulation('addPackage', [$package, $is_dev_requirement, $allow_plugins, $extra_files]);
       return $this;
     }
+
+    // Basic validation so we can defer the rest to `composer` commands.
     foreach (['name', 'type'] as $required_key) {
       if (!isset($package[$required_key])) {
         throw new \UnexpectedValueException("The '$required_key' is required when calling ::addPackage().");
@@ -95,29 +103,61 @@ class FixtureManipulator {
     if (!preg_match('/\w+\/\w+/', $package['name'])) {
       throw new \UnexpectedValueException(sprintf("'%s' is not a valid package name.", $package['name']));
     }
-    $this->setPackage($package['name'], $package, FALSE, $is_dev_requirement);
-    $drupal_project_types = [
-      'drupal-module',
-      'drupal-theme',
-      'drupal-custom-module',
-      'drupal-custom-theme',
-    ];
-    if (!$create_project || !in_array($package['type'], $drupal_project_types, TRUE)) {
-      return $this;
+
+    // `composer require` happily will re-require already required packages.
+    // Prevent test authors from thinking this has any effect when it does not.
+    $json = $this->runComposerCommand(['show', '--name-only', '--format=json'])->stdout;
+    $installed_package_names = array_column(json_decode($json)->installed, 'name');
+    if (in_array($package['name'], $installed_package_names)) {
+      throw new \LogicException(sprintf("Expected package '%s' to not be installed, but it was.", $package['name']));
     }
-    if (empty($package['install_path'])) {
-      throw new \LogicException("'install_path' is not set.");
+
+    $repo_path = $this->addRepository($package);
+    if (is_null($extra_files) && isset($package['type']) && in_array($package['type'], ['drupal-module', 'drupal-theme', 'drupal-profile'], TRUE)) {
+      // For Drupal projects if no files are provided create an info.yml file
+      // that assumes the project and package names match.
+      [, $package_name] = explode('/', $package['name']);
+      $project_name = str_replace('-', '_', $package_name);
+      $project_info_data = [
+        'name' => $package['name'],
+        'project' => $project_name,
+      ];
+      $extra_files["$project_name.info.yml"] = Yaml::encode($project_info_data);
     }
-    $install_path = "vendor/composer/" . $package['install_path'];
-    $this->addProjectAtPath($install_path);
+    if (!empty($extra_files)) {
+      $fs = new SymfonyFileSystem();
+      foreach ($extra_files as $file_name => $file_contents) {
+        if (str_contains($file_name, DIRECTORY_SEPARATOR)) {
+          $file_dir = dirname("$repo_path/$file_name");
+          if (!is_dir($file_dir)) {
+            $fs->mkdir($file_dir);
+          }
+        }
+        file_put_contents("$repo_path/$file_name", $file_contents);
+      }
+    }
+    $command_options = ['require', "{$package['name']}:{$package['version']}"];
+    if ($is_dev_requirement) {
+      $command_options[] = '--dev';
+    }
+    // Unlike ComposerInspector::validate(), explicitly do NOT validate plugins.
+    if (!$allow_plugins) {
+      $command_options[] = '--no-plugins';
+    }
+    $this->runComposerCommand($command_options);
     return $this;
   }
 
   /**
    * Modifies a package's installed info.
    *
-   * See ::addPackage() for information on how the `install_path` key is
-   * handled, if $package has it.
+   * @todo Since ::setVersion() is not longer calling this method the only test
+   *   the is using this that is not just testing this method itself is
+   *   \Drupal\Tests\automatic_updates\Kernel\StatusCheck\ScaffoldFilePermissionsValidatorTest::testScaffoldFilesChanged
+   *   That test is passing, so we could leave it, then we have to leave
+   *   ::setPackage() which is very complicated. Will leave notes on
+   *   testScaffoldFilesChanged() how we might solve that with composer commands
+   *   instead of this method.
    *
    * @param string $name
    *   The name of the package to modify.
@@ -141,11 +181,23 @@ class FixtureManipulator {
    *   The package name.
    * @param string $version
    *   The version.
+   * @param bool $is_dev_requirement
+   *   Whether or not the package is a development requirement.
    *
    * @return $this
    */
-  public function setVersion(string $package_name, string $version): self {
-    return $this->modifyPackage($package_name, ['version' => $version]);
+  public function setVersion(string $package_name, string $version, bool $is_dev_requirement = FALSE): self {
+    if (!$this->committingChanges) {
+      $this->queueManipulation('setVersion', func_get_args());
+      return $this;
+    }
+    $package = [
+      'name' => $package_name,
+      'version' => $version,
+    ];
+    $this->addRepository($package);
+    $this->runComposerCommand(array_filter(['require', "$package_name:$version", $is_dev_requirement ? '--dev' : NULL]));
+    return $this;
   }
 
   /**
@@ -153,13 +205,27 @@ class FixtureManipulator {
    *
    * @param string $name
    *   The name of the package to remove.
+   * @param bool $is_dev_requirement
+   *   Whether or not the package is a developer requirement.
    */
-  public function removePackage(string $name): self {
+  public function removePackage(string $name, bool $is_dev_requirement = FALSE): self {
     if (!$this->committingChanges) {
       $this->queueManipulation('removePackage', func_get_args());
       return $this;
     }
-    $this->setPackage($name, NULL, TRUE);
+
+    $output = $this->runComposerCommand(array_filter(['remove', $name, $is_dev_requirement ? '--dev' : NULL, '--no-update']));
+    // `composer remove` will not set exit code 1 whenever a non-required
+    // package is being removed.
+    // @see \Composer\Command\RemoveCommand
+    if (str_contains($output->stderr, 'not required in your composer.json and has not been removed')) {
+      $output->stderr = str_replace("./composer.json has been updated\n", '', $output->stderr);
+      throw new \LogicException($output->stderr);
+    }
+
+    // Make sure that `installed.json` & `installed.php` are updated.
+    // @todo Remove this when ComposerUtility gets removed.
+    $this->runComposerCommand(['update', $name]);
     return $this;
   }
 
@@ -168,6 +234,8 @@ class FixtureManipulator {
    *
    * This function is internal and should not be called directly. Use
    * ::addPackage(), ::modifyPackage(), and ::removePackage() instead.
+   *
+   * @todo Remove this method once ::modifyPackage() doesn't call it.
    *
    * @param string $pretty_name
    *   The name of the package to add, update, or remove.
@@ -214,7 +282,7 @@ class FixtureManipulator {
 
     if ($package) {
       $package = ['name' => $pretty_name] + $package;
-      $install_json_package = array_diff_key($package, array_flip(['install_path']));
+      $install_json_package = $package;
       // Composer will use 'version_normalized', if present, to determine the
       // version number.
       if (isset($install_json_package['version']) && !isset($install_json_package['version_normalized'])) {
@@ -230,16 +298,24 @@ class FixtureManipulator {
         $install_json_package = $install_json_package + $data['packages'][$position];
       }
 
-      // Remove the existing package; the array will be re-keyed by
-      // array_splice().
-      array_splice($data['packages'], $position, 1);
-      $is_existing_dev_package = in_array($name, $data['dev-package-names'], TRUE);
-      $data['dev-package-names'] = array_diff($data['dev-package-names'], [$name]);
-      $data['dev-package-names'] = array_values($data['dev-package-names']);
+      // If `$package === NULL`, the existing package should be removed.
+      if ($package === NULL) {
+        array_splice($data['packages'], $position, 1);
+        $is_existing_dev_package = in_array($name, $data['dev-package-names'], TRUE);
+        $data['dev-package-names'] = array_diff($data['dev-package-names'], [$name]);
+        $data['dev-package-names'] = array_values($data['dev-package-names']);
+      }
     }
     // Add the package back to the list, if we have data for it.
     if (isset($install_json_package)) {
-      $data['packages'][] = $install_json_package;
+      // If it previously existed, put it back in the previous position.
+      if ($position) {
+        $data['packages'][$i] = $install_json_package;
+      }
+      // Otherwise, it must be new: append it to the list.
+      else {
+        $data['packages'][] = $install_json_package;
+      }
 
       if ($is_dev_requirement || !empty($is_existing_dev_package)) {
         $data['dev-package-names'][] = $name;
@@ -259,23 +335,9 @@ class FixtureManipulator {
       throw new \LogicException($expected_package_message);
     }
     if ($package) {
-      // If an install path was provided, ensure it's relative.
-      if (array_key_exists('install_path', $package)) {
-        if (!str_starts_with($package['install_path'], '../')) {
-          throw new \UnexpectedValueException("'install_path' must start with '../'.");
-        }
-      }
       $install_php_package = $should_exist ?
         NestedArray::mergeDeep($data['versions'][$name], $package) :
         $package;
-
-      // The installation paths in $data will have been interpreted by the PHP
-      // runtime, so make them all relative again by stripping $this->dir out.
-      array_walk($data['versions'], function (array &$install_php_package) use ($composer_folder) : void {
-        if (array_key_exists('install_path', $install_php_package)) {
-          $install_php_package['install_path'] = str_replace("$composer_folder/", '', $install_php_package['install_path']);
-        }
-      });
       $data['versions'][$name] = $install_php_package;
     }
     else {
@@ -283,7 +345,6 @@ class FixtureManipulator {
     }
 
     $data = var_export($data, TRUE);
-    $data = str_replace("'install_path' => '../", "'install_path' => __DIR__ . '/../", $data);
     file_put_contents($file, "<?php\nreturn $data;");
   }
 
@@ -308,7 +369,7 @@ class FixtureManipulator {
     if (file_exists($path)) {
       throw new \LogicException("'$path' path already exists.");
     }
-    $fs = new Filesystem();
+    $fs = new SymfonyFileSystem();
     $fs->mkdir($path);
     if ($project_name === NULL) {
       $project_name = basename($path);
@@ -336,9 +397,6 @@ class FixtureManipulator {
   /**
    * Modifies a package's installed info.
    *
-   * See ::addPackage() for information on how the `install_path` key is
-   * handled, if $package has it.
-   *
    * @param array $additional_config
    *   The configuration to add.
    */
@@ -351,18 +409,24 @@ class FixtureManipulator {
       $this->queueManipulation('addConfig', func_get_args());
       return $this;
     }
+    $clean_value = function ($value) {
+      return $value === FALSE ? 'false' : $value;
+    };
 
-    $file = $this->dir . '/composer.json';
-    self::ensureFilePathIsWritable($file);
-
-    $data = file_get_contents($file);
-    $data = json_decode($data, TRUE, 512, JSON_THROW_ON_ERROR);
-
-    $config = $data['config'] ?? [];
-    $data['config'] = NestedArray::mergeDeep($config, $additional_config);
-
-    file_put_contents($file, json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
-    self::ensureFilePathIsWritable($file);
+    foreach ($additional_config as $key => $value) {
+      $command = ['config'];
+      if (is_array($value)) {
+        $value = json_encode($value, JSON_UNESCAPED_SLASHES);
+        $command[] = '--json';
+      }
+      else {
+        $value = $clean_value($value);
+      }
+      $command[] = $key;
+      $command[] = $value;
+      $this->runComposerCommand($command);
+    }
+    $this->runComposerCommand(['update', '--lock']);
 
     return $this;
   }
@@ -386,10 +450,16 @@ class FixtureManipulator {
       throw new \BadMethodCallException('Already committed.');
     }
     $this->dir = $dir;
+    $this->setUpRepos();
     $this->committingChanges = TRUE;
     $manipulator_arguments = $this->getQueuedManipulationItems();
     $this->clearQueuedManipulationItems();
+    // @todo The following line make InstalledPackagesListTest pass but causes
+    // other tests to fail, at least DeleteExistingUpdateTest.
+    // $this->runComposerCommand(['update']);
     foreach ($manipulator_arguments as $method => $argument_sets) {
+      // @todo Attempt to make fewer Composer calls in
+      //   https://drupal.org/i/3345639.
       foreach ($argument_sets as $argument_set) {
         $this->{$method}(...$argument_set);
       }
@@ -428,7 +498,7 @@ class FixtureManipulator {
       $this->queueManipulation('addDotGitFolder', func_get_args());
       return $this;
     }
-    $fs = new Filesystem();
+    $fs = new SymfonyFileSystem();
     $git_directory_path = $path . "/.git";
     if (!is_dir($git_directory_path)) {
       $fs->mkdir($git_directory_path);
@@ -466,6 +536,113 @@ class FixtureManipulator {
    */
   protected function getQueuedManipulationItems(): array {
     return $this->manipulatorArguments;
+  }
+
+  protected function runComposerCommand(array $command_options): ProcessOutputCallbackInterface {
+    $plain_output = new class() implements ProcessOutputCallbackInterface {
+      public string $stdout = '';
+      public string $stderr = '';
+
+      /**
+       * {@inheritdoc}
+       */
+      public function __invoke(string $type, string $buffer): void {
+        if ($type === self::OUT) {
+          $this->stdout .= $buffer;
+          return;
+        }
+        elseif ($type === self::ERR) {
+          $this->stderr .= $buffer;
+          return;
+        }
+        throw new \InvalidArgumentException("Unsupported output type: '$type'");
+      }
+
+    };
+    /** @var \PhpTuf\ComposerStager\Domain\Service\ProcessRunner\ComposerRunnerInterface $runner */
+    $runner = \Drupal::service(ComposerRunnerInterface::class);
+    $command_options[] = "--working-dir={$this->dir}";
+    $runner->run($command_options, $plain_output);
+    return $plain_output;
+  }
+
+  /**
+   * Adds a path repository.
+   *
+   * @param array $package
+   *   The package.
+   *
+   * @return string
+   *   The repository path.
+   */
+  private function addRepository(array $package): string {
+    $name = $package['name'];
+    $path_repo_base = \Drupal::state()->get(self::PATH_REPO_STATE_KEY);
+    $repo_path = "$path_repo_base/" . str_replace('/', '--', $name);
+    $composer_json_path = $repo_path . DIRECTORY_SEPARATOR . 'composer.json';
+    $fs = new SymfonyFileSystem();
+    if (!is_dir($repo_path)) {
+      // Create the repo if it does not exist.
+      $fs->mkdir($repo_path);
+      file_put_contents($composer_json_path, json_encode($package, JSON_THROW_ON_ERROR));
+      $repository = json_encode([
+        'type' => 'path',
+        'url' => $repo_path,
+        'options' => [
+          'symlink' => FALSE,
+        ],
+      ], JSON_UNESCAPED_SLASHES);
+      $this->runComposerCommand(['config', "repo.$name", $repository]);
+    }
+    else {
+      $composer_json_data = json_decode(file_get_contents($composer_json_path), TRUE);
+      // Update the version if needed.
+      // @todo Should we create 1 repo per version.
+      if ($composer_json_data['version'] !== $package['version']) {
+        $composer_json_data['version'] = $package['version'];
+        file_put_contents($composer_json_path, json_encode($composer_json_data, JSON_THROW_ON_ERROR));
+      }
+    }
+    return $repo_path;
+  }
+
+  /**
+   * Sets up the path repos at absolute paths.
+   */
+  public function setUpRepos(): void {
+    // Some of the test coverage for FixtureManipulator tests edge cases for
+    // making installed.php invalid, and those test fixtures do NOT have a
+    // composer.json because ComposerUtility didn't look at that!
+    // @todo Remove this early return when ComposerUtility gets removed along
+    // with that edge case test coverage.
+    // @see fixtures/FixtureUtilityTraitTest/missing_installed_php
+    if (!file_exists($this->dir . '/composer.json')) {
+      return;
+    }
+    $fs = new SymfonyFileSystem();
+    $path_repo_base = \Drupal::state()->get(self::PATH_REPO_STATE_KEY);
+    if (empty($path_repo_base)) {
+      // @todo Is this better to setup in the base test class or trait?
+      $path_repo_base = FileSystem::getOsTemporaryDirectory() . '/base-repo-' . microtime(TRUE) . rand(0, 10000);
+      \Drupal::state()->set(self::PATH_REPO_STATE_KEY, $path_repo_base);
+      // Copy the existing repos that were used to make the fixtures into the
+      // new folder.
+      $fs->mirror(__DIR__ . '/../../../fixtures/path_repos', $path_repo_base);
+    }
+    // Update all the repos in the composer.json file to point to the new
+    // repos at the absolute path.
+    $json_data = json_decode(file_get_contents($this->dir . '/composer.json'), TRUE);
+    $composer_json_needs_update = FALSE;
+    foreach ($json_data['repositories'] as &$existing_repo_data) {
+      if (is_array($existing_repo_data) && isset($existing_repo_data['url']) && str_starts_with($existing_repo_data['url'], '../path_repos/')) {
+        $composer_json_needs_update = TRUE;
+        $existing_repo_data['url'] = str_replace('../path_repos/', "$path_repo_base/", $existing_repo_data['url']);
+      }
+    }
+    if ($composer_json_needs_update) {
+      file_put_contents($this->dir . '/composer.json', json_encode($json_data, JSON_THROW_ON_ERROR));
+    }
+    $this->runComposerCommand(['install']);
   }
 
 }
