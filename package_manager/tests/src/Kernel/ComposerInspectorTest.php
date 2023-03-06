@@ -265,4 +265,16 @@ class ComposerInspectorTest extends PackageManagerKernelTestBase {
       ->validate($project_root);
   }
 
+  /**
+   * @covers ::getRootPackageInfo
+   */
+  public function testRootPackageInfo(): void {
+    $project_root = $this->container->get('package_manager.path_locator')
+      ->getProjectRoot();
+
+    $info = $this->container->get('package_manager.composer_inspector')
+      ->getRootPackageInfo($project_root);
+    $this->assertSame('fake/site', $info['name']);
+  }
+
 }

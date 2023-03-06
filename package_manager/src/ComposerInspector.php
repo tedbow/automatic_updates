@@ -287,6 +287,7 @@ class ComposerInspector {
     //   Composer requirement accordingly.
     $lock_content = file_get_contents($working_dir . DIRECTORY_SEPARATOR . 'composer.lock');
     $lock_data = json_decode($lock_content, TRUE, 512, JSON_THROW_ON_ERROR);
+
     $lock_packages = array_merge($lock_data['packages'] ?? [], $lock_data['packages-dev'] ?? []);
     foreach ($lock_packages as $lock_package) {
       $name = $lock_package['name'];
@@ -300,6 +301,22 @@ class ComposerInspector {
     $this->packageLists[$working_dir] = $list;
 
     return $list;
+  }
+
+  /**
+   * Returns the output of `composer show --self` in a directory.
+   *
+   * @param string $working_dir
+   *   The directory in which to run Composer.
+   *
+   * @return array
+   *   The parsed output of `composer show --self`.
+   */
+  public function getRootPackageInfo(string $working_dir): array {
+    $this->validate($working_dir);
+
+    $this->runner->run(['show', '--self', '--format=json', "--working-dir={$working_dir}"], $this->jsonCallback);
+    return $this->jsonCallback->getOutputData();
   }
 
   /**

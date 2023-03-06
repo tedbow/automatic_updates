@@ -5,6 +5,7 @@ declare(strict_types = 1);
 namespace Drupal\automatic_updates;
 
 use Drupal\Core\StringTranslation\TranslatableMarkup;
+use Drupal\package_manager\ComposerInspector;
 use Drupal\package_manager\Stage;
 
 /**
@@ -16,6 +17,18 @@ use Drupal\package_manager\Stage;
  * in the project-level composer.json, a requirement will be added.
  */
 class Updater extends Stage {
+
+  /**
+   * Constructs a new Updater object.
+   *
+   * @param \Drupal\package_manager\ComposerInspector $composerInspector
+   *   The Composer inspector service.
+   * @param mixed ...$arguments
+   *   Additional arguments to pass to the parent constructor.
+   */
+  public function __construct(protected ComposerInspector $composerInspector, mixed ...$arguments) {
+    parent::__construct(...$arguments);
+  }
 
   /**
    * Begins the update.
@@ -38,18 +51,16 @@ class Updater extends Stage {
       throw new \InvalidArgumentException("Currently only updates to Drupal core are supported.");
     }
 
-    $composer = $this->getActiveComposer();
     $package_versions = [
       'production' => [],
       'dev' => [],
     ];
 
-    $require_dev = $composer->getComposer()
-      ->getPackage()
-      ->getDevRequires();
-    foreach (array_keys($composer->getCorePackages()) as $package) {
-      $group = array_key_exists($package, $require_dev) ? 'dev' : 'production';
-      $package_versions[$group][$package] = $project_versions['drupal'];
+    $project_root = $this->pathLocator->getProjectRoot();
+    $info = $this->composerInspector->getRootPackageInfo($project_root);
+    foreach ($this->composerInspector->getInstalledPackagesList($project_root)->getCorePackages() as $package) {
+      $group = isset($info['devRequires'][$package->name]) ? 'dev' : 'production';
+      $package_versions[$group][$package->name] = $project_versions['drupal'];
     }
 
     // Ensure that package versions are available to pre-create event
