@@ -5,7 +5,6 @@ declare(strict_types = 1);
 namespace Drupal\Tests\package_manager\Traits;
 
 use Composer\Autoload\ClassLoader;
-use Drupal\Core\DependencyInjection\ContainerBuilder;
 use Drupal\fixture_manipulator\FixtureManipulator;
 use Symfony\Component\Process\Process;
 
@@ -41,14 +40,6 @@ trait ComposerInstallersTrait {
       ->addConfig(['allow-plugins.composer/installers' => TRUE])
       ->commitChanges($dir);
     (new Process(['composer', 'require', 'composer/installers:@dev', $working_dir_option]))->mustRun();
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public function register(ContainerBuilder $container) {
-    parent::register($container);
-    $container->getDefinition('package_manager.composer_inspector')->setPublic(TRUE);
   }
 
   /**

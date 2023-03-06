@@ -6,6 +6,7 @@ namespace Drupal\automatic_updates\Form;
 
 use Drupal\automatic_updates\BatchProcessor;
 use Drupal\automatic_updates\Updater;
+use Drupal\package_manager\ComposerInspector;
 use Drupal\package_manager\Exception\StageFailureMarkerException;
 use Drupal\package_manager\ValidationResult;
 use Drupal\Core\Batch\BatchBuilder;
@@ -41,6 +42,8 @@ final class UpdateReady extends UpdateFormBase {
    *   The renderer service.
    * @param \Symfony\Component\EventDispatcher\EventDispatcherInterface $eventDispatcher
    *   Event dispatcher service.
+   * @param \Drupal\package_manager\ComposerInspector $composerInspector
+   *   The Composer inspector service.
    */
   public function __construct(
     protected Updater $updater,
@@ -48,6 +51,7 @@ final class UpdateReady extends UpdateFormBase {
     protected ModuleExtensionList $moduleList,
     protected RendererInterface $renderer,
     protected EventDispatcherInterface $eventDispatcher,
+    private ComposerInspector $composerInspector
   ) {}
 
   /**
@@ -66,7 +70,8 @@ final class UpdateReady extends UpdateFormBase {
       $container->get('state'),
       $container->get('extension.list.module'),
       $container->get('renderer'),
-      $container->get('event_dispatcher')
+      $container->get('event_dispatcher'),
+      $container->get('package_manager.composer_inspector')
     );
   }
 
@@ -89,8 +94,9 @@ final class UpdateReady extends UpdateFormBase {
     $messages = [];
 
     try {
-      $staged_core_packages = $this->updater->getStageComposer()
-        ->getCorePackages();
+      $staged_core_packages = $this->composerInspector->getInstalledPackagesList($this->updater->getStageDirectory())
+        ->getCorePackages()
+        ->getArrayCopy();
     }
     catch (\Throwable) {
       $messages[MessengerInterface::TYPE_ERROR][] = $this->t('There was an error loading the pending update. Press the <em>Cancel update</em> button to start over.');
@@ -127,7 +133,7 @@ final class UpdateReady extends UpdateFormBase {
       '#type' => 'html_tag',
       '#tag' => 'p',
       '#value' => $this->t('Drupal core will be updated to %version', [
-        '%version' => reset($staged_core_packages)->getPrettyVersion(),
+        '%version' => reset($staged_core_packages)->version,
       ]),
     ];
     $form['backup'] = [

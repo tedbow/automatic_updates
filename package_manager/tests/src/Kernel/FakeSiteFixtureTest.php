@@ -4,7 +4,6 @@ declare(strict_types = 1);
 
 namespace Drupal\Tests\package_manager\Kernel;
 
-use Drupal\Core\DependencyInjection\ContainerBuilder;
 use Drupal\fixture_manipulator\ActiveFixtureManipulator;
 use Drupal\package_manager\ComposerUtility;
 use Symfony\Component\Process\Process;
@@ -151,14 +150,6 @@ class FakeSiteFixtureTest extends PackageManagerKernelTestBase {
     $list = $this->container->get('package_manager.composer_inspector')->getInstalledPackagesList($active_dir);
     $list_packages_names = array_keys($list->getArrayCopy());
     $this->assertSame(['any-org/any-package', 'drupal/core', 'drupal/core-dev', 'drupal/core-recommended'], $list_packages_names);
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public function register(ContainerBuilder $container) {
-    parent::register($container);
-    $container->getDefinition('package_manager.composer_inspector')->setPublic(TRUE);
   }
 
   /**

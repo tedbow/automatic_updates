@@ -6,7 +6,6 @@ namespace Drupal\Tests\package_manager\Kernel;
 
 use Composer\Json\JsonFile;
 use Drupal\Component\Serialization\Json;
-use Drupal\Core\DependencyInjection\ContainerBuilder;
 use Drupal\package_manager\ComposerInspector;
 use Drupal\package_manager\InstalledPackage;
 use Drupal\package_manager\JsonProcessOutputCallback;
@@ -57,14 +56,6 @@ class ComposerInspectorTest extends PackageManagerKernelTestBase {
     unlink($dir . '/composer.json');
     $this->expectExceptionMessage("composer.json not found.");
     $inspector->getConfig('extra', $dir);
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public function register(ContainerBuilder $container) {
-    parent::register($container);
-    $container->getDefinition('package_manager.composer_inspector')->setPublic(TRUE);
   }
 
   /**

@@ -48,7 +48,6 @@ services:
       - { name: event_subscriber }
   package_manager.composer_inspector:
     class: Drupal\package_manager\ComposerInspector
-    public: false
   Drupal\package_manager\ComposerInspector: '@package_manager.composer_inspector'
 
   # Validators.

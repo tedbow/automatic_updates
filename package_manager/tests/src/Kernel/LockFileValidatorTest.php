@@ -44,9 +44,6 @@ class LockFileValidatorTest extends PackageManagerKernelTestBase {
   public function register(ContainerBuilder $container) {
     parent::register($container);
 
-    $service_id = 'package_manager.composer_inspector';
-    $container->getDefinition($service_id)->setPublic(TRUE);
-
     // Temporarily mock the Composer inspector to prevent it from complaining
     // over the lack of a lock file if it's invoked by other validators.
     $inspector = $this->prophesize(ComposerInspector::class);
@@ -56,7 +53,7 @@ class LockFileValidatorTest extends PackageManagerKernelTestBase {
     $inspector->getConfig('minimum-stability', $arguments)->willReturn('stable');
     $inspector->getInstalledPackagesList($arguments)->willReturn(new InstalledPackagesList());
     $inspector->validate($arguments);
-    $container->set($service_id, $inspector->reveal());
+    $container->set('package_manager.composer_inspector', $inspector->reveal());
   }
 
   /**
