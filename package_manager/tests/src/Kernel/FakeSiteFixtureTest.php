@@ -48,19 +48,18 @@ class FakeSiteFixtureTest extends PackageManagerKernelTestBase {
    * @see \Drupal\fixture_manipulator\FixtureManipulator::setVersion()
    */
   public function testCallToSetVersion(): void {
+    /** @var \Drupal\package_manager\ComposerInspector $inspector */
+    $inspector = $this->container->get('package_manager.composer_inspector');
     $active_dir = $this->container->get('package_manager.path_locator')->getProjectRoot();
-    $stage = $this->createStage();
-    $installed_packages = $stage->getActiveComposer()->getInstalledPackages();
+    $installed_packages = $inspector->getInstalledPackagesList($active_dir);
     foreach (self::getExpectedFakeSitePackages() as $package_name) {
       $this->assertArrayHasKey($package_name, $installed_packages);
-      $this->assertSame('9.8.0', $installed_packages[$package_name]->getPrettyVersion());
-      $list = $this->container->get('package_manager.composer_inspector')->getInstalledPackagesList($active_dir);
-      $this->assertSame($list[$package_name]->version, '9.8.0');
+      $this->assertSame($installed_packages[$package_name]->version, '9.8.0');
       (new ActiveFixtureManipulator())
         ->setVersion($package_name, '11.1.0')
         ->commitChanges();
-      $list = $this->container->get('package_manager.composer_inspector')->getInstalledPackagesList($active_dir);
-      $this->assertSame($list[$package_name]->version, '11.1.0');
+      $list = $inspector->getInstalledPackagesList($active_dir);
+      $this->assertSame($list[$package_name]?->version, '11.1.0');
     }
   }
 
@@ -70,10 +69,11 @@ class FakeSiteFixtureTest extends PackageManagerKernelTestBase {
    * @covers \Drupal\fixture_manipulator\FixtureManipulator::removePackage()
    */
   public function testCallToRemovePackage(): void {
+    /** @var \Drupal\package_manager\ComposerInspector $inspector */
+    $inspector = $this->container->get('package_manager.composer_inspector');
     $active_dir = $this->container->get('package_manager.path_locator')->getProjectRoot();
     $expected_packages = self::getExpectedFakeSitePackages();
-    $stage = $this->createStage();
-    $actual_packages = array_keys($stage->getActiveComposer()->getInstalledPackages());
+    $actual_packages = array_keys($inspector->getInstalledPackagesList($active_dir)->getArrayCopy());
     sort($actual_packages);
     $this->assertSame($expected_packages, $actual_packages);
     foreach (self::getExpectedFakeSitePackages() as $package_name) {
@@ -81,8 +81,7 @@ class FakeSiteFixtureTest extends PackageManagerKernelTestBase {
         ->removePackage($package_name, $package_name === 'drupal/core-dev')
         ->commitChanges();
       array_shift($expected_packages);
-      $list = $this->container->get('package_manager.composer_inspector')->getInstalledPackagesList($active_dir);
-      $actual_package_names = array_keys($list->getArrayCopy());
+      $actual_package_names = array_keys($inspector->getInstalledPackagesList($active_dir)->getArrayCopy());
       sort($actual_package_names);
       $this->assertSame($expected_packages, $actual_package_names);
     }
@@ -90,24 +89,16 @@ class FakeSiteFixtureTest extends PackageManagerKernelTestBase {
   }
 
   /**
-   * Check which packages are installed in each file.
+   * Checks that the expected packages are installed in the fake site fixture.
    */
   public function testExpectedPackages(): void {
-    $expected_packages = $this->getExpectedFakeSitePackages();
-    $active_dir = $this->container->get('package_manager.path_locator')->getProjectRoot();
-    $stage = $this->createStage();
-    $original_installed_php = $stage->getActiveComposer()->getInstalledPackages();
-    $installed_php_packages = array_keys($original_installed_php);
-    sort($installed_php_packages);
-    $installed_json = json_decode(file_get_contents($active_dir . '/vendor/composer/installed.json'), TRUE, 512, JSON_THROW_ON_ERROR);
-    $installed_json_packages = [];
-    foreach ($installed_json['packages'] as $package) {
-      $installed_json_packages[] = $package['name'];
-    }
-    sort($installed_json_packages);
-    $this->assertSame($expected_packages, $installed_json_packages);
-    // Assert same packages are present in both installed.json and installed.php.
-    $this->assertSame($installed_json_packages, $installed_php_packages);
+    $project_root = $this->container->get('package_manager.path_locator')
+      ->getProjectRoot();
+    $installed_packages = $this->container->get('package_manager.composer_inspector')
+      ->getInstalledPackagesList($project_root)
+      ->getArrayCopy();
+    ksort($installed_packages);
+    $this->assertSame($this->getExpectedFakeSitePackages(), array_keys($installed_packages));
   }
 
   /**
