@@ -229,6 +229,9 @@ class ComposerInspector {
         case 'minimum-stability':
           return 'stable';
 
+        case 'extra':
+          return '{}';
+
         default:
           // Otherwise, re-throw the exception.
           throw $e;

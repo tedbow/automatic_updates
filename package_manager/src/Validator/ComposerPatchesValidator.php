@@ -4,15 +4,17 @@ declare(strict_types = 1);
 
 namespace Drupal\package_manager\Validator;
 
+use Drupal\Component\Serialization\Json;
 use Drupal\Core\Extension\ModuleHandlerInterface;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\Core\Url;
-use Drupal\package_manager\ComposerUtility;
+use Drupal\package_manager\ComposerInspector;
 use Drupal\package_manager\Event\PreApplyEvent;
 use Drupal\package_manager\Event\PreCreateEvent;
 use Drupal\package_manager\Event\PreOperationStageEvent;
 use Drupal\package_manager\Event\StatusCheckEvent;
+use Drupal\package_manager\PathLocator;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 /**
@@ -50,9 +52,16 @@ final class ComposerPatchesValidator implements EventSubscriberInterface {
    *
    * @param \Drupal\Core\Extension\ModuleHandlerInterface $moduleHandler
    *   The module handler service.
+   * @param \Drupal\package_manager\ComposerInspector $composerInspector
+   *   The Composer inspector service.
+   * @param \Drupal\package_manager\PathLocator $pathLocator
+   *   The path locator service.
    */
-  public function __construct(private ModuleHandlerInterface $moduleHandler) {
-  }
+  public function __construct(
+    private ModuleHandlerInterface $moduleHandler,
+    private ComposerInspector $composerInspector,
+    private PathLocator $pathLocator
+  ) {}
 
   /**
    * Validates the status of the patcher plugin.
@@ -63,13 +72,12 @@ final class ComposerPatchesValidator implements EventSubscriberInterface {
   public function validate(PreOperationStageEvent $event): void {
     $messages = [];
 
-    $stage = $event->stage;
-    [$plugin_installed_in_active, $is_active_root_requirement, $active_configuration_ok] = $this->computePatcherStatus($stage->getActiveComposer());
-    try {
-      [$plugin_installed_in_stage, $is_stage_root_requirement, $stage_configuration_ok] = $this->computePatcherStatus($stage->getStageComposer());
+    [$plugin_installed_in_active, $is_active_root_requirement, $active_configuration_ok] = $this->computePatcherStatus($this->pathLocator->getProjectRoot());
+    if ($event instanceof PreApplyEvent) {
+      [$plugin_installed_in_stage, $is_stage_root_requirement, $stage_configuration_ok] = $this->computePatcherStatus($event->stage->getStageDirectory());
       $has_staged_update = TRUE;
     }
-    catch (\LogicException) {
+    else {
       // No staged update exists.
       $has_staged_update = FALSE;
     }
@@ -134,8 +142,8 @@ final class ComposerPatchesValidator implements EventSubscriberInterface {
   /**
    * Computes the status of the patcher plugin in a particular directory.
    *
-   * @param \Drupal\package_manager\ComposerUtility $composer
-   *   A Composer utility for a specific directory.
+   * @param string $working_dir
+   *   The directory in which to run Composer.
    *
    * @return bool[]
    *   An indexed array containing three booleans, in order:
@@ -145,14 +153,15 @@ final class ComposerPatchesValidator implements EventSubscriberInterface {
    *   - Whether the `composer-exit-on-patch-failure` flag is set in the `extra`
    *     section of composer.json.
    */
-  private function computePatcherStatus(ComposerUtility $composer): array {
-    $is_installed = array_key_exists(static::PLUGIN_NAME, $composer->getInstalledPackages());
+  private function computePatcherStatus(string $working_dir): array {
+    $list = $this->composerInspector->getInstalledPackagesList($working_dir);
+    $is_installed = isset($list[static::PLUGIN_NAME]);
 
-    $root_package = $composer->getComposer()->getPackage();
-    $is_root_requirement = array_key_exists(static::PLUGIN_NAME, $root_package->getRequires()) || array_key_exists(static::PLUGIN_NAME, $root_package->getDevRequires());
+    $info = $this->composerInspector->getRootPackageInfo($working_dir);
+    $is_root_requirement = array_key_exists(static::PLUGIN_NAME, $info['requires'] ?? []) || array_key_exists(static::PLUGIN_NAME, $info['devRequires'] ?? []);
 
-    $extra = $root_package->getExtra();
-    $exit_on_failure = !empty($extra['composer-exit-on-patch-failure']);
+    $extra = Json::decode($this->composerInspector->getConfig('extra', $working_dir));
+    $exit_on_failure = $extra['composer-exit-on-patch-failure'] ?? FALSE;
 
     return [$is_installed, $is_root_requirement, $exit_on_failure];
   }

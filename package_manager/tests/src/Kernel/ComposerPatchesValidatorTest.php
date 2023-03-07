@@ -7,7 +7,6 @@ namespace Drupal\Tests\package_manager\Kernel;
 use Drupal\Core\Url;
 use Drupal\fixture_manipulator\ActiveFixtureManipulator;
 use Drupal\package_manager\Event\PreCreateEvent;
-use Drupal\package_manager\Event\StatusCheckEvent;
 use Drupal\package_manager\Exception\StageEventException;
 use Drupal\package_manager\ValidationResult;
 use Symfony\Component\Process\Process;
@@ -237,9 +236,6 @@ class ComposerPatchesValidatorTest extends PackageManagerKernelTestBase {
     $stage->create();
     $stage_dir = $stage->getStageDirectory();
     $stage->require(['drupal/core:9.8.1']);
-    $event = new StatusCheckEvent($stage, []);
-    $this->container->get('event_dispatcher')->dispatch($event);
-    $this->assertValidationResultsEqual($expected_results, $event->getResults(), NULL, $stage_dir);
 
     try {
       $stage->apply();
