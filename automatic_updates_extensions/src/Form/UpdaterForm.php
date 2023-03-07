@@ -13,8 +13,10 @@ use Drupal\Core\State\StateInterface;
 use Drupal\Core\Messenger\MessengerInterface;
 use Drupal\Core\Render\RendererInterface;
 use Drupal\Core\Url;
+use Drupal\package_manager\ComposerInspector;
 use Drupal\package_manager\Exception\StageFailureMarkerException;
 use Drupal\package_manager\FailureMarker;
+use Drupal\package_manager\PathLocator;
 use Drupal\package_manager\ProjectInfo;
 use Drupal\package_manager\ValidationResult;
 use Drupal\system\SystemManager;
@@ -31,41 +33,6 @@ use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 final class UpdaterForm extends UpdateFormBase {
 
   /**
-   * The extension updater service.
-   *
-   * @var \Drupal\automatic_updates_extensions\ExtensionUpdater
-   */
-  private $extensionUpdater;
-
-  /**
-   * The event dispatcher service.
-   *
-   * @var \Symfony\Component\EventDispatcher\EventDispatcherInterface
-   */
-  private $eventDispatcher;
-
-  /**
-   * The state service.
-   *
-   * @var \Drupal\Core\State\StateInterface
-   */
-  private $state;
-
-  /**
-   * The renderer service.
-   *
-   * @var \Drupal\Core\Render\RendererInterface
-   */
-  private $renderer;
-
-  /**
-   * Failure marker service.
-   *
-   * @var \Drupal\package_manager\FailureMarker
-   */
-  private $failureMarker;
-
-  /**
    * {@inheritdoc}
    */
   public static function create(ContainerInterface $container) {
@@ -74,31 +41,39 @@ final class UpdaterForm extends UpdateFormBase {
       $container->get('event_dispatcher'),
       $container->get('renderer'),
       $container->get('state'),
-      $container->get('package_manager.failure_marker')
+      $container->get('package_manager.failure_marker'),
+      $container->get('package_manager.composer_inspector'),
+      $container->get('package_manager.path_locator')
     );
   }
 
   /**
    * Constructs a new UpdaterForm object.
    *
-   * @param \Drupal\automatic_updates_extensions\ExtensionUpdater $extension_updater
+   * @param \Drupal\automatic_updates_extensions\ExtensionUpdater $extensionUpdater
    *   The extension updater service.
-   * @param \Symfony\Component\EventDispatcher\EventDispatcherInterface $event_dispatcher
+   * @param \Symfony\Component\EventDispatcher\EventDispatcherInterface $eventDispatcher
    *   The extension event dispatcher service.
    * @param \Drupal\Core\Render\RendererInterface $renderer
    *   The renderer service.
    * @param \Drupal\Core\State\StateInterface $state
    *   The state service.
-   * @param \Drupal\package_manager\FailureMarker $failure_marker
+   * @param \Drupal\package_manager\FailureMarker $failureMarker
    *   The failure marker service.
+   * @param \Drupal\package_manager\ComposerInspector $composerInspector
+   *   The Composer inspector service.
+   * @param \Drupal\package_manager\PathLocator $pathLocator
+   *   The path locator service.
    */
-  public function __construct(ExtensionUpdater $extension_updater, EventDispatcherInterface $event_dispatcher, RendererInterface $renderer, StateInterface $state, FailureMarker $failure_marker) {
-    $this->extensionUpdater = $extension_updater;
-    $this->eventDispatcher = $event_dispatcher;
-    $this->renderer = $renderer;
-    $this->state = $state;
-    $this->failureMarker = $failure_marker;
-  }
+  public function __construct(
+    private ExtensionUpdater $extensionUpdater,
+    private EventDispatcherInterface $eventDispatcher,
+    private RendererInterface $renderer,
+    private StateInterface $state,
+    private FailureMarker $failureMarker,
+    private ComposerInspector $composerInspector,
+    private PathLocator $pathLocator,
+  ) {}
 
   /**
    * {@inheritdoc}
@@ -261,12 +236,13 @@ final class UpdaterForm extends UpdateFormBase {
 
     $all_projects_data = update_calculate_project_data($available_updates);
     $outdated_modules = [];
-    $installed_packages = array_keys($this->extensionUpdater->getActiveComposer()->getInstalledPackages());
+    $installed_packages = $this->composerInspector->getInstalledPackagesList($this->pathLocator->getProjectRoot())
+      ->getArrayCopy();
     $non_supported_update_statuses = [];
     foreach ($all_projects_data as $project_name => $project_data) {
       if (in_array($project_data['project_type'], $supported_project_types, TRUE)) {
         if ($project_data['status'] !== UpdateManagerInterface::CURRENT) {
-          if (!in_array("drupal/$project_name", $installed_packages, TRUE)) {
+          if (!array_key_exists("drupal/$project_name", $installed_packages)) {
             $non_supported_update_statuses[] = $project_data['status'];
             continue;
           }
