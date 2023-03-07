@@ -5,7 +5,9 @@ declare(strict_types = 1);
 namespace Drupal\automatic_updates_extensions\Form;
 
 use Drupal\automatic_updates\Form\UpdateFormBase;
+use Drupal\package_manager\ComposerInspector;
 use Drupal\package_manager\Exception\StageFailureMarkerException;
+use Drupal\package_manager\PathLocator;
 use Drupal\package_manager\ProjectInfo;
 use Drupal\package_manager\ValidationResult;
 use Drupal\automatic_updates_extensions\BatchProcessor;
@@ -33,41 +35,6 @@ use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 final class UpdateReady extends UpdateFormBase {
 
   /**
-   * The updater service.
-   *
-   * @var \Drupal\automatic_updates_extensions\ExtensionUpdater
-   */
-  protected $updater;
-
-  /**
-   * The state service.
-   *
-   * @var \Drupal\Core\State\StateInterface
-   */
-  protected $state;
-
-  /**
-   * The module list service.
-   *
-   * @var \Drupal\Core\Extension\ModuleExtensionList
-   */
-  protected $moduleList;
-
-  /**
-   * The renderer service.
-   *
-   * @var \Drupal\Core\Render\RendererInterface
-   */
-  protected $renderer;
-
-  /**
-   * The event dispatcher.
-   *
-   * @var \Symfony\Component\EventDispatcher\EventDispatcherInterface
-   */
-  protected $eventDispatcher;
-
-  /**
    * Constructs a new UpdateReady object.
    *
    * @param \Drupal\automatic_updates_extensions\ExtensionUpdater $updater
@@ -76,20 +43,28 @@ final class UpdateReady extends UpdateFormBase {
    *   The messenger service.
    * @param \Drupal\Core\State\StateInterface $state
    *   The state service.
-   * @param \Drupal\Core\Extension\ModuleExtensionList $module_list
+   * @param \Drupal\Core\Extension\ModuleExtensionList $moduleList
    *   The module list service.
    * @param \Drupal\Core\Render\RendererInterface $renderer
    *   The renderer service.
-   * @param \Symfony\Component\EventDispatcher\EventDispatcherInterface $event_dispatcher
+   * @param \Symfony\Component\EventDispatcher\EventDispatcherInterface $eventDispatcher
    *   Event dispatcher service.
+   * @param \Drupal\package_manager\ComposerInspector $composerInspector
+   *   The Composer inspector service.
+   * @param \Drupal\package_manager\PathLocator $pathLocator
+   *   The path locator service.
    */
-  public function __construct(ExtensionUpdater $updater, MessengerInterface $messenger, StateInterface $state, ModuleExtensionList $module_list, RendererInterface $renderer, EventDispatcherInterface $event_dispatcher) {
-    $this->updater = $updater;
+  public function __construct(
+    private ExtensionUpdater $updater,
+    MessengerInterface $messenger,
+    private StateInterface $state,
+    private ModuleExtensionList $moduleList,
+    private RendererInterface $renderer,
+    private EventDispatcherInterface $eventDispatcher,
+    private ComposerInspector $composerInspector,
+    private PathLocator $pathLocator,
+  ) {
     $this->setMessenger($messenger);
-    $this->state = $state;
-    $this->moduleList = $module_list;
-    $this->renderer = $renderer;
-    $this->eventDispatcher = $event_dispatcher;
   }
 
   /**
@@ -109,7 +84,9 @@ final class UpdateReady extends UpdateFormBase {
       $container->get('state'),
       $container->get('extension.list.module'),
       $container->get('renderer'),
-      $container->get('event_dispatcher')
+      $container->get('event_dispatcher'),
+      $container->get('package_manager.composer_inspector'),
+      $container->get('package_manager.path_locator')
     );
   }
 
@@ -231,9 +208,9 @@ final class UpdateReady extends UpdateFormBase {
    */
   private function showUpdates(): array {
     // Get packages that were updated in the stage directory.
-    $active = $this->updater->getActiveComposer();
-    $staged = $this->updater->getStageComposer();
-    $updated_packages = $staged->getPackagesWithDifferentVersionsIn($active);
+    $installed_packages = $this->composerInspector->getInstalledPackagesList($this->pathLocator->getProjectRoot());
+    $staged_packages = $this->composerInspector->getInstalledPackagesList($this->updater->getStageDirectory());
+    $updated_packages = $staged_packages->getPackagesWithDifferentVersionsIn($installed_packages);
 
     // Build a list of package names that were updated by user request.
     $updated_by_request = [];
@@ -241,7 +218,6 @@ final class UpdateReady extends UpdateFormBase {
       $updated_by_request = array_merge($updated_by_request, array_keys($group));
     }
 
-    $installed_packages = $active->getInstalledPackages();
     $updated_by_request_info = [];
     $updated_project_info = [];
     $supported_package_types = ['drupal-module', 'drupal-theme'];
@@ -250,17 +226,17 @@ final class UpdateReady extends UpdateFormBase {
     // updated.
     foreach ($updated_packages as $name => $updated_package) {
       // Ignore anything that isn't a module or a theme.
-      if (!in_array($updated_package->getType(), $supported_package_types, TRUE)) {
+      if (!in_array($updated_package->type, $supported_package_types, TRUE)) {
         continue;
       }
       $updated_project_info[$name] = [
-        'title' => $this->getProjectTitle($updated_package->getName()),
-        'installed_version' => $installed_packages[$name]->getPrettyVersion(),
-        'updated_version' => $updated_package->getPrettyVersion(),
+        'title' => $this->getProjectTitle($updated_package->name),
+        'installed_version' => $installed_packages[$updated_package->name]->version,
+        'updated_version' => $updated_package->version,
       ];
     }
 
-    foreach (array_keys($updated_packages) as $name) {
+    foreach ($updated_packages as $name => $updated_package) {
       // Sort the updated packages into two groups: the ones that were updated
       // at the request of the user, and the ones that got updated anyway
       // (probably due to Composer's dependency resolution).
