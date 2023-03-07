@@ -1,4 +1,7 @@
 services:
+  _defaults:
+    autowire: true
+
   automatic_updates_extensions.updater:
     class: Drupal\automatic_updates_extensions\ExtensionUpdater
     arguments:

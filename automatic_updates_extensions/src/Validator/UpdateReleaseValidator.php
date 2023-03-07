@@ -4,6 +4,8 @@ declare(strict_types = 1);
 
 namespace Drupal\automatic_updates_extensions\Validator;
 
+use Drupal\package_manager\ComposerInspector;
+use Drupal\package_manager\PathLocator;
 use Drupal\package_manager\ProjectInfo;
 use Drupal\automatic_updates_extensions\ExtensionUpdater;
 use Drupal\package_manager\LegacyVersionUtility;
@@ -23,6 +25,19 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 final class UpdateReleaseValidator implements EventSubscriberInterface {
 
   use StringTranslationTrait;
+
+  /**
+   * Constructs an UpdateReleaseValidator object.
+   *
+   * @param \Drupal\package_manager\ComposerInspector $composerInspector
+   *   The Composer inspector service.
+   * @param \Drupal\package_manager\PathLocator $pathLocator
+   *   The path locator service.
+   */
+  public function __construct(
+    private ComposerInspector $composerInspector,
+    private PathLocator $pathLocator
+  ) {}
 
   /**
    * Checks if the given version of a project is supported.
@@ -77,11 +92,12 @@ final class UpdateReleaseValidator implements EventSubscriberInterface {
       return;
     }
 
+    $active_packages = $this->composerInspector->getInstalledPackagesList($this->pathLocator->getProjectRoot());
     $all_versions = $stage->getPackageVersions();
     $messages = [];
     foreach (['production', 'dev'] as $package_type) {
       foreach ($all_versions[$package_type] as $package_name => $sematic_version) {
-        $project_name = $stage->getActiveComposer()->getProjectForPackage($package_name);
+        $project_name = $active_packages[$package_name]->getProjectName();
         // If the version isn't in the list of installable releases, then it
         // isn't secure and supported and the user should receive an error.
         if (!$this->isSupportedRelease($project_name, $sematic_version)) {
