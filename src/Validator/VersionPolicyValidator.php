@@ -5,7 +5,9 @@ declare(strict_types = 1);
 namespace Drupal\automatic_updates\Validator;
 
 use Drupal\automatic_updates\CronUpdater;
+use Drupal\package_manager\ComposerInspector;
 use Drupal\package_manager\Event\StatusCheckEvent;
+use Drupal\package_manager\PathLocator;
 use Drupal\package_manager\ProjectInfo;
 use Drupal\automatic_updates\Updater;
 use Drupal\automatic_updates\Validator\VersionPolicy\ForbidDowngrade;
@@ -41,9 +43,16 @@ final class VersionPolicyValidator implements EventSubscriberInterface {
    *
    * @param \Drupal\Core\DependencyInjection\ClassResolverInterface $classResolver
    *   The class resolver service.
+   * @param \Drupal\package_manager\PathLocator $pathLocator
+   *   The path locator service.
+   * @param \Drupal\package_manager\ComposerInspector $composerInspector
+   *   The Composer inspector service.
    */
-  public function __construct(private ClassResolverInterface $classResolver) {
-  }
+  public function __construct(
+    private ClassResolverInterface $classResolver,
+    private PathLocator $pathLocator,
+    private ComposerInspector $composerInspector,
+  ) {}
 
   /**
    * Validates a target version of Drupal core.
@@ -188,8 +197,7 @@ final class VersionPolicyValidator implements EventSubscriberInterface {
     $unknown_target = new \LogicException('The target version of Drupal core could not be determined.');
 
     if (isset($package_versions)) {
-      // Get the first non-dev core package.
-      $core_package_name = key(array_diff_key($updater->getActiveComposer()->getCorePackages(), ['drupal/core-dev' => '']));
+      $core_package_name = $this->getCorePackageName();
 
       if ($core_package_name && array_key_exists($core_package_name, $package_versions)) {
         return $package_versions[$core_package_name];
@@ -253,6 +261,28 @@ final class VersionPolicyValidator implements EventSubscriberInterface {
       PreCreateEvent::class => 'checkVersion',
       StatusCheckEvent::class => 'checkVersion',
     ];
+  }
+
+  /**
+   * Returns the name of the first known installed core package.
+   *
+   * This does NOT include dev packages like `drupal/core-dev` and
+   * `drupal/core-dev-pinned`.
+   *
+   * @return string|bool
+   *   The name of the first known installed core package (most likely
+   *   `drupal/core` or `drupal/core-recommended`), or FALSE if none is found.
+   */
+  private function getCorePackageName(): string|bool {
+    $project_root = $this->pathLocator->getProjectRoot();
+
+    $core_packages = $this->composerInspector->getInstalledPackagesList($project_root)
+      ->getCorePackages()
+      ->getArrayCopy();
+    unset($core_packages['drupal/core-dev']);
+    unset($core_packages['drupal/core-dev-pinned']);
+
+    return key($core_packages) ?? FALSE;
   }
 
 }

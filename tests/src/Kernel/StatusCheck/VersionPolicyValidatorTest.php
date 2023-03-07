@@ -5,6 +5,7 @@ declare(strict_types = 1);
 namespace Drupal\Tests\automatic_updates\Kernel\StatusCheck;
 
 use Drupal\automatic_updates\CronUpdater;
+use Drupal\fixture_manipulator\ActiveFixtureManipulator;
 use Drupal\package_manager\Event\PreCreateEvent;
 use Drupal\package_manager\Exception\StageEventException;
 use Drupal\package_manager\Exception\StageException;
@@ -377,18 +378,17 @@ class VersionPolicyValidatorTest extends AutomaticUpdatesKernelTestBase {
    * just in case it does, we need to be sure that it's an error condition.
    */
   public function testNoCorePackagesInstalled(): void {
-    // Clear the list of packages in the active directory's installed.json.
     $listener = function (PreCreateEvent $event): void {
       // We should have staged package versions.
       /** @var \Drupal\automatic_updates\Updater $updater */
       $updater = $event->stage;
       $this->assertNotEmpty($updater->getPackageVersions());
-
-      $active_dir = $this->container->get('package_manager.path_locator')
-        ->getProjectRoot();
-      $installed = $active_dir . '/vendor/composer/installed.json';
-      $this->assertFileIsWritable($installed);
-      file_put_contents($installed, '{"packages": []}');
+      // Remove all core packages in the active directory.
+      (new ActiveFixtureManipulator())
+        ->removePackage('drupal/core-recommended')
+        ->removePackage('drupal/core')
+        ->removePackage('drupal/core-dev', TRUE)
+        ->commitChanges();
     };
     $this->assertTargetVersionNotDiscoverable($listener);
   }

@@ -91,8 +91,7 @@ services:
       - { name: event_subscriber }
   automatic_updates.validator.version_policy:
     class: Drupal\automatic_updates\Validator\VersionPolicyValidator
-    arguments:
-      - '@class_resolver'
+    autowire: true
     tags:
       - { name: event_subscriber }
   automatic_updates.config_subscriber:
