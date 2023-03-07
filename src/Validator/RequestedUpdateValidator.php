@@ -7,7 +7,9 @@ namespace Drupal\automatic_updates\Validator;
 use Composer\Semver\Semver;
 use Drupal\automatic_updates\Updater;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
+use Drupal\package_manager\ComposerInspector;
 use Drupal\package_manager\Event\PreApplyEvent;
+use Drupal\package_manager\PathLocator;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 /**
@@ -16,6 +18,19 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 class RequestedUpdateValidator implements EventSubscriberInterface {
 
   use StringTranslationTrait;
+
+  /**
+   * Constructs a RequestedUpdateValidator object.
+   *
+   * @param \Drupal\package_manager\ComposerInspector $composerInspector
+   *   The Composer inspector service.
+   * @param \Drupal\package_manager\PathLocator $pathLocator
+   *   The path locator service.
+   */
+  public function __construct(
+    private ComposerInspector $composerInspector,
+    private PathLocator $pathLocator,
+  ) {}
 
   /**
    * Validates that requested packages have been updated to the right version.
@@ -29,7 +44,10 @@ class RequestedUpdateValidator implements EventSubscriberInterface {
       return;
     }
     $requested_package_versions = $stage->getPackageVersions();
-    $changed_stage_packages = $stage->getStageComposer()->getPackagesWithDifferentVersionsIn($stage->getActiveComposer());
+    $active = $this->composerInspector->getInstalledPackagesList($this->pathLocator->getProjectRoot());
+    $staged = $this->composerInspector->getInstalledPackagesList($event->stage->getStageDirectory());
+    $changed_stage_packages = $staged->getPackagesWithDifferentVersionsIn($active)->getArrayCopy();
+
     if (empty($changed_stage_packages)) {
       $event->addError([$this->t('No updates detected in the staging area.')]);
       return;
@@ -40,7 +58,7 @@ class RequestedUpdateValidator implements EventSubscriberInterface {
     foreach (['production', 'dev'] as $package_type) {
       foreach ($requested_package_versions[$package_type] as $requested_package_name => $requested_version) {
         if (array_key_exists($requested_package_name, $changed_stage_packages)) {
-          $staged_version = $changed_stage_packages[$requested_package_name]->getPrettyVersion();
+          $staged_version = $changed_stage_packages[$requested_package_name]->version;
           if (!Semver::satisfies($staged_version, $requested_version)) {
             $event->addError([
               $this->t(

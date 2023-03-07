@@ -1,4 +1,7 @@
 services:
+  _defaults:
+    autowire: true
+
   automatic_updates.route_subscriber:
     class: Drupal\automatic_updates\Routing\RouteSubscriber
     tags:
