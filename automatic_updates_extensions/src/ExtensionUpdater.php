@@ -5,6 +5,7 @@ declare(strict_types = 1);
 namespace Drupal\automatic_updates_extensions;
 
 use Drupal\Core\StringTranslation\TranslatableMarkup;
+use Drupal\package_manager\ComposerInspector;
 use Drupal\package_manager\LegacyVersionUtility;
 use Drupal\package_manager\Stage;
 
@@ -16,6 +17,18 @@ use Drupal\package_manager\Stage;
  *   should not be used by external code.
  */
 class ExtensionUpdater extends Stage {
+
+  /**
+   * Constructs a new ExtensionUpdater object.
+   *
+   * @param \Drupal\package_manager\ComposerInspector $composerInspector
+   *   The Composer inspector service.
+   * @param mixed ...$arguments
+   *   Additional arguments to pass to the parent constructor.
+   */
+  public function __construct(protected ComposerInspector $composerInspector, mixed ...$arguments) {
+    parent::__construct(...$arguments);
+  }
 
   /**
    * Begins the update.
@@ -33,29 +46,27 @@ class ExtensionUpdater extends Stage {
     if (empty($project_versions)) {
       throw new \InvalidArgumentException("No projects to begin the update");
     }
-    $composer = $this->getActiveComposer();
     $package_versions = [
       'production' => [],
       'dev' => [],
     ];
 
-    $require_dev = $composer->getComposer()
-      ->getPackage()
-      ->getDevRequires();
-    $installed_packages = $composer->getInstalledPackages();
+    $project_root = $this->pathLocator->getProjectRoot();
+    $info = $this->composerInspector->getRootPackageInfo($project_root);
+    $installed_packages = $this->composerInspector->getInstalledPackagesList($project_root);
     foreach ($project_versions as $project_name => $version) {
-      $package = $composer->getPackageForProject($project_name);
+      $package = $installed_packages->getPackageByDrupalProjectName($project_name);
       if (empty($package)) {
         throw new \InvalidArgumentException("The project $project_name is not a Drupal project known to Composer and cannot be updated.");
       }
 
       // We don't support updating install profiles.
-      if ($installed_packages[$package]->getType() === 'drupal-profile') {
+      if ($package->type === 'drupal-profile') {
         throw new \InvalidArgumentException("The project $project_name cannot be updated because updating install profiles is not supported.");
       }
 
-      $group = array_key_exists($package, $require_dev) ? 'dev' : 'production';
-      $package_versions[$group][$package] = LegacyVersionUtility::convertToSemanticVersion($version);
+      $group = isset($info['devRequires'][$package->name]) ? 'dev' : 'production';
+      $package_versions[$group][$package->name] = LegacyVersionUtility::convertToSemanticVersion($version);
     }
 
     // Ensure that package versions are available to pre-create event
