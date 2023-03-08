@@ -36,21 +36,17 @@ class StatusCheckTraitTest extends PackageManagerKernelTestBase {
   }
 
   /**
-   * Tests StatusCheckTrait returns an error when unable to get ignored paths.
+   * Tests that any error will be added to the status check event.
    */
-  public function testErrorIgnoredPathsCollected(): void {
-    $exception = new \Exception("Not a chance, friend.");
-
-    $expected_result = ValidationResult::createErrorFromThrowable(
-      $exception,
-      t("Unable to collect ignored paths, therefore can't perform status checks.")
-    );
-
-    $this->addEventTestListener(function () use ($exception): void {
-      throw $exception;
+  public function testNoErrorIfIgnoredPathsCannotBeCollected(): void {
+    $this->addEventTestListener(function (): void {
+      throw new \Exception('Not a chance, friend.');
     }, CollectIgnoredPathsEvent::class);
-
-    $this->assertStatusCheckResults([$expected_result]);
+    $result = ValidationResult::createError(
+      [t('Not a chance, friend.')],
+      t('Unable to collect the ignored paths.'),
+    );
+    $this->assertStatusCheckResults([$result]);
   }
 
 }

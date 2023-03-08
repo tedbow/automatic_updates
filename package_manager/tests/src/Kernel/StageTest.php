@@ -616,9 +616,8 @@ class StageTest extends PackageManagerKernelTestBase {
       ->getProjectRoot();
     unlink($project_root . '/composer.json');
     $this->expectException(StageException::class);
-    $this->expectExceptionMessage("Composer could not find the config file: $project_root/composer.json\n");
-    $stage = $this->createStage();
-    $stage->create();
+    $this->expectExceptionMessage("composer.json not found.");
+    $this->createStage()->create();
   }
 
   /**

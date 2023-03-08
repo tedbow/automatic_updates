@@ -69,8 +69,16 @@ class SymlinkValidator implements EventSubscriberInterface {
     }
     $stage_dir = $this->pathFactory->create($stage_dir);
 
+    $ignored_paths = $event->getExcludedPaths();
+    // Return early if no ignored paths were collected because this validator
+    // is dependent on knowing which paths to ignore when searching for
+    // symlinks.
+    // @see \Drupal\package_manager\StatusCheckTrait::runStatusCheck()
+    if ($ignored_paths === NULL) {
+      return;
+    }
+
     try {
-      $ignored_paths = $event->getExcludedPaths();
       $this->precondition->assertIsFulfilled($active_dir, $stage_dir, new PathList($ignored_paths));
     }
     catch (PreconditionException $e) {

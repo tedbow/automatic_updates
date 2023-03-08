@@ -4,8 +4,6 @@ declare(strict_types = 1);
 
 namespace Drupal\Tests\package_manager\Kernel\PathExcluder;
 
-use Drupal\Core\DependencyInjection\ContainerBuilder;
-use Drupal\Core\File\FileSystemInterface;
 use Drupal\Core\Serialization\Yaml;
 use Drupal\fixture_manipulator\ActiveFixtureManipulator;
 use Drupal\Tests\package_manager\Kernel\PackageManagerKernelTestBase;
@@ -17,13 +15,6 @@ use Symfony\Component\Filesystem\Filesystem;
  * @internal
  */
 class GitExcluderTest extends PackageManagerKernelTestBase {
-
-  /**
-   * The mocked file system service.
-   *
-   * @var \Drupal\Core\File\FileSystemInterface|\Prophecy\Prophecy\ObjectProphecy
-   */
-  private $fileSystem;
 
   /**
    * {@inheritdoc}
@@ -41,18 +32,6 @@ class GitExcluderTest extends PackageManagerKernelTestBase {
       ->addDotGitFolder($path_locator->getProjectRoot() . "/modules/module_not_known_to_composer_in_active")
       ->addDotGitFolder($path_locator->getProjectRoot() . "/modules/module_known_to_composer_removed_later")
       ->commitChanges();
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public function register(ContainerBuilder $container) {
-    parent::register($container);
-
-    $this->fileSystem = $this->prophesize(FileSystemInterface::class);
-
-    $container->getDefinition('package_manager.git_excluder')
-      ->setArgument('$fileSystem', $this->fileSystem->reveal());
   }
 
   /**

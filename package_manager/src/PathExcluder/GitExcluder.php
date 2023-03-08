@@ -4,7 +4,7 @@ declare(strict_types = 1);
 
 namespace Drupal\package_manager\PathExcluder;
 
-use Drupal\Core\File\FileSystemInterface;
+use Drupal\package_manager\ComposerInspector;
 use Drupal\package_manager\Event\CollectIgnoredPathsEvent;
 use Drupal\package_manager\PathLocator;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
@@ -26,10 +26,10 @@ final class GitExcluder implements EventSubscriberInterface {
    *
    * @param \Drupal\package_manager\PathLocator $path_locator
    *   The path locator service.
-   * @param \Drupal\Core\File\FileSystemInterface $fileSystem
-   *   The file system service.
+   * @param \Drupal\package_manager\ComposerInspector $composerInspector
+   *   The Composer inspector service.
    */
-  public function __construct(PathLocator $path_locator, protected FileSystemInterface $fileSystem) {
+  public function __construct(PathLocator $path_locator, private ComposerInspector $composerInspector) {
     $this->pathLocator = $path_locator;
   }
 
@@ -53,10 +53,11 @@ final class GitExcluder implements EventSubscriberInterface {
 
     $installed_paths = [];
     // Collect the paths of every installed package.
-    $installed_packages = $event->stage->getActiveComposer()->getInstalledPackagesData();
-    foreach ($installed_packages as $package_data) {
-      if (array_key_exists('install_path', $package_data) && !empty($package_data['install_path'])) {
-        $installed_paths[] = $this->fileSystem->realpath($package_data['install_path']);
+    $project_root = $this->pathLocator->getProjectRoot();
+    $installed_packages = $this->composerInspector->getInstalledPackagesList($project_root);
+    foreach ($installed_packages as $package) {
+      if (!empty($package->path)) {
+        $installed_paths[] = $package->path;
       }
     }
     $paths = $this->scanForDirectoriesByName('.git');
