@@ -6,7 +6,7 @@ namespace Drupal\automatic_updates\Validator;
 
 use Drupal\automatic_updates\Updater;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
-use Drupal\package_manager\ComposerUtility;
+use Drupal\package_manager\ComposerInspector;
 use Drupal\package_manager\Event\PreApplyEvent;
 use Drupal\package_manager\Event\PreCreateEvent;
 use Drupal\package_manager\Event\PreOperationStageEvent;
@@ -27,13 +27,17 @@ final class ScaffoldFilePermissionsValidator implements EventSubscriberInterface
   use StringTranslationTrait;
 
   /**
-   * Constructs a SiteDirectoryPermissionsValidator object.
+   * Constructs a ScaffoldFilePermissionsValidator object.
    *
+   * @param \Drupal\package_manager\ComposerInspector $composerInspector
+   *   The Composer inspector service.
    * @param \Drupal\package_manager\PathLocator $pathLocator
    *   The path locator service.
    */
-  public function __construct(protected PathLocator $pathLocator) {
-  }
+  public function __construct(
+    private ComposerInspector $composerInspector,
+    private PathLocator $pathLocator,
+  ) {}
 
   /**
    * Validates that scaffold files have the appropriate permissions.
@@ -53,15 +57,14 @@ final class ScaffoldFilePermissionsValidator implements EventSubscriberInterface
     }
     $site_dir .= '/sites/default';
 
-    $stage = $event->stage;
-    $active_scaffold_files = $this->getDefaultSiteFilesFromScaffold($stage->getActiveComposer());
+    $active_scaffold_files = $this->getDefaultSiteFilesFromScaffold($this->pathLocator->getProjectRoot());
 
     // If the active directory and stage directory have different files
     // scaffolded into `sites/default` (i.e., files were added, renamed, or
     // deleted), the site directory itself must be writable for the changes to
     // be applied.
     if ($event instanceof PreApplyEvent) {
-      $staged_scaffold_files = $this->getDefaultSiteFilesFromScaffold($stage->getStageComposer());
+      $staged_scaffold_files = $this->getDefaultSiteFilesFromScaffold($event->stage->getStageDirectory());
 
       if ($active_scaffold_files !== $staged_scaffold_files) {
         $paths[] = $site_dir;
@@ -88,8 +91,8 @@ final class ScaffoldFilePermissionsValidator implements EventSubscriberInterface
   /**
    * Returns the list of file names scaffolded into `sites/default`.
    *
-   * @param \Drupal\package_manager\ComposerUtility $composer
-   *   A Composer utility helper for a directory.
+   * @param string $working_dir
+   *   The directory in which to run Composer.
    *
    * @return string[]
    *   The names of files that are scaffolded into `sites/default`, stripped
@@ -99,13 +102,12 @@ final class ScaffoldFilePermissionsValidator implements EventSubscriberInterface
    *   directory doesn't have the `drupal/core` package installed, the returned
    *   array will be empty.
    */
-  protected function getDefaultSiteFilesFromScaffold(ComposerUtility $composer): array {
-    $installed = $composer->getInstalledPackages();
+  protected function getDefaultSiteFilesFromScaffold(string $working_dir): array {
+    $installed = $this->composerInspector->getInstalledPackagesList($working_dir);
 
-    if (array_key_exists('drupal/core', $installed)) {
-      $extra = $installed['drupal/core']->getExtra();
+    if (isset($installed['drupal/core'])) {
       // We expect Drupal core to provide a list of scaffold files.
-      $files = $extra['drupal-scaffold']['file-mapping'];
+      $files = (array) json_decode($this->composerInspector->getConfig('extra.drupal-scaffold.file-mapping', $installed['drupal/core']->path . '/composer.json'));
     }
     else {
       $files = [];
