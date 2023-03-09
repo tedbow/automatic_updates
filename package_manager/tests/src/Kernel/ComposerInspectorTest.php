@@ -59,6 +59,31 @@ class ComposerInspectorTest extends PackageManagerKernelTestBase {
   }
 
   /**
+   * @covers ::getConfig
+   */
+  public function testConfigUndefinedKey(): void {
+    $project_root = $this->container->get('package_manager.path_locator')
+      ->getProjectRoot();
+    $inspector = $this->container->get('package_manager.composer_inspector');
+
+    // Overwrite the composer.json file and treat it as a
+    $file = new JsonFile($project_root . '/composer.json');
+    $this->assertTrue($file->exists());
+    $data = $file->read();
+    // Ensure that none of the special keys are defined, to test the fallback
+    // behavior.
+    unset(
+      $data['minimum-stability'],
+      $data['extra']
+    );
+    $file->write($data);
+
+    $path = $file->getPath();
+    $this->assertSame('stable', $inspector->getConfig('minimum-stability', $path));
+    $this->assertSame([], Json::decode($inspector->getConfig('extra', $path)));
+  }
+
+  /**
    * @covers ::getInstalledPackagesList
    */
   public function testGetInstalledPackagesList(): void {

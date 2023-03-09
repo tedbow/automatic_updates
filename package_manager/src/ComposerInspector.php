@@ -76,70 +76,28 @@ class ComposerInspector {
    * @param string $working_dir
    *   The directory in which Composer will be run.
    *
-   * @throws \Exception
-   *   If any of the following are true:
-   *   - The Composer executable is not available.
-   *   - composer.json does not exist in the given directory.
-   *   - composer.lock does not exist in the given directory.
-   *   - The detected version of Composer is not supported.
+   * @see ::validateExecutable()
+   * @see ::validateProject()
    */
   public function validate(string $working_dir): void {
+    $this->validateExecutable();
+    $this->validateProject($working_dir);
+  }
+
+  /**
+   * Checks that `composer.json` is valid and `composer.lock` exists.
+   *
+   * @param string $working_dir
+   *   The directory to check.
+   *
+   * @throws \Exception
+   *   Thrown if:
+   *   - `composer.json` doesn't exist in the given directory or is invalid
+   *     according to `composer validate`.
+   *   - `composer.lock` doesn't exist in the given directory.
+   */
+  private function validateProject(string $working_dir): void {
     $messages = [];
-
-    // Ensure the Composer executable is available. For performance reasons,
-    // statically cache the result, since it's unlikely to change during the
-    // current request. If $unavailable_message is NULL, it means we haven't
-    // done this check yet. If it's FALSE, it means we did the check and there
-    // were no errors; and, if it's a string, it's the error message we received
-    // the last time we did this check.
-    static $unavailable_message;
-    if ($unavailable_message === NULL) {
-      try {
-        // The "Composer is available" precondition requires active and stage
-        // directories, but they don't actually matter to it, nor do path
-        // exclusions, so dummies can be passed for simplicity.
-        $active_dir = $this->pathFactory::create($working_dir);
-        $stage_dir = $active_dir;
-
-        $this->composerIsAvailable->assertIsFulfilled($active_dir, $stage_dir);
-        $unavailable_message = FALSE;
-      }
-      catch (PreconditionException $e) {
-        $unavailable_message = $e->getMessage();
-      }
-    }
-    if ($unavailable_message) {
-      $messages[] = $unavailable_message;
-    }
-
-    // The detected version of Composer is unlikely to change during the
-    // current request, so statically cache it. If $unsupported_message is NULL,
-    // it means we haven't done this check yet. If it's FALSE, it means we did
-    // the check and there were no errors; and, if it's a string, it's the error
-    // message we received the last time we did this check.
-    static $unsupported_message;
-    if ($unsupported_message === NULL) {
-      try {
-        $detected_version = $this->getVersion($working_dir);
-
-        if (Semver::satisfies($detected_version, static::SUPPORTED_VERSION)) {
-          // We did the version check, and it did not produce an error message.
-          $unsupported_message = FALSE;
-        }
-        else {
-          $unsupported_message = $this->t('The detected Composer version, @version, does not satisfy <code>@constraint</code>.', [
-            '@version' => $detected_version,
-            '@constraint' => static::SUPPORTED_VERSION,
-          ]);
-        }
-      }
-      catch (\UnexpectedValueException $e) {
-        $unsupported_message = $e->getMessage();
-      }
-    }
-    if ($unsupported_message) {
-      $messages[] = $unsupported_message;
-    }
 
     // If either composer.json or composer.lock have changed, ensure the
     // directory is in a completely valid state, according to Composer.
@@ -176,12 +134,84 @@ class ComposerInspector {
   }
 
   /**
+   * Validates that the Composer executable exists in a supported version.
+   *
+   * @throws \Exception
+   *   Thrown if the Composer executable is not available or the detected
+   *   version of Composer is not supported.
+   */
+  private function validateExecutable(): void {
+    $messages = [];
+
+    // Ensure the Composer executable is available. For performance reasons,
+    // statically cache the result, since it's unlikely to change during the
+    // current request. If $unavailable_message is NULL, it means we haven't
+    // done this check yet. If it's FALSE, it means we did the check and there
+    // were no errors; and, if it's a string, it's the error message we received
+    // the last time we did this check.
+    static $unavailable_message;
+    if ($unavailable_message === NULL) {
+      try {
+        // The "Composer is available" precondition requires active and stage
+        // directories, but they don't actually matter to it, nor do path
+        // exclusions, so dummies can be passed for simplicity.
+        $active_dir = $this->pathFactory::create(__DIR__);
+        $stage_dir = $active_dir;
+
+        $this->composerIsAvailable->assertIsFulfilled($active_dir, $stage_dir);
+        $unavailable_message = FALSE;
+      }
+      catch (PreconditionException $e) {
+        $unavailable_message = $e->getMessage();
+      }
+    }
+    if ($unavailable_message) {
+      $messages[] = $unavailable_message;
+    }
+
+    // The detected version of Composer is unlikely to change during the
+    // current request, so statically cache it. If $unsupported_message is NULL,
+    // it means we haven't done this check yet. If it's FALSE, it means we did
+    // the check and there were no errors; and, if it's a string, it's the error
+    // message we received the last time we did this check.
+    static $unsupported_message;
+    if ($unsupported_message === NULL) {
+      try {
+        $detected_version = $this->getVersion();
+
+        if (Semver::satisfies($detected_version, static::SUPPORTED_VERSION)) {
+          // We did the version check, and it did not produce an error message.
+          $unsupported_message = FALSE;
+        }
+        else {
+          $unsupported_message = $this->t('The detected Composer version, @version, does not satisfy <code>@constraint</code>.', [
+            '@version' => $detected_version,
+            '@constraint' => static::SUPPORTED_VERSION,
+          ]);
+        }
+      }
+      catch (\UnexpectedValueException $e) {
+        $unsupported_message = $e->getMessage();
+      }
+    }
+    if ($unsupported_message) {
+      $messages[] = $unsupported_message;
+    }
+
+    if ($messages) {
+      throw new \Exception(implode("\n", $messages));
+    }
+  }
+
+  /**
    * Returns a config value from Composer.
    *
    * @param string $key
    *   The config key to get.
-   * @param string $working_dir
-   *   The working directory in which to run Composer.
+   * @param string $context
+   *   The path of either the directory in which to run Composer, or a specific
+   *   configuration file (such as a particular package's `composer.json`) from
+   *   which to read specific values.
    *
    * @return string|null
    *   The output data. Note that the caller must know the shape of the
@@ -191,8 +221,19 @@ class ComposerInspector {
    *
    * @see \Composer\Command\ConfigCommand::execute()
    */
-  public function getConfig(string $key, string $working_dir) : ?string {
-    $this->validate($working_dir);
+  public function getConfig(string $key, string $context): ?string {
+    $this->validateExecutable();
+
+    $command = ['config', $key];
+    // If we're consulting a specific file for the config value, we don't need
+    // to validate the project as a whole.
+    if (is_file($context)) {
+      $command[] = "--file={$context}";
+    }
+    else {
+      $this->validateProject($context);
+      $command[] = "--working-dir={$context}";
+    }
 
     // For whatever reason, PHPCS thinks that $output is not used, even though
     // it very clearly *is*. So, shut PHPCS up for the duration of this method.
@@ -218,7 +259,7 @@ class ComposerInspector {
     };
     // phpcs:enable
     try {
-      $this->runner->run(['config', $key, "--working-dir=$working_dir"], $callback);
+      $this->runner->run($command, $callback);
     }
     catch (RuntimeException $e) {
       // Assume any error from `composer config` is about an undefined key-value
@@ -243,17 +284,14 @@ class ComposerInspector {
   /**
    * Returns the current Composer version.
    *
-   * @param string $working_dir
-   *   The working directory in which to run Composer.
-   *
    * @return string
    *   The Composer version.
    *
    * @throws \UnexpectedValueException
    *   Thrown if the expect data format is not found.
    */
-  private function getVersion(string $working_dir): string {
-    $this->runner->run(['--format=json', "--working-dir=$working_dir"], $this->jsonCallback);
+  private function getVersion(): string {
+    $this->runner->run(['--format=json'], $this->jsonCallback);
     $data = $this->jsonCallback->getOutputData();
     if (isset($data['application']['name'])
       && isset($data['application']['version'])
@@ -283,7 +321,7 @@ class ComposerInspector {
 
     $packages_data = $this->show($working_dir);
     // The package type is not available using `composer show` for listing
-    // packages. To avoiding making many calls to `composer show package-name`
+    // packages. To avoiding making many calls to `composer show package-name`,
     // load the lock file data to get the `type` key.
     // @todo Remove all of this when
     //   https://github.com/composer/composer/pull/11340 lands and we bump our
