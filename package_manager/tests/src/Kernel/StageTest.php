@@ -93,7 +93,7 @@ class StageTest extends PackageManagerKernelTestBase {
    * @covers ::getStageDirectory
    */
   public function testUncreatedGetStageDirectory(): void {
-    $this->expectException('LogicException');
+    $this->expectException(\LogicException::class);
     $this->expectExceptionMessage('Drupal\package_manager\Stage::getStageDirectory() cannot be called because the stage has not been created or claimed.');
     $this->createStage()->getStageDirectory();
   }
@@ -209,7 +209,7 @@ class StageTest extends PackageManagerKernelTestBase {
     // stage has been applying for too long and is therefore considered stale),
     // the postApply() method should fail because the stage is not claimed.
     if ($stage->isAvailable()) {
-      $this->expectException('LogicException');
+      $this->expectException(\LogicException::class);
       $this->expectExceptionMessage('Stage must be claimed before performing any operations on it.');
     }
     $stage->postApply();
@@ -559,7 +559,7 @@ class StageTest extends PackageManagerKernelTestBase {
     $stage = $this->createStage();
     $stage->create();
     if ($is_invalid) {
-      $this->expectException('InvalidArgumentException');
+      $this->expectException(\InvalidArgumentException::class);
       $this->expectExceptionMessage("Invalid package name '$package_name'.");
     }
     $stage->require([$package_name]);

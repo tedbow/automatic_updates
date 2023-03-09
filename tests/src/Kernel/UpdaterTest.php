@@ -149,7 +149,7 @@ class UpdaterTest extends AutomaticUpdatesKernelTestBase {
   public function providerCommitException(): array {
     return [
       'RuntimeException' => [
-        'RuntimeException',
+        \RuntimeException::class,
         ApplyFailedException::class,
       ],
       'InvalidArgumentException' => [

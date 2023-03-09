@@ -43,7 +43,7 @@ class InstalledPackageTest extends UnitTestCase {
 
     // If we provide a path that cannot be resolved to a real path, it should
     // raise an error.
-    $this->expectException('TypeError');
+    $this->expectException(\TypeError::class);
     $this->expectExceptionMessageMatches('/must be of type \?string, bool given/');
     InstalledPackage::createFromArray([
       'name' => 'vendor/test',

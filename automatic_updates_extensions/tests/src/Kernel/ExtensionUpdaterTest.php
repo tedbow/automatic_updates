@@ -116,7 +116,7 @@ class ExtensionUpdaterTest extends AutomaticUpdatesExtensionsKernelTestBase {
    * Tests that attempting to update an install profile throws an exception.
    */
   public function testUpdatingInstallProfile(): void {
-    $this->expectException('InvalidArgumentException');
+    $this->expectException(\InvalidArgumentException::class);
     $this->expectExceptionMessage("The project contrib_profile1 cannot be updated because updating install profiles is not supported.");
 
     $this->container->get('automatic_updates_extensions.updater')
@@ -129,7 +129,7 @@ class ExtensionUpdaterTest extends AutomaticUpdatesExtensionsKernelTestBase {
    * Tests that an exception is thrown when calling begin() with no projects.
    */
   public function testNoProjectsInBegin(): void {
-    $this->expectException('InvalidArgumentException');
+    $this->expectException(\InvalidArgumentException::class);
     $this->expectExceptionMessage('No projects to begin the update');
     $this->container->get('automatic_updates_extensions.updater')->begin([]);
   }
@@ -138,7 +138,7 @@ class ExtensionUpdaterTest extends AutomaticUpdatesExtensionsKernelTestBase {
    * Tests exception if a Drupal project unknown to composer sent to ::begin().
    */
   public function testUnknownDrupalProject(): void {
-    $this->expectException('InvalidArgumentException');
+    $this->expectException(\InvalidArgumentException::class);
     $this->expectExceptionMessage("The project my_module_unknown is not a Drupal project known to Composer and cannot be updated.");
     $this->container->get('automatic_updates_extensions.updater')->begin([
       'my_module_unknown' => '9.8.1',

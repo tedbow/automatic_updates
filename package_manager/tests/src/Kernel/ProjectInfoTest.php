@@ -188,7 +188,7 @@ class ProjectInfoTest extends PackageManagerKernelTestBase {
   public function testNotPublishedProject(): void {
     $this->setReleaseMetadata(['drupal' => __DIR__ . '/../../fixtures/release-history/drupal.9.8.2_unknown_status.xml']);
     $project_info = new ProjectInfo('drupal');
-    $this->expectException('RuntimeException');
+    $this->expectException(\RuntimeException::class);
     $this->expectExceptionMessage("The project 'drupal' can not be updated because its status is any status besides published");
     $project_info->getInstallableReleases();
   }
