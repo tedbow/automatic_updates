@@ -214,9 +214,7 @@ class ComposerPatchesValidatorTest extends PackageManagerKernelTestBase {
       ]);
     }
     if ($in_stage & static::REQUIRE_PACKAGE_FROM_ROOT && !($in_active & static::REQUIRE_PACKAGE_FROM_ROOT)) {
-      $package_data = json_decode(file_get_contents(__DIR__ . '/../../fixtures/path_repos/cweagans--composer-patches/composer.json'), TRUE);
-      $package_data['version'] = '24.12.1999';
-      $stage_manipulator->addPackage($package_data);
+      $stage_manipulator->requirePackage('cweagans/composer-patches', '24.12.1999');
     }
     if (!($in_stage & static::REQUIRE_PACKAGE_FROM_ROOT) && $in_active & static::REQUIRE_PACKAGE_FROM_ROOT) {
       $stage_manipulator

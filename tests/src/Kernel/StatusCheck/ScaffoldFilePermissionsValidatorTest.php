@@ -293,27 +293,34 @@ class ScaffoldFilePermissionsValidatorTest extends AutomaticUpdatesKernelTestBas
    * @dataProvider providerScaffoldFilesChanged
    */
   public function testScaffoldFilesChanged(array $write_protected_paths, array $active_scaffold_files, array $staged_scaffold_files, array $expected_results): void {
-    // Rewrite the active and staged installed.json files, inserting the given
+    // Rewrite the active and staged composer.json files, inserting the given
     // lists of scaffold files.
-    // @todo Remove the use of modifyPackage() in https://drupal.org/i/3345633.
-    (new ActiveFixtureManipulator())
-      ->modifyPackage('drupal/core', [
-        'extra' => [
-          'drupal-scaffold' => [
-            'file-mapping' => $active_scaffold_files,
+    if ($active_scaffold_files) {
+      (new ActiveFixtureManipulator())
+        ->modifyPackageConfig('drupal/core', '9.8.0', [
+          'extra' => [
+            'drupal-scaffold' => [
+              'file-mapping' => $active_scaffold_files,
+            ],
           ],
-        ],
-      ])
-      ->commitChanges();
-    $this->getStageFixtureManipulator()
-      ->setCorePackageVersion('9.8.1')
-      ->modifyPackage('drupal/core', [
+        ])
+        ->commitChanges();
+    }
+    $stage_manipulator = $this->getStageFixtureManipulator();
+    $stage_manipulator->setVersion('drupal/core-recommended', '9.8.1');
+    $stage_manipulator->setVersion('drupal/core-dev', '9.8.1');
+    if ($staged_scaffold_files) {
+      $stage_manipulator->modifyPackageConfig('drupal/core', '9.8.1', [
         'extra' => [
           'drupal-scaffold' => [
             'file-mapping' => $staged_scaffold_files,
           ],
         ],
       ]);
+    }
+    else {
+      $stage_manipulator->setVersion('drupal/core', '9.8.1');
+    }
 
     // Create fake scaffold files so we can test scenarios in which a scaffold
     // file that exists in the active directory is deleted in the stage
@@ -331,7 +338,7 @@ class ScaffoldFilePermissionsValidatorTest extends AutomaticUpdatesKernelTestBas
       $updater->apply();
 
       // If no exception was thrown, ensure that we weren't expecting an error.
-      $this->assertEmpty($expected_results);
+      $this->assertSame([], $expected_results);
     }
     // If we try to overwrite any write-protected paths, even if they're not
     // scaffold files, we'll get an ApplyFailedException.

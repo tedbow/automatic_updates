@@ -6,7 +6,6 @@ namespace Drupal\Tests\package_manager\Kernel;
 
 use Drupal\fixture_manipulator\ActiveFixtureManipulator;
 use Drupal\fixture_manipulator\FixtureManipulator;
-use Symfony\Component\Filesystem\Filesystem;
 
 /**
  * @coversDefaultClass \Drupal\fixture_manipulator\FixtureManipulator
@@ -64,6 +63,7 @@ class FixtureManipulatorTest extends PackageManagerKernelTestBase {
       ->addPackage([
         'name' => 'my/package',
         'type' => 'library',
+        'version' => '1.2.3',
       ])
       ->addPackage(
         [
@@ -177,8 +177,9 @@ class FixtureManipulatorTest extends PackageManagerKernelTestBase {
   /**
    * @covers ::modifyPackage
    */
-  public function testModifyPackage(): void {
-    $fs = (new Filesystem());
+  public function testModifyPackageConfig(): void {
+    $inspector = $this->container->get('package_manager.composer_inspector');
+
     // Assert ::modifyPackage() works with a package in an existing fixture not
     // created by ::addPackage().
     $decode_installed_json = function () {
@@ -188,41 +189,19 @@ class FixtureManipulatorTest extends PackageManagerKernelTestBase {
     $this->assertIsArray($original_installed_json);
     (new ActiveFixtureManipulator())
       // @see ::setUp()
-      ->modifyPackage('my/dev-package', ['version' => '2.1.0'])
+      ->modifyPackageConfig('my/dev-package', '2.1.0', ['description' => 'something else'], TRUE)
       ->commitChanges();
-    $this->assertSame($original_installed_json, $decode_installed_json());
-
-    // Assert that ::modifyPackage() throws an error if a package exists in the
-    // 'installed.json' file but not the 'installed.php' file. We cannot test
-    // this with the trait functions because they cannot produce this starting
-    // point.
-    $existing_incorrect_fixture = __DIR__ . '/../../fixtures/FixtureUtilityTraitTest/missing_installed_php';
-    $temp_fixture = $this->siteDirectory . $this->randomMachineName('42');
-    $fs->mirror($existing_incorrect_fixture, $temp_fixture);
-    try {
-      (new FixtureManipulator())
-        ->modifyPackage('the-org/the-package', ['irrelevant' => TRUE])
-        ->commitChanges($temp_fixture);
-      $this->fail('Modifying a non-existent package should raise an error.');
-    }
-    catch (\LogicException $e) {
-      $this->assertSame("Expected package 'the-org/the-package' to be installed, but it wasn't.", $e->getMessage());
-    }
-
-    // We should not be able to modify a non-existent package.
-    try {
-      (new ActiveFixtureManipulator())
-        ->modifyPackage('junk/drawer', ['type' => 'library'])
-        ->commitChanges();
-      $this->fail('Modifying a non-existent package should raise an error.');
-    }
-    catch (\LogicException $e) {
-      $this->assertStringContainsString("Expected package 'junk/drawer' to be installed, but it wasn't.", $e->getMessage());
-    }
+    // Verify that the package is indeed properly installed.
+    $this->assertSame('2.1.0', $inspector->getInstalledPackagesList($this->dir)['my/dev-package']->version);
+    // Verify that the original exists, but has no description.
+    $this->assertSame('my/dev-package', $original_installed_json['packages'][3]['name']);
+    $this->assertArrayNotHasKey('description', $original_installed_json['packages']);
+    // Verify that the description was updated.
+    $this->assertSame('something else', $decode_installed_json()['packages'][3]['description']);
 
     (new ActiveFixtureManipulator())
       // Add a key to an existing package.
-      ->modifyPackage('my/package', ['type' => 'metapackage'])
+      ->modifyPackageConfig('my/package', '1.2.3', ['extra' => ['foo' => 'bar']])
       // Change a key in an existing package.
       ->setVersion('my/dev-package', '3.2.1', TRUE)
       // Move an existing package to dev requirements.
@@ -249,7 +228,7 @@ class FixtureManipulatorTest extends PackageManagerKernelTestBase {
         'name' => 'my/package',
         'version' => '1.2.3',
         'version_normalized' => '1.2.3.0',
-        'type' => 'metapackage',
+        'type' => 'library',
       ],
     ];
     $installed_php_expected_packages = $install_json_expected_packages;

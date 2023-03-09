@@ -157,7 +157,6 @@ class StagedProjectsValidatorTest extends AutomaticUpdatesKernelTestBase {
    */
   public function testProjectsRemoved(): void {
     (new ActiveFixtureManipulator())
-      ->setCorePackageVersion('9.8.0')
       ->addPackage([
         'name' => 'drupal/test_theme',
         'version' => '1.3.0',
@@ -230,7 +229,6 @@ class StagedProjectsValidatorTest extends AutomaticUpdatesKernelTestBase {
    */
   public function testVersionsChanged(): void {
     (new ActiveFixtureManipulator())
-      ->setCorePackageVersion('9.8.0')
       ->addPackage([
         'name' => 'drupal/test-module',
         'version' => '1.3.0',
@@ -291,7 +289,6 @@ class StagedProjectsValidatorTest extends AutomaticUpdatesKernelTestBase {
    */
   public function testNoErrors(): void {
     (new ActiveFixtureManipulator())
-      ->setCorePackageVersion('9.8.0')
       ->addPackage([
         'name' => 'drupal/test-module',
         'version' => '1.3.0',
