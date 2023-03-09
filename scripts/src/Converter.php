@@ -72,6 +72,7 @@ class Converter {
       'drupalci.yml',
       'README.md',
       '.git',
+      'pcre.ini',
       'composer.json',
       '.gitattributes',
       '.gitignore',

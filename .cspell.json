@@ -4,6 +4,7 @@
     { "name": "automatic_updates", "path": "./dictionary.txt"}
   ],
   "ignorePaths": [
+    "pcre.ini",
     "README.md"
   ]
 }
