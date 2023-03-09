@@ -11,7 +11,14 @@ use Symfony\Component\Filesystem\Filesystem as SymfonyFileSystem;
 use Drupal\Component\Serialization\Yaml;
 
 /**
- * It manipulates.
+ * Manipulates a test fixture using Composer commands.
+ *
+ * The composer.json file CANNOT be safely created or modified using the
+ * json_encode() function, because Composer does not use a real JSON parser — it
+ * updates composer.json using \Composer\Json\JsonManipulator, which is known to
+ * choke in a number of scenarios.
+ *
+ * @see https://www.drupal.org/i/3346628
  */
 class FixtureManipulator {
 
@@ -564,6 +571,46 @@ class FixtureManipulator {
   }
 
   /**
+   * Transform the received $package into options for `composer init`.
+   *
+   * @param array $package
+   *   A Composer package definition.
+   *
+   * @return array
+   *   The corresponding `composer init` options.
+   */
+  private static function getComposerInitOptionsForPackage(array $package): array {
+    return array_filter(array_map(function ($k, $v) {
+      switch ($k) {
+        case 'name':
+        case 'description':
+        case 'type':
+          return "--$k=$v";
+
+        case 'require':
+        case 'require-dev':
+          $requirements = array_map(
+            fn(string $req_package, string $req_version): string => "$req_package:$req_version",
+            array_keys($v),
+            array_values($v)
+          );
+          return "--$k=" . implode(',', $requirements);
+
+        case 'version':
+          // This gets set in the repository metadata itself.
+          return NULL;
+
+        case 'extra':
+          // Cannot be set using `composer init`, only `composer config` can.
+          return NULL;
+
+        default:
+          throw new \InvalidArgumentException($k);
+      }
+    }, array_keys($package), array_values($package)));
+  }
+
+  /**
    * Adds a path repository.
    *
    * @param array $package
@@ -576,30 +623,39 @@ class FixtureManipulator {
     $name = $package['name'];
     $path_repo_base = \Drupal::state()->get(self::PATH_REPO_STATE_KEY);
     $repo_path = "$path_repo_base/" . str_replace('/', '--', $name);
-    $composer_json_path = $repo_path . DIRECTORY_SEPARATOR . 'composer.json';
     $fs = new SymfonyFileSystem();
     if (!is_dir($repo_path)) {
       // Create the repo if it does not exist.
       $fs->mkdir($repo_path);
-      file_put_contents($composer_json_path, json_encode($package, JSON_THROW_ON_ERROR));
-      $repository = json_encode([
-        'type' => 'path',
-        'url' => $repo_path,
-        'options' => [
-          'symlink' => FALSE,
-        ],
-      ], JSON_UNESCAPED_SLASHES);
-      $this->runComposerCommand(['config', "repo.$name", $repository]);
-    }
-    else {
-      $composer_json_data = json_decode(file_get_contents($composer_json_path), TRUE);
-      // Update the version if needed.
-      // @todo Should we create 1 repo per version.
-      if ($composer_json_data['version'] !== $package['version']) {
-        $composer_json_data['version'] = $package['version'];
-        file_put_contents($composer_json_path, json_encode($composer_json_data, JSON_THROW_ON_ERROR));
+      // Switch the working directory from project root to repo path.
+      $project_root_dir = $this->dir;
+      $this->dir = $repo_path;
+      // Create a composer.json file using `composer init`.
+      $this->runComposerCommand(['init', ...static::getComposerInitOptionsForPackage($package)]);
+      // Set the `extra` property in the generated composer.json file using
+      // `composer config`, because `composer init` does not support it.
+      foreach ($package['extra'] ?? [] as $extra_property => $extra_value) {
+        $this->runComposerCommand(['config', "extra.$extra_property", '--json', json_encode($extra_value, JSON_UNESCAPED_SLASHES)]);
       }
+      // Restore the project root as the working directory.
+      $this->dir = $project_root_dir;
     }
+
+    // Register the repository, keyed by package name. This ensures each package
+    // is registered only once and its version can be updated.
+    // @todo Should we create 1 repo per version.
+    $repository = json_encode([
+      'type' => 'path',
+      'url' => $repo_path,
+      'options' => [
+        'symlink' => FALSE,
+        'versions' => [
+          $name => $package['version'],
+        ],
+      ],
+    ], JSON_UNESCAPED_SLASHES);
+    $this->runComposerCommand(['config', "repo.$name", $repository]);
+
     return $repo_path;
   }
 
@@ -627,17 +683,8 @@ class FixtureManipulator {
     }
     // Update all the repos in the composer.json file to point to the new
     // repos at the absolute path.
-    $json_data = json_decode(file_get_contents($this->dir . '/composer.json'), TRUE);
-    $composer_json_needs_update = FALSE;
-    foreach ($json_data['repositories'] as &$existing_repo_data) {
-      if (is_array($existing_repo_data) && isset($existing_repo_data['url']) && str_starts_with($existing_repo_data['url'], '../path_repos/')) {
-        $composer_json_needs_update = TRUE;
-        $existing_repo_data['url'] = str_replace('../path_repos/', "$path_repo_base/", $existing_repo_data['url']);
-      }
-    }
-    if ($composer_json_needs_update) {
-      file_put_contents($this->dir . '/composer.json', json_encode($json_data, JSON_THROW_ON_ERROR));
-    }
+    $composer_json = file_get_contents($this->dir . '/composer.json');
+    file_put_contents($this->dir . '/composer.json', str_replace('../path_repos/', "$path_repo_base/", $composer_json));
     $this->runComposerCommand(['install']);
   }
 

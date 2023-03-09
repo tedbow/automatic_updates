@@ -46,19 +46,16 @@ abstract class UpdaterFormTestBase extends UpdaterFormFunctionalTestBase {
         'name' => 'drupal/semver_test',
         'version' => '8.1.0',
         'type' => 'drupal-module',
-        'install_path' => '../../web/projects/semver_test',
       ])
       ->addPackage([
         'name' => 'drupal/aaa_update_test',
         'version' => '2.0.0',
         'type' => 'drupal-module',
-        'install_path' => '../../web/projects/aaa_update_test',
       ])
       ->addPackage([
         'name' => 'drupal/automatic_updates_extensions_test_theme',
         'version' => '2.0.0',
         'type' => 'drupal-theme',
-        'install_path' => '../../web/projects/automatic_updates_extensions_test_theme',
       ])
       ->commitChanges();
     $this->drupalPlaceBlock('local_tasks_block', ['primary' => TRUE]);
