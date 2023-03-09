@@ -9,12 +9,6 @@ build:
       # Run code quality checks.
       container_command.commit-checks:
         commands:
-          # Disable the PCRE engine's JIT, since it causes Composer to die during the
-          # update process, but only on Drupal CI, and for reasons that are essentially
-          # impossible to trace into. The PCRE JIT is not necessary for Automatic Updates
-          # to work correctly, and disabling it is a known workaround.
-          # @see pcre.ini
-          - sudo cp modules/contrib/automatic_updates/pcre.ini /usr/local/etc/php/conf.d
           # @todo Replace in favor of commit-code-check.sh once https://www.drupal.org/project/drupal/issues/3314100 lands.
           - modules/contrib/automatic_updates/scripts/commit-code-check.sh --drupalci
         halt-on-fail: true
