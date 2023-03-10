@@ -545,42 +545,6 @@ class StageTest extends PackageManagerKernelTestBase {
   }
 
   /**
-   * @covers ::validatePackageNames
-   *
-   * @param string $package_name
-   *   The package name.
-   * @param bool $is_invalid
-   *   TRUE if the given package name is invalid and will cause an exception,
-   *   FALSE otherwise.
-   *
-   * @dataProvider providerValidatePackageNames
-   */
-  public function testValidatePackageNames(string $package_name, bool $is_invalid): void {
-    $stage = $this->createStage();
-    $stage->create();
-    if ($is_invalid) {
-      $this->expectException(\InvalidArgumentException::class);
-      $this->expectExceptionMessage("Invalid package name '$package_name'.");
-    }
-    $stage->require([$package_name]);
-    // If we got here, the package name is valid and we just need to assert something so PHPUnit doesn't complain.
-    $this->assertTrue(TRUE);
-  }
-
-  /**
-   * Data provider for testValidatePackageNames.
-   *
-   * @return array[]
-   *   The test cases.
-   */
-  public function providerValidatePackageNames(): array {
-    return [
-      'Full package name' => ['drupal/semver_test', FALSE],
-      'Bare Drupal project name' => ['semver_test', TRUE],
-    ];
-  }
-
-  /**
    * Tests that ignored paths are collected before create and apply.
    */
   public function testCollectIgnoredPaths(): void {

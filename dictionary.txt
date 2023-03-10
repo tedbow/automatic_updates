@@ -9,3 +9,4 @@ testlogger
 unwritable
 filedate
 unshallow
+hhvm

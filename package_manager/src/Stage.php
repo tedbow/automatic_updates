@@ -4,6 +4,7 @@ declare(strict_types = 1);
 
 namespace Drupal\package_manager;
 
+use Composer\Semver\VersionParser;
 use Drupal\Component\Datetime\TimeInterface;
 use Drupal\Component\Utility\Crypt;
 use Drupal\Core\File\Exception\FileException;
@@ -120,6 +121,29 @@ class Stage implements LoggerAwareInterface {
    * @see ::destroy()
    */
   private const TEMPSTORE_DESTROYED_STAGES_INFO_PREFIX = 'TEMPSTORE_DESTROYED_STAGES_INFO';
+
+  /**
+   * The regular expression to check if a package name is a platform package.
+   *
+   * @var string
+   *
+   * @see \Composer\Repository\PlatformRepository::PLATFORM_PACKAGE_REGEX
+   * @see ::validateRequirements()
+   */
+  private const COMPOSER_PLATFORM_PACKAGE_REGEX = '{^(?:php(?:-64bit|-ipv6|-zts|-debug)?|hhvm|(?:ext|lib)-[a-z0-9](?:[_.-]?[a-z0-9]+)*|composer(?:-(?:plugin|runtime)-api)?)$}iD';
+
+  /**
+   * The regular expression to check if a package name is a regular package.
+   *
+   * If you try to require an invalid package name, this is the regular
+   * expression that Composer will, at the command line, tell you to match.
+   *
+   * @var string
+   *
+   * @see \Composer\Package\Loader\ValidatingArrayLoader::hasPackageNamingError()
+   * @see ::validateRequirements()
+   */
+  private const COMPOSER_PACKAGE_REGEX = '/^[a-z0-9]([_.-]?[a-z0-9]+)*\/[a-z0-9](([_.]?|-{0,2})[a-z0-9]+)*$/';
 
   /**
    * The lock info for the stage.
@@ -327,12 +351,12 @@ class Stage implements LoggerAwareInterface {
     // Change the runtime and dev requirements as needed, but don't update
     // the installed packages yet.
     if ($runtime) {
-      $this->validatePackageNames($runtime);
+      self::validateRequirements($runtime);
       $command = array_merge(['require', '--no-update'], $runtime);
       $this->stager->stage($command, $active_dir, $stage_dir, NULL, $timeout);
     }
     if ($dev) {
-      $this->validatePackageNames($dev);
+      self::validateRequirements($dev);
       $command = array_merge(['require', '--dev', '--no-update'], $dev);
       $this->stager->stage($command, $active_dir, $stage_dir, NULL, $timeout);
     }
@@ -726,10 +750,10 @@ class Stage implements LoggerAwareInterface {
    * Validates a set of package names.
    *
    * Package names are considered invalid if they look like Drupal project
-   * names. The only exceptions to this are `php` and `composer`, which Composer
-   * treats as legitimate requirements.
+   * names. The only exceptions to this are platform requirements, like `php`,
+   * `composer`, or `ext-json`, which are legitimate to Composer.
    *
-   * @param string[] $package_versions
+   * @param string[] $requirements
    *   A set of package names (with or without version constraints), as passed
    *   to ::require().
    *
@@ -738,10 +762,18 @@ class Stage implements LoggerAwareInterface {
    *
    * @see https://getcomposer.org/doc/articles/composer-platform-dependencies.md
    */
-  protected function validatePackageNames(array $package_versions): void {
-    foreach ($package_versions as $package_name) {
-      if (!ComposerUtility::isValidRequirement($package_name)) {
-        throw new \InvalidArgumentException("Invalid package name '$package_name'.");
+  protected static function validateRequirements(array $requirements): void {
+    $version_parser = new VersionParser();
+
+    foreach ($requirements as $requirement) {
+      $parts = explode(':', $requirement, 2);
+      $name = $parts[0];
+
+      if (!preg_match(self::COMPOSER_PLATFORM_PACKAGE_REGEX, $name) && !preg_match(self::COMPOSER_PACKAGE_REGEX, $name)) {
+        throw new \InvalidArgumentException("Invalid package name '$name'.");
+      }
+      if (count($parts) > 1) {
+        $version_parser->parseConstraints($parts[1]);
       }
     }
   }
