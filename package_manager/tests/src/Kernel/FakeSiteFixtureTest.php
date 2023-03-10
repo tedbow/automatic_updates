@@ -5,7 +5,6 @@ declare(strict_types = 1);
 namespace Drupal\Tests\package_manager\Kernel;
 
 use Drupal\fixture_manipulator\ActiveFixtureManipulator;
-use Drupal\package_manager\ComposerUtility;
 use Symfony\Component\Process\Process;
 
 /**
@@ -28,18 +27,15 @@ class FakeSiteFixtureTest extends PackageManagerKernelTestBase {
   }
 
   /**
-   * Tests calls to ComposerUtility class methods.
+   * Tests calls to ComposerInspector class methods.
    */
-  public function testCallToComposerUtilityMethods(): void {
+  public function testCallToComposerInspectorMethods(): void {
     $active_dir = $this->container->get('package_manager.path_locator')->getProjectRoot();
-    $composer_utility = ComposerUtility::createForDirectory($active_dir);
-    // Although the fake-site fixture does not contain any Composer packages or
-    // Drupal projects that would be returned from these methods calling them
-    // and asserting that they return NULL proves there are not any missing
-    // metadata in the fixture files that would cause these methods to throw an
-    // exception.
-    $this->assertNull($composer_utility->getProjectForPackage('any_random_name'));
-    $this->assertNull($composer_utility->getPackageForProject('drupal/any_random_name'));
+    /** @var \Drupal\package_manager\ComposerInspector $inspector */
+    $inspector = $this->container->get('package_manager.composer_inspector');
+    $list = $inspector->getInstalledPackagesList($active_dir);
+    $this->assertNull($list->getPackageByDrupalProjectName('any_random_name'));
+    $this->assertFalse(isset($list['drupal/any_random_name']));
   }
 
   /**

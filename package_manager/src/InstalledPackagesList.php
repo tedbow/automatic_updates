@@ -98,7 +98,7 @@ final class InstalledPackagesList extends \ArrayObject {
   }
 
   /**
-   * Returns the package name for a given Drupal project.
+   * Returns the package for a given Drupal project name, if it is installed.
    *
    * Although it is common for the package name to match the project name (for
    * example, a project name of `token` is likely part of the `drupal/token`

@@ -31,7 +31,7 @@ class RequestedUpdateValidatorTest extends AutomaticUpdatesKernelTestBase {
     // requested version of '9.8.1'. This also does not update all packages that
     // are expected to be updated when updating Drupal core.
     // @see \Drupal\automatic_updates\Updater::begin()
-    // @see \Drupal\package_manager\ComposerUtility::getCorePackages()
+    // @see \Drupal\package_manager\InstalledPackagesList::getCorePackages()
     $this->getStageFixtureManipulator()->setVersion('drupal/core-recommended', '9.8.2');
     $this->setCoreVersion('9.8.0');
     $this->setReleaseMetadata([
@@ -64,7 +64,7 @@ class RequestedUpdateValidatorTest extends AutomaticUpdatesKernelTestBase {
     $this->getStageFixtureManipulator()
       ->removePackage('drupal/core')
       ->removePackage('drupal/core-recommended')
-      ->removePackage('drupal/core-dev');
+      ->removePackage('drupal/core-dev', TRUE);
 
     $this->setCoreVersion('9.8.0');
     $this->setReleaseMetadata([

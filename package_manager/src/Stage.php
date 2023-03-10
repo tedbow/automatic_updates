@@ -563,28 +563,6 @@ class Stage implements LoggerAwareInterface {
   }
 
   /**
-   * Returns a Composer utility object for the active directory.
-   *
-   * @return \Drupal\package_manager\ComposerUtility
-   *   The Composer utility object.
-   */
-  public function getActiveComposer(): ComposerUtility {
-    $dir = $this->pathLocator->getProjectRoot();
-    return ComposerUtility::createForDirectory($dir);
-  }
-
-  /**
-   * Returns a Composer utility object for the stage directory.
-   *
-   * @return \Drupal\package_manager\ComposerUtility
-   *   The Composer utility object.
-   */
-  public function getStageComposer(): ComposerUtility {
-    $dir = $this->getStageDirectory();
-    return ComposerUtility::createForDirectory($dir);
-  }
-
-  /**
    * Attempts to claim the stage.
    *
    * Once a stage has been created, no operations can be performed on it until
@@ -758,9 +736,7 @@ class Stage implements LoggerAwareInterface {
    *   to ::require().
    *
    * @throws \InvalidArgumentException
-   *   Thrown if any of the given package names are invalid.
-   *
-   * @see https://getcomposer.org/doc/articles/composer-platform-dependencies.md
+   *   Thrown if any of the given package names fail basic validation.
    */
   protected static function validateRequirements(array $requirements): void {
     $version_parser = new VersionParser();

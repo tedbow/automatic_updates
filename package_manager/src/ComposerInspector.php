@@ -16,10 +16,11 @@ use PhpTuf\ComposerStager\Infrastructure\Factory\Path\PathFactoryInterface;
 /**
  * Defines a class to get information from Composer.
  *
- * @internal
- *   This is an internal part of Package Manager and may be changed or removed
- *   at any time without warning. External code should not interact with this
- *   class.
+ * This is a PHP wrapper to facilitate interacting with composer and:
+ * - list installed packages: getInstalledPackagesList() (`composer show`)
+ * - validate composer state & project: validate() (`composer validate`)
+ * - read project & package configuration: getConfig() (`composer config`)
+ * - read root package info: getRootPackageInfo() (`composer show --self`)
  */
 class ComposerInspector {
 

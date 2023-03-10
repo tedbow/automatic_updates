@@ -132,7 +132,7 @@ class StagedProjectsValidatorTest extends AutomaticUpdatesKernelTestBase {
         TRUE
       )
       ->removePackage('other/removed')
-      ->removePackage('other/dev-removed');
+      ->removePackage('other/dev-removed', TRUE);
 
     $messages = [
       t("custom module 'drupal/dev-test-module2' installed."),
@@ -204,7 +204,7 @@ class StagedProjectsValidatorTest extends AutomaticUpdatesKernelTestBase {
     // The validator shouldn't complain about these packages being removed,
     // since it only cares about Drupal modules and themes.
       ->removePackage('other/removed')
-      ->removePackage('other/dev-removed')
+      ->removePackage('other/dev-removed', TRUE)
       ->setCorePackageVersion('9.8.1');
 
     $messages = [
@@ -350,7 +350,7 @@ class StagedProjectsValidatorTest extends AutomaticUpdatesKernelTestBase {
       ->setVersion('other/changed', '1.3.2')
       ->setVersion('other/dev-changed', '1.3.2')
       ->removePackage('other/removed')
-      ->removePackage('other/dev-removed');
+      ->removePackage('other/dev-removed', TRUE);
 
     $updater = $this->container->get('automatic_updates.updater');
     $updater->begin(['drupal' => '9.8.1']);

@@ -237,7 +237,7 @@ class FixtureManipulator {
       return $this;
     }
 
-    $output = $this->runComposerCommand(array_filter(['remove', $name, $is_dev_requirement ? '--dev' : NULL, '--no-update']));
+    $output = $this->runComposerCommand(array_filter(['remove', $name, $is_dev_requirement ? '--dev' : NULL]));
     // `composer remove` will not set exit code 1 whenever a non-required
     // package is being removed.
     // @see \Composer\Command\RemoveCommand
@@ -245,10 +245,6 @@ class FixtureManipulator {
       $output->stderr = str_replace("./composer.json has been updated\n", '', $output->stderr);
       throw new \LogicException($output->stderr);
     }
-
-    // Make sure that `installed.json` & `installed.php` are updated.
-    // @todo Remove this when ComposerUtility gets removed.
-    $this->runComposerCommand(['update', $name]);
     return $this;
   }
 
@@ -624,15 +620,6 @@ class FixtureManipulator {
    * Sets up the path repos at absolute paths.
    */
   public function setUpRepos(): void {
-    // Some of the test coverage for FixtureManipulator tests edge cases for
-    // making installed.php invalid, and those test fixtures do NOT have a
-    // composer.json because ComposerUtility didn't look at that!
-    // @todo Remove this early return when ComposerUtility gets removed along
-    // with that edge case test coverage.
-    // @see fixtures/FixtureUtilityTraitTest/missing_installed_php
-    if (!file_exists($this->dir . '/composer.json')) {
-      return;
-    }
     $fs = new SymfonyFileSystem();
     $path_repo_base = \Drupal::state()->get(self::PATH_REPO_STATE_KEY);
     if (empty($path_repo_base)) {

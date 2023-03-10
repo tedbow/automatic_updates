@@ -144,14 +144,6 @@
  *   Destroys the stage directory, releases ownership, and dispatches pre- and
  *   post-destroy events.
  *
- * - \Drupal\package_manager\Stage::getActiveComposer()
- *   \Drupal\package_manager\Stage::getStageComposer()
- *   These methods initialize an instance of Composer's API in the active
- *   directory and stage directory, respectively, and return an object which
- *   can be used by event subscribers to inspect the directory and get relevant
- *   information from Composer's API, such as what packages are installed and
- *   where.
- *
  * If problems occur during any point of the stage life cycle, a
  * \Drupal\package_manager\Exception\StageException is thrown. If problems were
  * detected during one of the "pre" operations, a subclass of that is thrown:
@@ -207,6 +199,9 @@
  * To be able to do enforce those constraints, these event subscribers need to
  * know where to look: \Drupal\package_manager\PathLocator informs them where
  * the project root, the vendor directory, et cetera are.
+ * If the constraints involve Composer aspects (such as installed packages,
+ * required configuration …), then \Drupal\package_manager\ComposerInspector is
+ * available as a service.
  * Whenever a problem is encountered, an event subscriber should generate one or
  * more messages (with a summary if there's multiple) to explain it to the user
  * and call \Drupal\package_manager\Event\PreOperationStageEvent::addError() or
