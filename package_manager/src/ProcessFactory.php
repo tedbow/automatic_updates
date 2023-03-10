@@ -66,6 +66,23 @@ final class ProcessFactory implements ProcessFactoryInterface {
     $env = $process->getEnv();
     if ($this->isComposerCommand($command)) {
       $env['COMPOSER_HOME'] = $this->getComposerHomePath();
+      // Work around Composer not being designed to be run massively in parallel
+      // which it may in the context of Package Manager, at least for tests. It
+      // is trivial to work around though: create a unique temporary directory
+      // per process.
+      // @see https://www.drupal.org/i/3338789#comment-14961390
+      // @see https://github.com/composer/composer/commit/28e9193e9ebde743c19f334a7294830fc6429d06
+      // @see https://github.com/composer/composer/commit/43eb471ec293822d377b618a4a14d8d3651f5d13
+      static $race_condition_proof_tmpdir;
+      if (!isset($race_condition_proof_tmpdir)) {
+        $race_condition_proof_tmpdir = sys_get_temp_dir() . '/' . getmypid();
+        // The same PHP process may run multiple tests: create the directory
+        // only once.
+        if (!is_dir($race_condition_proof_tmpdir)) {
+          mkdir($race_condition_proof_tmpdir);
+        }
+      }
+      $env['TMPDIR'] = $race_condition_proof_tmpdir;
     }
     // Ensure that the current PHP installation is the first place that will be
     // searched when looking for the PHP interpreter.
