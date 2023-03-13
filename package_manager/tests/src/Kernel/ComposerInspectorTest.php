@@ -7,6 +7,7 @@ namespace Drupal\Tests\package_manager\Kernel;
 use Composer\Json\JsonFile;
 use Drupal\Component\Serialization\Json;
 use Drupal\package_manager\ComposerInspector;
+use Drupal\package_manager\Exception\ComposerNotReadyException;
 use Drupal\package_manager\InstalledPackage;
 use Drupal\package_manager\JsonProcessOutputCallback;
 use PhpTuf\ComposerStager\Domain\Exception\PreconditionException;
@@ -154,11 +155,13 @@ class ComposerInspectorTest extends PackageManagerKernelTestBase {
       $inspector->validate($project_root);
       $this->fail('Expected an exception to be thrown, but it was not.');
     }
-    catch (\Throwable $e) {
+    catch (ComposerNotReadyException $e) {
+      $this->assertNull($e->workingDir);
       $this->assertSame("Well, that didn't work.", $e->getMessage());
     }
 
     // Call validate() again to ensure the precondition is called once.
+    $this->expectException(ComposerNotReadyException::class);
     $this->expectExceptionMessage("Well, that didn't work.");
     $inspector->validate($project_root);
   }
@@ -182,9 +185,15 @@ class ComposerInspectorTest extends PackageManagerKernelTestBase {
     $file_path = $project_root . '/' . $filename;
     unlink($file_path);
 
-    $this->expectExceptionMessage("$filename not found");
-    $this->container->get('package_manager.composer_inspector')
-      ->validate($project_root);
+    /** @var \Drupal\package_manager\ComposerInspector $inspector */
+    $inspector = $this->container->get('package_manager.composer_inspector');
+    try {
+      $inspector->validate($project_root);
+    }
+    catch (ComposerNotReadyException $e) {
+      $this->assertSame($project_root, $e->workingDir);
+      $this->assertStringContainsString("$filename not found", $e->getMessage());
+    }
   }
 
   /**
@@ -260,11 +269,13 @@ class ComposerInspectorTest extends PackageManagerKernelTestBase {
       // an exception message.
       $this->assertNull($expected_message, 'Expected an exception, but none was thrown.');
     }
-    catch (\Throwable $e) {
+    catch (ComposerNotReadyException $e) {
+      $this->assertNull($e->workingDir);
       $this->assertSame($expected_message, $e->getMessage());
     }
 
     if (isset($expected_message)) {
+      $this->expectException(ComposerNotReadyException::class);
       $this->expectExceptionMessage($expected_message);
     }
     $inspector->validate($project_root);
@@ -285,9 +296,16 @@ class ComposerInspectorTest extends PackageManagerKernelTestBase {
     $data['prefer-stable'] = 'truthy';
     $file->write($data);
 
-    $this->expectExceptionMessage('composer.json" does not match the expected JSON schema');
-    $this->container->get('package_manager.composer_inspector')
-      ->validate($project_root);
+    try {
+      $this->container->get('package_manager.composer_inspector')
+        ->validate($project_root);
+      $this->fail('Expected an exception to be thrown, but it was not.');
+    }
+    catch (ComposerNotReadyException $e) {
+      $this->assertSame($project_root, $e->workingDir);
+      $this->assertStringContainsString('composer.json" does not match the expected JSON schema', $e->getMessage());
+      $this->assertStringContainsString('prefer-stable : String value found, but a boolean is required', $e->getPrevious()?->getMessage());
+    }
   }
 
   /**

@@ -6,6 +6,7 @@ namespace Drupal\package_manager;
 
 use Composer\Semver\Semver;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
+use Drupal\package_manager\Exception\ComposerNotReadyException;
 use PhpTuf\ComposerStager\Domain\Exception\PreconditionException;
 use PhpTuf\ComposerStager\Domain\Exception\RuntimeException;
 use PhpTuf\ComposerStager\Domain\Service\Precondition\ComposerIsAvailableInterface;
@@ -91,7 +92,7 @@ class ComposerInspector {
    * @param string $working_dir
    *   The directory to check.
    *
-   * @throws \Exception
+   * @throws \Drupal\package_manager\Exception\ComposerNotReadyException
    *   Thrown if:
    *   - `composer.json` doesn't exist in the given directory or is invalid
    *     according to `composer validate`.
@@ -99,6 +100,7 @@ class ComposerInspector {
    */
   private function validateProject(string $working_dir): void {
     $messages = [];
+    $previous_exception = NULL;
 
     // If either composer.json or composer.lock have changed, ensure the
     // directory is in a completely valid state, according to Composer.
@@ -118,6 +120,7 @@ class ComposerInspector {
       }
       catch (RuntimeException $e) {
         $messages[] = $e->getMessage();
+        $previous_exception = $e;
       }
     }
 
@@ -130,7 +133,7 @@ class ComposerInspector {
     }
 
     if ($messages) {
-      throw new \Exception(implode("\n", $messages));
+      throw new ComposerNotReadyException($working_dir, $messages, 0, $previous_exception);
     }
   }
 
@@ -200,7 +203,7 @@ class ComposerInspector {
     }
 
     if ($messages) {
-      throw new \Exception(implode("\n", $messages));
+      throw new ComposerNotReadyException(NULL, $messages);
     }
   }
 
