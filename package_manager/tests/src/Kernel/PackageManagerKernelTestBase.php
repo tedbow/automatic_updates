@@ -280,18 +280,6 @@ abstract class PackageManagerKernelTestBase extends KernelTestBase {
   }
 
   /**
-   * Copies a fixture directory into the active directory.
-   *
-   * @param string $active_fixture_dir
-   *   Path to fixture active directory from which the files will be copied.
-   */
-  protected function copyFixtureFolderToActiveDirectory(string $active_fixture_dir) {
-    $active_dir = $this->container->get('package_manager.path_locator')
-      ->getProjectRoot();
-    static::copyFixtureFilesTo($active_fixture_dir, $active_dir);
-  }
-
-  /**
    * Sets the current (running) version of core, as known to the Update module.
    *
    * @param string $version
