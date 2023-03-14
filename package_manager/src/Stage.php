@@ -455,6 +455,11 @@ class Stage implements LoggerAwareInterface {
 
   /**
    * Performs post-apply tasks.
+   *
+   * This should be called as soon as possible after ::apply(), in a new
+   * request.
+   *
+   * @see ::apply()
    */
   public function postApply(): void {
     $this->checkOwnership();
