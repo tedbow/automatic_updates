@@ -35,10 +35,10 @@ class ProjectInfoTest extends PackageManagerKernelTestBase {
     }
     else {
       // Update the version and the project of the project.
-      $this->enableModules(['aaa_automatic_updates_test']);
+      $this->enableModules(['aaa_package_manager_test']);
       $extension_info_update = [
         'version' => $installed_version,
-        'project' => 'aaa_automatic_updates_test',
+        'project' => 'aaa_package_manager_test',
       ];
       $this->config('update_test.settings')
         ->set("system_info.$project", $extension_info_update)
@@ -104,22 +104,22 @@ class ProjectInfoTest extends PackageManagerKernelTestBase {
         ['9.8.2', '9.8.1', '9.8.1-beta1', '9.8.0-alpha1', '9.7.1'],
       ],
       'contrib, semver and legacy' => [
-        'aaa_automatic_updates_test.7.0.1.xml',
+        'aaa_package_manager_test.7.0.1.xml',
         '8.x-6.0-alpha1',
         ['7.0.1', '7.0.0', '7.0.0-alpha1', '8.x-6.2', '8.x-6.1', '8.x-6.0'],
       ],
       'contrib, semver and legacy, some lower' => [
-        'aaa_automatic_updates_test.7.0.1.xml',
+        'aaa_package_manager_test.7.0.1.xml',
         '8.x-6.1',
         ['7.0.1', '7.0.0', '7.0.0-alpha1', '8.x-6.2'],
       ],
       'contrib, semver and legacy, on semantic dev' => [
-        'aaa_automatic_updates_test.7.0.1.xml',
+        'aaa_package_manager_test.7.0.1.xml',
         '7.0.x-dev',
         ['7.0.1', '7.0.0', '7.0.0-alpha1'],
       ],
       'contrib, semver and legacy, on legacy dev' => [
-        'aaa_automatic_updates_test.7.0.1.xml',
+        'aaa_package_manager_test.7.0.1.xml',
         '8.x-6.x-dev',
         ['7.0.1', '7.0.0', '7.0.0-alpha1', '8.x-6.2', '8.x-6.1', '8.x-6.0', '8.x-6.0-alpha1'],
       ],
@@ -136,7 +136,7 @@ class ProjectInfoTest extends PackageManagerKernelTestBase {
       ->addLogger($logger);
     $fixtures_directory = __DIR__ . '/../../fixtures/release-history/';
     $metadata_fixtures['drupal'] = $fixtures_directory . 'drupal.9.8.2.xml';
-    $metadata_fixtures['aaa_automatic_updates_test'] = $fixtures_directory . 'aaa_automatic_updates_test.7.0.1.xml';
+    $metadata_fixtures['aaa_package_manager_test'] = $fixtures_directory . 'aaa_package_manager_test.7.0.1.xml';
     $this->setReleaseMetadata($metadata_fixtures);
     $available = update_get_available(TRUE);
     $this->assertSame(['drupal'], array_keys($available));
@@ -145,7 +145,7 @@ class ProjectInfoTest extends PackageManagerKernelTestBase {
     // Set the state that the update module uses to store last checked time
     // ensure our calls do not affect it.
     $state->set('update.last_check', 123);
-    $project_info = new ProjectInfo('aaa_automatic_updates_test');
+    $project_info = new ProjectInfo('aaa_package_manager_test');
     $project_data = $project_info->getProjectInfo();
     // Ensure the project information is correct.
     $this->assertSame('AAA', $project_data['title']);

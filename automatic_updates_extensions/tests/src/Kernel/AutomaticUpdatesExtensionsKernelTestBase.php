@@ -63,7 +63,7 @@ abstract class AutomaticUpdatesExtensionsKernelTestBase extends AutomaticUpdates
         "type" => "drupal-module",
       ])
       ->addPackage([
-        "name" => "drupal/aaa_automatic_updates_test",
+        "name" => "drupal/aaa_package_manager_test",
         "version" => "1.0.0",
         "type" => "drupal-module",
       ])->commitChanges();
