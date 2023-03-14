@@ -325,8 +325,10 @@ END;
       'drupal/core-vendor-hardening',
       'drupal/core-project-message',
     ];
-    foreach ($this->getInstalledPackages() as $package) {
-      $name = $package['name'];
+
+    $output = $this->runComposer("composer show --format=json --working-dir=$drupal_root", NULL, TRUE);
+    foreach ($output['installed'] as $installed_package) {
+      $name = $installed_package['name'];
       if (in_array($name, $core_packages, TRUE)) {
         continue;
       }
@@ -338,47 +340,42 @@ END;
       // metapackage and will be represented as path repositories in the test
       // project's composer.json.
       if (is_dir($path) && !is_link($path)) {
-        unset(
-          // Force the package to be installed from our 'dist' information.
-          $package['source'],
-          // Don't notify anybody that we're installing this package.
-          $package['notification-url'],
-          // Since Drupal 10 requires PHP 8.1 or later, these polyfills won't be
-          // installed, so we should make sure that they're not required by
-          // anything.
-          $package['require']['symfony/polyfill-php72'],
-          $package['require']['symfony/polyfill-php73'],
-          $package['require']['symfony/polyfill-php80'],
-          $package['require']['symfony/polyfill-php81']
-        );
-        // Disabling symlinks in the transport options doesn't seem to have an
-        // effect, so we use the COMPOSER_MIRROR_PATH_REPOS environment variable
-        // to force mirroring in ::createTestProject().
-        $package['dist'] = [
-          'type' => 'path',
-          'url' => $path,
+        $package_info = $path . '/composer.json';
+        $this->assertFileIsReadable($package_info);
+        $package_info = file_get_contents($package_info);
+        $package_info = json_decode($package_info, TRUE, 512, JSON_THROW_ON_ERROR);
+
+        $version = $installed_package['version'];
+        // Create a pared-down package definition that has just enough
+        // information for Composer to install the package from the local copy:
+        // the name, version, package type, source path ("dist" in Composer
+        // terminology), and the autoload information, so that the classes
+        // provided by the package will actually be loadable in the test site
+        // we're building.
+        $packages[$name][$version] = [
+          'name' => $name,
+          'version' => $version,
+          'type' => $package_info['type'] ?? 'library',
+          // Disabling symlinks in the transport options doesn't seem to have an
+          // effect, so we use the COMPOSER_MIRROR_PATH_REPOS environment
+          // variable to force mirroring in ::createTestProject().
+          'dist' => [
+            'type' => 'path',
+            'url' => $path,
+          ],
+          'autoload' => $package_info['autoload'] ?? [],
         ];
-        $version = $package['version'];
-        $packages[$name][$version] = $package;
+        // Composer plugins are loaded and activated as early as possible, and
+        // they must have a `class` key defined in their `extra` section, along
+        // with a dependency on `composer-plugin-api` (plus any other real
+        // runtime dependencies).
+        if ($packages[$name][$version]['type'] === 'composer-plugin') {
+          $packages[$name][$version]['require'] = $package_info['require'] ?? [];
+          $packages[$name][$version]['extra'] = $package_info['extra'] ?? [];
+        }
       }
     }
     return ['packages' => $packages];
-  }
-
-  /**
-   * Returns all package information from the `installed.json` file.
-   *
-   * @return mixed[][]
-   *   All package data from the `installed.json` file.
-   */
-  private function getInstalledPackages(): array {
-    $installed = $this->getDrupalRoot() . '/vendor/composer/installed.json';
-    $this->assertFileExists($installed);
-
-    $installed = file_get_contents($installed);
-    $installed = json_decode($installed, TRUE, JSON_THROW_ON_ERROR);
-
-    return $installed['packages'];
   }
 
   /**
