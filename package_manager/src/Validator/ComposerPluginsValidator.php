@@ -4,7 +4,6 @@ declare(strict_types = 1);
 
 namespace Drupal\package_manager\Validator;
 
-use Composer\Package\Package;
 use Drupal\Component\Render\FormattableMarkup;
 use Drupal\Component\Serialization\Json;
 use Drupal\Core\Config\ConfigFactoryInterface;
@@ -131,8 +130,7 @@ final class ComposerPluginsValidator implements EventSubscriberInterface {
    *   The normalized package name.
    */
   private static function normalizePackageName(string $package_name): string {
-    // Normalize the configured package names using Composer's own logic.
-    return (new Package($package_name, 'irrelevant', 'irrelevant'))->getName();
+    return strtolower($package_name);
   }
 
   /**
