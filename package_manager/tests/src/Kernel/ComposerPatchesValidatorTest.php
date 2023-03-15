@@ -9,7 +9,6 @@ use Drupal\fixture_manipulator\ActiveFixtureManipulator;
 use Drupal\package_manager\Event\PreCreateEvent;
 use Drupal\package_manager\Exception\StageEventException;
 use Drupal\package_manager\ValidationResult;
-use Symfony\Component\Process\Process;
 
 /**
  * @covers \Drupal\package_manager\Validator\ComposerPatchesValidator
@@ -75,25 +74,27 @@ class ComposerPatchesValidatorTest extends PackageManagerKernelTestBase {
    *  @dataProvider providerErrorDuringPreCreate()
    */
   public function testErrorDuringPreCreate(int $options, array $expected_results): void {
+    $active_manipulator = new ActiveFixtureManipulator();
     if ($options & static::CONFIG_ALLOWED_PLUGIN) {
-      $this->addPatcherToAllowedPlugins();
+      $active_manipulator->addConfig(['allow-plugins.cweagans/composer-patches' => TRUE]);
     }
     if ($options & static::EXTRA_EXIT_ON_PATCH_FAILURE) {
-      $this->setRootExtra();
+      $active_manipulator->addConfig(['extra.composer-exit-on-patch-failure' => TRUE]);
     }
     if ($options & static::REQUIRE_PACKAGE_FROM_ROOT) {
-      $this->setRootRequires();
+      $active_manipulator->requirePackage('cweagans/composer-patches', '@dev');
     }
     elseif ($options & static::REQUIRE_PACKAGE_INDIRECTLY) {
-      (new ActiveFixtureManipulator())
-        ->addPackage([
-          'type' => 'package',
-          'name' => 'dummy/depends-on-composer-patches',
-          'description' => 'A dummy package depending on cweagans/composer-patches',
-          'version' => '1.0.0',
-          'require' => ['cweagans/composer-patches' => '*'],
-        ])
-        ->commitChanges();
+      $active_manipulator->addPackage([
+        'type' => 'package',
+        'name' => 'dummy/depends-on-composer-patches',
+        'description' => 'A dummy package depending on cweagans/composer-patches',
+        'version' => '1.0.0',
+        'require' => ['cweagans/composer-patches' => '*'],
+      ]);
+    }
+    if ($options !== static::ABSENT) {
+      $active_manipulator->commitChanges();
     }
     $this->assertStatusCheckResults($expected_results);
     $this->assertResults($expected_results, PreCreateEvent::class);
@@ -191,14 +192,18 @@ class ComposerPatchesValidatorTest extends PackageManagerKernelTestBase {
    */
   public function testErrorDuringPreApply(int $in_active, int $in_stage, array $expected_results): void {
     // Simulate in active.
+    $active_manipulator = new ActiveFixtureManipulator();
     if ($in_active & static::CONFIG_ALLOWED_PLUGIN) {
-      $this->addPatcherToAllowedPlugins();
+      $active_manipulator->addConfig(['allow-plugins.cweagans/composer-patches' => TRUE]);
     }
     if ($in_active & static::EXTRA_EXIT_ON_PATCH_FAILURE) {
-      $this->setRootExtra();
+      $active_manipulator->addConfig(['extra.composer-exit-on-patch-failure' => TRUE]);
     }
     if ($in_active & static::REQUIRE_PACKAGE_FROM_ROOT) {
-      $this->setRootRequires();
+      $active_manipulator->requirePackage('cweagans/composer-patches', '@dev');
+    }
+    if ($in_active !== static::ABSENT) {
+      $active_manipulator->commitChanges();
     }
 
     // Simulate in stage.
@@ -282,37 +287,6 @@ class ComposerPatchesValidatorTest extends PackageManagerKernelTestBase {
       $expected_results[$result_index] = ValidationResult::createError($messages, $result->getSummary());
     }
     $this->testErrorDuringPreApply($in_active, $in_stage, $expected_results);
-  }
-
-  /**
-   * Add the installed patcher to allowed plugins.
-   */
-  private function addPatcherToAllowedPlugins(): void {
-    (new ActiveFixtureManipulator())
-      ->addConfig(['allow-plugins.cweagans/composer-patches' => TRUE])
-      ->commitChanges();
-  }
-
-  /**
-   * Sets the cweagans/composer-patches as required package for root package.
-   */
-  private function setRootRequires(): void {
-    $process = new Process(
-      ['composer', 'require', "cweagans/composer-patches:@dev"],
-      $this->container->get('package_manager.path_locator')->getProjectRoot()
-    );
-    $process->mustRun();
-  }
-
-  /**
-   * Sets the composer-exit-on-patch-failure key in extra part of root package.
-   */
-  private function setRootExtra(): void {
-    $process = new Process(
-      ['composer', 'config', 'extra.composer-exit-on-patch-failure', 'true'],
-      $this->container->get('package_manager.path_locator')->getProjectRoot()
-    );
-    $process->mustRun();
   }
 
 }

@@ -40,7 +40,9 @@ final class ComposerSettingsValidator implements EventSubscriberInterface {
    * Validates Composer settings.
    */
   public function validate(PreOperationStageEvent $event): void {
-    $dir = $this->pathLocator->getProjectRoot();
+    $dir = $event instanceof PreApplyEvent
+      ? $event->stage->getStageDirectory()
+      : $this->pathLocator->getProjectRoot();
 
     try {
       $setting = (int) $this->inspector->getConfig('secure-http', $dir);

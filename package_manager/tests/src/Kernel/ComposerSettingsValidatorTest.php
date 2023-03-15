@@ -4,7 +4,7 @@ declare(strict_types = 1);
 
 namespace Drupal\Tests\package_manager\Kernel;
 
-use Drupal\Component\Serialization\Json;
+use Drupal\fixture_manipulator\ActiveFixtureManipulator;
 use Drupal\package_manager\Event\PreApplyEvent;
 use Drupal\package_manager\Event\PreCreateEvent;
 use Drupal\package_manager\ValidationResult;
@@ -29,23 +29,21 @@ class ComposerSettingsValidatorTest extends PackageManagerKernelTestBase {
 
     return [
       'disabled' => [
-        Json::encode([
-          'config' => [
-            'secure-http' => FALSE,
-          ],
-        ]),
+        [
+          'secure-http' => FALSE,
+        ],
         [$error],
       ],
       'explicitly enabled' => [
-        Json::encode([
-          'config' => [
-            'secure-http' => TRUE,
-          ],
-        ]),
+        [
+          'secure-http' => TRUE,
+        ],
         [],
       ],
       'implicitly enabled' => [
-        '{}',
+        [
+          'extra.unrelated' => TRUE,
+        ],
         [],
       ],
     ];
@@ -54,17 +52,15 @@ class ComposerSettingsValidatorTest extends PackageManagerKernelTestBase {
   /**
    * Tests that Composer's secure-http setting is validated.
    *
-   * @param string $contents
-   *   The contents of the composer.json file.
+   * @param array $config
+   *   The config to set.
    * @param \Drupal\package_manager\ValidationResult[] $expected_results
    *   The expected validation results, if any.
    *
    * @dataProvider providerSecureHttpValidation
    */
-  public function testSecureHttpValidation(string $contents, array $expected_results): void {
-    $active_dir = $this->container->get('package_manager.path_locator')
-      ->getProjectRoot();
-    file_put_contents("$active_dir/composer.json", $contents);
+  public function testSecureHttpValidation(array $config, array $expected_results): void {
+    (new ActiveFixtureManipulator())->addConfig($config)->commitChanges();
     $this->assertStatusCheckResults($expected_results);
     $this->assertResults($expected_results, PreCreateEvent::class);
   }
@@ -72,19 +68,15 @@ class ComposerSettingsValidatorTest extends PackageManagerKernelTestBase {
   /**
    * Tests that Composer's secure-http setting is validated during pre-apply.
    *
-   * @param string $contents
-   *   The contents of the composer.json file.
+   * @param array $config
+   *   The config to set.
    * @param \Drupal\package_manager\ValidationResult[] $expected_results
    *   The expected validation results, if any.
    *
    * @dataProvider providerSecureHttpValidation
    */
-  public function testSecureHttpValidationDuringPreApply(string $contents, array $expected_results): void {
-    $this->addEventTestListener(function () use ($contents): void {
-      $active_dir = $this->container->get('package_manager.path_locator')
-        ->getProjectRoot();
-      file_put_contents("$active_dir/composer.json", $contents);
-    });
+  public function testSecureHttpValidationDuringPreApply(array $config, array $expected_results): void {
+    $this->getStageFixtureManipulator()->addConfig($config);
     $this->assertResults($expected_results, PreApplyEvent::class);
   }
 

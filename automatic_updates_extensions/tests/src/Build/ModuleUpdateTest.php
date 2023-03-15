@@ -40,7 +40,8 @@ class ModuleUpdateTest extends UpdateTestBase {
 \$config['update_test.settings']['system_info'] = $system_info;
 END;
     $this->writeSettings($code);
-    $this->addRepository('alpha', $this->copyFixtureToTempDirectory(__DIR__ . '/../../../../package_manager/tests/fixtures/build_test_projects/alpha/1.0.0'));
+    $alpha_repo_path = $this->copyFixtureToTempDirectory(__DIR__ . '/../../../../package_manager/tests/fixtures/build_test_projects/alpha/1.0.0');
+    $this->addRepository('alpha', $alpha_repo_path);
     $this->runComposer('COMPOSER_MIRROR_PATH_REPOS=1 composer require drupal/alpha --update-with-all-dependencies', 'project');
     $this->assertModuleVersion('alpha', '1.0.0');
     $fs = new SymfonyFilesystem();
@@ -51,8 +52,8 @@ END;
       'new_module',
     ]);
 
-    // Change both modules' upstream version.
-    $this->addRepository('alpha', $this->copyFixtureToTempDirectory(__DIR__ . '/../../../../package_manager/tests/fixtures/build_test_projects/alpha/1.1.0'));
+    // Change the module's upstream version.
+    static::copyFixtureFilesTo(__DIR__ . '/../../../../package_manager/tests/fixtures/build_test_projects/alpha/1.1.0', $alpha_repo_path);
   }
 
   /**

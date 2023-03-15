@@ -22,6 +22,9 @@ class PackageInstallTest extends TemplateProjectTestBase {
       'alpha' => __DIR__ . '/../../fixtures/release-history/alpha.1.1.0.xml',
     ]);
     $this->addRepository('alpha', $this->copyFixtureToTempDirectory(__DIR__ . '/../../fixtures/build_test_projects/alpha/1.0.0'));
+    // Repository definitions affect the lock file hash, so update the hash to
+    // ensure that Composer won't complain that the lock file is out of sync.
+    $this->runComposer('composer update --lock', 'project');
 
     // Use the API endpoint to create a stage and install alpha 1.0.0. We ask
     // the API to return the contents of composer.json file of installed module,

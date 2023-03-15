@@ -108,8 +108,7 @@ class ComposerInspector {
       try {
         $this->runner->run([
           'validate',
-          // @todo Check the lock file in https://drupal.org/i/3343827.
-          '--no-check-lock',
+          '--check-lock',
           '--no-check-publish',
           '--with-dependencies',
           '--no-interaction',

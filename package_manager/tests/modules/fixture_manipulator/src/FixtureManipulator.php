@@ -59,6 +59,7 @@ class FixtureManipulator {
     $runner = \Drupal::service(ComposerRunnerInterface::class);
     $runner->run([
       'validate',
+      '--check-lock',
       '--no-check-publish',
       '--with-dependencies',
       '--no-interaction',
@@ -68,8 +69,6 @@ class FixtureManipulator {
       // Unlike ComposerInspector::validate(), explicitly do NOT validate
       // plugins, to allow for testing edge cases.
       '--no-plugins',
-      // @todo remove this after FixtureManipulator uses composer commands exclusively!
-      '--no-check-lock',
       // Dummy packages are not meant for publishing, so do not validate that.
       '--no-check-publish',
       '--no-check-version',
@@ -634,6 +633,7 @@ class FixtureManipulator {
     // repos at the absolute path.
     $composer_json = file_get_contents($this->dir . '/composer.json');
     file_put_contents($this->dir . '/composer.json', str_replace('../path_repos/', "$path_repo_base/", $composer_json));
+    $this->runComposerCommand(['update', '--lock']);
     $this->runComposerCommand(['install']);
   }
 

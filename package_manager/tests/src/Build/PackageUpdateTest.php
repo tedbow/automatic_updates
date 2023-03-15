@@ -20,8 +20,12 @@ class PackageUpdateTest extends TemplateProjectTestBase {
   public function testPackageUpdate(): void {
     $this->createTestProject('RecommendedProject');
 
-    $this->addRepository('alpha', $this->copyFixtureToTempDirectory(__DIR__ . '/../../fixtures/build_test_projects/alpha/1.0.0'));
-    $this->addRepository('updated_module', $this->copyFixtureToTempDirectory(__DIR__ . '/../../fixtures/build_test_projects/updated_module/1.0.0'));
+    $fixtures = __DIR__ . '/../../fixtures/build_test_projects';
+
+    $alpha_repo_path = $this->copyFixtureToTempDirectory("$fixtures/alpha/1.0.0");
+    $this->addRepository('alpha', $alpha_repo_path);
+    $updated_module_repo_path = $this->copyFixtureToTempDirectory("$fixtures/updated_module/1.0.0");
+    $this->addRepository('updated_module', $updated_module_repo_path);
     $this->setReleaseMetadata([
       'updated_module' => __DIR__ . '/../../fixtures/release-history/updated_module.1.1.0.xml',
     ]);
@@ -32,8 +36,8 @@ class PackageUpdateTest extends TemplateProjectTestBase {
     $this->installModules(['updated_module']);
 
     // Change both modules' upstream version.
-    $this->addRepository('alpha', $this->copyFixtureToTempDirectory(__DIR__ . '/../../fixtures/build_test_projects/alpha/1.1.0'));
-    $this->addRepository('updated_module', $this->copyFixtureToTempDirectory(__DIR__ . '/../../fixtures/build_test_projects/updated_module/1.1.0'));
+    static::copyFixtureFilesTo("$fixtures/alpha/1.1.0", $alpha_repo_path);
+    static::copyFixtureFilesTo("$fixtures/updated_module/1.1.0", $updated_module_repo_path);
     // Make .git folder
 
     // Use the API endpoint to create a stage and update updated_module to

@@ -44,7 +44,16 @@ class FixtureManipulatorTest extends PackageManagerKernelTestBase {
   private function assertOriginalFixturePackagesUnchanged(array $installed_php): void {
     $original_package_names = array_keys($this->originalInstalledPhp);
     $installed_php_core_packages = array_intersect_key($installed_php, array_flip($original_package_names));
-    $this->assertSame($this->originalInstalledPhp, $installed_php_core_packages);
+    // `reference` is never the same as the original because the relative path
+    // repos from the `fake_site` fixture are converted to absolute ones, which
+    // causes a new reference to be computed.
+    $without_reference_key = function (array $a): array {
+      return array_diff_key($a, array_flip(['reference']));
+    };
+    $this->assertSame(
+      array_map($without_reference_key, $this->originalInstalledPhp),
+      array_map($without_reference_key, $installed_php_core_packages)
+    );
   }
 
   /**
