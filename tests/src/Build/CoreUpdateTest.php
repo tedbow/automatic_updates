@@ -153,9 +153,11 @@ class CoreUpdateTest extends UpdateTestBase {
     $this->coreUpdateTillUpdateReady($page);
     $page->pressButton('Continue');
     $this->waitForBatchJob();
+    $assert_session->addressEquals('/admin/reports/updates');
     $assert_session->pageTextContains('Update complete!');
-    $this->assertExpectedStageEventsFired(Updater::class);
+    $assert_session->pageTextContains('Up to date');
     $assert_session->pageTextNotContains('There is a security update available for your version of Drupal.');
+    $this->assertExpectedStageEventsFired(Updater::class);
     $this->assertUpdateSuccessful('9.8.1');
   }
 
@@ -363,9 +365,6 @@ class CoreUpdateTest extends UpdateTestBase {
     // ...but it should have been updated in the dev dependencies.
     $this->assertSame($expected_version, $info['devRequires']['drupal/core-dev']);
     // The update form should not have any available updates.
-    // @todo Figure out why this assertion fails when the batch processor
-    //   redirects directly to the update form, instead of update.status, when
-    //   updating via the UI.
     $this->visit('/admin/modules/update');
     $this->getMink()->assertSession()->pageTextContains('No update available');
 
