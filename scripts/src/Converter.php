@@ -20,6 +20,8 @@ use Symfony\Component\Filesystem\Filesystem;
  */
 class Converter {
 
+  private const RUN_CHECKS = TRUE;
+
   /**
    * Prints message.
    *
@@ -38,18 +40,20 @@ class Converter {
    */
   public static function doConvert(Event $event): void {
     $args = $event->getArguments();
-    if (count($args) !== 2) {
-      throw new \Exception("This scripts 2 arguments, a directory that is a core clone and the branch.");
+    $count_arg = count($args);
+    if (!($count_arg === 2 || $count_arg === 3)) {
+      throw new \Exception("This scripts 2 required arguments: a directory that is a core clone and the branch.\nIt has 1 optional arguments: the branch of this module to use which defaults to 3.0.x");
     }
     $core_dir = $args[0];
     $core_branch = $args[1];
     if (!is_dir($core_dir)) {
       throw new \Exception("$core_dir is not a directory.");
     }
+    $contrib_branch = $count_arg === 2 ? '3.0.x' : $args[2];
     $old_machine_name = 'automatic_updates';
     $new_machine_name = 'auto_updates';
 
-    static::switchToBranches($core_dir, $core_branch);
+    static::switchToBranches($core_dir, $core_branch, $contrib_branch);
     self::info('Switched branches');
     $fs = new Filesystem();
 
@@ -66,16 +70,18 @@ class Converter {
 
     // Remove unneeded.
     $removals = [
-      'package_manager/package_manager.install',
-      'automatic_updates_9_3_shim',
       'automatic_updates_extensions',
       'drupalci.yml',
       'README.md',
+      '.cspell.json',
       '.git',
       'composer.json',
       '.gitattributes',
       '.gitignore',
       'DEVELOPING.md',
+      'phpstan.neon.dist',
+      // @todo Move ComposerFixtureCreator to its location in core
+      //   https://drupal.org/i/3347937.
       'scripts',
       'dictionary.txt',
     ];
@@ -86,14 +92,21 @@ class Converter {
     self::info('Remove not needed');
 
     // Replace in file names and contents.
+    static::replaceContents(
+      [
+        new \SplFileInfo("$core_module_path/automatic_updates.info.yml"),
+        new \SplFileInfo("$core_module_path/package_manager/package_manager.info.yml"),
+      ],
+      "core_version_requirement: ^9.7 || ^10",
+      "package: Core\nversion: VERSION\nlifecycle: experimental",
+    );
     $replacements = [
       $old_machine_name => $new_machine_name,
       'AutomaticUpdates' => 'AutoUpdates',
-      "core_version_requirement: ^9.3" => "package: Core\nversion: VERSION\nlifecycle: experimental",
     ];
     foreach ($replacements as $search => $replace) {
-      static::renameFiles($core_module_path, $search, $replace);
-      static::replaceContents($core_module_path, $search, $replace);
+      static::renameFiles(static::getDirContents($core_module_path), $search, $replace);
+      static::replaceContents(static::getDirContents($core_module_path, TRUE), $search, $replace);
     }
     self::info('Replacements done.');
 
@@ -102,13 +115,23 @@ class Converter {
     $fs->rename("$core_module_path/package_manager", $core_dir . "/core/modules/package_manager");
     self::info('Move package manager');
 
+    // ⚠️ For now, we're only trying to get package_manager committed, not automatic_updates!
+    $fs->remove($core_module_path);
+
     static::addWordsToDictionary($core_dir, self::getContribDir() . "/dictionary.txt");
     self::info("Added to dictionary");
-    static::runCoreChecks($core_dir);
-    self::info('Ran core checks');
+    if (self::RUN_CHECKS) {
+      static::runCoreChecks($core_dir);
+      self::info('Ran core checks');
+    }
+    else {
+      self::info('⚠️Skipped core checks');
+    }
     static::makeCommit($core_dir);
     self::info('Make commit');
-    self::info("Done. Probably good but you should check before you push.");
+    self::info("Done. Probably good but you should check before you push. These are the files present in the contrib module absent in core:");
+    print shell_exec(sprintf("tree %s/package_manager > /tmp/contrib.txt  && tree %s/core/modules/package_manager > /tmp/core.txt && diff /tmp/contrib.txt /tmp/core.txt", self::getContribDir(), $core_dir));
+    self::info('(Run diff /tmp/contrib.txt /tmp/core.txt to see that with color.');
   }
 
   /**
@@ -137,15 +160,14 @@ class Converter {
   /**
    * Replaces a string in the contents of the module files.
    *
-   * @param string $core_module_path
-   *   The path of module in Drupal Core.
+   * @param array $files
+   *   Files to replace.
    * @param string $search
    *   The string to be replaced.
    * @param string $replace
    *   The string to replace.
    */
-  private static function replaceContents(string $core_module_path, string $search, string $replace): void {
-    $files = static::getDirContents($core_module_path, TRUE);
+  private static function replaceContents(array $files, string $search, string $replace): void {
     foreach ($files as $file) {
       $filePath = $file->getRealPath();
       file_put_contents($filePath, str_replace($search, $replace, file_get_contents($filePath)));
@@ -155,17 +177,14 @@ class Converter {
   /**
    * Renames the module files.
    *
-   * @param string $core_module_path
-   *   The path of module in Drupal Core.
+   * @param array $files
+   *   Files to replace.
    * @param string $old_pattern
    *   The old file name.
    * @param string $new_pattern
    *   The new file name.
    */
-  private static function renameFiles(string $core_module_path, string $old_pattern, string $new_pattern): void {
-
-    $files = static::getDirContents($core_module_path);
-
+  private static function renameFiles(array $files, string $old_pattern, string $new_pattern): void {
     // Keep a record of the files and directories to change.
     // We will change all the files first, so we don't change the location of
     // any files in the middle. This probably won't work if we had nested
@@ -266,9 +285,11 @@ class Converter {
    *   The path to the root of Drupal Core.
    * @param string $core_branch
    *   The core merge request branch.
+   * @param string $contrib_branch
+   *   The contrib branch to switch to.
    */
-  private static function switchToBranches(string $core_dir, string $core_branch): void {
-    static::switchToBranch('8.x-2.x');
+  private static function switchToBranches(string $core_dir, string $core_branch, string $contrib_branch): void {
+    static::switchToBranch($contrib_branch);
     chdir($core_dir);
     static::switchToBranch($core_branch);
   }
@@ -299,6 +320,8 @@ class Converter {
     $hash = trim(shell_exec('git rev-parse HEAD'));
     $message = trim(shell_exec("git show -s --format='%s'"));
     chdir($core_dir);
+    // Make sure ALL files are committed, including the core/modules/package_manager/tests/fixtures/fake_site/core directory!
+    shell_exec('git add -f core/modules/package_manager');
     shell_exec('git add core');
     shell_exec("git commit -m 'Contrib: $message - https://git.drupalcode.org/project/automatic_updates/-/commit/$hash'");
   }
@@ -335,9 +358,11 @@ class Converter {
   private static function runCoreChecks(string $core_dir): void {
     chdir($core_dir);
     $result = NULL;
-    system(' sh ./core/scripts/dev/commit-code-check.sh --branch 9.5.x', $result);
+    system(' sh ./core/scripts/dev/commit-code-check.sh --branch 10.1.x', $result);
     if ($result !== 0) {
       print "😭commit-code-check.sh failed";
+      print "Reset using this command in the core checkout:";
+      print "  rm -rf core/modules/package_manager && git checkout -- core && cd core && yarn install && cd ..";
       exit(1);
     }
     print "🎉 commit-code-check.sh passed!";
@@ -359,7 +384,7 @@ class Converter {
       $skip = FALSE;
       $newLines = [];
       foreach ($lines as $line) {
-        if (strpos($line, '// BEGIN: DELETE FROM CORE MERGE REQUEST')) {
+        if (str_contains($line, '// BEGIN: DELETE FROM CORE MERGE REQUEST')) {
           if ($skip) {
             throw new \Exception("Already found begin");
           }
@@ -368,7 +393,7 @@ class Converter {
         if (!$skip) {
           $newLines[] = $line;
         }
-        if (strpos($line, '// END: DELETE FROM CORE MERGE REQUEST')) {
+        if (str_contains($line, '// END: DELETE FROM CORE MERGE REQUEST')) {
           if (!$skip) {
             throw new \Exception("Didn't find matching begin");
           }
@@ -377,6 +402,10 @@ class Converter {
       }
       if ($skip) {
         throw new \Exception("Didn't find ending token");
+      }
+      // Remove extra blank.
+      if ($newLines[count($newLines) - 1] === '' && $newLines[count($newLines) - 2] === '') {
+        array_pop($newLines);
       }
       file_put_contents($filePath, implode("\n", $newLines));
     }

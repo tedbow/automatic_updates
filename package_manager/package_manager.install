@@ -14,7 +14,7 @@ use Drupal\package_manager\Exception\StageFailureMarkerException;
  */
 function package_manager_requirements(string $phase) {
   $requirements = [];
-
+  // BEGIN: DELETE FROM CORE MERGE REQUEST
   if (!class_exists('\PhpTuf\ComposerStager\Domain\Core\Beginner\Beginner')) {
     $requirements['package_manager_composer_dependencies'] = [
       'title' => t('Missing dependency'),
@@ -22,7 +22,7 @@ function package_manager_requirements(string $phase) {
       'severity' => REQUIREMENT_ERROR,
     ];
   }
-
+  // END: DELETE FROM CORE MERGE REQUEST
   // If we're able to check for the presence of the failure marker at all, do it
   // irrespective of the current run phase. If the failure marker is there, the
   // site is in an indeterminate state and should be restored from backup ASAP.
@@ -42,6 +42,8 @@ function package_manager_requirements(string $phase) {
   return $requirements;
 }
 
+// BEGIN: DELETE FROM CORE MERGE REQUEST
+
 /**
  * Sets default value for new additional_trusted_composer_plugins configuration.
  *
@@ -52,3 +54,5 @@ function package_manager_update_9001(): void {
   $config = \Drupal::service('config.factory')->getEditable('package_manager.settings');
   $config->set('additional_trusted_composer_plugins', [])->save();
 }
+
+// END: DELETE FROM CORE MERGE REQUEST
