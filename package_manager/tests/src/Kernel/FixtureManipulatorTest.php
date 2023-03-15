@@ -329,14 +329,26 @@ class FixtureManipulatorTest extends PackageManagerKernelTestBase {
    * @covers ::addDotGitFolder
    */
   public function testAddDotGitFolder() {
-    $project_root = $this->container->get('package_manager.path_locator')->getProjectRoot();
+    $path_locator = $this->container->get('package_manager.path_locator');
+    $project_root = $path_locator->getProjectRoot();
     $this->assertFalse(is_dir($project_root . "/relative/path/.git"));
+    // We should not be able to add a git folder to a non-existing directory.
+    try {
+      (new FixtureManipulator())
+        ->addDotGitFolder($project_root . "/relative/path")
+        ->commitChanges($project_root);
+      $this->fail('Trying to create a .git directory that already exists should raise an error.');
+    }
+    catch (\LogicException $e) {
+      $this->assertSame('No directory exists at ' . $project_root . '/relative/path.', $e->getMessage());
+    }
+    mkdir($project_root . "/relative/path", 0777, TRUE);
     $fixture_manipulator = (new FixtureManipulator())
       ->addPackage([
         'name' => 'relative/project_path',
         'type' => 'drupal-module',
       ])
-      ->addDotGitFolder($project_root . "/relative/project_path")
+      ->addDotGitFolder($path_locator->getVendorDirectory() . "/relative/project_path")
       ->addDotGitFolder($project_root . "/relative/path");
     $this->assertTrue(!is_dir($project_root . "/relative/project_path/.git"));
     $fixture_manipulator->commitChanges($project_root);

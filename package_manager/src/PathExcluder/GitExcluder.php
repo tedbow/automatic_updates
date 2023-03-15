@@ -79,7 +79,7 @@ final class GitExcluder implements EventSubscriberInterface {
       // package's path, since it means Composer probably installed that package
       // from source and therefore needs the `.git` directory in order to update
       // the package.
-      if (!in_array($git_directory, $installed_paths, TRUE)) {
+      if (!in_array(dirname($git_directory), $installed_paths, TRUE)) {
         $paths_to_exclude[] = $git_directory;
       }
     }

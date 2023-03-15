@@ -7,6 +7,7 @@ namespace Drupal\Tests\package_manager\Kernel\PathExcluder;
 use Drupal\Core\Serialization\Yaml;
 use Drupal\fixture_manipulator\ActiveFixtureManipulator;
 use Drupal\Tests\package_manager\Kernel\PackageManagerKernelTestBase;
+use Drupal\Tests\package_manager\Traits\ComposerInstallersTrait;
 use Symfony\Component\Filesystem\Filesystem;
 
 /**
@@ -16,21 +17,42 @@ use Symfony\Component\Filesystem\Filesystem;
  */
 class GitExcluderTest extends PackageManagerKernelTestBase {
 
+  use ComposerInstallersTrait;
+
   /**
    * {@inheritdoc}
    */
   protected function setUp(): void {
     parent::setUp();
     $path_locator = $this->container->get('package_manager.path_locator');
-    (new ActiveFixtureManipulator())
+    $project_root = $path_locator->getProjectRoot();
+    $this->installComposerInstallers($project_root);
+    $active_manipulator = new ActiveFixtureManipulator();
+    $active_manipulator
       ->addPackage([
         'name' => 'foo/package_known_to_composer_removed_later',
         'type' => 'drupal-module',
         'version' => '1.0.0',
-      ])
-      ->addProjectAtPath("modules/module_not_known_to_composer_in_active")
-      ->addDotGitFolder($path_locator->getProjectRoot() . "/modules/module_not_known_to_composer_in_active")
-      ->addDotGitFolder($path_locator->getProjectRoot() . "/modules/module_known_to_composer_removed_later")
+      ], FALSE, TRUE)
+      ->addPackage([
+        'name' => 'foo/custom_package_known_to_composer',
+        'type' => 'drupal-custom-module',
+        'version' => '1.0.0',
+      ], FALSE, TRUE)
+      ->addPackage([
+        'name' => 'foo/package_with_different_installer_path_known_to_composer',
+        'type' => 'drupal-module',
+        'version' => '1.0.0',
+      ], FALSE, TRUE);
+    // Set the installer path config in the project root where we install the
+    // package.
+    $installer_paths['different_installer_path/package_known_to_composer'] = ['foo/package_with_different_installer_path_known_to_composer'];
+    $this->setInstallerPaths($installer_paths, $project_root);
+    $active_manipulator->addProjectAtPath("modules/module_not_known_to_composer_in_active")
+      ->addDotGitFolder($project_root . "/modules/module_not_known_to_composer_in_active")
+      ->addDotGitFolder($project_root . "/modules/contrib/package_known_to_composer_removed_later")
+      ->addDotGitFolder($project_root . "/modules/custom/custom_package_known_to_composer")
+      ->addDotGitFolder($project_root . "/different_installer_path/package_known_to_composer")
       ->commitChanges();
   }
 
@@ -53,6 +75,14 @@ class GitExcluderTest extends PackageManagerKernelTestBase {
     ];
     foreach ($excluded_paths as $excluded_path) {
       $this->assertContains($excluded_path, $beginner_args[0][2]->getAll());
+    }
+    $not_excluded_paths = [
+      'modules/contrib/package_known_to_composer_removed_later/.git',
+      'modules/custom/custom_package_known_to_composer/.git',
+      'different_installer_path/package_known_to_composer/.git',
+    ];
+    foreach ($not_excluded_paths as $not_excluded_path) {
+      $this->assertNotContains($not_excluded_path, $beginner_args[0][2]->getAll());
     }
   }
 

@@ -397,14 +397,15 @@ class FixtureManipulator {
       $this->queueManipulation('addDotGitFolder', func_get_args());
       return $this;
     }
+    if (!is_dir($path)) {
+      throw new \LogicException("No directory exists at $path.");
+    }
     $fs = new SymfonyFileSystem();
     $git_directory_path = $path . "/.git";
-    if (!is_dir($git_directory_path)) {
-      $fs->mkdir($git_directory_path);
-    }
-    else {
+    if (is_dir($git_directory_path)) {
       throw new \LogicException("A .git directory already exists at $path.");
     }
+    $fs->mkdir($git_directory_path);
     return $this;
   }
 
