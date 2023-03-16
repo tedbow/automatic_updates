@@ -2,7 +2,7 @@
     "name": "cweagans/composer-patches",
     "description": "A fake version of cweagans/composer-patches",
     "type": "composer-plugin",
-    "version": "24.12.1999",
+    "version": "1.7.333",
     "extra": {
         "class": "\\cweagans\\Fake\\ComposerPatches"
     },

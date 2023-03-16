@@ -204,6 +204,22 @@ class ComposerPluginsValidatorTest extends PackageManagerKernelTestBase {
       [],
     ];
 
+    yield 'a supported composer plugin for which any version is supported: party like it is Drupal 99!' => [
+      [
+        'allow-plugins.drupal/core-composer-scaffold' => TRUE,
+      ],
+      [
+        [
+          'name' => 'drupal/core-composer-scaffold',
+          'version' => '99.0.0',
+          'type' => 'composer-plugin',
+          'require' => ['composer-plugin-api' => '*'],
+          'extra' => ['class' => 'AnyClass'],
+        ],
+      ],
+      [],
+    ];
+
     yield 'one UNsupported but disallowed plugin — pretty package name' => [
       [
         'allow-plugins.composer/plugin-a' => FALSE,
@@ -308,6 +324,52 @@ class ComposerPluginsValidatorTest extends PackageManagerKernelTestBase {
         ),
       ],
     ];
+
+    yield 'one supported composer plugin but incompatible version — newer version' => [
+      [
+        'allow-plugins.phpstan/extension-installer' => TRUE,
+      ],
+      [
+        [
+          'name' => 'phpstan/extension-installer',
+          'version' => '20.1',
+          'type' => 'composer-plugin',
+          'require' => ['composer-plugin-api' => '*'],
+          'extra' => ['class' => 'AnyClass'],
+        ],
+      ],
+      [
+        ValidationResult::createError(
+          [
+            new TranslatableMarkup('<code>phpstan/extension-installer</code> is supported, but only version <code>^1.1</code>, found <code>20.1</code>.'),
+          ],
+          new TranslatableMarkup('An unsupported Composer plugin was detected.'),
+        ),
+      ],
+    ];
+
+    yield 'one supported composer plugin but incompatible version — older version' => [
+      [
+        'allow-plugins.dealerdirect/phpcodesniffer-composer-installer' => TRUE,
+      ],
+      [
+        [
+          'name' => 'dealerdirect/phpcodesniffer-composer-installer',
+          'version' => '0.6.1',
+          'type' => 'composer-plugin',
+          'require' => ['composer-plugin-api' => '*'],
+          'extra' => ['class' => 'AnyClass'],
+        ],
+      ],
+      [
+        ValidationResult::createError(
+          [
+            new TranslatableMarkup('<code>dealerdirect/phpcodesniffer-composer-installer</code> is supported, but only version <code>^0.7.1 || ^1.0.0</code>, found <code>0.6.1</code>.'),
+          ],
+          new TranslatableMarkup('An unsupported Composer plugin was detected.'),
+        ),
+      ],
+    ];
   }
 
   /**
@@ -335,6 +397,8 @@ class ComposerPluginsValidatorTest extends PackageManagerKernelTestBase {
           [
             new TranslatableMarkup('<code>not-cweagans/not-composer-patches</code>'),
             new TranslatableMarkup('<code>also-not-cweagans/also-not-composer-patches</code>'),
+            new TranslatableMarkup('<code>phpstan/extension-installer</code> is supported, but only version <code>^1.1</code>, found <code>20.1</code>.'),
+            new TranslatableMarkup('<code>dealerdirect/phpcodesniffer-composer-installer</code> is supported, but only version <code>^0.7.1 || ^1.0.0</code>, found <code>0.6.1</code>.'),
           ],
           new TranslatableMarkup('Unsupported Composer plugins were detected.'),
         ),

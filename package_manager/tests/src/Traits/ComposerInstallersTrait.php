@@ -30,6 +30,13 @@ trait ComposerInstallersTrait {
       'url' => $package_path,
       'options' => [
         'symlink' => FALSE,
+        'versions' => [
+          // Explicitly state the version contained by this path repository,
+          // otherwise Composer will infer the version based on the git clone or
+          // fall back to `dev-master`.
+          // @see https://getcomposer.org/doc/05-repositories.md#path
+          'composer/installers' => $package_list['composer/installers']->version,
+        ],
       ],
     ], JSON_UNESCAPED_SLASHES);
     $working_dir_option = "--working-dir=$dir";

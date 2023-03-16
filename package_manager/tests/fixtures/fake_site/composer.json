@@ -50,7 +50,7 @@
     },
     "cweagans/composer-patches": {
       "type": "path",
-      "version": "24.12.1999",
+      "version": "1.7.333",
       "url": "../path_repos/cweagans--composer-patches",
       "options": {
         "symlink": false

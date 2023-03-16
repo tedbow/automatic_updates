@@ -50,8 +50,12 @@ final class InstalledPackagesList extends \ArrayObject {
    * {@inheritdoc}
    */
   public function offsetGet(mixed $key): ?InstalledPackage {
-    // Overridden to provide a clearer return type hint.
-    return parent::offsetGet($key);
+    // Overridden to provide a clearer return type hint and compatibility with
+    // the null-safe operator.
+    if ($this->offsetExists($key)) {
+      return parent::offsetGet($key);
+    }
+    return NULL;
   }
 
   /**
