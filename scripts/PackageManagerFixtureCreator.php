@@ -1,40 +1,41 @@
+#!/usr/bin/env php
 <?php
+
+/**
+ * @file
+ * A script that updates the package_manager test 'fake_site' fixture.
+ */
 
 declare(strict_types = 1);
 
-namespace Drupal\automatic_updates\Development;
-
 use Composer\Json\JsonFile;
-use Composer\Script\Event;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\Process\Exception\ProcessFailedException;
 use Symfony\Component\Process\Process;
 
-/**
- * Creates the test fixture at 'package_manager/tests/fixtures/fake_site'.
- */
-final class ComposerFixtureCreator {
+if (PHP_SAPI !== 'cli') {
+  return;
+}
+// Bootstrap.
+require __DIR__ . '/../../../autoload.php';
 
-  const FIXTURE_PATH = __DIR__ . '/../../package_manager/tests/fixtures/fake_site';
+PackageManagerFixtureCreator::createFixture();
+/**
+ * Creates fixture at 'core/modules/package_manager/tests/fixtures/fake_site'.
+ */
+final class PackageManagerFixtureCreator {
+
+  private const FIXTURE_PATH = __DIR__ . '/../package_manager/tests/fixtures/fake_site';
+
+  private const CORE_ROOT_PATH = __DIR__ . '/../../../';
 
   /**
    * Creates the fixture.
-   *
-   * @param \Composer\Script\Event $event
-   *   The Composer event.
    */
-  public static function createFixture(Event $event): void {
-    $args = $event->getArguments();
-    if (count($args) !== 1) {
-      throw new \Exception("This script requires 1 argument: a directory that is a core clone.");
-    }
-    $core_dir = $args[0];
-    if (!is_dir($core_dir)) {
-      throw new \Exception("$core_dir is not a directory.");
-    }
+  public static function createFixture(): void {
     // Copy drupal scaffold file mapping from core/composer.json to
     // fixtures' core/composer.json.
-    $core_composer_json = new JsonFile("$core_dir/composer.json");
+    $core_composer_json = new JsonFile(static::CORE_ROOT_PATH . '/core/composer.json');
     $core_composer_data = $core_composer_json->read();
     $fixture_core_composer_file = new JsonFile(static::FIXTURE_PATH . "/../path_repos/drupal--core/composer.json");
     $fixture_core_composer_data = $fixture_core_composer_file->read();
@@ -49,8 +50,9 @@ final class ComposerFixtureCreator {
     static::doComposerInstall();
     static::removeAllExcept(static::FIXTURE_PATH . '/vendor/composer', ['installed.json', 'installed.php']);
     $fs->remove(static::FIXTURE_PATH . '/vendor/autoload.php');
+    print "\nFixture updated.\nRunning phpcbf";
 
-    $process = new Process(['composer', 'phpcbf'], __DIR__ . '/../..');
+    $process = new Process(['composer', 'phpcbf', static::FIXTURE_PATH], static::CORE_ROOT_PATH);
     $process->run();
     print "\nFixture created 🎉.";
   }
@@ -102,8 +104,6 @@ final class ComposerFixtureCreator {
    * Runs `composer install`.
    */
   protected static function doComposerInstall(): void {
-    // Disable Packagist entirely so that we don't test the Internet.
-    static::runComposerCommand(['config', 'repo.packagist.org', 'false']);
     static::runComposerCommand(['install']);
   }
 

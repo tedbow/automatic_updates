@@ -68,6 +68,18 @@ class Converter {
     $fs->mirror(self::getContribDir(), $core_module_path);
     self::info('Mirrored into core module');
 
+    $new_script_path = "$core_dir/core/scripts/PackageManagerFixtureCreator.php";
+    $fs->rename($core_module_path . '/scripts/PackageManagerFixtureCreator.php', $new_script_path);
+    $script_replacements = [
+      "__DIR__ . '/../../../autoload.php'" => "__DIR__ . '/../../autoload.php'",
+      "__DIR__ . '/../package_manager/tests/fixtures/fake_site'" => "__DIR__ . '/../modules/package_manager/tests/fixtures/fake_site'",
+      "CORE_ROOT_PATH = __DIR__ . '/../../../'" => "CORE_ROOT_PATH = __DIR__ . '/../..'",
+      "new Process(['composer', 'phpcbf'], self::FIXTURE_PATH);" => "new Process(['composer', 'phpcbf', self::FIXTURE_PATH], self::CORE_ROOT_PATH);",
+    ];
+    foreach ($script_replacements as $search => $replace) {
+      static::replaceContents([new \SplFileInfo($new_script_path)], $search, $replace);
+    }
+
     // Remove unneeded.
     $removals = [
       'automatic_updates_extensions',
