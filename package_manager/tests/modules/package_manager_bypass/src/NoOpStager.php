@@ -27,6 +27,7 @@ use PhpTuf\ComposerStager\Domain\Value\Path\PathInterface;
  */
 final class NoOpStager implements StagerInterface {
 
+  use ComposerStagerExceptionTrait;
   use LoggingDecoratorTrait;
 
   /**
@@ -44,6 +45,7 @@ final class NoOpStager implements StagerInterface {
    */
   public function stage(array $composerCommand, PathInterface $activeDir, PathInterface $stagingDir, ?ProcessOutputCallbackInterface $callback = NULL, ?int $timeout = ProcessRunnerInterface::DEFAULT_TIMEOUT): void {
     $this->saveInvocationArguments($composerCommand, $stagingDir, $timeout);
+    $this->throwExceptionIfSet();
 
     // If desired, simulate a change to the lock file (e.g., as a result of
     // running `composer update`).

@@ -18,6 +18,7 @@ use PhpTuf\ComposerStager\Domain\Value\PathList\PathListInterface;
  */
 final class LoggingCommitter implements CommitterInterface {
 
+  use ComposerStagerExceptionTrait;
   use LoggingDecoratorTrait;
 
   /**
@@ -45,20 +46,8 @@ final class LoggingCommitter implements CommitterInterface {
    */
   public function commit(PathInterface $stagingDir, PathInterface $activeDir, ?PathListInterface $exclusions = NULL, ?ProcessOutputCallbackInterface $callback = NULL, ?int $timeout = ProcessRunnerInterface::DEFAULT_TIMEOUT): void {
     $this->saveInvocationArguments($stagingDir, $activeDir, $exclusions, $timeout);
-    if ($exception = $this->state->get(static::class . '-exception')) {
-      throw $exception;
-    }
+    $this->throwExceptionIfSet();
     $this->inner->commit($stagingDir, $activeDir, $exclusions, $callback, $timeout);
-  }
-
-  /**
-   * Sets an exception to be thrown during ::commit().
-   *
-   * @param \Throwable $exception
-   *   The throwable.
-   */
-  public static function setException(\Throwable $exception): void {
-    \Drupal::state()->set(static::class . '-exception', $exception);
   }
 
 }

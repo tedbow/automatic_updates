@@ -18,6 +18,7 @@ use PhpTuf\ComposerStager\Domain\Value\PathList\PathListInterface;
  */
 final class LoggingBeginner implements BeginnerInterface {
 
+  use ComposerStagerExceptionTrait;
   use LoggingDecoratorTrait;
 
   /**
@@ -45,6 +46,7 @@ final class LoggingBeginner implements BeginnerInterface {
    */
   public function begin(PathInterface $activeDir, PathInterface $stagingDir, ?PathListInterface $exclusions = NULL, ?ProcessOutputCallbackInterface $callback = NULL, ?int $timeout = ProcessRunnerInterface::DEFAULT_TIMEOUT): void {
     $this->saveInvocationArguments($activeDir, $stagingDir, $exclusions, $timeout);
+    $this->throwExceptionIfSet();
     $this->inner->begin($activeDir, $stagingDir, $exclusions, $callback, $timeout);
   }
 

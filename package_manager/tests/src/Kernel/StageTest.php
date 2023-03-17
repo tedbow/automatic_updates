@@ -17,7 +17,9 @@ use Drupal\package_manager\Event\StageEvent;
 use Drupal\package_manager\Exception\ApplyFailedException;
 use Drupal\package_manager\Exception\StageException;
 use Drupal\package_manager\Exception\StageFailureMarkerException;
+use Drupal\package_manager_bypass\LoggingBeginner;
 use Drupal\package_manager_bypass\LoggingCommitter;
+use Drupal\package_manager_bypass\NoOpStager;
 use PhpTuf\ComposerStager\Domain\Exception\InvalidArgumentException;
 use PhpTuf\ComposerStager\Domain\Exception\PreconditionException;
 use PhpTuf\ComposerStager\Domain\Service\Precondition\PreconditionInterface;
@@ -542,6 +544,57 @@ class StageTest extends PackageManagerKernelTestBase {
     TestTime::$offset = 30;
     $stage->postApply();
     $this->assertFalse($logger->hasRecord($warning_message, LogLevel::WARNING));
+  }
+
+  /**
+   * Data provider for ::testFailureDuringComposerStagerOperations().
+   *
+   * @return array[]
+   *   The test cases.
+   */
+  public function providerFailureDuringComposerStagerOperations(): array {
+    return [
+      [LoggingBeginner::class],
+      [NoOpStager::class],
+      [LoggingCommitter::class],
+    ];
+  }
+
+  /**
+   * Tests when Composer Stager throws an exception during an operation.
+   *
+   * @param string $throwing_class
+   *   The fully qualified name of the Composer Stager class that should throw
+   *   an exception. It is expected to have a static ::setException() method,
+   *   provided by \Drupal\package_manager_bypass\ComposerStagerExceptionTrait.
+   *
+   * @dataProvider providerFailureDuringComposerStagerOperations
+   */
+  public function testFailureDuringComposerStagerOperations(string $throwing_class): void {
+    if ($throwing_class === LoggingCommitter::class) {
+      // If the committer throws an exception, Stage will always re-throw it
+      // with a predetermined failure message.
+      $expected_message = 'Staged changes failed to apply, and the site is in an indeterminate state. It is strongly recommended to restore the code and database from a backup.';
+    }
+    else {
+      $expected_message = "$throwing_class is angry!";
+    }
+
+    $exception = new \Exception($expected_message, 1024);
+    $throwing_class::setException($exception);
+
+    $stage = $this->createStage();
+    try {
+      $stage->create();
+      $stage->require(['ext-json:*']);
+      $stage->apply();
+      $this->fail('Expected an exception to be thrown, but it was not.');
+    }
+    catch (StageException $e) {
+      $this->assertSame($expected_message, $e->getMessage());
+      $this->assertSame(1024, $e->getCode());
+      $this->assertSame($exception, $e->getPrevious());
+    }
   }
 
   /**

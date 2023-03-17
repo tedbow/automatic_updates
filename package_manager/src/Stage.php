@@ -256,12 +256,20 @@ class Stage implements LoggerAwareInterface {
    *   A list of paths that Composer Stager should ignore when creating the
    *   stage directory and applying staged changes to the active directory.
    *
+   * @throws \Drupal\package_manager\Exception\StageException
+   *   Thrown if an exception occurs while collecting ignored paths.
+   *
    * @see ::create()
    * @see ::apply()
    */
   protected function getIgnoredPaths(): array {
     $event = new CollectIgnoredPathsEvent($this);
-    $this->eventDispatcher->dispatch($event);
+    try {
+      $this->eventDispatcher->dispatch($event);
+    }
+    catch (\Throwable $e) {
+      $this->rethrowAsStageException($e);
+    }
     return $event->getAll();
   }
 
@@ -283,7 +291,9 @@ class Stage implements LoggerAwareInterface {
    *   as long as the stage needs to exist.
    *
    * @throws \Drupal\package_manager\Exception\StageException
-   *   Thrown if a stage directory already exists.
+   *   Thrown if a stage directory already exists, or if an error occurs while
+   *   creating the stage directory. In the latter situation, the stage
+   *   directory will be destroyed.
    *
    * @see ::claim()
    */
@@ -312,20 +322,30 @@ class Stage implements LoggerAwareInterface {
     $active_dir = $this->pathFactory->create($this->pathLocator->getProjectRoot());
     $stage_dir = $this->pathFactory->create($this->getStageDirectory());
 
-    try {
-      $ignored_paths = $this->getIgnoredPaths();
-    }
-    catch (\Throwable $throwable) {
-      throw new StageException($this, $throwable->getMessage(), $throwable->getCode(), $throwable);
-    }
-    $event = new PreCreateEvent($this, $ignored_paths);
+    $event = new PreCreateEvent($this, $this->getIgnoredPaths());
     // If an error occurs and we won't be able to create the stage, mark it as
     // available.
     $this->dispatch($event, [$this, 'markAsAvailable']);
 
-    $this->beginner->begin($active_dir, $stage_dir, new PathList($event->getExcludedPaths()), NULL, $timeout);
+    try {
+      $this->beginner->begin($active_dir, $stage_dir, new PathList($event->getExcludedPaths()), NULL, $timeout);
+    }
+    catch (\Throwable $error) {
+      $this->destroy();
+      $this->rethrowAsStageException($error);
+    }
     $this->dispatch(new PostCreateEvent($this));
     return $id;
+  }
+
+  /**
+   * Wraps an exception in a StageException and re-throws it.
+   *
+   * @param \Throwable $e
+   *   The throwable to wrap.
+   */
+  private function rethrowAsStageException(\Throwable $e): never {
+    throw new StageException($this, $e->getMessage(), $e->getCode(), $e);
   }
 
   /**
@@ -340,33 +360,56 @@ class Stage implements LoggerAwareInterface {
    * @param int|null $timeout
    *   (optional) How long to allow the Composer operation to run before timing
    *   out, in seconds, or NULL to never time out. Defaults to 300 seconds.
+   *
+   * @throws \Drupal\package_manager\Exception\StageException
+   *   Thrown if the Composer operation cannot be started, or if an error occurs
+   *   during the operation. In the latter situation, the stage directory will
+   *   be destroyed.
    */
   public function require(array $runtime, array $dev = [], ?int $timeout = 300): void {
     $this->checkOwnership();
 
     $this->dispatch(new PreRequireEvent($this, $runtime, $dev));
-    $active_dir = $this->pathFactory->create($this->pathLocator->getProjectRoot());
-    $stage_dir = $this->pathFactory->create($this->getStageDirectory());
+
+    // A helper function to execute a command in the stage, destroying it if an
+    // exception occurs in the middle of a Composer operation.
+    $do_stage = function (array $command) use ($timeout): void {
+      $active_dir = $this->pathFactory->create($this->pathLocator->getProjectRoot());
+      $stage_dir = $this->pathFactory->create($this->getStageDirectory());
+
+      try {
+        $this->stager->stage($command, $active_dir, $stage_dir, NULL, $timeout);
+      }
+      catch (\Throwable $e) {
+        // If the caught exception isn't InvalidArgumentException or
+        // PreconditionException, a Composer operation was actually attempted,
+        // and failed. The stage should therefore be destroyed, because it's in
+        // an indeterminate and possibly unrecoverable state.
+        if (!$e instanceof InvalidArgumentException && !$e instanceof PreconditionException) {
+          $this->destroy();
+        }
+        $this->rethrowAsStageException($e);
+      }
+    };
 
     // Change the runtime and dev requirements as needed, but don't update
     // the installed packages yet.
     if ($runtime) {
       self::validateRequirements($runtime);
       $command = array_merge(['require', '--no-update'], $runtime);
-      $this->stager->stage($command, $active_dir, $stage_dir, NULL, $timeout);
+      $do_stage($command);
     }
     if ($dev) {
       self::validateRequirements($dev);
       $command = array_merge(['require', '--dev', '--no-update'], $dev);
-      $this->stager->stage($command, $active_dir, $stage_dir, NULL, $timeout);
+      $do_stage($command);
     }
 
     // If constraints were changed, update those packages.
     if ($runtime || $dev) {
       $command = array_merge(['update', '--with-all-dependencies'], $runtime, $dev);
-      $this->stager->stage($command, $active_dir, $stage_dir, NULL, $timeout);
+      $do_stage($command);
     }
-
     $this->dispatch(new PostRequireEvent($this, $runtime, $dev));
   }
 
@@ -397,17 +440,10 @@ class Stage implements LoggerAwareInterface {
     $active_dir = $this->pathFactory->create($this->pathLocator->getProjectRoot());
     $stage_dir = $this->pathFactory->create($this->getStageDirectory());
 
-    try {
-      $ignored_paths = $this->getIgnoredPaths();
-    }
-    catch (\Throwable $throwable) {
-      throw new StageException($this, $throwable->getMessage(), $throwable->getCode(), $throwable);
-    }
-
     // If an error occurs while dispatching the events, ensure that ::destroy()
     // doesn't think we're in the middle of applying the staged changes to the
     // active directory.
-    $event = new PreApplyEvent($this, $ignored_paths);
+    $event = new PreApplyEvent($this, $this->getIgnoredPaths());
     $this->tempStore->set(self::TEMPSTORE_APPLY_TIME_KEY, $this->time->getRequestTime());
     $this->dispatch($event, $this->setNotApplying());
 
@@ -426,7 +462,7 @@ class Stage implements LoggerAwareInterface {
       // The commit operation has not started yet, so we can clear the failure
       // marker.
       $this->failureMarker->clear();
-      throw new StageException($this, $e->getMessage(), $e->getCode(), $e);
+      $this->rethrowAsStageException($e);
     }
     catch (\Throwable $throwable) {
       // The commit operation may have failed midway through, and the site code
