@@ -159,12 +159,6 @@ composer config \
 # Prevent Composer from symlinking path repositories.
 export COMPOSER_MIRROR_PATH_REPOS=1
 
-# Prevent Composer from installing symlinks from common packages known to
-# contain them.
-# @see https://www.drupal.org/docs/develop/using-composer/using-drupals-vendor-hardening-composer-plugin
-composer config --json extra.drupal-core-vendor-hardening.drush/drush '["docs"]'
-composer config --json extra.drupal-core-vendor-hardening.grasmash/yaml-expander '["scenarios"]'
-
 # Require the module using the checked out dev branch.
 composer require \
   --no-ansi \

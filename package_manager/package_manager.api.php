@@ -174,9 +174,9 @@
  * - There is enough free disk space to do stage operations.
  * - The Drupal site root and vendor directory are writable.
  * - The current site is not part of a multisite.
- * - The project root and stage directory don't contain any symbolic links.
- *
- * @todo Clarify symbolic link support in https://drupal.org/i/3319507.
+ * - The project root and stage directory don't contain any unsupported links.
+ *   See https://github.com/php-tuf/composer-stager/tree/develop/src/Domain/Service/Precondition#symlinks
+ *   for information about which types of symlinks are supported.
  *
  * Apart from base requirements, Package Manager also enforces certain
  * constraints at various points of the stage life cycle (typically

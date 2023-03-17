@@ -352,6 +352,12 @@ END;
         // terminology), and the autoload information, so that the classes
         // provided by the package will actually be loadable in the test site
         // we're building.
+        if (str_starts_with($version, 'dev-')) {
+          [$version, $reference] = explode(' ', $version, 2);
+        }
+        else {
+          $reference = $version;
+        }
         $packages[$name][$version] = [
           'name' => $name,
           'version' => $version,
@@ -362,6 +368,11 @@ END;
           'dist' => [
             'type' => 'path',
             'url' => $path,
+          ],
+          'source' => [
+            'type' => 'path',
+            'url' => $path,
+            'reference' => $reference,
           ],
           'autoload' => $package_info['autoload'] ?? [],
         ];

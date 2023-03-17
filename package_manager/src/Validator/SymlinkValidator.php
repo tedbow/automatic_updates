@@ -4,22 +4,18 @@ declare(strict_types = 1);
 
 namespace Drupal\package_manager\Validator;
 
-use Drupal\Core\Extension\ModuleHandlerInterface;
-use Drupal\Core\StringTranslation\StringTranslationTrait;
-use Drupal\Core\Url;
 use Drupal\package_manager\Event\PreOperationStageEvent;
 use Drupal\package_manager\PathLocator;
+use PhpTuf\ComposerStager\Domain\Aggregate\PreconditionsTree\NoUnsupportedLinksExistInterface;
 use PhpTuf\ComposerStager\Domain\Exception\PreconditionException;
-use PhpTuf\ComposerStager\Domain\Service\Precondition\CodebaseContainsNoSymlinksInterface;
 use PhpTuf\ComposerStager\Infrastructure\Factory\Path\PathFactoryInterface;
 use PhpTuf\ComposerStager\Infrastructure\Value\PathList\PathList;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 /**
- * Flags errors if the project root or stage directory contain symbolic links.
+ * Flags errors if any unsupported symlinks exist.
  *
- * @todo Remove this when Composer Stager's PHP file copier handles symlinks
- *   without issues.
+ * @see https://github.com/php-tuf/composer-stager/tree/develop/src/Domain/Service/Precondition#symlinks
  *
  * @internal
  *   This is an internal part of Package Manager and may be changed or removed
@@ -29,25 +25,21 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 class SymlinkValidator implements EventSubscriberInterface {
 
   use BaseRequirementValidatorTrait;
-  use StringTranslationTrait;
 
   /**
    * Constructs a SymlinkValidator object.
    *
    * @param \Drupal\package_manager\PathLocator $pathLocator
    *   The path locator service.
-   * @param \PhpTuf\ComposerStager\Domain\Service\Precondition\CodebaseContainsNoSymlinksInterface $precondition
+   * @param \PhpTuf\ComposerStager\Domain\Aggregate\PreconditionsTree\NoUnsupportedLinksExistInterface $precondition
    *   The Composer Stager precondition that this validator wraps.
    * @param \PhpTuf\ComposerStager\Infrastructure\Factory\Path\PathFactoryInterface $pathFactory
    *   The path factory service.
-   * @param \Drupal\Core\Extension\ModuleHandlerInterface $moduleHandler
-   *   The module handler service.
    */
   public function __construct(
     protected PathLocator $pathLocator,
-    protected CodebaseContainsNoSymlinksInterface $precondition,
+    protected NoUnsupportedLinksExistInterface $precondition,
     protected PathFactoryInterface $pathFactory,
-    protected ModuleHandlerInterface $moduleHandler,
   ) {}
 
   /**
@@ -82,22 +74,7 @@ class SymlinkValidator implements EventSubscriberInterface {
       $this->precondition->assertIsFulfilled($active_dir, $stage_dir, new PathList($ignored_paths));
     }
     catch (PreconditionException $e) {
-      $message = $e->getMessage();
-
-      // If the Help module is enabled, append a link to Package Manager's help
-      // page.
-      // @see package_manager_help()
-      if ($this->moduleHandler->moduleExists('help')) {
-        $url = Url::fromRoute('help.page', ['name' => 'package_manager'])
-          ->setOption('fragment', 'package-manager-faq-symlinks-found')
-          ->toString();
-
-        $message = $this->t('@message See <a href=":package-manager-help">the help page</a> for information on how to resolve the problem.', [
-          '@message' => $message,
-          ':package-manager-help' => $url,
-        ]);
-      }
-      $event->addError([$message]);
+      $event->addErrorFromThrowable($e);
     }
   }
 

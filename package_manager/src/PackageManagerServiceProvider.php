@@ -7,6 +7,7 @@ namespace Drupal\package_manager;
 use Drupal\Core\DependencyInjection\ContainerBuilder;
 use Drupal\Core\DependencyInjection\ServiceProviderBase;
 use PhpTuf\ComposerStager\Domain\Core\Beginner\BeginnerInterface;
+use PhpTuf\ComposerStager\Domain\Service\Precondition\NoSymlinksPointToADirectoryInterface;
 
 /**
  * Defines dynamic container services for Package Manager.
@@ -84,6 +85,12 @@ final class PackageManagerServiceProvider extends ServiceProviderBase {
         $container->setAlias($interface_name, $implementations[0]);
       }
     }
+
+    // Decorate certain Composer Stager preconditions.
+    $container->register(NoSymlinksPointToADirectory::class)
+      ->setPublic(FALSE)
+      ->setAutowired(TRUE)
+      ->setDecoratedService(NoSymlinksPointToADirectoryInterface::class);
   }
 
 }
