@@ -69,6 +69,7 @@ class Converter {
     self::info('Mirrored into core module');
 
     $new_script_path = "$core_dir/core/scripts/PackageManagerFixtureCreator.php";
+    $fs->remove($new_script_path);
     $fs->rename($core_module_path . '/scripts/PackageManagerFixtureCreator.php', $new_script_path);
     $script_replacements = [
       "__DIR__ . '/../../../autoload.php'" => "__DIR__ . '/../../autoload.php'",
@@ -132,6 +133,7 @@ class Converter {
 
     static::addWordsToDictionary($core_dir, self::getContribDir() . "/dictionary.txt");
     self::info("Added to dictionary");
+    $fs->chmod($new_script_path, 0644);
     if (self::RUN_CHECKS) {
       static::runCoreChecks($core_dir);
       self::info('Ran core checks');
