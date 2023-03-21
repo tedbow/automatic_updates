@@ -14,19 +14,14 @@ class InstalledPackageTest extends UnitTestCase {
 
   /**
    * @covers ::createFromArray
+   *
+   * @depends testMetapackageWithAPath
    */
   public function testPathResolution(): void {
-    // It's okay to create an InstalledPackage without a path.
+    // Metapackages must be created without a path.
     $package = InstalledPackage::createFromArray([
       'name' => 'vendor/test',
-      'type' => 'library',
-      'version' => '1.0.0',
-    ]);
-    $this->assertNull($package->path);
-
-    $package = InstalledPackage::createFromArray([
-      'name' => 'vendor/test',
-      'type' => 'library',
+      'type' => 'metapackage',
       'version' => '1.0.0',
       'path' => NULL,
     ]);
@@ -37,9 +32,9 @@ class InstalledPackageTest extends UnitTestCase {
       'name' => 'vendor/test',
       'type' => 'library',
       'version' => '1.0.0',
-      'path' => __DIR__ . '/../..',
+      'path' => __DIR__ . '/..',
     ]);
-    $this->assertSame(realpath(__DIR__ . '/../..'), $package->path);
+    $this->assertSame(realpath(__DIR__ . '/..'), $package->path);
 
     // If we provide a path that cannot be resolved to a real path, it should
     // raise an error.
@@ -50,6 +45,21 @@ class InstalledPackageTest extends UnitTestCase {
       'type' => 'library',
       'version' => '1.0.0',
       'path' => $this->getRandomGenerator()->string(),
+    ]);
+  }
+
+  /**
+   * @covers ::createFromArray
+   */
+  public function testMetapackageWithAPath(): void {
+    $this->expectException(\AssertionError::class);
+    $this->expectExceptionMessage('Metapackage install path must be NULL.');
+
+    InstalledPackage::createFromArray([
+      'name' => 'vendor/test',
+      'type' => 'metapackage',
+      'version' => '1.0.0',
+      'path' => __DIR__,
     ]);
   }
 

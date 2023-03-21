@@ -6,14 +6,17 @@ namespace Drupal\Tests\package_manager\Kernel;
 
 use Composer\Json\JsonFile;
 use Drupal\Component\Serialization\Json;
+use Drupal\fixture_manipulator\ActiveFixtureManipulator;
 use Drupal\package_manager\ComposerInspector;
 use Drupal\package_manager\Exception\ComposerNotReadyException;
 use Drupal\package_manager\InstalledPackage;
 use Drupal\package_manager\JsonProcessOutputCallback;
+use Drupal\package_manager\PathLocator;
 use PhpTuf\ComposerStager\Domain\Exception\PreconditionException;
 use PhpTuf\ComposerStager\Domain\Exception\RuntimeException;
 use PhpTuf\ComposerStager\Domain\Service\Precondition\ComposerIsAvailableInterface;
 use PhpTuf\ComposerStager\Domain\Service\ProcessRunner\ComposerRunnerInterface;
+use PhpTuf\ComposerStager\Infrastructure\Factory\Path\PathFactory;
 use Prophecy\Argument;
 
 /**
@@ -318,6 +321,78 @@ class ComposerInspectorTest extends PackageManagerKernelTestBase {
     $info = $this->container->get('package_manager.composer_inspector')
       ->getRootPackageInfo($project_root);
     $this->assertSame('fake/site', $info['name']);
+  }
+
+  /**
+   * Tests that the installed path of metapackages is always NULL.
+   *
+   * @param bool $is_metapackage
+   *   Whether or not the test package will be a metapackage.
+   * @param string|null $install_path
+   *   The package install path that Composer should report. If NULL, the
+   *   reported path will be unchanged. If it is <PROJECT_ROOT>, it will be the
+   *   project root.
+   * @param string|null $exception_message
+   *   The expected exception message, or NULL if no exception should be thrown.
+   *
+   * @covers ::getInstalledPackagesList
+   *
+   * @testWith [true, "<PROJECT_ROOT>", null]
+   *   [true, "/another/directory", "Metapackage 'test/package' is installed at unexpected path: '/another/directory'"]
+   *   [false, null, null]
+   *   [false, "<PROJECT_ROOT>", "Package 'test/package' cannot be installed at path: '<PROJECT_ROOT>'"]
+   */
+  public function testMetapackagePath(bool $is_metapackage, ?string $install_path, ?string $exception_message): void {
+    $project_root = $this->container->get(PathLocator::class)
+      ->getProjectRoot();
+
+    $inspector = new class (
+      $this->container->get(ComposerRunnerInterface::class),
+      $this->container->get(ComposerIsAvailableInterface::class),
+      new PathFactory(),
+    ) extends ComposerInspector {
+
+      /**
+       * The install path that Composer should report for `test/package`.
+       *
+       * If not set, the reported install path will not be changed.
+       *
+       * @var string
+       */
+      public $packagePath;
+
+      /**
+       * {@inheritdoc}
+       */
+      protected function show(string $working_dir): array {
+        $data = parent::show($working_dir);
+        if ($this->packagePath) {
+          $data['test/package']['path'] = $this->packagePath;
+        }
+        return $data;
+      }
+
+    };
+    if ($install_path) {
+      $inspector->packagePath = str_replace('<PROJECT_ROOT>', $project_root, $install_path);
+    }
+
+    (new ActiveFixtureManipulator())
+      ->addPackage([
+        'name' => 'test/package',
+        'type' => $is_metapackage ? 'metapackage' : 'library',
+      ])
+      ->commitChanges();
+
+    if ($exception_message) {
+      $this->expectException(\UnexpectedValueException::class);
+      $exception_message = str_replace('<PROJECT_ROOT>', $project_root, $exception_message);
+      $this->expectExceptionMessage($exception_message);
+    }
+    $list = $inspector->getInstalledPackagesList($project_root);
+    $this->assertArrayHasKey('test/package', $list);
+    // If the package is a metapackage, its path should be NULL.
+    $this->assertSame($is_metapackage, is_null($list['test/package']->path));
   }
 
 }

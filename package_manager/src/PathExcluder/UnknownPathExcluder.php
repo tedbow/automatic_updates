@@ -97,21 +97,17 @@ final class UnknownPathExcluder implements EventSubscriberInterface {
    *
    * @return array
    *   The array of scaffold file paths.
+   *
+   * @todo Intelligently load scaffold files in https://drupal.org/i/3343802.
    */
   private function getScaffoldFiles(): array {
     $project_root = $this->pathLocator->getProjectRoot();
-    $core_packages = $this->composerInspector->getInstalledPackagesList($project_root)->getCorePackages();
-    $scaffold_file_paths = [];
-    // @todo The only core package that provides scaffold files is `drupal/core`
-    //   so do we really need to loop across all core packages here?
-    //   Intelligently load scaffold files in https://drupal.org/i/3343802.
-    foreach ($core_packages as $package) {
-      $extra = Json::decode($this->composerInspector->getConfig('extra', $package->path . '/composer.json'));
-      if (isset($extra['drupal-scaffold']['file-mapping'])) {
-        $scaffold_file_paths = array_merge($scaffold_file_paths, array_keys($extra['drupal-scaffold']['file-mapping']));
-      }
+    $packages = $this->composerInspector->getInstalledPackagesList($project_root);
+    $extra = Json::decode($this->composerInspector->getConfig('extra', $packages['drupal/core']->path . '/composer.json'));
+    if (isset($extra['drupal-scaffold']['file-mapping'])) {
+      return array_keys($extra['drupal-scaffold']['file-mapping']);
     }
-    return $scaffold_file_paths;
+    return [];
   }
 
 }

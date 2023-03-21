@@ -19,7 +19,7 @@ final class InstalledPackage {
    * @param string $version
    *   The package version.
    * @param string|null $path
-   *   The package path.
+   *   The package path, or NULL if the package type is `metapackage`.
    * @param string $type
    *   The package type.
    */
@@ -40,6 +40,8 @@ final class InstalledPackage {
    */
   public static function createFromArray(array $data): static {
     $path = isset($data['path']) ? realpath($data['path']) : NULL;
+    assert(($data['type'] === 'metapackage') === is_null($path), 'Metapackage install path must be NULL.');
+
     return new static($data['name'], $data['version'], $path, $data['type']);
   }
 

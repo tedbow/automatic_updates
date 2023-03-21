@@ -40,19 +40,19 @@ class InstalledPackagesListTest extends UnitTestCase {
       'drupal/existing' => InstalledPackage::createFromArray([
         'name' => 'drupal/existing',
         'version' => '1.0.0',
-        'path' => NULL,
+        'path' => __DIR__,
         'type' => 'drupal-module',
       ]),
       'drupal/updated' => InstalledPackage::createFromArray([
         'name' => 'drupal/updated',
         'version' => '1.0.0',
-        'path' => NULL,
+        'path' => __DIR__,
         'type' => 'drupal-module',
       ]),
       'drupal/removed' => InstalledPackage::createFromArray([
         'name' => 'drupal/removed',
         'version' => '1.0.0',
-        'path' => NULL,
+        'path' => __DIR__,
         'type' => 'drupal-module',
       ]),
     ]);
@@ -60,19 +60,19 @@ class InstalledPackagesListTest extends UnitTestCase {
       'drupal/existing' => InstalledPackage::createFromArray([
         'name' => 'drupal/existing',
         'version' => '1.0.0',
-        'path' => NULL,
+        'path' => __DIR__,
         'type' => 'drupal-module',
       ]),
       'drupal/updated' => InstalledPackage::createFromArray([
         'name' => 'drupal/updated',
         'version' => '1.1.0',
-        'path' => NULL,
+        'path' => __DIR__,
         'type' => 'drupal-module',
       ]),
       'drupal/added' => InstalledPackage::createFromArray([
         'name' => 'drupal/added',
         'version' => '1.0.0',
-        'path' => NULL,
+        'path' => __DIR__,
         'type' => 'drupal-module',
       ]),
     ]);
@@ -96,7 +96,7 @@ class InstalledPackagesListTest extends UnitTestCase {
         'name' => 'drupal/core',
         'version' => \Drupal::VERSION,
         'type' => 'drupal-core',
-        'path' => NULL,
+        'path' => __DIR__,
       ]),
       'drupal/core-dev' => InstalledPackage::createFromArray([
         'name' => 'drupal/core-dev',
@@ -114,25 +114,25 @@ class InstalledPackagesListTest extends UnitTestCase {
         'name' => 'drupal/core-composer-scaffold',
         'version' => \Drupal::VERSION,
         'type' => 'composer-plugin',
-        'path' => NULL,
+        'path' => __DIR__,
       ]),
       'drupal/core-project-message' => [
         'name' => 'drupal/core-project-message',
         'version' => \Drupal::VERSION,
         'type' => 'composer-plugin',
-        'path' => NULL,
+        'path' => __DIR__,
       ],
       'drupal/core-vendor-hardening' => InstalledPackage::createFromArray([
         'name' => 'drupal/core-vendor-hardening',
         'version' => \Drupal::VERSION,
         'type' => 'composer-plugin',
-        'path' => NULL,
+        'path' => __DIR__,
       ]),
       'drupal/not-core' => InstalledPackage::createFromArray([
         'name' => 'drupal/not-core',
         'version' => '1.0.0',
         'type' => 'drupal-module',
-        'path' => NULL,
+        'path' => __DIR__,
       ]),
     ];
 

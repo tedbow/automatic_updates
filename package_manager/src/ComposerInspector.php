@@ -314,6 +314,10 @@ class ComposerInspector {
    *
    * @return \Drupal\package_manager\InstalledPackagesList
    *   The installed packages list for the directory.
+   *
+   * @throws \UnexpectedValueException
+   *   Thrown if a package reports that its install path is the same as the
+   *   working directory, and it is not of the `metapackage` type.
    */
   public function getInstalledPackagesList(string $working_dir): InstalledPackagesList {
     $this->validate($working_dir);
@@ -323,12 +327,54 @@ class ComposerInspector {
     }
 
     $packages_data = $this->show($working_dir);
-    // The package type is not available using `composer show` for listing
-    // packages. To avoiding making many calls to `composer show package-name`,
-    // load the lock file data to get the `type` key.
-    // @todo Remove all of this when
-    //   https://github.com/composer/composer/pull/11340 lands and we bump our
-    //   Composer requirement accordingly.
+    $packages_data = $this->getPackageTypes($packages_data, $working_dir);
+
+    foreach ($packages_data as $name => $package) {
+      $path = $package['path'];
+
+      // We expect Composer to report that metapackages' install paths are the
+      // same as the working directory, in which case InstalledPackage::$path
+      // should be NULL. For all other package types, we consider it invalid
+      // if the install path is the same as the working directory.
+      if ($package['type'] === 'metapackage') {
+        if ($path === $working_dir) {
+          $packages_data[$name]['path'] = NULL;
+        }
+        else {
+          throw new \UnexpectedValueException("Metapackage '$name' is installed at unexpected path: '$path'");
+        }
+      }
+      elseif ($path === $working_dir) {
+        throw new \UnexpectedValueException("Package '$name' cannot be installed at path: '$path'");
+      }
+    }
+    $packages_data = array_map(InstalledPackage::createFromArray(...), $packages_data);
+
+    $list = new InstalledPackagesList($packages_data);
+    $this->packageLists[$working_dir] = $list;
+
+    return $list;
+  }
+
+  /**
+   * Loads package types from the lock file.
+   *
+   * The package type is not available using `composer show` for listing
+   * packages. To avoiding making many calls to `composer show package-name`,
+   * load the lock file data to get the `type` key.
+   *
+   * @param array $packages_data
+   *   The packages data returned from ::show().
+   * @param string $working_dir
+   *   The directory where Composer was run.
+   *
+   * @return array
+   *   The packages data, with a `type` key added to each package.
+   *
+   * @todo Remove this when https://github.com/composer/composer/pull/11340 and
+   *   we bump our Composer requirement accordingly.
+   */
+  private function getPackageTypes(array $packages_data, string $working_dir): array {
     $lock_content = file_get_contents($working_dir . DIRECTORY_SEPARATOR . 'composer.lock');
     $lock_data = json_decode($lock_content, TRUE, 512, JSON_THROW_ON_ERROR);
 
@@ -339,12 +385,7 @@ class ComposerInspector {
         $packages_data[$name]['type'] = $lock_package['type'];
       }
     }
-    $packages_data = array_map(fn (array $data) => InstalledPackage::createFromArray($data), $packages_data);
-
-    $list = new InstalledPackagesList($packages_data);
-    $this->packageLists[$working_dir] = $list;
-
-    return $list;
+    return $packages_data;
   }
 
   /**
@@ -372,7 +413,7 @@ class ComposerInspector {
    * @return array[]
    *   The installed packages data, keyed by package name.
    */
-  private function show(string $working_dir): array {
+  protected function show(string $working_dir): array {
     $data = [];
     $options = ['show', '--format=json', "--working-dir={$working_dir}"];
 

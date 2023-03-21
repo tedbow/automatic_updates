@@ -132,11 +132,8 @@ class OverwriteExistingPackagesValidatorTest extends PackageManagerKernelTestBas
       $list = $inspector->getInstalledPackagesList($event->stage->getStageDirectory());
       $this->assertArrayHasKey('drupal/sub-module', $list->getArrayCopy());
       $this->assertArrayHasKey('drupal/other_module_1', $list->getArrayCopy());
-      // Confirm that meta-package will have an install path that is the same
-      // as the stage directory.
-      // @todo Determine meta-packages should have a NULL path in
-      //   https://drupal.org/i/3345646.
-      $this->assertSame($list['drupal/sub-module']->path, $event->stage->getStageDirectory());
+      // Confirm that metapackage will have a NULL install path.
+      $this->assertNull($list['drupal/sub-module']->path);
       // Confirm another package has specified install path.
       $this->assertSame($list['drupal/other_module_1']->path, $event->stage->getStageDirectory() . '/modules/module_1');
     };
