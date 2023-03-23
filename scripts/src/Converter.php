@@ -110,7 +110,7 @@ class Converter {
         new \SplFileInfo("$core_module_path/automatic_updates.info.yml"),
         new \SplFileInfo("$core_module_path/package_manager/package_manager.info.yml"),
       ],
-      "core_version_requirement: ^9.7 || ^10",
+      "core_version_requirement: ^9.7 || ^10.1",
       "package: Core\nversion: VERSION\nlifecycle: experimental",
     );
     $replacements = [
