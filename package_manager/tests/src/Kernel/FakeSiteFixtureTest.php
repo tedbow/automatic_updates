@@ -5,6 +5,8 @@ declare(strict_types = 1);
 namespace Drupal\Tests\package_manager\Kernel;
 
 use Drupal\fixture_manipulator\ActiveFixtureManipulator;
+use Drupal\package_manager\ComposerInspector;
+use Drupal\package_manager\PathLocator;
 use Symfony\Component\Process\Process;
 
 /**
@@ -30,9 +32,9 @@ class FakeSiteFixtureTest extends PackageManagerKernelTestBase {
    * Tests calls to ComposerInspector class methods.
    */
   public function testCallToComposerInspectorMethods(): void {
-    $active_dir = $this->container->get('package_manager.path_locator')->getProjectRoot();
+    $active_dir = $this->container->get(PathLocator::class)->getProjectRoot();
     /** @var \Drupal\package_manager\ComposerInspector $inspector */
-    $inspector = $this->container->get('package_manager.composer_inspector');
+    $inspector = $this->container->get(ComposerInspector::class);
     $list = $inspector->getInstalledPackagesList($active_dir);
     $this->assertNull($list->getPackageByDrupalProjectName('any_random_name'));
     $this->assertFalse(isset($list['drupal/any_random_name']));
@@ -45,8 +47,8 @@ class FakeSiteFixtureTest extends PackageManagerKernelTestBase {
    */
   public function testCallToSetVersion(): void {
     /** @var \Drupal\package_manager\ComposerInspector $inspector */
-    $inspector = $this->container->get('package_manager.composer_inspector');
-    $active_dir = $this->container->get('package_manager.path_locator')->getProjectRoot();
+    $inspector = $this->container->get(ComposerInspector::class);
+    $active_dir = $this->container->get(PathLocator::class)->getProjectRoot();
     $installed_packages = $inspector->getInstalledPackagesList($active_dir);
     foreach (self::getExpectedFakeSitePackages() as $package_name) {
       $this->assertArrayHasKey($package_name, $installed_packages);
@@ -66,8 +68,8 @@ class FakeSiteFixtureTest extends PackageManagerKernelTestBase {
    */
   public function testCallToRemovePackage(): void {
     /** @var \Drupal\package_manager\ComposerInspector $inspector */
-    $inspector = $this->container->get('package_manager.composer_inspector');
-    $active_dir = $this->container->get('package_manager.path_locator')->getProjectRoot();
+    $inspector = $this->container->get(ComposerInspector::class);
+    $active_dir = $this->container->get(PathLocator::class)->getProjectRoot();
     $expected_packages = self::getExpectedFakeSitePackages();
     $actual_packages = array_keys($inspector->getInstalledPackagesList($active_dir)->getArrayCopy());
     sort($actual_packages);
@@ -88,9 +90,9 @@ class FakeSiteFixtureTest extends PackageManagerKernelTestBase {
    * Checks that the expected packages are installed in the fake site fixture.
    */
   public function testExpectedPackages(): void {
-    $project_root = $this->container->get('package_manager.path_locator')
+    $project_root = $this->container->get(PathLocator::class)
       ->getProjectRoot();
-    $installed_packages = $this->container->get('package_manager.composer_inspector')
+    $installed_packages = $this->container->get(ComposerInspector::class)
       ->getInstalledPackagesList($project_root)
       ->getArrayCopy();
     ksort($installed_packages);
@@ -117,7 +119,7 @@ class FakeSiteFixtureTest extends PackageManagerKernelTestBase {
    * Tests that Composer show command can be used on the fixture.
    */
   public function testComposerShow(): void {
-    $active_dir = $this->container->get('package_manager.path_locator')->getProjectRoot();
+    $active_dir = $this->container->get(PathLocator::class)->getProjectRoot();
     (new ActiveFixtureManipulator())
       ->addPackage([
         'type' => 'package',
@@ -134,7 +136,7 @@ class FakeSiteFixtureTest extends PackageManagerKernelTestBase {
     $package_names = array_map(fn (array $package) => $package['name'], $output['installed']);
     $this->assertTrue(asort($package_names));
     $this->assertSame(['any-org/any-package', 'drupal/core', 'drupal/core-dev', 'drupal/core-recommended'], $package_names);
-    $list = $this->container->get('package_manager.composer_inspector')->getInstalledPackagesList($active_dir);
+    $list = $this->container->get(ComposerInspector::class)->getInstalledPackagesList($active_dir);
     $list_packages_names = array_keys($list->getArrayCopy());
     $this->assertSame(['any-org/any-package', 'drupal/core', 'drupal/core-dev', 'drupal/core-recommended'], $list_packages_names);
   }
@@ -143,7 +145,7 @@ class FakeSiteFixtureTest extends PackageManagerKernelTestBase {
    * Tests that the fixture passes `composer validate`.
    */
   public function testComposerValidate(): void {
-    $active_dir = $this->container->get('package_manager.path_locator')->getProjectRoot();
+    $active_dir = $this->container->get(PathLocator::class)->getProjectRoot();
     $process = new Process([
       'composer',
       'validate',

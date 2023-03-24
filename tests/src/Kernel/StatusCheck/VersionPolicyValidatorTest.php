@@ -5,6 +5,7 @@ declare(strict_types = 1);
 namespace Drupal\Tests\automatic_updates\Kernel\StatusCheck;
 
 use Drupal\automatic_updates\CronUpdater;
+use Drupal\automatic_updates\Updater;
 use Drupal\fixture_manipulator\ActiveFixtureManipulator;
 use Drupal\package_manager\Event\PreCreateEvent;
 use Drupal\package_manager\Exception\StageEventException;
@@ -306,8 +307,7 @@ class VersionPolicyValidatorTest extends AutomaticUpdatesKernelTestBase {
       ->set('allow_core_minor_updates', $allow_minor_updates)
       ->save();
 
-    /** @var \Drupal\automatic_updates\Updater $updater */
-    $updater = $this->container->get('automatic_updates.updater');
+    $updater = $this->container->get(Updater::class);
 
     try {
       $updater->begin($project_versions);
@@ -408,7 +408,7 @@ class VersionPolicyValidatorTest extends AutomaticUpdatesKernelTestBase {
 
     $this->expectException(StageException::class);
     $this->expectExceptionMessage('The target version of Drupal core could not be determined.');
-    $this->container->get('automatic_updates.updater')
+    $this->container->get(Updater::class)
       ->begin(['drupal' => '9.8.1']);
   }
 

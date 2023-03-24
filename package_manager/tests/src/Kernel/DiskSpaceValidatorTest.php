@@ -8,6 +8,7 @@ use Drupal\package_manager\Event\PreApplyEvent;
 use Drupal\package_manager\Event\PreCreateEvent;
 use Drupal\package_manager\ValidationResult;
 use Drupal\Component\Utility\Bytes;
+use Drupal\package_manager\Validator\DiskSpaceValidator;
 
 /**
  * @covers \Drupal\package_manager\Validator\DiskSpaceValidator
@@ -149,7 +150,7 @@ class DiskSpaceValidatorTest extends PackageManagerKernelTestBase {
     $free_space = array_flip($this->resolvePlaceholdersInArrayValuesWithRealPaths(array_flip($free_space)));
 
     /** @var \Drupal\Tests\package_manager\Kernel\TestDiskSpaceValidator $validator */
-    $validator = $this->container->get('package_manager.validator.disk_space');
+    $validator = $this->container->get(DiskSpaceValidator::class);
     $validator->sharedDisk = $shared_disk;
     $validator->freeSpace = array_map([Bytes::class, 'toNumber'], $free_space);
 
@@ -177,7 +178,7 @@ class DiskSpaceValidatorTest extends PackageManagerKernelTestBase {
 
     $this->addEventTestListener(function () use ($shared_disk, $free_space): void {
       /** @var \Drupal\Tests\package_manager\Kernel\TestDiskSpaceValidator $validator */
-      $validator = $this->container->get('package_manager.validator.disk_space');
+      $validator = $this->container->get(DiskSpaceValidator::class);
       $validator->sharedDisk = $shared_disk;
       $validator->freeSpace = array_map([Bytes::class, 'toNumber'], $free_space);
     });

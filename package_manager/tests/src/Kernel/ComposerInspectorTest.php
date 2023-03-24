@@ -30,9 +30,9 @@ class ComposerInspectorTest extends PackageManagerKernelTestBase {
    * @covers ::getConfig
    */
   public function testConfig(): void {
-    $dir = $this->container->get('package_manager.path_locator')
+    $dir = $this->container->get(PathLocator::class)
       ->getProjectRoot();
-    $inspector = $this->container->get('package_manager.composer_inspector');
+    $inspector = $this->container->get(ComposerInspector::class);
     $this->assertSame(1, Json::decode($inspector->getConfig('secure-http', $dir)));
 
     $this->assertSame([
@@ -66,9 +66,9 @@ class ComposerInspectorTest extends PackageManagerKernelTestBase {
    * @covers ::getConfig
    */
   public function testConfigUndefinedKey(): void {
-    $project_root = $this->container->get('package_manager.path_locator')
+    $project_root = $this->container->get(PathLocator::class)
       ->getProjectRoot();
-    $inspector = $this->container->get('package_manager.composer_inspector');
+    $inspector = $this->container->get(ComposerInspector::class);
 
     // Overwrite the composer.json file and treat it as a
     $file = new JsonFile($project_root . '/composer.json');
@@ -91,11 +91,11 @@ class ComposerInspectorTest extends PackageManagerKernelTestBase {
    * @covers ::getInstalledPackagesList
    */
   public function testGetInstalledPackagesList(): void {
-    $project_root = $this->container->get('package_manager.path_locator')
+    $project_root = $this->container->get(PathLocator::class)
       ->getProjectRoot();
 
     /** @var \Drupal\package_manager\ComposerInspector $inspector */
-    $inspector = $this->container->get('package_manager.composer_inspector');
+    $inspector = $this->container->get(ComposerInspector::class);
     $list = $inspector->getInstalledPackagesList($project_root);
 
     $this->assertInstanceOf(InstalledPackage::class, $list['drupal/core']);
@@ -150,10 +150,9 @@ class ComposerInspectorTest extends PackageManagerKernelTestBase {
       // be called once even though we call validate() twice.
       ->shouldBeCalledOnce();
 
-    $project_root = $this->container->get('package_manager.path_locator')
-      ->getProjectRoot();
+    $project_root = $this->container->get(PathLocator::class)->getProjectRoot();
     /** @var \Drupal\package_manager\ComposerInspector $inspector */
-    $inspector = $this->container->get('package_manager.composer_inspector');
+    $inspector = $this->container->get(ComposerInspector::class);
     try {
       $inspector->validate($project_root);
       $this->fail('Expected an exception to be thrown, but it was not.');
@@ -182,14 +181,14 @@ class ComposerInspectorTest extends PackageManagerKernelTestBase {
    *   ["composer.lock"]
    */
   public function testComposerFilesDoNotExist(string $filename): void {
-    $project_root = $this->container->get('package_manager.path_locator')
+    $project_root = $this->container->get(PathLocator::class)
       ->getProjectRoot();
 
     $file_path = $project_root . '/' . $filename;
     unlink($file_path);
 
     /** @var \Drupal\package_manager\ComposerInspector $inspector */
-    $inspector = $this->container->get('package_manager.composer_inspector');
+    $inspector = $this->container->get(ComposerInspector::class);
     try {
       $inspector->validate($project_root);
     }
@@ -262,10 +261,10 @@ class ComposerInspectorTest extends PackageManagerKernelTestBase {
       $expected_message = "The detected Composer version, $reported_version, does not satisfy <code>" . ComposerInspector::SUPPORTED_VERSION . '</code>.';
     }
 
-    $project_root = $this->container->get('package_manager.path_locator')
+    $project_root = $this->container->get(PathLocator::class)
       ->getProjectRoot();
     /** @var \Drupal\package_manager\ComposerInspector $inspector */
-    $inspector = $this->container->get('package_manager.composer_inspector');
+    $inspector = $this->container->get(ComposerInspector::class);
     try {
       $inspector->validate($project_root);
       // If we expected the version check to succeed, ensure we did not expect
@@ -288,7 +287,7 @@ class ComposerInspectorTest extends PackageManagerKernelTestBase {
    * @covers ::validate
    */
   public function testComposerValidateIsCalled(): void {
-    $project_root = $this->container->get('package_manager.path_locator')
+    $project_root = $this->container->get(PathLocator::class)
       ->getProjectRoot();
 
     // Put an invalid value into composer.json and ensure it gets surfaced as
@@ -300,7 +299,7 @@ class ComposerInspectorTest extends PackageManagerKernelTestBase {
     $file->write($data);
 
     try {
-      $this->container->get('package_manager.composer_inspector')
+      $this->container->get(ComposerInspector::class)
         ->validate($project_root);
       $this->fail('Expected an exception to be thrown, but it was not.');
     }
@@ -315,10 +314,10 @@ class ComposerInspectorTest extends PackageManagerKernelTestBase {
    * @covers ::getRootPackageInfo
    */
   public function testRootPackageInfo(): void {
-    $project_root = $this->container->get('package_manager.path_locator')
+    $project_root = $this->container->get(PathLocator::class)
       ->getProjectRoot();
 
-    $info = $this->container->get('package_manager.composer_inspector')
+    $info = $this->container->get(ComposerInspector::class)
       ->getRootPackageInfo($project_root);
     $this->assertSame('fake/site', $info['name']);
   }

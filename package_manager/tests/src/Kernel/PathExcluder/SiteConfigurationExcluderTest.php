@@ -6,6 +6,7 @@ namespace Drupal\Tests\package_manager\Kernel\PathExcluder;
 
 use Drupal\Core\DependencyInjection\ContainerBuilder;
 use Drupal\package_manager\PathExcluder\SiteConfigurationExcluder;
+use Drupal\package_manager\PathLocator;
 use Drupal\Tests\package_manager\Kernel\PackageManagerKernelTestBase;
 
 /**
@@ -35,14 +36,12 @@ class SiteConfigurationExcluderTest extends PackageManagerKernelTestBase {
     // Ensure we have an up-to-date container.
     $this->container = $this->container->get('kernel')->rebuildContainer();
 
-    $active_dir = $this->container->get('package_manager.path_locator')
-      ->getProjectRoot();
+    $active_dir = $this->container->get(PathLocator::class)->getProjectRoot();
 
     $site_path = 'sites/example.com';
 
     // Update the event subscribers' dependencies.
-    /** @var \Drupal\Tests\package_manager\Kernel\PathExcluder\TestSiteConfigurationExcluder $site_configuration_excluder */
-    $site_configuration_excluder = $this->container->get('package_manager.site_configuration_excluder');
+    $site_configuration_excluder = $this->container->get(SiteConfigurationExcluder::class);
     $site_configuration_excluder->sitePath = $site_path;
 
     $stage = $this->createStage();

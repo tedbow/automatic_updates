@@ -6,6 +6,8 @@ namespace Drupal\Tests\package_manager\Kernel;
 
 use Drupal\fixture_manipulator\ActiveFixtureManipulator;
 use Drupal\fixture_manipulator\FixtureManipulator;
+use Drupal\package_manager\ComposerInspector;
+use Drupal\package_manager\PathLocator;
 
 /**
  * @coversDefaultClass \Drupal\fixture_manipulator\FixtureManipulator
@@ -62,8 +64,7 @@ class FixtureManipulatorTest extends PackageManagerKernelTestBase {
   protected function setUp(): void {
     parent::setUp();
 
-    $this->dir = $this->container->get('package_manager.path_locator')
-      ->getProjectRoot();
+    $this->dir = $this->container->get(PathLocator::class)->getProjectRoot();
 
     [, $this->originalInstalledPhp] = $this->getData();
 
@@ -187,7 +188,7 @@ class FixtureManipulatorTest extends PackageManagerKernelTestBase {
    * @covers ::modifyPackage
    */
   public function testModifyPackageConfig(): void {
-    $inspector = $this->container->get('package_manager.composer_inspector');
+    $inspector = $this->container->get(ComposerInspector::class);
 
     // Assert ::modifyPackage() works with a package in an existing fixture not
     // created by ::addPackage().
@@ -338,7 +339,7 @@ class FixtureManipulatorTest extends PackageManagerKernelTestBase {
    * @covers ::addDotGitFolder
    */
   public function testAddDotGitFolder() {
-    $path_locator = $this->container->get('package_manager.path_locator');
+    $path_locator = $this->container->get(PathLocator::class);
     $project_root = $path_locator->getProjectRoot();
     $this->assertFalse(is_dir($project_root . "/relative/path/.git"));
     // We should not be able to add a git folder to a non-existing directory.

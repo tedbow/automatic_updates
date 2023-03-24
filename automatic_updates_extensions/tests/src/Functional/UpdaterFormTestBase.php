@@ -5,6 +5,7 @@ declare(strict_types = 1);
 namespace Drupal\Tests\automatic_updates_extensions\Functional;
 
 use Drupal\fixture_manipulator\ActiveFixtureManipulator;
+use Drupal\package_manager\PathLocator;
 use Drupal\Tests\automatic_updates_extensions\Traits\FormTestTrait;
 use Drupal\Tests\automatic_updates\Functional\UpdaterFormTestBase as UpdaterFormFunctionalTestBase;
 
@@ -40,7 +41,7 @@ abstract class UpdaterFormTestBase extends UpdaterFormFunctionalTestBase {
   protected function setUp(): void {
     parent::setUp();
 
-    $this->activeDir = $this->container->get('package_manager.path_locator')->getProjectRoot();
+    $this->activeDir = $this->container->get(PathLocator::class)->getProjectRoot();
     (new ActiveFixtureManipulator())
       ->addPackage([
         'name' => 'drupal/semver_test',

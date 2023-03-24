@@ -17,6 +17,9 @@ use Drupal\package_manager\Event\StageEvent;
 use Drupal\package_manager\Exception\ApplyFailedException;
 use Drupal\package_manager\Exception\StageException;
 use Drupal\package_manager\Exception\StageFailureMarkerException;
+use Drupal\package_manager\FailureMarker;
+use Drupal\package_manager\PathLocator;
+use Drupal\package_manager\Validator\WritableFileSystemValidator;
 use Drupal\package_manager_bypass\LoggingBeginner;
 use Drupal\package_manager_bypass\LoggingCommitter;
 use Drupal\package_manager_bypass\NoOpStager;
@@ -61,11 +64,11 @@ class StageTest extends PackageManagerKernelTestBase {
     // In this test, we're working with paths that (probably) don't exist in
     // the file system at all, so we don't want to validate that the file system
     // is writable when creating stages.
-    $validator = $this->container->get('package_manager.validator.file_system');
+    $validator = $this->container->get(WritableFileSystemValidator::class);
     $this->container->get('event_dispatcher')->removeSubscriber($validator);
 
     /** @var \Drupal\package_manager_bypass\MockPathLocator $path_locator */
-    $path_locator = $this->container->get('package_manager.path_locator');
+    $path_locator = $this->container->get(PathLocator::class);
 
     $stage = $this->createStage();
     $id = $stage->create();
@@ -345,7 +348,7 @@ class StageTest extends PackageManagerKernelTestBase {
       $this->assertSame($thrown_message, $exception->getMessage());
       $this->assertSame(123, $exception->getCode());
 
-      $failure_marker = $this->container->get('package_manager.failure_marker');
+      $failure_marker = $this->container->get(FailureMarker::class);
       if ($exception instanceof ApplyFailedException) {
         $this->assertFileExists($failure_marker->getPath());
         $this->assertFalse($stage->isApplying());
@@ -392,7 +395,7 @@ class StageTest extends PackageManagerKernelTestBase {
 
     // If the failure marker is cleared, we should be able to create the stage
     // without issue.
-    $this->container->get('package_manager.failure_marker')->clear();
+    $this->container->get(FailureMarker::class)->clear();
     $stage->create();
   }
 
@@ -407,7 +410,7 @@ class StageTest extends PackageManagerKernelTestBase {
     $stage->require(['ext-json:*']);
     $stage->apply();
 
-    $this->container->get('package_manager.failure_marker')
+    $this->container->get(FailureMarker::class)
       ->assertNotExists();
   }
 
@@ -629,8 +632,7 @@ class StageTest extends PackageManagerKernelTestBase {
    * Tests that if a stage fails to get ignored paths, throws a stage exception.
    */
   public function testFailureCollectIgnoredPaths(): void {
-    $project_root = $this->container->get('package_manager.path_locator')
-      ->getProjectRoot();
+    $project_root = $this->container->get(PathLocator::class)->getProjectRoot();
     unlink($project_root . '/composer.json');
     $this->expectException(StageException::class);
     $this->expectExceptionMessage("composer.json not found.");

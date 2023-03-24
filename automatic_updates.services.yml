@@ -17,6 +17,7 @@ services:
       - 24
     tags:
       - { name: event_subscriber }
+  Drupal\automatic_updates\Validation\StatusChecker: '@automatic_updates.status_checker'
   automatic_updates.status_check_mailer:
     class: Drupal\automatic_updates\StatusCheckMailer
     arguments:
@@ -39,6 +40,7 @@ services:
       - '@package_manager.failure_marker'
     calls:
       - ['setLogger', ['@logger.channel.automatic_updates']]
+  Drupal\automatic_updates\Updater: '@automatic_updates.updater'
   automatic_updates.cron_updater:
     class: Drupal\automatic_updates\CronUpdater
     arguments:
@@ -60,6 +62,7 @@ services:
       - '@package_manager.failure_marker'
     calls:
       - ['setLogger', ['@logger.channel.automatic_updates']]
+  Drupal\automatic_updates\CronUpdater: '@automatic_updates.cron_updater'
   automatic_updates.requested_update_validator:
     class: Drupal\automatic_updates\Validator\RequestedUpdateValidator
     tags:
@@ -71,10 +74,12 @@ services:
       - '@package_manager.composer_inspector'
     tags:
       - { name: event_subscriber }
+  Drupal\automatic_updates\Validator\StagedProjectsValidator: '@automatic_updates.staged_projects_validator'
   automatic_updates.release_chooser:
     class: Drupal\automatic_updates\ReleaseChooser
     arguments:
       - '@automatic_updates.validator.version_policy'
+  Drupal\automatic_updates\ReleaseChooser: '@automatic_updates.release_chooser'
   automatic_updates.cron_frequency_validator:
     class: Drupal\automatic_updates\Validator\CronFrequencyValidator
     arguments:
@@ -107,6 +112,7 @@ services:
     class: Drupal\automatic_updates\Validator\ScaffoldFilePermissionsValidator
     tags:
       - { name: event_subscriber }
+  Drupal\automatic_updates\Validator\ScaffoldFilePermissionsValidator: '@automatic_updates.validator.scaffold_file_permissions'
   automatic_updates.validator.cron_server:
     class: Drupal\automatic_updates\Validator\CronServerValidator
     arguments:

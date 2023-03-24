@@ -273,7 +273,7 @@ class CronUpdaterTest extends AutomaticUpdatesKernelTestBase {
       ->addLogger($cron_logger);
 
     /** @var \Drupal\automatic_updates\CronUpdater $updater */
-    $updater = $this->container->get('automatic_updates.cron_updater');
+    $updater = $this->container->get(CronUpdater::class);
 
     // When the event specified by $event_class is dispatched, either throw an
     // exception directly from the event subscriber, or prepare a
@@ -427,7 +427,7 @@ class CronUpdaterTest extends AutomaticUpdatesKernelTestBase {
    */
   public function testBeginThrowsException(): void {
     $this->expectExceptionMessage(CronUpdater::class . '::begin() cannot be called directly.');
-    $this->container->get('automatic_updates.cron_updater')
+    $this->container->get(CronUpdater::class)
       ->begin(['drupal' => '9.8.1']);
   }
 
@@ -495,7 +495,7 @@ END;
     $error = ValidationResult::createError([
       t('Error while updating!'),
     ]);
-    $exception = $this->createStageEventExceptionFromResults([$error], $event_class, $this->container->get('automatic_updates.cron_updater'));
+    $exception = $this->createStageEventExceptionFromResults([$error], $event_class, $this->container->get(CronUpdater::class));
     TestSubscriber1::setTestResult($exception->event->getResults(), $event_class);
 
     $this->container->get('cron')->run();
@@ -537,7 +537,7 @@ END;
       t('Error while updating!'),
     ]);
     TestSubscriber1::setTestResult([$error], $event_class);
-    $exception = $this->createStageEventExceptionFromResults([$error], $event_class, $this->container->get('automatic_updates.cron_updater'));
+    $exception = $this->createStageEventExceptionFromResults([$error], $event_class, $this->container->get(CronUpdater::class));
 
     $this->container->get('cron')->run();
 

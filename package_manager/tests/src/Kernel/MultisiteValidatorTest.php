@@ -6,6 +6,7 @@ namespace Drupal\Tests\package_manager\Kernel;
 
 use Drupal\package_manager\Event\PreApplyEvent;
 use Drupal\package_manager\Event\PreCreateEvent;
+use Drupal\package_manager\PathLocator;
 use Drupal\package_manager\ValidationResult;
 
 /**
@@ -75,7 +76,7 @@ PHP,
    */
   public function testMultisite(?string $sites_php, array $expected_results = []): void {
     if ($sites_php) {
-      $project_root = $this->container->get('package_manager.path_locator')->getProjectRoot();
+      $project_root = $this->container->get(PathLocator::class)->getProjectRoot();
       file_put_contents($project_root . '/sites/sites.php', $sites_php);
     }
     $this->assertStatusCheckResults($expected_results);
@@ -96,7 +97,7 @@ PHP,
   public function testMultisiteDuringPreApply(?string $sites_php, array $expected_results = []): void {
     $this->addEventTestListener(function () use ($sites_php): void {
       if ($sites_php) {
-        $project_root = $this->container->get('package_manager.path_locator')->getProjectRoot();
+        $project_root = $this->container->get(PathLocator::class)->getProjectRoot();
         file_put_contents($project_root . '/sites/sites.php', $sites_php);
       }
     });

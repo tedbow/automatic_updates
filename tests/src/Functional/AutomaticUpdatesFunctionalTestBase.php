@@ -6,6 +6,7 @@ namespace Drupal\Tests\automatic_updates\Functional;
 
 use Drupal\automatic_updates\CronUpdater;
 use Drupal\fixture_manipulator\StageFixtureManipulator;
+use Drupal\package_manager\PathLocator;
 use Drupal\Tests\BrowserTestBase;
 use Drupal\Tests\package_manager\Traits\AssertPreconditionsTrait;
 use Drupal\Tests\package_manager\Traits\FixtureManipulatorTrait;
@@ -157,7 +158,7 @@ abstract class AutomaticUpdatesFunctionalTestBase extends BrowserTestBase {
     // unique for each test run. This will enable changing files in the
     // directory and not affect other tests.
     $active_dir = $this->copyFixtureToTempDirectory($fixture_directory);
-    $this->container->get('package_manager.path_locator')
+    $this->container->get(PathLocator::class)
       ->setPaths($active_dir, $active_dir . '/vendor', '', NULL);
   }
 

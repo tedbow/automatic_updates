@@ -6,6 +6,7 @@ namespace Drupal\Tests\automatic_updates\Kernel\StatusCheck;
 
 use Drupal\Core\Logger\RfcLogLevel;
 use Drupal\package_manager\Event\PreApplyEvent;
+use Drupal\package_manager\PathLocator;
 use Drupal\Tests\automatic_updates\Kernel\AutomaticUpdatesKernelTestBase;
 use ColinODell\PsrTestLogger\TestLogger;
 
@@ -59,8 +60,7 @@ class StagedDatabaseUpdateValidatorTest extends AutomaticUpdatesKernelTestBase {
 
     // Ensure that all the extensions we're testing with have database update
     // files in the active directory.
-    $active_dir = $this->container->get('package_manager.path_locator')
-      ->getProjectRoot();
+    $active_dir = $this->container->get(PathLocator::class)->getProjectRoot();
 
     foreach ($this->extensions as $extension_name => $extension_path) {
       $extension_path = $active_dir . '/' . $extension_path;
@@ -155,7 +155,7 @@ class StagedDatabaseUpdateValidatorTest extends AutomaticUpdatesKernelTestBase {
   public function testFileAdded(string $suffix): void {
     $this->getStageFixtureManipulator()->setCorePackageVersion('9.8.1');
     $listener = function () use ($suffix): void {
-      $active_dir = $this->container->get('package_manager.path_locator')
+      $active_dir = $this->container->get(PathLocator::class)
         ->getProjectRoot();
 
       foreach ($this->extensions as $name => $path) {

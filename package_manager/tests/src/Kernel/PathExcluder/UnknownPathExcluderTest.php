@@ -5,6 +5,7 @@ declare(strict_types = 1);
 namespace Drupal\Tests\package_manager\Kernel\PathExcluder;
 
 use Drupal\Component\FileSystem\FileSystem as DrupalFileSystem;
+use Drupal\package_manager\PathLocator;
 use Drupal\Tests\package_manager\Kernel\PackageManagerKernelTestBase;
 use Symfony\Component\Filesystem\Filesystem;
 
@@ -65,7 +66,7 @@ class UnknownPathExcluderTest extends PackageManagerKernelTestBase {
 
       // We need to reset the test paths with our new webroot.
       /** @var \Drupal\package_manager_bypass\MockPathLocator $path_locator */
-      $path_locator = $this->container->get('package_manager.path_locator');
+      $path_locator = $this->container->get(PathLocator::class);
 
       $path_locator->setPaths(
         $path_locator->getProjectRoot(),
@@ -142,7 +143,7 @@ class UnknownPathExcluderTest extends PackageManagerKernelTestBase {
   public function testUnknownPath(bool $use_nested_webroot, ?string $unknown_dir, array $unknown_files): void {
     $this->createTestProjectForTemplate($use_nested_webroot);
 
-    $active_dir = $this->container->get('package_manager.path_locator')
+    $active_dir = $this->container->get(PathLocator::class)
       ->getProjectRoot();
     if ($unknown_dir) {
       mkdir("$active_dir/$unknown_dir");

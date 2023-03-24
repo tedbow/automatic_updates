@@ -55,6 +55,7 @@ services:
     class: Drupal\package_manager\Validator\EnvironmentSupportValidator
     tags:
       - { name: event_subscriber }
+  Drupal\package_manager\Validator\EnvironmentSupportValidator: '@package_manager.validator.environment_support'
   package_manager.validator.composer:
     class: Drupal\package_manager\Validator\ComposerValidator
     tags:
@@ -63,6 +64,7 @@ services:
     class: Drupal\package_manager\Validator\DiskSpaceValidator
     tags:
       - { name: event_subscriber }
+  Drupal\package_manager\Validator\DiskSpaceValidator: '@package_manager.validator.disk_space'
   package_manager.validator.pending_updates:
     class: Drupal\package_manager\Validator\PendingUpdatesValidator
     arguments:
@@ -80,6 +82,7 @@ services:
     class: Drupal\package_manager\Validator\WritableFileSystemValidator
     tags:
       - { name: event_subscriber }
+  Drupal\package_manager\Validator\WritableFileSystemValidator: '@package_manager.validator.file_system'
   package_manager.validator.composer_settings:
     class: Drupal\package_manager\Validator\ComposerSettingsValidator
     tags:
@@ -128,6 +131,7 @@ services:
     class: Drupal\package_manager\PathExcluder\SqliteDatabaseExcluder
     tags:
       - { name: event_subscriber }
+  Drupal\package_manager\PathExcluder\SqliteDatabaseExcluder: '@package_manager.sqlite_excluder'
   package_manager.git_excluder:
     class: Drupal\package_manager\PathExcluder\GitExcluder
     tags:
@@ -142,6 +146,7 @@ services:
       $sitePath: '%site.path%'
     tags:
       - { name: event_subscriber }
+  Drupal\package_manager\PathExcluder\SiteConfigurationExcluder: '@package_manager.site_configuration_excluder'
   package_manager.node_modules_excluder:
     class: Drupal\package_manager\PathExcluder\NodeModulesExcluder
     tags:
@@ -170,6 +175,7 @@ services:
     class: Drupal\package_manager\Validator\BaseRequirementsFulfilledValidator
     tags:
       - { name: event_subscriber }
+  Drupal\package_manager\Validator\BaseRequirementsFulfilledValidator: '@package_manager.validator.base_requirements_fulfilled'
   package_manager.validator.supported_releases:
     class: Drupal\package_manager\Validator\SupportedReleaseValidator
     tags:

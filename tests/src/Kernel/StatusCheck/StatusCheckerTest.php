@@ -6,6 +6,9 @@ namespace Drupal\Tests\automatic_updates\Kernel\StatusCheck;
 
 use Drupal\automatic_updates\CronUpdater;
 use Drupal\automatic_updates\Updater;
+use Drupal\automatic_updates\Validation\StatusChecker;
+use Drupal\automatic_updates\Validator\ScaffoldFilePermissionsValidator;
+use Drupal\automatic_updates\Validator\StagedProjectsValidator;
 use Drupal\automatic_updates_test\EventSubscriber\TestSubscriber1;
 use Drupal\automatic_updates_test2\EventSubscriber\TestSubscriber2;
 use Drupal\package_manager\Event\StatusCheckEvent;
@@ -173,7 +176,7 @@ class StatusCheckerTest extends AutomaticUpdatesKernelTestBase {
 
     $unexpected_results = [$this->createValidationResult(SystemManager::REQUIREMENT_ERROR)];
     TestSubscriber1::setTestResult($unexpected_results, StatusCheckEvent::class);
-    $manager = $this->container->get('automatic_updates.status_checker');
+    $manager = $this->container->get(StatusChecker::class);
     // Confirm that the new results will not be returned because the checkers
     // will not be run.
     $manager->runIfNoStoredResults();
@@ -205,13 +208,13 @@ class StatusCheckerTest extends AutomaticUpdatesKernelTestBase {
       $stage = $event->stage;
     };
     $this->addEventTestListener($listener, StatusCheckEvent::class);
-    $this->container->get('automatic_updates.status_checker')->run();
+    $this->container->get(StatusChecker::class)->run();
     // By default, updates will be enabled on cron.
     $this->assertInstanceOf(CronUpdater::class, $stage);
     $this->config('automatic_updates.settings')
       ->set('cron', CronUpdater::DISABLED)
       ->save();
-    $this->container->get('automatic_updates.status_checker')->run();
+    $this->container->get(StatusChecker::class)->run();
     $this->assertInstanceOf(Updater::class, $stage);
   }
 
@@ -232,8 +235,7 @@ class StatusCheckerTest extends AutomaticUpdatesKernelTestBase {
     TestSubscriber1::setTestResult($results, StatusCheckEvent::class);
 
     // Ensure that the validation manager collects the warning.
-    /** @var \Drupal\automatic_updates\Validation\StatusChecker $manager */
-    $manager = $this->container->get('automatic_updates.status_checker')
+    $manager = $this->container->get(StatusChecker::class)
       ->run();
     $this->assertValidationResultsEqual($results, $manager->getResults());
     TestSubscriber1::setTestResult(NULL, StatusCheckEvent::class);
@@ -246,14 +248,13 @@ class StatusCheckerTest extends AutomaticUpdatesKernelTestBase {
     // will make these validators complain that there is no actual Composer data
     // for them to inspect.
     $validators = array_map([$this->container, 'get'], [
-      'automatic_updates.staged_projects_validator',
-      'automatic_updates.validator.scaffold_file_permissions',
+      StagedProjectsValidator::class,
+      ScaffoldFilePermissionsValidator::class,
     ]);
     $event_dispatcher = $this->container->get('event_dispatcher');
     array_walk($validators, [$event_dispatcher, 'removeSubscriber']);
 
-    /** @var \Drupal\automatic_updates\Updater $updater */
-    $updater = $this->container->get('automatic_updates.updater');
+    $updater = $this->container->get(Updater::class);
     $updater->begin(['drupal' => '9.8.1']);
     $updater->stage();
     $updater->apply();

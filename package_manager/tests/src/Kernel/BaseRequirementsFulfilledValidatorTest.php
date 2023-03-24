@@ -7,6 +7,7 @@ use Drupal\package_manager\Event\PreCreateEvent;
 use Drupal\package_manager\Event\PreOperationStageEvent;
 use Drupal\package_manager\Event\StatusCheckEvent;
 use Drupal\package_manager\ValidationResult;
+use Drupal\package_manager\Validator\BaseRequirementsFulfilledValidator;
 use Drupal\package_manager\Validator\BaseRequirementValidatorTrait;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
@@ -72,7 +73,7 @@ class BaseRequirementsFulfilledValidatorTest extends PackageManagerKernelTestBas
   public function testBaseRequirement(string $event_class): void {
     $this->eventClass = $event_class;
 
-    $validator = $this->container->get('package_manager.validator.base_requirements_fulfilled');
+    $validator = $this->container->get(BaseRequirementsFulfilledValidator::class);
     $this->assertEventPropagationStopped($event_class, [$validator, 'validate']);
 
     $result = ValidationResult::createError([

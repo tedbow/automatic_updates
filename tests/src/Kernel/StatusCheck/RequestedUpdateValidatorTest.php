@@ -4,6 +4,7 @@ declare(strict_types = 1);
 
 namespace Drupal\Tests\automatic_updates\Kernel\StatusCheck;
 
+use Drupal\automatic_updates\Updater;
 use Drupal\package_manager\Exception\StageEventException;
 use Drupal\package_manager\ValidationResult;
 use Drupal\Tests\automatic_updates\Kernel\AutomaticUpdatesKernelTestBase;
@@ -39,8 +40,7 @@ class RequestedUpdateValidatorTest extends AutomaticUpdatesKernelTestBase {
     ]);
     $this->container->get('module_installer')->install(['automatic_updates']);
 
-    /** @var \Drupal\automatic_updates\Updater $updater */
-    $updater = $this->container->get('automatic_updates.updater');
+    $updater = $this->container->get(Updater::class);
     $updater->begin(['drupal' => '9.8.1']);
     $updater->stage();
 
@@ -72,8 +72,7 @@ class RequestedUpdateValidatorTest extends AutomaticUpdatesKernelTestBase {
     ]);
     $this->container->get('module_installer')->install(['automatic_updates']);
 
-    /** @var \Drupal\automatic_updates\Updater $updater */
-    $updater = $this->container->get('automatic_updates.updater');
+    $updater = $this->container->get(Updater::class);
     $updater->begin(['drupal' => '9.8.1']);
     $updater->stage();
     $this->expectException(StageEventException::class);

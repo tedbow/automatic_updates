@@ -4,6 +4,7 @@ declare(strict_types = 1);
 
 namespace Drupal\Tests\package_manager\Kernel;
 
+use Drupal\package_manager\PathLocator;
 use Drupal\package_manager\ValidationResult;
 
 /**
@@ -44,8 +45,7 @@ class StagedDBUpdateValidatorTest extends PackageManagerKernelTestBase {
 
     // Ensure that all the extensions we're testing with have database update
     // files in the active directory.
-    $active_dir = $this->container->get('package_manager.path_locator')
-      ->getProjectRoot();
+    $active_dir = $this->container->get(PathLocator::class)->getProjectRoot();
 
     foreach ($this->extensions as $extension_name => $extension_path) {
       $extension_path = $active_dir . '/' . $extension_path;
@@ -133,8 +133,7 @@ class StagedDBUpdateValidatorTest extends PackageManagerKernelTestBase {
     $stage = $this->createStage();
     $stage->create();
 
-    $active_dir = $this->container->get('package_manager.path_locator')
-      ->getProjectRoot();
+    $active_dir = $this->container->get(PathLocator::class)->getProjectRoot();
     foreach ($this->extensions as $name => $path) {
       unlink("$active_dir/$path/$name.$suffix");
     }

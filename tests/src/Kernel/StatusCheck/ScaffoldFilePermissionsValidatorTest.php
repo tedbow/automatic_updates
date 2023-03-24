@@ -4,6 +4,7 @@ declare(strict_types = 1);
 
 namespace Drupal\Tests\automatic_updates\Kernel\StatusCheck;
 
+use Drupal\automatic_updates\Updater;
 use Drupal\fixture_manipulator\ActiveFixtureManipulator;
 use Drupal\package_manager\Exception\ApplyFailedException;
 use Drupal\package_manager\Exception\StageEventException;
@@ -36,7 +37,7 @@ class ScaffoldFilePermissionsValidatorTest extends AutomaticUpdatesKernelTestBas
   protected function setUp(): void {
     parent::setUp();
 
-    $this->activeDir = $this->container->get('package_manager.path_locator')
+    $this->activeDir = $this->container->get(PathLocator::class)
       ->getProjectRoot();
   }
 
@@ -120,7 +121,7 @@ class ScaffoldFilePermissionsValidatorTest extends AutomaticUpdatesKernelTestBas
     $this->assertCheckerResultsFromManager($expected_results, TRUE);
 
     try {
-      $this->container->get('automatic_updates.updater')
+      $this->container->get(Updater::class)
         ->begin(['drupal' => '9.8.1']);
 
       // If no exception was thrown, ensure that we weren't expecting an error.
@@ -328,7 +329,7 @@ class ScaffoldFilePermissionsValidatorTest extends AutomaticUpdatesKernelTestBas
     touch($this->activeDir . '/sites/default/deleted.txt');
     touch($this->activeDir . '/foo.txt');
 
-    $updater = $this->container->get('automatic_updates.updater');
+    $updater = $this->container->get(Updater::class);
     $updater->begin(['drupal' => '9.8.1']);
     $updater->stage();
 

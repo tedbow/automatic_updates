@@ -4,6 +4,7 @@ declare(strict_types = 1);
 
 namespace Drupal\Tests\automatic_updates\Kernel;
 
+use Drupal\automatic_updates\Updater;
 use Drupal\package_manager\Exception\ApplyFailedException;
 use Drupal\package_manager\Exception\StageException;
 use Drupal\package_manager_bypass\LoggingCommitter;
@@ -51,7 +52,7 @@ class UpdaterTest extends AutomaticUpdatesKernelTestBase {
     $user = $this->createUser([], NULL, TRUE, ['uid' => 2]);
     $this->setCurrentUser($user);
 
-    $id = $this->container->get('automatic_updates.updater')->begin([
+    $id = $this->container->get(Updater::class)->begin([
       'drupal' => '9.8.1',
     ]);
     // Rebuild the container to ensure the package versions are persisted.
@@ -62,8 +63,7 @@ class UpdaterTest extends AutomaticUpdatesKernelTestBase {
     // Keep using the user account we created.
     $this->setCurrentUser($user);
 
-    /** @var \Drupal\automatic_updates\Updater $updater */
-    $updater = $this->container->get('automatic_updates.updater');
+    $updater = $this->container->get(Updater::class);
 
     // Ensure that the target package versions are what we expect.
     $expected_versions = [
@@ -123,7 +123,7 @@ class UpdaterTest extends AutomaticUpdatesKernelTestBase {
   public function testInvalidProjectVersions(array $project_versions): void {
     $this->expectException(\InvalidArgumentException::class);
     $this->expectExceptionMessage('Currently only updates to Drupal core are supported.');
-    $this->container->get('automatic_updates.updater')->begin($project_versions);
+    $this->container->get(Updater::class)->begin($project_versions);
   }
 
   /**
@@ -176,7 +176,7 @@ class UpdaterTest extends AutomaticUpdatesKernelTestBase {
   public function testCommitException(string $thrown_class, string $expected_class = NULL): void {
     $this->getStageFixtureManipulator()->setCorePackageVersion('9.8.1');
 
-    $updater = $this->container->get('automatic_updates.updater');
+    $updater = $this->container->get(Updater::class);
     $updater->begin([
       'drupal' => '9.8.1',
     ]);

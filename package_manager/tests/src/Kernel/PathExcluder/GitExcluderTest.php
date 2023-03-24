@@ -6,6 +6,7 @@ namespace Drupal\Tests\package_manager\Kernel\PathExcluder;
 
 use Drupal\Core\Serialization\Yaml;
 use Drupal\fixture_manipulator\ActiveFixtureManipulator;
+use Drupal\package_manager\PathLocator;
 use Drupal\Tests\package_manager\Kernel\PackageManagerKernelTestBase;
 use Drupal\Tests\package_manager\Traits\ComposerInstallersTrait;
 use Symfony\Component\Filesystem\Filesystem;
@@ -24,8 +25,7 @@ class GitExcluderTest extends PackageManagerKernelTestBase {
    */
   protected function setUp(): void {
     parent::setUp();
-    $path_locator = $this->container->get('package_manager.path_locator');
-    $project_root = $path_locator->getProjectRoot();
+    $project_root = $this->container->get(PathLocator::class)->getProjectRoot();
     $this->installComposerInstallers($project_root);
     $active_manipulator = new ActiveFixtureManipulator();
     $active_manipulator

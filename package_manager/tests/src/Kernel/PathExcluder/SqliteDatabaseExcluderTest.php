@@ -8,6 +8,7 @@ use Drupal\Core\Database\Connection;
 use Drupal\Core\DependencyInjection\ContainerBuilder;
 use Drupal\package_manager\Event\CollectIgnoredPathsEvent;
 use Drupal\package_manager\PathExcluder\SqliteDatabaseExcluder;
+use Drupal\package_manager\PathLocator;
 use Drupal\Tests\package_manager\Kernel\PackageManagerKernelTestBase;
 
 /**
@@ -39,7 +40,7 @@ class SqliteDatabaseExcluderTest extends PackageManagerKernelTestBase {
     $database->getConnectionOptions()->willReturn($connection_options);
 
     /** @var \Drupal\Tests\package_manager\Kernel\PathExcluder\TestSiteConfigurationExcluder $sqlite_excluder */
-    $sqlite_excluder = $this->container->get('package_manager.sqlite_excluder');
+    $sqlite_excluder = $this->container->get(SqliteDatabaseExcluder::class);
     $sqlite_excluder->database = $database->reveal();
   }
 
@@ -53,8 +54,7 @@ class SqliteDatabaseExcluderTest extends PackageManagerKernelTestBase {
     // Ensure we have an up-to-date container.
     $this->container = $this->container->get('kernel')->rebuildContainer();
 
-    $active_dir = $this->container->get('package_manager.path_locator')
-      ->getProjectRoot();
+    $active_dir = $this->container->get(PathLocator::class)->getProjectRoot();
 
     // Mock a SQLite database connection to a file in the active directory. The
     // file should not be staged.
@@ -147,7 +147,7 @@ class SqliteDatabaseExcluderTest extends PackageManagerKernelTestBase {
     // If the database path should be treated as absolute, prefix it with the
     // path of the active directory.
     if (str_starts_with($database_path, '/')) {
-      $database_path = $this->container->get('package_manager.path_locator')->getProjectRoot() . $database_path;
+      $database_path = $this->container->get(PathLocator::class)->getProjectRoot() . $database_path;
     }
     $this->mockDatabase([
       'database' => $database_path,
@@ -156,7 +156,7 @@ class SqliteDatabaseExcluderTest extends PackageManagerKernelTestBase {
     $event = new CollectIgnoredPathsEvent($this->createStage());
     // Invoke the event subscriber directly, so we can check that the database
     // was correctly excluded.
-    $this->container->get('package_manager.sqlite_excluder')
+    $this->container->get(SqliteDatabaseExcluder::class)
       ->excludeDatabaseFiles($event);
     // All of the expected exclusions should be flagged.
     $this->assertEmpty(array_diff($expected_exclusions, $event->getAll()));

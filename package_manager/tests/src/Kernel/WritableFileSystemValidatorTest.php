@@ -6,6 +6,7 @@ namespace Drupal\Tests\package_manager\Kernel;
 
 use Drupal\package_manager\Event\PreApplyEvent;
 use Drupal\package_manager\Event\PreCreateEvent;
+use Drupal\package_manager\PathLocator;
 use Drupal\package_manager\ValidationResult;
 use Symfony\Component\Filesystem\Filesystem;
 
@@ -80,7 +81,7 @@ class WritableFileSystemValidatorTest extends PackageManagerKernelTestBase {
    * @dataProvider providerWritable
    */
   public function testWritable(int $root_permissions, int $vendor_permissions, array $expected_results): void {
-    $path_locator = $this->container->get('package_manager.path_locator');
+    $path_locator = $this->container->get(PathLocator::class);
 
     // We need to set the vendor directory's permissions first because, in the
     // test project, it's located inside the project root.
@@ -106,7 +107,7 @@ class WritableFileSystemValidatorTest extends PackageManagerKernelTestBase {
   public function testWritableDuringPreApply(int $root_permissions, int $vendor_permissions, array $expected_results): void {
     $this->addEventTestListener(
       function () use ($root_permissions, $vendor_permissions): void {
-        $path_locator = $this->container->get('package_manager.path_locator');
+        $path_locator = $this->container->get(PathLocator::class);
 
         // We need to set the vendor directory's permissions first because, in
         // the test project, it's located inside the project root.
@@ -168,7 +169,7 @@ class WritableFileSystemValidatorTest extends PackageManagerKernelTestBase {
    * @dataProvider providerStagingRootPermissions
    */
   public function testStagingRootPermissions(int $permissions, array $expected_results, bool $delete_staging_root): void {
-    $dir = $this->container->get('package_manager.path_locator')
+    $dir = $this->container->get(PathLocator::class)
       ->getStagingRoot();
 
     if ($delete_staging_root) {

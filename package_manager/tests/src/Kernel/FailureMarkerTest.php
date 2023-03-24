@@ -6,6 +6,7 @@ namespace Drupal\Tests\package_manager\Kernel;
 
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\package_manager\Exception\StageFailureMarkerException;
+use Drupal\package_manager\FailureMarker;
 
 /**
  * @coversDefaultClass \Drupal\package_manager\FailureMarker
@@ -19,7 +20,7 @@ class FailureMarkerTest extends PackageManagerKernelTestBase {
    * @covers ::assertNotExists
    */
   public function testExceptionIfExists(): void {
-    $failure_marker = $this->container->get('package_manager.failure_marker');
+    $failure_marker = $this->container->get(FailureMarker::class);
     $failure_marker->write($this->createStage(), $this->t('Disastrous catastrophe!'));
 
     $this->expectException(StageFailureMarkerException::class);
@@ -33,7 +34,7 @@ class FailureMarkerTest extends PackageManagerKernelTestBase {
    * @covers ::assertNotExists
    */
   public function testExceptionForInvalidJson(): void {
-    $failure_marker = $this->container->get('package_manager.failure_marker');
+    $failure_marker = $this->container->get(FailureMarker::class);
     // Write the failure marker with invalid JSON.
     file_put_contents($failure_marker->getPath(), '{}}');
 

@@ -5,6 +5,8 @@ declare(strict_types = 1);
 namespace Drupal\Tests\package_manager\Functional;
 
 use Drupal\Core\StringTranslation\StringTranslationTrait;
+use Drupal\package_manager\FailureMarker;
+use Drupal\package_manager\PathLocator;
 use Drupal\package_manager\Stage;
 use Drupal\Tests\BrowserTestBase;
 use Drupal\Tests\package_manager\Traits\AssertPreconditionsTrait;
@@ -43,10 +45,10 @@ class FailureMarkerRequirementTest extends BrowserTestBase {
     $this->drupalLogin($account);
 
     $fake_project_root = $this->root . DIRECTORY_SEPARATOR . $this->publicFilesDirectory;
-    $this->container->get('package_manager.path_locator')
+    $this->container->get(PathLocator::class)
       ->setPaths($fake_project_root, NULL, NULL, NULL);
 
-    $failure_marker = $this->container->get('package_manager.failure_marker');
+    $failure_marker = $this->container->get(FailureMarker::class);
     $message = $this->t('Package Manager is here to wreck your day.');
     $failure_marker->write($this->createMock(Stage::class), $message);
     $path = $failure_marker->getPath();

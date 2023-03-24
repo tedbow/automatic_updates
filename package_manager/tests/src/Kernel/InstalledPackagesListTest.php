@@ -5,6 +5,7 @@ namespace Drupal\Tests\package_manager\Kernel;
 use Drupal\fixture_manipulator\ActiveFixtureManipulator;
 use Drupal\package_manager\InstalledPackage;
 use Drupal\package_manager\InstalledPackagesList;
+use Drupal\package_manager\PathLocator;
 
 /**
  * @coversDefaultClass \Drupal\package_manager\InstalledPackagesList
@@ -23,7 +24,7 @@ class InstalledPackagesListTest extends PackageManagerKernelTestBase {
     // be in the `modules` directory, or themes will be the `themes` directory.
     // So, in this test, we ensure that flexibility works by just throwing all
     // the projects into a single `projects` directory.
-    $projects_path = $this->container->get('package_manager.path_locator')
+    $projects_path = $this->container->get(PathLocator::class)
       ->getProjectRoot() . '/projects';
 
     // The project name does not match the package name, and the project

@@ -4,6 +4,7 @@ declare(strict_types = 1);
 
 namespace Drupal\Tests\package_manager\Kernel\PathExcluder;
 
+use Drupal\package_manager\PathLocator;
 use Drupal\Tests\package_manager\Kernel\PackageManagerKernelTestBase;
 
 /**
@@ -27,8 +28,7 @@ class SiteFilesExcluderTest extends PackageManagerKernelTestBase {
     // Ensure we have an up-to-date container.
     $this->container = $this->container->get('kernel')->rebuildContainer();
 
-    $active_dir = $this->container->get('package_manager.path_locator')
-      ->getProjectRoot();
+    $active_dir = $this->container->get(PathLocator::class)->getProjectRoot();
 
     // Ensure that we are using directories within the fake site fixture for
     // public and private files.

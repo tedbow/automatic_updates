@@ -4,9 +4,12 @@ declare(strict_types = 1);
 
 namespace Drupal\Tests\automatic_updates\Kernel\StatusCheck;
 
+use Drupal\automatic_updates\Updater;
+use Drupal\automatic_updates\Validator\StagedProjectsValidator;
 use Drupal\fixture_manipulator\ActiveFixtureManipulator;
 use Drupal\package_manager\Event\PreApplyEvent;
 use Drupal\package_manager\Exception\StageEventException;
+use Drupal\package_manager\PathLocator;
 use Drupal\package_manager\ValidationResult;
 use Drupal\Tests\automatic_updates\Kernel\AutomaticUpdatesKernelTestBase;
 
@@ -36,7 +39,7 @@ class StagedProjectsValidatorTest extends AutomaticUpdatesKernelTestBase {
    * Tests that exceptions are turned into validation errors.
    */
   public function testEventConsumesExceptionResults(): void {
-    $composer_json = $this->container->get('package_manager.path_locator')
+    $composer_json = $this->container->get(PathLocator::class)
       ->getProjectRoot();
     $composer_json .= '/composer.json';
 
@@ -44,7 +47,7 @@ class StagedProjectsValidatorTest extends AutomaticUpdatesKernelTestBase {
       unlink($composer_json);
       // Directly invoke the validator under test, which should raise a
       // validation error.
-      $this->container->get('automatic_updates.staged_projects_validator')
+      $this->container->get(StagedProjectsValidator::class)
         ->validateStagedProjects($event);
       // Prevent any other event subscribers from running, since they might try
       // to read the file we just deleted.
@@ -52,8 +55,7 @@ class StagedProjectsValidatorTest extends AutomaticUpdatesKernelTestBase {
     };
     $this->addEventTestListener($listener);
 
-    /** @var \Drupal\automatic_updates\Updater $updater */
-    $updater = $this->container->get('automatic_updates.updater');
+    $updater = $this->container->get(Updater::class);
     $updater->begin(['drupal' => '9.8.1']);
     $updater->stage();
 
@@ -140,7 +142,7 @@ class StagedProjectsValidatorTest extends AutomaticUpdatesKernelTestBase {
     ];
     $error = ValidationResult::createError($messages, t('The update cannot proceed because the following Drupal projects were installed during the update.'));
 
-    $updater = $this->container->get('automatic_updates.updater');
+    $updater = $this->container->get(Updater::class);
     $updater->begin(['drupal' => '9.8.1']);
     $updater->stage();
     try {
@@ -212,7 +214,7 @@ class StagedProjectsValidatorTest extends AutomaticUpdatesKernelTestBase {
       t("theme 'drupal/test_theme' removed."),
     ];
     $error = ValidationResult::createError($messages, t('The update cannot proceed because the following Drupal projects were removed during the update.'));
-    $updater = $this->container->get('automatic_updates.updater');
+    $updater = $this->container->get(Updater::class);
     $updater->begin(['drupal' => '9.8.1']);
     $updater->stage();
     try {
@@ -271,7 +273,7 @@ class StagedProjectsValidatorTest extends AutomaticUpdatesKernelTestBase {
       t("module 'drupal/test-module' from 1.3.0 to 1.3.1."),
     ];
     $error = ValidationResult::createError($messages, t('The update cannot proceed because the following Drupal projects were unexpectedly updated. Only Drupal Core updates are currently supported.'));
-    $updater = $this->container->get('automatic_updates.updater');
+    $updater = $this->container->get(Updater::class);
     $updater->begin(['drupal' => '9.8.1']);
     $updater->stage();
 
@@ -352,7 +354,7 @@ class StagedProjectsValidatorTest extends AutomaticUpdatesKernelTestBase {
       ->removePackage('other/removed')
       ->removePackage('other/dev-removed', TRUE);
 
-    $updater = $this->container->get('automatic_updates.updater');
+    $updater = $this->container->get(Updater::class);
     $updater->begin(['drupal' => '9.8.1']);
     $updater->stage();
     $updater->apply();

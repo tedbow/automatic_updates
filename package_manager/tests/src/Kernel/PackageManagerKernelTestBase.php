@@ -13,6 +13,8 @@ use Drupal\package_manager\Event\PreApplyEvent;
 use Drupal\package_manager\Event\PreCreateEvent;
 use Drupal\package_manager\Event\PreOperationStageEvent;
 use Drupal\package_manager\Exception\StageEventException;
+use Drupal\package_manager\FailureMarker;
+use Drupal\package_manager\PathLocator;
 use Drupal\package_manager\StatusCheckTrait;
 use Drupal\package_manager\Validator\DiskSpaceValidator;
 use Drupal\package_manager\Stage;
@@ -129,7 +131,7 @@ abstract class PackageManagerKernelTestBase extends KernelTestBase {
    */
   protected function createStage(): TestStage {
     return new TestStage(
-      $this->container->get('package_manager.path_locator'),
+      $this->container->get(PathLocator::class),
       $this->container->get('package_manager.beginner'),
       $this->container->get('package_manager.stager'),
       $this->container->get('package_manager.committer'),
@@ -138,7 +140,7 @@ abstract class PackageManagerKernelTestBase extends KernelTestBase {
       $this->container->get('tempstore.shared'),
       $this->container->get('datetime.time'),
       new PathFactory(),
-      $this->container->get('package_manager.failure_marker')
+      $this->container->get(FailureMarker::class)
     );
   }
 
@@ -263,7 +265,7 @@ abstract class PackageManagerKernelTestBase extends KernelTestBase {
     // Ensure the path locator points to the test project. We assume that is its
     // own web root and the vendor directory is at its top level.
     /** @var \Drupal\package_manager_bypass\MockPathLocator $path_locator */
-    $path_locator = $this->container->get('package_manager.path_locator');
+    $path_locator = $this->container->get(PathLocator::class);
     $path_locator->setPaths($active_dir, $active_dir . '/vendor', '', $staging_root);
 
     // This validator will persist through container rebuilds.

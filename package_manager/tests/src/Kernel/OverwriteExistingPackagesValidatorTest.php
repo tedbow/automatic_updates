@@ -5,8 +5,10 @@ declare(strict_types = 1);
 namespace Drupal\Tests\package_manager\Kernel;
 
 use Drupal\fixture_manipulator\ActiveFixtureManipulator;
+use Drupal\package_manager\ComposerInspector;
 use Drupal\package_manager\Event\PostCreateEvent;
 use Drupal\package_manager\Event\PreApplyEvent;
+use Drupal\package_manager\PathLocator;
 use Drupal\package_manager\ValidationResult;
 use Drupal\Tests\package_manager\Traits\ComposerInstallersTrait;
 
@@ -28,7 +30,7 @@ class OverwriteExistingPackagesValidatorTest extends PackageManagerKernelTestBas
     $this->disableValidators[] = 'package_manager.validator.supported_releases';
     parent::setUp();
 
-    $this->installComposerInstallers($this->container->get('package_manager.path_locator')->getProjectRoot());
+    $this->installComposerInstallers($this->container->get(PathLocator::class)->getProjectRoot());
   }
 
   /**
@@ -114,7 +116,7 @@ class OverwriteExistingPackagesValidatorTest extends PackageManagerKernelTestBas
 
     // Set the installer path config in the active directory this will be
     // copied to the stage directory where we install the packages.
-    $this->setInstallerPaths($installer_paths, $this->container->get('package_manager.path_locator')->getProjectRoot());
+    $this->setInstallerPaths($installer_paths, $this->container->get(PathLocator::class)->getProjectRoot());
 
     // Add a package without an install_path set which will not raise an error.
     // The most common example of this in the Drupal ecosystem is a submodule.
@@ -127,7 +129,7 @@ class OverwriteExistingPackagesValidatorTest extends PackageManagerKernelTestBas
       FALSE,
       TRUE
     );
-    $inspector = $this->container->get('package_manager.composer_inspector');
+    $inspector = $this->container->get(ComposerInspector::class);
     $listener = function (PostCreateEvent $event) use ($inspector) {
       $list = $inspector->getInstalledPackagesList($event->stage->getStageDirectory());
       $this->assertArrayHasKey('drupal/sub-module', $list->getArrayCopy());

@@ -10,6 +10,7 @@ use Drupal\package_manager\Event\PreApplyEvent;
 use Drupal\package_manager\Event\PreCreateEvent;
 use Drupal\package_manager\Event\PreRequireEvent;
 use Drupal\package_manager\InstalledPackagesList;
+use Drupal\package_manager\PathLocator;
 use Drupal\package_manager\Validator\LockFileValidator;
 use Drupal\package_manager\ValidationResult;
 use Drupal\package_manager_bypass\NoOpStager;
@@ -34,7 +35,7 @@ class LockFileValidatorTest extends PackageManagerKernelTestBase {
    */
   protected function setUp(): void {
     parent::setUp();
-    $this->activeDir = $this->container->get('package_manager.path_locator')
+    $this->activeDir = $this->container->get(PathLocator::class)
       ->getProjectRoot();
   }
 
