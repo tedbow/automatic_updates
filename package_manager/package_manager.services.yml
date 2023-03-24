@@ -104,6 +104,10 @@ services:
     class: Drupal\package_manager\Validator\OverwriteExistingPackagesValidator
     tags:
       - { name: event_subscriber }
+  package_manager.validator.allowed_scaffold_packages:
+    class: Drupal\package_manager\Validator\AllowedScaffoldPackagesValidator
+    tags:
+      - { name: event_subscriber }
   package_manager.validator.staged_database_updates:
     class: Drupal\package_manager\Validator\StagedDBUpdateValidator
     tags:
