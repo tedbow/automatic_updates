@@ -73,6 +73,7 @@ final class ProcessFactory implements ProcessFactoryInterface {
       // @see https://www.drupal.org/i/3338789#comment-14961390
       // @see https://github.com/composer/composer/commit/28e9193e9ebde743c19f334a7294830fc6429d06
       // @see https://github.com/composer/composer/commit/43eb471ec293822d377b618a4a14d8d3651f5d13
+      // @todo Remove this once Composer 2.5.5 is required in https://www.drupal.org/i/3350568 (2.5.5 is the first release to contain the upstream fix: https://github.com/composer/composer/releases/tag/2.5.5)
       static $race_condition_proof_tmpdir;
       if (!isset($race_condition_proof_tmpdir)) {
         $race_condition_proof_tmpdir = sys_get_temp_dir() . '/' . getmypid();
