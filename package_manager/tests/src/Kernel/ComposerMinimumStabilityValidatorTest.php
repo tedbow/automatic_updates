@@ -33,9 +33,22 @@ class ComposerMinimumStabilityValidatorTest extends PackageManagerKernelTestBase
     $stage->destroy();
 
     // Specifying a stability flag bypasses this check.
-    $stage1 = $this->createStage();
-    $stage1->create();
-    $stage1->require(['drupal/core:9.8.1-beta1@dev']);
+    $stage->create();
+    $stage->require(['drupal/core:9.8.1-beta1@dev']);
+    $stage->destroy();
+
+    // Dev packages are also checked.
+    $stage->create();
+    $result = ValidationResult::createError([
+      t("<code>drupal/core-dev</code>'s requested version 9.8.x-dev is less stable (dev) than the minimum stability (stable) required in <PROJECT_ROOT>/composer.json."),
+    ]);
+    try {
+      $stage->require([], ['drupal/core-dev:9.8.x-dev']);
+      $this->fail('Able to require a package even though it did not meet minimum stability.');
+    }
+    catch (StageEventException $exception) {
+      $this->assertValidationResultsEqual([$result], $exception->event->getResults());
+    }
   }
 
 }
