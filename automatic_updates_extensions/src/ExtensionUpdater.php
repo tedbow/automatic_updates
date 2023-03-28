@@ -4,10 +4,20 @@ declare(strict_types = 1);
 
 namespace Drupal\automatic_updates_extensions;
 
+use Drupal\Component\Datetime\TimeInterface;
+use Drupal\Core\File\FileSystemInterface;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
+use Drupal\Core\TempStore\SharedTempStoreFactory;
 use Drupal\package_manager\ComposerInspector;
+use Drupal\package_manager\FailureMarker;
 use Drupal\package_manager\LegacyVersionUtility;
+use Drupal\package_manager\PathLocator;
 use Drupal\package_manager\Stage;
+use PhpTuf\ComposerStager\Domain\Core\Beginner\BeginnerInterface;
+use PhpTuf\ComposerStager\Domain\Core\Committer\CommitterInterface;
+use PhpTuf\ComposerStager\Domain\Core\Stager\StagerInterface;
+use PhpTuf\ComposerStager\Infrastructure\Factory\Path\PathFactoryInterface;
+use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 
 /**
  * Defines a service to perform updates for modules and themes.
@@ -23,11 +33,41 @@ class ExtensionUpdater extends Stage {
    *
    * @param \Drupal\package_manager\ComposerInspector $composerInspector
    *   The Composer inspector service.
-   * @param mixed ...$arguments
-   *   Additional arguments to pass to the parent constructor.
+   * @param \Drupal\package_manager\PathLocator $pathLocator
+   *   The path locator service.
+   * @param \PhpTuf\ComposerStager\Domain\Core\Beginner\BeginnerInterface $beginner
+   *   The beginner service.
+   * @param \PhpTuf\ComposerStager\Domain\Core\Stager\StagerInterface $stager
+   *   The stager service.
+   * @param \PhpTuf\ComposerStager\Domain\Core\Committer\CommitterInterface $committer
+   *   The committer service.
+   * @param \Drupal\Core\File\FileSystemInterface $fileSystem
+   *   The file system service.
+   * @param \Symfony\Contracts\EventDispatcher\EventDispatcherInterface $eventDispatcher
+   *   The event dispatcher service.
+   * @param \Drupal\Core\TempStore\SharedTempStoreFactory $tempStoreFactory
+   *   The shared tempstore factory.
+   * @param \Drupal\Component\Datetime\TimeInterface $time
+   *   The time service.
+   * @param \PhpTuf\ComposerStager\Infrastructure\Factory\Path\PathFactoryInterface $pathFactory
+   *   The path factory service.
+   * @param \Drupal\package_manager\FailureMarker $failureMarker
+   *   The failure marker service.
    */
-  public function __construct(protected ComposerInspector $composerInspector, mixed ...$arguments) {
-    parent::__construct(...$arguments);
+  public function __construct(
+    protected ComposerInspector $composerInspector,
+    PathLocator $pathLocator,
+    BeginnerInterface $beginner,
+    StagerInterface $stager,
+    CommitterInterface $committer,
+    FileSystemInterface $fileSystem,
+    EventDispatcherInterface $eventDispatcher,
+    SharedTempStoreFactory $tempStoreFactory,
+    TimeInterface $time,
+    PathFactoryInterface $pathFactory,
+    FailureMarker $failureMarker,
+  ) {
+    parent::__construct($pathLocator, $beginner, $stager, $committer, $fileSystem, $eventDispatcher, $tempStoreFactory, $time, $pathFactory, $failureMarker);
   }
 
   /**

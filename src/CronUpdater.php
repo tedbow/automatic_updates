@@ -4,16 +4,27 @@ declare(strict_types = 1);
 
 namespace Drupal\automatic_updates;
 
+use Drupal\Component\Datetime\TimeInterface;
 use Drupal\Core\Config\ConfigFactoryInterface;
+use Drupal\Core\File\FileSystemInterface;
 use Drupal\Core\Mail\MailManagerInterface;
 use Drupal\Core\State\StateInterface;
+use Drupal\Core\TempStore\SharedTempStoreFactory;
 use Drupal\Core\Url;
+use Drupal\package_manager\ComposerInspector;
 use Drupal\package_manager\Exception\ApplyFailedException;
 use Drupal\package_manager\Exception\StageEventException;
+use Drupal\package_manager\FailureMarker;
+use Drupal\package_manager\PathLocator;
 use Drupal\package_manager\ProjectInfo;
 use Drupal\update\ProjectRelease;
 use GuzzleHttp\Psr7\Uri as GuzzleUri;
+use PhpTuf\ComposerStager\Domain\Core\Beginner\BeginnerInterface;
+use PhpTuf\ComposerStager\Domain\Core\Committer\CommitterInterface;
+use PhpTuf\ComposerStager\Domain\Core\Stager\StagerInterface;
+use PhpTuf\ComposerStager\Infrastructure\Factory\Path\PathFactoryInterface;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 
 /**
  * Defines a service that updates via cron.
@@ -60,8 +71,28 @@ class CronUpdater extends Updater {
    *   The state service.
    * @param \Drupal\Core\Config\ConfigFactoryInterface $configFactory
    *   The config factory service.
-   * @param mixed ...$arguments
-   *   Additional arguments to pass to the parent constructor.
+   * @param \Drupal\package_manager\ComposerInspector $composerInspector
+   *   The Composer inspector service.
+   * @param \Drupal\package_manager\PathLocator $pathLocator
+   *   The path locator service.
+   * @param \PhpTuf\ComposerStager\Domain\Core\Beginner\BeginnerInterface $beginner
+   *   The beginner service.
+   * @param \PhpTuf\ComposerStager\Domain\Core\Stager\StagerInterface $stager
+   *   The stager service.
+   * @param \PhpTuf\ComposerStager\Domain\Core\Committer\CommitterInterface $committer
+   *   The committer service.
+   * @param \Drupal\Core\File\FileSystemInterface $fileSystem
+   *   The file system service.
+   * @param \Symfony\Contracts\EventDispatcher\EventDispatcherInterface $eventDispatcher
+   *   The event dispatcher service.
+   * @param \Drupal\Core\TempStore\SharedTempStoreFactory $tempStoreFactory
+   *   The shared tempstore factory.
+   * @param \Drupal\Component\Datetime\TimeInterface $time
+   *   The time service.
+   * @param \PhpTuf\ComposerStager\Infrastructure\Factory\Path\PathFactoryInterface $pathFactory
+   *   The path factory service.
+   * @param \Drupal\package_manager\FailureMarker $failureMarker
+   *   The failure marker service.
    */
   public function __construct(
     protected ReleaseChooser $releaseChooser,
@@ -69,9 +100,19 @@ class CronUpdater extends Updater {
     protected StatusCheckMailer $statusCheckMailer,
     protected StateInterface $state,
     protected ConfigFactoryInterface $configFactory,
-    mixed ...$arguments,
+    ComposerInspector $composerInspector,
+    PathLocator $pathLocator,
+    BeginnerInterface $beginner,
+    StagerInterface $stager,
+    CommitterInterface $committer,
+    FileSystemInterface $fileSystem,
+    EventDispatcherInterface $eventDispatcher,
+    SharedTempStoreFactory $tempStoreFactory,
+    TimeInterface $time,
+    PathFactoryInterface $pathFactory,
+    FailureMarker $failureMarker,
   ) {
-    parent::__construct(...$arguments);
+    parent::__construct($composerInspector, $pathLocator, $beginner, $stager, $committer, $fileSystem, $eventDispatcher, $tempStoreFactory, $time, $pathFactory, $failureMarker);
   }
 
   /**

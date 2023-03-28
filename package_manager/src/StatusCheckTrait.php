@@ -6,7 +6,7 @@ namespace Drupal\package_manager;
 
 use Drupal\package_manager\Event\CollectIgnoredPathsEvent;
 use Drupal\package_manager\Event\StatusCheckEvent;
-use Symfony\Component\EventDispatcher\EventDispatcherInterface;
+use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 
 /**
  * Contains helper methods to run status checks on a stage.
@@ -23,7 +23,7 @@ trait StatusCheckTrait {
    *
    * @param \Drupal\package_manager\Stage $stage
    *   The stage to run the status check for.
-   * @param \Symfony\Component\EventDispatcher\EventDispatcherInterface $event_dispatcher
+   * @param \Symfony\Contracts\EventDispatcher\EventDispatcherInterface $event_dispatcher
    *   (optional) The event dispatcher service.
    *
    * @return \Drupal\package_manager\ValidationResult[]

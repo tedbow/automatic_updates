@@ -26,10 +26,13 @@ services:
   # Services provided to Drupal by Package Manager.
   package_manager.beginner:
     class: PhpTuf\ComposerStager\Domain\Core\Beginner\Beginner
+  PhpTuf\ComposerStager\Domain\Core\Beginner\BeginnerInterface: '@package_manager.beginner'
   package_manager.stager:
     class: PhpTuf\ComposerStager\Domain\Core\Stager\Stager
+  PhpTuf\ComposerStager\Domain\Core\Stager\StagerInterface: '@package_manager.stager'
   package_manager.committer:
     class: PhpTuf\ComposerStager\Domain\Core\Committer\Committer
+  PhpTuf\ComposerStager\Domain\Core\Committer\CommitterInterface: '@package_manager.committer'
   package_manager.path_locator:
     class: Drupal\package_manager\PathLocator
     arguments:
@@ -115,6 +118,7 @@ services:
     class: Drupal\package_manager\Validator\StagedDBUpdateValidator
     tags:
       - { name: event_subscriber }
+  Drupal\package_manager\Validator\StagedDBUpdateValidator: '@package_manager.validator.staged_database_updates'
   package_manager.test_site_excluder:
     class: Drupal\package_manager\PathExcluder\TestSiteExcluder
     tags:

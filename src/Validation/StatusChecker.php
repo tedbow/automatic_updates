@@ -10,7 +10,7 @@ use Drupal\automatic_updates\Updater;
 use Drupal\Component\Datetime\TimeInterface;
 use Drupal\Core\KeyValueStore\KeyValueExpirableFactoryInterface;
 use Drupal\package_manager\Event\PostApplyEvent;
-use Symfony\Component\EventDispatcher\EventDispatcherInterface;
+use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 /**
@@ -34,7 +34,7 @@ final class StatusChecker implements EventSubscriberInterface {
    *   The key/value expirable factory.
    * @param \Drupal\Component\Datetime\TimeInterface $time
    *   The time service.
-   * @param \Symfony\Component\EventDispatcher\EventDispatcherInterface $eventDispatcher
+   * @param \Symfony\Contracts\EventDispatcher\EventDispatcherInterface $eventDispatcher
    *   The event dispatcher service.
    * @param \Drupal\automatic_updates\Updater $updater
    *   The updater service.
