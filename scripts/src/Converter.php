@@ -141,7 +141,7 @@ class Converter {
     else {
       self::info('⚠️Skipped core checks');
     }
-    static::makeCommit($core_dir);
+    static::doMakeCommit($core_dir);
     self::info('Make commit');
     self::info("Done. Probably good but you should check before you push. These are the files present in the contrib module absent in core:");
     print shell_exec(sprintf("tree %s/package_manager > /tmp/contrib.txt  && tree %s/core/modules/package_manager > /tmp/core.txt && diff /tmp/contrib.txt /tmp/core.txt", self::getContribDir(), $core_dir));
@@ -323,12 +323,31 @@ class Converter {
   }
 
   /**
+   * Makes the commit to the merge request.
+   *
+   * Should only be used if core code checks fail for a known reason that can
+   * be ignored.
+   *
+   * @param \Composer\Script\Event $event
+   *   The Composer event.
+   */
+  public static function makeCommit(Event $event): void {
+    $args = $event->getArguments();
+    $count_arg = count($args);
+    if ($count_arg !== 1) {
+      throw new \Exception("This scripts 1 required arguments: a directory that is a core clone");
+    }
+    $core_dir = $args[0];
+    static::doMakeCommit($core_dir);
+  }
+
+  /**
    * Makes commit in the root of Drupal Core.
    *
    * @param string $core_dir
    *   The path to the root of Drupal Core.
    */
-  private static function makeCommit(string $core_dir): void {
+  private static function doMakeCommit(string $core_dir): void {
     chdir(self::getContribDir());
     self::ensureGitClean();
     $hash = trim(shell_exec('git rev-parse HEAD'));
