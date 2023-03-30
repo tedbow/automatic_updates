@@ -5,5 +5,9 @@ parameters:
   ignoreErrors:
     # Drupal core's PHPStan config file ignores the non-anonymous variant of this.
     - "#^Anonymous class extends @internal class#"
+    - "#^@covers value .* references an invalid .*#"
+    - "#^@dataProvider .* related method not found#"
+    - "#^You should use .* instead of assertSame.*#"
+    - "#^Missing call to parent::tearDown.* method#"
   # Drupal core needs to ignore more things than we need to!
   reportUnmatchedIgnoredErrors: false
