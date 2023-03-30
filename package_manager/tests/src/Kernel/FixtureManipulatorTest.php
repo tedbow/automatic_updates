@@ -7,6 +7,8 @@ namespace Drupal\Tests\package_manager\Kernel;
 use Drupal\fixture_manipulator\ActiveFixtureManipulator;
 use Drupal\fixture_manipulator\FixtureManipulator;
 use Drupal\package_manager\ComposerInspector;
+use Drupal\package_manager\InstalledPackagesList;
+use Drupal\Tests\package_manager\Traits\InstalledPackagesListTrait;
 use Drupal\package_manager\PathLocator;
 
 /**
@@ -15,6 +17,8 @@ use Drupal\package_manager\PathLocator;
  * @group package_manager
  */
 class FixtureManipulatorTest extends PackageManagerKernelTestBase {
+
+  use InstalledPackagesListTrait;
 
   /**
    * The root directory of the test project.
@@ -31,32 +35,18 @@ class FixtureManipulatorTest extends PackageManagerKernelTestBase {
   private \Exception $expectedTearDownException;
 
   /**
-   * The original 'installed.php' data before any manipulation.
+   * The Composer inspector service.
    *
-   * @var array
+   * @var \Drupal\package_manager\ComposerInspector
    */
-  private array $originalInstalledPhp;
+  private ComposerInspector $inspector;
 
   /**
-   * Ensures the original fixture packages in 'installed.php' are unchanged.
+   * The original fixture package list at the start of the test.
    *
-   * @param array $installed_php
-   *   The current 'installed.php' data.
+   * @var \Drupal\package_manager\InstalledPackagesList
    */
-  private function assertOriginalFixturePackagesUnchanged(array $installed_php): void {
-    $original_package_names = array_keys($this->originalInstalledPhp);
-    $installed_php_core_packages = array_intersect_key($installed_php, array_flip($original_package_names));
-    // `reference` is never the same as the original because the relative path
-    // repos from the `fake_site` fixture are converted to absolute ones, which
-    // causes a new reference to be computed.
-    $without_reference_key = function (array $a): array {
-      return array_diff_key($a, array_flip(['reference']));
-    };
-    $this->assertSame(
-      array_map($without_reference_key, $this->originalInstalledPhp),
-      array_map($without_reference_key, $installed_php_core_packages)
-    );
-  }
+  private InstalledPackagesList $originalFixturePackages;
 
   /**
    * {@inheritdoc}
@@ -66,7 +56,7 @@ class FixtureManipulatorTest extends PackageManagerKernelTestBase {
 
     $this->dir = $this->container->get(PathLocator::class)->getProjectRoot();
 
-    [, $this->originalInstalledPhp] = $this->getData();
+    $this->inspector = $this->container->get(ComposerInspector::class);
 
     $manipulator = new ActiveFixtureManipulator();
     $manipulator
@@ -84,6 +74,7 @@ class FixtureManipulatorTest extends PackageManagerKernelTestBase {
         TRUE
       )
       ->commitChanges();
+    $this->originalFixturePackages = $this->inspector->getInstalledPackagesList($this->dir);
   }
 
   /**
@@ -138,50 +129,14 @@ class FixtureManipulatorTest extends PackageManagerKernelTestBase {
     catch (\LogicException $e) {
       $this->assertStringContainsString("Expected package 'my/package' to not be installed, but it was.", $e->getMessage());
     }
-
-    $installed_json_expected_packages = [
-      'my/dev-package' => [
-        'name' => 'my/dev-package',
-        'version' => '2.1.0',
-        'version_normalized' => '2.1.0.0',
-        'type' => 'library',
-      ],
-      'my/package' => [
-        'name' => 'my/package',
-        // If no version is specified in a new package it will be added.
-        'version' => '1.2.3',
-        'version_normalized' => '1.2.3.0',
-        'type' => 'library',
-      ],
-    ];
-    $installed_php_expected_packages = $installed_json_expected_packages;
-    foreach ($installed_php_expected_packages as $package_name => &$expectation) {
-      // Composer stores `version_normalized`in 'installed.json' but in
-      // 'installed.php' that is just 'version', and 'version' is
-      // 'pretty_version'.
-      $expectation['pretty_version'] = $expectation['version'];
-      $expectation['version'] = $expectation['version_normalized'];
-      unset($expectation['version_normalized']);
-      // `name` is omitted in installed.php.
-      unset($expectation['name']);
-      // Compute the expected `install_path`.
-      $expectation['install_path'] = $expectation['type'] === 'metapackage' ? NULL : "$this->dir/vendor/composer/../$package_name";
-    }
-    [$installed_json, $installed_php] = $this->getData();
-    $installed_json['packages'] = array_intersect_key($installed_json['packages'], $installed_json_expected_packages);
-    $this->assertSame($installed_json_expected_packages, array_map(fn (array $package) => array_intersect_key($package, array_flip(['name', 'type', 'version', 'version_normalized'])), $installed_json['packages']));
-    $this->assertContains('my/dev-package', $installed_json['dev-package-names']);
-    $this->assertNotContains('my/package', $installed_json['dev-package-names']);
-
-    // None of the operations should have changed the original packages.
-    $this->assertOriginalFixturePackagesUnchanged($installed_php);
-
-    // Remove the original packages since we have confirmed that they have not
-    // changed.
-    $installed_php = array_diff_key($installed_php, $this->originalInstalledPhp);
-    foreach ($installed_php_expected_packages as $package_name => $expected_data) {
-      $this->assertEquals($installed_php_expected_packages[$package_name], array_intersect_key($installed_php[$package_name], array_flip(['version', 'type', 'pretty_version', 'install_path'])), $package_name);
-    }
+    // Ensure that none of the failed calls to ::addPackage() changed the installed
+    // packages.
+    $this->assertPackageListsEqual($this->originalFixturePackages, $this->inspector->getInstalledPackagesList($this->dir));
+    $root_info = $this->inspector->getRootPackageInfo($this->dir);
+    $this->assertSame(
+      ['drupal/core-dev', 'my/dev-package'],
+      array_keys($root_info['devRequires'])
+    );
   }
 
   /**
@@ -189,87 +144,33 @@ class FixtureManipulatorTest extends PackageManagerKernelTestBase {
    */
   public function testModifyPackageConfig(): void {
     $inspector = $this->container->get(ComposerInspector::class);
-
     // Assert ::modifyPackage() works with a package in an existing fixture not
     // created by ::addPackage().
-    $decode_installed_json = function () {
-      return json_decode(file_get_contents($this->dir . '/vendor/composer/installed.json'), TRUE, 512, JSON_THROW_ON_ERROR);
+    $decode_composer_json = function ($package_name): array {
+      return json_decode(file_get_contents($this->dir . "/vendor/$package_name/composer.json"), TRUE, 512, JSON_THROW_ON_ERROR);
     };
-    $original_installed_json = $decode_installed_json();
-    $this->assertIsArray($original_installed_json);
+    $original_composer_json = $decode_composer_json('my/dev-package');
     (new ActiveFixtureManipulator())
       // @see ::setUp()
       ->modifyPackageConfig('my/dev-package', '2.1.0', ['description' => 'something else'], TRUE)
       ->commitChanges();
     // Verify that the package is indeed properly installed.
-    $this->assertSame('2.1.0', $inspector->getInstalledPackagesList($this->dir)['my/dev-package']->version);
+    $this->assertSame('2.1.0', $this->inspector->getInstalledPackagesList($this->dir)['my/dev-package']?->version);
     // Verify that the original exists, but has no description.
-    $this->assertSame('my/dev-package', $original_installed_json['packages'][3]['name']);
-    $this->assertArrayNotHasKey('description', $original_installed_json['packages']);
+    $this->assertSame('my/dev-package', $original_composer_json['name']);
+    $this->assertArrayNotHasKey('description', $original_composer_json);
     // Verify that the description was updated.
-    $this->assertSame('something else', $decode_installed_json()['packages'][3]['description']);
+    $this->assertSame('something else', $decode_composer_json('my/dev-package')['description']);
 
     (new ActiveFixtureManipulator())
       // Add a key to an existing package.
       ->modifyPackageConfig('my/package', '1.2.3', ['extra' => ['foo' => 'bar']])
       // Change a key in an existing package.
       ->setVersion('my/dev-package', '3.2.1', TRUE)
-      // Move an existing package to dev requirements.
-      ->addPackage([
-        'name' => 'my/other-package',
-        'type' => 'library',
-      ])
       ->commitChanges();
+    $this->assertSame(['foo' => 'bar'], $decode_composer_json('my/package')['extra']);
+    $this->assertSame('3.2.1', $this->inspector->getInstalledPackagesList($this->dir)['my/dev-package']?->version);
 
-    $install_json_expected_packages = [
-      'my/dev-package' => [
-        'name' => 'my/dev-package',
-        'version' => '3.2.1',
-        'version_normalized' => '3.2.1.0',
-        'type' => 'library',
-      ],
-      'my/other-package' => [
-        'name' => 'my/other-package',
-        'version' => '1.2.3',
-        'version_normalized' => '1.2.3.0',
-        'type' => 'library',
-      ],
-      'my/package' => [
-        'name' => 'my/package',
-        'version' => '1.2.3',
-        'version_normalized' => '1.2.3.0',
-        'type' => 'library',
-      ],
-    ];
-    $installed_php_expected_packages = $install_json_expected_packages;
-    foreach ($installed_php_expected_packages as $package_name => &$expectation) {
-      // Composer stores `version_normalized`in 'installed.json' but in
-      // 'installed.php' that is just 'version', and 'version' is
-      // 'pretty_version'.
-      $expectation['pretty_version'] = $expectation['version'];
-      $expectation['version'] = $expectation['version_normalized'];
-      unset($expectation['version_normalized']);
-      // `name` is omitted in installed.php.
-      unset($expectation['name']);
-      // Compute the expected `install_path`.
-      $expectation['install_path'] = $expectation['type'] === 'metapackage' ? NULL : "$this->dir/vendor/composer/../$package_name";
-    }
-    [$installed_json, $installed_php] = $this->getData();
-    $installed_json['packages'] = array_intersect_key($installed_json['packages'], $install_json_expected_packages);
-    $this->assertSame($install_json_expected_packages, array_map(fn (array $package) => array_intersect_key($package, array_flip(['name', 'type', 'version', 'version_normalized'])), $installed_json['packages']));
-    $this->assertContains('my/dev-package', $installed_json['dev-package-names']);
-    $this->assertNotContains('my/other-package', $installed_json['dev-package-names']);
-    $this->assertNotContains('my/package', $installed_json['dev-package-names']);
-
-    // None of the operations should have changed the original packages.
-    $this->assertOriginalFixturePackagesUnchanged($installed_php);
-
-    // Remove the original packages since we have confirmed that they have not
-    // changed.
-    $installed_php = array_diff_key($installed_php, $this->originalInstalledPhp);
-    foreach ($installed_php_expected_packages as $package_name => $expected_data) {
-      $this->assertEquals($installed_php_expected_packages[$package_name], array_intersect_key($installed_php[$package_name], array_flip(['version', 'type', 'pretty_version', 'install_path'])), $package_name);
-    }
   }
 
   /**
@@ -287,42 +188,20 @@ class FixtureManipulatorTest extends PackageManagerKernelTestBase {
       $this->assertStringContainsString('junk/drawer is not required in your composer.json and has not been remove', $e->getMessage());
     }
 
+    // Remove the 2 packages that were added in ::setUp().
     (new ActiveFixtureManipulator())
       ->removePackage('my/package')
       ->removePackage('my/dev-package', TRUE)
       ->commitChanges();
-
-    foreach (['json', 'php'] as $extension) {
-      $file = "$this->dir/vendor/composer/installed.$extension";
-      $contents = file_get_contents($file);
-      $this->assertStringNotContainsString('my/package', $contents, "'my/package' not found in $file");
-      $this->assertStringNotContainsString('my/dev-package', $contents, "'my/dev-package' not found in $file");
-    }
-  }
-
-  /**
-   * Returns the data from installed.php and installed.json.
-   *
-   * @return array[]
-   *   An array of two arrays. The first array will be the contents of
-   *   installed.json, with the `packages` array keyed by package name. The
-   *   second array will be the `versions` array from installed.php.
-   */
-  private function getData(): array {
-    $installed_json = file_get_contents("$this->dir/vendor/composer/installed.json");
-    $installed_json = json_decode($installed_json, TRUE, 512, JSON_THROW_ON_ERROR);
-
-    $keyed_packages = [];
-    foreach ($installed_json['packages'] as $package) {
-      $keyed_packages[$package['name']] = $package;
-    }
-    $installed_json['packages'] = $keyed_packages;
-
-    $installed_php = require "$this->dir/vendor/composer/installed.php";
-    return [
-      $installed_json,
-      $installed_php['versions'],
-    ];
+    $expected_packages = $this->originalFixturePackages->getArrayCopy();
+    unset($expected_packages['my/package'], $expected_packages['my/dev-package']);
+    $expected_list = new InstalledPackagesList($expected_packages);
+    $this->assertPackageListsEqual($expected_list, $this->inspector->getInstalledPackagesList($this->dir));
+    $root_info = $this->inspector->getRootPackageInfo($this->dir);
+    $this->assertSame(
+      ['drupal/core-dev'],
+      array_keys($root_info['devRequires'])
+    );
   }
 
   /**

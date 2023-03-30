@@ -10,7 +10,9 @@ use Drupal\fixture_manipulator\ActiveFixtureManipulator;
 use Drupal\package_manager\ComposerInspector;
 use Drupal\package_manager\Exception\ComposerNotReadyException;
 use Drupal\package_manager\InstalledPackage;
+use Drupal\package_manager\InstalledPackagesList;
 use Drupal\package_manager\JsonProcessOutputCallback;
+use Drupal\Tests\package_manager\Traits\InstalledPackagesListTrait;
 use Drupal\package_manager\PathLocator;
 use PhpTuf\ComposerStager\Domain\Exception\PreconditionException;
 use PhpTuf\ComposerStager\Domain\Exception\RuntimeException;
@@ -25,6 +27,8 @@ use Prophecy\Argument;
  * @group package_manager
  */
 class ComposerInspectorTest extends PackageManagerKernelTestBase {
+
+  use InstalledPackagesListTrait;
 
   /**
    * @covers ::getConfig
@@ -98,23 +102,28 @@ class ComposerInspectorTest extends PackageManagerKernelTestBase {
     $inspector = $this->container->get(ComposerInspector::class);
     $list = $inspector->getInstalledPackagesList($project_root);
 
-    $this->assertInstanceOf(InstalledPackage::class, $list['drupal/core']);
-    $this->assertSame('drupal/core', $list['drupal/core']->name);
-    $this->assertSame('drupal-core', $list['drupal/core']->type);
-    $this->assertSame('9.8.0', $list['drupal/core']->version);
-    $this->assertSame("$project_root/vendor/drupal/core", $list['drupal/core']->path);
+    $expected_list = new InstalledPackagesList([
+      'drupal/core' => InstalledPackage::createFromArray([
+        'name' => 'drupal/core',
+        'type' => 'drupal-core',
+        'version' => '9.8.0',
+        'path' => "$project_root/vendor/drupal/core",
+      ]),
+      'drupal/core-recommended' => InstalledPackage::createFromArray([
+        'name' => 'drupal/core-recommended',
+        'type' => 'project',
+        'version' => '9.8.0',
+        'path' => "$project_root/vendor/drupal/core-recommended",
+      ]),
+      'drupal/core-dev' => InstalledPackage::createFromArray([
+        'name' => 'drupal/core-dev',
+        'type' => 'package',
+        'version' => '9.8.0',
+        'path' => "$project_root/vendor/drupal/core-dev",
+      ]),
+    ]);
 
-    $this->assertInstanceOf(InstalledPackage::class, $list['drupal/core-recommended']);
-    $this->assertSame('drupal/core-recommended', $list['drupal/core-recommended']->name);
-    $this->assertSame('project', $list['drupal/core-recommended']->type);
-    $this->assertSame('9.8.0', $list['drupal/core']->version);
-    $this->assertSame("$project_root/vendor/drupal/core-recommended", $list['drupal/core-recommended']->path);
-
-    $this->assertInstanceOf(InstalledPackage::class, $list['drupal/core-dev']);
-    $this->assertSame('drupal/core-dev', $list['drupal/core-dev']->name);
-    $this->assertSame('package', $list['drupal/core-dev']->type);
-    $this->assertSame('9.8.0', $list['drupal/core']->version);
-    $this->assertSame("$project_root/vendor/drupal/core-dev", $list['drupal/core-dev']->path);
+    $this->assertPackageListsEqual($expected_list, $list);
 
     // Since the lock file hasn't changed, we should get the same package list
     // back if we call getInstalledPackageList() again.
