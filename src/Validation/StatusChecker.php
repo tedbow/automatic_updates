@@ -5,6 +5,9 @@ declare(strict_types = 1);
 namespace Drupal\automatic_updates\Validation;
 
 use Drupal\automatic_updates\CronUpdater;
+use Drupal\automatic_updates\StatusCheckMailer;
+use Drupal\Core\Config\ConfigCrudEvent;
+use Drupal\Core\Config\ConfigEvents;
 use Drupal\package_manager\StatusCheckTrait;
 use Drupal\automatic_updates\Updater;
 use Drupal\Component\Datetime\TimeInterface;
@@ -137,11 +140,40 @@ final class StatusChecker implements EventSubscriberInterface {
   }
 
   /**
+   * Reacts when config is saved.
+   *
+   * @param \Drupal\Core\Config\ConfigCrudEvent $event
+   *   The event object.
+   */
+  public function onConfigSave(ConfigCrudEvent $event): void {
+    $config = $event->getConfig();
+
+    // If the path of the Composer executable has changed, the status check
+    // results are likely to change as well.
+    if ($config->getName() === 'package_manager.settings' && $event->isChanged('executables.composer')) {
+      $this->clearStoredResults();
+    }
+    elseif ($config->getName() === 'automatic_updates.settings') {
+      // We only send status check failure notifications if unattended updates
+      // are enabled. If notifications were previously disabled but have been
+      // re-enabled, or their sensitivity level has changed, clear the stored
+      // results so that we'll send accurate notifications next time cron runs.
+      if ($event->isChanged('cron') && $config->getOriginal('cron') === CronUpdater::DISABLED) {
+        $this->clearStoredResults();
+      }
+      elseif ($event->isChanged('status_check_mail') && $config->get('status_check_mail') !== StatusCheckMailer::DISABLED) {
+        $this->clearStoredResults();
+      }
+    }
+  }
+
+  /**
    * {@inheritdoc}
    */
   public static function getSubscribedEvents() {
     return [
       PostApplyEvent::class => 'clearStoredResults',
+      ConfigEvents::SAVE => 'onConfigSave',
     ];
   }
 

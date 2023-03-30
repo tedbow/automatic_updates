@@ -57,10 +57,6 @@ services:
     tags:
       - { name: event_subscriber }
   Drupal\automatic_updates\Validator\VersionPolicyValidator: '@automatic_updates.validator.version_policy'
-  automatic_updates.config_subscriber:
-    class: Drupal\automatic_updates\EventSubscriber\ConfigSubscriber
-    tags:
-      - { name: event_subscriber }
   automatic_updates.validator.scaffold_file_permissions:
     class: Drupal\automatic_updates\Validator\ScaffoldFilePermissionsValidator
     tags:
