@@ -120,6 +120,29 @@ class InstalledPackagesListTest extends PackageManagerKernelTestBase {
     ]);
     $this->assertNull($list->getPackageByDrupalProjectName('custom_module'));
     $this->assertNull($list->getPackageByDrupalProjectName('custom_theme'));
+
+    // The project name is repeated.
+    (new ActiveFixtureManipulator())
+      ->addProjectAtPath('projects/duplicate_project')
+      ->addProjectAtPath('projects/repeat/duplicate_project')
+      ->commitChanges();
+    $list = new InstalledPackagesList([
+      'drupal/test_project1' => InstalledPackage::createFromArray([
+        'name' => 'drupal/test_project1',
+        'version' => '1.0.0',
+        'type' => 'drupal-module',
+        'path' => $projects_path . '/duplicate_project',
+      ]),
+      'drupal/test_project2' => InstalledPackage::createFromArray([
+        'name' => 'drupal/test_project2',
+        'version' => '1.0.0',
+        'type' => 'drupal-module',
+        'path' => $projects_path . '/repeat/duplicate_project',
+      ]),
+    ]);
+    $this->expectException(\UnexpectedValueException::class);
+    $this->expectExceptionMessage("Project 'duplicate_project' was found in packages 'drupal/test_project1' and 'drupal/test_project2'.");
+    $list->getPackageByDrupalProjectName('duplicate_project');
   }
 
 }

@@ -118,14 +118,16 @@ final class InstalledPackagesList extends \ArrayObject {
    *   be determined.
    */
   public function getPackageByDrupalProjectName(string $project_name): ?InstalledPackage {
+    $matching_package = NULL;
     foreach ($this as $package) {
       if ($package->getProjectName() === $project_name) {
-        // @todo Throw an exception if we find more than one package matching
-        //   $project_name in https://drupal.org/i/3343463.
-        return $package;
+        if ($matching_package) {
+          throw new \UnexpectedValueException(sprintf("Project '%s' was found in packages '%s' and '%s'.", $project_name, $matching_package->name, $package->name));
+        }
+        $matching_package = $package;
       }
     }
-    return NULL;
+    return $matching_package;
   }
 
   /**

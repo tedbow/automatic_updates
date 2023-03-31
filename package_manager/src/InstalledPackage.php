@@ -61,6 +61,9 @@ final class InstalledPackage {
    *     `drupal-profile`.
    *   - The package's vendor is not `drupal`.
    *   - The project name could not otherwise be determined.
+   *
+   * @throws \UnexpectedValueException
+   *   Thrown if the same project name exists in more than one package.
    */
   public function getProjectName(): ?string {
     // Only consider packages which are packaged by drupal.org and will be
