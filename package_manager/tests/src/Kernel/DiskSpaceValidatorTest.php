@@ -28,9 +28,9 @@ class DiskSpaceValidatorTest extends PackageManagerKernelTestBase {
     $root = '<PROJECT_ROOT>';
     $vendor = '<VENDOR_DIR>';
 
-    $root_insufficient = "Drupal root filesystem \"$root\" has insufficient space. There must be at least 1024 megabytes free.";
-    $vendor_insufficient = "Vendor filesystem \"$vendor\" has insufficient space. There must be at least 1024 megabytes free.";
-    $temp_insufficient = 'Directory "temp" has insufficient space. There must be at least 1024 megabytes free.';
+    $root_insufficient = t('Drupal root filesystem "<PROJECT_ROOT>" has insufficient space. There must be at least 1024 megabytes free.');
+    $vendor_insufficient = t('Vendor filesystem "<VENDOR_DIR>" has insufficient space. There must be at least 1024 megabytes free.');
+    $temp_insufficient = t('Directory "temp" has insufficient space. There must be at least 1024 megabytes free.');
     $summary = t("There is not enough disk space to create a stage directory.");
 
     return [

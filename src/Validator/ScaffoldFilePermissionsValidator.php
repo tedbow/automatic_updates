@@ -83,7 +83,7 @@ final class ScaffoldFilePermissionsValidator implements EventSubscriberInterface
     if ($non_writable_files) {
       // Re-key the messages in order to prevent false negative comparisons in
       // tests.
-      $non_writable_files = array_values($non_writable_files);
+      $non_writable_files = array_map($this->t(...), array_values($non_writable_files));
       $event->addError($non_writable_files, $this->t('The following paths must be writable in order to update default site configuration files.'));
     }
   }

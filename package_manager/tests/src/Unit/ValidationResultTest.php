@@ -92,6 +92,22 @@ class ValidationResultTest extends UnitTestCase {
   }
 
   /**
+   * Tests that the messages are asserted to be translatable.
+   *
+   * @testWith ["createError"]
+   *   ["createWarning"]
+   */
+  public function testMessagesMustBeTranslatable(string $method): void {
+    // When creating an error from a throwable, the message does not need to be
+    // translatable.
+    ValidationResult::createErrorFromThrowable(new \Exception('Burn it down.'));
+
+    $this->expectException(\AssertionError::class);
+    $this->expectExceptionMessageMatches('/instanceof TranslatableMarkup/');
+    ValidationResult::$method(['Not translatable!']);
+  }
+
+  /**
    * Data provider for test methods that test create exceptions.
    *
    * @return array[]

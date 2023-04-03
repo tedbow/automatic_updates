@@ -4,7 +4,6 @@ declare(strict_types = 1);
 
 namespace Drupal\package_manager\Validator;
 
-use Drupal\Core\Link;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\package_manager\Event\PreOperationStageEvent;
 use Drupal\Core\Url;
@@ -49,8 +48,10 @@ final class EnvironmentSupportValidator implements EventSubscriberInterface {
     // If the URL is not parseable, catch the exception that Url::fromUri()
     // would generate.
     try {
-      $message = Link::fromTextAndUrl($message, Url::fromUri($help_url))
-        ->toString();
+      $message = $this->t('<a href=":url">@message</a>', [
+        ':url' => Url::fromUri($help_url)->toString(),
+        '@message' => $message,
+      ]);
     }
     catch (\InvalidArgumentException) {
       // No need to do anything here. The message just won't be a link.

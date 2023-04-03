@@ -75,7 +75,7 @@ class PendingUpdatesValidatorTest extends PackageManagerKernelTestBase {
     // will think it's pending.
     require_once __DIR__ . '/../../fixtures/post_update.php';
     $result = ValidationResult::createError([
-      'Some modules have database schema updates to install. You should run the <a href="/update.php">database update script</a> immediately.',
+      t('Some modules have database schema updates to install. You should run the <a href="/update.php">database update script</a> immediately.'),
     ]);
     try {
       $stage->apply();

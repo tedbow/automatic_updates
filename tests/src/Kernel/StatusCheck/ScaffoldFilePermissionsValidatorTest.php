@@ -52,6 +52,7 @@ class ScaffoldFilePermissionsValidatorTest extends AutomaticUpdatesKernelTestBas
       // Prepend the active directory to every path listed in the error result,
       // and add the expected summary.
       $messages = array_map($map, $result->getMessages());
+      $messages = array_map(t(...), $messages);
       $expected_results[$i] = ValidationResult::createError($messages, t('The following paths must be writable in order to update default site configuration files.'));
     }
     parent::assertValidationResultsEqual($expected_results, $actual_results, $path_locator);

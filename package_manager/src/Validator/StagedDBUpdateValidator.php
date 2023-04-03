@@ -57,6 +57,7 @@ class StagedDBUpdateValidator implements EventSubscriberInterface {
 
     $extensions_with_updates = $this->getExtensionsWithDatabaseUpdates($stage_dir);
     if ($extensions_with_updates) {
+      $extensions_with_updates = array_map($this->t(...), $extensions_with_updates);
       $event->addWarning($extensions_with_updates, $this->t('Possible database updates have been detected in the following extensions.'));
     }
   }

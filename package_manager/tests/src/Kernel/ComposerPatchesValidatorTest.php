@@ -281,7 +281,7 @@ class ComposerPatchesValidatorTest extends PackageManagerKernelTestBase {
             ->toString();
           // Reformat the provided results so that they all have the link to the
           // online documentation appended to them.
-          $messages[$message_index] = $message . ' See <a href="' . $url . '">the help page</a> for information on how to resolve the problem.';
+          $messages[$message_index] = t('@message See <a href=":url">the help page</a> for information on how to resolve the problem.', ['@message' => $message, ':url' => $url]);
         }
       }
       $expected_results[$result_index] = ValidationResult::createError($messages, $result->getSummary());

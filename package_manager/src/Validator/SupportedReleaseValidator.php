@@ -4,7 +4,6 @@ declare(strict_types = 1);
 
 namespace Drupal\package_manager\Validator;
 
-use Drupal\Component\Render\FormattableMarkup;
 use Drupal\package_manager\ComposerInspector;
 use Drupal\package_manager\PathLocator;
 use Drupal\package_manager\ProjectInfo;
@@ -104,7 +103,7 @@ final class SupportedReleaseValidator implements EventSubscriberInterface {
       }
       $semantic_version = $staged_package->version;
       if (!$this->isSupportedRelease($project_name, $semantic_version)) {
-        $unsupported_packages[] = new FormattableMarkup('@project_name (@package_name) @version', [
+        $unsupported_packages[] = $this->t('@project_name (@package_name) @version', [
           '@project_name' => $project_name,
           '@package_name' => $package_name,
           '@version' => $semantic_version,

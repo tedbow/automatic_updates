@@ -141,14 +141,14 @@ class WritableFileSystemValidatorTest extends PackageManagerKernelTestBase {
       'write-protected stage root exists' => [
         $non_writable_permission,
         [
-          ValidationResult::createError(['The stage root directory "<STAGE_ROOT>" is not writable.'], $summary),
+          ValidationResult::createError([t('The stage root directory "<STAGE_ROOT>" is not writable.')], $summary),
         ],
         FALSE,
       ],
       'stage root directory does not exist, parent directory not writable' => [
         $non_writable_permission,
         [
-          ValidationResult::createError(['The stage root directory will not able to be created at "<STAGE_ROOT_PARENT>".'], $summary),
+          ValidationResult::createError([t('The stage root directory will not able to be created at "<STAGE_ROOT_PARENT>".')], $summary),
         ],
         TRUE,
       ],

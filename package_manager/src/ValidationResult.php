@@ -4,6 +4,7 @@ declare(strict_types = 1);
 
 namespace Drupal\package_manager;
 
+use Drupal\Component\Assertion\Inspector;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\system\SystemManager;
 
@@ -21,9 +22,18 @@ final class ValidationResult {
    * @param \Drupal\Core\StringTranslation\TranslatableMarkup[]|string[] $messages
    *   The error messages.
    * @param \Drupal\Core\StringTranslation\TranslatableMarkup|null $summary
-   *   The errors summary.
+   *   A summary of the result messages.
+   * @param bool $assert_translatable
+   *   Whether to assert the messages are translatable. Internal use only.
+   *
+   * @throws \InvalidArgumentException
+   *   Thrown if $messages is empty, or if it has 2 or more items but $summary
+   *   is NULL.
    */
-  private function __construct(protected int $severity, protected array $messages, protected ?TranslatableMarkup $summary = NULL) {
+  private function __construct(protected int $severity, protected array $messages, protected ?TranslatableMarkup $summary, bool $assert_translatable) {
+    if ($assert_translatable) {
+      assert(Inspector::assertAll(fn ($message) => $message instanceof TranslatableMarkup, $messages));
+    }
     if (empty($messages)) {
       throw new \InvalidArgumentException('At least one message is required.');
     }
@@ -43,7 +53,7 @@ final class ValidationResult {
    * @return static
    */
   public static function createErrorFromThrowable(\Throwable $throwable, ?TranslatableMarkup $summary = NULL): self {
-    return new static(SystemManager::REQUIREMENT_ERROR, [$throwable->getMessage()], $summary);
+    return new static(SystemManager::REQUIREMENT_ERROR, [$throwable->getMessage()], $summary, FALSE);
   }
 
   /**
@@ -57,7 +67,7 @@ final class ValidationResult {
    * @return static
    */
   public static function createError(array $messages, ?TranslatableMarkup $summary = NULL): self {
-    return new static(SystemManager::REQUIREMENT_ERROR, $messages, $summary);
+    return new static(SystemManager::REQUIREMENT_ERROR, $messages, $summary, TRUE);
   }
 
   /**
@@ -71,7 +81,7 @@ final class ValidationResult {
    * @return static
    */
   public static function createWarning(array $messages, ?TranslatableMarkup $summary = NULL): self {
-    return new static(SystemManager::REQUIREMENT_WARNING, $messages, $summary);
+    return new static(SystemManager::REQUIREMENT_WARNING, $messages, $summary, TRUE);
   }
 
   /**

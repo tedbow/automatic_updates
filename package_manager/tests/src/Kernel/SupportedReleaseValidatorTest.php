@@ -163,7 +163,7 @@ class SupportedReleaseValidatorTest extends PackageManagerKernelTestBase {
           'type' => 'drupal-theme',
         ],
         [
-          ValidationResult::createError(['package_manager_theme (drupal/package_manager_theme) 8.2.0'], $summary),
+          ValidationResult::createError([t('package_manager_theme (drupal/package_manager_theme) 8.2.0')], $summary),
         ],
       ],
       // For modules that don't start with 'drupal/' will not have update XML
