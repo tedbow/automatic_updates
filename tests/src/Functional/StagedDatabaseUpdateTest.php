@@ -54,7 +54,7 @@ class StagedDatabaseUpdateTest extends UpdaterFormTestBase {
     // on the updater form.
     $expected_results = [$this->createValidationResult(SystemManager::REQUIREMENT_WARNING)];
     TestSubscriber1::setTestResult($expected_results, StatusCheckEvent::class);
-    $messages = reset($expected_results)->getMessages();
+    $messages = reset($expected_results)->messages;
 
     StagedDatabaseUpdateValidator::setExtensionsWithUpdates([
       'system',

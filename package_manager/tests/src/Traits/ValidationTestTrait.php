@@ -111,15 +111,15 @@ trait ValidationTestTrait {
           $message = new TranslatableMarkup($message->getUntranslatedString(), $message->getArguments(), $message->getOptions(), $string_translation_stub);
         }
         return (string) $message;
-      }, $result->getMessages());
+      }, $result->messages);
 
-      $summary = $result->getSummary();
+      $summary = $result->summary;
       if ($summary !== NULL) {
-        $summary = (string) $result->getSummary();
+        $summary = (string) $result->summary;
       }
 
       return [
-        'severity' => $result->getSeverity(),
+        'severity' => $result->severity,
         'messages' => $messages,
         'summary' => $summary,
       ];

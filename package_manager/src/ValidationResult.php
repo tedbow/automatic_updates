@@ -10,6 +10,8 @@ use Drupal\system\SystemManager;
 
 /**
  * A value object to contain the results of a validation.
+ *
+ * @property \Drupal\Core\StringTranslation\TranslatableMarkup[] $messages
  */
 final class ValidationResult {
 
@@ -20,9 +22,9 @@ final class ValidationResult {
    *   The severity of the result. Should be one of the
    *   SystemManager::REQUIREMENT_* constants.
    * @param \Drupal\Core\StringTranslation\TranslatableMarkup[]|string[] $messages
-   *   The error messages.
+   *   The result messages.
    * @param \Drupal\Core\StringTranslation\TranslatableMarkup|null $summary
-   *   A summary of the result messages.
+   *   A succinct summary of the result.
    * @param bool $assert_translatable
    *   Whether to assert the messages are translatable. Internal use only.
    *
@@ -30,7 +32,7 @@ final class ValidationResult {
    *   Thrown if $messages is empty, or if it has 2 or more items but $summary
    *   is NULL.
    */
-  private function __construct(protected int $severity, protected array $messages, protected ?TranslatableMarkup $summary, bool $assert_translatable) {
+  private function __construct(public readonly int $severity, private array $messages, public readonly ?TranslatableMarkup $summary, bool $assert_translatable) {
     if ($assert_translatable) {
       assert(Inspector::assertAll(fn ($message) => $message instanceof TranslatableMarkup, $messages));
     }
@@ -43,6 +45,18 @@ final class ValidationResult {
   }
 
   /**
+   * Implements magic ::__get() method.
+   */
+  public function __get(string $name): mixed {
+    return match ($name) {
+      // The messages must be private so that they cannot be mutated by external
+      // code, but we want to allow callers to access them in the same way as
+      // $this->summary and $this->severity.
+      'messages' => $this->messages,
+    };
+  }
+
+  /**
    * Creates an error ValidationResult object from a throwable.
    *
    * @param \Throwable $throwable
@@ -52,7 +66,7 @@ final class ValidationResult {
    *
    * @return static
    */
-  public static function createErrorFromThrowable(\Throwable $throwable, ?TranslatableMarkup $summary = NULL): self {
+  public static function createErrorFromThrowable(\Throwable $throwable, ?TranslatableMarkup $summary = NULL): static {
     return new static(SystemManager::REQUIREMENT_ERROR, [$throwable->getMessage()], $summary, FALSE);
   }
 
@@ -66,7 +80,7 @@ final class ValidationResult {
    *
    * @return static
    */
-  public static function createError(array $messages, ?TranslatableMarkup $summary = NULL): self {
+  public static function createError(array $messages, ?TranslatableMarkup $summary = NULL): static {
     return new static(SystemManager::REQUIREMENT_ERROR, $messages, $summary, TRUE);
   }
 
@@ -80,39 +94,8 @@ final class ValidationResult {
    *
    * @return static
    */
-  public static function createWarning(array $messages, ?TranslatableMarkup $summary = NULL): self {
+  public static function createWarning(array $messages, ?TranslatableMarkup $summary = NULL): static {
     return new static(SystemManager::REQUIREMENT_WARNING, $messages, $summary, TRUE);
-  }
-
-  /**
-   * Gets the summary.
-   *
-   * @return \Drupal\Core\StringTranslation\TranslatableMarkup|null
-   *   The summary.
-   */
-  public function getSummary(): ?TranslatableMarkup {
-    return $this->summary;
-  }
-
-  /**
-   * Gets the messages.
-   *
-   * @return \Drupal\Core\StringTranslation\TranslatableMarkup[]|string[]
-   *   The error or warning messages.
-   */
-  public function getMessages(): array {
-    return $this->messages;
-  }
-
-  /**
-   * The severity of the result.
-   *
-   * @return int
-   *   Either SystemManager::REQUIREMENT_ERROR or
-   *   SystemManager::REQUIREMENT_WARNING.
-   */
-  public function getSeverity(): int {
-    return $this->severity;
   }
 
   /**
@@ -127,7 +110,7 @@ final class ValidationResult {
    */
   public static function getOverallSeverity(array $results): int {
     foreach ($results as $result) {
-      if ($result->getSeverity() === SystemManager::REQUIREMENT_ERROR) {
+      if ($result->severity === SystemManager::REQUIREMENT_ERROR) {
         return SystemManager::REQUIREMENT_ERROR;
       }
     }
@@ -149,9 +132,9 @@ final class ValidationResult {
    */
   public static function isEqual(self $a, self $b): bool {
     return (
-      $a->getSeverity() === $b->getSeverity() &&
-      strval($a->getSummary()) === strval($b->getSummary()) &&
-      array_map('strval', $a->getMessages()) === array_map('strval', $b->getMessages())
+      $a->severity === $b->severity &&
+      strval($a->summary) === strval($b->summary) &&
+      array_map('strval', $a->messages) === array_map('strval', $b->messages)
     );
   }
 

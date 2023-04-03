@@ -113,7 +113,7 @@ final class StatusChecker implements EventSubscriberInterface {
     if ($results !== NULL) {
       if ($severity !== NULL) {
         $results = array_filter($results, function ($result) use ($severity) {
-          return $result->getSeverity() === $severity;
+          return $result->severity === $severity;
         });
       }
       return $results;

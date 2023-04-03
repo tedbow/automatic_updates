@@ -64,11 +64,11 @@ abstract class UpdateFormBase extends FormBase {
       '#prefix' => $this->getFailureMessageForSeverity($severity),
     ];
     foreach ($results as $result) {
-      $messages = $result->getMessages();
+      $messages = $result->messages;
 
       // If there's a summary, there's guaranteed to be at least one message,
       // so render the result as a nested list.
-      $summary = $result->getSummary();
+      $summary = $result->summary;
       if ($summary) {
         $build['#items'][] = [
           '#theme' => $build['#theme'],

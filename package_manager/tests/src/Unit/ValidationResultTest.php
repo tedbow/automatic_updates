@@ -161,15 +161,15 @@ class ValidationResultTest extends UnitTestCase {
    *   The severity.
    */
   protected function assertResultValid(ValidationResult $result, array $expected_messages, ?TranslatableMarkup $summary, int $severity): void {
-    $this->assertSame($expected_messages, $result->getMessages());
+    $this->assertSame($expected_messages, $result->messages);
     if ($summary === NULL) {
-      $this->assertNull($result->getSummary());
+      $this->assertNull($result->summary);
     }
     else {
-      $this->assertSame($summary->getUntranslatedString(), $result->getSummary()
+      $this->assertSame($summary->getUntranslatedString(), $result->summary
         ->getUntranslatedString());
     }
-    $this->assertSame($severity, $result->getSeverity());
+    $this->assertSame($severity, $result->severity);
   }
 
 }

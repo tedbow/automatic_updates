@@ -82,7 +82,7 @@ final class StatusCheckMailer {
     // result sets.
     elseif ($level === static::ERRORS_ONLY) {
       $filter = function (ValidationResult $result): bool {
-        return $result->getSeverity() === SystemManager::REQUIREMENT_ERROR;
+        return $result->severity === SystemManager::REQUIREMENT_ERROR;
       };
       $current_results = array_filter($current_results, $filter);
       // If the current results don't have any errors, there's nothing else

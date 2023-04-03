@@ -137,10 +137,10 @@ abstract class UpdaterFormTestBase extends AutomaticUpdatesFunctionalTestBase {
    */
   protected function assertStatusMessageContainsResult(ValidationResult $result): void {
     $assert_session = $this->assertSession();
-    $type = $result->getSeverity() === SystemManager::REQUIREMENT_ERROR ? 'error' : 'warning';
-    $assert_session->statusMessageContains((string) $result->getSummary(), $type);
-    $assert_session->pageTextContainsOnce((string) $result->getSummary());
-    foreach ($result->getMessages() as $message) {
+    $type = $result->severity === SystemManager::REQUIREMENT_ERROR ? 'error' : 'warning';
+    $assert_session->statusMessageContains((string) $result->summary, $type);
+    $assert_session->pageTextContainsOnce((string) $result->summary);
+    foreach ($result->messages as $message) {
       $assert_session->statusMessageContains((string) $message, $type);
       $assert_session->pageTextContainsOnce((string) $message);
     }

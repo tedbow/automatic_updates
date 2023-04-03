@@ -42,8 +42,8 @@ class StageEventException extends StageException {
     $text = '';
     if ($this->event instanceof PreOperationStageEvent) {
       foreach ($this->event->getResults() as $result) {
-        $messages = $result->getMessages();
-        $summary = $result->getSummary();
+        $messages = $result->messages;
+        $summary = $result->summary;
         if ($summary) {
           array_unshift($messages, $summary);
         }

@@ -145,8 +145,8 @@ class UpdateErrorTest extends UpdaterFormTestBase {
     // messages or summary, because exceptions thrown directly by event
     // subscribers are wrapped in simple exceptions and re-thrown.
     $assert_session->pageTextContainsOnce($error->getMessage());
-    $assert_session->pageTextNotContains((string) $expected_results[0]->getMessages()[0]);
-    $assert_session->pageTextNotContains($expected_results[0]->getSummary());
+    $assert_session->pageTextNotContains((string) $expected_results[0]->messages[0]);
+    $assert_session->pageTextNotContains($expected_results[0]->summary);
     $assert_session->pageTextNotContains($cached_message);
     // Since the error occurred during pre-create, there should be no existing
     // update to delete.

@@ -51,7 +51,7 @@ class XdebugValidatorTest extends AutomaticUpdatesKernelTestBase {
     $this->assertUpdateStagedTimes(1);
     $event_dispatcher = \Drupal::service('event_dispatcher');
     $result = $this->runStatusCheck($stage, $event_dispatcher);
-    $this->assertSame($message->getUntranslatedString(), $result[0]->getMessages()[0]->getUntranslatedString());
+    $this->assertSame($message->getUntranslatedString(), $result[0]->messages[0]->getUntranslatedString());
     $stage->destroy(TRUE);
 
     $result = ValidationResult::createWarning([$message]);

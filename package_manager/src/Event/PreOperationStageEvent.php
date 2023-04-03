@@ -33,7 +33,7 @@ abstract class PreOperationStageEvent extends StageEvent {
   public function getResults(?int $severity = NULL): array {
     if ($severity !== NULL) {
       return array_filter($this->results, function ($result) use ($severity) {
-        return $result->getSeverity() === $severity;
+        return $result->severity === $severity;
       });
     }
     return $this->results;

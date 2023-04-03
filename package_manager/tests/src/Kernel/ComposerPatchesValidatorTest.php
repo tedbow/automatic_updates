@@ -271,7 +271,7 @@ class ComposerPatchesValidatorTest extends PackageManagerKernelTestBase {
     $this->enableModules(['help']);
 
     foreach ($expected_results as $result_index => $result) {
-      $messages = $result->getMessages();
+      $messages = $result->messages;
 
       foreach ($messages as $message_index => $message) {
         if ($help_page_sections[$message_index]) {
@@ -284,7 +284,7 @@ class ComposerPatchesValidatorTest extends PackageManagerKernelTestBase {
           $messages[$message_index] = t('@message See <a href=":url">the help page</a> for information on how to resolve the problem.', ['@message' => $message, ':url' => $url]);
         }
       }
-      $expected_results[$result_index] = ValidationResult::createError($messages, $result->getSummary());
+      $expected_results[$result_index] = ValidationResult::createError($messages, $result->summary);
     }
     $this->testErrorDuringPreApply($in_active, $in_stage, $expected_results);
   }

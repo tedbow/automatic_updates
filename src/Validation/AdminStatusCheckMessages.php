@@ -188,8 +188,8 @@ final class AdminStatusCheckMessages implements ContainerInjectionInterface {
     // want to alert users that problems exist, but not burden them with the
     // details. They can get those on the status report and updater form.
     $format_result = function (ValidationResult $result): TranslatableMarkup {
-      $messages = $result->getMessages();
-      return $result->getSummary() ?: reset($messages);
+      $messages = $result->messages;
+      return $result->summary ?: reset($messages);
     };
     // Format the results as a single item list prefixed by a preamble message.
     $build = [

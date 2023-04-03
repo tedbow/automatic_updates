@@ -399,8 +399,8 @@ abstract class PackageManagerKernelTestBase extends KernelTestBase {
     $event = new $event_class($stage ?? $this->createStage(), []);
 
     foreach ($expected_results as $result) {
-      if ($result->getSeverity() === SystemManager::REQUIREMENT_ERROR) {
-        $event->addError($result->getMessages(), $result->getSummary());
+      if ($result->severity === SystemManager::REQUIREMENT_ERROR) {
+        $event->addError($result->messages, $result->summary);
       }
     }
     return new StageEventException($event);

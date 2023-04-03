@@ -224,7 +224,7 @@ class CronServerValidatorTest extends AutomaticUpdatesKernelTestBase {
 
     foreach ($expected_results as $i => $result) {
       $messages = [];
-      foreach ($result->getMessages() as $message) {
+      foreach ($result->messages as $message) {
         $messages[] = t('@message See <a href=":url">the Automatic Updates help page</a> for more information on how to resolve this.', ['@message' => $message, ':url' => $url]);
       }
       $expected_results[$i] = ValidationResult::createError($messages);
