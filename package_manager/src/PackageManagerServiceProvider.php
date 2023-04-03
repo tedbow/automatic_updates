@@ -86,6 +86,35 @@ final class PackageManagerServiceProvider extends ServiceProviderBase {
       }
     }
 
+    // BEGIN: DELETE FROM CORE MERGE REQUEST
+    // Remove all of this when Drupal 10.1 is the minimum required version of
+    // Drupal core.
+    $aliases = [
+      'config.factory' => 'Drupal\Core\Config\ConfigFactoryInterface',
+      'module_handler' => 'Drupal\Core\Extension\ModuleHandlerInterface',
+      'state' => 'Drupal\Core\State\StateInterface',
+      'extension.list.module' => 'Drupal\Core\Extension\ModuleExtensionList',
+      'extension.list.theme' => 'Drupal\Core\Extension\ThemeExtensionList',
+      'stream_wrapper_manager' => 'Drupal\Core\StreamWrapper\StreamWrapperManagerInterface',
+      'database' => 'Drupal\Core\Database\Connection',
+      'queue' => 'Drupal\Core\Queue\QueueFactory',
+      'private_key' => 'Drupal\Core\PrivateKey',
+      'datetime.time' => 'Drupal\Component\Datetime\TimeInterface',
+      'event_dispatcher' => 'Symfony\Contracts\EventDispatcher\EventDispatcherInterface',
+      'plugin.manager.mail' => 'Drupal\Core\Mail\MailManagerInterface',
+      'language_manager' => 'Drupal\Core\Language\LanguageManagerInterface',
+      'file_system' => 'Drupal\Core\File\FileSystemInterface',
+      'tempstore.shared' => 'Drupal\Core\TempStore\SharedTempStoreFactory',
+      'class_resolver' => 'Drupal\Core\DependencyInjection\ClassResolverInterface',
+      'request_stack' => 'Symfony\Component\HttpFoundation\RequestStack',
+    ];
+    foreach ($aliases as $service_id => $alias) {
+      if (!$container->hasAlias($alias)) {
+        $container->setAlias($alias, $service_id);
+      }
+    }
+    // END: DELETE FROM CORE MERGE REQUEST
+
     // Decorate certain Composer Stager preconditions.
     $container->register(NoSymlinksPointToADirectory::class)
       ->setPublic(FALSE)

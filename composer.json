@@ -18,6 +18,9 @@
         "php-tuf/composer-stager": "2.0-alpha1",
         "composer-runtime-api": "^2.1"
     },
+    "require-dev": {
+        "colinodell/psr-testlogger": "^1.2"
+    },
     "scripts": {
         "phpcbf": "scripts/phpcbf.sh",
         "phpcs": "scripts/phpcs.sh",
