@@ -37,7 +37,7 @@ class ComposerInspectorTest extends PackageManagerKernelTestBase {
     $dir = $this->container->get(PathLocator::class)
       ->getProjectRoot();
     $inspector = $this->container->get(ComposerInspector::class);
-    $this->assertSame(1, Json::decode($inspector->getConfig('secure-http', $dir)));
+    $this->assertTrue((bool) Json::decode($inspector->getConfig('secure-http', $dir)));
 
     $this->assertSame([
       'boo' => 'boo boo',

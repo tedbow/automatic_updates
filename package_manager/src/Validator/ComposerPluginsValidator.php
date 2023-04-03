@@ -154,14 +154,23 @@ final class ComposerPluginsValidator implements EventSubscriberInterface {
       : $this->pathLocator->getProjectRoot();
     try {
       // @see https://getcomposer.org/doc/06-config.md#allow-plugins
-      $allowed_plugins = Json::decode($this->inspector->getConfig('allow-plugins', $dir));
+      $value = $this->inspector->getConfig('allow-plugins', $dir);
     }
     catch (RuntimeException $exception) {
       $event->addErrorFromThrowable($exception, $this->t('Unable to determine Composer <code>allow-plugins</code> setting.'));
       return;
     }
 
-    if ($allowed_plugins === 1) {
+    // Try to convert the value we got back to a boolean. If that can't be done,
+    // assume it's an array of plugin-specific flags and parse it as JSON.
+    try {
+      $allowed_plugins = ComposerInspector::toBoolean($value);
+    }
+    catch (\UnhandledMatchError) {
+      $allowed_plugins = Json::decode($value);
+    }
+
+    if ($allowed_plugins === TRUE) {
       $event->addError([$this->t('All composer plugins are allowed because <code>config.allow-plugins</code> is configured to <code>true</code>. This is an unacceptable security risk.')]);
       return;
     }

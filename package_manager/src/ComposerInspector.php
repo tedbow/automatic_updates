@@ -477,4 +477,34 @@ class ComposerInspector {
     return $invalidate;
   }
 
+  /**
+   * Tries to convert a string value from ::getConfig() to a boolean.
+   *
+   * For boolean config values, `composer config` returns `true` or `false` as
+   * of Composer 2.5.5, but older versions return `1` or `0`. This function
+   * normalizes the discrepancy.
+   *
+   * You should call this method if you're calling ::getConfig() to retrieve a
+   * config value that will be, or may be a boolean (e.g., `allow-plugins`). See
+   * https://getcomposer.org/doc/06-config.md for documentation on all the
+   * possible config values that `composer config` can expose.
+   *
+   * @param string $value
+   *   The value to convert. Must be one of '1', 'true', '0', or 'false'.
+   *
+   * @return bool
+   *   The value, as a boolean.
+   *
+   * @see https://getcomposer.org/doc/06-config.md
+   *
+   * @throws \UnhandledMatchError
+   *   If the given value cannot be converted to a boolean.
+   */
+  public static function toBoolean(string $value): bool {
+    return match ($value) {
+      '1', 'true' => TRUE,
+      '0', 'false' => FALSE,
+    };
+  }
+
 }

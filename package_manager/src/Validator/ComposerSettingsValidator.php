@@ -45,13 +45,13 @@ final class ComposerSettingsValidator implements EventSubscriberInterface {
       : $this->pathLocator->getProjectRoot();
 
     try {
-      $setting = (int) $this->inspector->getConfig('secure-http', $dir);
+      $setting = ComposerInspector::toBoolean($this->inspector->getConfig('secure-http', $dir) ?: '0');
     }
     catch (\Throwable $throwable) {
       $event->addErrorFromThrowable($throwable, $this->t('Unable to determine Composer <code>secure-http</code> setting.'));
       return;
     }
-    if ($setting !== 1) {
+    if ($setting === FALSE) {
       $event->addError([
         $this->t('HTTPS must be enabled for Composer downloads. See <a href=":url">the Composer documentation</a> for more information.', [
           ':url' => 'https://getcomposer.org/doc/06-config.md#secure-http',
