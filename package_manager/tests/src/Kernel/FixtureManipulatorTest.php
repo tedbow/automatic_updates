@@ -140,10 +140,9 @@ class FixtureManipulatorTest extends PackageManagerKernelTestBase {
   }
 
   /**
-   * @covers ::modifyPackage
+   * @covers ::modifyPackageConfig
    */
   public function testModifyPackageConfig(): void {
-    $inspector = $this->container->get(ComposerInspector::class);
     // Assert ::modifyPackage() works with a package in an existing fixture not
     // created by ::addPackage().
     $decode_composer_json = function ($package_name): array {

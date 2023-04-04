@@ -55,7 +55,7 @@ class UpdatePathTest extends UpdatePathTestBase {
 
     $this->assertSame(CronUpdater::SECURITY, $this->config('automatic_updates.settings')->get('cron'));
 
-    $this->assertSame(NULL, $this->config('package_manager.settings')->get('additional_trusted_composer_plugins'));
+    $this->assertNull($this->config('package_manager.settings')->get('additional_trusted_composer_plugins'));
 
     $this->runUpdates();
 
@@ -68,7 +68,13 @@ class UpdatePathTest extends UpdatePathTestBase {
     // @see automatic_updates_post_update_create_status_check_mail_config()
     // @see \Drupal\automatic_updates\EventSubscriber\ConfigSubscriber::onConfigSave()
     unset($expected_values['status_check_last_run']);
-    $this->assertSame($expected_values, $key_value->getMultiple(array_values($map)));
+    // Drupal 10.1 has an update path that installs a new phpass module, which
+    // triggers a status check and blows away previous status check results.
+    // If on 10.0.x, that doesn't happen and we can assert that the previous
+    // status check results were retained under a renamed key.
+    if (str_starts_with(\Drupal::VERSION, '10.0.')) {
+      $this->assertSame($expected_values, $key_value->getMultiple(array_values($map)));
+    }
     $this->assertSame(StatusCheckMailer::ERRORS_ONLY, $this->config('automatic_updates.settings')->get('status_check_mail'));
 
     $this->assertSame([], $this->config('package_manager.settings')->get('additional_trusted_composer_plugins'));

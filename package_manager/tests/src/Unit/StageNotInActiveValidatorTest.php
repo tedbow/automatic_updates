@@ -22,7 +22,7 @@ class StageNotInActiveValidatorTest extends UnitTestCase {
   use ValidationTestTrait;
 
   /**
-   * @covers ::checkNotInActive
+   * @covers ::validate
    *
    * @param \Drupal\package_manager\ValidationResult[] $expected
    *   The expected result.

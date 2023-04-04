@@ -48,7 +48,7 @@ class JsonProcessOutputCallbackTest extends UnitTestCase {
    */
   public function testNoInvokeCall(): void {
     $callback = new JsonProcessOutputCallback();
-    $this->assertSame(NULL, $callback->getOutputData());
+    $this->assertNull($callback->getOutputData());
   }
 
   /**

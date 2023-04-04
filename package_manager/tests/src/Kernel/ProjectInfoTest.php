@@ -16,7 +16,7 @@ use ColinODell\PsrTestLogger\TestLogger;
 class ProjectInfoTest extends PackageManagerKernelTestBase {
 
   /**
-   * @covers ::getInstallableReleases()
+   * @covers ::getInstallableReleases
    *
    * @param string $fixture
    *   The fixture file name.
@@ -183,7 +183,7 @@ class ProjectInfoTest extends PackageManagerKernelTestBase {
   /**
    * Tests a project with a status other than "published".
    *
-   * @covers ::getInstallableReleases()
+   * @covers ::getInstallableReleases
    */
   public function testNotPublishedProject(): void {
     $this->setReleaseMetadata(['drupal' => __DIR__ . '/../../fixtures/release-history/drupal.9.8.2_unknown_status.xml']);
@@ -287,7 +287,7 @@ class ProjectInfoTest extends PackageManagerKernelTestBase {
   }
 
   /**
-   * @covers ::getSupportedBranches()
+   * @covers ::getSupportedBranches
    *
    * @param string $release_xml
    *   The path of the release metadata.

@@ -107,7 +107,7 @@ class ExtensionUpdaterTest extends AutomaticUpdatesExtensionsKernelTestBase {
     $actual_arguments = $this->container->get('package_manager.stager')
       ->getInvocationArguments();
 
-    $this->assertSame(count($expected_arguments), count($actual_arguments));
+    $this->assertCount(count($expected_arguments), $actual_arguments);
     foreach ($actual_arguments as $i => [$arguments]) {
       $this->assertSame($expected_arguments[$i], $arguments);
     }

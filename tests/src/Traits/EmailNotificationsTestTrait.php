@@ -68,7 +68,7 @@ trait EmailNotificationsTestTrait {
       'subject' => $subject,
     ]);
     $this->assertNotEmpty($sent_messages);
-    $this->assertSame(count($this->emailRecipients), count($sent_messages));
+    $this->assertCount(count($this->emailRecipients), $sent_messages);
 
     // Ensure the body is formatted the way the PHP mailer would do it.
     $message = [

@@ -138,7 +138,7 @@ class UnknownPathExcluderTest extends PackageManagerKernelTestBase {
    * @param string[] $unknown_files
    *   The list of unknown files.
    *
-   * @dataProvider providerTestUnknownPath()
+   * @dataProvider providerTestUnknownPath
    */
   public function testUnknownPath(bool $use_nested_webroot, ?string $unknown_dir, array $unknown_files): void {
     $this->createTestProjectForTemplate($use_nested_webroot);

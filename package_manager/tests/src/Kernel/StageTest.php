@@ -473,7 +473,7 @@ class StageTest extends PackageManagerKernelTestBase {
    * @param string $expected_exception_message
    *   The expected exception message string.
    *
-   * @dataProvider providerStoreDestroyInfo()
+   * @dataProvider providerStoreDestroyInfo
    */
   public function testStoreDestroyInfo(bool $force, bool $changes_applied, ?TranslatableMarkup $message, string $expected_exception_message) {
     $stage = $this->createStage();

@@ -71,7 +71,7 @@ class ComposerPatchesValidatorTest extends PackageManagerKernelTestBase {
    * @param \Drupal\package_manager\ValidationResult[] $expected_results
    *   The expected validation results.
    *
-   *  @dataProvider providerErrorDuringPreCreate()
+   *  @dataProvider providerErrorDuringPreCreate
    */
   public function testErrorDuringPreCreate(int $options, array $expected_results): void {
     $active_manipulator = new ActiveFixtureManipulator();
