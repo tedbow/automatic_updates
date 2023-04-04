@@ -148,7 +148,7 @@ class CronUpdater extends Updater {
   /**
    * {@inheritdoc}
    */
-  final public function begin(array $project_versions, ?int $timeout = 300): string {
+  final public function begin(array $project_versions, ?int $timeout = 300): never {
     // Unattended updates should never be started using this method. They should
     // only be done by ::handleCron(), which has a strong opinion about which
     // release to update to. Throwing an exception here is just to enforce this
