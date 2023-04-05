@@ -77,12 +77,30 @@ abstract class PackageManagerKernelTestBase extends KernelTestBase {
   protected $disableValidators = [];
 
   /**
+   * The test root directory, if any, created by ::createTestProject().
+   *
+   * @var string|null
+   *
+   * @see ::createTestProject()
+   * @see ::tearDown()
+   */
+  protected ?string $testProjectRoot = NULL;
+
+  /**
+   * The Symfony filesystem class.
+   *
+   * @var \Symfony\Component\Filesystem\Filesystem
+   */
+  private readonly Filesystem $fileSystem;
+
+  /**
    * {@inheritdoc}
    */
   protected function setUp(): void {
     parent::setUp();
     $this->installConfig('package_manager');
 
+    $this->fileSystem = new Filesystem();
     $this->createTestProject();
 
     // The Update module's default configuration must be installed for our
@@ -229,25 +247,23 @@ abstract class PackageManagerKernelTestBase extends KernelTestBase {
       $called = TRUE;
     }
 
-    $source_dir = $source_dir ?? __DIR__ . '/../../fixtures/fake_site';
-    $root = DrupalFileSystem::getOsTemporaryDirectory() . DIRECTORY_SEPARATOR . 'package_manager_testing_root' . $this->databasePrefix;
-    $fs = new Filesystem();
-    if (is_dir($root)) {
-      $fs->remove($root);
+    $this->testProjectRoot = DrupalFileSystem::getOsTemporaryDirectory() . DIRECTORY_SEPARATOR . 'package_manager_testing_root' . $this->databasePrefix;
+    if (is_dir($this->testProjectRoot)) {
+      $this->fileSystem->remove($this->testProjectRoot);
     }
-    $fs->mkdir($root);
+    $this->fileSystem->mkdir($this->testProjectRoot);
 
     // Create the active directory and copy its contents from a fixture.
-    $active_dir = $root . DIRECTORY_SEPARATOR . 'active';
+    $active_dir = $this->testProjectRoot . DIRECTORY_SEPARATOR . 'active';
     $this->assertTrue(mkdir($active_dir));
-    static::copyFixtureFilesTo($source_dir, $active_dir);
+    static::copyFixtureFilesTo($source_dir ?? __DIR__ . '/../../fixtures/fake_site', $active_dir);
 
     // Removing 'vfs://root/' from site path set in
     // \Drupal\KernelTests\KernelTestBase::setUpFilesystem as we don't use vfs.
     $test_site_path = str_replace('vfs://root/', '', $this->siteDirectory);
 
     // Copy directory structure from vfs site directory to our site directory.
-    (new Filesystem())->mirror($this->siteDirectory, $active_dir . DIRECTORY_SEPARATOR . $test_site_path);
+    $this->fileSystem->mirror($this->siteDirectory, $active_dir . DIRECTORY_SEPARATOR . $test_site_path);
 
     // Override siteDirectory to point to root/active/... instead of root/... .
     $this->siteDirectory = $active_dir . DIRECTORY_SEPARATOR . $test_site_path;
@@ -259,7 +275,7 @@ abstract class PackageManagerKernelTestBase extends KernelTestBase {
     new Settings($settings);
 
     // Create a stage root directory alongside the active directory.
-    $staging_root = $root . DIRECTORY_SEPARATOR . 'stage';
+    $staging_root = $this->testProjectRoot . DIRECTORY_SEPARATOR . 'stage';
     $this->assertTrue(mkdir($staging_root));
 
     // Ensure the path locator points to the test project. We assume that is its
@@ -363,6 +379,14 @@ abstract class PackageManagerKernelTestBase extends KernelTestBase {
    * {@inheritdoc}
    */
   protected function tearDown(): void {
+    // Delete the test project root, which contains the active directory and
+    // the stage directory. First, make it writable in case any permissions were
+    // changed during the test.
+    if ($this->testProjectRoot) {
+      $this->fileSystem->chmod($this->testProjectRoot, 0777, 0000, TRUE);
+      $this->fileSystem->remove($this->testProjectRoot);
+    }
+
     StageFixtureManipulator::handleTearDown();
   }
 

@@ -5,7 +5,6 @@ declare(strict_types = 1);
 namespace Drupal\Tests\package_manager\Kernel;
 
 use Drupal\Component\Datetime\Time;
-use Drupal\Component\FileSystem\FileSystem;
 use Drupal\Core\DependencyInjection\ContainerBuilder;
 use Drupal\Core\Extension\ModuleUninstallValidatorException;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
@@ -78,7 +77,7 @@ class StageTest extends PackageManagerKernelTestBase {
     // If the stage root directory is changed, the existing stage shouldn't be
     // affected...
     $active_dir = $path_locator->getProjectRoot();
-    $new_staging_root = FileSystem::getOsTemporaryDirectory() . DIRECTORY_SEPARATOR . 'junk';
+    $new_staging_root = $this->testProjectRoot . DIRECTORY_SEPARATOR . 'junk';
     if (!is_dir($new_staging_root)) {
       mkdir($new_staging_root);
     }
