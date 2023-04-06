@@ -74,17 +74,16 @@ class StagedDBUpdateValidator implements EventSubscriberInterface {
    *   TRUE if the staged copy of the extension has changed update functions
    *   compared to the active copy, FALSE otherwise.
    *
-   * @todo Use a more sophisticated method to detect changes in the staged
-   *   extension. Right now, we just compare hashes of the .install and
-   *   .post_update.php files in both copies of the given extension, but this
-   *   will cause false positives for changes to comments, whitespace, or
-   *   runtime code like requirements checks. It would be preferable to use a
-   *   static analyzer to detect new or changed functions that are actually
-   *   executed during an update. No matter what, this method must NEVER cause
-   *   false negatives, since that could result in code which is incompatible
-   *   with the current database schema being copied to the active directory.
-   *
-   * @see https://www.drupal.org/project/automatic_updates/issues/3253828
+   * @todo In https://drupal.org/i/3253828 use a more sophisticated method to
+   *   detect changes in the staged extension. Right now, we just compare hashes
+   *   of the .install and .post_update.php files in both copies of the given
+   *   extension, but this will cause false positives for changes to comments,
+   *   whitespace, or runtime code like requirements checks. It would be
+   *   preferable to use a static analyzer to detect new or changed functions
+   *   that are actually executed during an update. No matter what, this method
+   *   must NEVER cause false negatives, since that could result in code which
+   *   is incompatible with the current database schema being copied to the
+   *   active directory.
    */
   public function hasStagedUpdates(string $stage_dir, Extension $extension): bool {
     $active_dir = $this->pathLocator->getProjectRoot();

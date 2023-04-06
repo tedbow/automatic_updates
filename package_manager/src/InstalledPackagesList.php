@@ -5,7 +5,6 @@ declare(strict_types = 1);
 namespace Drupal\package_manager;
 
 use Composer\Semver\Comparator;
-use Drupal\Component\Serialization\Yaml;
 
 /**
  * Defines a class to list installed Composer packages.
@@ -134,21 +133,22 @@ final class InstalledPackagesList extends \ArrayObject {
    * Returns the canonical names of the supported core packages.
    *
    * @return string[]
-   *   The canonical list of supported core package names, as listed in
-   *   ../core_packages.json.
+   *   The canonical list of supported core package names.
    */
   private static function getCorePackageList(): array {
-    if (self::$corePackages === NULL) {
-      $file = __DIR__ . '/../core_packages.yml';
-      assert(file_exists($file), "$file does not exist.");
-
-      $core_packages = file_get_contents($file);
-      $core_packages = Yaml::decode($core_packages);
-
-      assert(is_array($core_packages), "$file did not contain a list of core packages.");
-      self::$corePackages = $core_packages;
-    }
-    return self::$corePackages;
+    // This method returns the installed packages that are considered part of
+    // Drupal core. There's no way to tell by package type alone, since these
+    // packages have varying types, but are all part of Drupal core's
+    // repository.
+    return [
+      'drupal/core',
+      'drupal/core-composer-scaffold',
+      'drupal/core-dev',
+      'drupal/core-dev-pinned',
+      'drupal/core-project-message',
+      'drupal/core-recommended',
+      'drupal/core-vendor-hardening',
+    ];
   }
 
   /**

@@ -517,8 +517,6 @@ END;
       // We need to be sure we are seeing all entries, not just first page.
       // Since we don't need to log anywhere near 50 entries use 25 to be overly
       // cautious of the view changing.
-      // @todo Find a better solution than a view that could change to ensure
-      //   ensure these events have fired in https://drupal.org/i/3319768.
       $this->assertLessThan(25, count($expected_events), 'More than 25 events may not appear on one page of the log view');
     }
     $assert_session = $this->getMink()->assertSession();

@@ -117,8 +117,6 @@ final class BatchProcessor {
       // as possible.
       // @see \Drupal\package_manager\Stage::apply()
       // @see \Drupal\package_manager\Stage::postApply()
-      // @todo See if there's a better way to ensure the post-apply tasks run
-      //   in a new request in https://www.drupal.org/i/3293150.
       sleep(1);
     }
     catch (\Throwable $e) {

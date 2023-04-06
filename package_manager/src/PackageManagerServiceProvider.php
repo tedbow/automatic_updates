@@ -15,7 +15,7 @@ use PhpTuf\ComposerStager\Domain\Service\Precondition\NoSymlinksPointToADirector
  * Scans the Composer Stager library and registers its classes in the Drupal
  * service container.
  *
- * @todo Refactor this if/when symfony/config becomes a dependency: revert https://www.drupal.org/i/3345039.
+ * @todo Refactor this if/when https://www.drupal.org/i/3111008 is fixed.
  *
  * @internal
  *   This is an internal part of Package Manager and may be changed or removed

@@ -13,10 +13,11 @@ class TestController extends ControllerBase {
   /**
    * Page callback: Prints mock XML for the Update Manager module.
    *
-   * This is a wholesale copy of
-   * \Drupal\update_test\Controller\UpdateTestController::updateTest() for
-   * testing automatic updates. This was done in order to use a different
-   * directory of mock XML files.
+   * @todo This is a wholesale copy of
+   *   \Drupal\update_test\Controller\UpdateTestController::updateTest() for
+   *   testing package_manager. This was done in order to use a different
+   *   directory of mock XML files. Remove this module in
+   *   https://drupal.org/i/3274826.
    */
   public function metadata($project_name = 'drupal', $version = NULL): Response {
     $xml_map = $this->config('update_test.settings')->get('xml_map');

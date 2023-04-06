@@ -53,6 +53,7 @@ class UpdateReleaseValidatorTest extends AutomaticUpdatesExtensionsKernelTestBas
   public function testPreCreateException(string $project, string $installed_version, string $target_version, bool $error_expected): void {
     $this->enableModules([$project]);
 
+    // @todo Replace with use of the trait from the Update module in https://drupal.org/i/3348234.
     $module_info = ['version' => $installed_version, 'project' => $project];
     $this->config('update_test.settings')
       ->set("system_info.$project", $module_info)

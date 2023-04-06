@@ -20,7 +20,8 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
  *   This class is an internal part of the module's update handling and
  *   should not be used by external code.
  *
- * @todo Remove this validator completely in https://www.drupal.org/i/3307369.
+ * @todo Decide if this validator can be removed completely in
+ *    https://www.drupal.org/i/3351091.
  */
 final class UpdateReleaseValidator implements EventSubscriberInterface {
 

@@ -395,8 +395,6 @@ final class UpdaterForm extends UpdateFormBase {
       ],
       'target_version' => [
         'data' => [
-          // @todo Is an inline template the right tool here? Is there an Update
-          // module template we should use instead?
           '#type' => 'inline_template',
           '#template' => '{{ release_version }} (<a href="{{ release_link }}" title="{{ project_title }}">{{ release_notes }}</a>)',
           '#context' => [

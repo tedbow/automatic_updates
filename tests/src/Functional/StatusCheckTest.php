@@ -181,8 +181,6 @@ class StatusCheckTest extends AutomaticUpdatesFunctionalTestBase {
     $assert->pageTextMatchesCount(2, '/' . preg_quote(static::$errorsExplanation) . '/');
     $this->assertErrors($expected_results, TRUE);
 
-    // @todo Should we always show when the checks were last run and a link to
-    //   run when there is an error?
     // Confirm a user without permission to run the checks sees the same error.
     $this->drupalLogin($this->reportViewerUser);
     $this->drupalGet('admin/reports/status');

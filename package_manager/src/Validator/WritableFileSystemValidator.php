@@ -35,10 +35,8 @@ class WritableFileSystemValidator implements EventSubscriberInterface {
   /**
    * Checks that the file system is writable.
    *
-   * @todo It might make sense to use a more sophisticated method of testing
-   *   writability than is_writable(), since it's not clear if that can return
-   *   false negatives/positives due to things like SELinux, exotic file
-   *   systems, and so forth.
+   * @todo Determine if 'is_writable()' is a sufficiently robust test across
+   *   different operating systems in https://drupal.org/i/3348253.
    */
   public function validate(PreOperationStageEvent $event): void {
     $messages = [];

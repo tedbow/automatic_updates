@@ -28,7 +28,7 @@ class NoUpdateButtonsTest extends UpdaterFormTestBase {
    * Tests that the form doesn't display any buttons if Drupal is up-to-date.
    *
    * @todo Mark this test as skipped if the web server is PHP's built-in, single
-   *   threaded server.
+   *   threaded server in https://drupal.org/i/3348251.
    *
    * @param string $update_form_url
    *   The URL of the update form to visit.

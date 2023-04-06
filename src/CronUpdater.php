@@ -266,8 +266,6 @@ class CronUpdater extends Updater {
     // If we're using a single-threaded web server (e.g., the built-in PHP web
     // server used in build tests), allow the post-apply request to be sent to
     // an alternate port.
-    // @todo If using the built-in PHP web server, validate that this port is
-    //   set in https://www.drupal.org/i/3293146.
     $port = $this->configFactory->get('automatic_updates.settings')
       ->get('cron_port');
     if ($port) {

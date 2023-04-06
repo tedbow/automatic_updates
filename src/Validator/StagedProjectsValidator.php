@@ -48,16 +48,8 @@ final class StagedProjectsValidator implements EventSubscriberInterface {
       return;
     }
 
-    // @todo Remove or update the try/catch blocks around these calls to
-    //   getInstalledPackagesList() in https://drupal.org/i/3344039.
-    try {
-      $active_list = $this->composerInspector->getInstalledPackagesList($this->pathLocator->getProjectRoot());
-      $stage_list = $this->composerInspector->getInstalledPackagesList($stage->getStageDirectory());
-    }
-    catch (\Throwable $e) {
-      $event->addError([$this->t('Unable to determine installed packages.')]);
-      return;
-    }
+    $active_list = $this->composerInspector->getInstalledPackagesList($this->pathLocator->getProjectRoot());
+    $stage_list = $this->composerInspector->getInstalledPackagesList($stage->getStageDirectory());
 
     $type_map = [
       'drupal-module' => $this->t('module'),

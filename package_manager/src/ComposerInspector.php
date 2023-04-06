@@ -258,7 +258,7 @@ class ComposerInspector implements LoggerAwareInterface {
     catch (RuntimeException $e) {
       // Assume any error from `composer config` is about an undefined key-value
       // pair which may have a known default value.
-      // @todo Remove this once https://github.com/composer/composer/issues/11302 lands and ships in a composer release.
+      // @todo Remove this in https://www.drupal.org/i/3350568.
       switch ($key) {
         // @see https://getcomposer.org/doc/04-schema.md#minimum-stability
         case 'minimum-stability':

@@ -58,9 +58,7 @@ final class OverwriteExistingPackagesValidator implements EventSubscriberInterfa
       ->getPackagesNotIn($active_packages);
 
     foreach ($new_packages as $package) {
-      // @todo Remove the check for the `metapackage` type in
-      //   https://drupal.org/i/3345646.
-      if (empty($package->path) || $package->type === 'metapackage') {
+      if (empty($package->path)) {
         // Packages without a `path` cannot overwrite existing directories.
         continue;
       }

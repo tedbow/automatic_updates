@@ -39,6 +39,7 @@ class ProjectInfoTest extends PackageManagerKernelTestBase {
         'version' => $installed_version,
         'project' => 'aaa_package_manager_test',
       ];
+      // @todo Replace with use of the trait from the Update module in https://drupal.org/i/3348234.
       $this->config('update_test.settings')
         ->set("system_info.$project", $extension_info_update)
         ->save();

@@ -322,6 +322,9 @@ abstract class PackageManagerKernelTestBase extends KernelTestBase {
   /**
    * Sets the current (running) version of core, as known to the Update module.
    *
+   * @todo Remove this function with use of the trait from the Update module in
+   *   https://drupal.org/i/3348234.
+   *
    * @param string $version
    *   The current version of core.
    */

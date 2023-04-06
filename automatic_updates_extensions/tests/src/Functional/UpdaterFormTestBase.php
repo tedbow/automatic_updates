@@ -65,8 +65,8 @@ abstract class UpdaterFormTestBase extends UpdaterFormFunctionalTestBase {
   /**
    * Sets installed project version.
    *
-   * @todo This is copied from core. We need to file a core issue so we do not
-   *    have to copy this.
+   * @todo Remove this function with use of the trait from the Update module in
+   *   https://drupal.org/i/3348234.
    */
   protected function setProjectInstalledVersion($project_versions): void {
     $this->config('update.settings')

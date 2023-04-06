@@ -4,7 +4,8 @@
  * @file
  * Contains hook implementations to enable automatic updates during cron.
  *
- * @todo Move into automatic_updates when TUF integration is stable.
+ * @todo Move into automatic_updates when TUF integration is stable in
+ *   https://www.drupal.org/i/3284443.
  */
 
 declare(strict_types=1);
@@ -17,8 +18,6 @@ use Drupal\update\ProjectSecurityData;
 
 /**
  * Implements hook_form_FORM_ID_alter() for 'update_settings' form.
- *
- * @todo Move to automatic_updates in https://www.drupal.org/i/3322361
  */
 function automatic_updates_test_cron_form_update_settings_alter(array &$form, FormStateInterface $form_state, string $form_id) {
   $project_info = new ProjectInfo('drupal');

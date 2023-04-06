@@ -79,6 +79,9 @@ abstract class AutomaticUpdatesFunctionalTestBase extends BrowserTestBase {
   /**
    * Mocks the current (running) version of core, as known to the Update module.
    *
+   * @todo Remove this function with use of the trait from the Update module in
+   *   https://drupal.org/i/3348234.
+   *
    * @param string $version
    *   The version of core to mock.
    */
@@ -90,6 +93,9 @@ abstract class AutomaticUpdatesFunctionalTestBase extends BrowserTestBase {
 
   /**
    * Sets the release metadata file to use when fetching available updates.
+   *
+   * @todo Remove this function with use of the trait from the Update module in
+   *   https://drupal.org/i/3348234.
    *
    * @param string $file
    *   The path of the XML metadata file to use.

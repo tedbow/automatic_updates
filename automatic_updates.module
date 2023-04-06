@@ -127,10 +127,7 @@ function automatic_updates_page_top() {
 
   // @todo Rely on the route option after https://www.drupal.org/i/3236497 is
   //   committed.
-  // @todo Remove 'system.batch_page.html' after
-  //   https://www.drupal.org/i/3238311 is committed.
   $skip_routes = [
-    'system.batch_page.html',
     'automatic_updates.confirmation_page',
     'automatic_updates.report_update',
     'automatic_updates.module_update',
@@ -166,7 +163,7 @@ function automatic_updates_module_implements_alter(&$implementations, $hook) {
  * Implements hook_cron().
  */
 function automatic_updates_cron() {
-  // @todo Refactor this after https://www.drupal.org/project/drupal/issues/2969056
+  // @todo Refactor this after https://www.drupal.org/project/drupal/issues/2538292
   // @todo Remove this after https://www.drupal.org/project/drupal/issues/3318964
   if (defined('MAINTENANCE_MODE') || stripos($_SERVER['PHP_SELF'], 'update.php') !== FALSE) {
     return;

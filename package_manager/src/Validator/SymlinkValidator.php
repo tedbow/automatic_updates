@@ -13,7 +13,7 @@ use PhpTuf\ComposerStager\Infrastructure\Value\PathList\PathList;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 /**
- * Flags errors if any unsupported symlinks exist.
+ * Flags errors if unsupported symbolic links are detected.
  *
  * @see https://github.com/php-tuf/composer-stager/tree/develop/src/Domain/Service/Precondition#symlinks
  *

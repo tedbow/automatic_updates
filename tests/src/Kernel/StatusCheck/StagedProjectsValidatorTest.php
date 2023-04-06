@@ -5,11 +5,8 @@ declare(strict_types = 1);
 namespace Drupal\Tests\automatic_updates\Kernel\StatusCheck;
 
 use Drupal\automatic_updates\Updater;
-use Drupal\automatic_updates\Validator\StagedProjectsValidator;
 use Drupal\fixture_manipulator\ActiveFixtureManipulator;
-use Drupal\package_manager\Event\PreApplyEvent;
 use Drupal\package_manager\Exception\StageEventException;
-use Drupal\package_manager\PathLocator;
 use Drupal\package_manager\ValidationResult;
 use Drupal\Tests\automatic_updates\Kernel\AutomaticUpdatesKernelTestBase;
 
@@ -33,40 +30,6 @@ class StagedProjectsValidatorTest extends AutomaticUpdatesKernelTestBase {
     // supported.
     $this->disableValidators[] = 'package_manager.validator.supported_releases';
     parent::setUp();
-  }
-
-  /**
-   * Tests that exceptions are turned into validation errors.
-   */
-  public function testEventConsumesExceptionResults(): void {
-    $composer_json = $this->container->get(PathLocator::class)
-      ->getProjectRoot();
-    $composer_json .= '/composer.json';
-
-    $listener = function (PreApplyEvent $event) use ($composer_json): void {
-      unlink($composer_json);
-      // Directly invoke the validator under test, which should raise a
-      // validation error.
-      $this->container->get(StagedProjectsValidator::class)
-        ->validateStagedProjects($event);
-      // Prevent any other event subscribers from running, since they might try
-      // to read the file we just deleted.
-      $event->stopPropagation();
-    };
-    $this->addEventTestListener($listener);
-
-    $updater = $this->container->get(Updater::class);
-    $updater->begin(['drupal' => '9.8.1']);
-    $updater->stage();
-
-    $error = ValidationResult::createError([t('Unable to determine installed packages.')]);
-    try {
-      $updater->apply();
-      $this->fail('Expected an error, but none was raised.');
-    }
-    catch (StageEventException $e) {
-      $this->assertExpectedResultsFromException([$error], $e);
-    }
   }
 
   /**
