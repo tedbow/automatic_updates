@@ -10,8 +10,8 @@ use Drupal\fixture_manipulator\ActiveFixtureManipulator;
 use Drupal\package_manager\ComposerInspector;
 use Drupal\package_manager\Exception\ComposerNotReadyException;
 use Drupal\package_manager\InstalledPackage;
+use Drupal\package_manager\ProcessOutputCallback;
 use Drupal\package_manager\InstalledPackagesList;
-use Drupal\package_manager\JsonProcessOutputCallback;
 use Drupal\Tests\package_manager\Traits\InstalledPackagesListTrait;
 use Drupal\package_manager\PathLocator;
 use PhpTuf\ComposerStager\Domain\Exception\PreconditionException;
@@ -248,9 +248,9 @@ class ComposerInspectorTest extends PackageManagerKernelTestBase {
         ],
       ]);
 
-      /** @var \Drupal\package_manager\JsonProcessOutputCallback $callback */
+      /** @var \Drupal\package_manager\ProcessOutputCallback $callback */
       [, $callback] = $arguments_passed_to_runner;
-      $callback(JsonProcessOutputCallback::OUT, $command_output);
+      $callback($callback::OUT, $command_output);
     };
 
     // We expect the runner to be called with two arguments: an array whose
@@ -259,7 +259,7 @@ class ComposerInspectorTest extends PackageManagerKernelTestBase {
     // once, even though we call validate() twice in this test.
     $runner->run(
       Argument::withEntry(0, '--format=json'),
-      Argument::type(JsonProcessOutputCallback::class)
+      Argument::type(ProcessOutputCallback::class)
     )->will($pass_version_to_output_callback)->shouldBeCalledOnce();
     // The runner should be called with `validate` as the first argument, but
     // it won't affect the outcome of this test.

@@ -22,6 +22,10 @@ services:
     alias: 'Drupal\package_manager\ProcessFactory'
   PhpTuf\ComposerStager\Domain\Service\FileSyncer\FileSyncerInterface:
     factory: ['@Drupal\package_manager\FileSyncerFactory', 'create']
+  logger.channel.package_manager:
+    parent: logger.channel_base
+    arguments:
+      - 'package_manager'
 
   # Services provided to Drupal by Package Manager.
   package_manager.beginner:
@@ -51,6 +55,8 @@ services:
       - { name: event_subscriber }
   package_manager.composer_inspector:
     class: Drupal\package_manager\ComposerInspector
+    calls:
+      - [setLogger, ['@logger.channel.package_manager']]
   Drupal\package_manager\ComposerInspector: '@package_manager.composer_inspector'
 
   # Validators.

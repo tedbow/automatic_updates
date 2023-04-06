@@ -211,6 +211,9 @@ class SupportedReleaseValidatorTest extends PackageManagerKernelTestBase {
     // @see \Drupal\package_manager\Validator\SupportedReleaseValidator::checkStagedReleases()
     $stage_manipulator->setVersion('drupal/dependency', '9.8.1');
     $this->assertResults($expected_results, PreApplyEvent::class);
+    // Ensure that any errors arising from invalid project info (which we expect
+    // in this test) will not fail the test during tear-down.
+    $this->failureLogger->reset();
   }
 
 }

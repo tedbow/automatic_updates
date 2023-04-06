@@ -4,8 +4,10 @@ declare(strict_types = 1);
 
 namespace Drupal\Tests\package_manager\Kernel;
 
+use ColinODell\PsrTestLogger\TestLogger;
 use Drupal\Component\FileSystem\FileSystem as DrupalFileSystem;
 use Drupal\Core\DependencyInjection\ContainerBuilder;
+use Drupal\Core\Logger\RfcLogLevel;
 use Drupal\Core\Site\Settings;
 use Drupal\fixture_manipulator\StageFixtureManipulator;
 use Drupal\KernelTests\KernelTestBase;
@@ -94,6 +96,15 @@ abstract class PackageManagerKernelTestBase extends KernelTestBase {
   private readonly Filesystem $fileSystem;
 
   /**
+   * A logger that will fail the test if Package Manager logs any errors.
+   *
+   * @var \ColinODell\PsrTestLogger\TestLogger
+   *
+   * @see ::tearDown()
+   */
+  protected readonly TestLogger $failureLogger;
+
+  /**
    * {@inheritdoc}
    */
   protected function setUp(): void {
@@ -111,6 +122,13 @@ abstract class PackageManagerKernelTestBase extends KernelTestBase {
     // Make the update system think that all of System's post-update functions
     // have run.
     $this->registerPostUpdateFunctions();
+
+    // Ensure we can fail the test if any warnings, or worse, are logged by
+    // Package Manager.
+    // @see ::tearDown()
+    $this->failureLogger = new TestLogger();
+    $this->container->get('logger.channel.package_manager')
+      ->addLogger($this->failureLogger);
   }
 
   /**
@@ -132,6 +150,10 @@ abstract class PackageManagerKernelTestBase extends KernelTestBase {
     // rebuild.
     // @see ::createTestProject()
     $container->getDefinition('package_manager.validator.disk_space')
+      ->addTag('persist');
+
+    // Ensure that our failure logger will survive container rebuilds.
+    $container->getDefinition('logger.channel.package_manager')
       ->addTag('persist');
 
     foreach ($this->disableValidators as $service_id) {
@@ -388,6 +410,13 @@ abstract class PackageManagerKernelTestBase extends KernelTestBase {
     }
 
     StageFixtureManipulator::handleTearDown();
+
+    // Ensure no warnings (or worse) were logged by Package Manager.
+    $this->assertFalse($this->failureLogger->hasRecords(RfcLogLevel::EMERGENCY), 'Package Manager logged emergencies.');
+    $this->assertFalse($this->failureLogger->hasRecords(RfcLogLevel::ALERT), 'Package Manager logged alerts.');
+    $this->assertFalse($this->failureLogger->hasRecords(RfcLogLevel::CRITICAL), 'Package Manager logged critical errors.');
+    $this->assertFalse($this->failureLogger->hasRecords(RfcLogLevel::ERROR), 'Package Manager logged errors.');
+    $this->assertFalse($this->failureLogger->hasRecords(RfcLogLevel::WARNING), 'Package Manager logged warnings.');
   }
 
   /**

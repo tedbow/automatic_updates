@@ -10,9 +10,12 @@ use Drupal\package_manager\Exception\ComposerNotReadyException;
 use PhpTuf\ComposerStager\Domain\Exception\PreconditionException;
 use PhpTuf\ComposerStager\Domain\Exception\RuntimeException;
 use PhpTuf\ComposerStager\Domain\Service\Precondition\ComposerIsAvailableInterface;
-use PhpTuf\ComposerStager\Domain\Service\ProcessOutputCallback\ProcessOutputCallbackInterface;
 use PhpTuf\ComposerStager\Domain\Service\ProcessRunner\ComposerRunnerInterface;
 use PhpTuf\ComposerStager\Infrastructure\Factory\Path\PathFactoryInterface;
+use Psr\Log\LoggerAwareInterface;
+use Psr\Log\LoggerAwareTrait;
+use Psr\Log\LoggerInterface;
+use Psr\Log\NullLogger;
 
 /**
  * Defines a class to get information from Composer.
@@ -23,16 +26,19 @@ use PhpTuf\ComposerStager\Infrastructure\Factory\Path\PathFactoryInterface;
  * - read project & package configuration: getConfig() (`composer config`)
  * - read root package info: getRootPackageInfo() (`composer show --self`)
  */
-class ComposerInspector {
+class ComposerInspector implements LoggerAwareInterface {
 
+  use LoggerAwareTrait {
+    setLogger as traitSetLogger;
+  }
   use StringTranslationTrait;
 
   /**
-   * The JSON process output callback.
+   * The process output callback.
    *
-   * @var \Drupal\package_manager\JsonProcessOutputCallback
+   * @var \Drupal\package_manager\ProcessOutputCallback
    */
-  private JsonProcessOutputCallback $jsonCallback;
+  private ProcessOutputCallback $processCallback;
 
   /**
    * Statically cached installed package lists, keyed by directory.
@@ -69,7 +75,16 @@ class ComposerInspector {
    *   The path factory service from Composer Stager.
    */
   public function __construct(private ComposerRunnerInterface $runner, private ComposerIsAvailableInterface $composerIsAvailable, private PathFactoryInterface $pathFactory) {
-    $this->jsonCallback = new JsonProcessOutputCallback();
+    $this->processCallback = new ProcessOutputCallback();
+    $this->setLogger(new NullLogger());
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function setLogger(LoggerInterface $logger): void {
+    $this->traitSetLogger($logger);
+    $this->processCallback->setLogger($logger);
   }
 
   /**
@@ -237,32 +252,8 @@ class ComposerInspector {
       $this->validateProject($context);
       $command[] = "--working-dir={$context}";
     }
-
-    // For whatever reason, PHPCS thinks that $output is not used, even though
-    // it very clearly *is*. So, shut PHPCS up for the duration of this method.
-    // phpcs:disable DrupalPractice.CodeAnalysis.VariableAnalysis.UnusedVariable
-    $callback = new class () implements ProcessOutputCallbackInterface {
-
-      /**
-       * The command output.
-       *
-       * @var string
-       */
-      public string $output = '';
-
-      /**
-       * {@inheritdoc}
-       */
-      public function __invoke(string $type, string $buffer): void {
-        if ($type === ProcessOutputCallbackInterface::OUT) {
-          $this->output .= trim($buffer);
-        }
-      }
-
-    };
-    // phpcs:enable
     try {
-      $this->runner->run($command, $callback);
+      $this->runner->run($command, $this->processCallback->reset());
     }
     catch (RuntimeException $e) {
       // Assume any error from `composer config` is about an undefined key-value
@@ -281,7 +272,8 @@ class ComposerInspector {
           throw $e;
       }
     }
-    return $callback->output;
+    $output = $this->processCallback->getOutput();
+    return isset($output) ? trim($output) : $output;
   }
 
   /**
@@ -291,11 +283,11 @@ class ComposerInspector {
    *   The Composer version.
    *
    * @throws \UnexpectedValueException
-   *   Thrown if the expect data format is not found.
+   *   Thrown if the Composer version cannot be determined.
    */
   private function getVersion(): string {
-    $this->runner->run(['--format=json'], $this->jsonCallback);
-    $data = $this->jsonCallback->getOutputData();
+    $this->runner->run(['--format=json'], $this->processCallback->reset());
+    $data = $this->processCallback->parseJsonOutput();
     if (isset($data['application']['name'])
       && isset($data['application']['version'])
       && $data['application']['name'] === 'Composer'
@@ -401,8 +393,8 @@ class ComposerInspector {
   public function getRootPackageInfo(string $working_dir): array {
     $this->validate($working_dir);
 
-    $this->runner->run(['show', '--self', '--format=json', "--working-dir={$working_dir}"], $this->jsonCallback);
-    return $this->jsonCallback->getOutputData();
+    $this->runner->run(['show', '--self', '--format=json', "--working-dir={$working_dir}"], $this->processCallback->reset());
+    return $this->processCallback->parseJsonOutput();
   }
 
   /**
@@ -424,8 +416,8 @@ class ComposerInspector {
     // about the installed packages. So, to work around this maddening quirk, we
     // call `composer show` once without the --path option, and once with it,
     // then merge the results together.
-    $this->runner->run($options, $this->jsonCallback);
-    $output = $this->jsonCallback->getOutputData();
+    $this->runner->run($options, $this->processCallback->reset());
+    $output = $this->processCallback->parseJsonOutput();
     // $output['installed'] will not be set if no packages are installed.
     if (isset($output['installed'])) {
       foreach ($output['installed'] as $installed_package) {
@@ -433,8 +425,8 @@ class ComposerInspector {
       }
 
       $options[] = '--path';
-      $this->runner->run($options, $this->jsonCallback);
-      $output = $this->jsonCallback->getOutputData();
+      $this->runner->run($options, $this->processCallback->reset());
+      $output = $this->processCallback->parseJsonOutput();
       foreach ($output['installed'] as $installed_package) {
         $data[$installed_package['name']]['path'] = $installed_package['path'];
       }

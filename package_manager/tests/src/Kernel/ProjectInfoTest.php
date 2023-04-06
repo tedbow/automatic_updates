@@ -6,7 +6,6 @@ namespace Drupal\Tests\package_manager\Kernel;
 
 use Drupal\Core\Logger\RfcLogLevel;
 use Drupal\package_manager\ProjectInfo;
-use ColinODell\PsrTestLogger\TestLogger;
 
 /**
  * @coversDefaultClass \Drupal\package_manager\ProjectInfo
@@ -130,10 +129,6 @@ class ProjectInfoTest extends PackageManagerKernelTestBase {
    * Tests a project that is not in the codebase.
    */
   public function testNewProject(): void {
-    $logger = new TestLogger();
-    $this->container->get('logger.factory')
-      ->get('package_manager')
-      ->addLogger($logger);
     $fixtures_directory = __DIR__ . '/../../fixtures/release-history/';
     $metadata_fixtures['drupal'] = $fixtures_directory . 'drupal.9.8.2.xml';
     $metadata_fixtures['aaa_package_manager_test'] = $fixtures_directory . 'aaa_package_manager_test.7.0.1.xml';
@@ -176,8 +171,10 @@ class ProjectInfoTest extends PackageManagerKernelTestBase {
     // the last checked time.
     $this->assertSame(123, $state->get('update.last_check'));
 
-    $this->assertTrue($logger->hasRecordThatContains('Invalid project format: Array', (string) RfcLogLevel::ERROR));
-    $this->assertTrue($logger->hasRecordThatContains('[name] => AAA 8.x-5.x', (string) RfcLogLevel::ERROR));
+    $this->assertTrue($this->failureLogger->hasRecordThatContains('Invalid project format: Array', (string) RfcLogLevel::ERROR));
+    $this->assertTrue($this->failureLogger->hasRecordThatContains('[name] => AAA 8.x-5.x', (string) RfcLogLevel::ERROR));
+    // Prevent the logged errors from causing failures during tear-down.
+    $this->failureLogger->reset();
   }
 
   /**
