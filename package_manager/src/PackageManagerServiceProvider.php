@@ -114,7 +114,6 @@ final class PackageManagerServiceProvider extends ServiceProviderBase {
       }
     }
     // END: DELETE FROM CORE MERGE REQUEST
-
     // Decorate certain Composer Stager preconditions.
     $container->register(NoSymlinksPointToADirectory::class)
       ->setPublic(FALSE)

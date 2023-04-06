@@ -42,29 +42,13 @@ function automatic_updates_requirements($phase) {
   }
 }
 
-/**
- * Stores cached readiness check results under a new key.
- */
-function automatic_updates_update_9001(): void {
-  /** @var \Drupal\Core\KeyValueStore\KeyValueStoreExpirableInterface $key_value */
-  $key_value = \Drupal::service('keyvalue.expirable')
-    ->get('automatic_updates');
-  $key_value->rename('readiness_validation_last_run', 'status_check_last_run');
-  $key_value->rename('readiness_check_timestamp', 'status_check_timestamp');
-}
+// BEGIN: DELETE FROM CORE MERGE REQUEST
 
 /**
- * Sets cron setting to \Drupal\automatic_updates\CronUpdater::DISABLED.
- *
- * This is necessary until TUF support is available on drupal.org. This used to
- * be hardcoded, but that caused complex race conditions in tests. Hence, it is
- * now just configured.
- *
- * @see automatic_updates_requirements()
- * @see https://www.drupal.org/project/automatic_updates/issues/3284443
+ * Implements hook_update_last_removed().
  */
-function automatic_updates_update_9002(): void {
-  /** @var \Drupal\Core\Config\Config $config */
-  $config = \Drupal::service('config.factory')->getEditable('automatic_updates.settings');
-  $config->set('cron', CronUpdater::DISABLED)->save();
+function automatic_updates_update_last_removed(): int {
+  return 9002;
 }
+
+// END: DELETE FROM CORE MERGE REQUEST

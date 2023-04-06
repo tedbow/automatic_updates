@@ -45,14 +45,10 @@ function package_manager_requirements(string $phase) {
 // BEGIN: DELETE FROM CORE MERGE REQUEST
 
 /**
- * Sets default value for new additional_trusted_composer_plugins configuration.
- *
- * @see https://www.drupal.org/project/automatic_updates/issues/3331168
+ * Implements hook_update_last_removed().
  */
-function package_manager_update_9001(): void {
-  /** @var \Drupal\Core\Config\Config $config */
-  $config = \Drupal::service('config.factory')->getEditable('package_manager.settings');
-  $config->set('additional_trusted_composer_plugins', [])->save();
+function package_manager_update_last_removed(): int {
+  return 9001;
 }
 
 // END: DELETE FROM CORE MERGE REQUEST

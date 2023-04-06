@@ -3,18 +3,17 @@
 /**
  * @file
  * Contains post-update hooks for Automatic Updates.
+ *
+ * DELETE THIS FILE FROM CORE MERGE REQUEST.
  */
 
 declare(strict_types = 1);
 
-use Drupal\automatic_updates\StatusCheckMailer;
-
 /**
- * Creates the automatic_updates.settings:status_check_mail config.
+ * Implements hook_removed_post_updates().
  */
-function automatic_updates_post_update_create_status_check_mail_config(): void {
-  \Drupal::configFactory()
-    ->getEditable('automatic_updates.settings')
-    ->set('status_check_mail', StatusCheckMailer::ERRORS_ONLY)
-    ->save();
+function automatic_updates_removed_post_updates(): array {
+  return [
+    'automatic_updates_post_update_create_status_check_mail_config' => '3.0.0',
+  ];
 }
