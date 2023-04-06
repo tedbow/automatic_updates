@@ -338,22 +338,20 @@ class ComposerInspectorTest extends PackageManagerKernelTestBase {
    *   Whether or not the test package will be a metapackage.
    * @param string|null $install_path
    *   The package install path that Composer should report. If NULL, the
-   *   reported path will be unchanged. If it is <PROJECT_ROOT>, it will be the
-   *   project root.
+   *   reported path will be unchanged. The token <PROJECT_ROOT> will be
+   *   replaced with the project root.
    * @param string|null $exception_message
    *   The expected exception message, or NULL if no exception should be thrown.
+   *   The token <PROJECT_ROOT> will be replaced with the project root.
    *
    * @covers ::getInstalledPackagesList
    *
    * @testWith [true, "<PROJECT_ROOT>", null]
-   *   [true, "/another/directory", "Metapackage 'test/package' is installed at unexpected path: '/another/directory'"]
+   *   [true, "<PROJECT_ROOT>/another/directory", "Metapackage 'test/package' is installed at unexpected path: '<PROJECT_ROOT>/another/directory', expected '<PROJECT_ROOT>'"]
    *   [false, null, null]
    *   [false, "<PROJECT_ROOT>", "Package 'test/package' cannot be installed at path: '<PROJECT_ROOT>'"]
    */
   public function testMetapackagePath(bool $is_metapackage, ?string $install_path, ?string $exception_message): void {
-    $project_root = $this->container->get(PathLocator::class)
-      ->getProjectRoot();
-
     $inspector = new class (
       $this->container->get(ComposerRunnerInterface::class),
       $this->container->get(ComposerIsAvailableInterface::class),
@@ -381,8 +379,17 @@ class ComposerInspectorTest extends PackageManagerKernelTestBase {
       }
 
     };
+    $project_root = $this->container->get(PathLocator::class)
+      ->getProjectRoot();
+
     if ($install_path) {
-      $inspector->packagePath = str_replace('<PROJECT_ROOT>', $project_root, $install_path);
+      $install_path = str_replace('<PROJECT_ROOT>', $project_root, $install_path);
+
+      // The install path must actually exist.
+      if (!is_dir($install_path)) {
+        $this->assertTrue(mkdir($install_path, 0777, TRUE));
+      }
+      $inspector->packagePath = $install_path;
     }
 
     (new ActiveFixtureManipulator())

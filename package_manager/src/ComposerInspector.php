@@ -320,6 +320,7 @@ class ComposerInspector {
    *   working directory, and it is not of the `metapackage` type.
    */
   public function getInstalledPackagesList(string $working_dir): InstalledPackagesList {
+    $working_dir = realpath($working_dir);
     $this->validate($working_dir);
 
     if (array_key_exists($working_dir, $this->packageLists)) {
@@ -330,7 +331,7 @@ class ComposerInspector {
     $packages_data = $this->getPackageTypes($packages_data, $working_dir);
 
     foreach ($packages_data as $name => $package) {
-      $path = $package['path'];
+      $path = realpath($package['path']);
 
       // We expect Composer to report that metapackages' install paths are the
       // same as the working directory, in which case InstalledPackage::$path
@@ -341,7 +342,7 @@ class ComposerInspector {
           $packages_data[$name]['path'] = NULL;
         }
         else {
-          throw new \UnexpectedValueException("Metapackage '$name' is installed at unexpected path: '$path'");
+          throw new \UnexpectedValueException("Metapackage '$name' is installed at unexpected path: '$path', expected '$working_dir'");
         }
       }
       elseif ($path === $working_dir) {
