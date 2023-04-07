@@ -9,6 +9,7 @@ use Drupal\package_manager\ComposerInspector;
 use Drupal\package_manager\Event\PreApplyEvent;
 use Drupal\package_manager\Event\PreCreateEvent;
 use Drupal\package_manager\Event\PreRequireEvent;
+use Drupal\package_manager\Exception\StageException;
 use Drupal\package_manager\InstalledPackagesList;
 use Drupal\package_manager\PathLocator;
 use Drupal\package_manager\Validator\LockFileValidator;
@@ -67,7 +68,7 @@ class LockFileValidatorTest extends PackageManagerKernelTestBase {
   public function testCreateWithNoLock(): void {
     unlink($this->activeDir . '/composer.lock');
 
-    $no_lock = ValidationResult::createError([t('Could not hash the active lock file.')]);
+    $no_lock = ValidationResult::createError([t('The active lock file does not exist.')]);
     $stage = $this->assertResults([$no_lock], PreCreateEvent::class);
     // The stage was not created successfully, so the status check should be
     // clear.
@@ -106,7 +107,7 @@ class LockFileValidatorTest extends PackageManagerKernelTestBase {
     }, $event_class);
     $result = ValidationResult::createError([
       t('Unexpected changes were detected in composer.lock, which indicates that other Composer operations were performed since this Package Manager operation started. This can put the code base into an unreliable state and therefore is not allowed.'),
-    ]);
+    ], t('Problem detected in lock file during stage operations.'));
     $stage = $this->assertResults([$result], $event_class);
     // A status check should agree that there is an error here.
     $this->assertStatusCheckResults([$result], $stage);
@@ -126,15 +127,15 @@ class LockFileValidatorTest extends PackageManagerKernelTestBase {
       unlink($this->activeDir . '/composer.lock');
     }, $event_class);
     $result = ValidationResult::createError([
-      t('Could not hash the active lock file.'),
-    ]);
+      t('The active lock file does not exist.'),
+    ], t('Problem detected in lock file during stage operations.'));
     $stage = $this->assertResults([$result], $event_class);
     // A status check should agree that there is an error here.
     $this->assertStatusCheckResults([$result], $stage);
   }
 
   /**
-   * Tests validation when a stored hash of the active lock file is unavailable.
+   * Tests exception when a stored hash of the active lock file is unavailable.
    *
    * @dataProvider providerValidateStageEvents
    */
@@ -143,18 +144,23 @@ class LockFileValidatorTest extends PackageManagerKernelTestBase {
     $state_key = $reflector->getValue();
 
     // Add a listener with an extremely high priority to the same event that
-    // should raise the validation error. Because the validator uses the default
+    // should throw an exception. Because the validator uses the default
     // priority of 0, this listener deletes stored hash before the validator
     // runs.
     $this->addEventTestListener(function () use ($state_key) {
       $this->container->get('state')->delete($state_key);
     }, $event_class);
-    $result = ValidationResult::createError([
-      t('Could not retrieve stored hash of the active lock file.'),
-    ]);
-    $stage = $this->assertResults([$result], $event_class);
-    // A status check should agree that there is an error here.
-    $this->assertStatusCheckResults([$result], $stage);
+
+    $stage = $this->createStage();
+    $stage->create();
+    try {
+      $stage->require(['drupal/core:9.8.1']);
+      $stage->apply();
+    }
+    catch (StageException $e) {
+      $this->assertSame(\LogicException::class, $e->getPrevious()::class);
+      $this->assertSame('Stored hash key deleted.', $e->getMessage());
+    }
   }
 
   /**
@@ -166,7 +172,7 @@ class LockFileValidatorTest extends PackageManagerKernelTestBase {
 
     $result = ValidationResult::createError([
       t('There are no pending Composer operations.'),
-    ]);
+    ], t('Problem detected in lock file during stage operations.'));
     $stage = $this->assertResults([$result], PreApplyEvent::class);
     // A status check shouldn't produce raise any errors, because it's only
     // during pre-apply that we care if there are any pending Composer

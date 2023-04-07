@@ -79,7 +79,8 @@ final class LockFileValidator implements EventSubscriberInterface {
     }
     else {
       $event->addError([
-        $this->t('Could not hash the active lock file.'),
+        // @todo Reword in https://www.drupal.org/project/automatic_updates/issues/3352846
+        $this->t('The active lock file does not exist.'),
       ]);
     }
   }
@@ -93,36 +94,41 @@ final class LockFileValidator implements EventSubscriberInterface {
       return;
     }
 
+    $messages = [];
     // Ensure we can get a current hash of the lock file.
     $active_hash = $this->getLockFileHash($this->pathLocator->getProjectRoot());
     if (empty($active_hash)) {
-      $error = $this->t('Could not hash the active lock file.');
+      // @todo Reword in https://www.drupal.org/project/automatic_updates/issues/3352846
+      $messages[] = $this->t('The active lock file does not exist.');
     }
 
     // Ensure we also have a stored hash of the lock file.
     $stored_hash = $this->state->get(static::STATE_KEY);
     if (empty($stored_hash)) {
-      $error = $this->t('Could not retrieve stored hash of the active lock file.');
+      throw new \LogicException('Stored hash key deleted.');
     }
 
     // If we have both hashes, ensure they match.
     if ($active_hash && $stored_hash && !hash_equals($stored_hash, $active_hash)) {
-      $error = $this->t('Unexpected changes were detected in composer.lock, which indicates that other Composer operations were performed since this Package Manager operation started. This can put the code base into an unreliable state and therefore is not allowed.');
+      $messages[] = $this->t('Unexpected changes were detected in composer.lock, which indicates that other Composer operations were performed since this Package Manager operation started. This can put the code base into an unreliable state and therefore is not allowed.');
     }
 
     // Don't allow staged changes to be applied if the staged lock file has no
     // apparent changes.
-    if (empty($error) && $event instanceof PreApplyEvent) {
+    if (empty($messages) && $event instanceof PreApplyEvent) {
       $stage_hash = $this->getLockFileHash($event->stage->getStageDirectory());
       if ($stage_hash && hash_equals($active_hash, $stage_hash)) {
-        $error = $this->t('There are no pending Composer operations.');
+        $messages[] = $this->t('There are no pending Composer operations.');
       }
     }
 
-    // @todo Let the validation result carry all the relevant messages in
-    //   https://www.drupal.org/i/3247479.
-    if (isset($error)) {
-      $event->addError([$error]);
+    if (!empty($messages)) {
+      $summary = $this->formatPlural(
+        count($messages),
+        'Problem detected in lock file during stage operations.',
+        'Problems detected in lock file during stage operations.',
+      );
+      $event->addError($messages, $summary);
     }
   }
 
