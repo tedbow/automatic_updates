@@ -20,7 +20,7 @@ class TestTime extends Time {
   protected $decoratorTime;
 
   /**
-   * Constructs an Updater object.
+   * Constructs a TestTime object.
    *
    * @param \Drupal\Component\Datetime\Time $time
    *   The time service.
