@@ -139,6 +139,14 @@ class InstalledPackagesListTest extends UnitTestCase {
     $list = new InstalledPackagesList($data);
     $this->assertArrayNotHasKey('drupal/not-core', $list->getCorePackages());
 
+    // Tests that we don't get core packages intended for development when
+    // include_dev is set to FALSE.
+    $core_packages_no_dev = $list->getCorePackages(FALSE);
+    $this->assertArrayNotHasKey('drupal/core-dev', $core_packages_no_dev);
+    $this->assertArrayNotHasKey('drupal/core-dev-pinned', $core_packages_no_dev);
+    // We still get other packages as intended.
+    $this->assertArrayHasKey('drupal/core', $core_packages_no_dev);
+
     // If drupal/core-recommended is in the list, it should supersede
     // drupal/core.
     $this->assertArrayHasKey('drupal/core', $list->getCorePackages());

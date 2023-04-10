@@ -277,10 +277,8 @@ final class VersionPolicyValidator implements EventSubscriberInterface {
     $project_root = $this->pathLocator->getProjectRoot();
 
     $core_packages = $this->composerInspector->getInstalledPackagesList($project_root)
-      ->getCorePackages()
+      ->getCorePackages(FALSE)
       ->getArrayCopy();
-    unset($core_packages['drupal/core-dev']);
-    unset($core_packages['drupal/core-dev-pinned']);
 
     return key($core_packages) ?? FALSE;
   }

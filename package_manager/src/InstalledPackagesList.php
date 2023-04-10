@@ -156,10 +156,14 @@ final class InstalledPackagesList extends \ArrayObject {
    *
    * Packages returned by ::getCorePackageList() are considered core packages.
    *
+   * @param bool $include_dev
+   *   (optional) Whether to include core packages intended for development.
+   *   Defaults to TRUE.
+   *
    * @return static
    *   A list of the installed core packages.
    */
-  public function getCorePackages(): static {
+  public function getCorePackages(bool $include_dev = TRUE): static {
     $core_packages = array_intersect_key(
       $this->getArrayCopy(),
       array_flip(static::getCorePackageList())
@@ -169,6 +173,10 @@ final class InstalledPackagesList extends \ArrayObject {
     // drupal/core will always be one of its direct dependencies.
     if (array_key_exists('drupal/core-recommended', $core_packages)) {
       unset($core_packages['drupal/core']);
+    }
+    if (!$include_dev) {
+      unset($core_packages['drupal/core-dev']);
+      unset($core_packages['drupal/core-dev-pinned']);
     }
     return new static($core_packages);
   }
