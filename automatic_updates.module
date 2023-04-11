@@ -8,7 +8,7 @@
 declare(strict_types = 1);
 
 use Drupal\automatic_updates\BatchProcessor;
-use Drupal\automatic_updates\CronUpdater;
+use Drupal\automatic_updates\CronUpdateStage;
 use Drupal\Core\Routing\RouteMatchInterface;
 use Drupal\automatic_updates\Validation\AdminStatusCheckMessages;
 use Drupal\Core\Url;
@@ -169,9 +169,9 @@ function automatic_updates_cron() {
     return;
   }
 
-  /** @var \Drupal\automatic_updates\CronUpdater $updater */
-  $updater = \Drupal::service('automatic_updates.cron_updater');
-  $updater->handleCron();
+  /** @var \Drupal\automatic_updates\CronUpdateStage $stage */
+  $stage = \Drupal::service('automatic_updates.cron_update_stage');
+  $stage->handleCron();
 
   /** @var \Drupal\automatic_updates\Validation\StatusChecker $status_checker */
   $status_checker = \Drupal::service('automatic_updates.status_checker');
@@ -184,7 +184,7 @@ function automatic_updates_cron() {
   }
 
   // Only try to send failure notifications if unattended updates are enabled.
-  if ($updater->getMode() !== CronUpdater::DISABLED) {
+  if ($stage->getMode() !== CronUpdateStage::DISABLED) {
     \Drupal::service('automatic_updates.status_check_mailer')
       ->sendFailureNotifications($last_results, $status_checker->getResults());
   }
@@ -199,12 +199,12 @@ function automatic_updates_modules_installed($modules) {
   /** @var \Drupal\automatic_updates\Validation\StatusChecker $status_checker */
   $status_checker = \Drupal::service('automatic_updates.status_checker');
   $status_checker->run();
-  /** @var \Drupal\automatic_updates\CronUpdater $cron_updater */
-  $cron_updater = \Drupal::service('automatic_updates.cron_updater');
+  /** @var \Drupal\automatic_updates\CronUpdateStage $stage */
+  $stage = \Drupal::service('automatic_updates.cron_update_stage');
   // If cron updates are disabled status check messages will not be displayed on
   // admin pages. Therefore, after installing the module the user will not be
   // alerted to any problems until they access the status report page.
-  if ($cron_updater->getMode() === CronUpdater::DISABLED) {
+  if ($stage->getMode() === CronUpdateStage::DISABLED) {
     /** @var \Drupal\automatic_updates\Validation\AdminStatusCheckMessages $status_check_messages */
     $status_check_messages = \Drupal::classResolver(AdminStatusCheckMessages::class);
     $status_check_messages->displayResultSummary();
@@ -243,15 +243,15 @@ function automatic_updates_preprocess_update_project_status(array &$variables) {
   if ($project['name'] !== 'drupal') {
     return;
   }
-  $updater = \Drupal::service('automatic_updates.updater');
+  $stage = \Drupal::service('automatic_updates.update_stage');
   $supported_target_versions = [];
   /** @var \Drupal\automatic_updates\ReleaseChooser $recommender */
   $recommender = \Drupal::service('automatic_updates.release_chooser');
   try {
-    if ($installed_minor_release = $recommender->getLatestInInstalledMinor($updater)) {
+    if ($installed_minor_release = $recommender->getLatestInInstalledMinor($stage)) {
       $supported_target_versions[] = $installed_minor_release->getVersion();
     }
-    if ($next_minor_release = $recommender->getLatestInNextMinor($updater)) {
+    if ($next_minor_release = $recommender->getLatestInNextMinor($stage)) {
       $supported_target_versions[] = $next_minor_release->getVersion();
     }
   }

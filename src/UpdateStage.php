@@ -11,7 +11,7 @@ use Drupal\Core\TempStore\SharedTempStoreFactory;
 use Drupal\package_manager\ComposerInspector;
 use Drupal\package_manager\FailureMarker;
 use Drupal\package_manager\PathLocator;
-use Drupal\package_manager\Stage;
+use Drupal\package_manager\StageBase;
 use PhpTuf\ComposerStager\Domain\Core\Beginner\BeginnerInterface;
 use PhpTuf\ComposerStager\Domain\Core\Committer\CommitterInterface;
 use PhpTuf\ComposerStager\Domain\Core\Stager\StagerInterface;
@@ -26,10 +26,10 @@ use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
  * in the project-level composer.json. If neither package is directly required
  * in the project-level composer.json, a requirement will be added.
  */
-class Updater extends Stage {
+class UpdateStage extends StageBase {
 
   /**
-   * Constructs a new Updater object.
+   * Constructs a new UpdateStage object.
    *
    * @param \Drupal\package_manager\ComposerInspector $composerInspector
    *   The Composer inspector service.

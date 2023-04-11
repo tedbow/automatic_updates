@@ -4,7 +4,7 @@ declare(strict_types = 1);
 
 namespace Drupal\Tests\automatic_updates\Functional;
 
-use Drupal\automatic_updates\CronUpdater;
+use Drupal\automatic_updates\CronUpdateStage;
 use Drupal\fixture_manipulator\StageFixtureManipulator;
 use Drupal\package_manager\PathLocator;
 use Drupal\Tests\BrowserTestBase;
@@ -39,7 +39,7 @@ abstract class AutomaticUpdatesFunctionalTestBase extends BrowserTestBase {
     parent::setUp();
     $this->useFixtureDirectoryAsActive(__DIR__ . '/../../../package_manager/tests/fixtures/fake_site');
     // @todo Remove in https://www.drupal.org/project/automatic_updates/issues/3284443
-    $this->config('automatic_updates.settings')->set('cron', CronUpdater::SECURITY)->save();
+    $this->config('automatic_updates.settings')->set('cron', CronUpdateStage::SECURITY)->save();
   }
 
   /**
@@ -66,7 +66,7 @@ abstract class AutomaticUpdatesFunctionalTestBase extends BrowserTestBase {
     $service_ids = [
       // If automatic_updates is installed, ensure any stage directory created
       // during the test is cleaned up.
-      'automatic_updates.updater',
+      'automatic_updates.update_stage',
     ];
     foreach ($service_ids as $service_id) {
       if ($this->container->has($service_id)) {

@@ -53,12 +53,12 @@ final class FailureMarker {
   /**
    * Writes data to marker file.
    *
-   * @param \Drupal\package_manager\Stage $stage
+   * @param \Drupal\package_manager\StageBase $stage
    *   The stage.
    * @param \Drupal\Core\StringTranslation\TranslatableMarkup $message
    *   Failure message to be added.
    */
-  public function write(Stage $stage, TranslatableMarkup $message): void {
+  public function write(StageBase $stage, TranslatableMarkup $message): void {
     $data = [
       'stage_class' => get_class($stage),
       'stage_file' => (new \ReflectionObject($stage))->getFileName(),

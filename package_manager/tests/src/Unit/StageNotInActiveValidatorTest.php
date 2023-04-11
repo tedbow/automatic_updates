@@ -6,7 +6,7 @@ namespace Drupal\Tests\package_manager\Unit;
 
 use Drupal\package_manager\Event\PreCreateEvent;
 use Drupal\package_manager\PathLocator;
-use Drupal\package_manager\Stage;
+use Drupal\package_manager\StageBase;
 use Drupal\package_manager\ValidationResult;
 use Drupal\package_manager\Validator\StageNotInActiveValidator;
 use Drupal\Tests\package_manager\Traits\ValidationTestTrait;
@@ -39,7 +39,7 @@ class StageNotInActiveValidatorTest extends UnitTestCase {
     $path_locator_prophecy->getStagingRoot()->willReturn(Path::canonicalize($staging_root));
     $path_locator_prophecy->getVendorDirectory()->willReturn('not used');
     $path_locator = $path_locator_prophecy->reveal();
-    $stage = $this->prophesize(Stage::class)->reveal();
+    $stage = $this->prophesize(StageBase::class)->reveal();
 
     $stage_not_in_active_validator = new StageNotInActiveValidator($path_locator);
     $stage_not_in_active_validator->setStringTranslation($this->getStringTranslationStub());

@@ -4,7 +4,7 @@ declare(strict_types = 1);
 
 namespace Drupal\package_manager\Event;
 
-use Drupal\package_manager\Stage;
+use Drupal\package_manager\StageBase;
 
 /**
  * Event fired before staged changes are synced to the active directory.
@@ -16,7 +16,7 @@ class PreApplyEvent extends PreOperationStageEvent {
   /**
    * Constructs a PreApplyEvent object.
    *
-   * @param \Drupal\package_manager\Stage $stage
+   * @param \Drupal\package_manager\StageBase $stage
    *   The stage which fired this event.
    * @param string[] $ignored_paths
    *   The list of ignored paths. These will not be copied from the stage
@@ -24,7 +24,7 @@ class PreApplyEvent extends PreOperationStageEvent {
    *   directory if they exist, when the stage directory is copied back into
    *   the active directory.
    */
-  public function __construct(Stage $stage, array $ignored_paths) {
+  public function __construct(StageBase $stage, array $ignored_paths) {
     parent::__construct($stage);
     $this->excludedPaths = $ignored_paths;
   }

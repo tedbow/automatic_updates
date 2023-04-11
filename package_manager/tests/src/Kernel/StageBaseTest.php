@@ -29,12 +29,12 @@ use Psr\Log\LogLevel;
 use ColinODell\PsrTestLogger\TestLogger;
 
 /**
- * @coversDefaultClass \Drupal\package_manager\Stage
+ * @coversDefaultClass \Drupal\package_manager\StageBase
  * @covers \Drupal\package_manager\PackageManagerUninstallValidator
  * @group package_manager
  * @internal
  */
-class StageTest extends PackageManagerKernelTestBase {
+class StageBaseTest extends PackageManagerKernelTestBase {
 
   /**
    * {@inheritdoc}
@@ -98,7 +98,7 @@ class StageTest extends PackageManagerKernelTestBase {
    */
   public function testUncreatedGetStageDirectory(): void {
     $this->expectException(\LogicException::class);
-    $this->expectExceptionMessage('Drupal\package_manager\Stage::getStageDirectory() cannot be called because the stage has not been created or claimed.');
+    $this->expectExceptionMessage('Drupal\package_manager\StageBase::getStageDirectory() cannot be called because the stage has not been created or claimed.');
     $this->createStage()->getStageDirectory();
   }
 

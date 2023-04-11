@@ -4,7 +4,7 @@ declare(strict_types = 1);
 
 namespace Drupal\Tests\automatic_updates\Kernel\StatusCheck;
 
-use Drupal\automatic_updates\CronUpdater;
+use Drupal\automatic_updates\CronUpdateStage;
 use Drupal\automatic_updates\Validator\CronFrequencyValidator;
 use Drupal\package_manager\ValidationResult;
 use Drupal\Tests\automatic_updates\Kernel\AutomaticUpdatesKernelTestBase;
@@ -41,7 +41,7 @@ class CronFrequencyValidatorTest extends AutomaticUpdatesKernelTestBase {
    */
   public function testNoValidationIfCronDisabled(): void {
     $this->config('automatic_updates.settings')
-      ->set('cron', CronUpdater::DISABLED)
+      ->set('cron', CronUpdateStage::DISABLED)
       ->save();
 
     $validator = new class (
@@ -49,7 +49,6 @@ class CronFrequencyValidatorTest extends AutomaticUpdatesKernelTestBase {
       $this->container->get('module_handler'),
       $this->container->get('state'),
       $this->container->get('datetime.time'),
-      $this->container->get(CronUpdater::class),
       $this->container->get('lock')
     ) extends CronFrequencyValidator {
 

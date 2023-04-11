@@ -11,7 +11,7 @@
 declare(strict_types=1);
 
 use Drupal\package_manager\ProjectInfo;
-use Drupal\automatic_updates\CronUpdater;
+use Drupal\automatic_updates\CronUpdateStage;
 use Drupal\Core\Extension\ExtensionVersion;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\update\ProjectSecurityData;
@@ -33,9 +33,9 @@ function automatic_updates_test_cron_form_update_settings_alter(array &$form, Fo
     '#type' => 'radios',
     '#title' => t('Automatically update Drupal core'),
     '#options' => [
-      CronUpdater::DISABLED => t('Disabled'),
-      CronUpdater::ALL => t('All supported updates'),
-      CronUpdater::SECURITY => t('Security updates only'),
+      CronUpdateStage::DISABLED => t('Disabled'),
+      CronUpdateStage::ALL => t('All supported updates'),
+      CronUpdateStage::SECURITY => t('Security updates only'),
     ],
     '#default_value' => \Drupal::config('automatic_updates.settings')->get('cron'),
     '#description' => t(

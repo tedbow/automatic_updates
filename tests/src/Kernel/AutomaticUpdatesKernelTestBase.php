@@ -4,8 +4,8 @@ declare(strict_types = 1);
 
 namespace Drupal\Tests\automatic_updates\Kernel;
 
-use Drupal\automatic_updates\CronUpdater;
-use Drupal\automatic_updates\Updater;
+use Drupal\automatic_updates\CronUpdateStage;
+use Drupal\automatic_updates\UpdateStage;
 use Drupal\Core\DependencyInjection\ContainerBuilder;
 use Drupal\Core\Url;
 use Drupal\Tests\automatic_updates\Traits\ValidationTestTrait;
@@ -52,7 +52,7 @@ abstract class AutomaticUpdatesKernelTestBase extends PackageManagerKernelTestBa
     parent::setUp();
     // Enable cron updates, which will eventually be the default.
     // @todo Remove in https://www.drupal.org/project/automatic_updates/issues/3284443
-    $this->config('automatic_updates.settings')->set('cron', CronUpdater::SECURITY)->save();
+    $this->config('automatic_updates.settings')->set('cron', CronUpdateStage::SECURITY)->save();
 
     // By default, pretend we're running Drupal core 9.8.0 and a non-security
     // update to 9.8.1 is available.
@@ -71,10 +71,10 @@ abstract class AutomaticUpdatesKernelTestBase extends PackageManagerKernelTestBa
   public function register(ContainerBuilder $container) {
     parent::register($container);
 
-    // Use the test-only implementations of the regular and cron updaters.
+    // Use the test-only implementations of the regular and cron update stages.
     $overrides = [
-      'automatic_updates.updater' => TestUpdater::class,
-      'automatic_updates.cron_updater' => TestCronUpdater::class,
+      'automatic_updates.update_stage' => TestUpdateStage::class,
+      'automatic_updates.cron_update_stage' => TestCronUpdateStage::class,
     ];
     foreach ($overrides as $service_id => $class) {
       if ($container->hasDefinition($service_id)) {
@@ -86,9 +86,9 @@ abstract class AutomaticUpdatesKernelTestBase extends PackageManagerKernelTestBa
 }
 
 /**
- * A test-only version of the regular updater to override internals.
+ * A test-only version of the regular update stage to override internals.
  */
-class TestUpdater extends Updater {
+class TestUpdateStage extends UpdateStage {
 
   /**
    * {@inheritdoc}
@@ -100,9 +100,9 @@ class TestUpdater extends Updater {
 }
 
 /**
- * A test-only version of the cron updater to override and expose internals.
+ * A test-only version of the cron update stage to override and expose internals.
  */
-class TestCronUpdater extends CronUpdater {
+class TestCronUpdateStage extends CronUpdateStage {
 
   /**
    * {@inheritdoc}

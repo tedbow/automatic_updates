@@ -4,7 +4,7 @@ declare(strict_types = 1);
 
 namespace Drupal\package_manager\Event;
 
-use Drupal\package_manager\Stage;
+use Drupal\package_manager\StageBase;
 use PhpTuf\ComposerStager\Domain\Value\PathList\PathListInterface;
 use PhpTuf\ComposerStager\Infrastructure\Value\PathList\PathList;
 
@@ -26,7 +26,7 @@ class CollectIgnoredPathsEvent extends StageEvent implements PathListInterface {
   /**
    * {@inheritdoc}
    */
-  public function __construct(Stage $stage) {
+  public function __construct(StageBase $stage) {
     parent::__construct($stage);
     $this->pathList = new PathList([]);
   }

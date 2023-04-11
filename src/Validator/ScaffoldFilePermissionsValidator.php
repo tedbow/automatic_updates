@@ -4,7 +4,7 @@ declare(strict_types = 1);
 
 namespace Drupal\automatic_updates\Validator;
 
-use Drupal\automatic_updates\Updater;
+use Drupal\automatic_updates\UpdateStage;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\package_manager\ComposerInspector;
 use Drupal\package_manager\Event\PreApplyEvent;
@@ -44,7 +44,7 @@ final class ScaffoldFilePermissionsValidator implements EventSubscriberInterface
    */
   public function validate(PreOperationStageEvent $event): void {
     // We only want to do this check if the stage belongs to Automatic Updates.
-    if (!$event->stage instanceof Updater) {
+    if (!$event->stage instanceof UpdateStage) {
       return;
     }
     $paths = [];

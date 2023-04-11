@@ -4,7 +4,7 @@ declare(strict_types = 1);
 
 namespace Drupal\automatic_updates\Validator;
 
-use Drupal\automatic_updates\CronUpdater;
+use Drupal\automatic_updates\CronUpdateStage;
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Extension\ModuleHandlerInterface;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
@@ -70,7 +70,7 @@ final class CronServerValidator implements EventSubscriberInterface {
    *   The event object.
    */
   public function checkServer(PreOperationStageEvent $event): void {
-    if (!$event->stage instanceof CronUpdater) {
+    if (!$event->stage instanceof CronUpdateStage) {
       return;
     }
 

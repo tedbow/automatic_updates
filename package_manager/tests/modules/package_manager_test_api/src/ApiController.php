@@ -7,7 +7,7 @@ namespace Drupal\package_manager_test_api;
 use Drupal\Core\Controller\ControllerBase;
 use Drupal\Core\Url;
 use Drupal\package_manager\PathLocator;
-use Drupal\package_manager\Stage;
+use Drupal\package_manager\StageBase;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\RedirectResponse;
@@ -28,7 +28,7 @@ class ApiController extends ControllerBase {
   /**
    * The stage.
    *
-   * @var \Drupal\package_manager\Stage
+   * @var \Drupal\package_manager\StageBase
    */
   protected $stage;
 
@@ -42,12 +42,12 @@ class ApiController extends ControllerBase {
   /**
    * Constructs an ApiController object.
    *
-   * @param \Drupal\package_manager\Stage $stage
+   * @param \Drupal\package_manager\StageBase $stage
    *   The stage.
    * @param \Drupal\package_manager\PathLocator $path_locator
    *   The path locator service.
    */
-  public function __construct(Stage $stage, PathLocator $path_locator) {
+  public function __construct(StageBase $stage, PathLocator $path_locator) {
     $this->stage = $stage;
     $this->pathLocator = $path_locator;
   }
@@ -56,7 +56,7 @@ class ApiController extends ControllerBase {
    * {@inheritdoc}
    */
   public static function create(ContainerInterface $container) {
-    $stage = new Stage(
+    $stage = new ControllerStage(
       $container->get('package_manager.path_locator'),
       $container->get('package_manager.beginner'),
       $container->get('package_manager.stager'),
@@ -66,8 +66,7 @@ class ApiController extends ControllerBase {
       $container->get('tempstore.shared'),
       $container->get('datetime.time'),
       $container->get('PhpTuf\ComposerStager\Infrastructure\Factory\Path\PathFactoryInterface'),
-      $container->get('package_manager.failure_marker')
-    );
+      $container->get('package_manager.failure_marker'));
     return new static(
       $stage,
       $container->get('package_manager.path_locator')
@@ -158,3 +157,15 @@ class ApiController extends ControllerBase {
   }
 
 }
+
+/**
+ * Non-abstract version of StageBase.
+ *
+ * This is needed because we cannot instantiate StageBase as it's abstract, and
+ * we also can't use anonymous class because the name of anonymous class is
+ * always unique for every request which will create problem while claiming the
+ * stage as the stored lock will be different from current lock.
+ *
+ * @see \Drupal\package_manager\StageBase::claim()
+ */
+final class ControllerStage extends StageBase {}

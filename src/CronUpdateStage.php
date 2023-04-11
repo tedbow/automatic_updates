@@ -35,7 +35,7 @@ use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
  *   It should not be called directly, and external code should not interact
  *   with it.
  */
-class CronUpdater extends Updater {
+class CronUpdateStage extends UpdateStage {
 
   /**
    * All automatic updates are disabled.
@@ -59,7 +59,7 @@ class CronUpdater extends Updater {
   public const ALL = 'patch';
 
   /**
-   * Constructs a CronUpdater object.
+   * Constructs a CronUpdateStage object.
    *
    * @param \Drupal\automatic_updates\ReleaseChooser $releaseChooser
    *   The cron release chooser service.
@@ -153,7 +153,7 @@ class CronUpdater extends Updater {
     // only be done by ::handleCron(), which has a strong opinion about which
     // release to update to. Throwing an exception here is just to enforce this
     // boundary. To update to a specific version of core, use
-    // \Drupal\automatic_updates\Updater::begin() (which is called in
+    // \Drupal\automatic_updates\UpdateStage::begin() (which is called in
     // ::performUpdate() to start the update to the target version of core
     // chosen by ::handleCron()).
     throw new \BadMethodCallException(__METHOD__ . '() cannot be called directly.');
@@ -355,16 +355,16 @@ class CronUpdater extends Updater {
    *
    * @return string
    *   The cron update mode. Will be one of the following constants:
-   *   - \Drupal\automatic_updates\CronUpdater::DISABLED if updates during cron
-   *     are entirely disabled.
-   *   - \Drupal\automatic_updates\CronUpdater::SECURITY only security updates
-   *     can be done during cron.
-   *   - \Drupal\automatic_updates\CronUpdater::ALL if all updates are allowed
-   *     during cron.
+   *   - \Drupal\automatic_updates\CronUpdateStage::DISABLED if updates during
+   *     cron are entirely disabled.
+   *   - \Drupal\automatic_updates\CronUpdateStage::SECURITY only security
+   *     updates can be done during cron.
+   *   - \Drupal\automatic_updates\CronUpdateStage::ALL if all updates are
+   *     allowed during cron.
    */
   final public function getMode(): string {
     $mode = $this->configFactory->get('automatic_updates.settings')->get('cron');
-    return $mode ?: CronUpdater::SECURITY;
+    return $mode ?: static::SECURITY;
   }
 
 }

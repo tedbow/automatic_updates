@@ -42,7 +42,7 @@ class StagedDatabaseUpdateValidatorTest extends AutomaticUpdatesKernelTestBase {
   ];
 
   /**
-   * The test logger to collected messages logged by the cron updater.
+   * The test logger to collected messages logged by the cron update stage.
    *
    * @var \Psr\Log\Test\TestLogger
    */

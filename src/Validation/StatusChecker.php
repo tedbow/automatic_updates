@@ -4,12 +4,12 @@ declare(strict_types = 1);
 
 namespace Drupal\automatic_updates\Validation;
 
-use Drupal\automatic_updates\CronUpdater;
+use Drupal\automatic_updates\CronUpdateStage;
 use Drupal\automatic_updates\StatusCheckMailer;
 use Drupal\Core\Config\ConfigCrudEvent;
 use Drupal\Core\Config\ConfigEvents;
 use Drupal\package_manager\StatusCheckTrait;
-use Drupal\automatic_updates\Updater;
+use Drupal\automatic_updates\UpdateStage;
 use Drupal\Component\Datetime\TimeInterface;
 use Drupal\Core\KeyValueStore\KeyValueExpirableFactoryInterface;
 use Drupal\package_manager\Event\PostApplyEvent;
@@ -39,10 +39,10 @@ final class StatusChecker implements EventSubscriberInterface {
    *   The time service.
    * @param \Symfony\Contracts\EventDispatcher\EventDispatcherInterface $eventDispatcher
    *   The event dispatcher service.
-   * @param \Drupal\automatic_updates\Updater $updater
-   *   The updater service.
-   * @param \Drupal\automatic_updates\CronUpdater $cronUpdater
-   *   The cron updater service.
+   * @param \Drupal\automatic_updates\UpdateStage $updateStage
+   *   The update stage service.
+   * @param \Drupal\automatic_updates\CronUpdateStage $cronUpdateStage
+   *   The cron update stage service.
    * @param int $resultsTimeToLive
    *   The number of hours to store results.
    */
@@ -50,8 +50,8 @@ final class StatusChecker implements EventSubscriberInterface {
     KeyValueExpirableFactoryInterface $key_value_expirable_factory,
     protected TimeInterface $time,
     protected EventDispatcherInterface $eventDispatcher,
-    protected Updater $updater,
-    protected CronUpdater $cronUpdater,
+    protected UpdateStage $updateStage,
+    protected CronUpdateStage $cronUpdateStage,
     protected int $resultsTimeToLive,
   ) {
     $this->keyValueExpirable = $key_value_expirable_factory->get('automatic_updates');
@@ -63,14 +63,14 @@ final class StatusChecker implements EventSubscriberInterface {
    * @return $this
    */
   public function run(): self {
-    // If updates will run during cron, use the cron updater service provided by
-    // this module. This will allow validators to run specific validation for
-    // conditions that only affect cron updates.
-    if ($this->cronUpdater->getMode() === CronUpdater::DISABLED) {
-      $stage = $this->updater;
+    // If updates will run during cron, use the cron update stage service
+    // provided by this module. This will allow validators to run specific
+    // validation for conditions that only affect cron updates.
+    if ($this->cronUpdateStage->getMode() === CronUpdateStage::DISABLED) {
+      $stage = $this->updateStage;
     }
     else {
-      $stage = $this->cronUpdater;
+      $stage = $this->cronUpdateStage;
     }
     $results = $this->runStatusCheck($stage, $this->eventDispatcher);
 
@@ -158,7 +158,7 @@ final class StatusChecker implements EventSubscriberInterface {
       // are enabled. If notifications were previously disabled but have been
       // re-enabled, or their sensitivity level has changed, clear the stored
       // results so that we'll send accurate notifications next time cron runs.
-      if ($event->isChanged('cron') && $config->getOriginal('cron') === CronUpdater::DISABLED) {
+      if ($event->isChanged('cron') && $config->getOriginal('cron') === CronUpdateStage::DISABLED) {
         $this->clearStoredResults();
       }
       elseif ($event->isChanged('status_check_mail') && $config->get('status_check_mail') !== StatusCheckMailer::DISABLED) {

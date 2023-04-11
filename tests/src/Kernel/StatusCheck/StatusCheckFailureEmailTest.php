@@ -4,7 +4,7 @@ declare(strict_types = 1);
 
 namespace Drupal\Tests\automatic_updates\Kernel\StatusCheck;
 
-use Drupal\automatic_updates\CronUpdater;
+use Drupal\automatic_updates\CronUpdateStage;
 use Drupal\automatic_updates\StatusCheckMailer;
 use Drupal\automatic_updates_test\Datetime\TestTime;
 use Drupal\automatic_updates_test\EventSubscriber\TestSubscriber1;
@@ -54,7 +54,7 @@ class StatusCheckFailureEmailTest extends AutomaticUpdatesKernelTestBase {
 
     $this->installConfig('automatic_updates');
     // @todo Remove in https://www.drupal.org/project/automatic_updates/issues/3284443
-    $this->config('automatic_updates.settings')->set('cron', CronUpdater::SECURITY)->save();
+    $this->config('automatic_updates.settings')->set('cron', CronUpdateStage::SECURITY)->save();
     $this->setUpEmailRecipients();
 
     // Allow stored available update data to live for a very, very long time.
@@ -212,7 +212,7 @@ END;
 
     // If we disable unattended updates entirely and flag a new error, they
     // should not be e-mailed.
-    $config->set('cron', CronUpdater::DISABLED)->save();
+    $config->set('cron', CronUpdateStage::DISABLED)->save();
     $error = $this->createValidationResult(SystemManager::REQUIREMENT_ERROR);
     TestSubscriber1::setTestResult([$error], StatusCheckEvent::class);
     $this->runCron();
@@ -220,7 +220,7 @@ END;
 
     // If we re-enable unattended updates, they should be emailed again, even if
     // the results haven't changed.
-    $config->set('cron', CronUpdater::ALL)->save();
+    $config->set('cron', CronUpdateStage::ALL)->save();
     $this->runCron();
     $sent_messages_count += $recipient_count;
     $this->assertSentMessagesCount($sent_messages_count);

@@ -4,15 +4,15 @@ declare(strict_types = 1);
 
 namespace Drupal\Tests\package_manager\Unit;
 
-use Drupal\package_manager\Stage;
+use Drupal\package_manager\StageBase;
 use Drupal\Tests\UnitTestCase;
 
 /**
- * @coversDefaultClass \Drupal\package_manager\Stage
+ * @coversDefaultClass \Drupal\package_manager\StageBase
  * @group package_manager
  * @internal
  */
-class StageTest extends UnitTestCase {
+class StageBaseTest extends UnitTestCase {
 
   /**
    * @covers ::validateRequirements
@@ -26,7 +26,7 @@ class StageTest extends UnitTestCase {
    * @dataProvider providerValidateRequirements
    */
   public function testValidateRequirements(?string $expected_exception, string $requirement): void {
-    $reflector = new \ReflectionClass(Stage::class);
+    $reflector = new \ReflectionClass(StageBase::class);
     $method = $reflector->getMethod('validateRequirements');
     $method->setAccessible(TRUE);
 

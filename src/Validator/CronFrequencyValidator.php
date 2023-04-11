@@ -4,7 +4,7 @@ declare(strict_types = 1);
 
 namespace Drupal\automatic_updates\Validator;
 
-use Drupal\automatic_updates\CronUpdater;
+use Drupal\automatic_updates\CronUpdateStage;
 use Drupal\Component\Datetime\TimeInterface;
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Extension\ModuleHandlerInterface;
@@ -65,8 +65,6 @@ class CronFrequencyValidator implements EventSubscriberInterface {
    *   The state service.
    * @param \Drupal\Component\Datetime\TimeInterface $time
    *   The time service.
-   * @param \Drupal\automatic_updates\CronUpdater $cronUpdater
-   *   The cron updater service.
    * @param \Drupal\Core\Lock\LockBackendInterface $lock
    *   The lock service.
    */
@@ -75,7 +73,6 @@ class CronFrequencyValidator implements EventSubscriberInterface {
     protected ModuleHandlerInterface $moduleHandler,
     protected StateInterface $state,
     protected TimeInterface $time,
-    protected CronUpdater $cronUpdater,
     protected LockBackendInterface $lock,
   ) {}
 
@@ -87,12 +84,12 @@ class CronFrequencyValidator implements EventSubscriberInterface {
    */
   public function checkCronFrequency(StatusCheckEvent $event): void {
     // We only want to do this check if the stage belongs to Automatic Updates.
-    if (!$event->stage instanceof CronUpdater) {
+    if (!$event->stage instanceof CronUpdateStage) {
       return;
     }
     // If automatic updates are disabled during cron, there's nothing we need
     // to validate.
-    if ($this->cronUpdater->getMode() === CronUpdater::DISABLED) {
+    if ($event->stage->getMode() === CronUpdateStage::DISABLED) {
       return;
     }
     elseif ($this->moduleHandler->moduleExists('automated_cron')) {

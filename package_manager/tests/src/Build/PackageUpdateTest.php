@@ -4,7 +4,7 @@ declare(strict_types = 1);
 
 namespace Drupal\Tests\package_manager\Build;
 
-use Drupal\package_manager\Stage;
+use Drupal\package_manager_test_api\ControllerStage;
 
 /**
  * Tests updating packages in a stage directory.
@@ -75,7 +75,7 @@ class PackageUpdateTest extends TemplateProjectTestBase {
     // @see \Drupal\updated_module\PostApplySubscriber::postApply()
     $this->assertSame('Bravo!', $file_contents['bravo.txt']);
 
-    $this->assertExpectedStageEventsFired(Stage::class);
+    $this->assertExpectedStageEventsFired(ControllerStage::class);
   }
 
 }

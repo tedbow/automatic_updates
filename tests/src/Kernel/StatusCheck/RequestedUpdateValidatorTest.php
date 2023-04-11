@@ -4,7 +4,7 @@ declare(strict_types = 1);
 
 namespace Drupal\Tests\automatic_updates\Kernel\StatusCheck;
 
-use Drupal\automatic_updates\Updater;
+use Drupal\automatic_updates\UpdateStage;
 use Drupal\package_manager\Exception\StageEventException;
 use Drupal\package_manager\ValidationResult;
 use Drupal\Tests\automatic_updates\Kernel\AutomaticUpdatesKernelTestBase;
@@ -31,7 +31,7 @@ class RequestedUpdateValidatorTest extends AutomaticUpdatesKernelTestBase {
     // Update `drupal/core-recommended` to a version that does not match the
     // requested version of '9.8.1'. This also does not update all packages that
     // are expected to be updated when updating Drupal core.
-    // @see \Drupal\automatic_updates\Updater::begin()
+    // @see \Drupal\automatic_updates\UpdateStage::begin()
     // @see \Drupal\package_manager\InstalledPackagesList::getCorePackages()
     $this->getStageFixtureManipulator()->setVersion('drupal/core-recommended', '9.8.2');
     $this->setCoreVersion('9.8.0');
@@ -40,16 +40,16 @@ class RequestedUpdateValidatorTest extends AutomaticUpdatesKernelTestBase {
     ]);
     $this->container->get('module_installer')->install(['automatic_updates']);
 
-    $updater = $this->container->get(Updater::class);
-    $updater->begin(['drupal' => '9.8.1']);
-    $updater->stage();
+    $stage = $this->container->get(UpdateStage::class);
+    $stage->begin(['drupal' => '9.8.1']);
+    $stage->stage();
 
     $expected_results = [
       ValidationResult::createError([t("The requested update to 'drupal/core-recommended' to version '9.8.1' does not match the actual staged update to '9.8.2'.")]),
       ValidationResult::createError([t("The requested update to 'drupal/core-dev' to version '9.8.1' was not performed.")]),
     ];
     try {
-      $updater->apply();
+      $stage->apply();
       $this->fail('Expecting an exception.');
     }
     catch (StageEventException $exception) {
@@ -72,12 +72,12 @@ class RequestedUpdateValidatorTest extends AutomaticUpdatesKernelTestBase {
     ]);
     $this->container->get('module_installer')->install(['automatic_updates']);
 
-    $updater = $this->container->get(Updater::class);
-    $updater->begin(['drupal' => '9.8.1']);
-    $updater->stage();
+    $stage = $this->container->get(UpdateStage::class);
+    $stage->begin(['drupal' => '9.8.1']);
+    $stage->stage();
     $this->expectException(StageEventException::class);
     $this->expectExceptionMessage('No updates detected in the staging area.');
-    $updater->apply();
+    $stage->apply();
   }
 
 }

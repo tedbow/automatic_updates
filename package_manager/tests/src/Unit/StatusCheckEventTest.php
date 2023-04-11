@@ -5,7 +5,7 @@ declare(strict_types = 1);
 namespace Drupal\Tests\package_manager\Unit;
 
 use Drupal\package_manager\Event\StatusCheckEvent;
-use Drupal\package_manager\Stage;
+use Drupal\package_manager\StageBase;
 use Drupal\Tests\UnitTestCase;
 
 /**
@@ -19,7 +19,7 @@ class StatusCheckEventTest extends UnitTestCase {
    */
   public function testNoPathsNoErrorException(): void {
     $event = new StatusCheckEvent(
-      $this->prophesize(Stage::class)->reveal(),
+      $this->prophesize(StageBase::class)->reveal(),
       NULL
     );
     $this->expectException(\LogicException::class);

@@ -24,13 +24,13 @@ final class BatchProcessor {
   public const STAGE_ID_SESSION_KEY = '_automatic_updates_extensions_stage_id';
 
   /**
-   * Gets the updater service.
+   * Gets the update stage service.
    *
-   * @return \Drupal\automatic_updates_extensions\ExtensionUpdater
-   *   The updater service.
+   * @return \Drupal\automatic_updates_extensions\ExtensionUpdateStage
+   *   The update stage service.
    */
-  protected static function getUpdater(): ExtensionUpdater {
-    return \Drupal::service('automatic_updates_extensions.updater');
+  protected static function getStage(): ExtensionUpdateStage {
+    return \Drupal::service('automatic_updates_extensions.update_stage');
   }
 
   /**
@@ -51,18 +51,18 @@ final class BatchProcessor {
   }
 
   /**
-   * Calls the updater's begin() method.
+   * Calls the update stage's begin() method.
    *
    * @param string[] $project_versions
    *   The project versions to be staged in the update, keyed by package name.
    * @param array $context
    *   The current context of the batch job.
    *
-   * @see \Drupal\automatic_updates_extensions\ExtensionUpdater::begin()
+   * @see \Drupal\automatic_updates_extensions\ExtensionUpdateStage::begin()
    */
   public static function begin(array $project_versions, array &$context): void {
     try {
-      $stage_id = static::getUpdater()->begin($project_versions);
+      $stage_id = static::getStage()->begin($project_versions);
       \Drupal::service('session')->set(static::STAGE_ID_SESSION_KEY, $stage_id);
     }
     catch (\Throwable $e) {
@@ -71,17 +71,17 @@ final class BatchProcessor {
   }
 
   /**
-   * Calls the updater's stageVersions() method.
+   * Calls the update stage's stage() method.
    *
    * @param array $context
    *   The current context of the batch job.
    *
-   * @see \Drupal\automatic_updates\Updater::stage()
+   * @see \Drupal\automatic_updates\UpdateStage::stage()
    */
   public static function stage(array &$context): void {
     $stage_id = \Drupal::service('session')->get(static::STAGE_ID_SESSION_KEY);
     try {
-      static::getUpdater()->claim($stage_id)->stage();
+      static::getStage()->claim($stage_id)->stage();
     }
     catch (\Throwable $e) {
       static::clean($stage_id, $context);
@@ -90,18 +90,18 @@ final class BatchProcessor {
   }
 
   /**
-   * Calls the updater's commit() method.
+   * Calls the update stage's apply() method.
    *
    * @param string $stage_id
    *   The stage ID.
    * @param array $context
    *   The current context of the batch job.
    *
-   * @see \Drupal\automatic_updates\Updater::apply()
+   * @see \Drupal\automatic_updates_extensions\ExtensionUpdateStage::apply()
    */
   public static function commit(string $stage_id, array &$context): void {
     try {
-      static::getUpdater()->claim($stage_id)->apply();
+      static::getStage()->claim($stage_id)->apply();
       // The batch system does not allow any single request to run for longer
       // than a second, so this will force the next operation to be done in a
       // new request. This helps keep the running code in as consistent a state
@@ -118,18 +118,18 @@ final class BatchProcessor {
   }
 
   /**
-   * Calls the updater's postApply() method.
+   * Calls the update stage's postApply() method.
    *
    * @param string $stage_id
    *   The stage ID.
    * @param array $context
    *   The current context of the batch job.
    *
-   * @see \Drupal\automatic_updates\Updater::postApply()
+   * @see \Drupal\automatic_updates\UpdateStage::postApply()
    */
   public static function postApply(string $stage_id, array &$context): void {
     try {
-      static::getUpdater()->claim($stage_id)->postApply();
+      static::getStage()->claim($stage_id)->postApply();
     }
     catch (\Throwable $e) {
       static::handleException($e, $context);
@@ -137,18 +137,18 @@ final class BatchProcessor {
   }
 
   /**
-   * Calls the updater's clean() method.
+   * Calls the update stage's destroy() method.
    *
    * @param string $stage_id
    *   The stage ID.
    * @param array $context
    *   The current context of the batch job.
    *
-   * @see \Drupal\automatic_updates\Updater::clean()
+   * @see \Drupal\automatic_updates_extensions\ExtensionUpdateStage::destroy()
    */
   public static function clean(string $stage_id, array &$context): void {
     try {
-      static::getUpdater()->claim($stage_id)->destroy();
+      static::getStage()->claim($stage_id)->destroy();
     }
     catch (\Throwable $e) {
       static::handleException($e, $context);

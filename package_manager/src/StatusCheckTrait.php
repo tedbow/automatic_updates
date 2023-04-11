@@ -21,7 +21,7 @@ trait StatusCheckTrait {
   /**
    * Runs a status check for a stage and returns the results, if any.
    *
-   * @param \Drupal\package_manager\Stage $stage
+   * @param \Drupal\package_manager\StageBase $stage
    *   The stage to run the status check for.
    * @param \Symfony\Contracts\EventDispatcher\EventDispatcherInterface $event_dispatcher
    *   (optional) The event dispatcher service.
@@ -30,7 +30,7 @@ trait StatusCheckTrait {
    *   The results of the status check. If a readiness check was also done,
    *   its results will be included.
    */
-  protected function runStatusCheck(Stage $stage, EventDispatcherInterface $event_dispatcher = NULL): array {
+  protected function runStatusCheck(StageBase $stage, EventDispatcherInterface $event_dispatcher = NULL): array {
     $event_dispatcher ??= \Drupal::service('event_dispatcher');
     try {
       $ignored_paths_event = new CollectIgnoredPathsEvent($stage);

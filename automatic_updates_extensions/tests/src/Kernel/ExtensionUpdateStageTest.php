@@ -4,15 +4,15 @@ declare(strict_types = 1);
 
 namespace Drupal\Tests\automatic_updates_extensions\Kernel;
 
-use Drupal\automatic_updates_extensions\ExtensionUpdater;
+use Drupal\automatic_updates_extensions\ExtensionUpdateStage;
 use Drupal\Tests\user\Traits\UserCreationTrait;
 
 /**
- * @coversDefaultClass \Drupal\automatic_updates_extensions\ExtensionUpdater
+ * @coversDefaultClass \Drupal\automatic_updates_extensions\ExtensionUpdateStage
  * @group automatic_updates_extensions
  * @internal
  */
-class ExtensionUpdaterTest extends AutomaticUpdatesExtensionsKernelTestBase {
+class ExtensionUpdateStageTest extends AutomaticUpdatesExtensionsKernelTestBase {
 
   use UserCreationTrait;
 
@@ -46,7 +46,7 @@ class ExtensionUpdaterTest extends AutomaticUpdatesExtensionsKernelTestBase {
    * Tests that correct versions are staged after calling ::begin().
    */
   public function testCorrectVersionsStaged(): void {
-    $id = $this->container->get(ExtensionUpdater::class)->begin([
+    $id = $this->container->get(ExtensionUpdateStage::class)->begin([
       'my_module' => '9.8.1',
       // Use a legacy version number to ensure they are converted to semantic
       // version numbers which will work with the drupal.org Composer facade.
@@ -61,7 +61,7 @@ class ExtensionUpdaterTest extends AutomaticUpdatesExtensionsKernelTestBase {
     // Keep using the user account we created.
     $this->setCurrentUser($user);
 
-    $extension_updater = $this->container->get(ExtensionUpdater::class);
+    $stage = $this->container->get(ExtensionUpdateStage::class);
 
     // Ensure that the target package versions are what we expect.
     $expected_versions = [
@@ -72,9 +72,9 @@ class ExtensionUpdaterTest extends AutomaticUpdatesExtensionsKernelTestBase {
         'drupal/my_dev_module' => '1.2.0-alpha1@alpha',
       ],
     ];
-    $this->assertSame($expected_versions, $extension_updater->claim($id)->getPackageVersions());
+    $this->assertSame($expected_versions, $stage->claim($id)->getPackageVersions());
 
-    // When we call ExtensionUpdater::stage(), the stored project versions
+    // When we call ExtensionUpdateStage::stage(), the stored project versions
     // should be read from state and passed to Composer Stager's Stager service,
     // in the form of a Composer command. This is done using
     // package_manager_bypass's invocation recorder, rather than a regular mock,
@@ -102,7 +102,7 @@ class ExtensionUpdaterTest extends AutomaticUpdatesExtensionsKernelTestBase {
         'drupal/my_dev_module:1.2.0-alpha1@alpha',
       ],
     ];
-    $extension_updater->stage();
+    $stage->stage();
 
     $actual_arguments = $this->container->get('package_manager.stager')
       ->getInvocationArguments();
@@ -120,7 +120,7 @@ class ExtensionUpdaterTest extends AutomaticUpdatesExtensionsKernelTestBase {
     $this->expectException(\InvalidArgumentException::class);
     $this->expectExceptionMessage("The project contrib_profile1 cannot be updated because updating install profiles is not supported.");
 
-    $this->container->get(ExtensionUpdater::class)
+    $this->container->get(ExtensionUpdateStage::class)
       ->begin([
         'contrib_profile1' => '1.1.0',
       ]);
@@ -132,7 +132,7 @@ class ExtensionUpdaterTest extends AutomaticUpdatesExtensionsKernelTestBase {
   public function testNoProjectsInBegin(): void {
     $this->expectException(\InvalidArgumentException::class);
     $this->expectExceptionMessage('No projects to begin the update');
-    $this->container->get(ExtensionUpdater::class)->begin([]);
+    $this->container->get(ExtensionUpdateStage::class)->begin([]);
   }
 
   /**
@@ -141,7 +141,7 @@ class ExtensionUpdaterTest extends AutomaticUpdatesExtensionsKernelTestBase {
   public function testUnknownDrupalProject(): void {
     $this->expectException(\InvalidArgumentException::class);
     $this->expectExceptionMessage("The project my_module_unknown is not a Drupal project known to Composer and cannot be updated.");
-    $this->container->get(ExtensionUpdater::class)->begin([
+    $this->container->get(ExtensionUpdateStage::class)->begin([
       'my_module_unknown' => '9.8.1',
     ]);
   }

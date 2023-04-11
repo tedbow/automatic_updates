@@ -6,7 +6,7 @@ namespace Drupal\automatic_updates\Validator;
 
 use Drupal\package_manager\Event\PreApplyEvent;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
-use Drupal\automatic_updates\CronUpdater;
+use Drupal\automatic_updates\CronUpdateStage;
 use Drupal\package_manager\Event\PreCreateEvent;
 use Drupal\package_manager\Event\PreOperationStageEvent;
 use Drupal\package_manager\Event\StatusCheckEvent;
@@ -33,7 +33,7 @@ final class XdebugValidator extends PackageManagerXdebugValidator implements Eve
     $warning = $this->checkForXdebug();
 
     if ($warning) {
-      if ($stage instanceof CronUpdater) {
+      if ($stage instanceof CronUpdateStage) {
         // Cron updates are not allowed if Xdebug is enabled.
         $event->addError([$this->t("Xdebug is enabled, currently Cron Updates are not allowed while it is enabled. If Xdebug is not disabled you will not receive security and other updates during cron.")]);
       }

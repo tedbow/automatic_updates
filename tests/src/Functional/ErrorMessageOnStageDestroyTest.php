@@ -4,7 +4,7 @@ declare(strict_types = 1);
 
 namespace Drupal\Tests\automatic_updates\Functional;
 
-use Drupal\automatic_updates\Updater;
+use Drupal\automatic_updates\UpdateStage;
 
 /**
  * Tests error message when the stage the user is interacting with is destroyed.
@@ -54,11 +54,11 @@ class ErrorMessageOnStageDestroyTest extends AutomaticUpdatesFunctionalTestBase 
     $page->pressButton('Update to 9.8.1');
     $this->checkForMetaRefresh();
     $this->assertUpdateReady('9.8.1');
-    $updater = $this->container->get(Updater::class);
+    $stage = $this->container->get(UpdateStage::class);
     $random_message = $this->randomString();
     // @see \Drupal\Tests\package_manager\Kernel\StageTest::testStoreDestroyInfo()
-    // @see \Drupal\automatic_updates\CronUpdater::performUpdate()
-    $updater->destroy(TRUE, t($random_message));
+    // @see \Drupal\automatic_updates\CronUpdateStage::performUpdate()
+    $stage->destroy(TRUE, t($random_message));
     $this->checkForMetaRefresh();
     $page->pressButton('Continue');
     $assert_session->pageTextContains($random_message);

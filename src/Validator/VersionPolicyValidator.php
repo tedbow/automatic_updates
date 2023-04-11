@@ -4,12 +4,12 @@ declare(strict_types = 1);
 
 namespace Drupal\automatic_updates\Validator;
 
-use Drupal\automatic_updates\CronUpdater;
+use Drupal\automatic_updates\CronUpdateStage;
 use Drupal\package_manager\ComposerInspector;
 use Drupal\package_manager\Event\StatusCheckEvent;
 use Drupal\package_manager\PathLocator;
 use Drupal\package_manager\ProjectInfo;
-use Drupal\automatic_updates\Updater;
+use Drupal\automatic_updates\UpdateStage;
 use Drupal\automatic_updates\Validator\VersionPolicy\ForbidDowngrade;
 use Drupal\automatic_updates\Validator\VersionPolicy\ForbidMinorUpdates;
 use Drupal\automatic_updates\Validator\VersionPolicy\MajorVersionMatch;
@@ -57,8 +57,8 @@ final class VersionPolicyValidator implements EventSubscriberInterface {
   /**
    * Validates a target version of Drupal core.
    *
-   * @param \Drupal\automatic_updates\Updater $updater
-   *   The updater which will perform the update.
+   * @param \Drupal\automatic_updates\UpdateStage $stage
+   *   The update stage which will perform the update.
    * @param string|null $target_version
    *   The target version of Drupal core, or NULL if it is not known.
    *
@@ -68,7 +68,7 @@ final class VersionPolicyValidator implements EventSubscriberInterface {
    *
    * @see \Drupal\automatic_updates\Validator\VersionPolicy\RuleBase::validate()
    */
-  public function validateVersion(Updater $updater, ?string $target_version): array {
+  public function validateVersion(UpdateStage $stage, ?string $target_version): array {
     // Check that the installed version of Drupal isn't a dev snapshot.
     $rules = [
       ForbidDevSnapshot::class,
@@ -85,10 +85,10 @@ final class VersionPolicyValidator implements EventSubscriberInterface {
     }
 
     // If this is a cron update, we may need to do additional checks.
-    if ($updater instanceof CronUpdater) {
-      $mode = $updater->getMode();
+    if ($stage instanceof CronUpdateStage) {
+      $mode = $stage->getMode();
 
-      if ($mode !== CronUpdater::DISABLED) {
+      if ($mode !== CronUpdateStage::DISABLED) {
         // If cron updates are enabled, the installed version must be stable;
         // no alphas, betas, or RCs.
         $rules[] = StableReleaseInstalled::class;
@@ -104,7 +104,7 @@ final class VersionPolicyValidator implements EventSubscriberInterface {
 
           // If only security updates are allowed during cron, the target
           // version must be a security release.
-          if ($mode === CronUpdater::SECURITY) {
+          if ($mode === CronUpdateStage::SECURITY) {
             $rules[] = TargetSecurityRelease::class;
           }
         }
@@ -117,7 +117,7 @@ final class VersionPolicyValidator implements EventSubscriberInterface {
     }
 
     $installed_version = $this->getInstalledVersion();
-    $available_releases = $this->getAvailableReleases($updater);
+    $available_releases = $this->getAvailableReleases($stage);
 
     // Invoke each rule in the order that they were added to $rules, stopping
     // when one returns error messages.
@@ -144,7 +144,7 @@ final class VersionPolicyValidator implements EventSubscriberInterface {
     $stage = $event->stage;
 
     // Only do these checks for automatic updates.
-    if (!$stage instanceof Updater) {
+    if (!$stage instanceof UpdateStage) {
       return;
     }
     $target_version = $this->getTargetVersion($event);
@@ -181,17 +181,17 @@ final class VersionPolicyValidator implements EventSubscriberInterface {
    * @throws \LogicException
    *   Thrown if the target version cannot be determined due to unexpected
    *   conditions. This can happen if, during a stage life cycle event (i.e.,
-   *   NOT a status check), the event or updater does not have a list of desired
-   *   package versions, or the list of package versions does not include any
-   *   Drupal core packages.
+   *   NOT a status check), the event or update stage does not have a list of
+   *   desired package versions, or the list of package versions does not
+   *   include any Drupal core packages.
    */
   private function getTargetVersion(StageEvent $event): ?string {
-    $updater = $event->stage;
+    $stage = $event->stage;
 
     // If we're not doing a status check, we expect the stage to have been
     // created, and the requested package versions recorded.
     if (!$event instanceof StatusCheckEvent) {
-      $package_versions = $updater->getPackageVersions()['production'];
+      $package_versions = $stage->getPackageVersions()['production'];
     }
 
     $unknown_target = new \LogicException('The target version of Drupal core could not be determined.');
@@ -207,8 +207,8 @@ final class VersionPolicyValidator implements EventSubscriberInterface {
       }
     }
     elseif ($event instanceof StatusCheckEvent) {
-      if ($updater instanceof CronUpdater) {
-        $target_release = $updater->getTargetRelease();
+      if ($stage instanceof CronUpdateStage) {
+        $target_release = $stage->getTargetRelease();
         if ($target_release) {
           return $target_release->getVersion();
         }
@@ -220,23 +220,23 @@ final class VersionPolicyValidator implements EventSubscriberInterface {
   }
 
   /**
-   * Returns the available releases of Drupal core for a given updater.
+   * Returns the available releases of Drupal core for a given update stage.
    *
-   * @param \Drupal\automatic_updates\Updater $updater
-   *   The updater which will perform the update.
+   * @param \Drupal\automatic_updates\UpdateStage $stage
+   *   The update stage which will perform the update.
    *
    * @return \Drupal\update\ProjectRelease[]
    *   The available releases of Drupal core, keyed by version number and in
    *   descending order (i.e., newest first). Will be in ascending order (i.e.,
-   *   oldest first) if $updater is the cron updater.
+   *   oldest first) if $stage is the cron update stage.
    *
    * @see \Drupal\package_manager\ProjectInfo::getInstallableReleases()
    */
-  private function getAvailableReleases(Updater $updater): array {
+  private function getAvailableReleases(UpdateStage $stage): array {
     $project_info = new ProjectInfo('drupal');
     $available_releases = $project_info->getInstallableReleases() ?? [];
 
-    if ($updater instanceof CronUpdater) {
+    if ($stage instanceof CronUpdateStage) {
       $available_releases = array_reverse($available_releases);
     }
     return $available_releases;

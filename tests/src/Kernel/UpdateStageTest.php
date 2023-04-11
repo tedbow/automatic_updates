@@ -4,7 +4,7 @@ declare(strict_types = 1);
 
 namespace Drupal\Tests\automatic_updates\Kernel;
 
-use Drupal\automatic_updates\Updater;
+use Drupal\automatic_updates\UpdateStage;
 use Drupal\package_manager\Exception\ApplyFailedException;
 use Drupal\package_manager\Exception\StageException;
 use Drupal\package_manager_bypass\LoggingCommitter;
@@ -12,11 +12,11 @@ use Drupal\Tests\user\Traits\UserCreationTrait;
 use PhpTuf\ComposerStager\Domain\Exception\InvalidArgumentException;
 
 /**
- * @coversDefaultClass \Drupal\automatic_updates\Updater
+ * @coversDefaultClass \Drupal\automatic_updates\UpdateStage
  * @group automatic_updates
  * @internal
  */
-class UpdaterTest extends AutomaticUpdatesKernelTestBase {
+class UpdateStageTest extends AutomaticUpdatesKernelTestBase {
 
   use UserCreationTrait;
 
@@ -52,7 +52,7 @@ class UpdaterTest extends AutomaticUpdatesKernelTestBase {
     $user = $this->createUser([], NULL, TRUE, ['uid' => 2]);
     $this->setCurrentUser($user);
 
-    $id = $this->container->get(Updater::class)->begin([
+    $id = $this->container->get(UpdateStage::class)->begin([
       'drupal' => '9.8.1',
     ]);
     // Rebuild the container to ensure the package versions are persisted.
@@ -63,7 +63,7 @@ class UpdaterTest extends AutomaticUpdatesKernelTestBase {
     // Keep using the user account we created.
     $this->setCurrentUser($user);
 
-    $updater = $this->container->get(Updater::class);
+    $stage = $this->container->get(UpdateStage::class);
 
     // Ensure that the target package versions are what we expect.
     $expected_versions = [
@@ -74,9 +74,9 @@ class UpdaterTest extends AutomaticUpdatesKernelTestBase {
         'drupal/core-dev' => '9.8.1',
       ],
     ];
-    $this->assertSame($expected_versions, $updater->claim($id)->getPackageVersions());
+    $this->assertSame($expected_versions, $stage->claim($id)->getPackageVersions());
 
-    // When we call Updater::stage(), the stored project versions should be
+    // When we call UpdateStage::stage(), the stored project versions should be
     // read from state and passed to Composer Stager's Stager service, in the
     // form of a Composer command. This is done using package_manager_bypass's
     // invocation recorder, rather than a regular mock, in order to test that
@@ -104,7 +104,7 @@ class UpdaterTest extends AutomaticUpdatesKernelTestBase {
         'drupal/core-dev:9.8.1',
       ],
     ];
-    $updater->stage();
+    $stage->stage();
 
     $actual_arguments = $this->container->get('package_manager.stager')
       ->getInvocationArguments();
@@ -123,7 +123,7 @@ class UpdaterTest extends AutomaticUpdatesKernelTestBase {
   public function testInvalidProjectVersions(array $project_versions): void {
     $this->expectException(\InvalidArgumentException::class);
     $this->expectExceptionMessage('Currently only updates to Drupal core are supported.');
-    $this->container->get(Updater::class)->begin($project_versions);
+    $this->container->get(UpdateStage::class)->begin($project_versions);
   }
 
   /**
@@ -176,11 +176,11 @@ class UpdaterTest extends AutomaticUpdatesKernelTestBase {
   public function testCommitException(string $thrown_class, string $expected_class = NULL): void {
     $this->getStageFixtureManipulator()->setCorePackageVersion('9.8.1');
 
-    $updater = $this->container->get(Updater::class);
-    $updater->begin([
+    $stage = $this->container->get(UpdateStage::class);
+    $stage->begin([
       'drupal' => '9.8.1',
     ]);
-    $updater->stage();
+    $stage->stage();
     $thrown_message = 'A very bad thing happened';
     LoggingCommitter::setException(new $thrown_class($thrown_message, 123));
     $this->expectException($expected_class);
@@ -189,15 +189,15 @@ class UpdaterTest extends AutomaticUpdatesKernelTestBase {
       : $thrown_message;
     $this->expectExceptionMessage($expected_message);
     $this->expectExceptionCode(123);
-    $updater->apply();
+    $stage->apply();
   }
 
   /**
-   * Tests that setLogger is called on the updater service.
+   * Tests that setLogger is called on the update stage service.
    */
   public function testLoggerIsSetByContainer(): void {
-    $updater_method_calls = $this->container->getDefinition('automatic_updates.updater')->getMethodCalls();
-    $this->assertSame('setLogger', $updater_method_calls[0][0]);
+    $stage_method_calls = $this->container->getDefinition('automatic_updates.update_stage')->getMethodCalls();
+    $this->assertSame('setLogger', $stage_method_calls[0][0]);
   }
 
 }

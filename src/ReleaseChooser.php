@@ -37,16 +37,16 @@ final class ReleaseChooser {
   /**
    * Returns the releases that are installable.
    *
-   * @param \Drupal\automatic_updates\Updater $updater
-   *   The updater that will be used to install the releases.
+   * @param \Drupal\automatic_updates\UpdateStage $stage
+   *   The update stage that will be used to install the releases.
    *
    * @return \Drupal\update\ProjectRelease[]
-   *   The releases that are installable by the given updater, according to the
-   *   version validator service.
+   *   The releases that are installable by the given update stage, according to
+   *   the version validator service.
    */
-  protected function getInstallableReleases(Updater $updater): array {
-    $filter = function (string $version) use ($updater): bool {
-      return empty($this->versionPolicyValidator->validateVersion($updater, $version));
+  protected function getInstallableReleases(UpdateStage $stage): array {
+    $filter = function (string $version) use ($stage): bool {
+      return empty($this->versionPolicyValidator->validateVersion($stage, $version));
     };
     return array_filter(
       $this->projectInfo->getInstallableReleases(),
@@ -58,8 +58,8 @@ final class ReleaseChooser {
   /**
    * Gets the most recent release in the same minor as a specified version.
    *
-   * @param \Drupal\automatic_updates\Updater $updater
-   *   The updater that will be used to install the release.
+   * @param \Drupal\automatic_updates\UpdateStage $stage
+   *   The update stage that will be used to install the release.
    * @param string $version
    *   The full semantic version number, which must include a patch version.
    *
@@ -69,11 +69,11 @@ final class ReleaseChooser {
    * @throws \InvalidArgumentException
    *   If the given semantic version number does not contain a patch version.
    */
-  public function getMostRecentReleaseInMinor(Updater $updater, string $version): ?ProjectRelease {
+  public function getMostRecentReleaseInMinor(UpdateStage $stage, string $version): ?ProjectRelease {
     if (static::getPatchVersion($version) === NULL) {
       throw new \InvalidArgumentException("The version number $version does not contain a patch version");
     }
-    $releases = $this->getInstallableReleases($updater);
+    $releases = $this->getInstallableReleases($stage);
     foreach ($releases as $release) {
       // Checks if the release is in the same minor as the currently installed
       // version. For example, if the current version is 9.8.0 then the
@@ -102,15 +102,15 @@ final class ReleaseChooser {
    * This will only return a release if it passes the ::isValidVersion() method
    * of the version validator service injected into this class.
    *
-   * @param \Drupal\automatic_updates\Updater $updater
-   *   The updater which will install the release.
+   * @param \Drupal\automatic_updates\UpdateStage $stage
+   *   The update stage which will install the release.
    *
    * @return \Drupal\update\ProjectRelease|null
    *   The latest release in the currently installed minor, if any, otherwise
    *   NULL.
    */
-  public function getLatestInInstalledMinor(Updater $updater): ?ProjectRelease {
-    return $this->getMostRecentReleaseInMinor($updater, $this->getInstalledVersion());
+  public function getLatestInInstalledMinor(UpdateStage $stage): ?ProjectRelease {
+    return $this->getMostRecentReleaseInMinor($stage, $this->getInstalledVersion());
   }
 
   /**
@@ -119,16 +119,16 @@ final class ReleaseChooser {
    * This will only return a release if it passes the ::isValidVersion() method
    * of the version validator service injected into this class.
    *
-   * @param \Drupal\automatic_updates\Updater $updater
-   *   The updater which will install the release.
+   * @param \Drupal\automatic_updates\UpdateStage $stage
+   *   The update stage which will install the release.
    *
    * @return \Drupal\update\ProjectRelease|null
    *   The latest release in the next minor, if any, otherwise NULL.
    */
-  public function getLatestInNextMinor(Updater $updater): ?ProjectRelease {
+  public function getLatestInNextMinor(UpdateStage $stage): ?ProjectRelease {
     $installed_version = ExtensionVersion::createFromVersionString($this->getInstalledVersion());
     $next_minor = $installed_version->getMajorVersion() . '.' . (((int) $installed_version->getMinorVersion()) + 1) . '.0';
-    return $this->getMostRecentReleaseInMinor($updater, $next_minor);
+    return $this->getMostRecentReleaseInMinor($stage, $next_minor);
   }
 
 }

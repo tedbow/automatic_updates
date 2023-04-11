@@ -38,7 +38,7 @@ class StageEventsTest extends PackageManagerKernelTestBase implements EventSubsc
   /**
    * The stage under test.
    *
-   * @var \Drupal\package_manager\Stage
+   * @var \Drupal\package_manager\StageBase
    */
   private $stage;
 

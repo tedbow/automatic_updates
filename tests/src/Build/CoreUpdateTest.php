@@ -5,8 +5,8 @@ declare(strict_types = 1);
 namespace Drupal\Tests\automatic_updates\Build;
 
 use Behat\Mink\Element\DocumentElement;
-use Drupal\automatic_updates\CronUpdater;
-use Drupal\automatic_updates\Updater;
+use Drupal\automatic_updates\CronUpdateStage;
+use Drupal\automatic_updates\UpdateStage;
 use Drupal\Composer\Composer;
 use Drupal\package_manager\Event\PostApplyEvent;
 use Drupal\package_manager\Event\PostCreateEvent;
@@ -113,7 +113,7 @@ class CoreUpdateTest extends UpdateTestBase {
     $update_status_code = $session->getStatusCode();
     $file_contents = $session->getPage()->getContent();
     $this->assertExpectedStageEventsFired(
-      Updater::class,
+      UpdateStage::class,
       [
         // ::assertReadOnlyFileSystemError attempts to start an update
         // multiple times so 'PreCreateEvent' will be fired multiple times.
@@ -157,7 +157,7 @@ class CoreUpdateTest extends UpdateTestBase {
     $assert_session->pageTextContains('Update complete!');
     $assert_session->pageTextContains('Up to date');
     $assert_session->pageTextNotContains('There is a security update available for your version of Drupal.');
-    $this->assertExpectedStageEventsFired(Updater::class);
+    $this->assertExpectedStageEventsFired(UpdateStage::class);
     $this->assertUpdateSuccessful('9.8.1');
   }
 
@@ -186,7 +186,7 @@ class CoreUpdateTest extends UpdateTestBase {
     $assert_session = $mink->assertSession();
     $page->clickLink('Run cron');
     $cron_run_status_code = $mink->getSession()->getStatusCode();
-    $this->assertExpectedStageEventsFired(CronUpdater::class);
+    $this->assertExpectedStageEventsFired(CronUpdateStage::class);
     $this->assertSame(200, $cron_run_status_code);
 
     // There should be log messages, but no errors or warnings should have been

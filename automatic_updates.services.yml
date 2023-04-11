@@ -18,16 +18,16 @@ services:
   automatic_updates.status_check_mailer:
     class: Drupal\automatic_updates\StatusCheckMailer
   Drupal\automatic_updates\StatusCheckMailer: '@automatic_updates.status_check_mailer'
-  automatic_updates.updater:
-    class: Drupal\automatic_updates\Updater
+  automatic_updates.update_stage:
+    class: Drupal\automatic_updates\UpdateStage
     calls:
       - ['setLogger', ['@logger.channel.automatic_updates']]
-  Drupal\automatic_updates\Updater: '@automatic_updates.updater'
-  automatic_updates.cron_updater:
-    class: Drupal\automatic_updates\CronUpdater
+  Drupal\automatic_updates\UpdateStage: '@automatic_updates.update_stage'
+  automatic_updates.cron_update_stage:
+    class: Drupal\automatic_updates\CronUpdateStage
     calls:
       - ['setLogger', ['@logger.channel.automatic_updates']]
-  Drupal\automatic_updates\CronUpdater: '@automatic_updates.cron_updater'
+  Drupal\automatic_updates\CronUpdateStage: '@automatic_updates.cron_update_stage'
   automatic_updates.requested_update_validator:
     class: Drupal\automatic_updates\Validator\RequestedUpdateValidator
     tags:

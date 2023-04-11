@@ -7,7 +7,7 @@ namespace Drupal\automatic_updates_extensions\Validator;
 use Drupal\package_manager\ComposerInspector;
 use Drupal\package_manager\PathLocator;
 use Drupal\package_manager\ProjectInfo;
-use Drupal\automatic_updates_extensions\ExtensionUpdater;
+use Drupal\automatic_updates_extensions\ExtensionUpdateStage;
 use Drupal\package_manager\LegacyVersionUtility;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\package_manager\Event\PreCreateEvent;
@@ -89,7 +89,7 @@ final class UpdateReleaseValidator implements EventSubscriberInterface {
   public function checkRelease(PreCreateEvent $event): void {
     $stage = $event->stage;
     // This check only works with Automatic Updates Extensions.
-    if (!$stage instanceof ExtensionUpdater) {
+    if (!$stage instanceof ExtensionUpdateStage) {
       return;
     }
 

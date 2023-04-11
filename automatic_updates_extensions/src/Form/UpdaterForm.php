@@ -6,7 +6,7 @@ namespace Drupal\automatic_updates_extensions\Form;
 
 use Drupal\automatic_updates\Form\UpdateFormBase;
 use Drupal\automatic_updates_extensions\BatchProcessor;
-use Drupal\automatic_updates_extensions\ExtensionUpdater;
+use Drupal\automatic_updates_extensions\ExtensionUpdateStage;
 use Drupal\Core\Batch\BatchBuilder;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\State\StateInterface;
@@ -37,7 +37,7 @@ final class UpdaterForm extends UpdateFormBase {
    */
   public static function create(ContainerInterface $container) {
     return new static(
-      $container->get('automatic_updates_extensions.updater'),
+      $container->get('automatic_updates_extensions.update_stage'),
       $container->get('event_dispatcher'),
       $container->get('renderer'),
       $container->get('state'),
@@ -50,8 +50,8 @@ final class UpdaterForm extends UpdateFormBase {
   /**
    * Constructs a new UpdaterForm object.
    *
-   * @param \Drupal\automatic_updates_extensions\ExtensionUpdater $extensionUpdater
-   *   The extension updater service.
+   * @param \Drupal\automatic_updates_extensions\ExtensionUpdateStage $stage
+   *   The extension update stage service.
    * @param \Symfony\Component\EventDispatcher\EventDispatcherInterface $eventDispatcher
    *   The extension event dispatcher service.
    * @param \Drupal\Core\Render\RendererInterface $renderer
@@ -66,7 +66,7 @@ final class UpdaterForm extends UpdateFormBase {
    *   The path locator service.
    */
   public function __construct(
-    private ExtensionUpdater $extensionUpdater,
+    private ExtensionUpdateStage $stage,
     private EventDispatcherInterface $eventDispatcher,
     private RendererInterface $renderer,
     private StateInterface $state,
@@ -139,7 +139,7 @@ final class UpdaterForm extends UpdateFormBase {
       $results = [];
     }
     else {
-      $results = $this->runStatusCheck($this->extensionUpdater, $this->eventDispatcher);
+      $results = $this->runStatusCheck($this->stage, $this->eventDispatcher);
     }
     $this->displayResults($results, $this->renderer);
     $security_level = ValidationResult::getOverallSeverity($results);
@@ -166,7 +166,7 @@ final class UpdaterForm extends UpdateFormBase {
    */
   protected function actions(FormStateInterface $form_state): array {
     $actions = ['#type' => 'actions'];
-    if (!$this->extensionUpdater->isAvailable()) {
+    if (!$this->stage->isAvailable()) {
       // If the form has been submitted do not display this error message
       // because ::deleteExistingUpdate() may run on submit. The message will
       // still be displayed on form build if needed.
@@ -192,7 +192,7 @@ final class UpdaterForm extends UpdateFormBase {
    * Submit function to delete an existing in-progress update.
    */
   public function deleteExistingUpdate(): void {
-    $this->extensionUpdater->destroy(TRUE);
+    $this->stage->destroy(TRUE);
     $this->messenger()->addMessage($this->t("Staged update deleted"));
   }
 

@@ -4,7 +4,7 @@ declare(strict_types = 1);
 
 namespace Drupal\Tests\automatic_updates\Kernel\StatusCheck;
 
-use Drupal\automatic_updates\CronUpdater;
+use Drupal\automatic_updates\CronUpdateStage;
 use Drupal\Core\Logger\RfcLogLevel;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\package_manager\StatusCheckTrait;
@@ -40,7 +40,7 @@ class XdebugValidatorTest extends AutomaticUpdatesKernelTestBase {
     $config = $this->config('automatic_updates.settings');
     // If cron updates are disabled, the status check message should only be
     // a warning.
-    $config->set('cron', CronUpdater::DISABLED)->save();
+    $config->set('cron', CronUpdateStage::DISABLED)->save();
 
     // Tests that other projects which depend on Package manager also get the
     // warning.
@@ -58,8 +58,8 @@ class XdebugValidatorTest extends AutomaticUpdatesKernelTestBase {
     $this->assertCheckerResultsFromManager([$result], TRUE);
 
     // The parent class' setUp() method simulates an available security update,
-    // so ensure that the cron updater will try to update to it.
-    $config->set('cron', CronUpdater::SECURITY)->save();
+    // so ensure that the cron update stage will try to update to it.
+    $config->set('cron', CronUpdateStage::SECURITY)->save();
 
     // If cron updates are enabled the status check message should be an
     // error.
@@ -89,8 +89,8 @@ class XdebugValidatorTest extends AutomaticUpdatesKernelTestBase {
     $message = "Xdebug is enabled, currently Cron Updates are not allowed while it is enabled. If Xdebug is not disabled you will not receive security and other updates during cron.";
 
     // The parent class' setUp() method simulates an available security
-    // update, so ensure that the cron updater will try to update to it.
-    $this->config('automatic_updates.settings')->set('cron', CronUpdater::SECURITY)->save();
+    // update, so ensure that the cron update stage will try to update to it.
+    $this->config('automatic_updates.settings')->set('cron', CronUpdateStage::SECURITY)->save();
 
     // Trying to do the update during cron should fail with an error.
     $logger = new TestLogger();

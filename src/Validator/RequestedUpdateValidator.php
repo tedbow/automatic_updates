@@ -5,7 +5,7 @@ declare(strict_types = 1);
 namespace Drupal\automatic_updates\Validator;
 
 use Composer\Semver\Semver;
-use Drupal\automatic_updates\Updater;
+use Drupal\automatic_updates\UpdateStage;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\package_manager\ComposerInspector;
 use Drupal\package_manager\Event\PreApplyEvent;
@@ -40,7 +40,7 @@ class RequestedUpdateValidator implements EventSubscriberInterface {
    */
   public function checkRequestedStagedVersion(PreApplyEvent $event): void {
     $stage = $event->stage;
-    if (!($stage instanceof Updater)) {
+    if (!($stage instanceof UpdateStage)) {
       return;
     }
     $requested_package_versions = $stage->getPackageVersions();

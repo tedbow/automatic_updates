@@ -10,7 +10,7 @@ use Drupal\package_manager\Exception\StageFailureMarkerException;
 use Drupal\package_manager\FailureMarker;
 use Drupal\package_manager\ProjectInfo;
 use Drupal\automatic_updates\ReleaseChooser;
-use Drupal\automatic_updates\Updater;
+use Drupal\automatic_updates\UpdateStage;
 use Drupal\update\ProjectRelease;
 use Drupal\Core\Batch\BatchBuilder;
 use Drupal\Core\Extension\ExtensionVersion;
@@ -41,8 +41,8 @@ final class UpdaterForm extends UpdateFormBase {
    *
    * @param \Drupal\Core\State\StateInterface $state
    *   The state service.
-   * @param \Drupal\automatic_updates\Updater $updater
-   *   The updater service.
+   * @param \Drupal\automatic_updates\UpdateStage $stage
+   *   The update stage service.
    * @param \Symfony\Component\EventDispatcher\EventDispatcherInterface $eventDispatcher
    *   The event dispatcher service.
    * @param \Drupal\automatic_updates\ReleaseChooser $releaseChooser
@@ -56,7 +56,7 @@ final class UpdaterForm extends UpdateFormBase {
    */
   public function __construct(
     protected StateInterface $state,
-    protected Updater $updater,
+    protected UpdateStage $stage,
     protected EventDispatcherInterface $eventDispatcher,
     protected ReleaseChooser $releaseChooser,
     protected RendererInterface $renderer,
@@ -77,7 +77,7 @@ final class UpdaterForm extends UpdateFormBase {
   public static function create(ContainerInterface $container) {
     return new static(
       $container->get('state'),
-      $container->get('automatic_updates.updater'),
+      $container->get('automatic_updates.update_stage'),
       $container->get('event_dispatcher'),
       $container->get('automatic_updates.release_chooser'),
       $container->get('renderer'),
@@ -97,7 +97,7 @@ final class UpdaterForm extends UpdateFormBase {
       $this->messenger()->addError($e->getMessage());
       return $form;
     }
-    if ($this->updater->isAvailable()) {
+    if ($this->stage->isAvailable()) {
       $stage_exists = FALSE;
     }
     else {
@@ -109,7 +109,7 @@ final class UpdaterForm extends UpdateFormBase {
       $stage_id = $this->getRequest()->getSession()->get(BatchProcessor::STAGE_ID_SESSION_KEY);
       if ($stage_id) {
         try {
-          $this->updater->claim($stage_id);
+          $this->stage->claim($stage_id);
           return $this->redirect('automatic_updates.confirmation_page', [
             'stage_id' => $stage_id,
           ]);
@@ -134,7 +134,7 @@ final class UpdaterForm extends UpdateFormBase {
       foreach ($support_branches as $support_branch) {
         $support_branch_extension_version = ExtensionVersion::createFromSupportBranch($support_branch);
         if ($support_branch_extension_version->getMajorVersion() === $installed_version->getMajorVersion() && $support_branch_extension_version->getMinorVersion() >= $installed_version->getMinorVersion()) {
-          $recent_release_in_minor = $this->releaseChooser->getMostRecentReleaseInMinor($this->updater, $support_branch . '0');
+          $recent_release_in_minor = $this->releaseChooser->getMostRecentReleaseInMinor($this->stage, $support_branch . '0');
           if ($recent_release_in_minor) {
             $releases[$support_branch] = $recent_release_in_minor;
           }
@@ -152,7 +152,7 @@ final class UpdaterForm extends UpdateFormBase {
       $results = [];
     }
     else {
-      $results = $this->runStatusCheck($this->updater, $this->eventDispatcher);
+      $results = $this->runStatusCheck($this->stage, $this->eventDispatcher);
     }
     $this->displayResults($results, $this->renderer);
     $project = $project_info->getProjectInfo();
@@ -323,7 +323,7 @@ final class UpdaterForm extends UpdateFormBase {
    */
   public function deleteExistingUpdate(): void {
     try {
-      $this->updater->destroy(TRUE);
+      $this->stage->destroy(TRUE);
       $this->messenger()->addMessage($this->t("Staged update deleted"));
     }
     catch (StageException $e) {

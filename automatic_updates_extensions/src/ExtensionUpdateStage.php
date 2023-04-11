@@ -12,7 +12,7 @@ use Drupal\package_manager\ComposerInspector;
 use Drupal\package_manager\FailureMarker;
 use Drupal\package_manager\LegacyVersionUtility;
 use Drupal\package_manager\PathLocator;
-use Drupal\package_manager\Stage;
+use Drupal\package_manager\StageBase;
 use PhpTuf\ComposerStager\Domain\Core\Beginner\BeginnerInterface;
 use PhpTuf\ComposerStager\Domain\Core\Committer\CommitterInterface;
 use PhpTuf\ComposerStager\Domain\Core\Stager\StagerInterface;
@@ -26,10 +26,10 @@ use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
  *   This class is an internal part of the module's update handling and
  *   should not be used by external code.
  */
-class ExtensionUpdater extends Stage {
+class ExtensionUpdateStage extends StageBase {
 
   /**
-   * Constructs a new ExtensionUpdater object.
+   * Constructs a new ExtensionUpdateStage object.
    *
    * @param \Drupal\package_manager\ComposerInspector $composerInspector
    *   The Composer inspector service.

@@ -19,7 +19,7 @@ use Drupal\package_manager\FailureMarker;
 use Drupal\package_manager\PathLocator;
 use Drupal\package_manager\StatusCheckTrait;
 use Drupal\package_manager\Validator\DiskSpaceValidator;
-use Drupal\package_manager\Stage;
+use Drupal\package_manager\StageBase;
 use Drupal\system\SystemManager;
 use Drupal\Tests\package_manager\Traits\AssertPreconditionsTrait;
 use Drupal\Tests\package_manager\Traits\FixtureManipulatorTrait;
@@ -193,10 +193,10 @@ abstract class PackageManagerKernelTestBase extends KernelTestBase {
    *   (optional) The class of the event which should return the results. Must
    *   be passed if $expected_results is not empty.
    *
-   * @return \Drupal\package_manager\Stage
+   * @return \Drupal\package_manager\StageBase
    *   The stage that was used to collect the validation results.
    */
-  protected function assertResults(array $expected_results, string $event_class = NULL): Stage {
+  protected function assertResults(array $expected_results, string $event_class = NULL): StageBase {
     $stage = $this->createStage();
 
     try {
@@ -226,7 +226,7 @@ abstract class PackageManagerKernelTestBase extends KernelTestBase {
    *   (optional) The test stage to use to create the status check event. If
    *   none is provided a new stage will be created.
    */
-  protected function assertStatusCheckResults(array $expected_results, Stage $stage = NULL): void {
+  protected function assertStatusCheckResults(array $expected_results, StageBase $stage = NULL): void {
     $actual_results = $this->runStatusCheck($stage ?? $this->createStage(), $this->container->get('event_dispatcher'));
     $this->assertValidationResultsEqual($expected_results, $actual_results);
   }
@@ -445,13 +445,13 @@ abstract class PackageManagerKernelTestBase extends KernelTestBase {
    * @param string $event_class
    *   (optional) The event which raised the exception. Defaults to
    *   PreCreateEvent.
-   * @param \Drupal\package_manager\Stage $stage
+   * @param \Drupal\package_manager\StageBase $stage
    *   (optional) The stage which caused the exception.
    *
    * @return \Drupal\package_manager\Exception\StageEventException
    *   An exception with the given validation results.
    */
-  protected function createStageEventExceptionFromResults(array $expected_results, string $event_class = PreCreateEvent::class, Stage $stage = NULL): StageEventException {
+  protected function createStageEventExceptionFromResults(array $expected_results, string $event_class = PreCreateEvent::class, StageBase $stage = NULL): StageEventException {
     $event = new $event_class($stage ?? $this->createStage(), []);
 
     foreach ($expected_results as $result) {
@@ -467,7 +467,7 @@ abstract class PackageManagerKernelTestBase extends KernelTestBase {
 /**
  * Defines a stage specifically for testing purposes.
  */
-class TestStage extends Stage {
+class TestStage extends StageBase {
 
   /**
    * {@inheritdoc}

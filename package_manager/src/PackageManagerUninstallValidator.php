@@ -27,7 +27,7 @@ final class PackageManagerUninstallValidator implements ModuleUninstallValidator
    * {@inheritdoc}
    */
   public function validate($module) {
-    $stage = new Stage(
+    $stage = new class(
       $this->container->get('package_manager.path_locator'),
       $this->container->get('package_manager.beginner'),
       $this->container->get('package_manager.stager'),
@@ -37,8 +37,7 @@ final class PackageManagerUninstallValidator implements ModuleUninstallValidator
       $this->container->get('tempstore.shared'),
       $this->container->get('datetime.time'),
       $this->container->get(PathFactoryInterface::class),
-      $this->container->get('package_manager.failure_marker')
-    );
+      $this->container->get('package_manager.failure_marker')) extends StageBase {};
     if ($stage->isAvailable() || !$stage->isApplying()) {
       return [];
     }

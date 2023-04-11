@@ -4,7 +4,7 @@ declare(strict_types = 1);
 
 namespace Drupal\automatic_updates\Validation;
 
-use Drupal\automatic_updates\CronUpdater;
+use Drupal\automatic_updates\CronUpdateStage;
 use Drupal\Core\DependencyInjection\ContainerInjectionInterface;
 use Drupal\Core\Messenger\MessengerInterface;
 use Drupal\Core\Messenger\MessengerTrait;
@@ -45,8 +45,8 @@ final class AdminStatusCheckMessages implements ContainerInjectionInterface {
    *   The current user.
    * @param \Drupal\Core\Routing\CurrentRouteMatch $currentRouteMatch
    *   The current route match.
-   * @param \Drupal\automatic_updates\CronUpdater $cronUpdater
-   *   The cron updater service.
+   * @param \Drupal\automatic_updates\CronUpdateStage $stage
+   *   The cron update stage service.
    * @param \Drupal\Core\Render\RendererInterface $renderer
    *   The renderer service.
    */
@@ -55,7 +55,7 @@ final class AdminStatusCheckMessages implements ContainerInjectionInterface {
     protected AdminContext $adminContext,
     protected AccountProxyInterface $currentUser,
     protected CurrentRouteMatch $currentRouteMatch,
-    protected CronUpdater $cronUpdater,
+    protected CronUpdateStage $stage,
     protected RendererInterface $renderer
   ) {}
 
@@ -68,7 +68,7 @@ final class AdminStatusCheckMessages implements ContainerInjectionInterface {
       $container->get('router.admin_context'),
       $container->get('current_user'),
       $container->get('current_route_match'),
-      $container->get('automatic_updates.cron_updater'),
+      $container->get('automatic_updates.cron_update_stage'),
       $container->get('renderer')
     );
   }
@@ -106,7 +106,7 @@ final class AdminStatusCheckMessages implements ContainerInjectionInterface {
   protected function displayResultsOnCurrentPage(): bool {
     // If updates will not run during cron then we don't need to show the
     // status checks on admin pages.
-    if ($this->cronUpdater->getMode() === CronUpdater::DISABLED) {
+    if ($this->stage->getMode() === CronUpdateStage::DISABLED) {
       return FALSE;
     }
 

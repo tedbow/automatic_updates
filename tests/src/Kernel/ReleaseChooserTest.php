@@ -4,9 +4,9 @@ declare(strict_types = 1);
 
 namespace Drupal\Tests\automatic_updates\Kernel;
 
-use Drupal\automatic_updates\CronUpdater;
+use Drupal\automatic_updates\CronUpdateStage;
 use Drupal\automatic_updates\ReleaseChooser;
-use Drupal\automatic_updates\Updater;
+use Drupal\automatic_updates\UpdateStage;
 use Drupal\Core\Extension\ExtensionVersion;
 use Drupal\update\ProjectRelease;
 
@@ -41,84 +41,84 @@ class ReleaseChooserTest extends AutomaticUpdatesKernelTestBase {
   public function providerReleases(): array {
     return [
       'installed 9.8.0, no minor support' => [
-        'updater' => Updater::class,
+        'stage' => UpdateStage::class,
         'minor_support' => FALSE,
         'installed_version' => '9.8.0',
         'current_minor' => '9.8.2',
         'next_minor' => NULL,
       ],
       'installed 9.8.0, minor support' => [
-        'updater' => Updater::class,
+        'stage' => UpdateStage::class,
         'minor_support' => TRUE,
         'installed_version' => '9.8.0',
         'current_minor' => '9.8.2',
         'next_minor' => NULL,
       ],
       'installed 9.7.0, no minor support' => [
-        'updater' => Updater::class,
+        'stage' => UpdateStage::class,
         'minor_support' => FALSE,
         'installed_version' => '9.7.0',
         'current_minor' => '9.7.1',
         'next_minor' => NULL,
       ],
       'installed 9.7.0, minor support' => [
-        'updater' => Updater::class,
+        'stage' => UpdateStage::class,
         'minor_support' => TRUE,
         'installed_version' => '9.7.0',
         'current_minor' => '9.7.1',
         'next_minor' => '9.8.2',
       ],
       'installed 9.7.2, no minor support' => [
-        'updater' => Updater::class,
+        'stage' => UpdateStage::class,
         'minor_support' => FALSE,
         'installed_version' => '9.7.2',
         'current_minor' => NULL,
         'next_minor' => NULL,
       ],
       'installed 9.7.2, minor support' => [
-        'updater' => Updater::class,
+        'stage' => UpdateStage::class,
         'minor_support' => TRUE,
         'installed_version' => '9.7.2',
         'current_minor' => NULL,
         'next_minor' => '9.8.2',
       ],
       'cron, installed 9.8.0, no minor support' => [
-        'updater' => CronUpdater::class,
+        'stage' => CronUpdateStage::class,
         'minor_support' => FALSE,
         'installed_version' => '9.8.0',
         'current_minor' => '9.8.1',
         'next_minor' => NULL,
       ],
       'cron, installed 9.8.0, minor support' => [
-        'updater' => CronUpdater::class,
+        'stage' => CronUpdateStage::class,
         'minor_support' => TRUE,
         'installed_version' => '9.8.0',
         'current_minor' => '9.8.1',
         'next_minor' => NULL,
       ],
       'cron, installed 9.7.0, no minor support' => [
-        'updater' => CronUpdater::class,
+        'stage' => CronUpdateStage::class,
         'minor_support' => FALSE,
         'installed_version' => '9.7.0',
         'current_minor' => '9.7.1',
         'next_minor' => NULL,
       ],
       'cron, installed 9.7.0, minor support' => [
-        'updater' => CronUpdater::class,
+        'stage' => CronUpdateStage::class,
         'minor_support' => TRUE,
         'installed_version' => '9.7.0',
         'current_minor' => '9.7.1',
         'next_minor' => NULL,
       ],
       'cron, installed 9.7.2, no minor support' => [
-        'updater' => CronUpdater::class,
+        'stage' => CronUpdateStage::class,
         'minor_support' => FALSE,
         'installed_version' => '9.7.2',
         'current_minor' => NULL,
         'next_minor' => NULL,
       ],
       'cron, installed 9.7.2, minor support' => [
-        'updater' => CronUpdater::class,
+        'stage' => CronUpdateStage::class,
         'minor_support' => TRUE,
         'installed_version' => '9.7.2',
         'current_minor' => NULL,
@@ -130,8 +130,8 @@ class ReleaseChooserTest extends AutomaticUpdatesKernelTestBase {
   /**
    * Tests fetching the recommended release when an update is available.
    *
-   * @param string $updater_service
-   *   The ID of the updater service to use.
+   * @param string $stage_service
+   *   The ID of the update stage service to use.
    * @param bool $minor_support
    *   Whether updates to the next minor will be allowed.
    * @param string $installed_version
@@ -148,21 +148,21 @@ class ReleaseChooserTest extends AutomaticUpdatesKernelTestBase {
    * @covers ::getLatestInNextMinor
    * @covers ::getMostRecentReleaseInMinor
    */
-  public function testReleases(string $updater_service, bool $minor_support, string $installed_version, ?string $current_minor, ?string $next_minor): void {
+  public function testReleases(string $stage_service, bool $minor_support, string $installed_version, ?string $current_minor, ?string $next_minor): void {
     $this->setCoreVersion($installed_version);
     $this->config('automatic_updates.settings')->set('allow_core_minor_updates', $minor_support)->save();
     $chooser = $this->container->get(ReleaseChooser::class);
-    $updater = $this->container->get($updater_service);
-    $this->assertReleaseVersion($current_minor, $chooser->getLatestInInstalledMinor($updater));
-    $this->assertReleaseVersion($next_minor, $chooser->getLatestInNextMinor($updater));
+    $stage = $this->container->get($stage_service);
+    $this->assertReleaseVersion($current_minor, $chooser->getLatestInInstalledMinor($stage));
+    $this->assertReleaseVersion($next_minor, $chooser->getLatestInNextMinor($stage));
 
-    $this->assertReleaseVersion($current_minor, $chooser->getMostRecentReleaseInMinor($updater, $this->getRelativeVersion($installed_version, 0)));
+    $this->assertReleaseVersion($current_minor, $chooser->getMostRecentReleaseInMinor($stage, $this->getRelativeVersion($installed_version, 0)));
     $next_minor_version = $this->getRelativeVersion($installed_version, 1);
-    $this->assertReleaseVersion($next_minor, $chooser->getMostRecentReleaseInMinor($updater, $next_minor_version));
+    $this->assertReleaseVersion($next_minor, $chooser->getMostRecentReleaseInMinor($stage, $next_minor_version));
     $previous_minor_version = $this->getRelativeVersion($installed_version, -1);
     // The chooser should never return a release for a minor before the
     // currently installed version.
-    $this->assertReleaseVersion(NULL, $chooser->getMostRecentReleaseInMinor($updater, $previous_minor_version));
+    $this->assertReleaseVersion(NULL, $chooser->getMostRecentReleaseInMinor($stage, $previous_minor_version));
   }
 
   /**

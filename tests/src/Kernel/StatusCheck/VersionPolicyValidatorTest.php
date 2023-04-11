@@ -4,8 +4,8 @@ declare(strict_types = 1);
 
 namespace Drupal\Tests\automatic_updates\Kernel\StatusCheck;
 
-use Drupal\automatic_updates\CronUpdater;
-use Drupal\automatic_updates\Updater;
+use Drupal\automatic_updates\CronUpdateStage;
+use Drupal\automatic_updates\UpdateStage;
 use Drupal\fixture_manipulator\ActiveFixtureManipulator;
 use Drupal\package_manager\Event\PreCreateEvent;
 use Drupal\package_manager\Exception\StageEventException;
@@ -41,7 +41,7 @@ class VersionPolicyValidatorTest extends AutomaticUpdatesKernelTestBase {
       'stable release installed' => [
         '9.8.0',
         "$metadata_dir/drupal.9.8.1-security.xml",
-        [CronUpdater::DISABLED, CronUpdater::SECURITY, CronUpdater::ALL],
+        [CronUpdateStage::DISABLED, CronUpdateStage::SECURITY, CronUpdateStage::ALL],
         [],
       ],
       // This case proves that updating from a dev snapshot is never allowed,
@@ -49,7 +49,7 @@ class VersionPolicyValidatorTest extends AutomaticUpdatesKernelTestBase {
       'dev snapshot installed' => [
         '9.8.0-dev',
         "$metadata_dir/drupal.9.8.1-security.xml",
-        [CronUpdater::DISABLED, CronUpdater::SECURITY, CronUpdater::ALL],
+        [CronUpdateStage::DISABLED, CronUpdateStage::SECURITY, CronUpdateStage::ALL],
         [
           $this->createVersionPolicyValidationResult('9.8.0-dev', NULL, [
             t('Drupal cannot be automatically updated from the installed version, 9.8.0-dev, because automatic updates from a dev version to any other version are not supported.'),
@@ -61,13 +61,13 @@ class VersionPolicyValidatorTest extends AutomaticUpdatesKernelTestBase {
       'alpha installed, cron disabled' => [
         '9.8.0-alpha1',
         "$metadata_dir/drupal.9.8.1-security.xml",
-        [CronUpdater::DISABLED],
+        [CronUpdateStage::DISABLED],
         [],
       ],
       'alpha installed, cron enabled' => [
         '9.8.0-alpha1',
         "$metadata_dir/drupal.9.8.1-security.xml",
-        [CronUpdater::SECURITY, CronUpdater::ALL],
+        [CronUpdateStage::SECURITY, CronUpdateStage::ALL],
         [
           $this->createVersionPolicyValidationResult('9.8.0-alpha1', NULL, [
             t('Drupal cannot be automatically updated during cron from its current version, 9.8.0-alpha1, because it is not a stable version.'),
@@ -77,13 +77,13 @@ class VersionPolicyValidatorTest extends AutomaticUpdatesKernelTestBase {
       'beta installed, cron disabled' => [
         '9.8.0-beta2',
         "$metadata_dir/drupal.9.8.1-security.xml",
-        [CronUpdater::DISABLED],
+        [CronUpdateStage::DISABLED],
         [],
       ],
       'beta installed, cron enabled' => [
         '9.8.0-beta2',
         "$metadata_dir/drupal.9.8.1-security.xml",
-        [CronUpdater::SECURITY, CronUpdater::ALL],
+        [CronUpdateStage::SECURITY, CronUpdateStage::ALL],
         [
           $this->createVersionPolicyValidationResult('9.8.0-beta2', NULL, [
             t('Drupal cannot be automatically updated during cron from its current version, 9.8.0-beta2, because it is not a stable version.'),
@@ -93,13 +93,13 @@ class VersionPolicyValidatorTest extends AutomaticUpdatesKernelTestBase {
       'rc installed, cron disabled' => [
         '9.8.0-rc3',
         "$metadata_dir/drupal.9.8.1-security.xml",
-        [CronUpdater::DISABLED],
+        [CronUpdateStage::DISABLED],
         [],
       ],
       'rc installed, cron enabled' => [
         '9.8.0-rc3',
         "$metadata_dir/drupal.9.8.1-security.xml",
-        [CronUpdater::SECURITY, CronUpdater::ALL],
+        [CronUpdateStage::SECURITY, CronUpdateStage::ALL],
         [
           $this->createVersionPolicyValidationResult('9.8.0-rc3', NULL, [
             t('Drupal cannot be automatically updated during cron from its current version, 9.8.0-rc3, because it is not a stable version.'),
@@ -115,7 +115,7 @@ class VersionPolicyValidatorTest extends AutomaticUpdatesKernelTestBase {
       'update to normal release' => [
         '9.8.1',
         "$metadata_dir/drupal.9.8.2.xml",
-        [CronUpdater::DISABLED, CronUpdater::SECURITY, CronUpdater::ALL],
+        [CronUpdateStage::DISABLED, CronUpdateStage::SECURITY, CronUpdateStage::ALL],
         [],
       ],
       // These three cases prove that updating from an unsupported minor version
@@ -127,13 +127,13 @@ class VersionPolicyValidatorTest extends AutomaticUpdatesKernelTestBase {
       'update from unsupported minor, cron disabled' => [
         '9.7.1',
         "$metadata_dir/drupal.9.8.1-security.xml",
-        [CronUpdater::DISABLED],
+        [CronUpdateStage::DISABLED],
         [],
       ],
       'update from unsupported minor, cron enabled, minor updates forbidden' => [
         '9.7.1',
         "$metadata_dir/drupal.9.8.1-security.xml",
-        [CronUpdater::SECURITY, CronUpdater::ALL],
+        [CronUpdateStage::SECURITY, CronUpdateStage::ALL],
         [
           $this->createVersionPolicyValidationResult('9.7.1', NULL, [
             t('The currently installed version of Drupal core, 9.7.1, is not in a supported minor version. Your site will not be automatically updated during cron until it is updated to a supported minor version.'),
@@ -144,7 +144,7 @@ class VersionPolicyValidatorTest extends AutomaticUpdatesKernelTestBase {
       'update from unsupported minor, cron enabled, minor updates allowed' => [
         '9.7.1',
         "$metadata_dir/drupal.9.8.1-security.xml",
-        [CronUpdater::SECURITY, CronUpdater::ALL],
+        [CronUpdateStage::SECURITY, CronUpdateStage::ALL],
         [
           $this->createVersionPolicyValidationResult('9.7.1', NULL, [
             t('The currently installed version of Drupal core, 9.7.1, is not in a supported minor version. Your site will not be automatically updated during cron until it is updated to a supported minor version.'),
@@ -165,9 +165,9 @@ class VersionPolicyValidatorTest extends AutomaticUpdatesKernelTestBase {
    *   The path of the core release metadata to serve to the update system.
    * @param string[] $cron_modes
    *   The modes for unattended updates. Can contain any of
-   *   \Drupal\automatic_updates\CronUpdater::DISABLED,
-   *   \Drupal\automatic_updates\CronUpdater::SECURITY, and
-   *   \Drupal\automatic_updates\CronUpdater::ALL.
+   *   \Drupal\automatic_updates\CronUpdateStage::DISABLED,
+   *   \Drupal\automatic_updates\CronUpdateStage::SECURITY, and
+   *   \Drupal\automatic_updates\CronUpdateStage::ALL.
    * @param \Drupal\package_manager\ValidationResult[] $expected_results
    *   The expected validation results.
    * @param bool $allow_minor_updates
@@ -210,8 +210,8 @@ class VersionPolicyValidatorTest extends AutomaticUpdatesKernelTestBase {
           ]),
         ],
       ],
-      // The following cases can only happen by explicitly supplying the updater
-      // with an invalid target version.
+      // The following cases can only happen by explicitly supplying the
+      // update stage with an invalid target version.
       'downgrade' => [
         '9.8.1',
         "$metadata_dir/drupal.9.8.2.xml",
@@ -290,7 +290,7 @@ class VersionPolicyValidatorTest extends AutomaticUpdatesKernelTestBase {
    * @param string $release_metadata
    *   The path of the core release metadata to serve to the update system.
    * @param string[] $project_versions
-   *   The desired project versions that should be passed to the updater.
+   *   The desired project versions that should be passed to the update stage.
    * @param \Drupal\package_manager\ValidationResult[] $expected_results
    *   The expected validation results.
    * @param bool $allow_minor_updates
@@ -307,14 +307,14 @@ class VersionPolicyValidatorTest extends AutomaticUpdatesKernelTestBase {
       ->set('allow_core_minor_updates', $allow_minor_updates)
       ->save();
 
-    $updater = $this->container->get(Updater::class);
+    $stage = $this->container->get(UpdateStage::class);
 
     try {
-      $updater->begin($project_versions);
+      $stage->begin($project_versions);
       // Ensure that we did not, in fact, expect any errors.
       $this->assertEmpty($expected_results);
-      // Reset the updater for the next iteration of the loop.
-      $updater->destroy();
+      // Reset the update stage for the next iteration of the loop.
+      $stage->destroy();
     }
     catch (StageEventException $e) {
       $this->assertExpectedResultsFromException($expected_results, $e);
@@ -360,11 +360,11 @@ class VersionPolicyValidatorTest extends AutomaticUpdatesKernelTestBase {
    * just in case it does, we need to be sure that it's an error condition.
    */
   public function testNoStagedPackageVersions(): void {
-    // Remove the stored package versions from the updater's metadata.
+    // Remove the stored package versions from the update stage's metadata.
     $listener = function (PreCreateEvent $event): void {
-      /** @var \Drupal\Tests\automatic_updates\Kernel\TestUpdater $updater */
-      $updater = $event->stage;
-      $updater->setMetadata('packages', [
+      /** @var \Drupal\Tests\automatic_updates\Kernel\TestUpdateStage $stage */
+      $stage = $event->stage;
+      $stage->setMetadata('packages', [
         'production' => [],
       ]);
     };
@@ -380,9 +380,9 @@ class VersionPolicyValidatorTest extends AutomaticUpdatesKernelTestBase {
   public function testNoCorePackagesInstalled(): void {
     $listener = function (PreCreateEvent $event): void {
       // We should have staged package versions.
-      /** @var \Drupal\automatic_updates\Updater $updater */
-      $updater = $event->stage;
-      $this->assertNotEmpty($updater->getPackageVersions());
+      /** @var \Drupal\automatic_updates\UpdateStage $stage */
+      $stage = $event->stage;
+      $this->assertNotEmpty($stage->getPackageVersions());
       // Remove all core packages in the active directory.
       (new ActiveFixtureManipulator())
         ->removePackage('drupal/core-recommended')
@@ -398,7 +398,7 @@ class VersionPolicyValidatorTest extends AutomaticUpdatesKernelTestBase {
    *
    * @param \Closure $listener
    *   A pre-create event listener to run before all validators. This should put
-   *   the test project and/or updater into a state which will cause
+   *   the test project and/or update stage into a state which will cause
    *   \Drupal\automatic_updates\Validator\VersionPolicyValidator::getTargetVersion()
    *   to throw an exception because the target version of Drupal core is not
    *   known.
@@ -408,7 +408,7 @@ class VersionPolicyValidatorTest extends AutomaticUpdatesKernelTestBase {
 
     $this->expectException(StageException::class);
     $this->expectExceptionMessage('The target version of Drupal core could not be determined.');
-    $this->container->get(Updater::class)
+    $this->container->get(UpdateStage::class)
       ->begin(['drupal' => '9.8.1']);
   }
 

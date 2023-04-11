@@ -12,7 +12,7 @@ use Drupal\package_manager\ProjectInfo;
 use Drupal\package_manager\ValidationResult;
 use Drupal\automatic_updates_extensions\BatchProcessor;
 use Drupal\automatic_updates\BatchProcessor as AutoUpdatesBatchProcessor;
-use Drupal\automatic_updates_extensions\ExtensionUpdater;
+use Drupal\automatic_updates_extensions\ExtensionUpdateStage;
 use Drupal\Core\Batch\BatchBuilder;
 use Drupal\Core\Extension\ModuleExtensionList;
 use Drupal\Core\Form\FormStateInterface;
@@ -37,8 +37,8 @@ final class UpdateReady extends UpdateFormBase {
   /**
    * Constructs a new UpdateReady object.
    *
-   * @param \Drupal\automatic_updates_extensions\ExtensionUpdater $updater
-   *   The updater service.
+   * @param \Drupal\automatic_updates_extensions\ExtensionUpdateStage $stage
+   *   The update stage service.
    * @param \Drupal\Core\Messenger\MessengerInterface $messenger
    *   The messenger service.
    * @param \Drupal\Core\State\StateInterface $state
@@ -55,7 +55,7 @@ final class UpdateReady extends UpdateFormBase {
    *   The path locator service.
    */
   public function __construct(
-    private ExtensionUpdater $updater,
+    private ExtensionUpdateStage $stage,
     MessengerInterface $messenger,
     private StateInterface $state,
     private ModuleExtensionList $moduleList,
@@ -79,7 +79,7 @@ final class UpdateReady extends UpdateFormBase {
    */
   public static function create(ContainerInterface $container) {
     return new static(
-      $container->get('automatic_updates_extensions.updater'),
+      $container->get('automatic_updates_extensions.update_stage'),
       $container->get('messenger'),
       $container->get('state'),
       $container->get('extension.list.module'),
@@ -95,7 +95,7 @@ final class UpdateReady extends UpdateFormBase {
    */
   public function buildForm(array $form, FormStateInterface $form_state, string $stage_id = NULL) {
     try {
-      $this->updater->claim($stage_id);
+      $this->stage->claim($stage_id);
     }
     catch (StageOwnershipException) {
       $this->messenger()->addError($this->t('Cannot continue the update because another Composer operation is currently in progress.'));
@@ -144,7 +144,7 @@ final class UpdateReady extends UpdateFormBase {
 
     // Don't run the status checks once the form has been submitted.
     if (!$form_state->getUserInput()) {
-      $results = $this->runStatusCheck($this->updater, $this->eventDispatcher);
+      $results = $this->runStatusCheck($this->stage, $this->eventDispatcher);
       // This will have no effect if $results is empty.
       $this->displayResults($results, $this->renderer);
       // If any errors occurred, return the form early so the user cannot
@@ -191,7 +191,7 @@ final class UpdateReady extends UpdateFormBase {
    */
   public function cancel(array &$form, FormStateInterface $form_state): void {
     try {
-      $this->updater->destroy();
+      $this->stage->destroy();
       $this->messenger()->addStatus($this->t('The update was successfully cancelled.'));
       $form_state->setRedirect('automatic_updates_extensions.report_update');
     }
@@ -209,12 +209,12 @@ final class UpdateReady extends UpdateFormBase {
   private function showUpdates(): array {
     // Get packages that were updated in the stage directory.
     $installed_packages = $this->composerInspector->getInstalledPackagesList($this->pathLocator->getProjectRoot());
-    $staged_packages = $this->composerInspector->getInstalledPackagesList($this->updater->getStageDirectory());
+    $staged_packages = $this->composerInspector->getInstalledPackagesList($this->stage->getStageDirectory());
     $updated_packages = $staged_packages->getPackagesWithDifferentVersionsIn($installed_packages);
 
     // Build a list of package names that were updated by user request.
     $updated_by_request = [];
-    foreach ($this->updater->getPackageVersions() as $group) {
+    foreach ($this->stage->getPackageVersions() as $group) {
       $updated_by_request = array_merge($updated_by_request, array_keys($group));
     }
 

@@ -20,7 +20,7 @@ class ApiController extends PackageManagerApiController {
    */
   public static function create(ContainerInterface $container) {
     return new static(
-      $container->get('automatic_updates.updater'),
+      $container->get('automatic_updates.update_stage'),
       $container->get('package_manager.path_locator')
     );
   }

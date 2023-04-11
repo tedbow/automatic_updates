@@ -64,7 +64,7 @@ use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
  * site (e.g. `/tmp/.package_managerSITE_UUID`), which is deleted when any stage
  * created by that site is destroyed.
  */
-class Stage implements LoggerAwareInterface {
+abstract class StageBase implements LoggerAwareInterface {
 
   use LoggerAwareTrait;
   use StringTranslationTrait;

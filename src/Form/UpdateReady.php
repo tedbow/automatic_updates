@@ -5,7 +5,7 @@ declare(strict_types = 1);
 namespace Drupal\automatic_updates\Form;
 
 use Drupal\automatic_updates\BatchProcessor;
-use Drupal\automatic_updates\Updater;
+use Drupal\automatic_updates\UpdateStage;
 use Drupal\package_manager\ComposerInspector;
 use Drupal\package_manager\Exception\StageFailureMarkerException;
 use Drupal\package_manager\ValidationResult;
@@ -32,8 +32,8 @@ final class UpdateReady extends UpdateFormBase {
   /**
    * Constructs a new UpdateReady object.
    *
-   * @param \Drupal\automatic_updates\Updater $updater
-   *   The updater service.
+   * @param \Drupal\automatic_updates\UpdateStage $stage
+   *   The update stage service.
    * @param \Drupal\Core\State\StateInterface $state
    *   The state service.
    * @param \Drupal\Core\Extension\ModuleExtensionList $moduleList
@@ -46,7 +46,7 @@ final class UpdateReady extends UpdateFormBase {
    *   The Composer inspector service.
    */
   public function __construct(
-    protected Updater $updater,
+    protected UpdateStage $stage,
     protected StateInterface $state,
     protected ModuleExtensionList $moduleList,
     protected RendererInterface $renderer,
@@ -66,7 +66,7 @@ final class UpdateReady extends UpdateFormBase {
    */
   public static function create(ContainerInterface $container) {
     return new static(
-      $container->get('automatic_updates.updater'),
+      $container->get('automatic_updates.update_stage'),
       $container->get('state'),
       $container->get('extension.list.module'),
       $container->get('renderer'),
@@ -80,7 +80,7 @@ final class UpdateReady extends UpdateFormBase {
    */
   public function buildForm(array $form, FormStateInterface $form_state, string $stage_id = NULL) {
     try {
-      $this->updater->claim($stage_id);
+      $this->stage->claim($stage_id);
     }
     catch (StageOwnershipException $e) {
       $this->messenger()->addError($e->getMessage());
@@ -94,7 +94,7 @@ final class UpdateReady extends UpdateFormBase {
     $messages = [];
 
     try {
-      $staged_core_packages = $this->composerInspector->getInstalledPackagesList($this->updater->getStageDirectory())
+      $staged_core_packages = $this->composerInspector->getInstalledPackagesList($this->stage->getStageDirectory())
         ->getCorePackages()
         ->getArrayCopy();
     }
@@ -151,7 +151,7 @@ final class UpdateReady extends UpdateFormBase {
 
     // Don't run the status checks once the form has been submitted.
     if (!$form_state->getUserInput()) {
-      $results = $this->runStatusCheck($this->updater, $this->eventDispatcher);
+      $results = $this->runStatusCheck($this->stage, $this->eventDispatcher);
       // This will have no effect if $results is empty.
       $this->displayResults($results, $this->renderer);
       // If any errors occurred, return the form early so the user cannot
@@ -198,7 +198,7 @@ final class UpdateReady extends UpdateFormBase {
    */
   public function cancel(array &$form, FormStateInterface $form_state): void {
     try {
-      $this->updater->destroy();
+      $this->stage->destroy();
       $this->messenger()->addStatus($this->t('The update was successfully cancelled.'));
       $form_state->setRedirect('update.report_update');
     }

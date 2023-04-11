@@ -4,7 +4,7 @@ declare(strict_types = 1);
 
 namespace Drupal\Tests\automatic_updates\Kernel;
 
-use Drupal\automatic_updates\CronUpdater;
+use Drupal\automatic_updates\CronUpdateStage;
 use Drupal\automatic_updates_test\EventSubscriber\TestSubscriber1;
 use Drupal\Core\DependencyInjection\ContainerBuilder;
 use Drupal\Core\Logger\RfcLogLevel;
@@ -30,12 +30,12 @@ use ColinODell\PsrTestLogger\TestLogger;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 
 /**
- * @covers \Drupal\automatic_updates\CronUpdater
+ * @covers \Drupal\automatic_updates\CronUpdateStage
  * @covers \automatic_updates_test_cron_form_update_settings_alter
  * @group automatic_updates
  * @internal
  */
-class CronUpdaterTest extends AutomaticUpdatesKernelTestBase {
+class CronUpdateStageTest extends AutomaticUpdatesKernelTestBase {
 
   use EmailNotificationsTestTrait;
   use PackageManagerBypassTestTrait;
@@ -87,42 +87,42 @@ class CronUpdaterTest extends AutomaticUpdatesKernelTestBase {
   }
 
   /**
-   * Data provider for testUpdaterCalled().
+   * Data provider for testUpdateStageCalled().
    *
    * @return mixed[][]
    *   The test cases.
    */
-  public function providerUpdaterCalled(): array {
+  public function providerUpdateStageCalled(): array {
     $fixture_dir = __DIR__ . '/../../../package_manager/tests/fixtures/release-history';
 
     return [
       'disabled, normal release' => [
-        CronUpdater::DISABLED,
+        CronUpdateStage::DISABLED,
         ['drupal' => "$fixture_dir/drupal.9.8.2.xml"],
         FALSE,
       ],
       'disabled, security release' => [
-        CronUpdater::DISABLED,
+        CronUpdateStage::DISABLED,
         ['drupal' => "$fixture_dir/drupal.9.8.1-security.xml"],
         FALSE,
       ],
       'security only, security release' => [
-        CronUpdater::SECURITY,
+        CronUpdateStage::SECURITY,
         ['drupal' => "$fixture_dir/drupal.9.8.1-security.xml"],
         TRUE,
       ],
       'security only, normal release' => [
-        CronUpdater::SECURITY,
+        CronUpdateStage::SECURITY,
         ['drupal' => "$fixture_dir/drupal.9.8.2.xml"],
         FALSE,
       ],
       'enabled, normal release' => [
-        CronUpdater::ALL,
+        CronUpdateStage::ALL,
         ['drupal' => "$fixture_dir/drupal.9.8.2.xml"],
         TRUE,
       ],
       'enabled, security release' => [
-        CronUpdater::ALL,
+        CronUpdateStage::ALL,
         ['drupal' => "$fixture_dir/drupal.9.8.1-security.xml"],
         TRUE,
       ],
@@ -130,7 +130,7 @@ class CronUpdaterTest extends AutomaticUpdatesKernelTestBase {
   }
 
   /**
-   * Tests that the cron handler calls the updater as expected.
+   * Tests that the cron handler calls the update stage as expected.
    *
    * @param string $setting
    *   Whether automatic updates should be enabled during cron. Possible values
@@ -142,9 +142,9 @@ class CronUpdaterTest extends AutomaticUpdatesKernelTestBase {
    * @param bool $will_update
    *   Whether an update should be performed, given the previous two arguments.
    *
-   * @dataProvider providerUpdaterCalled
+   * @dataProvider providerUpdateStageCalled
    */
-  public function testUpdaterCalled(string $setting, array $release_data, bool $will_update): void {
+  public function testUpdateStageCalled(string $setting, array $release_data, bool $will_update): void {
     $version = strpos($release_data['drupal'], '9.8.2') ? '9.8.2' : '9.8.1';
     if ($will_update) {
       $this->getStageFixtureManipulator()->setCorePackageVersion($version);
@@ -258,22 +258,22 @@ class CronUpdaterTest extends AutomaticUpdatesKernelTestBase {
     }
     $this->installConfig('automatic_updates');
     // @todo Remove in https://www.drupal.org/project/automatic_updates/issues/3284443
-    $this->config('automatic_updates.settings')->set('cron', CronUpdater::SECURITY)->save();
+    $this->config('automatic_updates.settings')->set('cron', CronUpdateStage::SECURITY)->save();
     // Ensure that there is a security release to which we should update.
     $this->setReleaseMetadata([
       'drupal' => __DIR__ . "/../../../package_manager/tests/fixtures/release-history/drupal.9.8.1-security.xml",
     ]);
 
     // If the pre- or post-destroy events throw an exception, it will not be
-    // caught by the cron updater, but it *will* be caught by the main cron
+    // caught by the cron update stage, but it *will* be caught by the main cron
     // service, which will log it as a cron error that we'll want to check for.
     $cron_logger = new TestLogger();
     $this->container->get('logger.factory')
       ->get('cron')
       ->addLogger($cron_logger);
 
-    /** @var \Drupal\automatic_updates\CronUpdater $updater */
-    $updater = $this->container->get(CronUpdater::class);
+    /** @var \Drupal\automatic_updates\CronUpdateStage $stage */
+    $stage = $this->container->get(CronUpdateStage::class);
 
     // When the event specified by $event_class is dispatched, either throw an
     // exception directly from the event subscriber, or prepare a
@@ -282,7 +282,7 @@ class CronUpdaterTest extends AutomaticUpdatesKernelTestBase {
       $error = ValidationResult::createError([
         t('Destroy the stage!'),
       ]);
-      $exception = $this->createStageEventExceptionFromResults([$error], $event_class, $updater);
+      $exception = $this->createStageEventExceptionFromResults([$error], $event_class, $stage);
       TestSubscriber1::setTestResult($exception->event->getResults(), $event_class);
     }
     else {
@@ -296,10 +296,10 @@ class CronUpdaterTest extends AutomaticUpdatesKernelTestBase {
     $this->assertEmpty($cron_logger->records);
     $this->assertEmpty($this->logger->records);
 
-    $this->assertTrue($updater->isAvailable());
+    $this->assertTrue($stage->isAvailable());
     $this->container->get('cron')->run();
 
-    $logged_by_updater = $this->logger->hasRecord($expected_log_message, (string) RfcLogLevel::ERROR);
+    $logged_by_stage = $this->logger->hasRecord($expected_log_message, (string) RfcLogLevel::ERROR);
     // To check if the exception was logged by the main cron service, we need
     // to set up a special predicate, because exceptions logged by cron are
     // always formatted in a particular way that we don't control. But the
@@ -315,20 +315,20 @@ class CronUpdaterTest extends AutomaticUpdatesKernelTestBase {
     $logged_by_cron = $cron_logger->hasRecordThatPasses($predicate, (string) RfcLogLevel::ERROR);
 
     // If a pre-destroy event flags a validation error, it's handled like any
-    // other event (logged by the cron updater, but not the main cron service).
-    // But if a pre- or post-destroy event throws an exception, the cron updater
-    // won't try to catch it. Instead, it will be caught and logged by the main
-    // cron service.
+    // other event (logged by the cron update stage, but not the main cron
+    // service). But if a pre- or post-destroy event throws an exception, the
+    // cron update stage won't try to catch it. Instead, it will be caught and
+    // logged by the main cron service.
     if ($event_class === PreDestroyEvent::class || $event_class === PostDestroyEvent::class) {
       // If the pre-destroy event throws an exception or flags a validation
       // error, the stage won't be destroyed. But, once the post-destroy event
       // is fired, the stage should be fully destroyed and marked as available.
-      $this->assertSame($event_class === PostDestroyEvent::class, $updater->isAvailable());
+      $this->assertSame($event_class === PostDestroyEvent::class, $stage->isAvailable());
     }
     else {
-      $this->assertTrue($updater->isAvailable());
+      $this->assertTrue($stage->isAvailable());
     }
-    $this->assertTrue($logged_by_updater);
+    $this->assertTrue($logged_by_stage);
     $this->assertFalse($logged_by_cron);
   }
 
@@ -366,7 +366,7 @@ class CronUpdaterTest extends AutomaticUpdatesKernelTestBase {
    * Tests stage is not destroyed if another update is applying.
    */
   public function testStageNotDestroyedIfApplying(): void {
-    $this->config('automatic_updates.settings')->set('cron', CronUpdater::ALL)->save();
+    $this->config('automatic_updates.settings')->set('cron', CronUpdateStage::ALL)->save();
     $this->setReleaseMetadata([
       'drupal' => __DIR__ . "/../../../package_manager/tests/fixtures/release-history/drupal.9.8.1-security.xml",
     ]);
@@ -380,7 +380,7 @@ class CronUpdaterTest extends AutomaticUpdatesKernelTestBase {
     // another stage is applying.
     $this->addEventTestListener(function (PreApplyEvent $event) use ($stop_error) {
       // Ensure the stage that is applying the operation is not the cron
-      // updater.
+      // update stage.
       $this->assertInstanceOf(TestStage::class, $event->stage);
       $this->container->get('cron')->run();
       // We do not actually want to apply this operation it was just invoked to
@@ -404,7 +404,7 @@ class CronUpdaterTest extends AutomaticUpdatesKernelTestBase {
    * Tests stage is not destroyed if not available and site is on secure version.
    */
   public function testStageNotDestroyedIfSecure(): void {
-    $this->config('automatic_updates.settings')->set('cron', CronUpdater::ALL)->save();
+    $this->config('automatic_updates.settings')->set('cron', CronUpdateStage::ALL)->save();
     $this->setReleaseMetadata([
       'drupal' => __DIR__ . "/../../../package_manager/tests/fixtures/release-history/drupal.9.8.2.xml",
     ]);
@@ -414,8 +414,8 @@ class CronUpdaterTest extends AutomaticUpdatesKernelTestBase {
     $stage->require(['drupal/random']);
     $this->assertUpdateStagedTimes(1);
 
-    // Trigger CronUpdater, the above should cause it to detect a stage that is
-    // applying.
+    // Trigger CronUpdateStage, the above should cause it to detect a stage that
+    // is applying.
     $this->container->get('cron')->run();
 
     $this->assertTrue($this->logger->hasRecord('Cron will not perform any updates because there is an existing stage and the current version of the site is secure.', (string) RfcLogLevel::NOTICE));
@@ -423,11 +423,11 @@ class CronUpdaterTest extends AutomaticUpdatesKernelTestBase {
   }
 
   /**
-   * Tests that CronUpdater::begin() unconditionally throws an exception.
+   * Tests that CronUpdateStage::begin() unconditionally throws an exception.
    */
   public function testBeginThrowsException(): void {
-    $this->expectExceptionMessage(CronUpdater::class . '::begin() cannot be called directly.');
-    $this->container->get(CronUpdater::class)
+    $this->expectExceptionMessage(CronUpdateStage::class . '::begin() cannot be called directly.');
+    $this->container->get(CronUpdateStage::class)
       ->begin(['drupal' => '9.8.1']);
   }
 
@@ -489,13 +489,13 @@ END;
       'drupal' => __DIR__ . '/../../../package_manager/tests/fixtures/release-history/drupal.9.8.2.xml',
     ]);
     $this->config('automatic_updates.settings')
-      ->set('cron', CronUpdater::ALL)
+      ->set('cron', CronUpdateStage::ALL)
       ->save();
 
     $error = ValidationResult::createError([
       t('Error while updating!'),
     ]);
-    $exception = $this->createStageEventExceptionFromResults([$error], $event_class, $this->container->get(CronUpdater::class));
+    $exception = $this->createStageEventExceptionFromResults([$error], $event_class, $this->container->get(CronUpdateStage::class));
     TestSubscriber1::setTestResult($exception->event->getResults(), $event_class);
 
     $this->container->get('cron')->run();
@@ -537,7 +537,7 @@ END;
       t('Error while updating!'),
     ]);
     TestSubscriber1::setTestResult([$error], $event_class);
-    $exception = $this->createStageEventExceptionFromResults([$error], $event_class, $this->container->get(CronUpdater::class));
+    $exception = $this->createStageEventExceptionFromResults([$error], $event_class, $this->container->get(CronUpdateStage::class));
 
     $this->container->get('cron')->run();
 
@@ -581,11 +581,11 @@ END;
   }
 
   /**
-   * Tests that setLogger is called on the cron updater service.
+   * Tests that setLogger is called on the cron update stage service.
    */
   public function testLoggerIsSetByContainer(): void {
-    $updater_method_calls = $this->container->getDefinition('automatic_updates.cron_updater')->getMethodCalls();
-    $this->assertSame('setLogger', $updater_method_calls[0][0]);
+    $stage_method_calls = $this->container->getDefinition('automatic_updates.cron_update_stage')->getMethodCalls();
+    $this->assertSame('setLogger', $stage_method_calls[0][0]);
   }
 
 }

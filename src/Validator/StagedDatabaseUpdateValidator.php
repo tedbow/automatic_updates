@@ -4,7 +4,7 @@ declare(strict_types = 1);
 
 namespace Drupal\automatic_updates\Validator;
 
-use Drupal\automatic_updates\CronUpdater;
+use Drupal\automatic_updates\CronUpdateStage;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\package_manager\Event\PreApplyEvent;
 use Drupal\package_manager\Validator\StagedDBUpdateValidator;
@@ -39,7 +39,7 @@ class StagedDatabaseUpdateValidator implements EventSubscriberInterface {
    */
   public function checkUpdateHooks(PreApplyEvent $event): void {
     $stage = $event->stage;
-    if (!$stage instanceof CronUpdater) {
+    if (!$stage instanceof CronUpdateStage) {
       return;
     }
 

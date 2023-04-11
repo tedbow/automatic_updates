@@ -5,7 +5,7 @@ declare(strict_types = 1);
 namespace Drupal\package_manager\Event;
 
 use Drupal\Core\StringTranslation\TranslatableMarkup;
-use Drupal\package_manager\Stage;
+use Drupal\package_manager\StageBase;
 use Drupal\package_manager\ValidationResult;
 use Drupal\system\SystemManager;
 
@@ -41,12 +41,12 @@ class StatusCheckEvent extends PreOperationStageEvent {
   /**
    * Constructs a StatusCheckEvent object.
    *
-   * @param \Drupal\package_manager\Stage $stage
+   * @param \Drupal\package_manager\StageBase $stage
    *   The stage which fired this event.
    * @param string[]|null $excludedPaths
    *   The list of ignored paths, or NULL if they could not be collected.
    */
-  public function __construct(Stage $stage, private ?array $excludedPaths) {
+  public function __construct(StageBase $stage, private ?array $excludedPaths) {
     parent::__construct($stage);
   }
 

@@ -4,7 +4,7 @@ declare(strict_types = 1);
 
 namespace Drupal\Tests\automatic_updates\Kernel\StatusCheck;
 
-use Drupal\automatic_updates\Updater;
+use Drupal\automatic_updates\UpdateStage;
 use Drupal\fixture_manipulator\ActiveFixtureManipulator;
 use Drupal\package_manager\Exception\StageEventException;
 use Drupal\package_manager\ValidationResult;
@@ -105,11 +105,11 @@ class StagedProjectsValidatorTest extends AutomaticUpdatesKernelTestBase {
     ];
     $error = ValidationResult::createError($messages, t('The update cannot proceed because the following Drupal projects were installed during the update.'));
 
-    $updater = $this->container->get(Updater::class);
-    $updater->begin(['drupal' => '9.8.1']);
-    $updater->stage();
+    $stage = $this->container->get(UpdateStage::class);
+    $stage->begin(['drupal' => '9.8.1']);
+    $stage->stage();
     try {
-      $updater->apply();
+      $stage->apply();
       $this->fail('Expected an error, but none was raised.');
     }
     catch (StageEventException $e) {
@@ -177,11 +177,11 @@ class StagedProjectsValidatorTest extends AutomaticUpdatesKernelTestBase {
       t("theme 'drupal/test_theme' removed."),
     ];
     $error = ValidationResult::createError($messages, t('The update cannot proceed because the following Drupal projects were removed during the update.'));
-    $updater = $this->container->get(Updater::class);
-    $updater->begin(['drupal' => '9.8.1']);
-    $updater->stage();
+    $stage = $this->container->get(UpdateStage::class);
+    $stage->begin(['drupal' => '9.8.1']);
+    $stage->stage();
     try {
-      $updater->apply();
+      $stage->apply();
       $this->fail('Expected an error, but none was raised.');
     }
     catch (StageEventException $e) {
@@ -236,12 +236,12 @@ class StagedProjectsValidatorTest extends AutomaticUpdatesKernelTestBase {
       t("module 'drupal/test-module' from 1.3.0 to 1.3.1."),
     ];
     $error = ValidationResult::createError($messages, t('The update cannot proceed because the following Drupal projects were unexpectedly updated. Only Drupal Core updates are currently supported.'));
-    $updater = $this->container->get(Updater::class);
-    $updater->begin(['drupal' => '9.8.1']);
-    $updater->stage();
+    $stage = $this->container->get(UpdateStage::class);
+    $stage->begin(['drupal' => '9.8.1']);
+    $stage->stage();
 
     try {
-      $updater->apply();
+      $stage->apply();
       $this->fail('Expected an error, but none was raised.');
     }
     catch (StageEventException $e) {
@@ -317,10 +317,10 @@ class StagedProjectsValidatorTest extends AutomaticUpdatesKernelTestBase {
       ->removePackage('other/removed')
       ->removePackage('other/dev-removed', TRUE);
 
-    $updater = $this->container->get(Updater::class);
-    $updater->begin(['drupal' => '9.8.1']);
-    $updater->stage();
-    $updater->apply();
+    $stage = $this->container->get(UpdateStage::class);
+    $stage->begin(['drupal' => '9.8.1']);
+    $stage->stage();
+    $stage->apply();
     $this->assertTrue(TRUE);
   }
 

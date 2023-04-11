@@ -5,7 +5,7 @@ declare(strict_types = 1);
 namespace Drupal\Tests\automatic_updates\Functional;
 
 use Behat\Mink\Element\NodeElement;
-use Drupal\automatic_updates\CronUpdater;
+use Drupal\automatic_updates\CronUpdateStage;
 use Drupal\automatic_updates\StatusCheckMailer;
 use Drupal\automatic_updates_test\Datetime\TestTime;
 use Drupal\automatic_updates_test\EventSubscriber\TestSubscriber1;
@@ -381,7 +381,7 @@ class StatusCheckTest extends AutomaticUpdatesFunctionalTestBase {
 
     // Confirm status check messages are not displayed when cron updates are
     // disabled.
-    $this->config('automatic_updates.settings')->set('cron', CronUpdater::DISABLED)->save();
+    $this->config('automatic_updates.settings')->set('cron', CronUpdateStage::DISABLED)->save();
     $this->drupalGet('admin/structure');
     $this->checkForMetaRefresh();
     $assert->pageTextNotContains(static::$warningsExplanation);
@@ -403,7 +403,7 @@ class StatusCheckTest extends AutomaticUpdatesFunctionalTestBase {
     // the functionality to retrieve our fake release history metadata.
     $this->container->get('module_installer')->install(['automatic_updates', 'automatic_updates_test']);
     // @todo Remove in https://www.drupal.org/project/automatic_updates/issues/3284443
-    $this->config('automatic_updates.settings')->set('cron', CronUpdater::SECURITY)->save();
+    $this->config('automatic_updates.settings')->set('cron', CronUpdateStage::SECURITY)->save();
     $this->drupalGet('admin/reports/status');
     $this->assertNoErrors(TRUE);
 

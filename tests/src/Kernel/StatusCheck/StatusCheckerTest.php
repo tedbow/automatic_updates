@@ -4,8 +4,8 @@ declare(strict_types = 1);
 
 namespace Drupal\Tests\automatic_updates\Kernel\StatusCheck;
 
-use Drupal\automatic_updates\CronUpdater;
-use Drupal\automatic_updates\Updater;
+use Drupal\automatic_updates\CronUpdateStage;
+use Drupal\automatic_updates\UpdateStage;
 use Drupal\automatic_updates\Validation\StatusChecker;
 use Drupal\automatic_updates\Validator\ScaffoldFilePermissionsValidator;
 use Drupal\automatic_updates\Validator\StagedProjectsValidator;
@@ -210,12 +210,12 @@ class StatusCheckerTest extends AutomaticUpdatesKernelTestBase {
     $this->addEventTestListener($listener, StatusCheckEvent::class);
     $this->container->get(StatusChecker::class)->run();
     // By default, updates will be enabled on cron.
-    $this->assertInstanceOf(CronUpdater::class, $stage);
+    $this->assertInstanceOf(CronUpdateStage::class, $stage);
     $this->config('automatic_updates.settings')
-      ->set('cron', CronUpdater::DISABLED)
+      ->set('cron', CronUpdateStage::DISABLED)
       ->save();
     $this->container->get(StatusChecker::class)->run();
-    $this->assertInstanceOf(Updater::class, $stage);
+    $this->assertInstanceOf(UpdateStage::class, $stage);
   }
 
   /**
@@ -254,12 +254,12 @@ class StatusCheckerTest extends AutomaticUpdatesKernelTestBase {
     $event_dispatcher = $this->container->get('event_dispatcher');
     array_walk($validators, [$event_dispatcher, 'removeSubscriber']);
 
-    $updater = $this->container->get(Updater::class);
-    $updater->begin(['drupal' => '9.8.1']);
-    $updater->stage();
-    $updater->apply();
-    $updater->postApply();
-    $updater->destroy();
+    $stage = $this->container->get(UpdateStage::class);
+    $stage->begin(['drupal' => '9.8.1']);
+    $stage->stage();
+    $stage->apply();
+    $stage->postApply();
+    $stage->destroy();
 
     // The status validation manager shouldn't have any stored results.
     $this->assertEmpty($manager->getResults());

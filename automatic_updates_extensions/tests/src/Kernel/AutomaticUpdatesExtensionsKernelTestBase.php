@@ -81,14 +81,14 @@ abstract class AutomaticUpdatesExtensionsKernelTestBase extends AutomaticUpdates
    *   be passed if $expected_results is not empty.
    */
   protected function assertUpdateResults(array $project_versions, array $expected_results, string $event_class = NULL): void {
-    $updater = $this->container->get('automatic_updates_extensions.updater');
+    $stage = $this->container->get('automatic_updates_extensions.update_stage');
 
     try {
-      $updater->begin($project_versions);
-      $updater->stage();
-      $updater->apply();
-      $updater->postApply();
-      $updater->destroy();
+      $stage->begin($project_versions);
+      $stage->stage();
+      $stage->apply();
+      $stage->postApply();
+      $stage->destroy();
 
       // If we did not get an exception, ensure we didn't expect any results.
       $this->assertEmpty($expected_results);

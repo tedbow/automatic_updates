@@ -29,7 +29,7 @@ class RequireEventTraitTest extends UnitTestCase {
    * @dataProvider providerGetPackages
    */
   public function testGetPackages(array $runtime_packages, array $dev_packages, array $expected_runtime_packages, array $expected_dev_packages): void {
-    $stage = $this->createMock('\Drupal\package_manager\Stage');
+    $stage = $this->createMock('\Drupal\package_manager\StageBase');
 
     $events = [
       '\Drupal\package_manager\Event\PostRequireEvent',
