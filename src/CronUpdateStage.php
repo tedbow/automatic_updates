@@ -241,26 +241,29 @@ class CronUpdateStage extends UpdateStage {
       }
       return;
     }
+    $this->triggerPostApply($stage_id, $installed_version, $target_version);
+  }
 
+  /**
+   * Triggers the post-apply tasks.
+   *
+   * @param string $stage_id
+   *   The ID of the current stage.
+   * @param string $start_version
+   *   The version of Drupal core that started the update.
+   * @param string $target_version
+   *   The version of Drupal core to which we are updating.
+   */
+  protected function triggerPostApply(string $stage_id, string $start_version, string $target_version): void {
     // Perform a subrequest to run ::postApply(), which needs to be done in a
     // separate request.
     // @see parent::apply()
     $url = Url::fromRoute('automatic_updates.cron.post_apply', [
       'stage_id' => $stage_id,
-      'installed_version' => $installed_version,
+      'installed_version' => $start_version,
       'target_version' => $target_version,
       'key' => $this->state->get('system.cron_key'),
     ]);
-    $this->triggerPostApply($url);
-  }
-
-  /**
-   * Executes a subrequest to run post-apply tasks.
-   *
-   * @param \Drupal\Core\Url $url
-   *   The URL of the post-apply handler.
-   */
-  protected function triggerPostApply(Url $url): void {
     $url = $url->setAbsolute()->toString();
 
     // If we're using a single-threaded web server (e.g., the built-in PHP web

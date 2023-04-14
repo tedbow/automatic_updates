@@ -7,7 +7,6 @@ namespace Drupal\Tests\automatic_updates\Kernel;
 use Drupal\automatic_updates\CronUpdateStage;
 use Drupal\automatic_updates\UpdateStage;
 use Drupal\Core\DependencyInjection\ContainerBuilder;
-use Drupal\Core\Url;
 use Drupal\Tests\automatic_updates\Traits\ValidationTestTrait;
 use Drupal\Tests\package_manager\Kernel\PackageManagerKernelTestBase;
 
@@ -107,11 +106,10 @@ class TestCronUpdateStage extends CronUpdateStage {
   /**
    * {@inheritdoc}
    */
-  protected function triggerPostApply(Url $url): void {
+  protected function triggerPostApply(string $stage_id, string $start_version, string $target_version): void {
     // Subrequests don't work in kernel tests, so just call the post-apply
     // handler directly.
-    $parameters = $url->getRouteParameters();
-    $this->handlePostApply($parameters['stage_id'], $parameters['installed_version'], $parameters['target_version']);
+    $this->handlePostApply($stage_id, $start_version, $target_version);
   }
 
 }
