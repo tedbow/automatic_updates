@@ -68,7 +68,7 @@ class PackageUpdateTest extends TemplateProjectTestBase {
     foreach ($expected_versions as $module_name => $expected_version) {
       $path = "web/modules/contrib/$module_name/composer.json";
       $module_composer_json = json_decode($file_contents[$path]);
-      $this->assertSame($expected_version, $module_composer_json->version);
+      $this->assertSame($expected_version, $module_composer_json?->version);
     }
     // The post-apply event subscriber in updated_module 1.1.0 should have
     // created this file.

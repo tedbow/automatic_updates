@@ -134,7 +134,7 @@ class CoreUpdateTest extends UpdateTestBase {
     // Even though the response is what we expect, assert the status code as
     // well, to be extra-certain that there was no kind of server-side error.
     $this->assertSame(200, $update_status_code);
-    $file_contents = json_decode($file_contents, TRUE, 512, JSON_THROW_ON_ERROR);
+    $file_contents = json_decode($file_contents, TRUE, flags: JSON_THROW_ON_ERROR);
 
     $this->assertStringContainsString("const VERSION = '9.8.1';", $file_contents['web/core/lib/Drupal.php']);
     $this->assertUpdateSuccessful('9.8.1');

@@ -93,7 +93,7 @@ END;
     );
 
     $module_composer_json = json_decode($file_contents['web/modules/contrib/alpha/composer.json']);
-    $this->assertSame('1.1.0', $module_composer_json->version);
+    $this->assertSame('1.1.0', $module_composer_json?->version);
   }
 
   /**

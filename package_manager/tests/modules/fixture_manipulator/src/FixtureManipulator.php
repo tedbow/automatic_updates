@@ -111,7 +111,7 @@ class FixtureManipulator {
     // `composer require` happily will re-require already required packages.
     // Prevent test authors from thinking this has any effect when it does not.
     $json = $this->runComposerCommand(['show', '--name-only', '--format=json'])->stdout;
-    $installed_package_names = array_column(json_decode($json)->installed, 'name');
+    $installed_package_names = array_column(json_decode($json)?->installed ?? [], 'name');
     if (in_array($package['name'], $installed_package_names)) {
       throw new \LogicException(sprintf("Expected package '%s' to not be installed, but it was.", $package['name']));
     }
@@ -570,7 +570,7 @@ class FixtureManipulator {
     if ($is_new_or_fork === 'fork') {
       $original_composer_json_path = $repo_path . DIRECTORY_SEPARATOR . 'composer.json';
       $original_repo_path = $repo_path;
-      $original_composer_json_data = json_decode(file_get_contents($original_composer_json_path), TRUE);
+      $original_composer_json_data = json_decode(file_get_contents($original_composer_json_path), TRUE, flags: JSON_THROW_ON_ERROR);
       $forked_composer_json_data = NestedArray::mergeDeep($original_composer_json_data, $package);
       if ($original_composer_json_data === $forked_composer_json_data) {
         throw new \LogicException(sprintf('Nothing is actually different in this fork of the package %s.', $package['name']));
@@ -592,7 +592,7 @@ class FixtureManipulator {
     // must have unique versions).
     $repo_key = "repo.$name";
     if ($is_new_or_fork === 'fork') {
-      $repositories = json_decode(file_get_contents($this->dir . '/composer.json'), TRUE)['repositories'];
+      $repositories = json_decode(file_get_contents($this->dir . '/composer.json'), TRUE, flags: JSON_THROW_ON_ERROR)['repositories'];
       // @todo consistently use 'version' or 'options.versions.PACKAGE_NAME', by fixing ComposerFixtureCreator in https://drupal.org/i/3347055
       $original_version = isset($repositories[$name]['version']) ? $repositories[$name]['version'] : $repositories[$name]['options']['versions'][$name];
       if ($package['version'] !== $original_version) {

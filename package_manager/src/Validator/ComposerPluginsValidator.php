@@ -5,7 +5,6 @@ declare(strict_types = 1);
 namespace Drupal\package_manager\Validator;
 
 use Composer\Semver\Semver;
-use Drupal\Component\Serialization\Json;
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\package_manager\ComposerInspector;
@@ -167,7 +166,7 @@ final class ComposerPluginsValidator implements EventSubscriberInterface {
       $allowed_plugins = ComposerInspector::toBoolean($value);
     }
     catch (\UnhandledMatchError) {
-      $allowed_plugins = Json::decode($value);
+      $allowed_plugins = json_decode($value, TRUE, flags: JSON_THROW_ON_ERROR);
     }
 
     if ($allowed_plugins === TRUE) {

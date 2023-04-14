@@ -369,7 +369,7 @@ class ComposerInspector implements LoggerAwareInterface {
    */
   private function getPackageTypes(array $packages_data, string $working_dir): array {
     $lock_content = file_get_contents($working_dir . DIRECTORY_SEPARATOR . 'composer.lock');
-    $lock_data = json_decode($lock_content, TRUE, 512, JSON_THROW_ON_ERROR);
+    $lock_data = json_decode($lock_content, TRUE, flags: JSON_THROW_ON_ERROR);
 
     $lock_packages = array_merge($lock_data['packages'] ?? [], $lock_data['packages-dev'] ?? []);
     foreach ($lock_packages as $lock_package) {

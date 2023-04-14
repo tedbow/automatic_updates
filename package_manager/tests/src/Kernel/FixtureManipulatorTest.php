@@ -146,7 +146,7 @@ class FixtureManipulatorTest extends PackageManagerKernelTestBase {
     // Assert ::modifyPackage() works with a package in an existing fixture not
     // created by ::addPackage().
     $decode_composer_json = function ($package_name): array {
-      return json_decode(file_get_contents($this->dir . "/vendor/$package_name/composer.json"), TRUE, 512, JSON_THROW_ON_ERROR);
+      return json_decode(file_get_contents($this->dir . "/vendor/$package_name/composer.json"), TRUE, flags: JSON_THROW_ON_ERROR);
     };
     $original_composer_json = $decode_composer_json('my/dev-package');
     (new ActiveFixtureManipulator())

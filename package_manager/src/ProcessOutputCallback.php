@@ -84,7 +84,7 @@ final class ProcessOutputCallback implements ProcessOutputCallbackInterface, Log
   public function parseJsonOutput(): mixed {
     $output = $this->getOutput();
     if ($output !== NULL) {
-      return json_decode($output, TRUE, 512, JSON_THROW_ON_ERROR);
+      return json_decode($output, TRUE, flags: JSON_THROW_ON_ERROR);
     }
     return NULL;
   }

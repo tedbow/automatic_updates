@@ -343,7 +343,7 @@ END;
         $package_info = $path . '/composer.json';
         $this->assertFileIsReadable($package_info);
         $package_info = file_get_contents($package_info);
-        $package_info = json_decode($package_info, TRUE, 512, JSON_THROW_ON_ERROR);
+        $package_info = json_decode($package_info, TRUE, flags: JSON_THROW_ON_ERROR);
 
         $version = $installed_package['version'];
         // Create a pared-down package definition that has just enough
@@ -412,7 +412,7 @@ END;
 
     $output = trim($output);
     if ($json) {
-      $output = json_decode($output, TRUE, JSON_THROW_ON_ERROR);
+      $output = json_decode($output, TRUE, flags: JSON_THROW_ON_ERROR);
     }
     return $output;
   }
@@ -570,7 +570,7 @@ END;
       $mink->assertSession()->statusCodeEquals(200);
     }
 
-    return json_decode($file_contents, TRUE);
+    return json_decode($file_contents, TRUE, flags: JSON_THROW_ON_ERROR);
   }
 
   // BEGIN: DELETE FROM CORE MERGE REQUEST.
@@ -590,7 +590,7 @@ END;
     $file = $this->getWorkspaceDirectory() . '/composer/Metapackage/CoreRecommended/composer.json';
     $this->assertFileIsWritable($file);
     $data = file_get_contents($file);
-    $data = json_decode($data, TRUE);
+    $data = json_decode($data, TRUE, flags: JSON_THROW_ON_ERROR);
     unset($data['require']['drupal/automatic_updates']);
     file_put_contents($file, json_encode($data, JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT));
   }

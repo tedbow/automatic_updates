@@ -4,6 +4,7 @@ declare(strict_types = 1);
 
 namespace Drupal\package_manager\Validator;
 
+use Drupal\Component\Serialization\Json;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\package_manager\Event\StatusCheckEvent;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
@@ -52,7 +53,7 @@ final class AllowedScaffoldPackagesValidator implements EventSubscriberInterface
       "drupal/legacy-scaffold-assets",
       "drupal/core",
     ];
-    $extra = json_decode($this->composerInspector->getConfig('extra', $path . '/composer.json'), TRUE);
+    $extra = Json::decode($this->composerInspector->getConfig('extra', $path . '/composer.json'));
     $allowed_packages = $extra['drupal-scaffold']['allowed-packages'] ?? [];
     $extra_packages = array_diff($allowed_packages, $implicitly_allowed_packages);
     if (!empty($extra_packages)) {

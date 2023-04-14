@@ -59,7 +59,7 @@ trait ComposerInstallersTrait {
     // Ensure Drupal core's default installer paths are also respected.
     $extra = $this->container->get(ComposerInspector::class)
       ->getConfig('extra', $this->getDrupalRoot() . '/composer.json');
-    $core_project_installer_paths = json_decode($extra, TRUE, 512, JSON_THROW_ON_ERROR)['installer-paths'];
+    $core_project_installer_paths = json_decode($extra, TRUE, flags: JSON_THROW_ON_ERROR)['installer-paths'];
 
     (new FixtureManipulator())
       ->addConfig([
