@@ -439,25 +439,14 @@ final class UpdaterForm extends UpdateFormBase {
    *   The human-readable status.
    */
   private function getUpdateStatus(int $status): TranslatableMarkup {
-    switch ($status) {
-      case UpdateManagerInterface::NOT_SECURE:
-        return $this->t('Security update required!');
-
-      case UpdateManagerInterface::REVOKED:
-        return $this->t('Revoked!');
-
-      case UpdateManagerInterface::NOT_SUPPORTED:
-        return $this->t('Not supported!');
-
-      case UpdateManagerInterface::NOT_CURRENT:
-        return $this->t('Update available');
-
-      case UpdateManagerInterface::CURRENT:
-        return $this->t('Up to date');
-
-      default:
-        return $this->t('Unknown status');
-    }
+    return match ($status) {
+      UpdateManagerInterface::NOT_SECURE => $this->t('Security update required!'),
+      UpdateManagerInterface::REVOKED => $this->t('Revoked!'),
+      UpdateManagerInterface::NOT_SUPPORTED => $this->t('Not supported!'),
+      UpdateManagerInterface::NOT_CURRENT => $this->t('Update available'),
+      UpdateManagerInterface::CURRENT => $this->t('Up to date'),
+      default => $this->t('Unknown status'),
+    };
   }
 
 }
