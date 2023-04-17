@@ -136,6 +136,8 @@ abstract class AutomaticUpdatesFunctionalTestBase extends BrowserTestBase {
     $assert_session = $this->assertSession();
     $assert_session->addressMatches('/\/admin\/automatic-update-ready\/[a-zA-Z0-9_\-]+$/');
     $assert_session->pageTextContainsOnce('Drupal core will be updated to ' . $target_version);
+    $button = $assert_session->buttonExists("Continue");
+    $this->assertTrue($button->hasClass('button--primary'));
   }
 
   /**

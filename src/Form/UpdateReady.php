@@ -164,6 +164,7 @@ final class UpdateReady extends UpdateFormBase {
       '#type' => 'submit',
       '#value' => $this->t('Continue'),
     ];
+    $form['actions']['submit']['#button_type'] = 'primary';
     return $form;
   }
 
