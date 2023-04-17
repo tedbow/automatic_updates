@@ -33,6 +33,13 @@ final class BatchProcessor {
   public const MAINTENANCE_MODE_SESSION_KEY = '_automatic_updates_maintenance_mode';
 
   /**
+   * The session key which stores error messages that occur in processing.
+   *
+   * @var string
+   */
+  private const ERROR_MESSAGES_SESSION_KEY = '_automatic_updates_errors';
+
+  /**
    * Gets the update stage service.
    *
    * @return \Drupal\automatic_updates\UpdateStage
@@ -47,15 +54,24 @@ final class BatchProcessor {
    *
    * @param \Throwable $error
    *   The caught exception.
-   * @param array $context
-   *   The current context of the batch job.
    *
    * @throws \Throwable
    *   The caught exception, which will always be re-thrown once its messages
    *   have been recorded.
    */
-  protected static function handleException(\Throwable $error, array &$context): void {
-    $context['results']['errors'][] = $error->getMessage();
+  protected static function handleException(\Throwable $error): never {
+    // TRICKY: We need to store error messages in the session because the batch
+    // context becomes a dangling reference when static variables are globally
+    // reset by drupal_flush_all_caches(), which is called during the post-apply
+    // phase of the update. Which means that, when ::postApply() is called, any
+    // data added to the batch context in the current request is lost. On the
+    // other hand, data stored in the session is not affected.
+    /** @var \Symfony\Component\HttpFoundation\Session\SessionInterface $session */
+    $session = \Drupal::service('session');
+    $errors = $session->get(self::ERROR_MESSAGES_SESSION_KEY, []);
+    $errors[] = $error->getMessage();
+    $session->set(self::ERROR_MESSAGES_SESSION_KEY, $errors);
+
     throw $error;
   }
 
@@ -64,37 +80,32 @@ final class BatchProcessor {
    *
    * @param string[] $project_versions
    *   The project versions to be staged in the update, keyed by package name.
-   * @param array $context
-   *   The current context of the batch job.
    *
    * @see \Drupal\automatic_updates\UpdateStage::begin()
    */
-  public static function begin(array $project_versions, array &$context): void {
+  public static function begin(array $project_versions): void {
     try {
       $stage_id = static::getStage()->begin($project_versions);
       \Drupal::service('session')->set(static::STAGE_ID_SESSION_KEY, $stage_id);
     }
     catch (\Throwable $e) {
-      static::handleException($e, $context);
+      static::handleException($e);
     }
   }
 
   /**
    * Calls the update stage's stage() method.
    *
-   * @param array $context
-   *   The current context of the batch job.
-   *
    * @see \Drupal\automatic_updates\UpdateStage::stage()
    */
-  public static function stage(array &$context): void {
+  public static function stage(): void {
     $stage_id = \Drupal::service('session')->get(static::STAGE_ID_SESSION_KEY);
     try {
       static::getStage()->claim($stage_id)->stage();
     }
     catch (\Throwable $e) {
-      static::clean($stage_id, $context);
-      static::handleException($e, $context);
+      static::clean($stage_id);
+      static::handleException($e);
     }
   }
 
@@ -103,12 +114,10 @@ final class BatchProcessor {
    *
    * @param string $stage_id
    *   The stage ID.
-   * @param array $context
-   *   The current context of the batch job.
    *
    * @see \Drupal\automatic_updates\UpdateStage::apply()
    */
-  public static function commit(string $stage_id, array &$context): void {
+  public static function commit(string $stage_id): void {
     try {
       static::getStage()->claim($stage_id)->apply();
       // The batch system does not allow any single request to run for longer
@@ -120,7 +129,7 @@ final class BatchProcessor {
       sleep(1);
     }
     catch (\Throwable $e) {
-      static::handleException($e, $context);
+      static::handleException($e);
     }
   }
 
@@ -129,17 +138,15 @@ final class BatchProcessor {
    *
    * @param string $stage_id
    *   The stage ID.
-   * @param array $context
-   *   The current context of the batch job.
    *
    * @see \Drupal\automatic_updates\UpdateStage::postApply()
    */
-  public static function postApply(string $stage_id, array &$context): void {
+  public static function postApply(string $stage_id): void {
     try {
       static::getStage()->claim($stage_id)->postApply();
     }
     catch (\Throwable $e) {
-      static::handleException($e, $context);
+      static::handleException($e);
     }
   }
 
@@ -148,17 +155,15 @@ final class BatchProcessor {
    *
    * @param string $stage_id
    *   The stage ID.
-   * @param array $context
-   *   The current context of the batch job.
    *
    * @see \Drupal\automatic_updates\UpdateStage::destroy()
    */
-  public static function clean(string $stage_id, array &$context): void {
+  public static function clean(string $stage_id): void {
     try {
       static::getStage()->claim($stage_id)->destroy();
     }
     catch (\Throwable $e) {
-      static::handleException($e, $context);
+      static::handleException($e);
     }
   }
 
@@ -167,12 +172,8 @@ final class BatchProcessor {
    *
    * @param bool $success
    *   Indicate that the batch API tasks were all completed successfully.
-   * @param array $results
-   *   An array of all the results.
-   * @param array $operations
-   *   A list of the operations that had not been completed by the batch API.
    */
-  public static function finishStage(bool $success, array $results, array $operations): ?RedirectResponse {
+  public static function finishStage(bool $success): ?RedirectResponse {
     if ($success) {
       $stage_id = \Drupal::service('session')->get(static::STAGE_ID_SESSION_KEY);
       $url = Url::fromRoute('automatic_updates.confirmation_page', [
@@ -180,7 +181,7 @@ final class BatchProcessor {
       ]);
       return new RedirectResponse($url->setAbsolute()->toString());
     }
-    static::handleBatchError($results);
+    static::handleBatchError();
     return NULL;
   }
 
@@ -189,12 +190,8 @@ final class BatchProcessor {
    *
    * @param bool $success
    *   Indicate that the batch API tasks were all completed successfully.
-   * @param array $results
-   *   An array of all the results.
-   * @param array $operations
-   *   A list of the operations that had not been completed by the batch API.
    */
-  public static function finishCommit(bool $success, array $results, array $operations): ?RedirectResponse {
+  public static function finishCommit(bool $success): ?RedirectResponse {
     \Drupal::service('session')->remove(static::STAGE_ID_SESSION_KEY);
 
     if ($success) {
@@ -203,21 +200,21 @@ final class BatchProcessor {
         ->toString();
       return new RedirectResponse($url);
     }
-    static::handleBatchError($results);
+    static::handleBatchError();
     return NULL;
   }
 
   /**
    * Handles a batch job that finished with errors.
-   *
-   * @param array $results
-   *   The batch results.
    */
-  protected static function handleBatchError(array $results): void {
-    if (isset($results['errors'])) {
-      foreach ($results['errors'] as $error) {
-        \Drupal::messenger()->addError($error);
-      }
+  protected static function handleBatchError(): void {
+    /** @var \Symfony\Component\HttpFoundation\Session\SessionInterface $session */
+    $session = \Drupal::service('session');
+    $errors = $session->get(self::ERROR_MESSAGES_SESSION_KEY);
+    $session->remove(self::ERROR_MESSAGES_SESSION_KEY);
+
+    if (is_array($errors)) {
+      array_walk($errors, \Drupal::messenger()->addError(...));
     }
     else {
       \Drupal::messenger()->addError("Update error");
