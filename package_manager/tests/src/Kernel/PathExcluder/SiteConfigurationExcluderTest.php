@@ -49,16 +49,16 @@ class SiteConfigurationExcluderTest extends PackageManagerKernelTestBase {
     $stage->require(['ext-json:*']);
     $stage_dir = $stage->getStageDirectory();
 
-    $ignore = [
+    $excluded = [
       "$site_path/settings.php",
       "$site_path/settings.local.php",
       "$site_path/services.yml",
-      // Default site-specific settings files should be ignored.
+      // Default site-specific settings files should be excluded.
       'sites/default/settings.php',
       'sites/default/settings.local.php',
       'sites/default/services.yml',
     ];
-    foreach ($ignore as $path) {
+    foreach ($excluded as $path) {
       $this->assertFileExists("$active_dir/$path");
       $this->assertFileDoesNotExist("$stage_dir/$path");
     }
@@ -74,8 +74,8 @@ class SiteConfigurationExcluderTest extends PackageManagerKernelTestBase {
     $stage->apply();
     $this->assertFileExists("$active_dir/sites/default/new.txt");
 
-    // The ignored files should still be in the active directory.
-    foreach ($ignore as $path) {
+    // The excluded files should still be in the active directory.
+    foreach ($excluded as $path) {
       $this->assertFileExists("$active_dir/$path");
     }
   }

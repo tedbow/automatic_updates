@@ -6,7 +6,7 @@ namespace Drupal\package_manager\PathExcluder;
 
 use Drupal\Core\StreamWrapper\LocalStream;
 use Drupal\Core\StreamWrapper\StreamWrapperManagerInterface;
-use Drupal\package_manager\Event\CollectIgnoredPathsEvent;
+use Drupal\package_manager\Event\CollectPathsToExcludeEvent;
 use Drupal\package_manager\PathLocator;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\Component\Filesystem\Filesystem;
@@ -42,18 +42,18 @@ final class SiteFilesExcluder implements EventSubscriberInterface {
    */
   public static function getSubscribedEvents(): array {
     return [
-      CollectIgnoredPathsEvent::class => 'excludeSiteFiles',
+      CollectPathsToExcludeEvent::class => 'excludeSiteFiles',
     ];
   }
 
   /**
    * Excludes public and private files from stage operations.
    *
-   * @param \Drupal\package_manager\Event\CollectIgnoredPathsEvent $event
+   * @param \Drupal\package_manager\Event\CollectPathsToExcludeEvent $event
    *   The event object.
    */
-  public function excludeSiteFiles(CollectIgnoredPathsEvent $event): void {
-    // Ignore public and private files. These paths could be either absolute or
+  public function excludeSiteFiles(CollectPathsToExcludeEvent $event): void {
+    // Exclude public and private files. These paths could be either absolute or
     // relative, depending on site settings. If they are absolute, treat them
     // as relative to the project root. Otherwise, treat them as relative to
     // the web root.

@@ -18,13 +18,13 @@ class PreCreateEvent extends PreOperationStageEvent {
    *
    * @param \Drupal\package_manager\StageBase $stage
    *   The stage which fired this event.
-   * @param string[] $ignored_paths
-   *   The list of ignored paths. These will not be copied into the stage
+   * @param string[] $paths_to_exclude
+   *   The list of paths to exclude. These will not be copied into the stage
    *   directory when it is created.
    */
-  public function __construct(StageBase $stage, array $ignored_paths) {
+  public function __construct(StageBase $stage, array $paths_to_exclude) {
     parent::__construct($stage);
-    $this->excludedPaths = $ignored_paths;
+    $this->excludedPaths = $paths_to_exclude;
   }
 
 }

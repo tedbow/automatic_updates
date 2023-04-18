@@ -4,7 +4,7 @@ declare(strict_types = 1);
 
 namespace Drupal\Tests\package_manager\Kernel;
 
-use Drupal\package_manager\Event\CollectIgnoredPathsEvent;
+use Drupal\package_manager\Event\CollectPathsToExcludeEvent;
 use Drupal\package_manager\Event\StatusCheckEvent;
 use Drupal\package_manager\StatusCheckTrait;
 use Drupal\package_manager\ValidationResult;
@@ -19,12 +19,12 @@ class StatusCheckTraitTest extends PackageManagerKernelTestBase {
   use StatusCheckTrait;
 
   /**
-   * Tests that StatusCheckTrait will collect ignored paths.
+   * Tests that StatusCheckTrait will collect paths to exclude.
    */
-  public function testIgnoredPathsCollected(): void {
-    $this->addEventTestListener(function (CollectIgnoredPathsEvent $event): void {
+  public function testPathsToExcludeCollected(): void {
+    $this->addEventTestListener(function (CollectPathsToExcludeEvent $event): void {
       $event->add(['/junk/drawer']);
-    }, CollectIgnoredPathsEvent::class);
+    }, CollectPathsToExcludeEvent::class);
 
     $status_check_called = FALSE;
     $this->addEventTestListener(function (StatusCheckEvent $event) use (&$status_check_called): void {
@@ -38,13 +38,13 @@ class StatusCheckTraitTest extends PackageManagerKernelTestBase {
   /**
    * Tests that any error will be added to the status check event.
    */
-  public function testNoErrorIfIgnoredPathsCannotBeCollected(): void {
+  public function testNoErrorIfPathsToExcludeCannotBeCollected(): void {
     $this->addEventTestListener(function (): void {
       throw new \Exception('Not a chance, friend.');
-    }, CollectIgnoredPathsEvent::class);
+    }, CollectPathsToExcludeEvent::class);
     $result = ValidationResult::createError(
       [t('Not a chance, friend.')],
-      t('Unable to collect the ignored paths.'),
+      t('Unable to collect the paths to exclude.'),
     );
     $this->assertStatusCheckResults([$result]);
   }

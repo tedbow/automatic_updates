@@ -18,15 +18,15 @@ class PreApplyEvent extends PreOperationStageEvent {
    *
    * @param \Drupal\package_manager\StageBase $stage
    *   The stage which fired this event.
-   * @param string[] $ignored_paths
-   *   The list of ignored paths. These will not be copied from the stage
+   * @param string[] $paths_to_exclude
+   *   The list of paths to exclude. These will not be copied from the stage
    *   directory to the active directory, nor be deleted from the active
    *   directory if they exist, when the stage directory is copied back into
    *   the active directory.
    */
-  public function __construct(StageBase $stage, array $ignored_paths) {
+  public function __construct(StageBase $stage, array $paths_to_exclude) {
     parent::__construct($stage);
-    $this->excludedPaths = $ignored_paths;
+    $this->excludedPaths = $paths_to_exclude;
   }
 
 }

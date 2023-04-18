@@ -32,18 +32,18 @@ class NodeModulesExcluderTest extends PackageManagerKernelTestBase {
     $stage->require(['ext-json:*']);
     $stage_dir = $stage->getStageDirectory();
 
-    $ignored = [
-      "core/node_modules/ignore.txt",
-      'modules/example/node_modules/ignore.txt',
+    $excluded = [
+      "core/node_modules/exclude.txt",
+      'modules/example/node_modules/exclude.txt',
     ];
-    foreach ($ignored as $path) {
+    foreach ($excluded as $path) {
       $this->assertFileExists("$active_dir/$path");
       $this->assertFileDoesNotExist("$stage_dir/$path");
     }
 
     $stage->apply();
-    // The ignored files should still be in the active directory.
-    foreach ($ignored as $path) {
+    // The excluded files should still be in the active directory.
+    foreach ($excluded as $path) {
       $this->assertFileExists("$active_dir/$path");
     }
   }

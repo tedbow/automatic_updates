@@ -23,7 +23,7 @@ class StatusCheckEventTest extends UnitTestCase {
       NULL
     );
     $this->expectException(\LogicException::class);
-    $this->expectExceptionMessage('$ignored_paths should only be NULL if the error that caused the paths to not be collected was added to the status check event.');
+    $this->expectExceptionMessage('$paths_to_exclude should only be NULL if the error that caused the paths to not be collected was added to the status check event.');
     $event->getExcludedPaths();
   }
 

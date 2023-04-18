@@ -9,15 +9,15 @@ use PhpTuf\ComposerStager\Domain\Value\PathList\PathListInterface;
 use PhpTuf\ComposerStager\Infrastructure\Value\PathList\PathList;
 
 /**
- * Defines an event that collects ignored paths.
+ * Defines an event that collects paths to exclude.
  *
- * Ignored paths are completely ignored by Composer Stager. They are never
- * copied into the stage directory from the active directory, or vice-versa.
+ * These paths are excluded by Composer Stager and are never copied into the
+ * stage directory from the active directory, or vice-versa.
  */
-class CollectIgnoredPathsEvent extends StageEvent implements PathListInterface {
+class CollectPathsToExcludeEvent extends StageEvent implements PathListInterface {
 
   /**
-   * The list of ignored paths.
+   * The list of paths to exclude.
    *
    * @var \PhpTuf\ComposerStager\Domain\Value\PathList\PathListInterface
    */

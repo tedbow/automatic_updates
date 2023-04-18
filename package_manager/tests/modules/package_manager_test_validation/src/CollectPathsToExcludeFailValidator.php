@@ -5,17 +5,17 @@ declare(strict_types = 1);
 namespace Drupal\package_manager_test_validation;
 
 use Drupal\package_manager\ComposerInspector;
-use Drupal\package_manager\Event\CollectIgnoredPathsEvent;
+use Drupal\package_manager\Event\CollectPathsToExcludeEvent;
 use Drupal\package_manager\PathLocator;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 /**
- * Allows to test an excluder which fails on CollectIgnoredPathsEvent.
+ * Allows to test an excluder which fails on CollectPathsToExcludeEvent.
  */
-class CollectIgnoredPathsFailValidator implements EventSubscriberInterface {
+class CollectPathsToExcludeFailValidator implements EventSubscriberInterface {
 
   /**
-   * Constructs a CollectIgnoredPathsFailValidator object.
+   * Constructs a CollectPathsToExcludeFailValidator object.
    *
    * @param \Drupal\package_manager\ComposerInspector $composerInspector
    *   The Composer inspector service.
@@ -30,7 +30,7 @@ class CollectIgnoredPathsFailValidator implements EventSubscriberInterface {
    */
   public static function getSubscribedEvents(): array {
     return [
-      CollectIgnoredPathsEvent::class => 'callToComposer',
+      CollectPathsToExcludeEvent::class => 'callToComposer',
     ];
   }
 

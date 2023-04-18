@@ -8,7 +8,7 @@ use Drupal\Component\Datetime\Time;
 use Drupal\Core\DependencyInjection\ContainerBuilder;
 use Drupal\Core\Extension\ModuleUninstallValidatorException;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
-use Drupal\package_manager\Event\CollectIgnoredPathsEvent;
+use Drupal\package_manager\Event\CollectPathsToExcludeEvent;
 use Drupal\package_manager\Event\PostApplyEvent;
 use Drupal\package_manager\Event\PreApplyEvent;
 use Drupal\package_manager\Event\PreCreateEvent;
@@ -600,23 +600,23 @@ class StageBaseTest extends PackageManagerKernelTestBase {
   }
 
   /**
-   * Tests that ignored paths are collected before create and apply.
+   * Tests that paths to exclude are collected before create and apply.
    */
-  public function testCollectIgnoredPaths(): void {
-    $this->addEventTestListener(function (CollectIgnoredPathsEvent $event): void {
-      $event->add(['ignore/me']);
-    }, CollectIgnoredPathsEvent::class);
+  public function testCollectPathsToExclude(): void {
+    $this->addEventTestListener(function (CollectPathsToExcludeEvent $event): void {
+      $event->add(['exclude/me']);
+    }, CollectPathsToExcludeEvent::class);
 
-    // On pre-create and pre-apply, ensure that the ignored path is known to
+    // On pre-create and pre-apply, ensure that the excluded path is known to
     // the event.
     $asserted = FALSE;
-    $assert_ignored = function (object $event) use (&$asserted): void {
-      $this->assertContains('ignore/me', $event->getExcludedPaths());
+    $assert_excluded = function (object $event) use (&$asserted): void {
+      $this->assertContains('exclude/me', $event->getExcludedPaths());
       // Use this to confirm that this listener was actually called.
       $asserted = TRUE;
     };
-    $this->addEventTestListener($assert_ignored, PreCreateEvent::class);
-    $this->addEventTestListener($assert_ignored);
+    $this->addEventTestListener($assert_excluded, PreCreateEvent::class);
+    $this->addEventTestListener($assert_excluded);
 
     $stage = $this->createStage();
     $stage->create();
@@ -628,9 +628,9 @@ class StageBaseTest extends PackageManagerKernelTestBase {
   }
 
   /**
-   * Tests that if a stage fails to get ignored paths, throws a stage exception.
+   * Tests that if a stage fails to get paths to exclude, throws a stage exception.
    */
-  public function testFailureCollectIgnoredPaths(): void {
+  public function testFailureCollectPathsToExclude(): void {
     $project_root = $this->container->get(PathLocator::class)->getProjectRoot();
     unlink($project_root . '/composer.json');
     $this->expectException(StageException::class);
@@ -639,9 +639,9 @@ class StageBaseTest extends PackageManagerKernelTestBase {
   }
 
   /**
-   * Tests that if apply fails to get ignored paths, throws a stage exception.
+   * Tests that if apply fails to get paths to exclude, throws a stage exception.
    */
-  public function testFailureCollectIgnoredPathsOnApply(): void {
+  public function testFailureCollectPathsToExcludeOnApply(): void {
     $stage = $this->createStage();
     $stage->create();
     $stage->require(['drupal/random']);

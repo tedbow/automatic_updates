@@ -6,7 +6,7 @@ namespace Drupal\package_manager\PathExcluder;
 
 use Drupal\Component\Serialization\Json;
 use Drupal\package_manager\ComposerInspector;
-use Drupal\package_manager\Event\CollectIgnoredPathsEvent;
+use Drupal\package_manager\Event\CollectPathsToExcludeEvent;
 use Drupal\package_manager\PathLocator;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
@@ -49,20 +49,20 @@ final class UnknownPathExcluder implements EventSubscriberInterface {
    */
   public static function getSubscribedEvents(): array {
     return [
-      CollectIgnoredPathsEvent::class => 'excludeUnknownPaths',
+      CollectPathsToExcludeEvent::class => 'excludeUnknownPaths',
     ];
   }
 
   /**
    * Excludes unknown paths from stage operations.
    *
-   * @param \Drupal\package_manager\Event\CollectIgnoredPathsEvent $event
+   * @param \Drupal\package_manager\Event\CollectPathsToExcludeEvent $event
    *   The event object.
    *
    * @throws \Exception
    *   See \Drupal\package_manager\ComposerInspector::validate().
    */
-  public function excludeUnknownPaths(CollectIgnoredPathsEvent $event): void {
+  public function excludeUnknownPaths(CollectPathsToExcludeEvent $event): void {
     $project_root = $this->pathLocator->getProjectRoot();
     $web_root = $project_root . DIRECTORY_SEPARATOR . $this->pathLocator->getWebRoot();
     if (realpath($web_root) === $project_root) {

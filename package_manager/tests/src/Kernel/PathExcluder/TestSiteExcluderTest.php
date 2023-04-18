@@ -31,17 +31,17 @@ class TestSiteExcluderTest extends PackageManagerKernelTestBase {
     $stage->require(['ext-json:*']);
     $stage_dir = $stage->getStageDirectory();
 
-    $ignored = [
+    $excluded = [
       'sites/simpletest',
     ];
-    foreach ($ignored as $path) {
+    foreach ($excluded as $path) {
       $this->assertFileExists("$active_dir/$path");
       $this->assertFileDoesNotExist("$stage_dir/$path");
     }
 
     $stage->apply();
-    // The ignored files should still be in the active directory.
-    foreach ($ignored as $path) {
+    // The excluded files should still be in the active directory.
+    foreach ($excluded as $path) {
       $this->assertFileExists("$active_dir/$path");
     }
   }

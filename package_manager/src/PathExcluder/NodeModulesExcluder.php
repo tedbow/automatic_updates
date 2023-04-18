@@ -4,7 +4,7 @@ declare(strict_types = 1);
 
 namespace Drupal\package_manager\PathExcluder;
 
-use Drupal\package_manager\Event\CollectIgnoredPathsEvent;
+use Drupal\package_manager\Event\CollectPathsToExcludeEvent;
 use Drupal\package_manager\PathLocator;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
@@ -33,10 +33,10 @@ class NodeModulesExcluder implements EventSubscriberInterface {
   /**
    * Excludes node_modules directories from stage operations.
    *
-   * @param \Drupal\package_manager\Event\CollectIgnoredPathsEvent $event
+   * @param \Drupal\package_manager\Event\CollectPathsToExcludeEvent $event
    *   The event object.
    */
-  public function excludeNodeModulesFiles(CollectIgnoredPathsEvent $event): void {
+  public function excludeNodeModulesFiles(CollectPathsToExcludeEvent $event): void {
     $paths = $this->scanForDirectoriesByName('node_modules');
     $this->excludeInProjectRoot($event, $paths);
   }
@@ -46,7 +46,7 @@ class NodeModulesExcluder implements EventSubscriberInterface {
    */
   public static function getSubscribedEvents(): array {
     return [
-      CollectIgnoredPathsEvent::class => 'excludeNodeModulesFiles',
+      CollectPathsToExcludeEvent::class => 'excludeNodeModulesFiles',
     ];
   }
 

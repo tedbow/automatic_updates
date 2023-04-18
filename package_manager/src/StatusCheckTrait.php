@@ -4,7 +4,7 @@ declare(strict_types = 1);
 
 namespace Drupal\package_manager;
 
-use Drupal\package_manager\Event\CollectIgnoredPathsEvent;
+use Drupal\package_manager\Event\CollectPathsToExcludeEvent;
 use Drupal\package_manager\Event\StatusCheckEvent;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 
@@ -33,20 +33,20 @@ trait StatusCheckTrait {
   protected function runStatusCheck(StageBase $stage, EventDispatcherInterface $event_dispatcher = NULL): array {
     $event_dispatcher ??= \Drupal::service('event_dispatcher');
     try {
-      $ignored_paths_event = new CollectIgnoredPathsEvent($stage);
-      $event_dispatcher->dispatch($ignored_paths_event);
-      $event = new StatusCheckEvent($stage, $ignored_paths_event->getAll());
+      $paths_to_exclude_event = new CollectPathsToExcludeEvent($stage);
+      $event_dispatcher->dispatch($paths_to_exclude_event);
+      $event = new StatusCheckEvent($stage, $paths_to_exclude_event->getAll());
     }
     catch (\Throwable $throwable) {
-      // We can dispatch the status check event without the ignored paths, but
-      // it must be set explicitly to NULL, to allow those status checks to run
-      // that do not need the ignored paths.
+      // We can dispatch the status check event without the paths to exclude,
+      // but it must be set explicitly to NULL, to allow those status checks to
+      // run that do not need the paths to exclude.
       $event = new StatusCheckEvent($stage, NULL);
       // Add the error that was encountered so that regardless of any other
       // validation errors BaseRequirementsFulfilledValidator will stop the
       // event propagation after the base requirement validators have run.
       // @see \Drupal\package_manager\Validator\BaseRequirementsFulfilledValidator
-      $event->addErrorFromThrowable($throwable, t('Unable to collect the ignored paths.'));
+      $event->addErrorFromThrowable($throwable, t('Unable to collect the paths to exclude.'));
     }
 
     $event_dispatcher->dispatch($event);

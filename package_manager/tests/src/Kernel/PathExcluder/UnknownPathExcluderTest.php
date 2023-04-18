@@ -172,7 +172,7 @@ class UnknownPathExcluderTest extends PackageManagerKernelTestBase {
     }
 
     $stage->apply();
-    // The ignored files should still be in the active directory.
+    // The excluded files should still be in the active directory.
     foreach ($unknown_files as $path) {
       $this->assertFileExists("$active_dir/$path");
     }

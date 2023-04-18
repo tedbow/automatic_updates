@@ -6,7 +6,7 @@ namespace Drupal\Tests\package_manager\Kernel\PathExcluder;
 
 use Drupal\Core\Database\Connection;
 use Drupal\Core\DependencyInjection\ContainerBuilder;
-use Drupal\package_manager\Event\CollectIgnoredPathsEvent;
+use Drupal\package_manager\Event\CollectPathsToExcludeEvent;
 use Drupal\package_manager\PathExcluder\SqliteDatabaseExcluder;
 use Drupal\package_manager\PathLocator;
 use Drupal\Tests\package_manager\Kernel\PackageManagerKernelTestBase;
@@ -67,19 +67,19 @@ class SqliteDatabaseExcluderTest extends PackageManagerKernelTestBase {
     $stage->require(['ext-json:*']);
     $stage_dir = $stage->getStageDirectory();
 
-    $ignored = [
+    $excluded = [
       "sites/example.com/db.sqlite",
       "sites/example.com/db.sqlite-shm",
       "sites/example.com/db.sqlite-wal",
     ];
-    foreach ($ignored as $path) {
+    foreach ($excluded as $path) {
       $this->assertFileExists("$active_dir/$path");
       $this->assertFileDoesNotExist("$stage_dir/$path");
     }
 
     $stage->apply();
-    // The ignored files should still be in the active directory.
-    foreach ($ignored as $path) {
+    // The excluded files should still be in the active directory.
+    foreach ($excluded as $path) {
       $this->assertFileExists("$active_dir/$path");
     }
   }
@@ -153,7 +153,7 @@ class SqliteDatabaseExcluderTest extends PackageManagerKernelTestBase {
       'database' => $database_path,
     ]);
 
-    $event = new CollectIgnoredPathsEvent($this->createStage());
+    $event = new CollectPathsToExcludeEvent($this->createStage());
     // Invoke the event subscriber directly, so we can check that the database
     // was correctly excluded.
     $this->container->get(SqliteDatabaseExcluder::class)

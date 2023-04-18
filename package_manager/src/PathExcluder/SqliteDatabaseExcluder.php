@@ -5,7 +5,7 @@ declare(strict_types = 1);
 namespace Drupal\package_manager\PathExcluder;
 
 use Drupal\Core\Database\Connection;
-use Drupal\package_manager\Event\CollectIgnoredPathsEvent;
+use Drupal\package_manager\Event\CollectPathsToExcludeEvent;
 use Drupal\package_manager\PathLocator;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
@@ -38,19 +38,19 @@ class SqliteDatabaseExcluder implements EventSubscriberInterface {
    */
   public static function getSubscribedEvents(): array {
     return [
-      CollectIgnoredPathsEvent::class => 'excludeDatabaseFiles',
+      CollectPathsToExcludeEvent::class => 'excludeDatabaseFiles',
     ];
   }
 
   /**
    * Excludes SQLite database files from stage operations.
    *
-   * @param \Drupal\package_manager\Event\CollectIgnoredPathsEvent $event
+   * @param \Drupal\package_manager\Event\CollectPathsToExcludeEvent $event
    *   The event object.
    */
-  public function excludeDatabaseFiles(CollectIgnoredPathsEvent $event): void {
+  public function excludeDatabaseFiles(CollectPathsToExcludeEvent $event): void {
     // If the database is SQLite, it might be located in the active directory
-    // and we should ignore it. Always treat it as relative to the project root.
+    // and we should exclude it. Always treat it as relative to the project root.
     if ($this->database->driver() === 'sqlite') {
       $options = $this->database->getConnectionOptions();
       // Nothing to exclude if the database lives outside the project root.

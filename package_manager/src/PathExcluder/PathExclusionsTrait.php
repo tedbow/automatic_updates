@@ -4,7 +4,7 @@ declare(strict_types = 1);
 
 namespace Drupal\package_manager\PathExcluder;
 
-use Drupal\package_manager\Event\CollectIgnoredPathsEvent;
+use Drupal\package_manager\Event\CollectPathsToExcludeEvent;
 
 /**
  * Contains methods for excluding paths from stage operations.
@@ -24,13 +24,13 @@ trait PathExclusionsTrait {
    * This should only be used for paths that, if they exist at all, are
    * *guaranteed* to exist within the web root.
    *
-   * @param \Drupal\package_manager\Event\CollectIgnoredPathsEvent|\Drupal\package_manager\Event\StageEvent $event
+   * @param \Drupal\package_manager\Event\CollectPathsToExcludeEvent|\Drupal\package_manager\Event\StageEvent $event
    *   The event object.
    * @param string[] $paths
    *   The paths to exclude. These should be relative to the web root, and will
    *   be made relative to the project root.
    */
-  protected function excludeInWebRoot(CollectIgnoredPathsEvent $event, array $paths): void {
+  protected function excludeInWebRoot(CollectPathsToExcludeEvent $event, array $paths): void {
     $web_root = $this->pathLocator->getWebRoot();
     if ($web_root) {
       $web_root .= '/';
@@ -45,14 +45,14 @@ trait PathExclusionsTrait {
   /**
    * Flags paths to be excluded, relative to the project root.
    *
-   * @param \Drupal\package_manager\Event\CollectIgnoredPathsEvent|\Drupal\package_manager\Event\StageEvent $event
+   * @param \Drupal\package_manager\Event\CollectPathsToExcludeEvent|\Drupal\package_manager\Event\StageEvent $event
    *   The event object.
    * @param string[] $paths
    *   The paths to exclude. Absolute paths will be made relative to the project
    *   root; relative paths will be assumed to already be relative to the
    *   project root, and excluded as given.
    */
-  protected function excludeInProjectRoot(CollectIgnoredPathsEvent $event, array $paths): void {
+  protected function excludeInProjectRoot(CollectPathsToExcludeEvent $event, array $paths): void {
     $project_root = $this->pathLocator->getProjectRoot();
 
     foreach ($paths as $path) {

@@ -13,7 +13,7 @@ use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\Core\TempStore\SharedTempStore;
 use Drupal\Core\TempStore\SharedTempStoreFactory;
-use Drupal\package_manager\Event\CollectIgnoredPathsEvent;
+use Drupal\package_manager\Event\CollectPathsToExcludeEvent;
 use Drupal\package_manager\Event\PostApplyEvent;
 use Drupal\package_manager\Event\PostCreateEvent;
 use Drupal\package_manager\Event\PostDestroyEvent;
@@ -250,20 +250,20 @@ abstract class StageBase implements LoggerAwareInterface {
   }
 
   /**
-   * Collects paths that Composer Stager should ignore.
+   * Collects paths that Composer Stager should exclude.
    *
    * @return string[]
-   *   A list of paths that Composer Stager should ignore when creating the
+   *   A list of paths that Composer Stager should exclude when creating the
    *   stage directory and applying staged changes to the active directory.
    *
    * @throws \Drupal\package_manager\Exception\StageException
-   *   Thrown if an exception occurs while collecting ignored paths.
+   *   Thrown if an exception occurs while collecting paths to exclude.
    *
    * @see ::create()
    * @see ::apply()
    */
-  protected function getIgnoredPaths(): array {
-    $event = new CollectIgnoredPathsEvent($this);
+  protected function getPathsToExclude(): array {
+    $event = new CollectPathsToExcludeEvent($this);
     try {
       $this->eventDispatcher->dispatch($event);
     }
@@ -322,7 +322,7 @@ abstract class StageBase implements LoggerAwareInterface {
     $active_dir = $this->pathFactory->create($this->pathLocator->getProjectRoot());
     $stage_dir = $this->pathFactory->create($this->getStageDirectory());
 
-    $event = new PreCreateEvent($this, $this->getIgnoredPaths());
+    $event = new PreCreateEvent($this, $this->getPathsToExclude());
     // If an error occurs and we won't be able to create the stage, mark it as
     // available.
     $this->dispatch($event, [$this, 'markAsAvailable']);
@@ -443,20 +443,20 @@ abstract class StageBase implements LoggerAwareInterface {
     // If an error occurs while dispatching the events, ensure that ::destroy()
     // doesn't think we're in the middle of applying the staged changes to the
     // active directory.
-    $event = new PreApplyEvent($this, $this->getIgnoredPaths());
+    $event = new PreApplyEvent($this, $this->getPathsToExclude());
     $this->tempStore->set(self::TEMPSTORE_APPLY_TIME_KEY, $this->time->getRequestTime());
     $this->dispatch($event, $this->setNotApplying());
 
     // Create a marker file so that we can tell later on if the commit failed.
     $this->failureMarker->write($this, $this->getFailureMarkerMessage());
     // Exclude the failure file from the commit operation.
-    $ignored_paths = new PathList($event->getExcludedPaths());
-    $ignored_paths->add([
+    $paths_to_exclude = new PathList($event->getExcludedPaths());
+    $paths_to_exclude->add([
       $this->failureMarker->getPath(),
     ]);
 
     try {
-      $this->committer->commit($stage_dir, $active_dir, $ignored_paths, NULL, $timeout);
+      $this->committer->commit($stage_dir, $active_dir, $paths_to_exclude, NULL, $timeout);
     }
     catch (InvalidArgumentException | PreconditionException $e) {
       // The commit operation has not started yet, so we can clear the failure

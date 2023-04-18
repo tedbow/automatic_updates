@@ -28,12 +28,12 @@ class StatusCheckEvent extends PreOperationStageEvent {
    *   this event.
    */
   public function getExcludedPaths(): ?array {
-    if (isset($this->excludedPaths)) {
-      return array_unique($this->excludedPaths);
+    if (isset($this->pathsToExclude)) {
+      return array_unique($this->pathsToExclude);
     }
 
     if (empty($this->getResults(SystemManager::REQUIREMENT_ERROR))) {
-      throw new \LogicException('$ignored_paths should only be NULL if the error that caused the paths to not be collected was added to the status check event.');
+      throw new \LogicException('$paths_to_exclude should only be NULL if the error that caused the paths to not be collected was added to the status check event.');
     }
     return NULL;
   }
@@ -43,10 +43,10 @@ class StatusCheckEvent extends PreOperationStageEvent {
    *
    * @param \Drupal\package_manager\StageBase $stage
    *   The stage which fired this event.
-   * @param string[]|null $excludedPaths
-   *   The list of ignored paths, or NULL if they could not be collected.
+   * @param string[]|null $pathsToExclude
+   *   The list of paths to exclude, or NULL if they could not be collected.
    */
-  public function __construct(StageBase $stage, private ?array $excludedPaths) {
+  public function __construct(StageBase $stage, private ?array $pathsToExclude) {
     parent::__construct($stage);
   }
 

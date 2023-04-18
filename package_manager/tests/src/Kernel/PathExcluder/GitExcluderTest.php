@@ -114,7 +114,7 @@ class GitExcluderTest extends PackageManagerKernelTestBase {
         'core_version_requirement' => '^9.7 || ^10',
       ])
     );
-    file_put_contents("$path/.git/ignored.txt", 'Phoenix!');
+    file_put_contents("$path/.git/excluded.txt", 'Phoenix!');
 
     $stage->apply();
     /** @var \Drupal\package_manager_bypass\BypassedStagerServiceBase $committer */

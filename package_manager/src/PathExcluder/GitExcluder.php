@@ -5,7 +5,7 @@ declare(strict_types = 1);
 namespace Drupal\package_manager\PathExcluder;
 
 use Drupal\package_manager\ComposerInspector;
-use Drupal\package_manager\Event\CollectIgnoredPathsEvent;
+use Drupal\package_manager\Event\CollectPathsToExcludeEvent;
 use Drupal\package_manager\PathLocator;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
@@ -38,20 +38,20 @@ final class GitExcluder implements EventSubscriberInterface {
    */
   public static function getSubscribedEvents(): array {
     return [
-      CollectIgnoredPathsEvent::class => 'excludeGitDirectories',
+      CollectPathsToExcludeEvent::class => 'excludeGitDirectories',
     ];
   }
 
   /**
    * Excludes .git directories from stage operations.
    *
-   * @param \Drupal\package_manager\Event\CollectIgnoredPathsEvent $event
+   * @param \Drupal\package_manager\Event\CollectPathsToExcludeEvent $event
    *   The event object.
    *
    * @throws \Exception
    *   See \Drupal\package_manager\ComposerInspector::validate().
    */
-  public function excludeGitDirectories(CollectIgnoredPathsEvent $event): void {
+  public function excludeGitDirectories(CollectPathsToExcludeEvent $event): void {
     $project_root = $this->pathLocator->getProjectRoot();
 
     // To determine which .git directories to exclude, the installed packages

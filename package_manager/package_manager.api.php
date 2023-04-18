@@ -233,11 +233,11 @@
  * irrelevant to Composer or Package Manager. Examples include settings.php
  * and related files, public and private files, SQLite databases, and git
  * repositories. Custom code can subscribe to
- * Drupal\package_manager\Event\CollectIgnoredPathsEvent to flag paths which
+ * Drupal\package_manager\Event\CollectPathsToExcludeEvent to flag paths which
  * should never be copied into the stage directory from the active directory or
  * vice versa.
  *
- * @see \Drupal\package_manager\Event\CollectIgnoredPathsEvent
+ * @see \Drupal\package_manager\Event\CollectPathsToExcludeEvent
  *
  * @section sec_services Useful services
  * The following services are especially useful to validators:

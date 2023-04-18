@@ -198,14 +198,14 @@ class SymlinkValidatorTest extends PackageManagerKernelTestBase {
   }
 
   /**
-   * Tests that unsupported links are ignored if they're beneath excluded paths.
+   * Tests that unsupported links are excluded if they're under excluded paths.
    *
    * @depends testAbsoluteSymlinks
    *
    * @covers \Drupal\package_manager\PathExcluder\GitExcluder
    * @covers \Drupal\package_manager\PathExcluder\NodeModulesExcluder
    */
-  public function testUnsupportedLinkBeneathExcludedPath(): void {
+  public function testUnsupportedLinkUnderExcludedPath(): void {
     $project_root = $this->container->get(PathLocator::class)
       ->getProjectRoot();
 

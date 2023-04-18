@@ -4,7 +4,7 @@ declare(strict_types = 1);
 
 namespace Drupal\package_manager\PathExcluder;
 
-use Drupal\package_manager\Event\CollectIgnoredPathsEvent;
+use Drupal\package_manager\Event\CollectPathsToExcludeEvent;
 use Drupal\package_manager\PathLocator;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
@@ -35,14 +35,14 @@ class SiteConfigurationExcluder implements EventSubscriberInterface {
   /**
    * Excludes site configuration files from stage operations.
    *
-   * @param \Drupal\package_manager\Event\CollectIgnoredPathsEvent $event
+   * @param \Drupal\package_manager\Event\CollectPathsToExcludeEvent $event
    *   The event object.
    */
-  public function excludeSiteConfiguration(CollectIgnoredPathsEvent $event): void {
+  public function excludeSiteConfiguration(CollectPathsToExcludeEvent $event): void {
     // Site configuration files are always excluded relative to the web root.
     $paths = [];
 
-    // Ignore site-specific settings files, which are always in the web root.
+    // Exclude site-specific settings files, which are always in the web root.
     // By default, Drupal core will always try to write-protect these files.
     $settings_files = [
       'settings.php',
@@ -61,7 +61,7 @@ class SiteConfigurationExcluder implements EventSubscriberInterface {
    */
   public static function getSubscribedEvents(): array {
     return [
-      CollectIgnoredPathsEvent::class => 'excludeSiteConfiguration',
+      CollectPathsToExcludeEvent::class => 'excludeSiteConfiguration',
     ];
   }
 
