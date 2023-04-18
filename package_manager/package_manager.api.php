@@ -201,6 +201,14 @@
  *   secure-http configuration option must be enabled). This is the default
  *   behavior.
  *
+ * Package Manager also assumes certain things that it does not explicitly
+ * enforce or check:
+ *
+ * - Only Composer operations should be performed on the stage directory. If
+ *   other file operations were performed, any newly created files might not
+ *   be copied back to the active site because of
+ *   \Drupal\package_manager\PathExcluder\UnknownPathExcluder.
+ *
  * Event subscribers which enforce these and other constraints are referred to
  * as validators.
  *
