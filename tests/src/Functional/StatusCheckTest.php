@@ -9,7 +9,7 @@ use Drupal\automatic_updates\CronUpdateStage;
 use Drupal\automatic_updates\StatusCheckMailer;
 use Drupal\automatic_updates_test\Datetime\TestTime;
 use Drupal\automatic_updates_test\EventSubscriber\TestSubscriber1;
-use Drupal\automatic_updates_test2\EventSubscriber\TestSubscriber2;
+use Drupal\automatic_updates_test_status_checker\EventSubscriber\TestSubscriber2;
 use Drupal\Core\Url;
 use Drupal\package_manager\Event\StatusCheckEvent;
 use Drupal\package_manager\ValidationResult;
@@ -409,7 +409,7 @@ class StatusCheckTest extends AutomaticUpdatesFunctionalTestBase {
 
     $expected_results = [$this->createValidationResult(SystemManager::REQUIREMENT_ERROR)];
     TestSubscriber2::setTestResult($expected_results, StatusCheckEvent::class);
-    $this->container->get('module_installer')->install(['automatic_updates_test2']);
+    $this->container->get('module_installer')->install(['automatic_updates_test_status_checker']);
     $this->drupalGet('admin/structure');
     $assert->pageTextContainsOnce((string) $expected_results[0]->summary);
 
@@ -445,7 +445,7 @@ class StatusCheckTest extends AutomaticUpdatesFunctionalTestBase {
     $this->container->get('module_installer')->install([
       'automatic_updates',
       'automatic_updates_test',
-      'automatic_updates_test2',
+      'automatic_updates_test_status_checker',
     ]);
     // Check for message on 'admin/structure' instead of the status report
     // because checkers will be run if needed on the status report.
@@ -455,7 +455,7 @@ class StatusCheckTest extends AutomaticUpdatesFunctionalTestBase {
 
     // Confirm that when on of the module is uninstalled the other module's
     // checker result is still displayed.
-    $this->container->get('module_installer')->uninstall(['automatic_updates_test2']);
+    $this->container->get('module_installer')->uninstall(['automatic_updates_test_status_checker']);
     $this->drupalGet('admin/structure');
     $assert->pageTextNotContains($expected_results_2[0]->summary);
     $assert->pageTextContainsOnce($expected_results_1[0]->summary);

@@ -114,27 +114,27 @@ class SupportedReleaseValidatorTest extends PackageManagerKernelTestBase {
           ValidationResult::createError([t('aaa_update_test (drupal/aaa_update_test) 3.0.0')], $summary),
         ],
       ],
-      'aaa_package_manager_test(not in active), update to unsupported branch' => [
+      'package_manager_test_update(not in active), update to unsupported branch' => [
         [
-          'aaa_package_manager_test' => "$release_fixture_folder/aaa_package_manager_test.7.0.1.xml",
+          'package_manager_test_update' => "$release_fixture_folder/package_manager_test_update.7.0.1.xml",
         ],
         FALSE,
         [
-          'name' => "drupal/aaa_package_manager_test",
+          'name' => "drupal/package_manager_test_update",
           'version' => '7.0.1-dev',
           'type' => 'drupal-module',
         ],
         [
-          ValidationResult::createError([t('aaa_package_manager_test (drupal/aaa_package_manager_test) 7.0.1-dev')], $summary),
+          ValidationResult::createError([t('package_manager_test_update (drupal/package_manager_test_update) 7.0.1-dev')], $summary),
         ],
       ],
-      'aaa_package_manager_test(not in active), update to supported branch' => [
+      'package_manager_test_update(not in active), update to supported branch' => [
         [
-          'aaa_package_manager_test' => "$release_fixture_folder/aaa_package_manager_test.7.0.1.xml",
+          'package_manager_test_update' => "$release_fixture_folder/package_manager_test_update.7.0.1.xml",
         ],
         FALSE,
         [
-          'name' => "drupal/aaa_package_manager_test",
+          'name' => "drupal/package_manager_test_update",
           'version' => '7.0.1',
           'type' => 'drupal-module',
         ],

@@ -1,4 +1,4 @@
-name: 'Automatic Updates Test module 2'
+name: 'Automatic Updates Test Status Checker Provider'
 type: module
 description: 'Test module to provide an additional status checker.'
 package: Testing
