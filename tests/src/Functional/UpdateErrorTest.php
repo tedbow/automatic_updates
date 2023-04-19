@@ -279,12 +279,33 @@ class UpdateErrorTest extends UpdaterFormTestBase {
       // We should see the exception's backtrace.
       $assert_session->responseContains('<pre class="backtrace">');
       $page->clickLink('the error page');
-      $assert_session->statusMessageContains($exception->getMessage(), 'error');
-      // We should be back on the "ready to update" page.
+      // We should be back on the "ready to update" page, and the exception
+      // message should be visible.
       $this->assertStringContainsString('/admin/automatic-update-ready/', $session->getCurrentUrl());
+      $assert_session->statusMessageContains($exception->getMessage(), 'error');
       return;
     }
-    $this->fail('Expected to encounter an error message during the update process.');
+
+    // If we got any further, ensure we were expecting an exception during the
+    // destroy phase.
+    $this->assertStringEndsWith('DestroyEvent', $event);
+    // We should have been forwarded to the main update page, and the exception
+    // message should be visible.
+    $assert_session->addressEquals('/admin/reports/updates');
+    $assert_session->statusMessageContains($exception->getMessage(), 'error');
+
+    // If the exception was thrown during PreDestroyEvent, the stage was not
+    // destroyed, so pretend there's another available update, and ensure that
+    // the user cannot update to it before they delete the existing update.
+    if ($event === PreDestroyEvent::class) {
+      $this->mockActiveCoreVersion('9.8.0');
+      $this->checkForUpdates();
+      $this->drupalGet('/admin/reports/updates/update');
+
+      $assert_session->statusMessageContains('Cannot begin an update because another Composer operation is currently in progress.', 'error');
+      $assert_session->buttonNotExists('Update to 9.8.1');
+      $assert_session->buttonExists('Delete existing update');
+    }
   }
 
   /**
@@ -315,11 +336,7 @@ class UpdateErrorTest extends UpdaterFormTestBase {
       PreApplyEvent::class,
       PostApplyEvent::class,
       PreDestroyEvent::class,
-      // @todo PostDestroyEvent leads to an exception with "This operation was
-      //   already canceled". This is because the batch processor redirects to
-      //   the UpdateReady form, which tries to claim the stage...which has been
-      //   destroyed. Fix this in https://drupal.org/i/3354003.
-      // PostDestroyEvent::class,
+      PostDestroyEvent::class,
     ];
     return array_combine($events, array_map(fn ($event) => [$event], $events));
   }

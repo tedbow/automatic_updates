@@ -50,16 +50,12 @@ final class BatchProcessor {
   }
 
   /**
-   * Records messages from a throwable, then re-throws it.
+   * Stores an error message for later display.
    *
-   * @param \Throwable $error
-   *   The caught exception.
-   *
-   * @throws \Throwable
-   *   The caught exception, which will always be re-thrown once its messages
-   *   have been recorded.
+   * @param string $error_message
+   *   The error message.
    */
-  protected static function handleException(\Throwable $error): never {
+  protected static function storeErrorMessage(string $error_message): void {
     // TRICKY: We need to store error messages in the session because the batch
     // context becomes a dangling reference when static variables are globally
     // reset by drupal_flush_all_caches(), which is called during the post-apply
@@ -69,10 +65,8 @@ final class BatchProcessor {
     /** @var \Symfony\Component\HttpFoundation\Session\SessionInterface $session */
     $session = \Drupal::service('session');
     $errors = $session->get(self::ERROR_MESSAGES_SESSION_KEY, []);
-    $errors[] = $error->getMessage();
+    $errors[] = $error_message;
     $session->set(self::ERROR_MESSAGES_SESSION_KEY, $errors);
-
-    throw $error;
   }
 
   /**
@@ -89,7 +83,8 @@ final class BatchProcessor {
       \Drupal::service('session')->set(static::STAGE_ID_SESSION_KEY, $stage_id);
     }
     catch (\Throwable $e) {
-      static::handleException($e);
+      static::storeErrorMessage($e->getMessage());
+      throw $e;
     }
   }
 
@@ -105,7 +100,8 @@ final class BatchProcessor {
     }
     catch (\Throwable $e) {
       static::clean($stage_id);
-      static::handleException($e);
+      static::storeErrorMessage($e->getMessage());
+      throw $e;
     }
   }
 
@@ -129,7 +125,8 @@ final class BatchProcessor {
       sleep(1);
     }
     catch (\Throwable $e) {
-      static::handleException($e);
+      static::storeErrorMessage($e->getMessage());
+      throw $e;
     }
   }
 
@@ -146,7 +143,8 @@ final class BatchProcessor {
       static::getStage()->claim($stage_id)->postApply();
     }
     catch (\Throwable $e) {
-      static::handleException($e);
+      static::storeErrorMessage($e->getMessage());
+      throw $e;
     }
   }
 
@@ -156,14 +154,24 @@ final class BatchProcessor {
    * @param string $stage_id
    *   The stage ID.
    *
+   * @return \Symfony\Component\HttpFoundation\RedirectResponse|null
+   *   A redirect response, or NULL to proceed to the normal finish page.
+   *
    * @see \Drupal\automatic_updates\UpdateStage::destroy()
    */
-  public static function clean(string $stage_id): void {
+  public static function clean(string $stage_id): ?RedirectResponse {
     try {
       static::getStage()->claim($stage_id)->destroy();
+      return NULL;
     }
     catch (\Throwable $e) {
-      static::handleException($e);
+      static::storeErrorMessage($e->getMessage());
+      static::displayStoredErrorMessages();
+      // If we failed to destroy the stage, the update still (mostly) succeeded,
+      // so forward the user to the finish page. They won't be able to start
+      // another update (or, indeed, any other Package Manager operation) until
+      // they destroy the existing stage anyway.
+      return static::finishCommit(TRUE);
     }
   }
 
@@ -181,7 +189,7 @@ final class BatchProcessor {
       ]);
       return new RedirectResponse($url->setAbsolute()->toString());
     }
-    static::handleBatchError();
+    static::displayStoredErrorMessages();
     return NULL;
   }
 
@@ -200,14 +208,16 @@ final class BatchProcessor {
         ->toString();
       return new RedirectResponse($url);
     }
-    static::handleBatchError();
+    static::displayStoredErrorMessages();
     return NULL;
   }
 
   /**
-   * Handles a batch job that finished with errors.
+   * Displays any error messages that were stored in the session.
+   *
+   * @see ::storeErrorMessage()
    */
-  protected static function handleBatchError(): void {
+  protected static function displayStoredErrorMessages(): void {
     /** @var \Symfony\Component\HttpFoundation\Session\SessionInterface $session */
     $session = \Drupal::service('session');
     $errors = $session->get(self::ERROR_MESSAGES_SESSION_KEY);
