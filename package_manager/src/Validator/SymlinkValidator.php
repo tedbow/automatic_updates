@@ -53,11 +53,9 @@ class SymlinkValidator implements EventSubscriberInterface {
     // that contains this file, which contains only a few files and no symlinks,
     // as the stage directory. The precondition itself doesn't care if the
     // directory actually exists or not.
-    try {
+    $stage_dir = __DIR__;
+    if ($event->stage->stageDirectoryExists()) {
       $stage_dir = $event->stage->getStageDirectory();
-    }
-    catch (\LogicException) {
-      $stage_dir = __DIR__;
     }
     $stage_dir = $this->pathFactory->create($stage_dir);
 

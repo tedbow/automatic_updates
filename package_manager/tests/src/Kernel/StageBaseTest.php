@@ -651,6 +651,16 @@ class StageBaseTest extends PackageManagerKernelTestBase {
     $stage->apply();
   }
 
+  /**
+   * @covers ::stageDirectoryExists
+   */
+  public function testStageDirectoryExists(): void {
+    $stage = $this->createStage();
+    $this->assertFalse($stage->stageDirectoryExists());
+    $stage->create();
+    $this->assertTrue($stage->stageDirectoryExists());
+  }
+
 }
 
 /**

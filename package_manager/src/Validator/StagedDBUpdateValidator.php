@@ -47,14 +47,10 @@ class StagedDBUpdateValidator implements EventSubscriberInterface {
    *   The event object.
    */
   public function checkForStagedDatabaseUpdates(StatusCheckEvent $event): void {
-    try {
-      $stage_dir = $event->stage->getStageDirectory();
-    }
-    catch (\LogicException) {
-      // Stage directory can't be determined, so there's nothing to validate.
+    if (!$event->stage->stageDirectoryExists()) {
       return;
     }
-
+    $stage_dir = $event->stage->getStageDirectory();
     $extensions_with_updates = $this->getExtensionsWithDatabaseUpdates($stage_dir);
     if ($extensions_with_updates) {
       $extensions_with_updates = array_map($this->t(...), $extensions_with_updates);

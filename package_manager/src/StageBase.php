@@ -739,6 +739,22 @@ abstract class StageBase implements LoggerAwareInterface {
   }
 
   /**
+   * Determines if the stage directory exists.
+   *
+   * @return bool
+   *   TRUE if the directory exists, otherwise FALSE.
+   */
+  public function stageDirectoryExists(): bool {
+    try {
+      $this->getStageDirectory();
+      return TRUE;
+    }
+    catch (\LogicException $e) {
+      return FALSE;
+    }
+  }
+
+  /**
    * Checks if staged changes are being applied to the active directory.
    *
    * @return bool

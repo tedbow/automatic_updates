@@ -143,6 +143,12 @@
  *   post-destroy events. It is possible to destroy the stage without having
  *   claimed it first, but this shouldn't be done unless absolutely necessary.
  *
+ * - \Drupal\package_manager\StageBase::stageDirectoryExists()
+ *   Determines if the stage directory exists and returns a boolean accordingly.
+ *   This allows validators to directly know if the stage directory exists
+ *   without using \Drupal\package_manager\StageBase::getStageDirectory(), which
+ *   throws an exception if the stage directory does not exist.
+ *
  * @section sec_stage_exceptions Stage life cycle exceptions
  * If problems occur during any point of the stage life cycle, a
  * \Drupal\package_manager\Exception\StageException is thrown. If problems are
