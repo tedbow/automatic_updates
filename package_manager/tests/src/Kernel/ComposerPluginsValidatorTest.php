@@ -9,6 +9,7 @@ use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\fixture_manipulator\ActiveFixtureManipulator;
 use Drupal\package_manager\Event\PreApplyEvent;
 use Drupal\package_manager\Event\PreCreateEvent;
+use Drupal\package_manager\Exception\StageEventException;
 use Drupal\package_manager\ValidationResult;
 
 /**
@@ -102,6 +103,36 @@ class ComposerPluginsValidatorTest extends PackageManagerKernelTestBase {
   }
 
   /**
+   * Tests adding a plugin that's not allowed by the allow-plugins config.
+   */
+  public function testAddDisallowedPlugin(): void {
+    $this->getStageFixtureManipulator()
+      ->addPackage([
+        'name' => 'composer/plugin-c',
+        'version' => '16.4',
+        'type' => 'composer-plugin',
+        'require' => ['composer-plugin-api' => '*'],
+        'extra' => ['class' => 'AnyClass'],
+      ]);
+
+    $expected_message = "composer/plugin-c contains a Composer plugin which is blocked by your allow-plugins config.";
+    $stage = $this->createStage();
+    $stage->create();
+    $stage->require(['drupal/core:9.8.1']);
+    try {
+      // We are trying to add package plugin-c but not allowing it in config,
+      // so we expect the operation to fail on PreApplyEvent.
+      $stage->apply();
+    }
+    catch (StageEventException $e) {
+      // Processing is required because the error message we get from Composer
+      // contains multiple white spaces at the start or end of line.
+      $this->assertStringContainsString($expected_message, preg_replace('/\s\s+/', '', $e->getMessage()));
+      $this->assertInstanceOf(PreApplyEvent::class, $e->event);
+    }
+  }
+
+  /**
    * Tests additional composer plugins can be trusted during pre-create.
    *
    * @dataProvider providerSimpleInvalidCases
@@ -162,31 +193,6 @@ class ComposerPluginsValidatorTest extends PackageManagerKernelTestBase {
       ],
       [],
     ];
-
-    // @todo Uncomment this in https://www.drupal.org/project/automatic_updates/issues/3252299
-    // phpcs:disable
-    /*
-    yield 'one supported composer plugin' => [
-      [
-        [
-          'name' => 'cweagans/composer-patches',
-          'version' => '1.0.0',
-          'type' => 'composer-plugin',
-          'require' => ['composer-plugin-api' => '*'],
-          'extra' => ['class' => 'AnyClass'],
-        ],
-      ],
-      [
-        // Note: this is not a complaint about using cweagans/composer-patches
-        // but a complaint about *how* it is used.
-        // @see \Drupal\package_manager\Validator\ComposerPatchesValidator
-        ValidationResult::createError([
-          new TranslatableMarkup('The <code>cweagans/composer-patches</code> plugin is installed, but the <code>composer-exit-on-patch-failure</code> key is not set to <code>true</code> in the <code>extra</code> section of composer.json.'),
-        ]),
-      ],
-    ];
-    */
-    // phpcs:enable
 
     yield 'another supported composer plugin' => [
       [
@@ -251,33 +257,13 @@ class ComposerPluginsValidatorTest extends PackageManagerKernelTestBase {
       ],
       [],
     ];
-
-    // @todo handle following type of case where the project is invalid in
-    // https://www.drupal.org/node/3344595.
-    // phpcs:disable
-    /*
-    yield 'one UNsupported but disallowed plugin' => [
-      [
-        'allow-plugins' => [
-          // Definitely NOT `composer/plugin-c`!
-          'drupal/core-project-message' => TRUE,
-        ],
-      ],
-      [
-        [
-          'name' => 'composer/plugin-c',
-          'version' => '16.4',
-          'type' => 'composer-plugin',
-          'require' => ['composer-plugin-api' => '*'],
-          'extra' => ['class' => 'AnyClass'],
-        ],
-      ],
-      [],
-    ];
-    */
-    // phpcs:enable
   }
 
+  /**
+   * Generates simple invalid test cases.
+   *
+   * @return \Generator
+   */
   public function providerSimpleInvalidCases(): \Generator {
     yield 'one UNsupported composer plugin — pretty package name' => [
       [
