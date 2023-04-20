@@ -26,16 +26,20 @@ class NodeModulesExcluderTest extends PackageManagerKernelTestBase {
 
     $active_dir = $this->container->get(PathLocator::class)
       ->getProjectRoot();
+    $excluded = [
+      "core/node_modules/exclude.txt",
+      'modules/example/node_modules/exclude.txt',
+    ];
+    foreach ($excluded as $path) {
+      mkdir(dirname("$active_dir/$path"), 0777, TRUE);
+      file_put_contents("$active_dir/$path", "This file should never be staged.");
+    }
 
     $stage = $this->createStage();
     $stage->create();
     $stage->require(['ext-json:*']);
     $stage_dir = $stage->getStageDirectory();
 
-    $excluded = [
-      "core/node_modules/exclude.txt",
-      'modules/example/node_modules/exclude.txt',
-    ];
     foreach ($excluded as $path) {
       $this->assertFileExists("$active_dir/$path");
       $this->assertFileDoesNotExist("$stage_dir/$path");
