@@ -112,4 +112,11 @@ class TestCronUpdateStage extends CronUpdateStage {
     $this->handlePostApply($stage_id, $start_version, $target_version);
   }
 
+  /**
+   * {@inheritdoc}
+   */
+  public function setMetadata(string $key, $data): void {
+    parent::setMetadata($key, $data);
+  }
+
 }

@@ -5,6 +5,7 @@ declare(strict_types = 1);
 namespace Drupal\automatic_updates\Validator;
 
 use Drupal\automatic_updates\CronUpdateStage;
+use Drupal\Component\Utility\NestedArray;
 use Drupal\package_manager\ComposerInspector;
 use Drupal\package_manager\Event\StatusCheckEvent;
 use Drupal\package_manager\PathLocator;
@@ -13,7 +14,6 @@ use Drupal\automatic_updates\UpdateStage;
 use Drupal\automatic_updates\Validator\VersionPolicy\ForbidDowngrade;
 use Drupal\automatic_updates\Validator\VersionPolicy\ForbidMinorUpdates;
 use Drupal\automatic_updates\Validator\VersionPolicy\MajorVersionMatch;
-use Drupal\automatic_updates\Validator\VersionPolicy\MinorUpdatesEnabled;
 use Drupal\automatic_updates\Validator\VersionPolicy\StableReleaseInstalled;
 use Drupal\automatic_updates\Validator\VersionPolicy\ForbidDevSnapshot;
 use Drupal\automatic_updates\Validator\VersionPolicy\SupportedBranchInstalled;
@@ -110,28 +110,56 @@ final class VersionPolicyValidator implements EventSubscriberInterface {
         }
       }
     }
-    // If this is not a cron update, and we know the target version, minor
-    // version updates are allowed if configuration says so.
-    elseif ($target_version) {
-      $rules[] = MinorUpdatesEnabled::class;
-    }
 
     $installed_version = $this->getInstalledVersion();
     $available_releases = $this->getAvailableReleases($stage);
 
-    // Invoke each rule in the order that they were added to $rules, stopping
-    // when one returns error messages.
-    // @todo Return all the error messages in https://www.drupal.org/i/3281379.
+    // Let all the rules flag whatever messages they need to.
+    $messages = [];
     foreach ($rules as $rule) {
-      $messages = $this->classResolver
-        ->getInstanceFromDefinition($rule)
+      $messages[$rule] = $this->classResolver->getInstanceFromDefinition($rule)
         ->validate($installed_version, $target_version, $available_releases);
+    }
+    // Remove any messages that are superseded by other, more specific ones.
+    $filtered_rule_messages = array_filter($messages, fn ($rule) => !self::isRuleSuperseded($rule, $messages), ARRAY_FILTER_USE_KEY);
+    // Collapse all the rules' messages into a single array.
+    return NestedArray::mergeDeepArray($filtered_rule_messages);
+  }
 
-      if ($messages) {
-        return $messages;
+  /**
+   * Check if a given rule's messages are superseded by a more specific rule.
+   *
+   * @param string $rule
+   *   The rule to check.
+   * @param array[] $rule_messages
+   *   The messages that were returned by the various rules, keyed by the name
+   *   of the rule that returned them.
+   *
+   * @return bool
+   *   TRUE if the given rule is superseded by another rule, FALSE otherwise.
+   */
+  private static function isRuleSuperseded(string $rule, array $rule_messages): bool {
+    // Some rules' messages are more specific than other rules' messages. For
+    // example, if the message "… automatic updates from one major version to
+    // another are not supported" is returned, then the message "… not in the
+    // list of installable releases" is not needed because the new major version
+    // will not be in the list of installable releases. The keys of this array
+    // are the rules which supersede messages from the values, which are the
+    // less specific rules.
+    $more_specific_rule_sets = [
+      ForbidDowngrade::class => [TargetVersionInstallable::class, MajorVersionMatch::class],
+      ForbidDevSnapshot::class => [StableReleaseInstalled::class],
+      MajorVersionMatch::class => [TargetVersionInstallable::class],
+      ForbidMinorUpdates::class => [TargetVersionInstallable::class],
+    ];
+    foreach ($more_specific_rule_sets as $more_specific_rule => $less_specific_rules) {
+      // If the more specific rule flagged any messages, the given rule is
+      // superseded.
+      if (!empty($rule_messages[$more_specific_rule]) && in_array($rule, $less_specific_rules, TRUE)) {
+        return TRUE;
       }
     }
-    return [];
+    return FALSE;
   }
 
   /**
