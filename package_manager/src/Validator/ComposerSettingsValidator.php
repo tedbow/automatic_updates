@@ -44,19 +44,36 @@ final class ComposerSettingsValidator implements EventSubscriberInterface {
       ? $event->stage->getStageDirectory()
       : $this->pathLocator->getProjectRoot();
 
-    try {
-      $setting = ComposerInspector::toBoolean($this->inspector->getConfig('secure-http', $dir) ?: '0');
+    $settings = [];
+    foreach (['disable-tls', 'secure-http'] as $key) {
+      try {
+        $settings[$key] = ComposerInspector::toBoolean($this->inspector->getConfig($key, $dir) ?: '0');
+      }
+      catch (\Throwable $throwable) {
+        $event->addErrorFromThrowable($throwable, $this->t('Unable to determine Composer <code>@key</code> setting.', [
+          '@key' => $key,
+        ]));
+        return;
+      }
     }
-    catch (\Throwable $throwable) {
-      $event->addErrorFromThrowable($throwable, $this->t('Unable to determine Composer <code>secure-http</code> setting.'));
-      return;
-    }
-    if ($setting === FALSE) {
-      $event->addError([
-        $this->t('HTTPS must be enabled for Composer downloads. See <a href=":url">the Composer documentation</a> for more information.', [
-          ':url' => 'https://getcomposer.org/doc/06-config.md#secure-http',
-        ]),
+
+    // If disable-tls is enabled, it overrides secure-http and sets its value to
+    // FALSE, even if secure-http is set to TRUE explicitly.
+    $messages = [];
+    if ($settings['disable-tls'] === TRUE) {
+      $messages[] = $this->t('TLS must be enabled for HTTPS Composer downloads. See <a href=":url">the Composer documentation</a> for more information.', [
+        ':url' => 'https://getcomposer.org/doc/06-config.md#disable-tls',
       ]);
+      $messages[] = $this->t('You should also check the value of <code>secure-http</code> and make sure that it is set to <code>true</code> or not set at all.');
+    }
+    elseif ($settings['secure-http'] !== TRUE) {
+      $messages[] = $this->t('HTTPS must be enabled for Composer downloads. See <a href=":url">the Composer documentation</a> for more information.', [
+        ':url' => 'https://getcomposer.org/doc/06-config.md#secure-http',
+      ]);
+    }
+
+    if ($messages) {
+      $event->addError($messages, $this->t("Composer settings don't satisfy Package Manager's requirements."));
     }
   }
 
