@@ -107,6 +107,7 @@ final class PackageManagerServiceProvider extends ServiceProviderBase {
       'tempstore.shared' => 'Drupal\Core\TempStore\SharedTempStoreFactory',
       'class_resolver' => 'Drupal\Core\DependencyInjection\ClassResolverInterface',
       'request_stack' => 'Symfony\Component\HttpFoundation\RequestStack',
+      'theme_handler' => 'Drupal\Core\Extension\ThemeHandlerInterface',
     ];
     foreach ($aliases as $service_id => $alias) {
       if (!$container->hasAlias($alias)) {

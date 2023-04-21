@@ -112,6 +112,10 @@ services:
     class: Drupal\package_manager\Validator\DuplicateInfoFileValidator
     tags:
       - { name: event_subscriber }
+  package_manager.validator.enabled_extensions:
+    class: Drupal\package_manager\Validator\EnabledExtensionsValidator
+    tags:
+      - { name: event_subscriber }
   package_manager.validator.overwrite_existing_packages:
     class: Drupal\package_manager\Validator\OverwriteExistingPackagesValidator
     tags:
