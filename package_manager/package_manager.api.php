@@ -27,7 +27,7 @@
  * Only one stage directory can exist at any given time, and it is "owned" by
  * the user or session that originally created it. Only the owner can perform
  * operations on the stage directory, and only using the same class (i.e.,
- * \Drupal\package_manager\Stage or a subclass) they used to create it.
+ * \Drupal\package_manager\StageBase or a subclass) they used to create it.
  *
  * Package Manager can run Composer commands in the stage directory to require
  * or update packages in it, and then copy those changes back into the live,
@@ -35,9 +35,9 @@
  * stage directory can then be safely deleted. These four distinct operations
  * -- create, require, apply, and destroy -- comprise the "stage life cycle."
  *
- * Package Manager's \Drupal\package_manager\Stage controls the stage life cycle
- * and may be subclassed to implement custom behavior. But in most cases, custom
- * code should use the event system to interact with the stage.
+ * Package Manager's \Drupal\package_manager\StageBase controls the stage life
+ * cycle and is an abstract class that must be subclassed. But in most cases,
+ * custom code should use the event system to interact with the stage.
  *
  * @see sec_stage_events Stage API: Events
  * Events are dispatched before and after each operation in the stage life
@@ -112,25 +112,26 @@
  * @section sec_stage_api Stage API: Public methods
  * The public API of any stage consists of the following methods:
  *
- * - \Drupal\package_manager\Stage::create()
+ * - \Drupal\package_manager\StageBase::create()
  *   Creates the stage directory, records ownership, and dispatches pre- and
  *   post-create events. Returns a unique token which calling code must use to
  *   verify stage ownership before performing operations on the stage
  *   directory in subsequent requests (when the stage directory is created,
  *   its ownership is automatically verified for the duration of the current
- *   request). See \Drupal\package_manager\Stage::claim() for more information.
+ *   request). See \Drupal\package_manager\StageBase::claim() for more
+ *   information.
  *
- * - \Drupal\package_manager\Stage::require()
+ * - \Drupal\package_manager\StageBase::require()
  *   Adds and/or updates packages in the stage directory and dispatches pre-
  *   and post-require events. The stage must be claimed by its owner to call
  *   this method.
  *
- * - \Drupal\package_manager\Stage::apply()
+ * - \Drupal\package_manager\StageBase::apply()
  *   Copies changes from the stage directory into the active directory, and
  *   dispatches the pre-apply event. The stage must be claimed by its owner to
  *   call this method.
  *
- * - \Drupal\package_manager\Stage::postApply()
+ * - \Drupal\package_manager\StageBase::postApply()
  *   Performs post-apply tasks after changes have been copied from the stage
  *   directory. This method should be called as soon as possible in a new
  *   request because the code on disk may no longer match what has been loaded
@@ -138,7 +139,7 @@
  *   the service container, and dispatches the post-apply event. The stage must
  *   be claimed by its owner to call this method.
  *
- * - \Drupal\package_manager\Stage::destroy()
+ * - \Drupal\package_manager\StageBase::destroy()
  *   Destroys the stage directory, releases ownership, and dispatches pre- and
  *   post-destroy events. It is possible to destroy the stage without having
  *   claimed it first, but this shouldn't be done unless absolutely necessary.
@@ -148,6 +149,18 @@
  *   This allows validators to directly know if the stage directory exists
  *   without using \Drupal\package_manager\StageBase::getStageDirectory(), which
  *   throws an exception if the stage directory does not exist.
+ *
+ * - \Drupal\package_manager\StageBase::getStageDirectory()
+ *   Returns the absolute path of the directory where changes should be staged.
+ *   It throws an exception if the stage hasn't been created or claimed yet.
+ *
+ * - \Drupal\package_manager\StageBase::isApplying()
+ *   Determines if the staged changes are being applied to the active directory.
+ *   It will return FALSE if more than an hour has passed since the apply
+ *   operation began.
+ *
+ * - \Drupal\package_manager\StageBase::isAvailable()
+ *   Determines if a stage directory can be created.
  *
  * @section sec_stage_exceptions Stage life cycle exceptions
  * If problems occur during any point of the stage life cycle, a
