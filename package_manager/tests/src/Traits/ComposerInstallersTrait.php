@@ -45,6 +45,9 @@ trait ComposerInstallersTrait {
       ->addConfig(['allow-plugins.composer/installers' => TRUE])
       ->commitChanges($dir);
     (new Process(['composer', 'require', 'composer/installers:@dev', $working_dir_option]))->mustRun();
+
+    // Use the default installer paths for Drupal core and extensions.
+    $this->setInstallerPaths([], $dir);
   }
 
   /**

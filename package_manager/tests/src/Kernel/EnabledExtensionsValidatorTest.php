@@ -102,8 +102,6 @@ class EnabledExtensionsValidatorTest extends PackageManagerKernelTestBase {
   public function testExtensionRemoved(array $packages, array $expected_results): void {
     $project_root = $this->container->get(PathLocator::class)->getProjectRoot();
     $this->installComposerInstallers($project_root);
-    // @todo Remove this in https://www.drupal.org/project/automatic_updates/issues/3355553.
-    $this->setInstallerPaths([], $project_root);
 
     $active_manipulator = new ActiveFixtureManipulator();
     $stage_manipulator = $this->getStageFixtureManipulator();
