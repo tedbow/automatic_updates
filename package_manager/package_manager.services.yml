@@ -92,10 +92,6 @@ services:
     tags:
       - { name: event_subscriber }
   Drupal\package_manager\Validator\WritableFileSystemValidator: '@package_manager.validator.file_system'
-  package_manager.validator.composer_settings:
-    class: Drupal\package_manager\Validator\ComposerSettingsValidator
-    tags:
-      - { name: event_subscriber }
   package_manger.validator.composer_minimum_stability:
     class: Drupal\package_manager\Validator\ComposerMinimumStabilityValidator
     tags:

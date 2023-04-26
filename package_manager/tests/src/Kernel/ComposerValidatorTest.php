@@ -10,11 +10,11 @@ use Drupal\package_manager\Event\PreCreateEvent;
 use Drupal\package_manager\ValidationResult;
 
 /**
- * @covers \Drupal\package_manager\Validator\ComposerSettingsValidator
+ * @covers \Drupal\package_manager\Validator\ComposerValidator
  * @group package_manager
  * @internal
  */
-class ComposerSettingsValidatorTest extends PackageManagerKernelTestBase {
+class ComposerValidatorTest extends PackageManagerKernelTestBase {
 
   /**
    * Data provider for testComposerSettingsValidation().

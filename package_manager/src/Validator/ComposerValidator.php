@@ -7,6 +7,7 @@ namespace Drupal\package_manager\Validator;
 use Drupal\Core\Extension\ModuleHandlerInterface;
 use Drupal\Core\Url;
 use Drupal\package_manager\ComposerInspector;
+use Drupal\package_manager\Event\PreApplyEvent;
 use Drupal\package_manager\Event\PreOperationStageEvent;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\package_manager\PathLocator;
@@ -45,8 +46,12 @@ class ComposerValidator implements EventSubscriberInterface {
    * Validates that the Composer executable is the correct version.
    */
   public function validate(PreOperationStageEvent $event): void {
+    $messages = [];
+    $dir = $event instanceof PreApplyEvent
+      ? $event->stage->getStageDirectory()
+      : $this->pathLocator->getProjectRoot();
     try {
-      $this->composerInspector->validate($this->pathLocator->getProjectRoot());
+      $this->composerInspector->validate($dir);
     }
     catch (\Throwable $e) {
       if ($this->moduleHandler->moduleExists('help')) {
@@ -63,7 +68,38 @@ class ComposerValidator implements EventSubscriberInterface {
       else {
         $event->addErrorFromThrowable($e);
       }
+      return;
+    }
 
+    $settings = [];
+    foreach (['disable-tls', 'secure-http'] as $key) {
+      try {
+        $settings[$key] = ComposerInspector::toBoolean($this->composerInspector->getConfig($key, $dir) ?: '0');
+      }
+      catch (\Throwable $e) {
+        $event->addErrorFromThrowable($e, $this->t('Unable to determine Composer <code>@key</code> setting.', [
+          '@key' => $key,
+        ]));
+        return;
+      }
+    }
+
+    // If disable-tls is enabled, it overrides secure-http and sets its value to
+    // FALSE, even if secure-http is set to TRUE explicitly.
+    if ($settings['disable-tls'] === TRUE) {
+      $messages[] = $this->t('TLS must be enabled for HTTPS Composer downloads. See <a href=":url">the Composer documentation</a> for more information.', [
+        ':url' => 'https://getcomposer.org/doc/06-config.md#disable-tls',
+      ]);
+      $messages[] = $this->t('You should also check the value of <code>secure-http</code> and make sure that it is set to <code>true</code> or not set at all.');
+    }
+    elseif ($settings['secure-http'] !== TRUE) {
+      $messages[] = $this->t('HTTPS must be enabled for Composer downloads. See <a href=":url">the Composer documentation</a> for more information.', [
+        ':url' => 'https://getcomposer.org/doc/06-config.md#secure-http',
+      ]);
+    }
+
+    if ($messages) {
+      $event->addError($messages, $this->t("Composer settings don't satisfy Package Manager's requirements."));
     }
   }
 
