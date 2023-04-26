@@ -126,9 +126,7 @@ class ComposerInspector implements LoggerAwareInterface {
           '--check-lock',
           '--no-check-publish',
           '--with-dependencies',
-          '--no-interaction',
-          '--ansi',
-          '--no-cache',
+          '--no-ansi',
           "--working-dir=$working_dir",
         ]);
       }
