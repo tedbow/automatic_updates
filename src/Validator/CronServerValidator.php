@@ -57,8 +57,8 @@ final class CronServerValidator implements EventSubscriberInterface {
    */
   public function __construct(
     RequestStack $request_stack,
-    protected ConfigFactoryInterface $configFactory,
-    protected ModuleHandlerInterface $moduleHandler,
+    private readonly ConfigFactoryInterface $configFactory,
+    private readonly ModuleHandlerInterface $moduleHandler,
   ) {
     $this->request = $request_stack->getCurrentRequest();
   }

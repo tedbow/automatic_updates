@@ -109,8 +109,8 @@ final class ComposerPluginsValidator implements EventSubscriberInterface {
    */
   public function __construct(
     ConfigFactoryInterface $config_factory,
-    protected ComposerInspector $inspector,
-    protected PathLocator $pathLocator,
+    private readonly ComposerInspector $inspector,
+    private readonly PathLocator $pathLocator,
   ) {
     $settings = $config_factory->get('package_manager.settings');
     $this->additionalTrustedComposerPlugins = array_fill_keys(

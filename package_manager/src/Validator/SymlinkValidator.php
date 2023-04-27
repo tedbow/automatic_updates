@@ -37,9 +37,9 @@ class SymlinkValidator implements EventSubscriberInterface {
    *   The path factory service.
    */
   public function __construct(
-    protected PathLocator $pathLocator,
-    protected NoUnsupportedLinksExistInterface $precondition,
-    protected PathFactoryInterface $pathFactory,
+    private readonly PathLocator $pathLocator,
+    private readonly NoUnsupportedLinksExistInterface $precondition,
+    private readonly PathFactoryInterface $pathFactory,
   ) {}
 
   /**

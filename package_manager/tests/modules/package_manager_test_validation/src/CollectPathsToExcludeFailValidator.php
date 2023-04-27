@@ -22,8 +22,10 @@ class CollectPathsToExcludeFailValidator implements EventSubscriberInterface {
    * @param \Drupal\package_manager\PathLocator $pathLocator
    *   The path locator service.
    */
-  public function __construct(private ComposerInspector $composerInspector, private PathLocator $pathLocator) {
-  }
+  public function __construct(
+    private readonly ComposerInspector $composerInspector,
+    private readonly PathLocator $pathLocator
+  ) {}
 
   /**
    * {@inheritdoc}

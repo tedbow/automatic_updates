@@ -28,7 +28,7 @@ class StagedDatabaseUpdateValidator implements EventSubscriberInterface {
    * @param \Drupal\package_manager\Validator\StagedDBUpdateValidator $stagedDBUpdateValidator
    *   The Staged DB Update Validator service.
    */
-  public function __construct(protected StagedDBUpdateValidator $stagedDBUpdateValidator) {
+  public function __construct(private readonly StagedDBUpdateValidator $stagedDBUpdateValidator) {
   }
 
   /**

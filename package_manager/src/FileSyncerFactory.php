@@ -42,9 +42,9 @@ final class FileSyncerFactory {
    */
   public function __construct(
     ExecutableFinder $executable_finder,
-    private PhpFileSyncer $phpFileSyncer,
-    private RsyncFileSyncer $rsyncFileSyncer,
-    private ConfigFactoryInterface $configFactory,
+    private readonly PhpFileSyncer $phpFileSyncer,
+    private readonly RsyncFileSyncer $rsyncFileSyncer,
+    private readonly ConfigFactoryInterface $configFactory,
   ) {
     $this->decorated = new StagerFileSyncerFactory($executable_finder, $phpFileSyncer, $rsyncFileSyncer);
   }

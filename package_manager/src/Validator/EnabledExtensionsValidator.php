@@ -37,10 +37,10 @@ final class EnabledExtensionsValidator implements EventSubscriberInterface {
    *   The theme handler service.
    */
   public function __construct(
-    private PathLocator $pathLocator,
-    private ModuleHandlerInterface $moduleHandler,
-    private ComposerInspector $composerInspector,
-    private ThemeHandlerInterface $themeHandler
+    private readonly PathLocator $pathLocator,
+    private readonly ModuleHandlerInterface $moduleHandler,
+    private readonly ComposerInspector $composerInspector,
+    private readonly ThemeHandlerInterface $themeHandler
   ) {}
 
   /**

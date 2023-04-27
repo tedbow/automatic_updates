@@ -49,9 +49,9 @@ final class VersionPolicyValidator implements EventSubscriberInterface {
    *   The Composer inspector service.
    */
   public function __construct(
-    private ClassResolverInterface $classResolver,
-    private PathLocator $pathLocator,
-    private ComposerInspector $composerInspector,
+    private readonly ClassResolverInterface $classResolver,
+    private readonly PathLocator $pathLocator,
+    private readonly ComposerInspector $composerInspector,
   ) {}
 
   /**

@@ -29,7 +29,7 @@ final class GitExcluder implements EventSubscriberInterface {
    * @param \Drupal\package_manager\ComposerInspector $composerInspector
    *   The Composer inspector service.
    */
-  public function __construct(PathLocator $path_locator, private ComposerInspector $composerInspector) {
+  public function __construct(PathLocator $path_locator, private readonly ComposerInspector $composerInspector) {
     $this->pathLocator = $path_locator;
   }
 

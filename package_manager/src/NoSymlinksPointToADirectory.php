@@ -35,8 +35,8 @@ final class NoSymlinksPointToADirectory implements NoSymlinksPointToADirectoryIn
    *   The config factory.
    */
   public function __construct(
-    private NoSymlinksPointToADirectoryInterface $decorated,
-    private ConfigFactoryInterface $configFactory
+    private readonly NoSymlinksPointToADirectoryInterface $decorated,
+    private readonly ConfigFactoryInterface $configFactory
   ) {}
 
   /**

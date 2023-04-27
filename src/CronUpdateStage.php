@@ -95,11 +95,11 @@ class CronUpdateStage extends UpdateStage {
    *   The failure marker service.
    */
   public function __construct(
-    protected ReleaseChooser $releaseChooser,
-    protected MailManagerInterface $mailManager,
-    protected StatusCheckMailer $statusCheckMailer,
-    protected StateInterface $state,
-    protected ConfigFactoryInterface $configFactory,
+    private readonly ReleaseChooser $releaseChooser,
+    private readonly MailManagerInterface $mailManager,
+    private readonly StatusCheckMailer $statusCheckMailer,
+    private readonly StateInterface $state,
+    private readonly ConfigFactoryInterface $configFactory,
     ComposerInspector $composerInspector,
     PathLocator $pathLocator,
     BeginnerInterface $beginner,

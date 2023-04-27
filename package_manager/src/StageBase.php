@@ -186,16 +186,16 @@ abstract class StageBase implements LoggerAwareInterface {
    *   The failure marker service.
    */
   public function __construct(
-    protected PathLocator $pathLocator,
-    protected BeginnerInterface $beginner,
-    protected StagerInterface $stager,
-    protected CommitterInterface $committer,
-    protected FileSystemInterface $fileSystem,
+    protected readonly PathLocator $pathLocator,
+    protected readonly BeginnerInterface $beginner,
+    protected readonly StagerInterface $stager,
+    protected readonly CommitterInterface $committer,
+    protected readonly FileSystemInterface $fileSystem,
     protected EventDispatcherInterface $eventDispatcher,
-    protected SharedTempStoreFactory $tempStoreFactory,
-    protected TimeInterface $time,
-    protected PathFactoryInterface $pathFactory,
-    protected FailureMarker $failureMarker,
+    protected readonly SharedTempStoreFactory $tempStoreFactory,
+    protected readonly TimeInterface $time,
+    protected readonly PathFactoryInterface $pathFactory,
+    protected readonly FailureMarker $failureMarker,
   ) {
     $this->tempStore = $tempStoreFactory->get('package_manager_stage');
     $this->setLogger(new NullLogger());

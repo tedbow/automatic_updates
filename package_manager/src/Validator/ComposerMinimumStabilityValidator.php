@@ -32,8 +32,10 @@ final class ComposerMinimumStabilityValidator implements EventSubscriberInterfac
    * @param \Drupal\package_manager\ComposerInspector $inspector
    *   The Composer inspector service.
    */
-  public function __construct(protected PathLocator $pathLocator, protected ComposerInspector $inspector) {
-  }
+  public function __construct(
+    private readonly PathLocator $pathLocator,
+    private readonly ComposerInspector $inspector
+  ) {}
 
   /**
    * Validates composer minimum stability.

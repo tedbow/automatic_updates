@@ -24,7 +24,7 @@ final class UpdateDataSubscriber implements EventSubscriberInterface {
    * @param \Drupal\update\UpdateManagerInterface $updateManager
    *   The update manager service.
    */
-  public function __construct(protected UpdateManagerInterface $updateManager) {
+  public function __construct(private readonly UpdateManagerInterface $updateManager) {
   }
 
   /**

@@ -27,7 +27,7 @@ final class StatusCheckController extends ControllerBase {
    * @param \Drupal\automatic_updates\Validation\StatusChecker $statusChecker
    *   The status checker service.
    */
-  public function __construct(protected StatusChecker $statusChecker) {
+  public function __construct(private readonly StatusChecker $statusChecker) {
   }
 
   /**

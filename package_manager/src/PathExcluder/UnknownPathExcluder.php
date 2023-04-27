@@ -40,7 +40,7 @@ final class UnknownPathExcluder implements EventSubscriberInterface {
    * @param \Drupal\package_manager\PathLocator $path_locator
    *   The path locator service.
    */
-  public function __construct(private ComposerInspector $composerInspector, PathLocator $path_locator) {
+  public function __construct(private readonly ComposerInspector $composerInspector, PathLocator $path_locator) {
     $this->pathLocator = $path_locator;
   }
 

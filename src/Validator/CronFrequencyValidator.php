@@ -69,11 +69,11 @@ class CronFrequencyValidator implements EventSubscriberInterface {
    *   The lock service.
    */
   public function __construct(
-    protected ConfigFactoryInterface $configFactory,
-    protected ModuleHandlerInterface $moduleHandler,
-    protected StateInterface $state,
-    protected TimeInterface $time,
-    protected LockBackendInterface $lock,
+    private readonly ConfigFactoryInterface $configFactory,
+    private readonly ModuleHandlerInterface $moduleHandler,
+    private readonly StateInterface $state,
+    private readonly TimeInterface $time,
+    private readonly LockBackendInterface $lock,
   ) {}
 
   /**

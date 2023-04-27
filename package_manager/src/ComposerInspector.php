@@ -74,7 +74,11 @@ class ComposerInspector implements LoggerAwareInterface {
    * @param \PhpTuf\ComposerStager\Infrastructure\Factory\Path\PathFactoryInterface $pathFactory
    *   The path factory service from Composer Stager.
    */
-  public function __construct(private ComposerRunnerInterface $runner, private ComposerIsAvailableInterface $composerIsAvailable, private PathFactoryInterface $pathFactory) {
+  public function __construct(
+    private readonly ComposerRunnerInterface $runner,
+    private readonly ComposerIsAvailableInterface $composerIsAvailable,
+    private readonly PathFactoryInterface $pathFactory
+  ) {
     $this->processCallback = new ProcessOutputCallback();
     $this->setLogger(new NullLogger());
   }

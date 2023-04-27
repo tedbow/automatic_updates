@@ -37,9 +37,9 @@ class ComposerValidator implements EventSubscriberInterface {
    *   The module handler service.
    */
   public function __construct(
-    protected ComposerInspector $composerInspector,
-    protected PathLocator $pathLocator,
-    protected ModuleHandlerInterface $moduleHandler,
+    private readonly ComposerInspector $composerInspector,
+    private readonly PathLocator $pathLocator,
+    private readonly ModuleHandlerInterface $moduleHandler,
   ) {}
 
   /**

@@ -33,8 +33,10 @@ final class PendingUpdatesValidator implements EventSubscriberInterface {
    * @param \Drupal\Core\Update\UpdateRegistry $updateRegistry
    *   The update registry service.
    */
-  public function __construct(protected string $appRoot, protected UpdateRegistry $updateRegistry) {
-  }
+  public function __construct(
+    private readonly string $appRoot,
+    private readonly UpdateRegistry $updateRegistry
+  ) {}
 
   /**
    * Validates that there are no pending database updates.

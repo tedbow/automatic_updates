@@ -42,8 +42,10 @@ final class LockFileValidator implements EventSubscriberInterface {
    * @param \Drupal\package_manager\PathLocator $pathLocator
    *   The path locator service.
    */
-  public function __construct(protected StateInterface $state, protected PathLocator $pathLocator) {
-  }
+  public function __construct(
+    private readonly StateInterface $state,
+    private readonly PathLocator $pathLocator
+  ) {}
 
   /**
    * Returns the current hash of the given directory's lock file.

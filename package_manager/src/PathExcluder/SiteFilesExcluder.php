@@ -33,7 +33,11 @@ final class SiteFilesExcluder implements EventSubscriberInterface {
    * @param \Symfony\Component\Filesystem\Filesystem $fileSystem
    *   The Symfony file system service.
    */
-  public function __construct(PathLocator $path_locator, protected StreamWrapperManagerInterface $streamWrapperManager, protected Filesystem $fileSystem) {
+  public function __construct(
+    PathLocator $path_locator,
+    private readonly StreamWrapperManagerInterface $streamWrapperManager,
+    private readonly Filesystem $fileSystem
+  ) {
     $this->pathLocator = $path_locator;
   }
 

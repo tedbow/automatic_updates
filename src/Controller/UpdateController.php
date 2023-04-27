@@ -34,9 +34,9 @@ final class UpdateController extends ControllerBase {
    *   The status checker service.
    */
   public function __construct(
-    protected PendingUpdatesValidator $pendingUpdatesValidator,
-    protected RouteMatchInterface $routeMatch,
-    protected StatusChecker $statusChecker,
+    private readonly PendingUpdatesValidator $pendingUpdatesValidator,
+    private readonly RouteMatchInterface $routeMatch,
+    private readonly StatusChecker $statusChecker,
   ) {}
 
   /**

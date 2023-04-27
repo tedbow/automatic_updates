@@ -30,7 +30,7 @@ final class ReleaseChooser {
    * @param \Drupal\automatic_updates\Validator\VersionPolicyValidator $versionPolicyValidator
    *   The version validator.
    */
-  public function __construct(protected VersionPolicyValidator $versionPolicyValidator) {
+  public function __construct(private readonly VersionPolicyValidator $versionPolicyValidator) {
     $this->projectInfo = new ProjectInfo('drupal');
   }
 

@@ -30,7 +30,7 @@ final class FailureMarker {
    * @param \Drupal\package_manager\PathLocator $pathLocator
    *   The path locator service.
    */
-  public function __construct(private PathLocator $pathLocator) {
+  public function __construct(private readonly PathLocator $pathLocator) {
   }
 
   /**

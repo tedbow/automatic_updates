@@ -55,14 +55,14 @@ final class UpdateReady extends UpdateFormBase {
    *   The path locator service.
    */
   public function __construct(
-    private ExtensionUpdateStage $stage,
+    private readonly ExtensionUpdateStage $stage,
     MessengerInterface $messenger,
-    private StateInterface $state,
-    private ModuleExtensionList $moduleList,
-    private RendererInterface $renderer,
-    private EventDispatcherInterface $eventDispatcher,
-    private ComposerInspector $composerInspector,
-    private PathLocator $pathLocator,
+    private readonly StateInterface $state,
+    private readonly ModuleExtensionList $moduleList,
+    private readonly RendererInterface $renderer,
+    private readonly EventDispatcherInterface $eventDispatcher,
+    private readonly ComposerInspector $composerInspector,
+    private readonly PathLocator $pathLocator,
   ) {
     $this->setMessenger($messenger);
   }

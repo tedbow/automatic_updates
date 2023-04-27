@@ -28,7 +28,7 @@ class DuplicateInfoFileValidator implements EventSubscriberInterface {
    * @param \Drupal\package_manager\PathLocator $pathLocator
    *   The path locator service.
    */
-  public function __construct(protected PathLocator $pathLocator) {
+  public function __construct(private readonly PathLocator $pathLocator) {
   }
 
   /**

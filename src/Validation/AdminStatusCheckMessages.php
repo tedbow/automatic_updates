@@ -51,12 +51,12 @@ final class AdminStatusCheckMessages implements ContainerInjectionInterface {
    *   The renderer service.
    */
   public function __construct(
-    protected StatusChecker $statusChecker,
-    protected AdminContext $adminContext,
-    protected AccountProxyInterface $currentUser,
-    protected CurrentRouteMatch $currentRouteMatch,
-    protected CronUpdateStage $stage,
-    protected RendererInterface $renderer
+    private readonly StatusChecker $statusChecker,
+    private readonly AdminContext $adminContext,
+    private readonly AccountProxyInterface $currentUser,
+    private readonly CurrentRouteMatch $currentRouteMatch,
+    private readonly CronUpdateStage $stage,
+    private readonly RendererInterface $renderer
   ) {}
 
   /**

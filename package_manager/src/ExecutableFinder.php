@@ -34,7 +34,10 @@ final class ExecutableFinder implements ExecutableFinderInterface {
    * @param \Drupal\Core\Config\ConfigFactoryInterface $configFactory
    *   The config factory service.
    */
-  public function __construct(SymfonyExecutableFinder $symfony_executable_finder, private ConfigFactoryInterface $configFactory) {
+  public function __construct(
+    SymfonyExecutableFinder $symfony_executable_finder,
+    private readonly ConfigFactoryInterface $configFactory
+  ) {
     $this->decorated = new StagerExecutableFinder($symfony_executable_finder);
   }
 

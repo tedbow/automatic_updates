@@ -32,7 +32,12 @@ final class ValidationResult {
    *   Thrown if $messages is empty, or if it has 2 or more items but $summary
    *   is NULL.
    */
-  private function __construct(public readonly int $severity, private array $messages, public readonly ?TranslatableMarkup $summary, bool $assert_translatable) {
+  private function __construct(
+    public readonly int $severity,
+    private array $messages,
+    public readonly ?TranslatableMarkup $summary,
+    bool $assert_translatable
+  ) {
     if ($assert_translatable) {
       assert(Inspector::assertAll(fn ($message) => $message instanceof TranslatableMarkup, $messages));
     }

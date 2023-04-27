@@ -29,7 +29,7 @@ final class TargetVersionInstallable implements ContainerInjectionInterface {
    * @param \Drupal\Core\Config\ConfigFactoryInterface $configFactory
    *   The config factory service.
    */
-  public function __construct(private ConfigFactoryInterface $configFactory) {}
+  public function __construct(private readonly ConfigFactoryInterface $configFactory) {}
 
   /**
    * {@inheritdoc}

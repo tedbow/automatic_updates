@@ -55,7 +55,7 @@ class UpdateStage extends StageBase {
    *   The failure marker service.
    */
   public function __construct(
-    protected ComposerInspector $composerInspector,
+    protected readonly ComposerInspector $composerInspector,
     PathLocator $pathLocator,
     BeginnerInterface $beginner,
     StagerInterface $stager,

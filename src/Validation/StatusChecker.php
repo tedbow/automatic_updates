@@ -48,11 +48,11 @@ final class StatusChecker implements EventSubscriberInterface {
    */
   public function __construct(
     KeyValueExpirableFactoryInterface $key_value_expirable_factory,
-    protected TimeInterface $time,
-    protected EventDispatcherInterface $eventDispatcher,
-    protected UpdateStage $updateStage,
-    protected CronUpdateStage $cronUpdateStage,
-    protected int $resultsTimeToLive,
+    private readonly TimeInterface $time,
+    private readonly EventDispatcherInterface $eventDispatcher,
+    private readonly UpdateStage $updateStage,
+    private readonly CronUpdateStage $cronUpdateStage,
+    private readonly int $resultsTimeToLive,
   ) {
     $this->keyValueExpirable = $key_value_expirable_factory->get('automatic_updates');
   }

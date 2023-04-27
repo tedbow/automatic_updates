@@ -66,13 +66,13 @@ final class UpdaterForm extends UpdateFormBase {
    *   The path locator service.
    */
   public function __construct(
-    private ExtensionUpdateStage $stage,
-    private EventDispatcherInterface $eventDispatcher,
-    private RendererInterface $renderer,
-    private StateInterface $state,
-    private FailureMarker $failureMarker,
-    private ComposerInspector $composerInspector,
-    private PathLocator $pathLocator,
+    private readonly ExtensionUpdateStage $stage,
+    private readonly EventDispatcherInterface $eventDispatcher,
+    private readonly RendererInterface $renderer,
+    private readonly StateInterface $state,
+    private readonly FailureMarker $failureMarker,
+    private readonly ComposerInspector $composerInspector,
+    private readonly PathLocator $pathLocator,
   ) {}
 
   /**

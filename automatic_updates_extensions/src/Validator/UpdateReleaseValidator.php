@@ -36,8 +36,8 @@ final class UpdateReleaseValidator implements EventSubscriberInterface {
    *   The path locator service.
    */
   public function __construct(
-    private ComposerInspector $composerInspector,
-    private PathLocator $pathLocator
+    private readonly ComposerInspector $composerInspector,
+    private readonly PathLocator $pathLocator
   ) {}
 
   /**

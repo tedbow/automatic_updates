@@ -32,8 +32,10 @@ final class StagedProjectsValidator implements EventSubscriberInterface {
    * @param \Drupal\package_manager\ComposerInspector $composerInspector
    *   The Composer inspector service.
    */
-  public function __construct(private PathLocator $pathLocator, private ComposerInspector $composerInspector) {
-  }
+  public function __construct(
+    private readonly PathLocator $pathLocator,
+    private readonly ComposerInspector $composerInspector
+  ) {}
 
   /**
    * Validates the staged packages.

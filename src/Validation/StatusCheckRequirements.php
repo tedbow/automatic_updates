@@ -34,8 +34,10 @@ final class StatusCheckRequirements implements ContainerInjectionInterface {
    * @param \Drupal\Core\Datetime\DateFormatterInterface $dateFormatter
    *   The date formatter service.
    */
-  public function __construct(protected StatusChecker $statusChecker, protected DateFormatterInterface $dateFormatter) {
-  }
+  public function __construct(
+    private readonly StatusChecker $statusChecker,
+    private readonly DateFormatterInterface $dateFormatter
+  ) {}
 
   /**
    * {@inheritdoc}

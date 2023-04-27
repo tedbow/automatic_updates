@@ -35,9 +35,9 @@ class StagedDBUpdateValidator implements EventSubscriberInterface {
    *   The theme list service.
    */
   public function __construct(
-    protected PathLocator $pathLocator,
-    protected ModuleExtensionList $moduleList,
-    protected ThemeExtensionList $themeList,
+    private readonly PathLocator $pathLocator,
+    private readonly ModuleExtensionList $moduleList,
+    private readonly ThemeExtensionList $themeList,
   ) {}
 
   /**

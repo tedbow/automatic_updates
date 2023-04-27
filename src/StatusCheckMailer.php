@@ -52,9 +52,9 @@ final class StatusCheckMailer {
    *   The language manager service.
    */
   public function __construct(
-    protected ConfigFactoryInterface $configFactory,
-    protected MailManagerInterface $mailManager,
-    protected LanguageManagerInterface $languageManager,
+    private readonly ConfigFactoryInterface $configFactory,
+    private readonly MailManagerInterface $mailManager,
+    private readonly LanguageManagerInterface $languageManager,
   ) {}
 
   /**
