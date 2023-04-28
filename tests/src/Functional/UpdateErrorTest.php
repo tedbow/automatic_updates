@@ -11,6 +11,7 @@ use Drupal\package_manager\Event\PostRequireEvent;
 use Drupal\package_manager\Event\PreApplyEvent;
 use Drupal\package_manager\Event\PreCreateEvent;
 use Drupal\package_manager\Event\PreDestroyEvent;
+use Drupal\package_manager\Event\PreOperationStageEvent;
 use Drupal\package_manager\Event\PreRequireEvent;
 use Drupal\package_manager\Event\StatusCheckEvent;
 use Drupal\package_manager\ValidationResult;
@@ -40,36 +41,9 @@ class UpdateErrorTest extends UpdaterFormTestBase {
   }
 
   /**
-   * Tests that the update stage is destroyed if an error occurs during require.
-   */
-  public function testStageDestroyedOnError(): void {
-    $session = $this->getSession();
-    $assert_session = $this->assertSession();
-    $page = $session->getPage();
-    $this->mockActiveCoreVersion('9.8.0');
-    $this->checkForUpdates();
-
-    $this->drupalGet('/admin/modules/update');
-    $error = new \Exception('Some Exception');
-    TestSubscriber1::setException($error, PostRequireEvent::class);
-    $assert_session->pageTextNotContains(static::$errorsExplanation);
-    $assert_session->pageTextNotContains(static::$warningsExplanation);
-    $page->pressButton('Update to 9.8.1');
-    $this->checkForMetaRefresh();
-    $this->assertUpdateStagedTimes(1);
-    $assert_session->pageTextContainsOnce('An error has occurred.');
-    $page->clickLink('the error page');
-    $assert_session->addressEquals('/admin/modules/update');
-    $assert_session->pageTextNotContains('Cannot begin an update because another Composer operation is currently in progress.');
-    $assert_session->buttonNotExists('Delete existing update');
-    $assert_session->pageTextContains('Some Exception');
-    $assert_session->buttonExists('Update');
-  }
-
-  /**
    * Tests that update cannot be completed via the UI if a status check fails.
    */
-  public function testNoContinueOnError(): void {
+  public function testStatusCheckErrorPreventsUpdate(): void {
     $session = $this->getSession();
     $assert_session = $this->assertSession();
     $page = $session->getPage();
@@ -103,9 +77,9 @@ class UpdateErrorTest extends UpdaterFormTestBase {
   }
 
   /**
-   * Tests handling of errors and warnings during the update process.
+   * Tests the display of errors and warnings during status check.
    */
-  public function testUpdateErrors(): void {
+  public function testStatusCheckErrorDisplay(): void {
     $session = $this->getSession();
     $assert_session = $this->assertSession();
     $page = $session->getPage();
@@ -148,53 +122,33 @@ class UpdateErrorTest extends UpdaterFormTestBase {
     $assert_session->pageTextNotContains(static::$warningsExplanation);
     $assert_session->pageTextNotContains($cached_message);
     TestSubscriber1::setTestResult(NULL, StatusCheckEvent::class);
-
-    // Make the validator throw an exception during pre-create.
-    $error = new \Exception('The update exploded.');
-    TestSubscriber1::setException($error, PreCreateEvent::class);
-    $session->reload();
-    $assert_session->pageTextNotContains(static::$errorsExplanation);
-    $assert_session->pageTextNotContains(static::$warningsExplanation);
-    $assert_session->pageTextNotContains($cached_message);
-    $page->pressButton('Update to 9.8.1');
-    $this->checkForMetaRefresh();
-    $this->assertUpdateStagedTimes(0);
-    $assert_session->pageTextContainsOnce('An error has occurred.');
-    $page->clickLink('the error page');
-    // We should see the exception message, but not the validation result's
-    // messages or summary, because exceptions thrown directly by event
-    // subscribers are wrapped in simple exceptions and re-thrown.
-    $assert_session->pageTextContainsOnce($error->getMessage());
-    $assert_session->pageTextNotContains((string) $expected_results[0]->messages[0]);
-    $assert_session->pageTextNotContains($expected_results[0]->summary);
-    $assert_session->pageTextNotContains($cached_message);
-    // Since the error occurred during pre-create, there should be no existing
-    // update to delete.
-    $assert_session->buttonNotExists('Delete existing update');
-
-    // If a validator flags an error, but doesn't throw, the update should still
-    // be halted.
-    TestSubscriber1::setTestResult($expected_results, PreCreateEvent::class);
-    $page->pressButton('Update to 9.8.1');
-    $this->checkForMetaRefresh();
-    $this->assertUpdateStagedTimes(0);
-    $assert_session->pageTextContainsOnce('An error has occurred.');
-    $page->clickLink('the error page');
-    $this->assertStatusMessageContainsResult($expected_results[0]);
-    $assert_session->pageTextNotContains($cached_message);
   }
 
   /**
-   * Tests handling of exceptions thrown by event subscribers.
+   * Tests handling of exceptions and errors raised by event subscribers.
    *
    * @param string $event
-   *   The event that should throw an exception.
+   *   The event that should cause a problem.
+   * @param string $stopped_by
+   *   Either 'exception' to throw an exception on the given event, or
+   *   'validation error' to flag a validation error instead.
    *
-   * @dataProvider providerExceptionFromEventSubscriber
+   * @dataProvider providerUpdateStoppedByEventSubscriber
    */
-  public function testExceptionFromEventSubscriber(string $event): void {
-    $exception = new \Exception('Bad news bears!');
-    TestSubscriber::setException($exception, $event);
+  public function testUpdateStoppedByEventSubscriber(string $event, string $stopped_by): void {
+    $expected_message = 'Bad news bears!';
+
+    if ($stopped_by === 'validation error') {
+      $result = ValidationResult::createError([
+        // @codingStandardsIgnoreLine
+        t($expected_message),
+      ]);
+      TestSubscriber::setTestResult([$result], $event);
+    }
+    else {
+      $this->assertSame('exception', $stopped_by);
+      TestSubscriber::setException(new \Exception($expected_message), $event);
+    }
 
     // Only simulate a staged update if we're going to get far enough that the
     // stage directory will be created.
@@ -213,7 +167,16 @@ class UpdateErrorTest extends UpdaterFormTestBase {
     // StatusCheckEvent runs very early, before we can even start the update.
     // If it raises the error we're expecting, we're done.
     if ($event === StatusCheckEvent::class) {
-      $assert_session->statusMessageContains($exception->getMessage(), 'error');
+      // If we are flagging a validation error, we should see an explanatory
+      // message. If we're throwing an exception, we shouldn't.
+      if ($stopped_by === 'validation error') {
+        $assert_session->statusMessageContains(static::$errorsExplanation, 'error');
+      }
+      else {
+        $assert_session->pageTextNotContains(static::$errorsExplanation);
+      }
+      $assert_session->pageTextNotContains(static::$warningsExplanation);
+      $assert_session->statusMessageContains($expected_message, 'error');
       // We shouldn't be able to start the update.
       $assert_session->buttonNotExists('Update to 9.8.1');
       return;
@@ -228,40 +191,31 @@ class UpdateErrorTest extends UpdaterFormTestBase {
       // We should see the exception's backtrace.
       $assert_session->responseContains('<pre class="backtrace">');
       $page->clickLink('the error page');
-      $assert_session->statusMessageContains($exception->getMessage(), 'error');
+      $assert_session->statusMessageContains($expected_message, 'error');
       // We should be on the start page.
       $assert_session->addressEquals('/admin/modules/update');
 
       // If we failed during post-create, the stage is not destroyed, so we
       // should not be able to start the update anew without destroying the
       // stage first. In all other cases, the stage should have been destroyed
-      // and we should be able to try again.
+      // (or never created at all) and we should be able to try again.
       // @todo Delete the existing update on behalf of the user in
       //   https://drupal.org/i/3346644.
       if ($event === PostCreateEvent::class) {
+        $assert_session->pageTextContains('Cannot begin an update because another Composer operation is currently in progress.');
         $assert_session->buttonNotExists('Update to 9.8.1');
         $assert_session->buttonExists('Delete existing update');
       }
       else {
+        $assert_session->pageTextNotContains('Cannot begin an update because another Composer operation is currently in progress.');
         $assert_session->buttonExists('Update to 9.8.1');
         $assert_session->buttonNotExists('Delete existing update');
       }
       return;
     }
 
-    // We should now be ready to finish the update...
+    // We should now be ready to finish the update.
     $this->assertStringContainsString('/admin/automatic-update-ready/', $session->getCurrentUrl());
-    // ...but if we set it up to fail on PostRequireEvent, and we see the error
-    // message from that, we're done.
-    // @todo In https://drupal.org/i/3346644, ensure that PostRequireEvent
-    //   behaves the same way as PreCreateEvent, PostCreateEvent, and
-    //   PreRequireEvent.
-    if ($event === PostRequireEvent::class) {
-      $assert_session->statusMessageContains($exception->getMessage(), 'error');
-      $assert_session->buttonNotExists('Continue');
-      return;
-    }
-
     // Ensure that we are expecting a failure from an event that is dispatched
     // during the second phase (apply and destroy) of the update.
     $this->assertContains($event, [
@@ -282,7 +236,7 @@ class UpdateErrorTest extends UpdaterFormTestBase {
       // We should be back on the "ready to update" page, and the exception
       // message should be visible.
       $this->assertStringContainsString('/admin/automatic-update-ready/', $session->getCurrentUrl());
-      $assert_session->statusMessageContains($exception->getMessage(), 'error');
+      $assert_session->statusMessageContains($expected_message, 'error');
       return;
     }
 
@@ -292,7 +246,7 @@ class UpdateErrorTest extends UpdaterFormTestBase {
     // We should have been forwarded to the main update page, and the exception
     // message should be visible.
     $assert_session->addressEquals('/admin/reports/updates');
-    $assert_session->statusMessageContains($exception->getMessage(), 'error');
+    $assert_session->statusMessageContains($expected_message, 'error');
 
     // If the exception was thrown during PreDestroyEvent, the stage was not
     // destroyed, so pretend there's another available update, and ensure that
@@ -321,12 +275,12 @@ class UpdateErrorTest extends UpdaterFormTestBase {
   }
 
   /**
-   * Data provider for ::testExceptionFromEventSubscriber().
+   * Data provider for ::testUpdateStoppedByEventSubscriber().
    *
    * @return array[]
    *   The test cases.
    */
-  public function providerExceptionFromEventSubscriber(): array {
+  public function providerUpdateStoppedByEventSubscriber(): array {
     $events = [
       StatusCheckEvent::class,
       PreCreateEvent::class,
@@ -338,7 +292,16 @@ class UpdateErrorTest extends UpdaterFormTestBase {
       PreDestroyEvent::class,
       PostDestroyEvent::class,
     ];
-    return array_combine($events, array_map(fn ($event) => [$event], $events));
+    $data = [];
+    foreach ($events as $event) {
+      $data["exception from $event"] = [$event, 'exception'];
+
+      // Only the pre-operation events support flagging validation errors.
+      if (is_subclass_of($event, PreOperationStageEvent::class)) {
+        $data["validation error from $event"] = [$event, 'validation error'];
+      }
+    }
+    return $data;
   }
 
 }
