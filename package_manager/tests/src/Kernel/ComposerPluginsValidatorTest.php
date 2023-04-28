@@ -104,6 +104,16 @@ class ComposerPluginsValidatorTest extends PackageManagerKernelTestBase {
 
   /**
    * Tests adding a plugin that's not allowed by the allow-plugins config.
+   *
+   * The exception that this test looks for is not necessarily triggered by
+   * ComposerPluginsValidator; Composer will exit with an error if there is an
+   * installed plugin that is not allowed by the `allow-plugins` config. In
+   * practice, this means that whichever validator is the first one to do a
+   * Composer operation (via ComposerInspector) will get the exception -- it
+   * may or may not be ComposerPluginsValidator.
+   *
+   * This test is here to ensure that Composer's behavior remains consistent,
+   * even if we're not explicitly testing ComposerPluginsValidator here.
    */
   public function testAddDisallowedPlugin(): void {
     $this->getStageFixtureManipulator()
