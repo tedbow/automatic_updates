@@ -194,8 +194,8 @@ services:
     class: Drupal\package_manager\Validator\StageNotInActiveValidator
     tags:
       - { name: event_subscriber }
-  package_manager.validator.xdebug:
-    class: Drupal\package_manager\Validator\XdebugValidator
+  package_manager.validator.php_extensions:
+    class: Drupal\package_manager\Validator\PhpExtensionsValidator
     tags:
       - { name: event_subscriber }
   package_manager.update_processor:

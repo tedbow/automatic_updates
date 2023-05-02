@@ -402,8 +402,9 @@ class Converter {
   }
 
   /**
-   * Removes lines from the module based on a starting and ending token
-   * These are lines that are not need in core at all.
+   * Removes lines from the module based on a starting and ending token.
+   *
+   * These are lines that are not needed in core at all.
    *
    * @param string $core_dir
    *   The path to the root of Drupal Core.
