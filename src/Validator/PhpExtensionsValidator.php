@@ -27,7 +27,7 @@ final class PhpExtensionsValidator extends PackageManagerPhpExtensionsValidator 
    */
   public function validateXdebug(PreOperationStageEvent $event): void {
     if ($this->isExtensionLoaded('xdebug') && $event->stage instanceof CronUpdateStage) {
-      $event->addError([$this->t("Xdebug is enabled, currently Cron Updates are not allowed while it is enabled. If Xdebug is not disabled you will not receive security and other updates during cron.")]);
+      $event->addError([$this->t("Unattended updates are not allowed while Xdebug is enabled. You cannot receive updates, including security updates, until it is disabled.")]);
     }
     elseif ($event instanceof StatusCheckEvent) {
       parent::validateXdebug($event);

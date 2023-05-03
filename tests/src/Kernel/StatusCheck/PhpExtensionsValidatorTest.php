@@ -37,7 +37,7 @@ class PhpExtensionsValidatorTest extends AutomaticUpdatesKernelTestBase {
       t('Xdebug is enabled, which may have a negative performance impact on Package Manager and any modules that use it.'),
     ]);
     $error_result = ValidationResult::createError([
-      t("Xdebug is enabled, currently Cron Updates are not allowed while it is enabled. If Xdebug is not disabled you will not receive security and other updates during cron."),
+      t("Unattended updates are not allowed while Xdebug is enabled. You cannot receive updates, including security updates, until it is disabled."),
     ]);
 
     $config = $this->config('automatic_updates.settings');
@@ -88,7 +88,7 @@ class PhpExtensionsValidatorTest extends AutomaticUpdatesKernelTestBase {
     $this->container->get('cron')->run();
     // The update should have been staged, but then stopped with an error.
     $this->assertUpdateStagedTimes(1);
-    $this->assertTrue($logger->hasRecordThatContains("Xdebug is enabled, currently Cron Updates are not allowed while it is enabled. If Xdebug is not disabled you will not receive security and other updates during cron.", RfcLogLevel::ERROR));
+    $this->assertTrue($logger->hasRecordThatContains("Unattended updates are not allowed while Xdebug is enabled. You cannot receive updates, including security updates, until it is disabled.", RfcLogLevel::ERROR));
   }
 
   /**
