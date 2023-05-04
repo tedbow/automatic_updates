@@ -54,14 +54,13 @@ class ComposerValidator implements EventSubscriberInterface {
       $this->composerInspector->validate($dir);
     }
     catch (\Throwable $e) {
+      // @todo There are other reasons this exception could have happened
+      //   besides Composer not being found. Explain those reasons in our online
+      //   help, and update this link, in https://drupal.org/i/3357657.
       if ($this->moduleHandler->moduleExists('help')) {
-        $url = Url::fromRoute('help.page', ['name' => 'package_manager'])
-          ->setOption('fragment', 'package-manager-faq-composer-not-found')
-          ->toString();
-
         $message = $this->t('@message See <a href=":package-manager-help">the help page</a> for information on how to configure the path to Composer.', [
           '@message' => $e->getMessage(),
-          ':package-manager-help' => $url,
+          ':package-manager-help' => self::getHelpUrl('package-manager-faq-composer-not-found'),
         ]);
         $event->addError([$message]);
       }
@@ -87,20 +86,61 @@ class ComposerValidator implements EventSubscriberInterface {
     // If disable-tls is enabled, it overrides secure-http and sets its value to
     // FALSE, even if secure-http is set to TRUE explicitly.
     if ($settings['disable-tls'] === TRUE) {
-      $messages[] = $this->t('TLS must be enabled for HTTPS Composer downloads. See <a href=":url">the Composer documentation</a> for more information.', [
-        ':url' => 'https://getcomposer.org/doc/06-config.md#disable-tls',
-      ]);
+      $message = $this->t('TLS must be enabled for HTTPS Composer downloads.');
+
+      // If the Help module is installed, link to our help page, which displays
+      // the commands for configuring Composer correctly. Otherwise, direct
+      // users straight to the Composer documentation, which is a little less
+      // helpful.
+      if ($this->moduleHandler->moduleExists('help')) {
+        $messages[] = $this->t('@message See <a href=":url">the help page</a> for more information on how to configure Composer to download packages securely.', [
+          '@message' => $message,
+          ':url' => self::getHelpUrl('package-manager-requirements'),
+        ]);
+      }
+      else {
+        $messages[] = $this->t('@message See <a href=":url">the Composer documentation</a> for more information.', [
+          '@message' => $message,
+          ':url' => 'https://getcomposer.org/doc/06-config.md#disable-tls',
+        ]);
+      }
       $messages[] = $this->t('You should also check the value of <code>secure-http</code> and make sure that it is set to <code>true</code> or not set at all.');
     }
     elseif ($settings['secure-http'] !== TRUE) {
-      $messages[] = $this->t('HTTPS must be enabled for Composer downloads. See <a href=":url">the Composer documentation</a> for more information.', [
-        ':url' => 'https://getcomposer.org/doc/06-config.md#secure-http',
-      ]);
+      $message = $this->t('HTTPS must be enabled for Composer downloads.');
+
+      if ($this->moduleHandler->moduleExists('help')) {
+        $messages[] = $this->t('@message See <a href=":url">the help page</a> for more information on how to configure Composer to download packages securely.', [
+          '@message' => $message,
+          ':url' => self::getHelpUrl('package-manager-requirements'),
+        ]);
+      }
+      else {
+        $messages[] = $this->t('@message See <a href=":url">the Composer documentation</a> for more information.', [
+          '@message' => $message,
+          ':url' => 'https://getcomposer.org/doc/06-config.md#secure-http',
+        ]);
+      }
     }
 
     if ($messages) {
       $event->addError($messages, $this->t("Composer settings don't satisfy Package Manager's requirements."));
     }
+  }
+
+  /**
+   * Returns a URL to a specific fragment of Package Manager's online help.
+   *
+   * @param string $fragment
+   *   The fragment to link to.
+   *
+   * @return string
+   *   A URL to Package Manager's online help.
+   */
+  private static function getHelpUrl(string $fragment): string {
+    return Url::fromRoute('help.page', ['name' => 'package_manager'])
+      ->setOption('fragment', $fragment)
+      ->toString();
   }
 
 }

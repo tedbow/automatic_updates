@@ -119,6 +119,48 @@ class ComposerValidatorTest extends PackageManagerKernelTestBase {
   }
 
   /**
+   * Data provider for ::testLinkToOnlineHelp().
+   *
+   * @return array[]
+   *   The test cases.
+   */
+  public function providerLinkToOnlineHelp(): array {
+    return [
+      'TLS disabled' => [
+        ['disable-tls' => TRUE],
+        [
+          t('TLS must be enabled for HTTPS Composer downloads. See <a href="/admin/help/package_manager#package-manager-requirements">the help page</a> for more information on how to configure Composer to download packages securely.'),
+          t('You should also check the value of <code>secure-http</code> and make sure that it is set to <code>true</code> or not set at all.'),
+        ],
+      ],
+      'secure-http is off' => [
+        ['secure-http' => FALSE],
+        [
+          t('HTTPS must be enabled for Composer downloads. See <a href="/admin/help/package_manager#package-manager-requirements">the help page</a> for more information on how to configure Composer to download packages securely.'),
+        ],
+      ],
+    ];
+  }
+
+  /**
+   * Tests that invalid configuration links to online help, if available.
+   *
+   * @param array $config
+   *   The Composer configuration to set.
+   * @param \Drupal\Core\StringTranslation\TranslatableMarkup[] $expected_messages
+   *   The expected validation error messages.
+   *
+   * @dataProvider providerLinkToOnlineHelp
+   */
+  public function testLinkToOnlineHelp(array $config, array $expected_messages): void {
+    $this->enableModules(['help']);
+    (new ActiveFixtureManipulator())->addConfig($config)->commitChanges();
+
+    $result = ValidationResult::createError($expected_messages, t("Composer settings don't satisfy Package Manager's requirements."));
+    $this->assertStatusCheckResults([$result]);
+  }
+
+  /**
    * {@inheritdoc}
    */
   protected function tearDown(): void {
