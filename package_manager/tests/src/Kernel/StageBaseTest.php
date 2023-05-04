@@ -655,6 +655,16 @@ class StageBaseTest extends PackageManagerKernelTestBase {
    * @covers ::stageDirectoryExists
    */
   public function testStageDirectoryExists(): void {
+    // Ensure that stageDirectoryExists() returns an accurate result during
+    // pre-create.
+    $listener = function (StageEvent $event): void {
+      $stage = $event->stage;
+      // The directory should not exist yet, because we are still in pre-create.
+      $this->assertDirectoryDoesNotExist($stage->getStageDirectory());
+      $this->assertFalse($stage->stageDirectoryExists());
+    };
+    $this->addEventTestListener($listener, PreCreateEvent::class);
+
     $stage = $this->createStage();
     $this->assertFalse($stage->stageDirectoryExists());
     $stage->create();

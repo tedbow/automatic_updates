@@ -746,10 +746,9 @@ abstract class StageBase implements LoggerAwareInterface {
    */
   public function stageDirectoryExists(): bool {
     try {
-      $this->getStageDirectory();
-      return TRUE;
+      return is_dir($this->getStageDirectory());
     }
-    catch (\LogicException $e) {
+    catch (\LogicException) {
       return FALSE;
     }
   }
