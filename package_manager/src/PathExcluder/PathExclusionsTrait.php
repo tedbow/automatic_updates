@@ -19,6 +19,13 @@ trait PathExclusionsTrait {
   protected $pathLocator;
 
   /**
+   * The path factory service.
+   *
+   * @var \PhpTuf\ComposerStager\Infrastructure\Factory\Path\PathFactoryInterface
+   */
+  protected $pathFactory;
+
+  /**
    * Flags paths to be excluded, relative to the web root.
    *
    * This should only be used for paths that, if they exist at all, are
@@ -56,7 +63,7 @@ trait PathExclusionsTrait {
     $project_root = $this->pathLocator->getProjectRoot();
 
     foreach ($paths as $path) {
-      if (str_starts_with($path, '/')) {
+      if ($this->pathFactory->create($path)->isAbsolute()) {
         if (!str_starts_with($path, $project_root)) {
           throw new \LogicException("$path is not inside the project root: $project_root.");
         }

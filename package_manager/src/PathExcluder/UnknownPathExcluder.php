@@ -8,6 +8,7 @@ use Drupal\Component\Serialization\Json;
 use Drupal\package_manager\ComposerInspector;
 use Drupal\package_manager\Event\CollectPathsToExcludeEvent;
 use Drupal\package_manager\PathLocator;
+use PhpTuf\ComposerStager\Infrastructure\Factory\Path\PathFactoryInterface;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 /**
@@ -39,9 +40,12 @@ final class UnknownPathExcluder implements EventSubscriberInterface {
    *   The Composer inspector service.
    * @param \Drupal\package_manager\PathLocator $path_locator
    *   The path locator service.
+   * @param \PhpTuf\ComposerStager\Infrastructure\Factory\Path\PathFactoryInterface $path_factory
+   *   The path factory service.
    */
-  public function __construct(private readonly ComposerInspector $composerInspector, PathLocator $path_locator) {
+  public function __construct(private readonly ComposerInspector $composerInspector, PathLocator $path_locator, PathFactoryInterface $path_factory) {
     $this->pathLocator = $path_locator;
+    $this->pathFactory = $path_factory;
   }
 
   /**

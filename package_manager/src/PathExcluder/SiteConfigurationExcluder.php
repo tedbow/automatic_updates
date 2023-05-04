@@ -6,6 +6,7 @@ namespace Drupal\package_manager\PathExcluder;
 
 use Drupal\package_manager\Event\CollectPathsToExcludeEvent;
 use Drupal\package_manager\PathLocator;
+use PhpTuf\ComposerStager\Infrastructure\Factory\Path\PathFactoryInterface;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 /**
@@ -27,9 +28,12 @@ class SiteConfigurationExcluder implements EventSubscriberInterface {
    *   The current site path, relative to the Drupal root.
    * @param \Drupal\package_manager\PathLocator $path_locator
    *   The path locator service.
+   * @param \PhpTuf\ComposerStager\Infrastructure\Factory\Path\PathFactoryInterface $path_factory
+   *   The path factory service.
    */
-  public function __construct(protected string $sitePath, PathLocator $path_locator) {
+  public function __construct(protected string $sitePath, PathLocator $path_locator, PathFactoryInterface $path_factory) {
     $this->pathLocator = $path_locator;
+    $this->pathFactory = $path_factory;
   }
 
   /**

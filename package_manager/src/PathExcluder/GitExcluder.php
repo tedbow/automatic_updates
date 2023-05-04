@@ -7,6 +7,7 @@ namespace Drupal\package_manager\PathExcluder;
 use Drupal\package_manager\ComposerInspector;
 use Drupal\package_manager\Event\CollectPathsToExcludeEvent;
 use Drupal\package_manager\PathLocator;
+use PhpTuf\ComposerStager\Infrastructure\Factory\Path\PathFactoryInterface;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 /**
@@ -28,9 +29,12 @@ final class GitExcluder implements EventSubscriberInterface {
    *   The path locator service.
    * @param \Drupal\package_manager\ComposerInspector $composerInspector
    *   The Composer inspector service.
+   * @param \PhpTuf\ComposerStager\Infrastructure\Factory\Path\PathFactoryInterface $path_factory
+   *   The path factory service.
    */
-  public function __construct(PathLocator $path_locator, private readonly ComposerInspector $composerInspector) {
+  public function __construct(PathLocator $path_locator, private readonly ComposerInspector $composerInspector, PathFactoryInterface $path_factory) {
     $this->pathLocator = $path_locator;
+    $this->pathFactory = $path_factory;
   }
 
   /**

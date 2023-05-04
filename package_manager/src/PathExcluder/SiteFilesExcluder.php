@@ -8,6 +8,7 @@ use Drupal\Core\StreamWrapper\LocalStream;
 use Drupal\Core\StreamWrapper\StreamWrapperManagerInterface;
 use Drupal\package_manager\Event\CollectPathsToExcludeEvent;
 use Drupal\package_manager\PathLocator;
+use PhpTuf\ComposerStager\Infrastructure\Factory\Path\PathFactoryInterface;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\Component\Filesystem\Filesystem;
 
@@ -28,6 +29,8 @@ final class SiteFilesExcluder implements EventSubscriberInterface {
    *
    * @param \Drupal\package_manager\PathLocator $path_locator
    *   The path locator service.
+   * @param \PhpTuf\ComposerStager\Infrastructure\Factory\Path\PathFactoryInterface $path_factory
+   *   The path factory service.
    * @param \Drupal\Core\StreamWrapper\StreamWrapperManagerInterface $streamWrapperManager
    *   The stream wrapper manager service.
    * @param \Symfony\Component\Filesystem\Filesystem $fileSystem
@@ -35,10 +38,12 @@ final class SiteFilesExcluder implements EventSubscriberInterface {
    */
   public function __construct(
     PathLocator $path_locator,
+    PathFactoryInterface $path_factory,
     private readonly StreamWrapperManagerInterface $streamWrapperManager,
     private readonly Filesystem $fileSystem
   ) {
     $this->pathLocator = $path_locator;
+    $this->pathFactory = $path_factory;
   }
 
   /**

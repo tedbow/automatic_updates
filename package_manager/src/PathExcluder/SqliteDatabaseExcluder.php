@@ -7,6 +7,7 @@ namespace Drupal\package_manager\PathExcluder;
 use Drupal\Core\Database\Connection;
 use Drupal\package_manager\Event\CollectPathsToExcludeEvent;
 use Drupal\package_manager\PathLocator;
+use PhpTuf\ComposerStager\Infrastructure\Factory\Path\PathFactoryInterface;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 /**
@@ -28,9 +29,12 @@ class SqliteDatabaseExcluder implements EventSubscriberInterface {
    *   The path locator service.
    * @param \Drupal\Core\Database\Connection $database
    *   The database connection.
+   * @param \PhpTuf\ComposerStager\Infrastructure\Factory\Path\PathFactoryInterface $path_factory
+   *   The path factory service.
    */
-  public function __construct(PathLocator $path_locator, protected Connection $database) {
+  public function __construct(PathLocator $path_locator, protected Connection $database, PathFactoryInterface $path_factory) {
     $this->pathLocator = $path_locator;
+    $this->pathFactory = $path_factory;
   }
 
   /**
