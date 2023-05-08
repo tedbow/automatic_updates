@@ -54,13 +54,10 @@ class ComposerValidator implements EventSubscriberInterface {
       $this->composerInspector->validate($dir);
     }
     catch (\Throwable $e) {
-      // @todo There are other reasons this exception could have happened
-      //   besides Composer not being found. Explain those reasons in our online
-      //   help, and update this link, in https://drupal.org/i/3357657.
       if ($this->moduleHandler->moduleExists('help')) {
-        $message = $this->t('@message See <a href=":package-manager-help">the help page</a> for information on how to configure the path to Composer.', [
+        $message = $this->t('@message See <a href=":package-manager-help">the help page</a> for information on how to resolve the problem.', [
           '@message' => $e->getMessage(),
-          ':package-manager-help' => self::getHelpUrl('package-manager-faq-composer-not-found'),
+          ':package-manager-help' => self::getHelpUrl('package-manager-composer-related-faq'),
         ]);
         $event->addError([$message]);
       }

@@ -46,17 +46,27 @@ function package_manager_help($route_name, RouteMatchInterface $route_match) {
       $output .= '  <li>' . t('It associates the temporary copy of the site with the user or session that originally created it, and only that user or session can make changes to it.') . '</li>';
       $output .= '  <li>' . t('It does not allow modules to be uninstalled while syncing changes into live site.') . '</li>';
       $output .= '</ul>';
-      $output .= '<p>' . t('For more information, see the <a href=":package-manager-documentation">online documentation for the Package Manager module</a>.', [':package-manager-documentation' => 'https://www.drupal.org/docs/8/core/modules/package-manager']) . '</p>';
+      $output .= '<p>' . t('For more information, see the <a href=":url">online documentation for the Package Manager module</a>.', [':url' => 'https://www.drupal.org/docs/8/core/modules/package-manager']) . '</p>';
 
       $output .= '<h3 id="package-manager-faq">' . t('FAQ') . '</h3>';
-
-      $output .= '<h4 id="package-manager-faq-composer-not-found">' . t('What if it says the "composer" executable cannot be found?') . '</h4>';
-      $output .= '<p>' . t('If the <code>composer</code> executable path cannot be automatically determined, it can be explicitly set in by adding the following line to <code>settings.php</code>:') . '</p>';
-      $output .= "<pre><code>\$config['package_manager.settings']['executables']['composer'] = '/full/path/to/composer.phar';</code></pre>";
+      $output .= '<h4 id="package-manager-composer-related-faq">' . t('FAQs related to Composer') . '</h4>';
+      $output .= '<ul>';
+      $output .= '  <li>' . t('What if it says the <code>composer</code> executable cannot be found?');
+      $output .= '    <p>' . t("If the <code>composer</code> executable's path cannot be automatically determined, it can be explicitly set by adding the following line to <code>settings.php</code>:") . '</p>';
+      $output .= "    <pre><code>\$config['package_manager.settings']['executables']['composer'] = '/full/path/to/composer.phar';</code></pre>";
       // BEGIN: DELETE FROM CORE MERGE REQUEST
-      $output .= '<p>' . t('Alternatively, you can use the following Drush command:') . '</p>';
-      $output .= '<pre><code>drush config:set package_manager.settings executables.composer /full/path/to/composer.phar</code></pre>';
+      $output .= '    <p>' . t('Alternatively, you can use the following Drush command:') . '</p>';
+      $output .= '    <pre><code>drush config:set package_manager.settings executables.composer /full/path/to/composer.phar</code></pre>';
       // END: DELETE FROM CORE MERGE REQUEST
+      $output .= '  </li>';
+      $output .= '  <li>' . t('What if it says the detected version of Composer is not supported?');
+      $output .= '    <p>' . t('The version of the <code>composer</code> executable must satisfy <code>@version</code>. See the <a href=":url">the Composer documentation</a> for more information, or use this command to update Composer:', ['@version' => ComposerInspector::SUPPORTED_VERSION, ':url' => 'https://getcomposer.org/doc/03-cli.md#self-update-selfupdate']) . '</p>';
+      $output .= '    <pre><code>composer self-update</code></pre>';
+      $output .= '  </li>';
+      $output .= '  <li>' . t('What if it says the <code>composer validate</code> command failed?');
+      $output .= '    <p>' . t('Composer detected problems with your <code>composer.json</code> and/or <code>composer.lock</code> files, and the project is not in a completely valid state. See <a href=":url">the Composer documentation</a> for more information.', [':url' => 'https://getcomposer.org/doc/04-schema.md']) . '</p>';
+      $output .= '  </li>';
+      $output .= '</ul>';
 
       $output .= '<h4 id="package-manager-faq-unsupported-composer-plugin">' . t('What if it says I have unsupported Composer plugins in my codebase?') . '</h4>';
       $output .= '<p>' . t('A fresh Drupal installation only uses supported Composer plugins, but some modules or themes may depend on additional Composer plugins. Please <a href=":new-issue">create a new issue</a> when you encounter this.', [

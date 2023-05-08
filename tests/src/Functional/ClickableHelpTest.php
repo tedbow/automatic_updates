@@ -36,7 +36,7 @@ class ClickableHelpTest extends AutomaticUpdatesFunctionalTestBase {
       ->set('executables.composer', '/not/matching/path/to/composer')
       ->save();
     $this->drupalGet('admin/reports/status');
-    $this->assertSession()->linkByHrefExists('/admin/help/package_manager#package-manager-faq-composer-not-found');
+    $this->assertSession()->linkByHrefExists('/admin/help/package_manager#package-manager-composer-related-faq');
   }
 
 }
