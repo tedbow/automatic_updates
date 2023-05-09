@@ -12,5 +12,5 @@ namespace Drupal\package_manager\Event;
  *
  * @see \Drupal\package_manager\StageBase::destroy()
  */
-class PostDestroyEvent extends StageEvent {
+final class PostDestroyEvent extends StageEvent {
 }

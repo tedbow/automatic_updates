@@ -5,7 +5,9 @@ declare(strict_types = 1);
 namespace Drupal\package_manager\Event;
 
 use Drupal\package_manager\StageBase;
+use Drupal\package_manager\PathLocator;
 use PhpTuf\ComposerStager\Domain\Value\PathList\PathListInterface;
+use PhpTuf\ComposerStager\Infrastructure\Factory\Path\PathFactoryInterface;
 use PhpTuf\ComposerStager\Infrastructure\Value\PathList\PathList;
 
 /**
@@ -14,7 +16,7 @@ use PhpTuf\ComposerStager\Infrastructure\Value\PathList\PathList;
  * These paths are excluded by Composer Stager and are never copied into the
  * stage directory from the active directory, or vice-versa.
  */
-class CollectPathsToExcludeEvent extends StageEvent implements PathListInterface {
+final class CollectPathsToExcludeEvent extends StageEvent implements PathListInterface {
 
   /**
    * The list of paths to exclude.
@@ -24,9 +26,20 @@ class CollectPathsToExcludeEvent extends StageEvent implements PathListInterface
   protected PathListInterface $pathList;
 
   /**
-   * {@inheritdoc}
+   * Constructs a CollectPathsToExcludeEvent object.
+   *
+   * @param \Drupal\package_manager\StageBase $stage
+   *   The stage which fired this event.
+   * @param \Drupal\package_manager\PathLocator $pathLocator
+   *   The path locator service.
+   * @param \PhpTuf\ComposerStager\Infrastructure\Factory\Path\PathFactoryInterface $pathFactory
+   *   The path factory service.
    */
-  public function __construct(StageBase $stage) {
+  public function __construct(
+    StageBase $stage,
+    protected PathLocator $pathLocator,
+    protected PathFactoryInterface $pathFactory
+  ) {
     parent::__construct($stage);
     $this->pathList = new PathList([]);
   }
@@ -43,6 +56,73 @@ class CollectPathsToExcludeEvent extends StageEvent implements PathListInterface
    */
   public function getAll(): array {
     return $this->pathList->getAll();
+  }
+
+  /**
+   * Flags paths to be ignored, relative to the web root.
+   *
+   * This should only be used for paths that, if they exist at all, are
+   * *guaranteed* to exist within the web root.
+   *
+   * @param string[] $paths
+   *   The paths to ignore. These should be relative to the web root, and will
+   *   be made relative to the project root.
+   */
+  public function addPathsRelativeToWebRoot(array $paths): void {
+    $web_root = $this->pathLocator->getWebRoot();
+    if ($web_root) {
+      $web_root .= '/';
+    }
+
+    foreach ($paths as $path) {
+      // Make the path relative to the project root by prefixing the web root.
+      $this->add([$web_root . $path]);
+    }
+  }
+
+  /**
+   * Flags paths to be ignored, relative to the project root.
+   *
+   * @param string[] $paths
+   *   The paths to ignore. Absolute paths will be made relative to the project
+   *   root; relative paths will be assumed to already be relative to the
+   *   project root, and ignored as given.
+   */
+  public function addPathsRelativeToProjectRoot(array $paths): void {
+    $project_root = $this->pathLocator->getProjectRoot();
+
+    foreach ($paths as $path) {
+      if ($this->pathFactory->create($path)->isAbsolute()) {
+        if (!str_starts_with($path, $project_root)) {
+          throw new \LogicException("$path is not inside the project root: $project_root.");
+        }
+      }
+
+      // Make absolute paths relative to the project root.
+      $path = str_replace($project_root, '', $path);
+      $path = ltrim($path, '/');
+      $this->add([$path]);
+    }
+  }
+
+  /**
+   * Finds all directories in the project root matching the given name.
+   *
+   * @param string $directory_name
+   *   The directory name to scan for.
+   *
+   * @return string[]
+   *   All discovered absolute paths matching the given directory name.
+   */
+  public function scanForDirectoriesByName(string $directory_name): array {
+    $flags = \FilesystemIterator::UNIX_PATHS;
+    $flags |= \FilesystemIterator::CURRENT_AS_SELF;
+    $directories_tree = new \RecursiveDirectoryIterator($this->pathLocator->getProjectRoot(), $flags);
+    $filtered_directories = new \RecursiveIteratorIterator($directories_tree, \RecursiveIteratorIterator::SELF_FIRST);
+    $matched_directories = new \CallbackFilterIterator($filtered_directories,
+      fn (\RecursiveDirectoryIterator $current) => $current->isDir() && $current->getFilename() === $directory_name
+    );
+    return array_keys(iterator_to_array($matched_directories));
   }
 
 }

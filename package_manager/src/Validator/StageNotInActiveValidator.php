@@ -18,7 +18,7 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
  *   at any time without warning. External code should not interact with this
  *   class.
  */
-class StageNotInActiveValidator implements EventSubscriberInterface {
+final class StageNotInActiveValidator implements EventSubscriberInterface {
 
   use BaseRequirementValidatorTrait {
     getSubscribedEvents as protected getSubscribedEventsFromTrait;

@@ -18,7 +18,7 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
  *   at any time without warning. External code should not interact with this
  *   class.
  */
-class DuplicateInfoFileValidator implements EventSubscriberInterface {
+final class DuplicateInfoFileValidator implements EventSubscriberInterface {
 
   use StringTranslationTrait;
 

@@ -7,8 +7,6 @@ namespace Drupal\package_manager\PathExcluder;
 use Drupal\Core\StreamWrapper\LocalStream;
 use Drupal\Core\StreamWrapper\StreamWrapperManagerInterface;
 use Drupal\package_manager\Event\CollectPathsToExcludeEvent;
-use Drupal\package_manager\PathLocator;
-use PhpTuf\ComposerStager\Infrastructure\Factory\Path\PathFactoryInterface;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\Component\Filesystem\Filesystem;
 
@@ -22,29 +20,18 @@ use Symfony\Component\Filesystem\Filesystem;
  */
 final class SiteFilesExcluder implements EventSubscriberInterface {
 
-  use PathExclusionsTrait;
-
   /**
    * Constructs a SiteFilesExcluder object.
    *
-   * @param \Drupal\package_manager\PathLocator $path_locator
-   *   The path locator service.
-   * @param \PhpTuf\ComposerStager\Infrastructure\Factory\Path\PathFactoryInterface $path_factory
-   *   The path factory service.
    * @param \Drupal\Core\StreamWrapper\StreamWrapperManagerInterface $streamWrapperManager
    *   The stream wrapper manager service.
    * @param \Symfony\Component\Filesystem\Filesystem $fileSystem
    *   The Symfony file system service.
    */
   public function __construct(
-    PathLocator $path_locator,
-    PathFactoryInterface $path_factory,
     private readonly StreamWrapperManagerInterface $streamWrapperManager,
     private readonly Filesystem $fileSystem
-  ) {
-    $this->pathLocator = $path_locator;
-    $this->pathFactory = $path_factory;
-  }
+  ) {}
 
   /**
    * {@inheritdoc}
@@ -72,10 +59,10 @@ final class SiteFilesExcluder implements EventSubscriberInterface {
         $path = $wrapper->getDirectoryPath();
 
         if ($this->fileSystem->isAbsolutePath($path)) {
-          $this->excludeInProjectRoot($event, [realpath($path)]);
+          $event->addPathsRelativeToProjectRoot([realpath($path)]);
         }
         else {
-          $this->excludeInWebRoot($event, [$path]);
+          $event->addPathsRelativeToWebRoot([$path]);
         }
       }
     }

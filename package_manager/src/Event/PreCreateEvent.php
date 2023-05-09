@@ -9,9 +9,24 @@ use Drupal\package_manager\StageBase;
 /**
  * Event fired before a stage directory is created.
  */
-class PreCreateEvent extends PreOperationStageEvent {
+final class PreCreateEvent extends PreOperationStageEvent {
 
-  use ExcludedPathsTrait;
+  /**
+   * Paths to exclude from the update.
+   *
+   * @var string[]
+   */
+  protected array $excludedPaths = [];
+
+  /**
+   * Returns the paths to exclude from the current operation.
+   *
+   * @return string[]
+   *   The paths to exclude.
+   */
+  public function getExcludedPaths(): array {
+    return array_unique($this->excludedPaths);
+  }
 
   /**
    * Constructs a PreCreateEvent object.

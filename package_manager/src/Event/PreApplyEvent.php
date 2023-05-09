@@ -9,9 +9,24 @@ use Drupal\package_manager\StageBase;
 /**
  * Event fired before staged changes are synced to the active directory.
  */
-class PreApplyEvent extends PreOperationStageEvent {
+final class PreApplyEvent extends PreOperationStageEvent {
 
-  use ExcludedPathsTrait;
+  /**
+   * Paths to exclude from the update.
+   *
+   * @var string[]
+   */
+  protected array $excludedPaths = [];
+
+  /**
+   * Returns the paths to exclude from the current operation.
+   *
+   * @return string[]
+   *   The paths to exclude.
+   */
+  public function getExcludedPaths(): array {
+    return array_unique($this->excludedPaths);
+  }
 
   /**
    * Constructs a PreApplyEvent object.

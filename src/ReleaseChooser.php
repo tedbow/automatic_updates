@@ -12,6 +12,11 @@ use Drupal\Core\Extension\ExtensionVersion;
 
 /**
  * Defines a class to choose a release of Drupal core to update to.
+ *
+ * @internal
+ *   This is an internal part of Automatic Updates and may be changed or removed
+ *   at any time without warning. External code should not interact with this
+ *   class.
  */
 final class ReleaseChooser {
 

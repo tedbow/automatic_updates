@@ -5,8 +5,6 @@ declare(strict_types = 1);
 namespace Drupal\package_manager\PathExcluder;
 
 use Drupal\package_manager\Event\CollectPathsToExcludeEvent;
-use Drupal\package_manager\PathLocator;
-use PhpTuf\ComposerStager\Infrastructure\Factory\Path\PathFactoryInterface;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 /**
@@ -19,21 +17,6 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
  */
 class NodeModulesExcluder implements EventSubscriberInterface {
 
-  use PathExclusionsTrait;
-
-  /**
-   * Constructs a NodeModulesExcluder object.
-   *
-   * @param \Drupal\package_manager\PathLocator $path_locator
-   *   The path locator service.
-   * @param \PhpTuf\ComposerStager\Infrastructure\Factory\Path\PathFactoryInterface $path_factory
-   *   The path factory service.
-   */
-  public function __construct(PathLocator $path_locator, PathFactoryInterface $path_factory) {
-    $this->pathLocator = $path_locator;
-    $this->pathFactory = $path_factory;
-  }
-
   /**
    * Excludes node_modules directories from stage operations.
    *
@@ -41,8 +24,7 @@ class NodeModulesExcluder implements EventSubscriberInterface {
    *   The event object.
    */
   public function excludeNodeModulesFiles(CollectPathsToExcludeEvent $event): void {
-    $paths = $this->scanForDirectoriesByName('node_modules');
-    $this->excludeInProjectRoot($event, $paths);
+    $event->addPathsRelativeToProjectRoot($event->scanForDirectoriesByName('node_modules'));
   }
 
   /**

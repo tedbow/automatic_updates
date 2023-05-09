@@ -10,8 +10,13 @@ use Drupal\Core\DependencyInjection\ServiceProviderBase;
 
 /**
  * Modifies container services for Automatic Updates.
+ *
+ * @internal
+ *   This is an internal part of Automatic Updates and may be changed or removed
+ *   at any time without warning. External code should not interact with this
+ *   class.
  */
-class AutomaticUpdatesServiceProvider extends ServiceProviderBase {
+final class AutomaticUpdatesServiceProvider extends ServiceProviderBase {
 
   /**
    * {@inheritdoc}

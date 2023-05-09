@@ -7,7 +7,6 @@ namespace Drupal\package_manager\PathExcluder;
 use Drupal\package_manager\ComposerInspector;
 use Drupal\package_manager\Event\CollectPathsToExcludeEvent;
 use Drupal\package_manager\PathLocator;
-use PhpTuf\ComposerStager\Infrastructure\Factory\Path\PathFactoryInterface;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 /**
@@ -20,22 +19,18 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
  */
 final class GitExcluder implements EventSubscriberInterface {
 
-  use PathExclusionsTrait;
-
   /**
    * Constructs a GitExcluder object.
    *
-   * @param \Drupal\package_manager\PathLocator $path_locator
+   * @param \Drupal\package_manager\PathLocator $pathLocator
    *   The path locator service.
    * @param \Drupal\package_manager\ComposerInspector $composerInspector
    *   The Composer inspector service.
-   * @param \PhpTuf\ComposerStager\Infrastructure\Factory\Path\PathFactoryInterface $path_factory
-   *   The path factory service.
    */
-  public function __construct(PathLocator $path_locator, private readonly ComposerInspector $composerInspector, PathFactoryInterface $path_factory) {
-    $this->pathLocator = $path_locator;
-    $this->pathFactory = $path_factory;
-  }
+  public function __construct(
+    private readonly PathLocator $pathLocator,
+    private readonly ComposerInspector $composerInspector
+  ) {}
 
   /**
    * {@inheritdoc}
@@ -77,7 +72,7 @@ final class GitExcluder implements EventSubscriberInterface {
         $installed_paths[] = $package->path;
       }
     }
-    $paths = $this->scanForDirectoriesByName('.git');
+    $paths = $event->scanForDirectoriesByName('.git');
     foreach ($paths as $git_directory) {
       // Don't exclude any `.git` directory that is directly under an installed
       // package's path, since it means Composer probably installed that package
@@ -87,7 +82,7 @@ final class GitExcluder implements EventSubscriberInterface {
         $paths_to_exclude[] = $git_directory;
       }
     }
-    $this->excludeInProjectRoot($event, $paths_to_exclude);
+    $event->addPathsRelativeToProjectRoot($paths_to_exclude);
   }
 
 }

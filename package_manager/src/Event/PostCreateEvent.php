@@ -7,5 +7,5 @@ namespace Drupal\package_manager\Event;
 /**
  * Event fired after a stage directory has been created.
  */
-class PostCreateEvent extends StageEvent {
+final class PostCreateEvent extends StageEvent {
 }

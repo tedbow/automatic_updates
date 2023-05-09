@@ -263,7 +263,7 @@ abstract class StageBase implements LoggerAwareInterface {
    * @see ::apply()
    */
   protected function getPathsToExclude(): array {
-    $event = new CollectPathsToExcludeEvent($this);
+    $event = new CollectPathsToExcludeEvent($this, $this->pathLocator, $this->pathFactory);
     try {
       $this->eventDispatcher->dispatch($event);
     }

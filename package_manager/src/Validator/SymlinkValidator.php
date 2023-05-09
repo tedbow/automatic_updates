@@ -22,7 +22,7 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
  *   at any time without warning. External code should not interact with this
  *   class.
  */
-class SymlinkValidator implements EventSubscriberInterface {
+final class SymlinkValidator implements EventSubscriberInterface {
 
   use BaseRequirementValidatorTrait;
 

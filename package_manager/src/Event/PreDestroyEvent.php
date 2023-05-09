@@ -12,5 +12,5 @@ namespace Drupal\package_manager\Event;
  *
  * @see \Drupal\package_manager\StageBase::destroy()
  */
-class PreDestroyEvent extends PreOperationStageEvent {
+final class PreDestroyEvent extends PreOperationStageEvent {
 }

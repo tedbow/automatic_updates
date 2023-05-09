@@ -5,8 +5,6 @@ declare(strict_types = 1);
 namespace Drupal\package_manager\PathExcluder;
 
 use Drupal\package_manager\Event\CollectPathsToExcludeEvent;
-use Drupal\package_manager\PathLocator;
-use PhpTuf\ComposerStager\Infrastructure\Factory\Path\PathFactoryInterface;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 /**
@@ -19,22 +17,13 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
  */
 class SiteConfigurationExcluder implements EventSubscriberInterface {
 
-  use PathExclusionsTrait;
-
   /**
-   * Constructs an ExcludedPathsSubscriber.
+   * Constructs an SiteConfigurationExcluder.
    *
    * @param string $sitePath
    *   The current site path, relative to the Drupal root.
-   * @param \Drupal\package_manager\PathLocator $path_locator
-   *   The path locator service.
-   * @param \PhpTuf\ComposerStager\Infrastructure\Factory\Path\PathFactoryInterface $path_factory
-   *   The path factory service.
    */
-  public function __construct(protected string $sitePath, PathLocator $path_locator, PathFactoryInterface $path_factory) {
-    $this->pathLocator = $path_locator;
-    $this->pathFactory = $path_factory;
-  }
+  public function __construct(protected string $sitePath) {}
 
   /**
    * Excludes site configuration files from stage operations.
@@ -57,7 +46,7 @@ class SiteConfigurationExcluder implements EventSubscriberInterface {
       $paths[] = $this->sitePath . '/' . $settings_file;
       $paths[] = 'sites/default/' . $settings_file;
     }
-    $this->excludeInWebRoot($event, $paths);
+    $event->addPathsRelativeToWebRoot($paths);
   }
 
   /**

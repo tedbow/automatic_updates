@@ -15,7 +15,7 @@ use Drupal\system\SystemManager;
  * The event's stage will be set with the type of stage that will perform the
  * operations. The stage may or may not be currently in use.
  */
-class StatusCheckEvent extends PreOperationStageEvent {
+final class StatusCheckEvent extends PreOperationStageEvent {
 
   /**
    * Returns paths to exclude or NULL if a base requirement is not fulfilled.

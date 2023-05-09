@@ -8,7 +8,6 @@ use Drupal\Component\Serialization\Json;
 use Drupal\package_manager\ComposerInspector;
 use Drupal\package_manager\Event\CollectPathsToExcludeEvent;
 use Drupal\package_manager\PathLocator;
-use PhpTuf\ComposerStager\Infrastructure\Factory\Path\PathFactoryInterface;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 /**
@@ -31,22 +30,18 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
  */
 final class UnknownPathExcluder implements EventSubscriberInterface {
 
-  use PathExclusionsTrait;
-
   /**
    * Constructs a UnknownPathExcluder object.
    *
    * @param \Drupal\package_manager\ComposerInspector $composerInspector
    *   The Composer inspector service.
-   * @param \Drupal\package_manager\PathLocator $path_locator
+   * @param \Drupal\package_manager\PathLocator $pathLocator
    *   The path locator service.
-   * @param \PhpTuf\ComposerStager\Infrastructure\Factory\Path\PathFactoryInterface $path_factory
-   *   The path factory service.
    */
-  public function __construct(private readonly ComposerInspector $composerInspector, PathLocator $path_locator, PathFactoryInterface $path_factory) {
-    $this->pathLocator = $path_locator;
-    $this->pathFactory = $path_factory;
-  }
+  public function __construct(
+    private readonly ComposerInspector $composerInspector,
+    private readonly PathLocator $pathLocator,
+  ) {}
 
   /**
    * {@inheritdoc}
@@ -93,7 +88,7 @@ final class UnknownPathExcluder implements EventSubscriberInterface {
         $paths[] = $path_in_project_root;
       }
     }
-    $this->excludeInProjectRoot($event, $paths);
+    $event->addPathsRelativeToProjectRoot($paths);
   }
 
   /**

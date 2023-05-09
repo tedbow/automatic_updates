@@ -21,7 +21,7 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
  *   at any time without warning. External code should not interact with this
  *   class.
  */
-class ComposerValidator implements EventSubscriberInterface {
+final class ComposerValidator implements EventSubscriberInterface {
 
   use BaseRequirementValidatorTrait;
   use StringTranslationTrait;

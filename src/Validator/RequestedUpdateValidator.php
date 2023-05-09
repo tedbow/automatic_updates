@@ -14,8 +14,13 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 /**
  * Validates that requested packages have been updated.
+ *
+ * @internal
+ *   This is an internal part of Automatic Updates and may be changed or removed
+ *   at any time without warning. External code should not interact with this
+ *   class.
  */
-class RequestedUpdateValidator implements EventSubscriberInterface {
+final class RequestedUpdateValidator implements EventSubscriberInterface {
 
   use StringTranslationTrait;
 

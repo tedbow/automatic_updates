@@ -10,6 +10,7 @@ use Drupal\package_manager\Event\CollectPathsToExcludeEvent;
 use Drupal\package_manager\PathExcluder\SqliteDatabaseExcluder;
 use Drupal\package_manager\PathLocator;
 use Drupal\Tests\package_manager\Kernel\PackageManagerKernelTestBase;
+use PhpTuf\ComposerStager\Infrastructure\Factory\Path\PathFactoryInterface;
 
 /**
  * @covers \Drupal\package_manager\PathExcluder\SqliteDatabaseExcluder
@@ -144,22 +145,24 @@ class SqliteDatabaseExcluderTest extends PackageManagerKernelTestBase {
    * @dataProvider providerPathProcessing
    */
   public function testPathProcessing(string $database_path, array $expected_exclusions): void {
+    $path_locator = $this->container->get(PathLocator::class);
+    $path_factory = $this->container->get(PathFactoryInterface::class);
     // If the database path should be treated as absolute, prefix it with the
     // path of the active directory.
     if (str_starts_with($database_path, '/')) {
-      $database_path = $this->container->get(PathLocator::class)->getProjectRoot() . $database_path;
+      $database_path = $path_locator->getProjectRoot() . $database_path;
     }
     $this->mockDatabase([
       'database' => $database_path,
     ]);
 
-    $event = new CollectPathsToExcludeEvent($this->createStage());
+    $event = new CollectPathsToExcludeEvent($this->createStage(), $path_locator, $path_factory);
     // Invoke the event subscriber directly, so we can check that the database
     // was correctly excluded.
     $this->container->get(SqliteDatabaseExcluder::class)
       ->excludeDatabaseFiles($event);
     // All of the expected exclusions should be flagged.
-    $this->assertEmpty(array_diff($expected_exclusions, $event->getAll()));
+    $this->assertEquals($expected_exclusions, $event->getAll());
   }
 
 }

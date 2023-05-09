@@ -6,7 +6,6 @@ namespace Drupal\package_manager\PathExcluder;
 
 use Drupal\package_manager\Event\CollectPathsToExcludeEvent;
 use Drupal\package_manager\PathLocator;
-use PhpTuf\ComposerStager\Infrastructure\Factory\Path\PathFactoryInterface;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 /**
@@ -19,20 +18,13 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
  */
 final class VendorHardeningExcluder implements EventSubscriberInterface {
 
-  use PathExclusionsTrait;
-
   /**
    * Constructs a VendorHardeningExcluder object.
    *
-   * @param \Drupal\package_manager\PathLocator $path_locator
+   * @param \Drupal\package_manager\PathLocator $pathLocator
    *   The path locator service.
-   * @param \PhpTuf\ComposerStager\Infrastructure\Factory\Path\PathFactoryInterface $path_factory
-   *   The path factory service.
    */
-  public function __construct(PathLocator $path_locator, PathFactoryInterface $path_factory) {
-    $this->pathLocator = $path_locator;
-    $this->pathFactory = $path_factory;
-  }
+  public function __construct(private readonly PathLocator $pathLocator) {}
 
   /**
    * {@inheritdoc}
@@ -54,7 +46,7 @@ final class VendorHardeningExcluder implements EventSubscriberInterface {
     // is present, it may have written security hardening files in the vendor
     // directory. They should always be excluded.
     $vendor_dir = $this->pathLocator->getVendorDirectory();
-    $this->excludeInProjectRoot($event, [
+    $event->addPathsRelativeToProjectRoot([
       $vendor_dir . '/web.config',
       $vendor_dir . '/.htaccess',
     ]);

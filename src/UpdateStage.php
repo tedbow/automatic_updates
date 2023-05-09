@@ -25,6 +25,11 @@ use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
  * changing the constraint for either 'drupal/core' or 'drupal/core-recommended'
  * in the project-level composer.json. If neither package is directly required
  * in the project-level composer.json, a requirement will be added.
+ *
+ * @internal
+ *   This is an internal part of Automatic Updates and may be changed or removed
+ *   at any time without warning. External code should not interact with this
+ *   class.
  */
 class UpdateStage extends StageBase {
 

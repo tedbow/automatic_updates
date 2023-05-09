@@ -6,6 +6,7 @@ namespace Drupal\package_manager;
 
 use Drupal\package_manager\Event\CollectPathsToExcludeEvent;
 use Drupal\package_manager\Event\StatusCheckEvent;
+use PhpTuf\ComposerStager\Infrastructure\Factory\Path\PathFactoryInterface;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 
 /**
@@ -25,15 +26,21 @@ trait StatusCheckTrait {
    *   The stage to run the status check for.
    * @param \Symfony\Contracts\EventDispatcher\EventDispatcherInterface $event_dispatcher
    *   (optional) The event dispatcher service.
+   * @param \Drupal\package_manager\PathLocator $path_locator
+   *   (optional) The path locator service.
+   * @param \PhpTuf\ComposerStager\Infrastructure\Factory\Path\PathFactoryInterface $path_factory
+   *   (optional) The path factory service.
    *
    * @return \Drupal\package_manager\ValidationResult[]
    *   The results of the status check. If a readiness check was also done,
    *   its results will be included.
    */
-  protected function runStatusCheck(StageBase $stage, EventDispatcherInterface $event_dispatcher = NULL): array {
+  protected function runStatusCheck(StageBase $stage, EventDispatcherInterface $event_dispatcher = NULL, PathLocator $path_locator = NULL, PathFactoryInterface $path_factory = NULL): array {
     $event_dispatcher ??= \Drupal::service('event_dispatcher');
+    $path_locator ??= \Drupal::service(PathLocator::class);
+    $path_factory ??= \Drupal::service(PathFactoryInterface::class);
     try {
-      $paths_to_exclude_event = new CollectPathsToExcludeEvent($stage);
+      $paths_to_exclude_event = new CollectPathsToExcludeEvent($stage, $path_locator, $path_factory);
       $event_dispatcher->dispatch($paths_to_exclude_event);
       $event = new StatusCheckEvent($stage, $paths_to_exclude_event->getAll());
     }

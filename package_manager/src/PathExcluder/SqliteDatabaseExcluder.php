@@ -7,7 +7,6 @@ namespace Drupal\package_manager\PathExcluder;
 use Drupal\Core\Database\Connection;
 use Drupal\package_manager\Event\CollectPathsToExcludeEvent;
 use Drupal\package_manager\PathLocator;
-use PhpTuf\ComposerStager\Infrastructure\Factory\Path\PathFactoryInterface;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 /**
@@ -20,22 +19,20 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
  */
 class SqliteDatabaseExcluder implements EventSubscriberInterface {
 
-  use PathExclusionsTrait;
-
   /**
    * Constructs a SqliteDatabaseExcluder object.
    *
-   * @param \Drupal\package_manager\PathLocator $path_locator
+   * @param \Drupal\package_manager\PathLocator $pathLocator
    *   The path locator service.
    * @param \Drupal\Core\Database\Connection $database
    *   The database connection.
-   * @param \PhpTuf\ComposerStager\Infrastructure\Factory\Path\PathFactoryInterface $path_factory
-   *   The path factory service.
    */
-  public function __construct(PathLocator $path_locator, protected Connection $database, PathFactoryInterface $path_factory) {
-    $this->pathLocator = $path_locator;
-    $this->pathFactory = $path_factory;
-  }
+  public function __construct(
+    private readonly PathLocator $pathLocator,
+    // TRICKY: this cannot be private nor readonly for testing purposes.
+    // @see \Drupal\Tests\package_manager\Kernel\PathExcluder\SqliteDatabaseExcluderTest::mockDatabase()
+    protected Connection $database
+  ) {}
 
   /**
    * {@inheritdoc}
@@ -61,7 +58,7 @@ class SqliteDatabaseExcluder implements EventSubscriberInterface {
       if (str_starts_with($options['database'], '/') && !str_starts_with($options['database'], $this->pathLocator->getProjectRoot())) {
         return;
       }
-      $this->excludeInProjectRoot($event, [
+      $event->addPathsRelativeToProjectRoot([
         $options['database'],
         $options['database'] . '-shm',
         $options['database'] . '-wal',
