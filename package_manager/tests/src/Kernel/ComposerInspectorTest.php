@@ -410,4 +410,66 @@ class ComposerInspectorTest extends PackageManagerKernelTestBase {
     $this->assertSame($is_metapackage, is_null($list['test/package']->path));
   }
 
+  /**
+   * Data provider for ::testAllowedPlugins().
+   *
+   * @return array[]
+   *   The test cases.
+   */
+  public function providerAllowedPlugins(): array {
+    return [
+      'all plugins allowed' => [
+        ['allow-plugins' => TRUE],
+        TRUE,
+      ],
+      'no plugins allowed' => [
+        ['allow-plugins' => FALSE],
+        [],
+      ],
+      'some plugins allowed' => [
+        [
+          'allow-plugins.example/plugin-a' => TRUE,
+          'allow-plugins.example/plugin-b' => FALSE,
+        ],
+        [
+          'example/plugin-a' => TRUE,
+          'example/plugin-b' => FALSE,
+          // The scaffold plugin is explicitly disallowed by the fake_site
+          // fixture.
+          'drupal/core-composer-scaffold' => FALSE,
+        ],
+      ],
+    ];
+  }
+
+  /**
+   * Tests ComposerInspector's parsing of the allowed plugins list.
+   *
+   * @param array $config
+   *   The Composer configuration to set.
+   * @param array|bool $expected_value
+   *   The expected return value from getAllowPluginsConfig().
+   *
+   * @covers ::getAllowPluginsConfig
+   *
+   * @dataProvider providerAllowedPlugins
+   */
+  public function testAllowedPlugins(array $config, bool|array $expected_value): void {
+    (new ActiveFixtureManipulator())
+      ->addConfig($config)
+      ->commitChanges();
+
+    $project_root = $this->container->get(PathLocator::class)->getProjectRoot();
+    $actual_value = $this->container->get(ComposerInspector::class)
+      ->getAllowPluginsConfig($project_root);
+
+    if (is_array($expected_value)) {
+      ksort($expected_value);
+    }
+    if (is_array($actual_value)) {
+      ksort($actual_value);
+    }
+    $this->assertSame($expected_value, $actual_value);
+  }
+
 }

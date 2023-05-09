@@ -239,6 +239,7 @@ class ComposerInspector implements LoggerAwareInterface {
    *   but if it is a boolean, an array or a map, JSON decoding should be
    *   applied.
    *
+   * @see ::getAllowPluginsConfig()
    * @see \Composer\Command\ConfigCommand::execute()
    */
   public function getConfig(string $key, string $context): ?string {
@@ -500,6 +501,34 @@ class ComposerInspector implements LoggerAwareInterface {
       '1', 'true' => TRUE,
       '0', 'false' => FALSE,
     };
+  }
+
+  /**
+   * Returns the value of `allow-plugins` config setting.
+   *
+   * @param string $dir
+   *   The directory in which to run Composer.
+   *
+   * @return bool[]|bool
+   *   An array of boolean flags to allow or disallow certain plugins, or TRUE
+   *   if all plugins are allowed.
+   *
+   * @see https://getcomposer.org/doc/06-config.md#allow-plugins
+   */
+  public function getAllowPluginsConfig(string $dir): array|bool {
+    // If `allow-plugins` is `false`, Composer 2.5.4 and earlier has no output.
+    $value = $this->getConfig('allow-plugins', $dir) ?? 'false';
+
+    // Try to convert the value we got back to a boolean. If that can't be done,
+    // assume it's an array of plugin-specific flags and parse it as JSON.
+    try {
+      $value = static::toBoolean($value);
+    }
+    catch (\UnhandledMatchError) {
+      $value = json_decode($value, TRUE, flags: JSON_THROW_ON_ERROR);
+    }
+    // An empty array indicates that no plugins are allowed.
+    return $value ?: [];
   }
 
 }

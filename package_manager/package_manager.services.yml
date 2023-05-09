@@ -198,6 +198,9 @@ services:
     class: Drupal\package_manager\Validator\PhpExtensionsValidator
     tags:
       - { name: event_subscriber }
+  # @todo Tag this service as an event subscriber in https://drupal.org/i/3358504,
+  #   once packages.drupal.org supports TUF.
+  Drupal\package_manager\Validator\PhpTufValidator: {}
   package_manager.update_processor:
     class: Drupal\package_manager\PackageManagerUpdateProcessor
     arguments:

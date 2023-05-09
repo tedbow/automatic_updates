@@ -68,6 +68,23 @@ function package_manager_help($route_name, RouteMatchInterface $route_match) {
       $output .= '  </li>';
       $output .= '</ul>';
 
+      $output .= '<h4 id="package-manager-tuf-info">' . t('Enabling PHP-TUF protection') . '</h4>';
+      $output .= '<p>' . t('Package Manager requires <a href=":php-tuf">PHP-TUF</a>, which implements <a href=":tuf">The Update Framework</a> as a way to help secure Composer package downloads via the <a href=":php-tuf-plugin">PHP-TUF Composer integration plugin</a>. This plugin must be installed and configured properly in order to use Package Manager.', [
+        ':php-tuf' => 'https://github.com/php-tuf/php-tuf',
+        ':tuf' => 'https://theupdateframework.io/',
+        ':php-tuf-plugin' => 'https://github.com/php-tuf/composer-integration',
+      ]) . '</p>';
+      $output .= '<p>' . t('To install and configure the plugin as needed, you can run the following commands:') . '</p>';
+      $output .= '<pre><code>';
+      $output .= "composer config allow-plugins.php-tuf/composer-integration true\n";
+      $output .= "composer require php-tuf/composer-integration";
+      $output .= '</code></pre>';
+      $output .= '<p>' . t('Package Manager currently requires the <code>https://packages.drupal.org</code> Composer repository to be defined in your <code>composer.json</code> file, since Drupal.org is currently the only package repository that has support for TUF. To set this up, run the following commands (assuming your site is based on the <code>drupal/recommended-project</code> or <code>drupal/legacy-project</code> templates):') . '</p>';
+      $output .= '<pre><code>';
+      $output .= "composer config --unset repositories.0\n";
+      $output .= "composer config repositories.drupal '{\"type\": \"composer\", \"url\": \"https://packages.drupal.org/8\", \"tuf\": true}'\n";
+      $output .= '</code></pre>';
+
       $output .= '<h4 id="package-manager-faq-unsupported-composer-plugin">' . t('What if it says I have unsupported Composer plugins in my codebase?') . '</h4>';
       $output .= '<p>' . t('A fresh Drupal installation only uses supported Composer plugins, but some modules or themes may depend on additional Composer plugins. Please <a href=":new-issue">create a new issue</a> when you encounter this.', [
         ':new-issue' => 'https://www.drupal.org/node/add/project-issue/automatic_updates',

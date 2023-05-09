@@ -85,6 +85,7 @@ final class ComposerPluginsValidator implements EventSubscriberInterface {
     'drupal/core-project-message' => '*',
     'phpstan/extension-installer' => '^1.1',
     // cSpell:enable
+    PhpTufValidator::PLUGIN_NAME => '^1',
   ];
 
   /**
@@ -152,21 +153,11 @@ final class ComposerPluginsValidator implements EventSubscriberInterface {
       ? $stage->getStageDirectory()
       : $this->pathLocator->getProjectRoot();
     try {
-      // @see https://getcomposer.org/doc/06-config.md#allow-plugins
-      $value = $this->inspector->getConfig('allow-plugins', $dir);
+      $allowed_plugins = $this->inspector->getAllowPluginsConfig($dir);
     }
     catch (RuntimeException $exception) {
       $event->addErrorFromThrowable($exception, $this->t('Unable to determine Composer <code>allow-plugins</code> setting.'));
       return;
-    }
-
-    // Try to convert the value we got back to a boolean. If that can't be done,
-    // assume it's an array of plugin-specific flags and parse it as JSON.
-    try {
-      $allowed_plugins = ComposerInspector::toBoolean($value);
-    }
-    catch (\UnhandledMatchError) {
-      $allowed_plugins = json_decode($value, TRUE, flags: JSON_THROW_ON_ERROR);
     }
 
     if ($allowed_plugins === TRUE) {
