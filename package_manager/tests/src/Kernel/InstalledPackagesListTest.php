@@ -2,6 +2,7 @@
 
 namespace Drupal\Tests\package_manager\Kernel;
 
+use Drupal\Component\Serialization\Yaml;
 use Drupal\fixture_manipulator\ActiveFixtureManipulator;
 use Drupal\package_manager\InstalledPackage;
 use Drupal\package_manager\InstalledPackagesList;
@@ -120,6 +121,25 @@ class InstalledPackagesListTest extends PackageManagerKernelTestBase {
     ]);
     $this->assertNull($list->getPackageByDrupalProjectName('custom_module'));
     $this->assertNull($list->getPackageByDrupalProjectName('custom_theme'));
+
+    // The `project` key has been removed from the info file.
+    (new ActiveFixtureManipulator())
+      ->addProjectAtPath('projects/no_project_key')
+      ->commitChanges();
+    $list = new InstalledPackagesList([
+      'drupal/no_project_key' => InstalledPackage::createFromArray([
+        'name' => 'drupal/no_project_key',
+        'version' => '1.0.0',
+        'type' => 'drupal-module',
+        'path' => $projects_path . '/no_project_key',
+      ]),
+    ]);
+    $info_file = $list['drupal/no_project_key']->path . '/no_project_key.info.yml';
+    $this->assertFileIsWritable($info_file);
+    $info = Yaml::decode(file_get_contents($info_file));
+    unset($info['project']);
+    file_put_contents($info_file, Yaml::encode($info));
+    $this->assertNull($list->getPackageByDrupalProjectName('no_project_key'));
 
     // The project name is repeated.
     (new ActiveFixtureManipulator())

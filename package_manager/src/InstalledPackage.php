@@ -98,7 +98,7 @@ final class InstalledPackage {
       $info = file_get_contents($match[0]);
       $info = Yaml::decode($info);
 
-      if (is_string($info['project']) && !empty($info['project'])) {
+      if (!empty($info['project'])) {
         return $info['project'];
       }
     }
