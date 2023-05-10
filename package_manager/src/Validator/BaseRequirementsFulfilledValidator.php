@@ -5,6 +5,7 @@ namespace Drupal\package_manager\Validator;
 use Drupal\package_manager\Event\PreApplyEvent;
 use Drupal\package_manager\Event\PreCreateEvent;
 use Drupal\package_manager\Event\PreOperationStageEvent;
+use Drupal\package_manager\Event\PreRequireEvent;
 use Drupal\package_manager\Event\StatusCheckEvent;
 use Drupal\system\SystemManager;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
@@ -59,10 +60,9 @@ final class BaseRequirementsFulfilledValidator implements EventSubscriberInterfa
    * {@inheritdoc}
    */
   public static function getSubscribedEvents(): array {
-    // @todo Decide whether to also listen to PreRequireEvent in
-    //   https://drupal.org/i/3345535.
     return [
       PreCreateEvent::class => ['validate', self::PRIORITY],
+      PreRequireEvent::class => ['validate', self::PRIORITY],
       PreApplyEvent::class => ['validate', self::PRIORITY],
       StatusCheckEvent::class => ['validate', self::PRIORITY],
     ];

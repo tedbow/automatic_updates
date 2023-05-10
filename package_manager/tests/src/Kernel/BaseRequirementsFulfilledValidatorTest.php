@@ -5,6 +5,7 @@ namespace Drupal\Tests\package_manager\Kernel;
 use Drupal\package_manager\Event\PreApplyEvent;
 use Drupal\package_manager\Event\PreCreateEvent;
 use Drupal\package_manager\Event\PreOperationStageEvent;
+use Drupal\package_manager\Event\PreRequireEvent;
 use Drupal\package_manager\Event\StatusCheckEvent;
 use Drupal\package_manager\ValidationResult;
 use Drupal\package_manager\Validator\BaseRequirementsFulfilledValidator;
@@ -56,6 +57,7 @@ class BaseRequirementsFulfilledValidatorTest extends PackageManagerKernelTestBas
   public function providerBaseRequirement(): array {
     return [
       [PreCreateEvent::class],
+      [PreRequireEvent::class],
       [PreApplyEvent::class],
       [StatusCheckEvent::class],
     ];

@@ -5,6 +5,7 @@ declare(strict_types = 1);
 namespace Drupal\package_manager\Validator;
 
 use Drupal\package_manager\Event\PreOperationStageEvent;
+use Drupal\package_manager\Event\PreRequireEvent;
 use Drupal\package_manager\PathLocator;
 use PhpTuf\ComposerStager\Domain\Aggregate\PreconditionsTree\NoUnsupportedLinksExistInterface;
 use PhpTuf\ComposerStager\Domain\Exception\PreconditionException;
@@ -46,6 +47,11 @@ final class SymlinkValidator implements EventSubscriberInterface {
    * Flags errors if the project root or stage directory contain symbolic links.
    */
   public function validate(PreOperationStageEvent $event): void {
+    if ($event instanceof PreRequireEvent) {
+      // We don't need to check symlinks again during PreRequireEvent; this was
+      // already just validated during PreCreateEvent.
+      return;
+    }
     $active_dir = $this->pathFactory->create($this->pathLocator->getProjectRoot());
 
     // The precondition requires us to pass both an active and stage directory,

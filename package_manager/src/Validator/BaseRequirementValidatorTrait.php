@@ -7,6 +7,7 @@ namespace Drupal\package_manager\Validator;
 use Drupal\package_manager\Event\PreApplyEvent;
 use Drupal\package_manager\Event\PreCreateEvent;
 use Drupal\package_manager\Event\PreOperationStageEvent;
+use Drupal\package_manager\Event\PreRequireEvent;
 use Drupal\package_manager\Event\StatusCheckEvent;
 
 /**
@@ -40,6 +41,7 @@ trait BaseRequirementValidatorTrait {
 
     return [
       PreCreateEvent::class => ['validate', $priority],
+      PreRequireEvent::class => ['validate', $priority],
       PreApplyEvent::class => ['validate', $priority],
       StatusCheckEvent::class => ['validate', $priority],
     ];
