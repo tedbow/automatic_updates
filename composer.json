@@ -19,7 +19,8 @@
         "composer-runtime-api": "^2.1"
     },
     "require-dev": {
-        "colinodell/psr-testlogger": "^1.2"
+        "colinodell/psr-testlogger": "^1.2",
+        "drush/drush": "^11"
     },
     "scripts": {
         "phpcbf": "scripts/phpcbf.sh",
@@ -41,6 +42,13 @@
     "autoload": {
         "psr-4": {
             "Drupal\\automatic_updates\\Development\\": "scripts/src"
+        }
+    },
+    "extra": {
+        "drush": {
+            "services": {
+                "drush.services.yml": "^11"
+            }
         }
     }
 }

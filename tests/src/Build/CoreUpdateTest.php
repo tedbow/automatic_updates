@@ -5,6 +5,7 @@ declare(strict_types = 1);
 namespace Drupal\Tests\automatic_updates\Build;
 
 use Behat\Mink\Element\DocumentElement;
+use Drupal\automatic_updates\DrushUpdateStage;
 use Drupal\automatic_updates\CronUpdateStage;
 use Drupal\automatic_updates\UpdateStage;
 use Drupal\Composer\Composer;
@@ -17,6 +18,7 @@ use Drupal\package_manager\Event\PreCreateEvent;
 use Drupal\package_manager\Event\PreDestroyEvent;
 use Drupal\package_manager\Event\PreRequireEvent;
 use Drupal\Tests\WebAssert;
+use Symfony\Component\Process\Process;
 
 /**
  * Tests an end-to-end update of Drupal core.
@@ -407,5 +409,41 @@ class CoreUpdateTest extends UpdateTestBase {
     $this->waitForBatchJob();
     $assert_session->pageTextContains('Ready to update');
   }
+
+  // BEGIN: DELETE FROM CORE MERGE REQUEST
+
+  /**
+   * Tests updating via Drush.
+   */
+  public function testDrushUpdate(): void {
+    $this->createTestProject('RecommendedProject');
+
+    $this->runComposer('composer require drush/drush', 'project');
+
+    $dir = $this->getWorkspaceDirectory() . '/project';
+    $command = [
+      $dir . '/vendor/drush/drush/drush',
+      'auto-update',
+      '--verbose',
+    ];
+    $process = new Process($command, $dir . '/web/sites/default');
+
+    // Give the update process as much time as it needs to run.
+    $process->setTimeout(NULL)->mustRun();
+    $output = $process->getOutput();
+    $this->assertStringContainsString('Updating Drupal core to 9.8.1. This may take a while.', $output);
+    $this->assertStringContainsString('Drupal core was successfully updated to 9.8.1!', $output);
+    $this->assertStringContainsString('Running post-apply tasks and final clean-up...', $output);
+    $this->assertUpdateSuccessful('9.8.1');
+    $this->assertExpectedStageEventsFired(DrushUpdateStage::class);
+
+    // Rerunning the command should exit with a message that no newer version
+    // is available.
+    $process = new Process($command, $process->getWorkingDirectory());
+    $process->mustRun();
+    $this->assertStringContainsString("There is no Drupal core update available.", $process->getOutput());
+  }
+
+  // END: DELETE FROM CORE MERGE REQUEST
 
 }

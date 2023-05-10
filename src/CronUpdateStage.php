@@ -168,7 +168,7 @@ class CronUpdateStage extends UpdateStage {
    *   How long to allow the operation to run before timing out, in seconds, or
    *   NULL to never time out.
    */
-  private function performUpdate(string $target_version, ?int $timeout): void {
+  protected function performUpdate(string $target_version, ?int $timeout): void {
     $project_info = new ProjectInfo('drupal');
 
     if (!$this->isAvailable()) {
