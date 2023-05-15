@@ -104,7 +104,7 @@ final class StatusChecker implements EventSubscriberInterface {
    *   (optional) The severity for the results to return. Should be one of the
    *   SystemManager::REQUIREMENT_* constants.
    *
-   * @return \Drupal\package_manager\ValidationResult[]|
+   * @return \Drupal\package_manager\ValidationResult[]|null
    *   The validation result objects or NULL if no results are
    *   available or if the stored results are no longer valid.
    */
