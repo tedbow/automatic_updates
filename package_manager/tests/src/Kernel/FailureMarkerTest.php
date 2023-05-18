@@ -29,14 +29,14 @@ class FailureMarkerTest extends PackageManagerKernelTestBase {
   }
 
   /**
-   * Tests that an exception is thrown if the marker file contains invalid JSON.
+   * Tests that an exception is thrown if the marker file contains invalid YAML.
    *
    * @covers ::assertNotExists
    */
-  public function testExceptionForInvalidJson(): void {
+  public function testExceptionForInvalidYaml(): void {
     $failure_marker = $this->container->get(FailureMarker::class);
-    // Write the failure marker with invalid JSON.
-    file_put_contents($failure_marker->getPath(), '{}}');
+    // Write the failure marker with invalid YAML.
+    file_put_contents($failure_marker->getPath(), 'message : something message : something1');
 
     $this->expectException(StageFailureMarkerException::class);
     $this->expectExceptionMessage('Failure marker file exists but cannot be decoded.');

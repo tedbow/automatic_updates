@@ -75,7 +75,7 @@ trait AssertPreconditionsTrait {
     // If the failure marker exists, it will be in the project root. The project
     // root is defined as the directory containing the `vendor` directory.
     // @see \Drupal\package_manager\FailureMarker::getPath()
-    $failure_marker = static::getProjectRoot() . '/PACKAGE_MANAGER_FAILURE.json';
+    $failure_marker = static::getProjectRoot() . '/PACKAGE_MANAGER_FAILURE.yml';
     if (file_exists($failure_marker)) {
       $suffix = $when === 'before'
         ? 'Remove it to continue.'

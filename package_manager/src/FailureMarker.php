@@ -4,7 +4,8 @@ declare(strict_types = 1);
 
 namespace Drupal\package_manager;
 
-use Drupal\Component\Serialization\Json;
+use Symfony\Component\Yaml\Exception\ParseException;
+use Symfony\Component\Yaml\Yaml;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\package_manager\Exception\StageFailureMarkerException;
 
@@ -40,7 +41,7 @@ final class FailureMarker {
    *   The absolute path of the marker file.
    */
   public function getPath(): string {
-    return $this->pathLocator->getProjectRoot() . '/PACKAGE_MANAGER_FAILURE.json';
+    return $this->pathLocator->getProjectRoot() . '/PACKAGE_MANAGER_FAILURE.yml';
   }
 
   /**
@@ -62,9 +63,9 @@ final class FailureMarker {
     $data = [
       'stage_class' => get_class($stage),
       'stage_file' => (new \ReflectionObject($stage))->getFileName(),
-      'message' => $message,
+      'message' => $message->render(),
     ];
-    file_put_contents($this->getPath(), Json::encode($data));
+    file_put_contents($this->getPath(), Yaml::dump($data));
   }
 
   /**
@@ -79,9 +80,9 @@ final class FailureMarker {
     if (file_exists($path)) {
       $data = file_get_contents($path);
       try {
-        $data = json_decode($data, TRUE, flags: JSON_THROW_ON_ERROR);
+        $data = Yaml::parse($data);
       }
-      catch (\JsonException $exception) {
+      catch (ParseException $exception) {
         throw new StageFailureMarkerException('Failure marker file exists but cannot be decoded.', $exception->getCode(), $exception);
       }
 
