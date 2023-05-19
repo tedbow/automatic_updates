@@ -71,7 +71,7 @@ final class FailureMarker {
   /**
    * Asserts the failure file doesn't exist.
    *
-   * @throws \Drupal\package_manager\Exception\ApplyFailedException
+   * @throws \Drupal\package_manager\Exception\StageFailureMarkerException
    *   Thrown if the marker file exists.
    */
   public function assertNotExists(): void {
