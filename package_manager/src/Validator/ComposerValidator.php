@@ -46,6 +46,19 @@ final class ComposerValidator implements EventSubscriberInterface {
    * Validates that the Composer executable is the correct version.
    */
   public function validate(PreOperationStageEvent $event): void {
+    // If we can't stat processes, there's nothing else we can possibly do here.
+    // @see \Symfony\Component\Process\Process::__construct()
+    if (!\function_exists('proc_open')) {
+      $message = $this->t('Composer cannot be used because the <code>proc_open()</code> function is disabled.');
+      if ($this->moduleHandler->moduleExists('help')) {
+        $message = $this->t('@message See <a href=":package-manager-help">the help page</a> for information on how to resolve the problem.', [
+          ':package-manager-help' => self::getHelpUrl('package-manager-composer-related-faq'),
+        ]);
+      }
+      $event->addError([$message]);
+      return;
+    }
+
     $messages = [];
     $dir = $event instanceof PreApplyEvent
       ? $event->stage->getStageDirectory()

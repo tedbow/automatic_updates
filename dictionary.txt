@@ -11,3 +11,4 @@ filedate
 unshallow
 hhvm
 tmpdir
+proc_open

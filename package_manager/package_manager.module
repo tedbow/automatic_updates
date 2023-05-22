@@ -51,6 +51,9 @@ function package_manager_help($route_name, RouteMatchInterface $route_match) {
       $output .= '<h3 id="package-manager-faq">' . t('FAQ') . '</h3>';
       $output .= '<h4 id="package-manager-composer-related-faq">' . t('FAQs related to Composer') . '</h4>';
       $output .= '<ul>';
+      $output .= '  <li>' . t('What if it says the <code>proc_open()</code> function is disabled on your PHP installation?');
+      $output .= '    <p>' . t('Ask your system administrator to remove <code>proc_open()</code> from the <a href=":url">disable_functions</a> setting in <code>php.ini</code>.', [':url' => 'https://www.php.net/manual/en/ini.core.php#ini.disable-functions']) . '</p>';
+      $output .= '  </li>';
       $output .= '  <li>' . t('What if it says the <code>composer</code> executable cannot be found?');
       $output .= '    <p>' . t("If the <code>composer</code> executable's path cannot be automatically determined, it can be explicitly set by adding the following line to <code>settings.php</code>:") . '</p>';
       $output .= "    <pre><code>\$config['package_manager.settings']['executables']['composer'] = '/full/path/to/composer.phar';</code></pre>";
