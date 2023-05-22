@@ -275,5 +275,15 @@
  *   Composer at the command line and get information from it about the
  *   project's `composer.json`, which packages are installed, etc.
  *
+ * @section sec_package_manager_failure_marker Package Manager failure marker
+ * A file PACKAGE_MANAGER_FAILURE.yml is placed in the active directory while
+ * staged code is copied back into it, and then removed after the copying is
+ * finished. If this file exists, it means that the staged changes failed to be
+ * applied to the active directory (for example: a file system error, or the
+ * copying process was interrupted), and the site is therefore in an
+ * indeterminate state. The only thing you can do is to restore the code and
+ * database from a backup.
+ * @see \Drupal\package_manager\FailureMarker
+ *
  * @}
  */
