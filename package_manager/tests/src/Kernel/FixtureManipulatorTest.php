@@ -263,6 +263,9 @@ class FixtureManipulatorTest extends PackageManagerKernelTestBase {
 
   /**
    * {@inheritdoc}
+   *
+   * @todo Remove the line below when https://github.com/phpstan/phpstan-phpunit/issues/187 is fixed.
+   * @phpstan-ignore-next-line
    */
   protected function tearDown(): void {
     try {

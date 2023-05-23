@@ -420,6 +420,7 @@ abstract class PackageManagerKernelTestBase extends KernelTestBase {
     $this->assertFalse($this->failureLogger->hasRecords(RfcLogLevel::CRITICAL), 'Package Manager logged critical errors.');
     $this->assertFalse($this->failureLogger->hasRecords(RfcLogLevel::ERROR), 'Package Manager logged errors.');
     $this->assertFalse($this->failureLogger->hasRecords(RfcLogLevel::WARNING), 'Package Manager logged warnings.');
+    parent::tearDown();
   }
 
   /**
