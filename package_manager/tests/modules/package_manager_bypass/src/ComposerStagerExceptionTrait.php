@@ -14,10 +14,10 @@ trait ComposerStagerExceptionTrait {
   /**
    * Sets an exception to be thrown.
    *
-   * @param \Throwable $exception
-   *   The throwable.
+   * @param \Throwable|null $exception
+   *   The exception to throw, or NULL to delete a stored exception.
    */
-  public static function setException(\Throwable $exception): void {
+  public static function setException(?\Throwable $exception): void {
     \Drupal::state()->set(static::class . '-exception', $exception);
   }
 

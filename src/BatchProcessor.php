@@ -95,11 +95,16 @@ final class BatchProcessor {
    */
   public static function stage(): void {
     $stage_id = \Drupal::service('session')->get(static::STAGE_ID_SESSION_KEY);
+    $stage = static::getStage();
     try {
-      static::getStage()->claim($stage_id)->stage();
+      $stage->claim($stage_id)->stage();
     }
     catch (\Throwable $e) {
-      static::clean($stage_id);
+      // If the stage was not already destroyed because of this exception
+      // destroy it.
+      if (!$stage->isAvailable()) {
+        static::clean($stage_id);
+      }
       static::storeErrorMessage($e->getMessage());
       throw $e;
     }
