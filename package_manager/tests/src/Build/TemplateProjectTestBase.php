@@ -279,6 +279,7 @@ END;
     if (str_contains($automatic_updates_dir, 'automatic_updates')) {
       $dir = 'project';
       $this->runComposer("composer config repo.automatic_updates path $automatic_updates_dir", $dir);
+      $output = $this->runComposer('COMPOSER_MIRROR_PATH_REPOS=1 composer require  psr/http-message', $dir);
       $output = $this->runComposer('COMPOSER_MIRROR_PATH_REPOS=1 composer require --update-with-all-dependencies "drupal/automatic_updates:@dev"', $dir);
       $this->assertStringNotContainsString('Symlinking', $output);
     }
