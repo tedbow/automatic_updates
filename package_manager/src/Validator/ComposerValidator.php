@@ -83,7 +83,7 @@ final class ComposerValidator implements EventSubscriberInterface {
     $settings = [];
     foreach (['disable-tls', 'secure-http'] as $key) {
       try {
-        $settings[$key] = ComposerInspector::toBoolean($this->composerInspector->getConfig($key, $dir) ?: '0');
+        $settings[$key] = json_decode($this->composerInspector->getConfig($key, $dir));
       }
       catch (\Throwable $e) {
         $event->addErrorFromThrowable($e, $this->t('Unable to determine Composer <code>@key</code> setting.', [

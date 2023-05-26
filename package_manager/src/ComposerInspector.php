@@ -51,18 +51,14 @@ class ComposerInspector implements LoggerAwareInterface {
    * A semantic version constraint for the supported version(s) of Composer.
    *
    * Only versions supported by Composer are supported: the LTS and the latest
-   * minor version. Those are currently 2.2 and 2.5.
+   * minor version. Those are currently (May 2023) 2.2 and 2.5, but will be 2.5
+   * and 2.6 later this year (December 2023): the 2.2 LTS ends in December 2023.
    *
    * @see https://endoflife.date/composer
    *
-   * Note that Composer <= 2.2.11 is not supported anymore due to a security
-   * vulnerability.
-   *
-   * @see https://blog.packagist.com/cve-2022-24828-composer-command-injection-vulnerability/
-   *
    * @var string
    */
-  final public const SUPPORTED_VERSION = '~2.2.12 || ^2.5';
+  final public const SUPPORTED_VERSION = '~2.5.5 || ^2.6';
 
   /**
    * Constructs a ComposerInspector object.
@@ -261,12 +257,7 @@ class ComposerInspector implements LoggerAwareInterface {
     catch (RuntimeException $e) {
       // Assume any error from `composer config` is about an undefined key-value
       // pair which may have a known default value.
-      // @todo Remove this in https://www.drupal.org/i/3350568.
       switch ($key) {
-        // @see https://getcomposer.org/doc/04-schema.md#minimum-stability
-        case 'minimum-stability':
-          return 'stable';
-
         case 'extra':
           return '{}';
 
@@ -474,36 +465,6 @@ class ComposerInspector implements LoggerAwareInterface {
   }
 
   /**
-   * Tries to convert a string value from ::getConfig() to a boolean.
-   *
-   * For boolean config values, `composer config` returns `true` or `false` as
-   * of Composer 2.5.5, but older versions return `1` or `0`. This function
-   * normalizes the discrepancy.
-   *
-   * You should call this method if you're calling ::getConfig() to retrieve a
-   * config value that will be, or may be a boolean (e.g., `allow-plugins`). See
-   * https://getcomposer.org/doc/06-config.md for documentation on all the
-   * possible config values that `composer config` can expose.
-   *
-   * @param string $value
-   *   The value to convert. Must be one of '1', 'true', '0', or 'false'.
-   *
-   * @return bool
-   *   The value, as a boolean.
-   *
-   * @see https://getcomposer.org/doc/06-config.md
-   *
-   * @throws \UnhandledMatchError
-   *   If the given value cannot be converted to a boolean.
-   */
-  public static function toBoolean(string $value): bool {
-    return match ($value) {
-      '1', 'true' => TRUE,
-      '0', 'false' => FALSE,
-    };
-  }
-
-  /**
    * Returns the value of `allow-plugins` config setting.
    *
    * @param string $dir
@@ -516,17 +477,12 @@ class ComposerInspector implements LoggerAwareInterface {
    * @see https://getcomposer.org/doc/06-config.md#allow-plugins
    */
   public function getAllowPluginsConfig(string $dir): array|bool {
-    // If `allow-plugins` is `false`, Composer 2.5.4 and earlier has no output.
-    $value = $this->getConfig('allow-plugins', $dir) ?? 'false';
+    $value = $this->getConfig('allow-plugins', $dir);
 
-    // Try to convert the value we got back to a boolean. If that can't be done,
-    // assume it's an array of plugin-specific flags and parse it as JSON.
-    try {
-      $value = static::toBoolean($value);
-    }
-    catch (\UnhandledMatchError) {
-      $value = json_decode($value, TRUE, flags: JSON_THROW_ON_ERROR);
-    }
+    // Try to convert the value we got back to a boolean. If it's not a boolean,
+    // it should be an array of plugin-specific flags.
+    $value = json_decode($value, TRUE, flags: JSON_THROW_ON_ERROR);
+
     // An empty array indicates that no plugins are allowed.
     return $value ?: [];
   }

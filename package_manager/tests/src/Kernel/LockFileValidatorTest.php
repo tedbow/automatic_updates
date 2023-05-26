@@ -51,8 +51,8 @@ class LockFileValidatorTest extends PackageManagerKernelTestBase {
     $inspector = $this->prophesize(ComposerInspector::class);
     $arguments = Argument::cetera();
     $inspector->getConfig('allow-plugins', $arguments)->willReturn('[]');
-    $inspector->getConfig('secure-http', $arguments)->willReturn('1');
-    $inspector->getConfig('disable-tls', $arguments)->willReturn('0');
+    $inspector->getConfig('secure-http', $arguments)->willReturn('true');
+    $inspector->getConfig('disable-tls', $arguments)->willReturn('false');
     $inspector->getConfig('extra', $arguments)->willReturn('{}');
     $inspector->getConfig('minimum-stability', $arguments)->willReturn('stable');
     $inspector->getInstalledPackagesList($arguments)->willReturn(new InstalledPackagesList());

@@ -9,6 +9,8 @@ build:
       # Run code quality checks.
       container_command.commit-checks:
         commands:
+          # Update to Composer 2.5.5.
+          - composer self-update 2.5.5
           # @todo Replace in favor of commit-code-check.sh once https://www.drupal.org/project/drupal/issues/3314100 lands.
           - modules/contrib/automatic_updates/scripts/commit-code-check.sh --drupalci
         halt-on-fail: true

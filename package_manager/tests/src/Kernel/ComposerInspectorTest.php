@@ -217,10 +217,12 @@ class ComposerInspectorTest extends PackageManagerKernelTestBase {
    *
    * @covers ::validate
    *
-   * @testWith ["2.2.12", null]
-   *   ["2.2.13", null]
-   *   ["2.5.0", null]
+   * @testWith ["2.2.12", "<default>"]
+   *   ["2.2.13", "<default>"]
+   *   ["2.5.0", "<default>"]
+   *   ["2.5.5", null]
    *   ["2.5.11", null]
+   *   ["2.6.0", null]
    *   ["2.2.11", "<default>"]
    *   ["2.2.0-dev", "<default>"]
    *   ["2.3.6", "<default>"]
