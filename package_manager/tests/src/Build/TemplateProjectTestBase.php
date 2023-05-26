@@ -82,6 +82,46 @@ abstract class TemplateProjectTestBase extends QuickStartTestBase {
   }
 
   /**
+   * Sets the version of Drupal core to which the test site will be updated.
+   *
+   * @param string $version
+   *   The Drupal core version to set.
+   */
+  protected function setUpstreamCoreVersion(string $version): void {
+    $workspace_dir = $this->getWorkspaceDirectory();
+
+    // Loop through core's metapackages and plugins, and alter them as needed.
+    $packages = str_replace("$workspace_dir/", '', $this->getCorePackages());
+    foreach ($packages as $path) {
+      // Assign the new upstream version.
+      $this->runComposer("composer config version $version", $path);
+
+      // If this package requires Drupal core (e.g., drupal/core-recommended),
+      // make it require the new upstream version.
+      $info = $this->runComposer('composer info --self --format json', $path, TRUE);
+      if (isset($info['requires']['drupal/core'])) {
+        $this->runComposer("composer require --no-update drupal/core:$version", $path);
+      }
+    }
+
+    // Change the \Drupal::VERSION constant and put placeholder text in the
+    // README so we can ensure that we really updated to the correct version. We
+    // also change the default site configuration files so we can ensure that
+    // these are updated as well, despite `sites/default` being write-protected.
+    // @see ::assertUpdateSuccessful()
+    // @see ::createTestProject()
+    Composer::setDrupalVersion($workspace_dir, $version);
+    file_put_contents("$workspace_dir/core/README.txt", "Placeholder for Drupal core $version.");
+
+    foreach (['default.settings.php', 'default.services.yml'] as $file) {
+      $file = fopen("$workspace_dir/core/assets/scaffold/files/$file", 'a');
+      $this->assertIsResource($file);
+      fwrite($file, "# This is part of Drupal $version.\n");
+      fclose($file);
+    }
+  }
+
+  /**
    * Returns the full path to the test site's document root.
    *
    * @return string

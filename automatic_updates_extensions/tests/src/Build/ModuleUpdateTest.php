@@ -24,7 +24,7 @@ class ModuleUpdateTest extends UpdateTestBase {
   protected function createTestProject(string $template): void {
     parent::createTestProject($template);
     $this->setReleaseMetadata([
-      'drupal' => __DIR__ . '/../../../../package_manager/tests/fixtures/release-history/drupal.9.8.1-security.xml',
+      'drupal' => __DIR__ . '/../../../../package_manager/tests/fixtures/release-history/drupal.9.8.2.xml',
       'alpha'  => __DIR__ . '/../../fixtures/release-history/alpha.1.1.0.xml',
       'new_module' => __DIR__ . '/../../fixtures/release-history/new_module.1.1.0.xml',
     ]);
@@ -131,6 +131,17 @@ END;
     $this->waitForBatchJob();
     $assert_session->pageTextContains('Update complete!');
     $this->assertModuleVersion('alpha', '1.1.0');
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function copyCodebase(\Iterator $iterator = NULL, $working_dir = NULL): void {
+    parent::copyCodebase($iterator, $working_dir);
+
+    // Ensure that we will install Drupal 9.8.0 (a fake version that should
+    // never exist in real life) initially.
+    $this->setUpstreamCoreVersion('9.8.0');
   }
 
   /**
