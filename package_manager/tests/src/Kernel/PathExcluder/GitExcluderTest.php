@@ -65,7 +65,7 @@ class GitExcluderTest extends PackageManagerKernelTestBase {
 
     $stage = $this->createStage();
     $stage->create();
-    /** @var \Drupal\package_manager_bypass\BypassedStagerServiceBase $beginner */
+    /** @var \Drupal\package_manager_bypass\LoggingBeginner $beginner */
     $beginner = $this->container->get('package_manager.beginner');
     $beginner_args = $beginner->getInvocationArguments();
     $excluded_paths = [
@@ -117,7 +117,7 @@ class GitExcluderTest extends PackageManagerKernelTestBase {
     file_put_contents("$path/.git/excluded.txt", 'Phoenix!');
 
     $stage->apply();
-    /** @var \Drupal\package_manager_bypass\BypassedStagerServiceBase $committer */
+    /** @var \Drupal\package_manager_bypass\LoggingCommitter $committer */
     $committer = $this->container->get('package_manager.committer');
     $committer_args = $committer->getInvocationArguments();
     $excluded_paths = [
