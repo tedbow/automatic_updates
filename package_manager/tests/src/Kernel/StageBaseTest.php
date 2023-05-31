@@ -631,6 +631,20 @@ class StageBaseTest extends PackageManagerKernelTestBase {
   }
 
   /**
+   * Tests that the failure marker file is excluded using a relative path.
+   */
+  public function testFailureMarkerFileExcluded(): void {
+    $this->assertResults([]);
+    /** @var \Drupal\package_manager_bypass\LoggingCommitter $committer */
+    $committer = $this->container->get('package_manager.committer');
+    $committer_args = $committer->getInvocationArguments();
+    $this->assertCount(1, $committer_args);
+    /** @var \PhpTuf\ComposerStager\Domain\Value\PathList\PathListInterface $path_list */
+    $path_list = $committer_args[0][2];
+    $this->assertContains('PACKAGE_MANAGER_FAILURE.yml', $path_list->getAll());
+  }
+
+  /**
    * Tests that if a stage fails to get paths to exclude, throws a stage exception.
    */
   public function testFailureCollectPathsToExclude(): void {

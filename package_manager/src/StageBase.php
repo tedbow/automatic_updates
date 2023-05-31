@@ -452,7 +452,7 @@ abstract class StageBase implements LoggerAwareInterface {
     // Exclude the failure file from the commit operation.
     $paths_to_exclude = new PathList($event->getExcludedPaths());
     $paths_to_exclude->add([
-      $this->failureMarker->getPath(),
+      str_replace($this->pathLocator->getProjectRoot() . DIRECTORY_SEPARATOR, '', $this->failureMarker->getPath()),
     ]);
 
     try {
