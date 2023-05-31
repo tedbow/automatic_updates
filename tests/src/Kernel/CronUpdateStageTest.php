@@ -564,14 +564,14 @@ END;
    */
   public function testApplyFailureEmail(): void {
     $this->getStageFixtureManipulator()->setCorePackageVersion('9.8.1');
-    $error = new \Exception('I drink your milkshake!');
+    $error = new \LogicException('I drink your milkshake!');
     LoggingCommitter::setException($error);
 
     $this->container->get('cron')->run();
     $expected_body = <<<END
 Drupal core failed to update automatically from 9.8.0 to 9.8.1. The following error was logged:
 
-Automatic updates failed to apply, and the site is in an indeterminate state. Consider restoring the code and database from a backup.
+Automatic updates failed to apply, and the site is in an indeterminate state. Consider restoring the code and database from a backup. Caused by LogicException, with this message: {$error->getMessage()}
 
 This e-mail was sent by the Automatic Updates module. Unattended updates are not yet fully supported.
 

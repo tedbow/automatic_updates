@@ -14,6 +14,7 @@ use Drupal\Core\Url;
 use Drupal\package_manager\ComposerInspector;
 use Drupal\package_manager\Exception\ApplyFailedException;
 use Drupal\package_manager\Exception\StageEventException;
+use Drupal\package_manager\Exception\StageFailureMarkerException;
 use Drupal\package_manager\FailureMarker;
 use Drupal\package_manager\PathLocator;
 use Drupal\package_manager\ProjectInfo;
@@ -215,6 +216,11 @@ class CronUpdateStage extends UpdateStage {
         'target_version' => $target_version,
         'error_message' => $e->getMessage(),
       ];
+      // Omit the backtrace in e-mails. That will be visible on the site, and is
+      // also stored in the failure marker.
+      if ($e instanceof StageFailureMarkerException || $e instanceof ApplyFailedException) {
+        $mail_params['error_message'] = $this->failureMarker->getMessage(FALSE);
+      }
       if ($e instanceof ApplyFailedException) {
         $mail_params['urgent'] = TRUE;
         $key = 'cron_failed_apply';

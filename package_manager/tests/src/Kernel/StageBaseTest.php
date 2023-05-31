@@ -341,10 +341,14 @@ class StageBaseTest extends PackageManagerKernelTestBase {
       // \Drupal\package_manager\Stage::getFailureMarkerMessage() when throwing
       // ApplyFailedException.
       if ($expected_class == ApplyFailedException::class) {
-        $thrown_message = 'Staged changes failed to apply, and the site is in an indeterminate state. It is strongly recommended to restore the code and database from a backup.';
+        $class_in_message = get_class($throwable);
+        $thrown_message = "/^Staged changes failed to apply, and the site is in an indeterminate state. It is strongly recommended to restore the code and database from a backup. Caused by $class_in_message, with this message: A very bad thing happened\nBacktrace:\n#0 .*/";
+      }
+      else {
+        $thrown_message = "/^$thrown_message$/";
       }
       $this->assertInstanceOf($expected_class, $exception);
-      $this->assertSame($thrown_message, $exception->getMessage());
+      $this->assertMatchesRegularExpression($thrown_message, $exception->getMessage());
       $this->assertSame(123, $exception->getCode());
 
       $failure_marker = $this->container->get(FailureMarker::class);
@@ -368,14 +372,14 @@ class StageBaseTest extends PackageManagerKernelTestBase {
 
     // Make the committer throw an exception, which should cause the failure
     // marker to be present.
-    $thrown = new \Exception('Staged changes failed to apply, and the site is in an indeterminate state. It is strongly recommended to restore the code and database from a backup.');
+    $thrown = new \Exception('Thrown by the committer.');
     LoggingCommitter::setException($thrown);
     try {
       $stage->apply();
       $this->fail('Expected an exception.');
     }
     catch (ApplyFailedException $e) {
-      $this->assertSame($thrown->getMessage(), $e->getMessage());
+      $this->assertStringContainsString($thrown->getMessage(), $e->getMessage());
       $this->assertFalse($stage->isApplying());
     }
     $stage->destroy();
@@ -388,7 +392,7 @@ class StageBaseTest extends PackageManagerKernelTestBase {
       $this->fail('Expected an exception.');
     }
     catch (StageFailureMarkerException $e) {
-      $this->assertSame('Staged changes failed to apply, and the site is in an indeterminate state. It is strongly recommended to restore the code and database from a backup.', $e->getMessage());
+      $this->assertMatchesRegularExpression('/^Staged changes failed to apply, and the site is in an indeterminate state. It is strongly recommended to restore the code and database from a backup. Caused by Exception, with this message: ' . $thrown->getMessage() . "\nBacktrace:\n#0 .*/", $e->getMessage());
       $this->assertFalse($stage->isApplying());
     }
 
@@ -573,17 +577,16 @@ class StageBaseTest extends PackageManagerKernelTestBase {
    * @dataProvider providerFailureDuringComposerStagerOperations
    */
   public function testFailureDuringComposerStagerOperations(string $throwing_class): void {
+    $exception = new \Exception("$throwing_class is angry!", 1024);
+    $throwing_class::setException($exception);
+
+    $expected_message = preg_quote($exception->getMessage());
     if ($throwing_class === LoggingCommitter::class) {
-      // If the committer throws an exception, Stage will always re-throw it
-      // with a predetermined failure message.
-      $expected_message = 'Staged changes failed to apply, and the site is in an indeterminate state. It is strongly recommended to restore the code and database from a backup.';
+      $expected_message = "/^Staged changes failed to apply, and the site is in an indeterminate state. It is strongly recommended to restore the code and database from a backup. Caused by Exception, with this message: $expected_message\nBacktrace:\n#0 .*/";
     }
     else {
-      $expected_message = "$throwing_class is angry!";
+      $expected_message = "/^$expected_message$/";
     }
-
-    $exception = new \Exception($expected_message, 1024);
-    $throwing_class::setException($exception);
 
     $stage = $this->createStage();
     try {
@@ -593,7 +596,7 @@ class StageBaseTest extends PackageManagerKernelTestBase {
       $this->fail('Expected an exception to be thrown, but it was not.');
     }
     catch (StageException $e) {
-      $this->assertSame($expected_message, $e->getMessage());
+      $this->assertMatchesRegularExpression($expected_message, $e->getMessage());
       $this->assertSame(1024, $e->getCode());
       $this->assertSame($exception, $e->getPrevious());
     }

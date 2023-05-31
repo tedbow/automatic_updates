@@ -4,7 +4,6 @@ declare(strict_types = 1);
 
 namespace Drupal\Tests\package_manager\Kernel;
 
-use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\package_manager\Exception\StageFailureMarkerException;
 use Drupal\package_manager\FailureMarker;
 
@@ -14,18 +13,42 @@ use Drupal\package_manager\FailureMarker;
  * @internal
  */
 class FailureMarkerTest extends PackageManagerKernelTestBase {
-  use StringTranslationTrait;
 
   /**
-   * @covers ::assertNotExists
+   * @covers ::getMessage
+   * @testWith [true]
+   *   [false]
    */
-  public function testExceptionIfExists(): void {
+  public function testGetMessageWithoutThrowable(bool $include_backtrace): void {
     $failure_marker = $this->container->get(FailureMarker::class);
-    $failure_marker->write($this->createStage(), $this->t('Disastrous catastrophe!'));
+    $failure_marker->write($this->createStage(), t('Disastrous catastrophe!'));
 
-    $this->expectException(StageFailureMarkerException::class);
-    $this->expectExceptionMessage('Disastrous catastrophe!');
-    $failure_marker->assertNotExists();
+    $this->assertMatchesRegularExpression('/^Disastrous catastrophe!$/', $failure_marker->getMessage($include_backtrace));
+  }
+
+  /**
+   * @covers ::getMessage
+   * @testWith [true]
+   *   [false]
+   */
+  public function testGetMessageWithThrowable(bool $include_backtrace): void {
+    $failure_marker = $this->container->get(FailureMarker::class);
+    $failure_marker->write($this->createStage(), t('Disastrous catastrophe!'), new \Exception('Witchcraft!'));
+
+    $expected_pattern = $include_backtrace
+      ? <<<REGEXP
+/^Disastrous catastrophe! Caused by Exception, with this message: Witchcraft!
+Backtrace:
+#0 .*FailureMarkerTest->testGetMessageWithThrowable\(true\)
+#1 .*
+#2 .*
+#3 .*/
+REGEXP
+      : '/^Disastrous catastrophe! Caused by Exception, with this message: Witchcraft!$/';
+    $this->assertMatchesRegularExpression(
+      $expected_pattern,
+      $failure_marker->getMessage($include_backtrace)
+    );
   }
 
   /**
@@ -40,6 +63,20 @@ class FailureMarkerTest extends PackageManagerKernelTestBase {
 
     $this->expectException(StageFailureMarkerException::class);
     $this->expectExceptionMessage('Failure marker file exists but cannot be decoded.');
+    $failure_marker->assertNotExists();
+  }
+
+  /**
+   * Tests that the failure marker can contain an exception message.
+   *
+   * @covers ::assertNotExists
+   */
+  public function testAssertNotExists(): void {
+    $failure_marker = $this->container->get(FailureMarker::class);
+    $failure_marker->write($this->createStage(), t('Something wicked occurred here.'), new \Exception('Witchcraft!'));
+
+    $this->expectException(StageFailureMarkerException::class);
+    $this->expectExceptionMessageMatches('/^Something wicked occurred here. Caused by Exception, with this message: Witchcraft!\nBacktrace:\n#0 .*/');
     $failure_marker->assertNotExists();
   }
 

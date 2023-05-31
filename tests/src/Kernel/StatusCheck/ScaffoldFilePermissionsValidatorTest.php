@@ -345,7 +345,7 @@ class ScaffoldFilePermissionsValidatorTest extends AutomaticUpdatesKernelTestBas
     // If we try to overwrite any write-protected paths, even if they're not
     // scaffold files, we'll get an ApplyFailedException.
     catch (ApplyFailedException $e) {
-      $this->assertSame("Automatic updates failed to apply, and the site is in an indeterminate state. Consider restoring the code and database from a backup.", $e->getMessage());
+      $this->assertStringStartsWith("Automatic updates failed to apply, and the site is in an indeterminate state. Consider restoring the code and database from a backup.", $e->getMessage());
     }
     catch (StageEventException $e) {
       $this->assertExpectedResultsFromException($expected_results, $e);

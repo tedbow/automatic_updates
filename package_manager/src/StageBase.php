@@ -470,7 +470,9 @@ abstract class StageBase implements LoggerAwareInterface {
       // applying, because in this situation, the site owner should probably
       // restore everything from a backup.
       $this->setNotApplying()();
-      throw new ApplyFailedException($this, (string) $this->getFailureMarkerMessage(), $throwable->getCode(), $throwable);
+      // Update the marker file with the information from the throwable.
+      $this->failureMarker->write($this, $this->getFailureMarkerMessage(), $throwable);
+      throw new ApplyFailedException($this, $this->failureMarker->getMessage(), $throwable->getCode(), $throwable);
     }
     $this->failureMarker->clear();
     $this->setMetadata(self::TEMPSTORE_CHANGES_APPLIED, TRUE);

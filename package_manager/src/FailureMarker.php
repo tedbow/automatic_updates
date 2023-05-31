@@ -58,14 +58,76 @@ final class FailureMarker {
    *   The stage.
    * @param \Drupal\Core\StringTranslation\TranslatableMarkup $message
    *   Failure message to be added.
+   * @param \Throwable $throwable
+   *   (optional) The throwable that caused the failure.
    */
-  public function write(StageBase $stage, TranslatableMarkup $message): void {
+  public function write(StageBase $stage, TranslatableMarkup $message, \Throwable $throwable = NULL): void {
     $data = [
       'stage_class' => get_class($stage),
       'stage_file' => (new \ReflectionObject($stage))->getFileName(),
-      'message' => $message->render(),
+      'message' => (string) $message,
+      'throwable_class' => $throwable ? get_class($throwable) : FALSE,
+      'throwable_message' => $throwable?->getMessage() ?? 'Not available',
+      'throwable_backtrace' => $throwable?->getTraceAsString() ?? 'Not available.',
     ];
     file_put_contents($this->getPath(), Yaml::dump($data));
+  }
+
+  /**
+   * Gets the data from the file if it exists.
+   *
+   * @return array|null
+   *   The data from the file if it exists.
+   *
+   * @throws \Drupal\package_manager\Exception\StageFailureMarkerException
+   *   Thrown if failure marker exists but cannot be decoded.
+   */
+  private function getData(): ?array {
+    $path = $this->getPath();
+    if (file_exists($path)) {
+      $data = file_get_contents($path);
+      try {
+        return Yaml::parse($data);
+
+      }
+      catch (ParseException $exception) {
+        throw new StageFailureMarkerException('Failure marker file exists but cannot be decoded.', $exception->getCode(), $exception);
+      }
+    }
+    return NULL;
+  }
+
+  /**
+   * Gets the message from the file if it exists.
+   *
+   * @param bool $include_backtrace
+   *   Whether to include the backtrace in the message. Defaults to TRUE. May be
+   *   set to FALSE in a context where it does not make sense to include, such
+   *   as e-mails.
+   *
+   * @return string|null
+   *   The message from the file if it exists, otherwise NULL.
+   *
+   * @throws \Drupal\package_manager\Exception\StageFailureMarkerException
+   *   Thrown if failure marker exists but cannot be decoded.
+   */
+  public function getMessage(bool $include_backtrace = TRUE): ?string {
+    $data = $this->getData();
+    if ($data === NULL) {
+      return NULL;
+    }
+    $message = $data['message'];
+    if ($data['throwable_class']) {
+      $message .= sprintf(
+        ' Caused by %s, with this message: %s',
+        $data['throwable_class'],
+        $data['throwable_message'],
+      );
+      if ($include_backtrace) {
+        $message .= "\nBacktrace:\n" . $data['throwable_backtrace'];
+      }
+    }
+    return $message;
   }
 
   /**
@@ -75,18 +137,8 @@ final class FailureMarker {
    *   Thrown if the marker file exists.
    */
   public function assertNotExists(): void {
-    $path = $this->getPath();
-
-    if (file_exists($path)) {
-      $data = file_get_contents($path);
-      try {
-        $data = Yaml::parse($data);
-      }
-      catch (ParseException $exception) {
-        throw new StageFailureMarkerException('Failure marker file exists but cannot be decoded.', $exception->getCode(), $exception);
-      }
-
-      throw new StageFailureMarkerException($data['message']);
+    if ($message = $this->getMessage()) {
+      throw new StageFailureMarkerException($message);
     }
   }
 
