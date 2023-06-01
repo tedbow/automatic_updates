@@ -169,10 +169,6 @@ function automatic_updates_cron() {
     return;
   }
 
-  /** @var \Drupal\automatic_updates\CronUpdateStage $stage */
-  $stage = \Drupal::service('automatic_updates.cron_update_stage');
-  $stage->handleCron();
-
   /** @var \Drupal\automatic_updates\Validation\StatusChecker $status_checker */
   $status_checker = \Drupal::service('automatic_updates.status_checker');
   $last_results = $status_checker->getResults();
@@ -184,6 +180,8 @@ function automatic_updates_cron() {
   }
 
   // Only try to send failure notifications if unattended updates are enabled.
+  /** @var \Drupal\automatic_updates\CronUpdateStage $stage */
+  $stage = \Drupal::service('automatic_updates.cron_update_stage');
   if ($stage->getMode() !== CronUpdateStage::DISABLED) {
     \Drupal::service('automatic_updates.status_check_mailer')
       ->sendFailureNotifications($last_results, $status_checker->getResults());

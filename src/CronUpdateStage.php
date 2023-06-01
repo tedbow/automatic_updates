@@ -6,12 +6,14 @@ namespace Drupal\automatic_updates;
 
 use Drupal\Component\Datetime\TimeInterface;
 use Drupal\Core\Config\ConfigFactoryInterface;
+use Drupal\Core\CronInterface;
 use Drupal\Core\File\FileSystemInterface;
 use Drupal\Core\Mail\MailManagerInterface;
 use Drupal\Core\State\StateInterface;
 use Drupal\Core\TempStore\SharedTempStoreFactory;
 use Drupal\Core\Url;
 use Drupal\package_manager\ComposerInspector;
+use Drupal\package_manager\Event\PreCreateEvent;
 use Drupal\package_manager\Exception\ApplyFailedException;
 use Drupal\package_manager\Exception\StageEventException;
 use Drupal\package_manager\Exception\StageFailureMarkerException;
@@ -36,7 +38,7 @@ use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
  *   It should not be called directly, and external code should not interact
  *   with it.
  */
-class CronUpdateStage extends UpdateStage {
+class CronUpdateStage extends UpdateStage implements CronInterface {
 
   /**
    * All automatic updates are disabled.
@@ -94,6 +96,8 @@ class CronUpdateStage extends UpdateStage {
    *   The path factory service.
    * @param \Drupal\package_manager\FailureMarker $failureMarker
    *   The failure marker service.
+   * @param \Drupal\Core\CronInterface $inner
+   *   The decorated cron service.
    */
   public function __construct(
     private readonly ReleaseChooser $releaseChooser,
@@ -112,6 +116,7 @@ class CronUpdateStage extends UpdateStage {
     TimeInterface $time,
     PathFactoryInterface $pathFactory,
     FailureMarker $failureMarker,
+    private readonly CronInterface $inner
   ) {
     parent::__construct($composerInspector, $pathLocator, $beginner, $stager, $committer, $fileSystem, $eventDispatcher, $tempStoreFactory, $time, $pathFactory, $failureMarker);
   }
@@ -123,16 +128,20 @@ class CronUpdateStage extends UpdateStage {
    *   (optional) How long to allow the file copying operation to run before
    *   timing out, in seconds, or NULL to never time out. Defaults to 300
    *   seconds.
+   *
+   * @return bool
+   *   If an update was attempted.
    */
-  public function handleCron(?int $timeout = 300): void {
+  public function handleCron(?int $timeout = 300): bool {
     if ($this->getMode() === static::DISABLED) {
-      return;
+      return FALSE;
     }
 
     $next_release = $this->getTargetRelease();
     if ($next_release) {
-      $this->performUpdate($next_release->getVersion(), $timeout);
+      return $this->performUpdate($next_release->getVersion(), $timeout);
     }
+    return FALSE;
   }
 
   /**
@@ -168,21 +177,25 @@ class CronUpdateStage extends UpdateStage {
    * @param int|null $timeout
    *   How long to allow the operation to run before timing out, in seconds, or
    *   NULL to never time out.
+   *
+   * @return bool
+   *   Returns TRUE if any update was attempted, otherwise FALSE.
    */
-  protected function performUpdate(string $target_version, ?int $timeout): void {
+  protected function performUpdate(string $target_version, ?int $timeout): bool {
     $project_info = new ProjectInfo('drupal');
+    $update_started = FALSE;
 
     if (!$this->isAvailable()) {
       if ($project_info->isInstalledVersionSafe() && !$this->isApplying()) {
         $this->logger->notice('Cron will not perform any updates because there is an existing stage and the current version of the site is secure.');
-        return;
+        return $update_started;
       }
       if (!$project_info->isInstalledVersionSafe() && $this->isApplying()) {
         $this->logger->notice(
           'Cron will not perform any updates as an existing staged update is applying. The site is currently on an insecure version of Drupal core but will attempt to update to a secure version next time cron is run. This update may be applied manually at the <a href="%url">update form</a>.',
           ['%url' => Url::fromRoute('update.report_update')->setAbsolute()->toString()],
         );
-        return;
+        return $update_started;
       }
     }
 
@@ -197,19 +210,25 @@ class CronUpdateStage extends UpdateStage {
     $installed_version = $project_info->getInstalledVersion();
     if (empty($installed_version)) {
       $this->logger->error('Unable to determine the current version of Drupal core.');
-      return;
+      return $update_started;
     }
 
     // Do the bulk of the update in its own try-catch structure, so that we can
     // handle any exceptions or validation errors consistently, and destroy the
     // stage regardless of whether the update succeeds.
     try {
+      $update_started = TRUE;
       // @see ::begin()
       $stage_id = parent::begin(['drupal' => $target_version], $timeout);
       $this->stage();
       $this->apply();
     }
     catch (\Throwable $e) {
+      if ($e instanceof StageEventException && $e->event instanceof PreCreateEvent) {
+        // If the error happened during PreCreateEvent then the update did not
+        // really start.
+        $update_started = FALSE;
+      }
       // Send notifications about the failed update.
       $mail_params = [
         'previous_version' => $installed_version,
@@ -245,9 +264,10 @@ class CronUpdateStage extends UpdateStage {
       if (!$this->isAvailable()) {
         $this->destroy();
       }
-      return;
+      return $update_started;
     }
     $this->triggerPostApply($stage_id, $installed_version, $target_version);
+    return TRUE;
   }
 
   /**
@@ -374,6 +394,16 @@ class CronUpdateStage extends UpdateStage {
   final public function getMode(): string {
     $mode = $this->configFactory->get('automatic_updates.settings')->get('cron');
     return $mode ?: static::SECURITY;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function run() {
+    if ($this->handleCron()) {
+      return TRUE;
+    }
+    return $this->inner->run();
   }
 
 }

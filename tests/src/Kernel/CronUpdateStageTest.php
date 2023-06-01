@@ -48,6 +48,7 @@ class CronUpdateStageTest extends AutomaticUpdatesKernelTestBase {
     'automatic_updates',
     'automatic_updates_test',
     'user',
+    'common_test_cron_helper',
   ];
 
   /**
@@ -71,6 +72,7 @@ class CronUpdateStageTest extends AutomaticUpdatesKernelTestBase {
     $this->installSchema('user', ['users_data']);
 
     $this->setUpEmailRecipients();
+    $this->assertRegularCronRun(FALSE);
   }
 
   /**
@@ -449,6 +451,63 @@ This e-mail was sent by the Automatic Updates module. Unattended updates are not
 If you are using this feature in production, it is strongly recommended for you to visit your site and ensure that everything still looks good.
 END;
     $this->assertMessagesSent("Drupal core was successfully updated", $expected_body);
+    $this->assertRegularCronRun(FALSE);
+  }
+
+  /**
+   * Tests that regular cron runs if not update is available.
+   */
+  public function testNoUpdateAvailable(): void {
+    $this->setCoreVersion('9.8.2');
+    $this->container->get('cron')->run();
+    $this->assertRegularCronRun(TRUE);
+  }
+
+  /**
+   * Tests that regular cron does not run if an update is started.
+   *
+   * @param string $event_exception_class
+   *   The event in which to throw the exception.
+   *
+   * @dataProvider providerRegularCronRuns
+   */
+  public function testRegularCronRuns(string $event_exception_class): void {
+    $this->addEventTestListener(
+      function (): void {
+        throw new \Exception('😜');
+      },
+      $event_exception_class
+    );
+    try {
+      $this->container->get('cron')->run();
+    }
+    catch (\Exception $e) {
+      if ($event_exception_class !== PostDestroyEvent::class && $event_exception_class !== PreDestroyEvent::class) {
+        // No other events should result in an exception.
+        throw $e;
+      }
+      $this->assertSame('😜', $e->getMessage());
+    }
+    $this->assertRegularCronRun($event_exception_class === PreCreateEvent::class);
+  }
+
+  /**
+   * Data provider for testStageDestroyedOnError().
+   *
+   * @return string[][]
+   *   The test cases.
+   */
+  public function providerRegularCronRuns(): array {
+    return [
+      'pre-create exception' => [PreCreateEvent::class],
+      'post-create exception' => [PostCreateEvent::class],
+      'pre-require exception' => [PreRequireEvent::class],
+      'post-require exception' => [PostRequireEvent::class],
+      'pre-apply exception' => [PreApplyEvent::class],
+      'post-apply exception' => [PostApplyEvent::class],
+      'pre-destroy exception' => [PreDestroyEvent::class],
+      'post-destroy exception' => [PostDestroyEvent::class],
+    ];
   }
 
   /**
@@ -586,6 +645,10 @@ END;
   public function testLoggerIsSetByContainer(): void {
     $stage_method_calls = $this->container->getDefinition('automatic_updates.cron_update_stage')->getMethodCalls();
     $this->assertSame('setLogger', $stage_method_calls[0][0]);
+  }
+
+  private function assertRegularCronRun(bool $expected_cron_run) {
+    $this->assertSame($expected_cron_run, $this->container->get('state')->get('common_test.cron') === 'success');
   }
 
 }

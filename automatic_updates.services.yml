@@ -27,6 +27,25 @@ services:
     class: Drupal\automatic_updates\CronUpdateStage
     calls:
       - ['setLogger', ['@logger.channel.automatic_updates']]
+    arguments:
+      - '@automatic_updates.release_chooser'
+      - '@plugin.manager.mail'
+      - '@automatic_updates.status_check_mailer'
+      - '@state'
+      - '@config.factory'
+      - '@package_manager.composer_inspector'
+      - '@package_manager.path_locator'
+      - '@PhpTuf\ComposerStager\Domain\Core\Beginner\BeginnerInterface'
+      - '@PhpTuf\ComposerStager\Domain\Core\Stager\StagerInterface'
+      - '@PhpTuf\ComposerStager\Domain\Core\Committer\CommitterInterface'
+      - '@file_system'
+      - '@event_dispatcher'
+      - '@tempstore.shared'
+      - '@datetime.time'
+      - '@PhpTuf\ComposerStager\Infrastructure\Factory\Path\PathFactoryInterface'
+      - '@package_manager.failure_marker'
+      - '@automatic_updates.cron_update_stage.inner'
+    decorates: 'cron'
   Drupal\automatic_updates\CronUpdateStage: '@automatic_updates.cron_update_stage'
   automatic_updates.requested_update_validator:
     class: Drupal\automatic_updates\Validator\RequestedUpdateValidator

@@ -33,9 +33,9 @@ final class DrushUpdateStage extends CronUpdateStage {
   /**
    * {@inheritdoc}
    */
-  public function performUpdate(string $target_version, ?int $timeout): void {
+  public function performUpdate(string $target_version, ?int $timeout): bool {
     // Overridden to expose this method to calling code.
-    parent::performUpdate($target_version, $timeout);
+    return parent::performUpdate($target_version, $timeout);
   }
 
 }
