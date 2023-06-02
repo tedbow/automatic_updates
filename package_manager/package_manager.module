@@ -71,6 +71,12 @@ function package_manager_help($route_name, RouteMatchInterface $route_match) {
       $output .= '  </li>';
       $output .= '</ul>';
 
+      $output .= '<h4 id="package-manager-faq-rsync">' . t('Using rsync') . '</h4>';
+      $output .= '<p>' . t('By default, Package Manager expects to be able to run <code>rsync</code> to copy files between the live site and the stage directory. It is strongly recommended to use <code>rsync</code>, because it is more reliable than the built-in PHP file syncer. Package Manager will try to detect the path to <code>rsync</code>, but if it cannot be detected, you can set it explicitly by adding the following line to <code>settings.php</code>:') . '</p>';
+      $output .= "<pre><code>\$config['package_manager.settings']['executables']['rsync'] = '/full/path/to/rsync';</code></pre>";
+      $output .= '<p>' . t('If <code>rsync</code> is available but Package Manager is configured to use the built-in PHP file syncer, you should also add the following to <code>settings.php</code>:') . '</p>';
+      $output .= "<pre><code>\$config['package_manager.settings']['file_syncer'] = 'rsync';</code></pre>";
+
       $output .= '<h4 id="package-manager-tuf-info">' . t('Enabling PHP-TUF protection') . '</h4>';
       $output .= '<p>' . t('Package Manager requires <a href=":php-tuf">PHP-TUF</a>, which implements <a href=":tuf">The Update Framework</a> as a way to help secure Composer package downloads via the <a href=":php-tuf-plugin">PHP-TUF Composer integration plugin</a>. This plugin must be installed and configured properly in order to use Package Manager.', [
         ':php-tuf' => 'https://github.com/php-tuf/php-tuf',

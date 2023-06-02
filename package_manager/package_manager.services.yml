@@ -173,6 +173,9 @@ services:
     class: Drupal\package_manager\Validator\SettingsValidator
     tags:
       - { name: event_subscriber }
+  Drupal\package_manager\Validator\RsyncValidator:
+    tags:
+      - { name: event_subscriber }
   package_manager.validator.composer_plugins:
     class: Drupal\package_manager\Validator\ComposerPluginsValidator
     tags:
