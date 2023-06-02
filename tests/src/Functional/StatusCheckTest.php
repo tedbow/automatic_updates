@@ -128,11 +128,6 @@ class StatusCheckTest extends AutomaticUpdatesFunctionalTestBase {
   public function testStatusChecksOnStatusReport(): void {
     $assert = $this->assertSession();
     $page = $this->getSession()->getPage();
-
-    // Ensure automated_cron is disabled before installing automatic_updates.
-    // This ensures we are testing that automatic_updates runs the checkers when
-    // the module itself is installed and they weren't run on cron.
-    $this->assertFalse($this->container->get('module_handler')->moduleExists('automated_cron'));
     $this->container->get('module_installer')->install(['automatic_updates', 'automatic_updates_test']);
 
     // If the site is ready for updates, the users will see the same output
@@ -263,10 +258,6 @@ class StatusCheckTest extends AutomaticUpdatesFunctionalTestBase {
     $assert = $this->assertSession();
     $messages_section_selector = '[data-drupal-messages]';
 
-    // Ensure automated_cron is disabled before installing automatic_updates. This
-    // ensures we are testing that automatic_updates runs the checkers when the
-    // module itself is installed and they weren't run on cron.
-    $this->assertFalse($this->container->get('module_handler')->moduleExists('automated_cron'));
     $this->container->get('module_installer')->install(['automatic_updates', 'automatic_updates_test']);
 
     // If site is ready for updates no message will be displayed on admin pages.

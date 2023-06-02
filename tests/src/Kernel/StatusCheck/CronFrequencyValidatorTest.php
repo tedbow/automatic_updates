@@ -5,10 +5,8 @@ declare(strict_types = 1);
 namespace Drupal\Tests\automatic_updates\Kernel\StatusCheck;
 
 use Drupal\automatic_updates\CronUpdateStage;
-use Drupal\automatic_updates\Validator\CronFrequencyValidator;
 use Drupal\package_manager\ValidationResult;
 use Drupal\Tests\automatic_updates\Kernel\AutomaticUpdatesKernelTestBase;
-use PHPUnit\Framework\AssertionFailedError;
 
 /**
  * @covers \Drupal\automatic_updates\Validator\CronFrequencyValidator
@@ -43,32 +41,17 @@ class CronFrequencyValidatorTest extends AutomaticUpdatesKernelTestBase {
     $this->config('automatic_updates.settings')
       ->set('unattended.level', CronUpdateStage::DISABLED)
       ->save();
-
-    $validator = new class (
-      $this->container->get('config.factory'),
-      $this->container->get('module_handler'),
-      $this->container->get('state'),
-      $this->container->get('datetime.time'),
-      $this->container->get('lock')
-    ) extends CronFrequencyValidator {
-
-      /**
-       * {@inheritdoc}
-       */
-      protected function validateAutomatedCron($event): void {
-        throw new AssertionFailedError(__METHOD__ . '() should not have been called.');
-      }
-
-      /**
-       * {@inheritdoc}
-       */
-      protected function validateLastCronRun($event): void {
-        throw new AssertionFailedError(__METHOD__ . '() should not have been called.');
-      }
-
-    };
-    $this->container->set('automatic_updates.cron_frequency_validator', $validator);
+    $state = $this->container->get('state');
+    $state->delete('system.cron_last');
+    $state->delete('install_time');
     $this->assertCheckerResultsFromManager([], TRUE);
+    $this->config('automatic_updates.settings')
+      ->set('unattended.level', CronUpdateStage::ALL)
+      ->save();
+    $error = ValidationResult::createError([
+      t('Cron has not run recently. For more information, see the online handbook entry for <a href="https://www.drupal.org/cron">configuring cron jobs</a> to run at least every 3 hours.'),
+    ]);
+    $this->assertCheckerResultsFromManager([$error], TRUE);
   }
 
   /**
@@ -115,64 +98,6 @@ class CronFrequencyValidatorTest extends AutomaticUpdatesKernelTestBase {
     // After running cron, any errors or warnings should be gone.
     $this->container->get('cron')->run();
     $this->assertCheckerResultsFromManager([], TRUE);
-  }
-
-  /**
-   * Data provider for testAutomatedCronValidation().
-   *
-   * @return mixed[][]
-   *   The test cases.
-   */
-  public function providerAutomatedCronValidation(): array {
-    return [
-      'default configuration' => [
-        NULL,
-        [],
-      ],
-      'every 6 hours' => [
-        21600,
-        [
-          ValidationResult::createWarning([
-            t('Cron is not set to run frequently enough. <a href="/admin/config/system/cron">Configure it</a> to run at least every 3 hours or disable automated cron and run it via an external scheduling system.'),
-          ]),
-        ],
-      ],
-      'every 25 hours' => [
-        90000,
-        [
-          ValidationResult::createError([
-            t('Cron is not set to run frequently enough. <a href="/admin/config/system/cron">Configure it</a> to run at least every 3 hours or disable automated cron and run it via an external scheduling system.'),
-          ]),
-        ],
-      ],
-    ];
-  }
-
-  /**
-   * Tests validation based on Automated Cron settings.
-   *
-   * @param int|null $interval
-   *   The configured interval for Automated Cron. If NULL, the default value
-   *   will be used.
-   * @param \Drupal\package_manager\ValidationResult[] $expected_results
-   *   The expected validation results.
-   *
-   * @dataProvider providerAutomatedCronValidation
-   */
-  public function testAutomatedCronValidation(?int $interval, array $expected_results): void {
-    $this->enableModules(['automated_cron']);
-    $this->installConfig('automated_cron');
-
-    if (isset($interval)) {
-      $this->config('automated_cron.settings')
-        ->set('interval', $interval)
-        ->save();
-    }
-    $this->assertCheckerResultsFromManager($expected_results, TRUE);
-
-    // Even after running cron, we should have the same results.
-    $this->container->get('cron')->run();
-    $this->assertCheckerResultsFromManager($expected_results);
   }
 
 }

@@ -7,11 +7,9 @@ namespace Drupal\automatic_updates\Validator;
 use Drupal\automatic_updates\CronUpdateStage;
 use Drupal\Component\Datetime\TimeInterface;
 use Drupal\Core\Config\ConfigFactoryInterface;
-use Drupal\Core\Extension\ModuleHandlerInterface;
 use Drupal\Core\Lock\LockBackendInterface;
 use Drupal\Core\State\StateInterface;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
-use Drupal\Core\Url;
 use Drupal\package_manager\Event\StatusCheckEvent;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
@@ -23,7 +21,7 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
  *   at any time without warning. External code should not interact with this
  *   class.
  */
-class CronFrequencyValidator implements EventSubscriberInterface {
+final class CronFrequencyValidator implements EventSubscriberInterface {
 
   use StringTranslationTrait;
 
@@ -59,8 +57,6 @@ class CronFrequencyValidator implements EventSubscriberInterface {
    *
    * @param \Drupal\Core\Config\ConfigFactoryInterface $configFactory
    *   The config factory service.
-   * @param \Drupal\Core\Extension\ModuleHandlerInterface $moduleHandler
-   *   The module handler.
    * @param \Drupal\Core\State\StateInterface $state
    *   The state service.
    * @param \Drupal\Component\Datetime\TimeInterface $time
@@ -70,19 +66,18 @@ class CronFrequencyValidator implements EventSubscriberInterface {
    */
   public function __construct(
     private readonly ConfigFactoryInterface $configFactory,
-    private readonly ModuleHandlerInterface $moduleHandler,
     private readonly StateInterface $state,
     private readonly TimeInterface $time,
     private readonly LockBackendInterface $lock,
   ) {}
 
   /**
-   * Validates that cron runs frequently enough to perform automatic updates.
+   * Validates the cron frequency according to the last cron run time.
    *
    * @param \Drupal\package_manager\Event\StatusCheckEvent $event
    *   The event object.
    */
-  public function checkCronFrequency(StatusCheckEvent $event): void {
+  public function validateLastCronRun(StatusCheckEvent $event): void {
     // We only want to do this check if the stage belongs to Automatic Updates.
     if (!$event->stage instanceof CronUpdateStage) {
       return;
@@ -92,43 +87,6 @@ class CronFrequencyValidator implements EventSubscriberInterface {
     if ($event->stage->getMode() === CronUpdateStage::DISABLED) {
       return;
     }
-    elseif ($this->moduleHandler->moduleExists('automated_cron')) {
-      $this->validateAutomatedCron($event);
-    }
-    else {
-      $this->validateLastCronRun($event);
-    }
-  }
-
-  /**
-   * Validates the cron frequency according to Automated Cron settings.
-   *
-   * @param \Drupal\package_manager\Event\StatusCheckEvent $event
-   *   The event object.
-   */
-  protected function validateAutomatedCron(StatusCheckEvent $event): void {
-    $message = $this->t('Cron is not set to run frequently enough. <a href=":configure">Configure it</a> to run at least every @frequency hours or disable automated cron and run it via an external scheduling system.', [
-      ':configure' => Url::fromRoute('system.cron_settings')->toString(),
-      '@frequency' => static::SUGGESTED_INTERVAL,
-    ]);
-
-    $interval = $this->configFactory->get('automated_cron.settings')->get('interval');
-
-    if ($interval > static::ERROR_INTERVAL) {
-      $event->addError([$message]);
-    }
-    elseif ($interval > static::WARNING_INTERVAL) {
-      $event->addWarning([$message]);
-    }
-  }
-
-  /**
-   * Validates the cron frequency according to the last cron run time.
-   *
-   * @param \Drupal\package_manager\Event\StatusCheckEvent $event
-   *   The event object.
-   */
-  protected function validateLastCronRun(StatusCheckEvent $event): void {
     // If cron is running right now, cron is clearly being run recently enough!
     if (!$this->lock->lockMayBeAvailable('cron')) {
       return;
@@ -152,7 +110,7 @@ class CronFrequencyValidator implements EventSubscriberInterface {
    */
   public static function getSubscribedEvents(): array {
     return [
-      StatusCheckEvent::class => 'checkCronFrequency',
+      StatusCheckEvent::class => 'validateLastCronRun',
     ];
   }
 

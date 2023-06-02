@@ -9,6 +9,7 @@ declare(strict_types = 1);
 
 use Drupal\automatic_updates\BatchProcessor;
 use Drupal\automatic_updates\CronUpdateStage;
+use Drupal\automatic_updates\Validator\AutomatedCronDisabledValidator;
 use Drupal\Core\Routing\RouteMatchInterface;
 use Drupal\automatic_updates\Validation\AdminStatusCheckMessages;
 use Drupal\Core\Url;
@@ -169,6 +170,18 @@ function automatic_updates_cron() {
   // if unattended updates are configured to run via the web, running status
   // checks on the command line could cause invalid results to get cached.
   if (defined('MAINTENANCE_MODE') || stripos($_SERVER['PHP_SELF'], 'update.php') !== FALSE || CronUpdateStage::isCommandLine()) {
+    return;
+  }
+
+  /** @var \Drupal\automatic_updates\Validator\AutomatedCronDisabledValidator $automated_cron_validator */
+  $automated_cron_validator = \Drupal::service(AutomatedCronDisabledValidator::class);
+  if ($automated_cron_validator->hasTerminateBeenCalled()) {
+    // Running updates and status checks will not work during kernel
+    // termination.
+    \Drupal::logger('automatic_updates')
+      ->info('Unattended automatic updates were triggered by Automated Cron, which is not supported. No update was performed. See the <a href=":url">status report</a> for more information.', [
+        ':url' => Url::fromRoute('system.status')->toString(),
+      ]);
     return;
   }
 
