@@ -41,7 +41,7 @@ class CronFrequencyValidatorTest extends AutomaticUpdatesKernelTestBase {
    */
   public function testNoValidationIfCronDisabled(): void {
     $this->config('automatic_updates.settings')
-      ->set('cron', CronUpdateStage::DISABLED)
+      ->set('unattended.level', CronUpdateStage::DISABLED)
       ->save();
 
     $validator = new class (

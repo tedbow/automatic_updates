@@ -212,7 +212,7 @@ class StatusCheckerTest extends AutomaticUpdatesKernelTestBase {
     // By default, updates will be enabled on cron.
     $this->assertInstanceOf(CronUpdateStage::class, $stage);
     $this->config('automatic_updates.settings')
-      ->set('cron', CronUpdateStage::DISABLED)
+      ->set('unattended.level', CronUpdateStage::DISABLED)
       ->save();
     $this->container->get(StatusChecker::class)->run();
     $this->assertInstanceOf(UpdateStage::class, $stage);

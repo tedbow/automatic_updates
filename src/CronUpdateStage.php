@@ -41,6 +41,13 @@ use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 class CronUpdateStage extends UpdateStage implements CronInterface {
 
   /**
+   * The current interface between PHP and the server.
+   *
+   * @var string
+   */
+  private static $serverApi = PHP_SAPI;
+
+  /**
    * All automatic updates are disabled.
    *
    * @var string
@@ -119,6 +126,16 @@ class CronUpdateStage extends UpdateStage implements CronInterface {
     private readonly CronInterface $inner
   ) {
     parent::__construct($composerInspector, $pathLocator, $beginner, $stager, $committer, $fileSystem, $eventDispatcher, $tempStoreFactory, $time, $pathFactory, $failureMarker);
+  }
+
+  /**
+   * Indicates if we are currently running at the command line.
+   *
+   * @return bool
+   *   TRUE if we are running at the command line, otherwise FALSE.
+   */
+  final public static function isCommandLine(): bool {
+    return self::$serverApi === 'cli';
   }
 
   /**
@@ -392,7 +409,7 @@ class CronUpdateStage extends UpdateStage implements CronInterface {
    *     allowed during cron.
    */
   final public function getMode(): string {
-    $mode = $this->configFactory->get('automatic_updates.settings')->get('cron');
+    $mode = $this->configFactory->get('automatic_updates.settings')->get('unattended.level');
     return $mode ?: static::SECURITY;
   }
 
@@ -400,7 +417,14 @@ class CronUpdateStage extends UpdateStage implements CronInterface {
    * {@inheritdoc}
    */
   public function run() {
-    if ($this->handleCron()) {
+    $method = $this->configFactory->get('automatic_updates.settings')
+      ->get('unattended.method');
+
+    // If we are configured to run updates via the web, and we're actually being
+    // accessed via the web (i.e., anything that isn't the command line), go
+    // ahead and try to do the update. In all other circumstances, just run the
+    // normal cron handler.
+    if ($method === 'web' && !self::isCommandLine() && $this->handleCron()) {
       return TRUE;
     }
     return $this->inner->run();

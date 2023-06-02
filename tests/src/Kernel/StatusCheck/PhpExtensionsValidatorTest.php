@@ -44,12 +44,12 @@ class PhpExtensionsValidatorTest extends AutomaticUpdatesKernelTestBase {
 
     // If unattended updates are disabled, we should only see a warning from
     // Package Manager.
-    $config->set('cron', CronUpdateStage::DISABLED)->save();
+    $config->set('unattended.level', CronUpdateStage::DISABLED)->save();
     $this->assertCheckerResultsFromManager([$warning_result], TRUE);
 
     // The parent class' setUp() method simulates an available security update,
     // so ensure that the cron update stage will try to update to it.
-    $config->set('cron', CronUpdateStage::SECURITY)->save();
+    $config->set('unattended.level', CronUpdateStage::SECURITY)->save();
 
     // If unattended updates are enabled, we should see an error from Automatic
     // Updates.
@@ -77,7 +77,7 @@ class PhpExtensionsValidatorTest extends AutomaticUpdatesKernelTestBase {
     // The parent class' setUp() method simulates an available security
     // update, so ensure that the cron update stage will try to update to it.
     $this->config('automatic_updates.settings')
-      ->set('cron', CronUpdateStage::SECURITY)
+      ->set('unattended.level', CronUpdateStage::SECURITY)
       ->save();
 
     $logger = new TestLogger();

@@ -198,7 +198,7 @@ class VersionPolicyValidatorTest extends AutomaticUpdatesKernelTestBase {
 
     foreach ($cron_modes as $cron_mode) {
       $this->config('automatic_updates.settings')
-        ->set('cron', $cron_mode)
+        ->set('unattended.level', $cron_mode)
         ->set('allow_core_minor_updates', $allow_minor_updates)
         ->save();
 
@@ -420,7 +420,7 @@ class VersionPolicyValidatorTest extends AutomaticUpdatesKernelTestBase {
 
     foreach ($cron_modes as $cron_mode) {
       $this->config('automatic_updates.settings')
-        ->set('cron', $cron_mode)
+        ->set('unattended.level', $cron_mode)
         ->set('allow_core_minor_updates', $allow_minor_updates)
         ->save();
 

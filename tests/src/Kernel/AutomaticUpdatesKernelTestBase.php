@@ -51,7 +51,12 @@ abstract class AutomaticUpdatesKernelTestBase extends PackageManagerKernelTestBa
     parent::setUp();
     // Enable cron updates, which will eventually be the default.
     // @todo Remove in https://www.drupal.org/project/automatic_updates/issues/3284443
-    $this->config('automatic_updates.settings')->set('cron', CronUpdateStage::SECURITY)->save();
+    $this->config('automatic_updates.settings')
+      ->set('unattended', [
+        'method' => 'web',
+        'level' => CronUpdateStage::SECURITY,
+      ])
+      ->save();
 
     // By default, pretend we're running Drupal core 9.8.0 and a non-security
     // update to 9.8.1 is available.
@@ -62,6 +67,13 @@ abstract class AutomaticUpdatesKernelTestBase extends PackageManagerKernelTestBa
     // from a sane state.
     // @see \Drupal\automatic_updates\Validator\CronFrequencyValidator
     $this->container->get('state')->set('system.cron_last', time());
+
+    // Cron updates are not done when running at the command line, so override
+    // our cron handler's PHP_SAPI constant to a valid value that isn't `cli`.
+    // The choice of `cgi-fcgi` is arbitrary; see
+    // https://www.php.net/php_sapi_name for some valid values of PHP_SAPI.
+    $property = new \ReflectionProperty(CronUpdateStage::class, 'serverApi');
+    $property->setValue(NULL, 'cgi-fcgi');
   }
 
   /**

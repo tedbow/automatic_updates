@@ -5,6 +5,9 @@ declare(strict_types = 1);
 namespace Drupal\automatic_updates\Commands;
 
 use Drupal\automatic_updates\DrushUpdateStage;
+use Drupal\automatic_updates\StatusCheckMailer;
+use Drupal\automatic_updates\Validation\StatusChecker;
+use Drupal\Core\Config\ConfigFactoryInterface;
 use Drush\Commands\DrushCommands;
 
 /**
@@ -22,8 +25,19 @@ final class AutomaticUpdatesCommands extends DrushCommands {
    *
    * @param \Drupal\automatic_updates\DrushUpdateStage $stage
    *   The console cron updater service.
+   * @param \Drupal\automatic_updates\Validation\StatusChecker $statusChecker
+   *   The status checker service.
+   * @param \Drupal\automatic_updates\StatusCheckMailer $statusCheckMailer
+   *   The status check mailer service.
+   * @param \Drupal\Core\Config\ConfigFactoryInterface $configFactory
+   *   The config factory service.
    */
-  public function __construct(private readonly DrushUpdateStage $stage) {
+  public function __construct(
+    private readonly DrushUpdateStage $stage,
+    private readonly StatusChecker $statusChecker,
+    private readonly StatusCheckMailer $statusCheckMailer,
+    private readonly ConfigFactoryInterface $configFactory,
+  ) {
     parent::__construct();
   }
 
@@ -60,6 +74,7 @@ final class AutomaticUpdatesCommands extends DrushCommands {
 
       $io->info('Running post-apply tasks and final clean-up...');
       $this->stage->handlePostApply($options['stage-id'], $options['from-version'], $options['to-version']);
+      $this->runStatusChecks();
     }
     else {
       if ($this->stage->getMode() === DrushUpdateStage::DISABLED) {
@@ -75,7 +90,23 @@ final class AutomaticUpdatesCommands extends DrushCommands {
       }
       else {
         $io->info("There is no Drupal core update available.");
+        $this->runStatusChecks();
       }
+    }
+  }
+
+  /**
+   * Runs status checks, and sends failure notifications if necessary.
+   */
+  private function runStatusChecks(): void {
+    $method = $this->configFactory->get('automatic_updates.settings')
+      ->get('unattended.method');
+
+    // To ensure consistent results, only run the status checks if we're
+    // explicitly configured to do unattended updates on the command line.
+    if ($method === 'console') {
+      $last_results = $this->statusChecker->getResults();
+      $this->statusCheckMailer->sendFailureNotifications($last_results, $this->statusChecker->run()->getResults());
     }
   }
 

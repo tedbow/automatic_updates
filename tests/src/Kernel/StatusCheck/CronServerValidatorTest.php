@@ -111,7 +111,7 @@ class CronServerValidatorTest extends AutomaticUpdatesKernelTestBase {
     $property->setValue(NULL, $server_api);
 
     $this->config('automatic_updates.settings')
-      ->set('cron', $cron_mode)
+      ->set('unattended.level', $cron_mode)
       ->set('cron_port', $alternate_port ? 2501 : 0)
       ->save();
 
@@ -169,7 +169,7 @@ class CronServerValidatorTest extends AutomaticUpdatesKernelTestBase {
       ->addLogger($logger);
 
     $this->config('automatic_updates.settings')
-      ->set('cron', $cron_mode)
+      ->set('unattended.level', $cron_mode)
       ->save();
 
     // Add a listener to change the $server_api and $alternate_port settings

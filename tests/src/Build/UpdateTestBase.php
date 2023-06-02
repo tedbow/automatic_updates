@@ -21,7 +21,7 @@ abstract class UpdateTestBase extends TemplateProjectTestBase {
     parent::createTestProject($template);
     // @todo Remove in https://www.drupal.org/project/automatic_updates/issues/3284443
     $code = <<<END
-\$config['automatic_updates.settings']['cron'] = 'security';
+\$config['automatic_updates.settings']['unattended']['level'] = 'security';
 END;
     $this->writeSettings($code);
     // Install Automatic Updates, and other modules needed for testing.
@@ -69,6 +69,7 @@ END;
     $this->visit('/admin/reports/status');
     $mink = $this->getMink();
     $page = $mink->getSession()->getPage();
+    $page->clickLink('Rerun readiness checks');
 
     $readiness_check_summaries = $page->findAll('css', 'summary:contains("Update readiness checks")');
     // There should always either be the summary section indicating the site is

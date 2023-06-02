@@ -156,7 +156,9 @@ class CronUpdateStageTest extends AutomaticUpdatesKernelTestBase {
     $this->setReleaseMetadata($release_data);
     $this->setCoreVersion('9.8.0');
     update_get_available(TRUE);
-    $this->config('automatic_updates.settings')->set('cron', $setting)->save();
+    $this->config('automatic_updates.settings')
+      ->set('unattended.level', $setting)
+      ->save();
 
     // Since we're just trying to ensure that all of Package Manager's services
     // are called as expected, disable validation by replacing the event
@@ -260,7 +262,9 @@ class CronUpdateStageTest extends AutomaticUpdatesKernelTestBase {
     }
     $this->installConfig('automatic_updates');
     // @todo Remove in https://www.drupal.org/project/automatic_updates/issues/3284443
-    $this->config('automatic_updates.settings')->set('cron', CronUpdateStage::SECURITY)->save();
+    $this->config('automatic_updates.settings')
+      ->set('unattended.level', CronUpdateStage::SECURITY)
+      ->save();
     // Ensure that there is a security release to which we should update.
     $this->setReleaseMetadata([
       'drupal' => __DIR__ . "/../../../package_manager/tests/fixtures/release-history/drupal.9.8.1-security.xml",
@@ -368,7 +372,9 @@ class CronUpdateStageTest extends AutomaticUpdatesKernelTestBase {
    * Tests stage is not destroyed if another update is applying.
    */
   public function testStageNotDestroyedIfApplying(): void {
-    $this->config('automatic_updates.settings')->set('cron', CronUpdateStage::ALL)->save();
+    $this->config('automatic_updates.settings')
+      ->set('unattended.level', CronUpdateStage::ALL)
+      ->save();
     $this->setReleaseMetadata([
       'drupal' => __DIR__ . "/../../../package_manager/tests/fixtures/release-history/drupal.9.8.1-security.xml",
     ]);
@@ -406,7 +412,9 @@ class CronUpdateStageTest extends AutomaticUpdatesKernelTestBase {
    * Tests stage is not destroyed if not available and site is on secure version.
    */
   public function testStageNotDestroyedIfSecure(): void {
-    $this->config('automatic_updates.settings')->set('cron', CronUpdateStage::ALL)->save();
+    $this->config('automatic_updates.settings')
+      ->set('unattended.level', CronUpdateStage::ALL)
+      ->save();
     $this->setReleaseMetadata([
       'drupal' => __DIR__ . "/../../../package_manager/tests/fixtures/release-history/drupal.9.8.2.xml",
     ]);
@@ -548,7 +556,7 @@ END;
       'drupal' => __DIR__ . '/../../../package_manager/tests/fixtures/release-history/drupal.9.8.2.xml',
     ]);
     $this->config('automatic_updates.settings')
-      ->set('cron', CronUpdateStage::ALL)
+      ->set('unattended.level', CronUpdateStage::ALL)
       ->save();
 
     $error = ValidationResult::createError([

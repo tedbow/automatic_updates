@@ -37,7 +37,7 @@ function automatic_updates_test_cron_form_update_settings_alter(array &$form, Fo
       CronUpdateStage::ALL => t('All supported updates'),
       CronUpdateStage::SECURITY => t('Security updates only'),
     ],
-    '#default_value' => \Drupal::config('automatic_updates.settings')->get('cron'),
+    '#default_value' => \Drupal::config('automatic_updates.settings')->get('unattended.level'),
     '#description' => t(
       'If enabled, Drupal core will be automatically updated when an update is available. Automatic updates are only supported for @current_minor.x versions of Drupal core. Drupal @current_minor will receive security updates until @supported_until_version is released.',
       [
@@ -58,6 +58,6 @@ function automatic_updates_test_cron_form_update_settings_alter(array &$form, Fo
 function _automatic_updates_test_cron_update_settings_form_submit(array &$form, FormStateInterface $form_state) {
   \Drupal::configFactory()
     ->getEditable('automatic_updates.settings')
-    ->set('cron', $form_state->getValue('automatic_updates_cron'))
+    ->set('unattended.level', $form_state->getValue('automatic_updates_cron'))
     ->save();
 }

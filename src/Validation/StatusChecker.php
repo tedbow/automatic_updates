@@ -154,13 +154,15 @@ final class StatusChecker implements EventSubscriberInterface {
       $this->clearStoredResults();
     }
     elseif ($config->getName() === 'automatic_updates.settings') {
+      // If anything about how we run unattended updates has changed, clear the
+      // stored results, since they can be affected by these settings.
+      if ($event->isChanged('unattended')) {
+        $this->clearStoredResults();
+      }
       // We only send status check failure notifications if unattended updates
       // are enabled. If notifications were previously disabled but have been
       // re-enabled, or their sensitivity level has changed, clear the stored
       // results so that we'll send accurate notifications next time cron runs.
-      if ($event->isChanged('cron') && $config->getOriginal('cron') === CronUpdateStage::DISABLED) {
-        $this->clearStoredResults();
-      }
       elseif ($event->isChanged('status_check_mail') && $config->get('status_check_mail') !== StatusCheckMailer::DISABLED) {
         $this->clearStoredResults();
       }

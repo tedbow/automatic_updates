@@ -39,7 +39,9 @@ abstract class AutomaticUpdatesFunctionalTestBase extends BrowserTestBase {
     parent::setUp();
     $this->useFixtureDirectoryAsActive(__DIR__ . '/../../../package_manager/tests/fixtures/fake_site');
     // @todo Remove in https://www.drupal.org/project/automatic_updates/issues/3284443
-    $this->config('automatic_updates.settings')->set('cron', CronUpdateStage::SECURITY)->save();
+    $this->config('automatic_updates.settings')
+      ->set('unattended.level', CronUpdateStage::SECURITY)
+      ->save();
   }
 
   /**

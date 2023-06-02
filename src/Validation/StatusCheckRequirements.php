@@ -4,6 +4,7 @@ declare(strict_types = 1);
 
 namespace Drupal\automatic_updates\Validation;
 
+use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Datetime\DateFormatterInterface;
 use Drupal\Core\DependencyInjection\ContainerInjectionInterface;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
@@ -33,10 +34,13 @@ final class StatusCheckRequirements implements ContainerInjectionInterface {
    *   The status checker service.
    * @param \Drupal\Core\Datetime\DateFormatterInterface $dateFormatter
    *   The date formatter service.
+   * @param \Drupal\Core\Config\ConfigFactoryInterface $configFactory
+   *   The config factory service.
    */
   public function __construct(
     private readonly StatusChecker $statusChecker,
-    private readonly DateFormatterInterface $dateFormatter
+    private readonly DateFormatterInterface $dateFormatter,
+    private readonly ConfigFactoryInterface $configFactory,
   ) {}
 
   /**
@@ -45,8 +49,21 @@ final class StatusCheckRequirements implements ContainerInjectionInterface {
   public static function create(ContainerInterface $container): self {
     return new static(
       $container->get('automatic_updates.status_checker'),
-      $container->get('date.formatter')
+      $container->get('date.formatter'),
+      $container->get('config.factory'),
     );
+  }
+
+  /**
+   * Returns the method used to run unattended updates.
+   *
+   * @return string
+   *   The method used to run unattended updates. Will be either 'console' or
+   *   'web'.
+   */
+  private function getMethod(): string {
+    return $this->configFactory->get('automatic_updates.settings')
+      ->get('unattended.method');
   }
 
   /**
@@ -56,8 +73,26 @@ final class StatusCheckRequirements implements ContainerInjectionInterface {
    *   Requirements arrays as specified by hook_requirements().
    */
   public function getRequirements(): array {
-    $results = $this->statusChecker->run()->getResults();
     $requirements = [];
+
+    $results = $this->statusChecker->getResults();
+    // If unattended updates are run on the terminal, we don't want to do the
+    // status check right now, since running them over the web may yield
+    // inaccurate or irrelevant results. The console command runs status checks,
+    // so if there are no results, we can assume it has not been run in a while,
+    // and raise an error about that.
+    if (is_null($results) && $this->getMethod() === 'console') {
+      $requirements['automatic_updates_status_check_console_command_not_run'] = [
+        'title' => $this->t('Update readiness checks'),
+        'severity' => SystemManager::REQUIREMENT_ERROR,
+        // @todo Link to the documentation on how to set up unattended updates
+        //   via the terminal in https://drupal.org/i/3362695.
+        'value' => $this->t('Unattended updates are configured to run via the console, but do not appear to have run recently.'),
+      ];
+      return $requirements;
+    }
+
+    $results ??= $this->statusChecker->run()->getResults();
     if (empty($results)) {
       $requirements['automatic_updates_status_check'] = [
         'title' => $this->t('Update readiness checks'),
@@ -144,6 +179,11 @@ final class StatusCheckRequirements implements ContainerInjectionInterface {
    *   NULL.
    */
   protected function createRunLink(): ?TranslatableMarkup {
+    // Only show this link if unattended updates are being run over the web.
+    if ($this->getMethod() !== 'web') {
+      return NULL;
+    }
+
     $status_check_url = Url::fromRoute('automatic_updates.status_check');
     if ($status_check_url->access()) {
       return $this->t(

@@ -5,6 +5,7 @@ declare(strict_types = 1);
 namespace Drupal\automatic_updates\Validation;
 
 use Drupal\automatic_updates\CronUpdateStage;
+use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\DependencyInjection\ContainerInjectionInterface;
 use Drupal\Core\Messenger\MessengerInterface;
 use Drupal\Core\Messenger\MessengerTrait;
@@ -49,6 +50,8 @@ final class AdminStatusCheckMessages implements ContainerInjectionInterface {
    *   The cron update stage service.
    * @param \Drupal\Core\Render\RendererInterface $renderer
    *   The renderer service.
+   * @param \Drupal\Core\Config\ConfigFactoryInterface $configFactory
+   *   The config factory service.
    */
   public function __construct(
     private readonly StatusChecker $statusChecker,
@@ -56,7 +59,8 @@ final class AdminStatusCheckMessages implements ContainerInjectionInterface {
     private readonly AccountProxyInterface $currentUser,
     private readonly CurrentRouteMatch $currentRouteMatch,
     private readonly CronUpdateStage $stage,
-    private readonly RendererInterface $renderer
+    private readonly RendererInterface $renderer,
+    private readonly ConfigFactoryInterface $configFactory
   ) {}
 
   /**
@@ -69,7 +73,8 @@ final class AdminStatusCheckMessages implements ContainerInjectionInterface {
       $container->get('current_user'),
       $container->get('current_route_match'),
       $container->get('automatic_updates.cron_update_stage'),
-      $container->get('renderer')
+      $container->get('renderer'),
+      $container->get('config.factory')
     );
   }
 
@@ -81,11 +86,20 @@ final class AdminStatusCheckMessages implements ContainerInjectionInterface {
       return;
     }
     if ($this->statusChecker->getResults() === NULL) {
+      $method = $this->configFactory->get('automatic_updates.settings')
+        ->get('unattended.method');
+
       $checker_url = Url::fromRoute('automatic_updates.status_check')->setOption('query', $this->getDestinationArray());
-      if ($checker_url->access()) {
+      if ($method === 'web' && $checker_url->access()) {
         $this->messenger()->addError($this->t('Your site has not recently run an update readiness check. <a href=":url">Rerun readiness checks now.</a>', [
           ':url' => $checker_url->toString(),
         ]));
+      }
+      elseif ($method === 'console') {
+        // @todo Link to the documentation on how to set up unattended updates
+        //   via the terminal in https://drupal.org/i/3362695.
+        $message = $this->t('Unattended updates are configured to run via the console, but not appear to have run recently.');
+        $this->messenger()->addError($message);
       }
     }
     else {
