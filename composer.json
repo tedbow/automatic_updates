@@ -16,7 +16,8 @@
         "ext-json": "*",
         "drupal/core": "^9.7 || ^10",
         "php-tuf/composer-stager": "2.0-alpha1",
-        "composer-runtime-api": "^2.1"
+        "composer-runtime-api": "^2.1",
+        "symfony/config": "^6.2"
     },
     "require-dev": {
         "colinodell/psr-testlogger": "^1.2",
