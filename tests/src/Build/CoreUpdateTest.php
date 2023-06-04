@@ -89,9 +89,6 @@ class CoreUpdateTest extends UpdateTestBase {
 
     // Ensure that Drupal has write-protected the site directory.
     $this->assertDirectoryIsNotWritable($this->getWebRoot() . '/sites/default');
-    // @todo Remove this when default.settings.php and default.services.yml are
-    //   ignored by Package Manager in  in https://drupal.org/i/3363938.
-    $this->assertTrue(chmod($this->getWebRoot() . '/sites/default', 0777));
   }
 
   /**
@@ -185,9 +182,6 @@ class CoreUpdateTest extends UpdateTestBase {
     $this->installModules(['dblog']);
 
     $this->visit('/admin/reports/status');
-    // @todo Remove this line when default.settings.php and default.services.yml
-    //   are ignored by Package Manager in  in https://drupal.org/i/3363938.
-    $this->assertTrue(chmod($this->getWebRoot() . '/sites/default', 0777));
     $mink = $this->getMink();
     $page = $mink->getSession()->getPage();
     $assert_session = $mink->assertSession();
@@ -239,9 +233,6 @@ class CoreUpdateTest extends UpdateTestBase {
     $assert_session = $mink->assertSession();
     $this->coreUpdateTillUpdateReady($page);
     $this->visit('/admin/reports/status');
-    // @todo Remove this line when default.settings.php and default.services.yml
-    //   are ignored by Package Manager in https://drupal.org/i/3363938.
-    $this->assertTrue(chmod($this->getWebRoot() . '/sites/default', 0777));
     $assert_session->pageTextContains('Your site is ready for automatic updates.');
     $page->clickLink('Run cron');
     $this->assertUpdateSuccessful('9.8.1');
@@ -309,12 +300,16 @@ class CoreUpdateTest extends UpdateTestBase {
     foreach (['default.settings.php', 'default.services.yml'] as $file) {
       $file = $web_root . '/sites/default/' . $file;
       $this->assertFileIsReadable($file);
-      $this->assertStringContainsString("# This is part of Drupal $expected_version.", file_get_contents($file));
+      // The `default.settings.php` and `default.services.yml` files are
+      // explicitly excluded from Package Manager operations, since they are not
+      // relevant to existing sites. Therefore, ensure that the changes we made
+      // to the original (scaffold) versions of the files are not present in
+      // the updated site.
+      // @see \Drupal\package_manager\PathExcluder\SiteConfigurationExcluder()
+      // @see \Drupal\Tests\package_manager\Build\TemplateProjectTestBase::setUpstreamCoreVersion()
+      $this->assertStringNotContainsString("# This is part of Drupal $expected_version.", file_get_contents($file));
     }
-    // @todo Restore this line when default.settings.php and
-    //   default.services.yml are ignored by Package Manager in
-    //   https://drupal.org/i/3363938.
-    // $this->assertDirectoryIsNotWritable("$web_root/sites/default");
+    $this->assertDirectoryIsNotWritable("$web_root/sites/default");
 
     $info = $this->runComposer('composer info --self --format json', 'project', TRUE);
 

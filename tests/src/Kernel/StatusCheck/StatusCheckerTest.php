@@ -7,7 +7,6 @@ namespace Drupal\Tests\automatic_updates\Kernel\StatusCheck;
 use Drupal\automatic_updates\CronUpdateStage;
 use Drupal\automatic_updates\UpdateStage;
 use Drupal\automatic_updates\Validation\StatusChecker;
-use Drupal\automatic_updates\Validator\ScaffoldFilePermissionsValidator;
 use Drupal\automatic_updates\Validator\StagedProjectsValidator;
 use Drupal\automatic_updates_test\EventSubscriber\TestSubscriber1;
 use Drupal\automatic_updates_test_status_checker\EventSubscriber\TestSubscriber2;
@@ -243,16 +242,11 @@ class StatusCheckerTest extends AutomaticUpdatesKernelTestBase {
     // results should be stored.
     $this->assertValidationResultsEqual($results, $manager->getResults());
 
-    // Don't validate staged projects or scaffold file permissions because
-    // actual stage operations are bypassed by package_manager_bypass, which
-    // will make these validators complain that there is no actual Composer data
-    // for them to inspect.
-    $validators = array_map([$this->container, 'get'], [
-      StagedProjectsValidator::class,
-      ScaffoldFilePermissionsValidator::class,
-    ]);
-    $event_dispatcher = $this->container->get('event_dispatcher');
-    array_walk($validators, [$event_dispatcher, 'removeSubscriber']);
+    // Don't validate staged projects because actual stage operations are
+    // bypassed by package_manager_bypass, which will make this validator
+    // complain that there is no actual Composer data for it to inspect.
+    $validator = $this->container->get(StagedProjectsValidator::class);
+    $this->container->get('event_dispatcher')->removeSubscriber($validator);
 
     $stage = $this->container->get(UpdateStage::class);
     $stage->begin(['drupal' => '9.8.1']);

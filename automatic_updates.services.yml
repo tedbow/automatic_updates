@@ -79,11 +79,6 @@ services:
     tags:
       - { name: event_subscriber }
   Drupal\automatic_updates\Validator\VersionPolicyValidator: '@automatic_updates.validator.version_policy'
-  automatic_updates.validator.scaffold_file_permissions:
-    class: Drupal\automatic_updates\Validator\ScaffoldFilePermissionsValidator
-    tags:
-      - { name: event_subscriber }
-  Drupal\automatic_updates\Validator\ScaffoldFilePermissionsValidator: '@automatic_updates.validator.scaffold_file_permissions'
   automatic_updates.validator.cron_server:
     class: Drupal\automatic_updates\Validator\CronServerValidator
     tags:
