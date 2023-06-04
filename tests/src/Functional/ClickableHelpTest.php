@@ -45,8 +45,13 @@ class ClickableHelpTest extends AutomaticUpdatesFunctionalTestBase {
 
     $this->drupalLogin($this->createUser([
       'administer site configuration',
+      'administer software updates',
     ]));
     $this->drupalGet('admin/reports/status');
+    // Status checks were run when modules were installed, and are now cached,
+    // so we need to re-run the status checks to see our new result.
+    // @see automatic_updates_modules_installed()
+    $this->clickLink('Rerun readiness checks');
     $assert_session = $this->assertSession();
     $assert_session->pageTextContains('A problem was found! Read all about it.');
     $assert_session->linkExists('Read all about it.');

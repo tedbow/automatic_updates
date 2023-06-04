@@ -44,9 +44,9 @@ build:
         halt-on-fail: false
       # Functional JavaScript tests require a concurrency of 1 because there is
       # only one instance of PhantomJS on the testbot machine.
-      #run_tests.javascript:
-      #  concurrency: 1
-      #  types: 'PHPUnit-FunctionalJavascript'
-      #  testgroups: '--all'
-      #  suppress-deprecations: false
-      #  halt-on-fail: false
+      run_tests.javascript:
+        concurrency: 1
+        types: 'PHPUnit-FunctionalJavascript'
+        testgroups: '--all'
+        suppress-deprecations: false
+        halt-on-fail: false

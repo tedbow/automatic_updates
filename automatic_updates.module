@@ -10,6 +10,7 @@ declare(strict_types = 1);
 use Drupal\automatic_updates\BatchProcessor;
 use Drupal\automatic_updates\CronUpdateStage;
 use Drupal\automatic_updates\Validator\AutomatedCronDisabledValidator;
+use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Routing\RouteMatchInterface;
 use Drupal\automatic_updates\Validation\AdminStatusCheckMessages;
 use Drupal\Core\Url;
@@ -247,6 +248,59 @@ function automatic_updates_batch_alter(array &$batch): void {
       $batch_set['finished'] = [BatchProcessor::class, 'dbUpdateBatchFinished'];
     }
   }
+}
+
+/**
+ * Implements hook_form_FORM_ID_alter() for update_settings.
+ */
+function automatic_updates_form_update_settings_alter(array &$form): void {
+  $config = \Drupal::config('automatic_updates.settings');
+
+  $form['unattended_level'] = [
+    '#type' => 'radios',
+    '#title' => t('Unattended background updates'),
+    '#options' => [
+      CronUpdateStage::DISABLED => t('Disabled'),
+      CronUpdateStage::SECURITY => t('Security updates only'),
+      CronUpdateStage::ALL => t('All patch releases'),
+    ],
+    '#default_value' => $config->get('unattended.level'),
+  ];
+  $form['unattended_method'] = [
+    '#type' => 'radios',
+    '#title' => t('How unattended updates should be run'),
+    '#options' => [
+      'web' => t('By a request to /system/cron'),
+      'console' => t('By the <code>auto-update</code> Drush command'),
+    ],
+    '#default_value' => $config->get('unattended.method'),
+    '#states' => [
+      'invisible' => [
+        'input[name="unattended_level"]' => [
+          'value' => CronUpdateStage::DISABLED,
+        ],
+      ],
+    ],
+  ];
+  $form['#submit'][] = '_automatic_updates_submit_update_settings';
+}
+
+/**
+ * Saves settings for unattended updates.
+ *
+ * @param array $form
+ *   The complete form structure.
+ * @param \Drupal\Core\Form\FormStateInterface $form_state
+ *   The form state.
+ */
+function _automatic_updates_submit_update_settings(array &$form, FormStateInterface $form_state): void {
+  \Drupal::configFactory()
+    ->getEditable('automatic_updates.settings')
+    ->set('unattended', [
+      'method' => $form_state->getValue('unattended_method'),
+      'level' => $form_state->getValue('unattended_level'),
+    ])
+    ->save();
 }
 
 /**
