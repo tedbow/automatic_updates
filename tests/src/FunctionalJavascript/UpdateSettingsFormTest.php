@@ -40,6 +40,7 @@ class UpdateSettingsFormTest extends WebDriverTestBase {
     $page = $this->getSession()->getPage();
     $page->selectFieldOption('unattended_level', CronUpdateStage::SECURITY);
     $this->assertNotEmpty($assert_session->waitForElementVisible('named', ['field', 'unattended_method']));
+    $assert_session->elementAttributeContains('named', ['link', 'ensure cron is set up correctly'], 'href', 'http://drupal.org/docs/user_guide/en/security-cron.html');
     // Change the method, to ensure it is properly saved in config.
     $page->selectFieldOption('unattended_method', 'console');
 

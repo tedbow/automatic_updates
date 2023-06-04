@@ -281,6 +281,7 @@ function automatic_updates_form_update_settings_alter(array &$form): void {
         ],
       ],
     ],
+    '#description' => t('To use the <code>/system/cron</code> method <a href="http://drupal.org/docs/user_guide/en/security-cron.html">ensure cron is set up correctly</a>.'),
   ];
   $form['#submit'][] = '_automatic_updates_submit_update_settings';
 }
