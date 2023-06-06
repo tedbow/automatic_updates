@@ -348,8 +348,8 @@ class ComposerInspectorTest extends PackageManagerKernelTestBase {
    *
    * @covers ::getInstalledPackagesList
    *
-   * @testWith [true, "<PROJECT_ROOT>", null]
-   *   [true, "<PROJECT_ROOT>/another/directory", "Metapackage 'test/package' is installed at unexpected path: '<PROJECT_ROOT>/another/directory', expected '<PROJECT_ROOT>'"]
+   * @testWith [true, null, null]
+   *   [true, "<PROJECT_ROOT>/another/directory", "Metapackage 'test/package' is installed at unexpected path: '<PROJECT_ROOT>/another/directory', expected NULL"]
    *   [false, null, null]
    *   [false, "<PROJECT_ROOT>", "Package 'test/package' cannot be installed at path: '<PROJECT_ROOT>'"]
    */

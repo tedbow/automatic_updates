@@ -11,8 +11,8 @@ build:
         commands:
           # Install rsync.
           - DEBIAN_FRONTEND=noninteractive apt-get update && apt-get install -y rsync
-          # Update to Composer 2.5.5.
-          - composer self-update 2.5.5
+          # Update to latest Composer.
+          - composer self-update
           # @todo Replace in favor of commit-code-check.sh once https://www.drupal.org/project/drupal/issues/3314100 lands.
           - modules/contrib/automatic_updates/scripts/commit-code-check.sh --drupalci
         halt-on-fail: true

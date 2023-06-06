@@ -40,9 +40,12 @@ final class InstalledPackage {
    */
   public static function createFromArray(array $data): static {
     $path = isset($data['path']) ? realpath($data['path']) : NULL;
-    assert(($data['type'] === 'metapackage') === is_null($path), 'Metapackage install path must be NULL.');
+    // Fall back to `library`.
+    // @see https://getcomposer.org/doc/04-schema.md#type
+    $type = $data['type'] ?? 'library';
+    assert(($type === 'metapackage') === is_null($path), 'Metapackage install path must be NULL.');
 
-    return new static($data['name'], $data['version'], $path, $data['type']);
+    return new static($data['name'], $data['version'], $path, $type);
   }
 
   /**
