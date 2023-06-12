@@ -172,14 +172,6 @@ class CoreUpdateTest extends UpdateTestBase {
    */
   public function testCron(string $template): void {
     $this->createTestProject($template);
-    // Install dblog so we can check if any errors were logged during the update.
-    // This implies one can only retrieve log entries through the dblog UI. This
-    // seems non-ideal but it is the choice that requires least custom
-    // configuration or custom code. Using the `syslog` or `syslog_test` module
-    // or the `@RestResource=dblog` plugin for the `rest` module require
-    // more additional code than the inflexible log querying via
-    // `/admin/reports/dblog` below.
-    $this->installModules(['dblog']);
 
     $this->visit('/admin/reports/status');
     $mink = $this->getMink();
@@ -192,6 +184,12 @@ class CoreUpdateTest extends UpdateTestBase {
 
     // There should be log messages, but no errors or warnings should have been
     // logged by Automatic Updates.
+    // The use of the database log here implies one can only retrieve log
+    // entries through the dblog UI. This seems non-ideal but it is the choice
+    // that requires least custom configuration or custom code. Using the
+    // `syslog` or `syslog_test` module  or the `@RestResource=dblog` plugin for
+    // the `rest` module require more additional code than the inflexible log
+    // querying below.
     $this->visit('/admin/reports/dblog');
     $assert_session->pageTextNotContains('No log messages available.');
     $page->selectFieldOption('Type', 'automatic_updates');
@@ -205,8 +203,9 @@ class CoreUpdateTest extends UpdateTestBase {
     // Ensure that the update occurred.
     $page->selectFieldOption('Severity', 'Info');
     $page->pressButton('Filter');
-    $assert_session->elementsCount('css', '#admin-dblog tbody tr', 1);
-    $assert_session->elementTextContains('css', '#admin-dblog tr:nth-of-type(1) td:nth-of-type(4)', 'Drupal core has been updated from 9.8.0 to 9.8.1');
+    // There should be a log entry about the successful update.
+    $log_entry = $assert_session->elementExists('named', ['link', 'Drupal core has been updated from 9.8.0 to 9.8.1']);
+    $this->assertStringContainsString('/admin/reports/dblog/event/', $log_entry->getAttribute('href'));
     $this->assertUpdateSuccessful('9.8.1');
     // \Drupal\automatic_updates\Routing\RouteSubscriber::alterRoutes() sets
     // `_automatic_updates_status_messages: skip` on the route for the path

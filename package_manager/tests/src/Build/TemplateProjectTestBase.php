@@ -346,7 +346,7 @@ END;
     }
 
     // Install Drupal.
-    $this->installQuickStart('minimal');
+    $this->installQuickStart('standard');
     $this->formLogin($this->adminUsername, $this->adminPassword);
 
     // When checking for updates, we need to be able to make sub-requests, but
