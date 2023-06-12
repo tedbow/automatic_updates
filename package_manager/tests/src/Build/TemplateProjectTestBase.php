@@ -5,6 +5,7 @@ declare(strict_types = 1);
 namespace Drupal\Tests\package_manager\Build;
 
 use Drupal\BuildTests\QuickStart\QuickStartTestBase;
+use Drupal\Component\Serialization\Yaml;
 use Drupal\Composer\Composer;
 use Drupal\package_manager\Event\PostApplyEvent;
 use Drupal\package_manager\Event\PostCreateEvent;
@@ -312,6 +313,12 @@ END;
     // Now that we know the project was created successfully, we can set the
     // web root with confidence.
     $this->webRoot = 'project/' . $this->runComposer('composer config extra.drupal-scaffold.locations.web-root', 'project');
+    // List the info files that need to be made compatible with our fake version
+    // of Drupal core.
+    $info_files = [
+      'core/modules/package_manager/package_manager.info.yml',
+      'core/modules/automatic_updates/automatic_updates.info.yml',
+    ];
     // BEGIN: DELETE FROM CORE MERGE REQUEST
     // Install Automatic Updates into the test project and ensure it wasn't
     // symlinked.
@@ -319,11 +326,24 @@ END;
     if (str_contains($automatic_updates_dir, 'automatic_updates')) {
       $dir = 'project';
       $this->runComposer("composer config repo.automatic_updates path $automatic_updates_dir", $dir);
-      $output = $this->runComposer('COMPOSER_MIRROR_PATH_REPOS=1 composer require  psr/http-message', $dir);
-      $output = $this->runComposer('COMPOSER_MIRROR_PATH_REPOS=1 composer require --update-with-all-dependencies "drupal/automatic_updates:@dev"', $dir);
+      $output = $this->runComposer('COMPOSER_MIRROR_PATH_REPOS=1 composer require --update-with-all-dependencies psr/http-message "drupal/automatic_updates:@dev"', $dir);
       $this->assertStringNotContainsString('Symlinking', $output);
     }
+    // In contrib, the info files have different paths.
+    $info_files = [
+      'modules/contrib/automatic_updates/package_manager/package_manager.info.yml',
+      'modules/contrib/automatic_updates/automatic_updates.info.yml',
+      'modules/contrib/automatic_updates/automatic_updates_extensions/automatic_updates_extensions.info.yml',
+    ];
     // END: DELETE FROM CORE MERGE REQUEST
+    foreach ($info_files as $path) {
+      $path = $this->getWebRoot() . $path;
+      $this->assertFileIsWritable($path);
+      $info = file_get_contents($path);
+      $info = Yaml::decode($info);
+      $info['core_version_requirement'] .= ' || ^9.7';
+      file_put_contents($path, Yaml::encode($info));
+    }
 
     // Install Drupal.
     $this->installQuickStart('minimal');

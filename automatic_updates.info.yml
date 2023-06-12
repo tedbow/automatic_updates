@@ -1,7 +1,7 @@
 name: 'Automatic Updates'
 type: module
 description: 'Automatically updates Drupal core.'
-core_version_requirement: ^9.7 || ^10
+core_version_requirement: ^10
 dependencies:
   - drupal:package_manager
   - drupal:update

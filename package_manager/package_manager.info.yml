@@ -1,6 +1,6 @@
 name: 'Package Manager'
 type: module
 description: 'API module providing functionality to stage package installs and updates with Composer.'
-core_version_requirement: ^9.7 || ^10
+core_version_requirement: ^10
 dependencies:
   - drupal:update
