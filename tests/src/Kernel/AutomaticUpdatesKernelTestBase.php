@@ -118,15 +118,6 @@ class TestCronUpdateStage extends CronUpdateStage {
   /**
    * {@inheritdoc}
    */
-  protected function triggerPostApply(string $stage_id, string $start_version, string $target_version): void {
-    // Subrequests don't work in kernel tests, so just call the post-apply
-    // handler directly.
-    $this->handlePostApply($stage_id, $start_version, $target_version);
-  }
-
-  /**
-   * {@inheritdoc}
-   */
   public function setMetadata(string $key, $data): void {
     parent::setMetadata($key, $data);
   }

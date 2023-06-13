@@ -27,9 +27,3 @@ automatic_updates.finish:
   options:
     _maintenance_access: TRUE
     _automatic_updates_status_messages: skip
-automatic_updates.cron.post_apply:
-  path: '/automatic-update/cron/post-apply/{stage_id}/{installed_version}/{target_version}/{key}'
-  defaults:
-    _controller: 'automatic_updates.cron_update_stage:handlePostApply'
-  requirements:
-    _access_system_cron: 'TRUE'
