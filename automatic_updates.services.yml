@@ -29,9 +29,6 @@ services:
       - ['setLogger', ['@logger.channel.automatic_updates']]
     arguments:
       - '@automatic_updates.release_chooser'
-      - '@plugin.manager.mail'
-      - '@automatic_updates.status_check_mailer'
-      - '@state'
       - '@config.factory'
       - '@package_manager.composer_inspector'
       - '@package_manager.path_locator'

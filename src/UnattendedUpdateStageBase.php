@@ -28,7 +28,7 @@ class UnattendedUpdateStageBase extends UpdateStage {
    *
    * @var string
    */
-  private static $serverApi = PHP_SAPI;
+  protected static $serverApi = PHP_SAPI;
 
   /**
    * All automatic updates are disabled.

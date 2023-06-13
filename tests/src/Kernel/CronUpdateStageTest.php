@@ -25,6 +25,7 @@ use Drupal\Tests\automatic_updates\Traits\EmailNotificationsTestTrait;
 use Drupal\Tests\package_manager\Kernel\TestStage;
 use Drupal\Tests\package_manager\Traits\PackageManagerBypassTestTrait;
 use Drupal\Tests\user\Traits\UserCreationTrait;
+use Drush\TestTraits\DrushTestTrait;
 use Prophecy\Argument;
 use ColinODell\PsrTestLogger\TestLogger;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
@@ -37,6 +38,7 @@ use Symfony\Component\EventDispatcher\EventDispatcherInterface;
  */
 class CronUpdateStageTest extends AutomaticUpdatesKernelTestBase {
 
+  use DrushTestTrait;
   use EmailNotificationsTestTrait;
   use PackageManagerBypassTestTrait;
   use UserCreationTrait;
@@ -447,6 +449,7 @@ class CronUpdateStageTest extends AutomaticUpdatesKernelTestBase {
   public function testEmailOnSuccess(): void {
     $this->getStageFixtureManipulator()->setCorePackageVersion('9.8.1');
     $this->container->get('cron')->run();
+    $this->drush('auto-update');
 
     // Ensure we sent a success message to all recipients.
     $expected_body = <<<END

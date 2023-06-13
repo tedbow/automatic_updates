@@ -116,7 +116,8 @@ final class DrushUpdateStage extends UnattendedUpdateStageBase {
    * @return bool
    *   Returns TRUE if any update was attempted, otherwise FALSE.
    */
-  protected function performUpdate(string $target_version, ?int $timeout): bool {
+  public function performUpdate(string $target_version, ?int $timeout): bool {
+    throw new \Exception("sopt here");
     $project_info = new ProjectInfo('drupal');
     $update_started = FALSE;
 

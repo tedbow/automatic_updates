@@ -4,7 +4,9 @@ declare(strict_types = 1);
 
 namespace Drupal\Tests\automatic_updates\Kernel;
 
+use Drupal\automatic_updates\Commands\AutomaticUpdatesCommands;
 use Drupal\automatic_updates\CronUpdateStage;
+use Drupal\automatic_updates\DrushUpdateStage;
 use Drupal\automatic_updates\UpdateStage;
 use Drupal\Core\DependencyInjection\ContainerBuilder;
 use Drupal\Tests\automatic_updates\Traits\ValidationTestTrait;
@@ -114,6 +116,16 @@ class TestUpdateStage extends UpdateStage {
  * A test-only version of the cron update stage to override and expose internals.
  */
 class TestCronUpdateStage extends CronUpdateStage {
+
+  /**
+   * @inheritDoc
+   */
+  public function runTerminalUpdateCommand(): void {
+    /** @var \Drupal\automatic_updates\DrushUpdateStage $commands */
+    $commands = \Drupal::service(DrushUpdateStage::class);
+    $commands->performUpdate('a', 300);
+  }
+
 
   /**
    * {@inheritdoc}
