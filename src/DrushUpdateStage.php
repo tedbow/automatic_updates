@@ -29,7 +29,7 @@ use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 /**
  * An updater that runs via a Drush command.
  */
-final class DrushUpdateStage extends UnattendedUpdateStageBase {
+class DrushUpdateStage extends UnattendedUpdateStageBase {
 
   /**
    * Constructs a UnattendedUpdateStageBase object.
@@ -88,7 +88,7 @@ final class DrushUpdateStage extends UnattendedUpdateStageBase {
   /**
    * Runs the post apply command.
    */
-  private function triggerPostApply(string $stage_id, string $start_version, string $target_version): void {
+  protected function triggerPostApply(string $stage_id, string $start_version, string $target_version): void {
     $alias = Drush::aliasManager()->getSelf();
 
     $output = Drush::processManager()
@@ -117,7 +117,6 @@ final class DrushUpdateStage extends UnattendedUpdateStageBase {
    *   Returns TRUE if any update was attempted, otherwise FALSE.
    */
   public function performUpdate(string $target_version, ?int $timeout): bool {
-    throw new \Exception("sopt here");
     $project_info = new ProjectInfo('drupal');
     $update_started = FALSE;
 

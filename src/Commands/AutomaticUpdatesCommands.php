@@ -8,7 +8,9 @@ use Drupal\automatic_updates\DrushUpdateStage;
 use Drupal\automatic_updates\StatusCheckMailer;
 use Drupal\automatic_updates\Validation\StatusChecker;
 use Drupal\Core\Config\ConfigFactoryInterface;
+use Drupal\package_manager\DebuggerTrait;
 use Drush\Commands\DrushCommands;
+use function Psy\debug;
 
 /**
  * Contains Drush commands for Automatic Updates.
@@ -19,6 +21,8 @@ use Drush\Commands\DrushCommands;
  *   code should not interact with it.
  */
 final class AutomaticUpdatesCommands extends DrushCommands {
+
+  use DebuggerTrait;
 
   /**
    * Constructs a AutomaticUpdatesCommands object.
@@ -59,6 +63,9 @@ final class AutomaticUpdatesCommands extends DrushCommands {
    *   --from-version, and --to-version options.
    */
   public function autoUpdate(array $options = ['post-apply' => FALSE, 'stage-id' => NULL, 'from-version' => NULL, 'to-version' => NULL]) {
+    $this->debugOut(print_r($options, true), 0);
+    $out = "the package_manager_bypass exists:" . (\Drupal::moduleHandler()->moduleExists('package_manager_bypass') ? 'yes' : 'no');
+    $this->debugOut($out);
     $io = $this->io();
 
     // The second half of the update process (post-apply etc.) is done by this
@@ -78,17 +85,20 @@ final class AutomaticUpdatesCommands extends DrushCommands {
     }
     else {
       if ($this->stage->getMode() === DrushUpdateStage::DISABLED) {
+        $this->debugOut("***disabled");
         $io->error('Automatic updates are disabled.');
         return;
       }
 
       $release = $this->stage->getTargetRelease();
       if ($release) {
+        $this->debugOut("release is " . $release->getVersion());
         $message = sprintf('Updating Drupal core to %s. This may take a while.', $release->getVersion());
         $io->info($message);
         $this->stage->performUpdate($release->getVersion(), 300);
       }
       else {
+        $this->debugOut("release none");
         $io->info("There is no Drupal core update available.");
         $this->runStatusChecks();
       }
