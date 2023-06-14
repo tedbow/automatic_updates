@@ -76,6 +76,8 @@ class PackageUpdateTest extends TemplateProjectTestBase {
     $this->assertSame('Bravo!', $file_contents['bravo.txt']);
 
     $this->assertExpectedStageEventsFired(ControllerStage::class);
+    $this->assertRequestedChangesWereLogged(['Update drupal/updated_module from 1.0.0 to 1.1.0']);
+    $this->assertAppliedChangesWereLogged(['Updated drupal/updated_module from 1.0.0 to 1.1.0']);
   }
 
 }

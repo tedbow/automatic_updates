@@ -109,6 +109,7 @@ final class PackageManagerServiceProvider extends ServiceProviderBase {
       'request_stack' => 'Symfony\Component\HttpFoundation\RequestStack',
       'theme_handler' => 'Drupal\Core\Extension\ThemeHandlerInterface',
       'cron' => 'Drupal\Core\CronInterface',
+      'logger.factory' => 'Drupal\Core\Logger\LoggerChannelFactoryInterface',
     ];
     foreach ($aliases as $service_id => $alias) {
       if (!$container->hasAlias($alias)) {

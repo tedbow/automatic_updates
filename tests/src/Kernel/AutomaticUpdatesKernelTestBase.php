@@ -5,7 +5,6 @@ declare(strict_types = 1);
 namespace Drupal\Tests\automatic_updates\Kernel;
 
 use Drupal\automatic_updates\CronUpdateStage;
-use Drupal\automatic_updates\UpdateStage;
 use Drupal\Core\DependencyInjection\ContainerBuilder;
 use Drupal\Tests\automatic_updates\Traits\ValidationTestTrait;
 use Drupal\Tests\package_manager\Kernel\PackageManagerKernelTestBase;
@@ -84,7 +83,6 @@ abstract class AutomaticUpdatesKernelTestBase extends PackageManagerKernelTestBa
 
     // Use the test-only implementations of the regular and cron update stages.
     $overrides = [
-      'automatic_updates.update_stage' => TestUpdateStage::class,
       'automatic_updates.cron_update_stage' => TestCronUpdateStage::class,
     ];
     foreach ($overrides as $service_id => $class) {
@@ -92,20 +90,6 @@ abstract class AutomaticUpdatesKernelTestBase extends PackageManagerKernelTestBa
         $container->getDefinition($service_id)->setClass($class);
       }
     }
-  }
-
-}
-
-/**
- * A test-only version of the regular update stage to override internals.
- */
-class TestUpdateStage extends UpdateStage {
-
-  /**
-   * {@inheritdoc}
-   */
-  public function setMetadata(string $key, $data): void {
-    parent::setMetadata($key, $data);
   }
 
 }
@@ -122,13 +106,6 @@ class TestCronUpdateStage extends CronUpdateStage {
     // Subrequests don't work in kernel tests, so just call the post-apply
     // handler directly.
     $this->handlePostApply($stage_id, $start_version, $target_version);
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public function setMetadata(string $key, $data): void {
-    parent::setMetadata($key, $data);
   }
 
 }

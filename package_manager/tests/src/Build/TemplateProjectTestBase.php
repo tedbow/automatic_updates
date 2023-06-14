@@ -605,6 +605,68 @@ END;
   }
 
   /**
+   * Visits the 'admin/reports/dblog' and selects Package Manager's change log.
+   */
+  private function visitPackageManagerChangeLog(): void {
+    $mink = $this->getMink();
+    $assert_session = $mink->assertSession();
+    $page = $mink->getSession()->getPage();
+
+    $this->visit('/admin/reports/dblog');
+    $assert_session->statusCodeEquals(200);
+    $page->selectFieldOption('Type', 'package_manager_change_log');
+    $page->pressButton('Filter');
+    $assert_session->statusCodeEquals(200);
+  }
+
+  /**
+   * Asserts changes requested during the stage life cycle were logged.
+   *
+   * This method specifically asserts changes that were *requested* (i.e.,
+   * during the require phase) rather than changes that were actually applied.
+   * The requested and applied changes may be exactly the same, or they may
+   * differ (for example, if a secondary dependency was added or updated in the
+   * stage directory).
+   *
+   * @param string[] $expected_requested_changes
+   *   The expected requested changes.
+   *
+   * @see ::assertAppliedChangesWereLogged()
+   * @see \Drupal\package_manager\EventSubscriber\ChangeLogger
+   */
+  protected function assertRequestedChangesWereLogged(array $expected_requested_changes): void {
+    $this->visitPackageManagerChangeLog();
+    $assert_session = $this->getMink()->assertSession();
+
+    $assert_session->elementExists('css', 'a[href*="/admin/reports/dblog/event/"]:contains("Requested changes:")')
+      ->click();
+    array_walk($expected_requested_changes, $assert_session->pageTextContains(...));
+  }
+
+  /**
+   * Asserts that changes applied during the stage life cycle were logged.
+   *
+   * This method specifically asserts changes that were *applied*, rather than
+   * the changes that were merely requested. For example, if a package was
+   * required into the stage and it added a secondary dependency, that change
+   * will be considered one of the applied changes, not a requested change.
+   *
+   * @param string[] $expected_applied_changes
+   *   The expected applied changes.
+   *
+   * @see ::assertRequestedChangesWereLogged()
+   * @see \Drupal\package_manager\EventSubscriber\ChangeLogger
+   */
+  protected function assertAppliedChangesWereLogged(array $expected_applied_changes): void {
+    $this->visitPackageManagerChangeLog();
+    $assert_session = $this->getMink()->assertSession();
+
+    $assert_session->elementExists('css', 'a[href*="/admin/reports/dblog/event/"]:contains("Applied changes:")')
+      ->click();
+    array_walk($expected_applied_changes, $assert_session->pageTextContains(...));
+  }
+
+  /**
    * Gets a /package-manager-test-api response.
    *
    * @param string $url

@@ -26,6 +26,10 @@ services:
     parent: logger.channel_base
     arguments:
       - 'package_manager'
+  logger.channel.package_manager_change_log:
+    parent: logger.channel_base
+    arguments:
+      - 'package_manager_change_log'
 
   # Services provided to Drupal by Package Manager.
   package_manager.beginner:
@@ -51,6 +55,11 @@ services:
       - '@update.manager'
     # @todo Autowire this service when https://drupal.org/i/3325557 lands.
     autowire: false
+    tags:
+      - { name: event_subscriber }
+  Drupal\package_manager\EventSubscriber\ChangeLogger:
+    calls:
+      - [setLogger, ['@logger.channel.package_manager_change_log']]
     tags:
       - { name: event_subscriber }
   package_manager.composer_inspector:

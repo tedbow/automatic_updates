@@ -94,6 +94,8 @@ END;
 
     $module_composer_json = json_decode($file_contents['web/modules/contrib/alpha/composer.json']);
     $this->assertSame('1.1.0', $module_composer_json?->version);
+    $this->assertRequestedChangesWereLogged(['Update drupal/alpha from 1.0.0 to 1.1.0']);
+    $this->assertAppliedChangesWereLogged(['Updated drupal/alpha from 1.0.0 to 1.1.0']);
   }
 
   /**
@@ -131,6 +133,8 @@ END;
     $this->waitForBatchJob();
     $assert_session->pageTextContains('Update complete!');
     $this->assertModuleVersion('alpha', '1.1.0');
+    $this->assertRequestedChangesWereLogged(['Update drupal/alpha from 1.0.0 to 1.1.0']);
+    $this->assertAppliedChangesWereLogged(['Updated drupal/alpha from 1.0.0 to 1.1.0']);
   }
 
   /**

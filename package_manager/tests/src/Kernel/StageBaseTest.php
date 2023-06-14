@@ -57,6 +57,43 @@ class StageBaseTest extends PackageManagerKernelTestBase {
   }
 
   /**
+   * @covers ::getMetadata
+   * @covers ::setMetadata
+   */
+  public function testMetadata(): void {
+    $stage = $this->createStage();
+    $stage->create();
+    $this->assertNull($stage->getMetadata('new_key'));
+    $stage->setMetadata('new_key', 'value');
+    $this->assertSame('value', $stage->getMetadata('new_key'));
+    $stage->destroy();
+
+    // Ensure that metadata associated with the previous stage was deleted.
+    $stage = $this->createStage();
+    $stage->create();
+    $this->assertNull($stage->getMetadata('new_key'));
+    $stage->destroy();
+
+    // Ensure metadata cannot be get or set unless the stage has been claimed.
+    $stage = $this->createStage();
+    try {
+      $stage->getMetadata('new_key');
+      $this->fail('Expected an ownership exception, but none was thrown.');
+    }
+    catch (\LogicException $e) {
+      $this->assertSame('Stage must be claimed before performing any operations on it.', $e->getMessage());
+    }
+
+    try {
+      $stage->setMetadata('new_key', 'value');
+      $this->fail('Expected an ownership exception, but none was thrown.');
+    }
+    catch (\LogicException $e) {
+      $this->assertSame('Stage must be claimed before performing any operations on it.', $e->getMessage());
+    }
+  }
+
+  /**
    * @covers ::getStageDirectory
    */
   public function testGetStageDirectory(): void {
