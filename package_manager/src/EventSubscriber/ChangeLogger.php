@@ -79,7 +79,7 @@ final class ChangeLogger implements EventSubscriberInterface, LoggerAwareInterfa
   /**
    * Records requested packages.
    *
-   * @param \Drupal\package_manager\Event\PreRequireEvent $event
+   * @param \Drupal\package_manager\Event\PostRequireEvent $event
    *   The event object.
    */
   public function recordRequestedPackageVersions(PostRequireEvent $event): void {
