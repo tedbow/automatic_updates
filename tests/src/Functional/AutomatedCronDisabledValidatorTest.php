@@ -2,7 +2,7 @@
 
 namespace Drupal\Tests\automatic_updates\Functional;
 
-use Drupal\automatic_updates\CronUpdateStage;
+use Drupal\automatic_updates\UnattendedUpdateStageBase;
 
 /**
  * Tests that updates are not run by Automated Cron.
@@ -37,7 +37,7 @@ class AutomatedCronDisabledValidatorTest extends AutomaticUpdatesFunctionalTestB
     // Delete the last cron run time, to ensure that Automated Cron will run.
     $this->container->get('state')->delete('system.cron_last');
     $this->config('automatic_updates.settings')
-      ->set('unattended.level', CronUpdateStage::ALL)
+      ->set('unattended.level', UnattendedUpdateStageBase::ALL)
       ->save();
 
     $this->drupalGet('user');

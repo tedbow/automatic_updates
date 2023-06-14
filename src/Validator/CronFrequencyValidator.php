@@ -4,7 +4,7 @@ declare(strict_types = 1);
 
 namespace Drupal\automatic_updates\Validator;
 
-use Drupal\automatic_updates\CronUpdateStage;
+use Drupal\automatic_updates\UnattendedUpdateStageBase;
 use Drupal\Component\Datetime\TimeInterface;
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Lock\LockBackendInterface;
@@ -79,12 +79,12 @@ final class CronFrequencyValidator implements EventSubscriberInterface {
    */
   public function validateLastCronRun(StatusCheckEvent $event): void {
     // We only want to do this check if the stage belongs to Automatic Updates.
-    if (!$event->stage instanceof CronUpdateStage) {
+    if (!$event->stage instanceof UnattendedUpdateStageBase) {
       return;
     }
     // If automatic updates are disabled during cron, there's nothing we need
     // to validate.
-    if ($event->stage->getMode() === CronUpdateStage::DISABLED) {
+    if ($event->stage->getMode() === UnattendedUpdateStageBase::DISABLED) {
       return;
     }
     // If cron is running right now, cron is clearly being run recently enough!

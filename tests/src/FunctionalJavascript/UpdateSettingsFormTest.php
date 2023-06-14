@@ -2,7 +2,7 @@
 
 namespace Drupal\Tests\automatic_updates\FunctionalJavascript;
 
-use Drupal\automatic_updates\CronUpdateStage;
+use Drupal\automatic_updates\UnattendedUpdateStageBase;
 use Drupal\FunctionalJavascriptTests\WebDriverTestBase;
 
 /**
@@ -31,14 +31,14 @@ class UpdateSettingsFormTest extends WebDriverTestBase {
     // The default values should be reflected.
     $assert_session = $this->assertSession();
     $assert_session->fieldValueEquals('unattended_method', 'web');
-    $assert_session->fieldValueEquals('unattended_level', CronUpdateStage::DISABLED);
+    $assert_session->fieldValueEquals('unattended_level', UnattendedUpdateStageBase::DISABLED);
     // Since unattended updates are disabled, the method radio buttons should be
     // hidden.
     $this->assertFalse($assert_session->fieldExists('unattended_method')->isVisible());
 
     // Enabling unattended updates should reveal the method radio buttons.
     $page = $this->getSession()->getPage();
-    $page->selectFieldOption('unattended_level', CronUpdateStage::SECURITY);
+    $page->selectFieldOption('unattended_level', UnattendedUpdateStageBase::SECURITY);
     $this->assertNotEmpty($assert_session->waitForElementVisible('named', ['field', 'unattended_method']));
     $assert_session->elementAttributeContains('named', ['link', 'ensure cron is set up correctly'], 'href', 'http://drupal.org/docs/user_guide/en/security-cron.html');
     // Change the method, to ensure it is properly saved in config.
@@ -47,10 +47,10 @@ class UpdateSettingsFormTest extends WebDriverTestBase {
     // Ensure the changes are reflected in config.
     $page->pressButton('Save configuration');
     $config = $this->config('automatic_updates.settings');
-    $this->assertSame(CronUpdateStage::SECURITY, $config->get('unattended.level'));
+    $this->assertSame(UnattendedUpdateStageBase::SECURITY, $config->get('unattended.level'));
     $this->assertSame('console', $config->get('unattended.method'));
     // Our saved changes should be reflected in the form too.
-    $assert_session->fieldValueEquals('unattended_level', CronUpdateStage::SECURITY);
+    $assert_session->fieldValueEquals('unattended_level', UnattendedUpdateStageBase::SECURITY);
     $assert_session->fieldValueEquals('unattended_method', 'console');
   }
 

@@ -5,6 +5,7 @@ declare(strict_types = 1);
 namespace Drupal\automatic_updates\Validation;
 
 use Drupal\automatic_updates\CronUpdateStage;
+use Drupal\automatic_updates\UnattendedUpdateStageBase;
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\DependencyInjection\ContainerInjectionInterface;
 use Drupal\Core\Messenger\MessengerInterface;
@@ -120,7 +121,7 @@ final class AdminStatusCheckMessages implements ContainerInjectionInterface {
   protected function displayResultsOnCurrentPage(): bool {
     // If updates will not run during cron then we don't need to show the
     // status checks on admin pages.
-    if ($this->stage->getMode() === CronUpdateStage::DISABLED) {
+    if ($this->stage->getMode() === UnattendedUpdateStageBase::DISABLED) {
       return FALSE;
     }
 

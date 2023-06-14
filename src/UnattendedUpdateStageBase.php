@@ -104,11 +104,11 @@ class UnattendedUpdateStageBase extends UpdateStage {
    *
    * @return string
    *   The cron update mode. Will be one of the following constants:
-   *   - \Drupal\automatic_updates\CronUpdateStage::DISABLED if updates during
+   *   - \Drupal\automatic_updates\UnattendedUpdateStageBase::DISABLED if updates during
    *     cron are entirely disabled.
-   *   - \Drupal\automatic_updates\CronUpdateStage::SECURITY only security
+   *   - \Drupal\automatic_updates\UnattendedUpdateStageBase::SECURITY only security
    *     updates can be done during cron.
-   *   - \Drupal\automatic_updates\CronUpdateStage::ALL if all updates are
+   *   - \Drupal\automatic_updates\UnattendedUpdateStageBase::ALL if all updates are
    *     allowed during cron.
    */
   final public function getMode(): string {

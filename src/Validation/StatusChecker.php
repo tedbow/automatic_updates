@@ -6,6 +6,7 @@ namespace Drupal\automatic_updates\Validation;
 
 use Drupal\automatic_updates\CronUpdateStage;
 use Drupal\automatic_updates\StatusCheckMailer;
+use Drupal\automatic_updates\UnattendedUpdateStageBase;
 use Drupal\Core\Config\ConfigCrudEvent;
 use Drupal\Core\Config\ConfigEvents;
 use Drupal\package_manager\StatusCheckTrait;
@@ -66,7 +67,7 @@ final class StatusChecker implements EventSubscriberInterface {
     // If updates will run during cron, use the cron update stage service
     // provided by this module. This will allow validators to run specific
     // validation for conditions that only affect cron updates.
-    if ($this->cronUpdateStage->getMode() === CronUpdateStage::DISABLED) {
+    if ($this->cronUpdateStage->getMode() === UnattendedUpdateStageBase::DISABLED) {
       $stage = $this->updateStage;
     }
     else {

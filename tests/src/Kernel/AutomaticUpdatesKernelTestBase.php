@@ -6,6 +6,7 @@ namespace Drupal\Tests\automatic_updates\Kernel;
 
 use Drupal\automatic_updates\CronUpdateStage;
 use Drupal\automatic_updates\DrushUpdateStage;
+use Drupal\automatic_updates\UnattendedUpdateStageBase;
 use Drupal\automatic_updates\UpdateStage;
 use Drupal\Core\DependencyInjection\ContainerBuilder;
 use Drupal\Tests\automatic_updates\Traits\ValidationTestTrait;
@@ -57,7 +58,7 @@ abstract class AutomaticUpdatesKernelTestBase extends PackageManagerKernelTestBa
     $this->config('automatic_updates.settings')
       ->set('unattended', [
         'method' => 'web',
-        'level' => CronUpdateStage::SECURITY,
+        'level' => UnattendedUpdateStageBase::SECURITY,
       ])
       ->save();
 

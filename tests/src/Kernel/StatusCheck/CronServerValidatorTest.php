@@ -4,7 +4,7 @@ declare(strict_types = 1);
 
 namespace Drupal\Tests\automatic_updates\Kernel\StatusCheck;
 
-use Drupal\automatic_updates\CronUpdateStage;
+use Drupal\automatic_updates\UnattendedUpdateStageBase;
 use Drupal\automatic_updates\Validator\CronServerValidator;
 use Drupal\Core\Logger\RfcLogLevel;
 use Drupal\Core\Url;
@@ -39,7 +39,7 @@ class CronServerValidatorTest extends AutomaticUpdatesKernelTestBase {
     ]);
     // Add all the test cases where there no expected results for all cron
     // modes.
-    foreach ([CronUpdateStage::DISABLED, CronUpdateStage::SECURITY, CronUpdateStage::ALL] as $cron_mode) {
+    foreach ([UnattendedUpdateStageBase::DISABLED, UnattendedUpdateStageBase::SECURITY, UnattendedUpdateStageBase::ALL] as $cron_mode) {
       $test_cases["PHP server with alternate port, cron $cron_mode"] = [
         TRUE,
         'cli-server',
@@ -61,7 +61,7 @@ class CronServerValidatorTest extends AutomaticUpdatesKernelTestBase {
     }
     // If the PHP server is used with the same port and cron is enabled an error
     // will be flagged.
-    foreach ([CronUpdateStage::SECURITY, CronUpdateStage::ALL] as $cron_mode) {
+    foreach ([UnattendedUpdateStageBase::SECURITY, UnattendedUpdateStageBase::ALL] as $cron_mode) {
       $test_cases["PHP server with same port, cron $cron_mode"] = [
         FALSE,
         'cli-server',
@@ -72,7 +72,7 @@ class CronServerValidatorTest extends AutomaticUpdatesKernelTestBase {
     $test_cases["PHP server with same port, cron disabled"] = [
       FALSE,
       'cli-server',
-      CronUpdateStage::DISABLED,
+      UnattendedUpdateStageBase::DISABLED,
       [],
     ];
     return $test_cases;
@@ -87,9 +87,9 @@ class CronServerValidatorTest extends AutomaticUpdatesKernelTestBase {
    *   The value of the PHP_SAPI constant, as known to the validator.
    * @param string $cron_mode
    *   The cron mode to test with. Can be any of
-   *   \Drupal\automatic_updates\CronUpdateStage::DISABLED,
-   *   \Drupal\automatic_updates\CronUpdateStage::SECURITY, or
-   *   \Drupal\automatic_updates\CronUpdateStage::ALL.
+   *   \Drupal\automatic_updates\UnattendedUpdateStageBase::DISABLED,
+   *   \Drupal\automatic_updates\UnattendedUpdateStageBase::SECURITY, or
+   *   \Drupal\automatic_updates\UnattendedUpdateStageBase::ALL.
    * @param \Drupal\package_manager\ValidationResult[] $expected_results
    *   The expected validation results.
    *
@@ -99,7 +99,7 @@ class CronServerValidatorTest extends AutomaticUpdatesKernelTestBase {
     // If CronUpdateStage is disabled, a stage will never be created; nor will
     // it if validation results happen before the stage is even created: in
     // either case the stage fixture need not be manipulated.
-    if ($cron_mode !== CronUpdateStage::DISABLED && empty($expected_results)) {
+    if ($cron_mode !== UnattendedUpdateStageBase::DISABLED && empty($expected_results)) {
       $this->getStageFixtureManipulator()->setCorePackageVersion('9.8.1');
     }
     $request = $this->container->get('request_stack')->getCurrentRequest();
@@ -145,9 +145,9 @@ class CronServerValidatorTest extends AutomaticUpdatesKernelTestBase {
    *   The value of the PHP_SAPI constant, as known to the validator.
    * @param string $cron_mode
    *   The cron mode to test with. Can be any of
-   *   \Drupal\automatic_updates\CronUpdateStage::DISABLED,
-   *   \Drupal\automatic_updates\CronUpdateStage::SECURITY, or
-   *   \Drupal\automatic_updates\CronUpdateStage::ALL.
+   *   \Drupal\automatic_updates\UnattendedUpdateStageBase::DISABLED,
+   *   \Drupal\automatic_updates\UnattendedUpdateStageBase::SECURITY, or
+   *   \Drupal\automatic_updates\UnattendedUpdateStageBase::ALL.
    * @param \Drupal\package_manager\ValidationResult[] $expected_results
    *   The expected validation results.
    *
@@ -156,7 +156,7 @@ class CronServerValidatorTest extends AutomaticUpdatesKernelTestBase {
   public function testCronServerValidationDuringPreApply(bool $alternate_port, string $server_api, string $cron_mode, array $expected_results): void {
     // If CronUpdateStage is disabled, a stage will never be created, hence
     // stage fixture need not be manipulated.
-    if ($cron_mode !== CronUpdateStage::DISABLED) {
+    if ($cron_mode !== UnattendedUpdateStageBase::DISABLED) {
       $this->getStageFixtureManipulator()->setCorePackageVersion('9.8.1');
     }
     $request = $this->container->get('request_stack')->getCurrentRequest();
@@ -206,9 +206,9 @@ class CronServerValidatorTest extends AutomaticUpdatesKernelTestBase {
    *   The value of the PHP_SAPI constant, as known to the validator.
    * @param string $cron_mode
    *   The cron mode to test with. Can contain be of
-   *   \Drupal\automatic_updates\CronUpdateStage::DISABLED,
-   *   \Drupal\automatic_updates\CronUpdateStage::SECURITY, or
-   *   \Drupal\automatic_updates\CronUpdateStage::ALL.
+   *   \Drupal\automatic_updates\UnattendedUpdateStageBase::DISABLED,
+   *   \Drupal\automatic_updates\UnattendedUpdateStageBase::SECURITY, or
+   *   \Drupal\automatic_updates\UnattendedUpdateStageBase::ALL.
    * @param \Drupal\package_manager\ValidationResult[] $expected_results
    *   The expected validation results.
    *

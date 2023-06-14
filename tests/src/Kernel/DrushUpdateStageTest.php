@@ -6,6 +6,7 @@ namespace Drupal\Tests\automatic_updates\Kernel;
 
 use Drupal\automatic_updates\CronUpdateStage;
 use Drupal\automatic_updates\DrushUpdateStage;
+use Drupal\automatic_updates\UnattendedUpdateStageBase;
 use Drupal\automatic_updates_test\EventSubscriber\TestSubscriber1;
 use Drupal\Core\DependencyInjection\ContainerBuilder;
 use Drupal\Core\Logger\RfcLogLevel;
@@ -100,32 +101,32 @@ class DrushUpdateStageTest extends AutomaticUpdatesKernelTestBase {
 
     return [
       'disabled, normal release' => [
-        CronUpdateStage::DISABLED,
+        UnattendedUpdateStageBase::DISABLED,
         ['drupal' => "$fixture_dir/drupal.9.8.2.xml"],
         FALSE,
       ],
       'disabled, security release' => [
-        CronUpdateStage::DISABLED,
+        UnattendedUpdateStageBase::DISABLED,
         ['drupal' => "$fixture_dir/drupal.9.8.1-security.xml"],
         FALSE,
       ],
       'security only, security release' => [
-        CronUpdateStage::SECURITY,
+        UnattendedUpdateStageBase::SECURITY,
         ['drupal' => "$fixture_dir/drupal.9.8.1-security.xml"],
         TRUE,
       ],
       'security only, normal release' => [
-        CronUpdateStage::SECURITY,
+        UnattendedUpdateStageBase::SECURITY,
         ['drupal' => "$fixture_dir/drupal.9.8.2.xml"],
         FALSE,
       ],
       'enabled, normal release' => [
-        CronUpdateStage::ALL,
+        UnattendedUpdateStageBase::ALL,
         ['drupal' => "$fixture_dir/drupal.9.8.2.xml"],
         TRUE,
       ],
       'enabled, security release' => [
-        CronUpdateStage::ALL,
+        UnattendedUpdateStageBase::ALL,
         ['drupal' => "$fixture_dir/drupal.9.8.1-security.xml"],
         TRUE,
       ],
@@ -265,7 +266,7 @@ class DrushUpdateStageTest extends AutomaticUpdatesKernelTestBase {
     $this->installConfig('automatic_updates');
     // @todo Remove in https://www.drupal.org/project/automatic_updates/issues/3284443
     $this->config('automatic_updates.settings')
-      ->set('unattended.level', CronUpdateStage::SECURITY)
+      ->set('unattended.level', UnattendedUpdateStageBase::SECURITY)
       ->save();
     // Ensure that there is a security release to which we should update.
     $this->setReleaseMetadata([
@@ -375,7 +376,7 @@ class DrushUpdateStageTest extends AutomaticUpdatesKernelTestBase {
    */
   public function testStageNotDestroyedIfApplying(): void {
     $this->config('automatic_updates.settings')
-      ->set('unattended.level', CronUpdateStage::ALL)
+      ->set('unattended.level', UnattendedUpdateStageBase::ALL)
       ->save();
     $this->setReleaseMetadata([
       'drupal' => __DIR__ . "/../../../package_manager/tests/fixtures/release-history/drupal.9.8.1-security.xml",
@@ -415,7 +416,7 @@ class DrushUpdateStageTest extends AutomaticUpdatesKernelTestBase {
    */
   public function testStageNotDestroyedIfSecure(): void {
     $this->config('automatic_updates.settings')
-      ->set('unattended.level', CronUpdateStage::ALL)
+      ->set('unattended.level', UnattendedUpdateStageBase::ALL)
       ->save();
     $this->setReleaseMetadata([
       'drupal' => __DIR__ . "/../../../package_manager/tests/fixtures/release-history/drupal.9.8.2.xml",
@@ -501,7 +502,7 @@ END;
       'drupal' => __DIR__ . '/../../../package_manager/tests/fixtures/release-history/drupal.9.8.2.xml',
     ]);
     $this->config('automatic_updates.settings')
-      ->set('unattended.level', CronUpdateStage::ALL)
+      ->set('unattended.level', UnattendedUpdateStageBase::ALL)
       ->save();
 
     $error = ValidationResult::createError([
