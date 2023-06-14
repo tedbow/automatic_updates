@@ -4,7 +4,6 @@ declare(strict_types = 1);
 
 namespace Drupal\Tests\automatic_updates\Kernel;
 
-use Drupal\automatic_updates\Commands\AutomaticUpdatesCommands;
 use Drupal\automatic_updates\CronUpdateStage;
 use Drupal\automatic_updates\DrushUpdateStage;
 use Drupal\automatic_updates\UpdateStage;
@@ -123,6 +122,23 @@ class TestUpdateStage extends UpdateStage {
  * A test-only version of the cron update stage to override and expose internals.
  */
 class TestCronUpdateStage extends CronUpdateStage {
+
+  /**
+   * Determines whether an exception should be thrown.
+   *
+   * @var bool
+   */
+  public bool $throwExceptionOnTerminalCommand = FALSE;
+
+  /**
+   * {@inheritdoc}
+   */
+  public function runTerminalUpdateCommand(): void {
+    if ($this->throwExceptionOnTerminalCommand) {
+      throw new \Exception('Simulated process failure.');
+    }
+    parent::runTerminalUpdateCommand();
+  }
 
   /**
    * {@inheritdoc}

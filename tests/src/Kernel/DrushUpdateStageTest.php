@@ -26,12 +26,8 @@ use Drupal\Tests\automatic_updates\Traits\EmailNotificationsTestTrait;
 use Drupal\Tests\package_manager\Kernel\TestStage;
 use Drupal\Tests\package_manager\Traits\PackageManagerBypassTestTrait;
 use Drupal\Tests\user\Traits\UserCreationTrait;
-use Drupal\update\ProjectRelease;
-use Drush\TestTraits\DrushTestTrait;
 use Prophecy\Argument;
 use ColinODell\PsrTestLogger\TestLogger;
-use Symfony\Component\DependencyInjection\Definition;
-use Symfony\Component\DependencyInjection\Reference;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 
 /**
@@ -175,7 +171,7 @@ class DrushUpdateStageTest extends AutomaticUpdatesKernelTestBase {
     $this->assertCount(0, $this->container->get('package_manager.beginner')->getInvocationArguments());
     // Run cron and ensure that Package Manager's services were called or
     // bypassed depending on configuration.
-    $this->startDrushUpdate($version);
+    $this->performDrushUpdate();
 
     $will_update = (int) $will_update;
     $this->assertCount($will_update, $this->container->get('package_manager.beginner')->getInvocationArguments());
@@ -309,7 +305,7 @@ class DrushUpdateStageTest extends AutomaticUpdatesKernelTestBase {
     $this->assertEmpty($this->logger->records);
 
     $this->assertTrue($stage->isAvailable());
-    $this->startDrushUpdate();
+    $this->performDrushUpdate();
 
     $logged_by_stage = $this->logger->hasRecord($expected_log_message, (string) RfcLogLevel::ERROR);
     // To check if the exception was logged by the main cron service, we need
@@ -361,7 +357,7 @@ class DrushUpdateStageTest extends AutomaticUpdatesKernelTestBase {
     };
     $this->addEventTestListener($listener, PostRequireEvent::class);
 
-    $this->startDrushUpdate();
+    $this->performDrushUpdate();
     $this->assertIsString($cron_stage_dir);
     $this->assertNotEquals($original_stage_directory, $cron_stage_dir);
     $this->assertDirectoryDoesNotExist($cron_stage_dir);
@@ -396,7 +392,7 @@ class DrushUpdateStageTest extends AutomaticUpdatesKernelTestBase {
       // Ensure the stage that is applying the operation is not the cron
       // update stage.
       $this->assertInstanceOf(TestStage::class, $event->stage);
-      $this->startDrushUpdate();
+      $this->performDrushUpdate();
       // We do not actually want to apply this operation it was just invoked to
       // allow cron to be  attempted.
       $event->addError([$stop_error]);
@@ -432,7 +428,7 @@ class DrushUpdateStageTest extends AutomaticUpdatesKernelTestBase {
 
     // Trigger CronUpdateStage, the above should cause it to detect a stage that
     // is applying.
-    $this->startDrushUpdate();
+    $this->performDrushUpdate();
 
     $this->assertTrue($this->logger->hasRecord('Cron will not perform any updates because there is an existing stage and the current version of the site is secure.', (string) RfcLogLevel::NOTICE));
     $this->assertUpdateStagedTimes(1);
@@ -452,8 +448,7 @@ class DrushUpdateStageTest extends AutomaticUpdatesKernelTestBase {
    */
   public function testEmailOnSuccess(): void {
     $this->getStageFixtureManipulator()->setCorePackageVersion('9.8.1');
-    $this->container->get('cron')->run();
-    $this->startDrushUpdate();
+    $this->performDrushUpdate();
 
     // Ensure we sent a success message to all recipients.
     $expected_body = <<<END
@@ -466,64 +461,6 @@ This e-mail was sent by the Automatic Updates module. Unattended updates are not
 If you are using this feature in production, it is strongly recommended for you to visit your site and ensure that everything still looks good.
 END;
     $this->assertMessagesSent("Drupal core was successfully updated", $expected_body);
-  }
-
-  /**
-   * Tests that regular cron runs if not update is available.
-   */
-  public function testNoUpdateAvailable(): void {
-    $this->setCoreVersion('9.8.2');
-    $this->container->get('cron')->run();
-    $this->assertRegularCronRun(TRUE);
-  }
-
-  /**
-   * Tests that regular cron does not run if an update is started.
-   *
-   * @todo This test can be remove or simplified because cron always run first.
-   *
-   * @param string $event_exception_class
-   *   The event in which to throw the exception.
-   *
-   * @dataProvider providerRegularCronRuns
-   */
-  public function testRegularCronRuns(string $event_exception_class): void {
-    $this->addEventTestListener(
-      function (): void {
-        throw new \Exception('😜');
-      },
-      $event_exception_class
-    );
-    try {
-      $this->container->get('cron')->run();
-    }
-    catch (\Exception $e) {
-      if ($event_exception_class !== PostDestroyEvent::class && $event_exception_class !== PreDestroyEvent::class) {
-        // No other events should result in an exception.
-        throw $e;
-      }
-      $this->assertSame('😜', $e->getMessage());
-    }
-    $this->assertRegularCronRun($event_exception_class === PreCreateEvent::class);
-  }
-
-  /**
-   * Data provider for testStageDestroyedOnError().
-   *
-   * @return string[][]
-   *   The test cases.
-   */
-  public function providerRegularCronRuns(): array {
-    return [
-      'pre-create exception' => [PreCreateEvent::class],
-      'post-create exception' => [PostCreateEvent::class],
-      'pre-require exception' => [PreRequireEvent::class],
-      'post-require exception' => [PostRequireEvent::class],
-      'pre-apply exception' => [PreApplyEvent::class],
-      'post-apply exception' => [PostApplyEvent::class],
-      'pre-destroy exception' => [PreDestroyEvent::class],
-      'post-destroy exception' => [PostDestroyEvent::class],
-    ];
   }
 
   /**
@@ -573,7 +510,7 @@ END;
     $exception = $this->createStageEventExceptionFromResults([$error], $event_class, $this->container->get(CronUpdateStage::class));
     TestSubscriber1::setTestResult($exception->event->getResults(), $event_class);
 
-    $this->startDrushUpdate();
+    $this->performDrushUpdate();
 
     $url = Url::fromRoute('update.report_update')
       ->setAbsolute()
@@ -614,7 +551,7 @@ END;
     TestSubscriber1::setTestResult([$error], $event_class);
     $exception = $this->createStageEventExceptionFromResults([$error], $event_class, $this->container->get(CronUpdateStage::class));
 
-    $this->startDrushUpdate();
+    $this->performDrushUpdate();
 
     $url = Url::fromRoute('update.report_update')
       ->setAbsolute()
@@ -642,7 +579,7 @@ END;
     $error = new \LogicException('I drink your milkshake!');
     LoggingCommitter::setException($error);
 
-    $this->startDrushUpdate();
+    $this->performDrushUpdate();
     $expected_body = <<<END
 Drupal core failed to update automatically from 9.8.0 to 9.8.1. The following error was logged:
 
@@ -668,12 +605,10 @@ END;
   }
 
   /**
-   * @return void
-   * @throws \Exception
+   * Performs an update using the drush update stage directly.
    */
-  protected function startDrushUpdate(): void {
-    $drush_stage = $this->container->get(DrushUpdateStage::class);;
-    $drush_stage->performUpdate();
+  protected function performDrushUpdate(): void {
+    $this->container->get(DrushUpdateStage::class)->performUpdate();
   }
 
 }

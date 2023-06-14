@@ -10,7 +10,6 @@ use Drupal\automatic_updates\Validation\StatusChecker;
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\package_manager\DebuggerTrait;
 use Drush\Commands\DrushCommands;
-use function Psy\debug;
 
 /**
  * Contains Drush commands for Automatic Updates.
@@ -63,7 +62,7 @@ final class AutomaticUpdatesCommands extends DrushCommands {
    *   --from-version, and --to-version options.
    */
   public function autoUpdate(array $options = ['post-apply' => FALSE, 'stage-id' => NULL, 'from-version' => NULL, 'to-version' => NULL]) {
-    $this->debugOut(print_r($options, true), 0);
+    $this->debugOut(print_r($options, TRUE), 0);
     $out = "the package_manager_bypass exists:" . (\Drupal::moduleHandler()->moduleExists('package_manager_bypass') ? 'yes' : 'no');
     $this->debugOut($out);
     $io = $this->io();

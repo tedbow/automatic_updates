@@ -4,7 +4,6 @@ declare(strict_types = 1);
 
 namespace Drupal\automatic_updates\Validator;
 
-use Drupal\automatic_updates\CronUpdateStage;
 use Drupal\automatic_updates\UnattendedUpdateStageBase;
 use Drupal\Component\Utility\NestedArray;
 use Drupal\package_manager\ComposerInspector;
