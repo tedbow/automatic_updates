@@ -35,14 +35,13 @@ use Symfony\Component\DependencyInjection\Reference;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 
 /**
- * @covers \Drupal\automatic_updates\CronUpdateStage
+ * @covers \Drupal\automatic_updates\DrushUpdateStage
  * @covers \automatic_updates_test_cron_form_update_settings_alter
  * @group automatic_updates
  * @internal
  */
-class CronUpdateStageTest extends AutomaticUpdatesKernelTestBase {
+class DrushUpdateStageTest extends AutomaticUpdatesKernelTestBase {
 
-  use DrushTestTrait;
   use EmailNotificationsTestTrait;
   use PackageManagerBypassTestTrait;
   use UserCreationTrait;
@@ -173,9 +172,10 @@ class CronUpdateStageTest extends AutomaticUpdatesKernelTestBase {
     $event_dispatcher->dispatch(Argument::type('object'))->willReturnArgument(0);
     $this->container->set('event_dispatcher', $event_dispatcher->reveal());
 
+    $this->assertCount(0, $this->container->get('package_manager.beginner')->getInvocationArguments());
     // Run cron and ensure that Package Manager's services were called or
     // bypassed depending on configuration.
-    $this->container->get('cron')->run();
+    $this->startDrushUpdate($version);
 
     $will_update = (int) $will_update;
     $this->assertCount($will_update, $this->container->get('package_manager.beginner')->getInvocationArguments());
@@ -309,7 +309,7 @@ class CronUpdateStageTest extends AutomaticUpdatesKernelTestBase {
     $this->assertEmpty($this->logger->records);
 
     $this->assertTrue($stage->isAvailable());
-    $this->startDrushUpdate('9.8.1');
+    $this->startDrushUpdate();
 
     $logged_by_stage = $this->logger->hasRecord($expected_log_message, (string) RfcLogLevel::ERROR);
     // To check if the exception was logged by the main cron service, we need
@@ -361,7 +361,7 @@ class CronUpdateStageTest extends AutomaticUpdatesKernelTestBase {
     };
     $this->addEventTestListener($listener, PostRequireEvent::class);
 
-    $this->startDrushUpdate('9.8.1');
+    $this->startDrushUpdate();
     $this->assertIsString($cron_stage_dir);
     $this->assertNotEquals($original_stage_directory, $cron_stage_dir);
     $this->assertDirectoryDoesNotExist($cron_stage_dir);
@@ -396,7 +396,7 @@ class CronUpdateStageTest extends AutomaticUpdatesKernelTestBase {
       // Ensure the stage that is applying the operation is not the cron
       // update stage.
       $this->assertInstanceOf(TestStage::class, $event->stage);
-      $this->startDrushUpdate('9.8.1');
+      $this->startDrushUpdate();
       // We do not actually want to apply this operation it was just invoked to
       // allow cron to be  attempted.
       $event->addError([$stop_error]);
@@ -432,7 +432,7 @@ class CronUpdateStageTest extends AutomaticUpdatesKernelTestBase {
 
     // Trigger CronUpdateStage, the above should cause it to detect a stage that
     // is applying.
-    $this->startDrushUpdate('9.8.2');
+    $this->startDrushUpdate();
 
     $this->assertTrue($this->logger->hasRecord('Cron will not perform any updates because there is an existing stage and the current version of the site is secure.', (string) RfcLogLevel::NOTICE));
     $this->assertUpdateStagedTimes(1);
@@ -453,7 +453,7 @@ class CronUpdateStageTest extends AutomaticUpdatesKernelTestBase {
   public function testEmailOnSuccess(): void {
     $this->getStageFixtureManipulator()->setCorePackageVersion('9.8.1');
     $this->container->get('cron')->run();
-    $this->drush('auto-update');
+    $this->startDrushUpdate();
 
     // Ensure we sent a success message to all recipients.
     $expected_body = <<<END
@@ -466,7 +466,6 @@ This e-mail was sent by the Automatic Updates module. Unattended updates are not
 If you are using this feature in production, it is strongly recommended for you to visit your site and ensure that everything still looks good.
 END;
     $this->assertMessagesSent("Drupal core was successfully updated", $expected_body);
-    $this->assertRegularCronRun(FALSE);
   }
 
   /**
@@ -574,7 +573,7 @@ END;
     $exception = $this->createStageEventExceptionFromResults([$error], $event_class, $this->container->get(CronUpdateStage::class));
     TestSubscriber1::setTestResult($exception->event->getResults(), $event_class);
 
-    $this->startDrushUpdate('9.8.2');
+    $this->startDrushUpdate();
 
     $url = Url::fromRoute('update.report_update')
       ->setAbsolute()
@@ -615,7 +614,7 @@ END;
     TestSubscriber1::setTestResult([$error], $event_class);
     $exception = $this->createStageEventExceptionFromResults([$error], $event_class, $this->container->get(CronUpdateStage::class));
 
-    $this->startDrushUpdate('9.8.1');
+    $this->startDrushUpdate();
 
     $url = Url::fromRoute('update.report_update')
       ->setAbsolute()
@@ -643,7 +642,7 @@ END;
     $error = new \LogicException('I drink your milkshake!');
     LoggingCommitter::setException($error);
 
-    $this->startDrushUpdate('9.8.1');
+    $this->startDrushUpdate();
     $expected_body = <<<END
 Drupal core failed to update automatically from 9.8.0 to 9.8.1. The following error was logged:
 
@@ -672,12 +671,9 @@ END;
    * @return void
    * @throws \Exception
    */
-  protected function startDrushUpdate(string $expected_version): void {
-    $drush_stage = $this->container->get(DrushUpdateStage::class);
-    $release = $drush_stage->getTargetRelease();
-    $this->assertInstanceOf(ProjectRelease::class, $release);
-    $this->assertSame($expected_version, $release->getVersion());
-    $drush_stage->performUpdate($release->getVersion(), 300);
+  protected function startDrushUpdate(): void {
+    $drush_stage = $this->container->get(DrushUpdateStage::class);;
+    $drush_stage->performUpdate();
   }
 
 }

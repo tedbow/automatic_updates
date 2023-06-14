@@ -107,16 +107,19 @@ class DrushUpdateStage extends UnattendedUpdateStageBase {
   /**
    * Performs the update.
    *
-   * @param string $target_version
-   *   The target version of Drupal core.
-   * @param int|null $timeout
-   *   How long to allow the operation to run before timing out, in seconds, or
-   *   NULL to never time out.
-   *
    * @return bool
    *   Returns TRUE if any update was attempted, otherwise FALSE.
    */
-  public function performUpdate(string $target_version, ?int $timeout): bool {
+  public function performUpdate(): bool {
+    if ($this->getMode() === static::DISABLED) {
+      return FALSE;
+    }
+
+    $next_release = $this->getTargetRelease();
+    if (!$next_release) {
+      return FALSE;
+    }
+    $target_version = $next_release->getVersion();
     $project_info = new ProjectInfo('drupal');
     $update_started = FALSE;
 
@@ -154,7 +157,7 @@ class DrushUpdateStage extends UnattendedUpdateStageBase {
     try {
       $update_started = TRUE;
       // @see ::begin()
-      $stage_id = parent::begin(['drupal' => $target_version], $timeout);
+      $stage_id = parent::begin(['drupal' => $target_version], 300);
       $this->stage();
       $this->apply();
     }
