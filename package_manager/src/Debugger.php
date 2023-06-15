@@ -5,6 +5,7 @@ namespace Drupal\package_manager;
 class Debugger {
 
   public static function debugOutput($value, $label = NULL, $flags = FILE_APPEND) {
+    file_put_contents("/Users/ted.bowman/sites/debug.txt", "\n***", $flags);
     if (is_bool($value)) {
       $value = $value ? 'TRUE' : 'FALSE';
     }

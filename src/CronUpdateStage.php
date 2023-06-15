@@ -92,21 +92,21 @@ class CronUpdateStage extends UnattendedUpdateStageBase implements CronInterface
     //   background updates.
     // @todo Replace drush call with Symfony console command in
     //   https://www.drupal.org/i/3360485
-    $drush_path = $this->pathLocator->getVendorDirectory() . '/bin/drush';
+    // @todo Why isn't it in vendor bin?
+    $drush_path = $this->pathLocator->getVendorDirectory() . '/drush/drush/drush';
     $phpBinaryFinder = new PhpExecutableFinder();
     $process = new Process([$phpBinaryFinder->find(), $drush_path, 'auto-update', '&']);
     $process->setWorkingDirectory($this->pathLocator->getProjectRoot() . DIRECTORY_SEPARATOR . $this->pathLocator->getWebRoot());
-    $process->disableOutput();
+    //$process->disableOutput();
     $process->setTimeout(0);
     try {
-      Debugger::debugOutput('start process');
-      $process->start();
-      sleep(5);
-      Debugger::debugOutput('process started');
+      $process->mustRun();
     }
     catch (\Throwable $throwable) {
       // @todo Does this work 10.0.x?
       Error::logException($this->logger, $throwable, 'Could not perform background update.');
+      Debugger::debugOutput($process->getErrorOutput(), 'process error');
+      Debugger::debugOutput($process->getOutput(), 'process output');
       Debugger::debugOutput($throwable, 'Could not perform background update.');
     }
   }

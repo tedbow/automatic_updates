@@ -28,6 +28,8 @@ use Symfony\Component\Process\Process;
  */
 class CoreUpdateTest extends UpdateTestBase {
 
+  protected $destroyBuild = FALSE;
+
   /**
    * WebAssert object.
    *
