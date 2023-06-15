@@ -11,12 +11,14 @@ use Drupal\Core\File\FileSystemInterface;
 use Drupal\Core\TempStore\SharedTempStoreFactory;
 use Drupal\Core\Utility\Error;
 use Drupal\package_manager\ComposerInspector;
+use Drupal\package_manager\Debugger;
 use Drupal\package_manager\FailureMarker;
 use Drupal\package_manager\PathLocator;
 use PhpTuf\ComposerStager\Domain\Core\Beginner\BeginnerInterface;
 use PhpTuf\ComposerStager\Domain\Core\Committer\CommitterInterface;
 use PhpTuf\ComposerStager\Domain\Core\Stager\StagerInterface;
 use PhpTuf\ComposerStager\Infrastructure\Factory\Path\PathFactoryInterface;
+use Symfony\Component\Process\PhpExecutableFinder;
 use Symfony\Component\Process\Process;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 
@@ -91,13 +93,21 @@ class CronUpdateStage extends UnattendedUpdateStageBase implements CronInterface
     // @todo Replace drush call with Symfony console command in
     //   https://www.drupal.org/i/3360485
     $drush_path = $this->pathLocator->getVendorDirectory() . '/bin/drush';
-    $process = new Process([$drush_path, 'auto-update']);
+    $phpBinaryFinder = new PhpExecutableFinder();
+    $process = new Process([$phpBinaryFinder->find(), $drush_path, 'auto-update', '&']);
+    $process->setWorkingDirectory($this->pathLocator->getProjectRoot() . DIRECTORY_SEPARATOR . $this->pathLocator->getWebRoot());
+    $process->disableOutput();
+    $process->setTimeout(0);
     try {
+      Debugger::debugOutput('start process');
       $process->start();
+      sleep(5);
+      Debugger::debugOutput('process started');
     }
     catch (\Throwable $throwable) {
       // @todo Does this work 10.0.x?
       Error::logException($this->logger, $throwable, 'Could not perform background update.');
+      Debugger::debugOutput($throwable, 'Could not perform background update.');
     }
   }
 
@@ -124,12 +134,14 @@ class CronUpdateStage extends UnattendedUpdateStageBase implements CronInterface
     // Always run the cron service before we trigger the update terminal
     // command.
     $inner_success = $this->inner->run();
+    Debugger::debugOutput('ran cron');
 
     // If we are configured to run updates via the web, and we're actually being
     // accessed via the web (i.e., anything that isn't the command line), go
     // ahead and try to do the update. In all other circumstances, just run the
     // normal cron handler.
-    if ($this->getMode() !== self::DISABLED && $method === 'web' && !self::isCommandLine()) {
+    if ($this->getMode() !== self::DISABLED && $method === 'web') {
+      Debugger::debugOutput('running terminal');
       $this->runTerminalUpdateCommand();
     }
     return $inner_success;

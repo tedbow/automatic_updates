@@ -17,6 +17,7 @@ use Drupal\package_manager\Event\PreCreateEvent;
 use Drupal\package_manager\Event\PreDestroyEvent;
 use Drupal\package_manager\Event\PreRequireEvent;
 use Drupal\Tests\WebAssert;
+use Drush\Drush;
 use Symfony\Component\Process\Process;
 
 /**
@@ -172,6 +173,7 @@ class CoreUpdateTest extends UpdateTestBase {
    */
   public function testCron(string $template): void {
     $this->createTestProject($template);
+    $this->runComposer('composer require drush/drush', 'project');
 
     $this->visit('/admin/reports/status');
     $mink = $this->getMink();
@@ -179,7 +181,11 @@ class CoreUpdateTest extends UpdateTestBase {
     $assert_session = $mink->assertSession();
     $page->clickLink('Run cron');
     $cron_run_status_code = $mink->getSession()->getStatusCode();
-    $this->assertExpectedStageEventsFired(CronUpdateStage::class);
+    // Wait for update to start.
+    sleep(2);
+    $this->visit('/admin/reports/dblog');
+    $this->assertExpectedStageEventsFired(DrushUpdateStage::class, [PreCreateEvent::class], 'Update has not started after a wait.', TRUE);
+    $this->assertExpectedStageEventsFired(DrushUpdateStage::class);
     $this->assertSame(200, $cron_run_status_code);
 
     // There should be log messages, but no errors or warnings should have been

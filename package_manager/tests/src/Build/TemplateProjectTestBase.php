@@ -559,7 +559,7 @@ END;
    *
    * @see \Drupal\package_manager_test_event_logger\EventSubscriber\EventLogSubscriber::logEventInfo
    */
-  protected function assertExpectedStageEventsFired(string $expected_stage_class, ?array $expected_events = NULL, ?string $message = NULL): void {
+  protected function assertExpectedStageEventsFired(string $expected_stage_class, ?array $expected_events = NULL, ?string $message = NULL, bool $allow_additional_events = FALSE): void {
     if ($expected_events === NULL) {
       $expected_events = [
         PreCreateEvent::class,
@@ -584,6 +584,7 @@ END;
     $page = $this->getMink()->getSession()->getPage();
     $this->visit('/admin/reports/dblog');
     $assert_session->statusCodeEquals(200);
+    file_put_contents("/Users/ted.bowman/sites/dblog.html", $page->getContent());
     $page->selectFieldOption('Type', 'package_manager_test_event_logger');
     $page->pressButton('Filter');
     $assert_session->statusCodeEquals(200);
@@ -601,7 +602,13 @@ END;
     foreach ($expected_events as $event) {
       $expected_titles[] = "package_manager_test_event_logger-start: Event: $event, Stage instance of: $expected_stage_class:package_manager_test_event_logger-end";
     }
-    $this->assertSame($expected_titles, $actual_titles, $message ?? '');
+    if (!$allow_additional_events) {
+      $this->assertSame($expected_titles, $actual_titles, $message ?? '');
+    }
+    else {
+      $this->assertEmpty(array_diff($expected_titles, $actual_titles), $message ?? '');
+    }
+
   }
 
   /**
