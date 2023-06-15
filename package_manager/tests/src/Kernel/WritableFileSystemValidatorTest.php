@@ -32,37 +32,80 @@ class WritableFileSystemValidatorTest extends PackageManagerKernelTestBase {
    */
   public function providerWritable(): array {
     // @see \Drupal\Tests\package_manager\Traits\ValidationTestTrait::resolvePlaceholdersInArrayValuesWithRealPaths()
-    $root_error = t('The Drupal directory "<PROJECT_ROOT>" is not writable.');
+    $drupal_root_error = t('The Drupal directory "<PROJECT_ROOT>/web" is not writable.');
     $vendor_error = t('The vendor directory "<VENDOR_DIR>" is not writable.');
+    $project_root_error = t('The project root directory "<PROJECT_ROOT>" is not writable.');
     $summary = t('The file system is not writable.');
     $writable_permission = 0777;
     $non_writable_permission = 0550;
 
     return [
-      'root and vendor are writable' => [
+      'root and vendor are writable, nested web root' => [
         $writable_permission,
         $writable_permission,
+        $writable_permission,
+        'web',
         [],
       ],
-      'root writable, vendor not writable' => [
+      'root writable, vendor not writable, nested web root' => [
+        $writable_permission,
         $writable_permission,
         $non_writable_permission,
+        'web',
         [
           ValidationResult::createError([$vendor_error], $summary),
         ],
       ],
-      'root not writable, vendor writable' => [
+      'root not writable, vendor writable, nested web root' => [
+        $non_writable_permission,
         $non_writable_permission,
         $writable_permission,
+        'web',
         [
-          ValidationResult::createError([$root_error], $summary),
+          ValidationResult::createError([$drupal_root_error, $project_root_error], $summary),
         ],
       ],
-      'nothing writable' => [
+      'nothing writable, nested web root' => [
         $non_writable_permission,
         $non_writable_permission,
+        $non_writable_permission,
+        'web',
         [
-          ValidationResult::createError([$root_error, $vendor_error], $summary),
+          ValidationResult::createError([$drupal_root_error, $project_root_error, $vendor_error], $summary),
+        ],
+      ],
+      'root and vendor are writable, non-nested web root' => [
+        $writable_permission,
+        $writable_permission,
+        $writable_permission,
+        '',
+        [],
+      ],
+      'root writable, vendor not writable, non-nested web root' => [
+        $writable_permission,
+        $writable_permission,
+        $non_writable_permission,
+        '',
+        [
+          ValidationResult::createError([$vendor_error], $summary),
+        ],
+      ],
+      'root not writable, vendor writable, non-nested web root' => [
+        $non_writable_permission,
+        $non_writable_permission,
+        $writable_permission,
+        '',
+        [
+          ValidationResult::createError([$project_root_error], $summary),
+        ],
+      ],
+      'nothing writable, non-nested web root' => [
+        $non_writable_permission,
+        $non_writable_permission,
+        $non_writable_permission,
+        '',
+        [
+          ValidationResult::createError([$project_root_error, $vendor_error], $summary),
         ],
       ],
     ];
@@ -73,20 +116,20 @@ class WritableFileSystemValidatorTest extends PackageManagerKernelTestBase {
    *
    * @param int $root_permissions
    *   The file permissions for the root folder.
+   * @param int $webroot_permissions
+   *   The file permissions for the web root folder.
    * @param int $vendor_permissions
    *   The file permissions for the vendor folder.
-   * @param array $expected_results
+   * @param string $webroot_relative_directory
+   *   The web root path, relative to the project root, or an empty string if
+   *   the web root and project root are the same.
+   * @param \Drupal\package_manager\ValidationResult[] $expected_results
    *   The expected validation results.
    *
    * @dataProvider providerWritable
    */
-  public function testWritable(int $root_permissions, int $vendor_permissions, array $expected_results): void {
-    $path_locator = $this->container->get(PathLocator::class);
-
-    // We need to set the vendor directory's permissions first because, in the
-    // test project, it's located inside the project root.
-    $this->assertTrue(chmod($path_locator->getVendorDirectory(), $vendor_permissions));
-    $this->assertTrue(chmod($path_locator->getProjectRoot(), $root_permissions));
+  public function testWritable(int $root_permissions, int $webroot_permissions, int $vendor_permissions, string $webroot_relative_directory, array $expected_results): void {
+    $this->setUpPermissions($root_permissions, $webroot_permissions, $vendor_permissions, $webroot_relative_directory);
 
     $this->assertStatusCheckResults($expected_results);
     $this->assertResults($expected_results, PreCreateEvent::class);
@@ -97,29 +140,66 @@ class WritableFileSystemValidatorTest extends PackageManagerKernelTestBase {
    *
    * @param int $root_permissions
    *   The file permissions for the root folder.
+   * @param int $webroot_permissions
+   *   The file permissions for the web root folder.
    * @param int $vendor_permissions
    *   The file permissions for the vendor folder.
-   * @param array $expected_results
+   * @param string $webroot_relative_directory
+   *   The web root path, relative to the project root, or an empty string if
+   *   the web root and project root are the same.
+   * @param \Drupal\package_manager\ValidationResult[] $expected_results
    *   The expected validation results.
    *
    * @dataProvider providerWritable
    */
-  public function testWritableDuringPreApply(int $root_permissions, int $vendor_permissions, array $expected_results): void {
+  public function testWritableDuringPreApply(int $root_permissions, int $webroot_permissions, int $vendor_permissions, string $webroot_relative_directory, array $expected_results): void {
     $this->addEventTestListener(
-      function () use ($root_permissions, $vendor_permissions): void {
-        $path_locator = $this->container->get(PathLocator::class);
-
-        // We need to set the vendor directory's permissions first because, in
-        // the test project, it's located inside the project root.
-        $this->assertTrue(chmod($path_locator->getVendorDirectory(), $vendor_permissions));
-        $this->assertTrue(chmod($path_locator->getProjectRoot(), $root_permissions));
+      function () use ($webroot_permissions, $root_permissions, $vendor_permissions, $webroot_relative_directory): void {
+        $this->setUpPermissions($root_permissions, $webroot_permissions, $vendor_permissions, $webroot_relative_directory);
 
         // During pre-apply we don't care whether the staging root is writable.
+        /** @var \Drupal\package_manager_bypass\MockPathLocator $path_locator */
+        $path_locator = $this->container->get(PathLocator::class);
         $this->assertTrue(chmod($path_locator->getStagingRoot(), 0550));
       },
     );
 
     $this->assertResults($expected_results, PreApplyEvent::class);
+  }
+
+  /**
+   * Sets the permissions of the test project's directories.
+   *
+   * @param int $root_permissions
+   *   The permissions for the project root.
+   * @param int $web_root_permissions
+   *   The permissions for the web root.
+   * @param int $vendor_permissions
+   *   The permissions for the vendor directory.
+   * @param string $relative_web_root
+   *   The web root path, relative to the project root, or an empty string if
+   *   the web root and project root are the same.
+   */
+  private function setUpPermissions(int $root_permissions, int $web_root_permissions, int $vendor_permissions, string $relative_web_root): void {
+    /** @var \Drupal\package_manager_bypass\MockPathLocator $path_locator */
+    $path_locator = $this->container->get(PathLocator::class);
+
+    $project_root = $web_root = $path_locator->getProjectRoot();
+    $vendor_dir = $path_locator->getVendorDirectory();
+    // Create the web root directory, if necessary.
+    if (!empty($relative_web_root)) {
+      $web_root .= '/' . $relative_web_root;
+      mkdir($web_root);
+    }
+    $path_locator->setPaths($project_root, $vendor_dir, $relative_web_root, $path_locator->getStagingRoot());
+
+    // We need to set the vendor directory and web root permissions first
+    // because they may be located inside the project root.
+    $this->assertTrue(chmod($vendor_dir, $vendor_permissions));
+    if ($project_root !== $web_root) {
+      $this->assertTrue(chmod($web_root, $web_root_permissions));
+    }
+    $this->assertTrue(chmod($project_root, $root_permissions));
   }
 
   /**

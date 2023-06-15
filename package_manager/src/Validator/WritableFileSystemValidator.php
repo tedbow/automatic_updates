@@ -41,14 +41,23 @@ class WritableFileSystemValidator implements EventSubscriberInterface {
   public function validate(PreOperationStageEvent $event): void {
     $messages = [];
 
-    $drupal_root = $this->pathLocator->getProjectRoot();
+    $project_root = $this->pathLocator->getProjectRoot();
+
+    // If the web (Drupal) root and project root are different, validate the
+    // web root separately.
     $web_root = $this->pathLocator->getWebRoot();
     if ($web_root) {
-      $drupal_root .= DIRECTORY_SEPARATOR . $web_root;
+      $drupal_root = $project_root . DIRECTORY_SEPARATOR . $web_root;
+      if (!is_writable($drupal_root)) {
+        $messages[] = $this->t('The Drupal directory "@dir" is not writable.', [
+          '@dir' => $drupal_root,
+        ]);
+      }
     }
-    if (!is_writable($drupal_root)) {
-      $messages[] = $this->t('The Drupal directory "@dir" is not writable.', [
-        '@dir' => $drupal_root,
+
+    if (!is_writable($project_root)) {
+      $messages[] = $this->t('The project root directory "@dir" is not writable.', [
+        '@dir' => $project_root,
       ]);
     }
 
