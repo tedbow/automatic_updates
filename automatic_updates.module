@@ -8,9 +8,7 @@
 declare(strict_types = 1);
 
 use Drupal\automatic_updates\BatchProcessor;
-use Drupal\automatic_updates\CronUpdateStage;
 use Drupal\automatic_updates\UnattendedUpdateStageBase;
-use Drupal\automatic_updates\Validator\AutomatedCronDisabledValidator;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Routing\RouteMatchInterface;
 use Drupal\automatic_updates\Validation\AdminStatusCheckMessages;

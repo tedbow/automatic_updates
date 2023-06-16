@@ -95,18 +95,21 @@ class CronUpdateStage extends UnattendedUpdateStageBase implements CronInterface
     // @todo Why isn't it in vendor bin?
     $drush_path = $this->pathLocator->getVendorDirectory() . '/drush/drush/drush';
     $phpBinaryFinder = new PhpExecutableFinder();
-    $process = new Process([$phpBinaryFinder->find(), $drush_path, 'auto-update', '&']);
-    $process->setWorkingDirectory($this->pathLocator->getProjectRoot() . DIRECTORY_SEPARATOR . $this->pathLocator->getWebRoot());
-    //$process->disableOutput();
+    $process = Process::fromShellCommandline($phpBinaryFinder->find() . " $drush_path auto-update &");
+    // Temporary command to test detached process still runs after response.
+    // $process = Process::fromShellCommandline($phpBinaryFinder->find() . " $drush_path test-process &");
+    $process->setworkingdirectory($this->pathLocator->getProjectRoot() . DIRECTORY_SEPARATOR . $this->pathLocator->getWebRoot());
+    $process->disableOutput();
     $process->setTimeout(0);
     try {
-      $process->mustRun();
+      Debugger::debugOutput('before start:' . $process->getCommandLine());
+      $process->start();
+      Debugger::debugOutput('after start');
     }
     catch (\Throwable $throwable) {
       // @todo Does this work 10.0.x?
       Error::logException($this->logger, $throwable, 'Could not perform background update.');
       Debugger::debugOutput($process->getErrorOutput(), 'process error');
-      Debugger::debugOutput($process->getOutput(), 'process output');
       Debugger::debugOutput($throwable, 'Could not perform background update.');
     }
   }

@@ -61,7 +61,7 @@ final class AutomaticUpdatesCommands extends DrushCommands {
    */
   public function autoUpdate(array $options = ['post-apply' => FALSE, 'stage-id' => NULL, 'from-version' => NULL, 'to-version' => NULL]) {
     $io = $this->io();
-    Debugger::debugOutput('Drush command started');
+    Debugger::debugOutput('Drush command started2');
 
     // The second half of the update process (post-apply etc.) is done by this
     // exact same command, with some additional flags, in a separate process to
@@ -114,6 +114,24 @@ final class AutomaticUpdatesCommands extends DrushCommands {
       $last_results = $this->statusChecker->getResults();
       $this->statusCheckMailer->sendFailureNotifications($last_results, $this->statusChecker->run()->getResults());
     }
+  }
+
+  /**
+   * Temp test to confirm the detached process would still run.
+   *
+   * @usage test-process
+   *   Automatically updates Drupal core, if any updates are available.
+   *
+   * @command test-process
+   */
+  public function testProcess() {
+    $c = 0;
+    while ($c < 10) {
+      $c++;
+      Debugger::debugOutput("output $c");
+      sleep(1);
+    }
+    Debugger::debugOutput("output done");
   }
 
 }

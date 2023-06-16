@@ -6,7 +6,6 @@ namespace Drupal\Tests\automatic_updates\Build;
 
 use Behat\Mink\Element\DocumentElement;
 use Drupal\automatic_updates\DrushUpdateStage;
-use Drupal\automatic_updates\CronUpdateStage;
 use Drupal\automatic_updates\UpdateStage;
 use Drupal\package_manager\Event\PostApplyEvent;
 use Drupal\package_manager\Event\PostCreateEvent;
@@ -17,7 +16,6 @@ use Drupal\package_manager\Event\PreCreateEvent;
 use Drupal\package_manager\Event\PreDestroyEvent;
 use Drupal\package_manager\Event\PreRequireEvent;
 use Drupal\Tests\WebAssert;
-use Drush\Drush;
 use Symfony\Component\Process\Process;
 
 /**

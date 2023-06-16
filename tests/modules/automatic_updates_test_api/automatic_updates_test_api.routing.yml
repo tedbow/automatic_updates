@@ -12,3 +12,12 @@ automatic_updates_test_api.finish:
     _controller: 'Drupal\automatic_updates_test_api\ApiController::finish'
   requirements:
     _access: 'TRUE'
+automatic_updates_test_api.test:
+  path: '/tester-drush'
+  defaults:
+    _controller: 'Drupal\automatic_updates_test_api\ApiController::testProcess'
+  requirements:
+    _access: 'TRUE'
+  options:
+    _maintenance_access: TRUE
+    no_cache: TRUE
