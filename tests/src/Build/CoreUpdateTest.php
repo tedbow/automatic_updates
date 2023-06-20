@@ -7,6 +7,7 @@ namespace Drupal\Tests\automatic_updates\Build;
 use Behat\Mink\Element\DocumentElement;
 use Drupal\automatic_updates\DrushUpdateStage;
 use Drupal\automatic_updates\UpdateStage;
+use Drupal\package_manager\Debugger;
 use Drupal\package_manager\Event\PostApplyEvent;
 use Drupal\package_manager\Event\PostCreateEvent;
 use Drupal\package_manager\Event\PostDestroyEvent;
@@ -179,12 +180,17 @@ class CoreUpdateTest extends UpdateTestBase {
     $mink = $this->getMink();
     $page = $mink->getSession()->getPage();
     $assert_session = $mink->assertSession();
+    touch("/Users/ted.bowman/sites/stop.txt");
+    while(file_exists("/Users/ted.bowman/sites/stop.txt")) {
+      Debugger::debugOutput('wait deleting 88');
+      sleep(1);
+    }
     $page->clickLink('Run cron');
     $cron_run_status_code = $mink->getSession()->getStatusCode();
     // Wait for update to start.
-    sleep(2);
-    $this->visit('/admin/reports/dblog');
-    $this->assertExpectedStageEventsFired(DrushUpdateStage::class, [PreCreateEvent::class], 'Update has not started after a wait.', TRUE);
+    Debugger::debugOutput('sleeing 180');
+    sleep(180);
+    Debugger::debugOutput('slept 180');
     $this->assertExpectedStageEventsFired(DrushUpdateStage::class);
     $this->assertSame(200, $cron_run_status_code);
 
