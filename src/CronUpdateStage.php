@@ -104,6 +104,11 @@ class CronUpdateStage extends UnattendedUpdateStageBase implements CronInterface
     try {
       Debugger::debugOutput('before start:' . $process->getCommandLine());
       $process->start();
+      sleep(1);
+      $wait_till = time() + 5;
+      // Wait for the process to start.
+      while (is_null($process->getPid()) && $wait_till > time()) {
+      }
       Debugger::debugOutput('after start');
     }
     catch (\Throwable $throwable) {
