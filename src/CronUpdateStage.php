@@ -107,8 +107,7 @@ class CronUpdateStage extends UnattendedUpdateStageBase implements CronInterface
       Debugger::debugOutput('after start');
     }
     catch (\Throwable $throwable) {
-      // @todo Does this work 10.0.x?
-      Error::logException($this->logger, $throwable, 'Could not perform background update.');
+      watchdog_exception('automatic_updates', $throwable, 'affff');
       Debugger::debugOutput($process->getErrorOutput(), 'process error');
       Debugger::debugOutput($throwable, 'Could not perform background update.');
     }
