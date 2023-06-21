@@ -40,7 +40,7 @@ abstract class PreOperationStageEvent extends StageEvent {
   }
 
   /**
-   * Adds error information to the event.
+   * Convenience method, adds error validation result.
    *
    * @param \Drupal\Core\StringTranslation\TranslatableMarkup[] $messages
    *   The error messages.
@@ -49,11 +49,11 @@ abstract class PreOperationStageEvent extends StageEvent {
    *   is more than one message.
    */
   public function addError(array $messages, ?TranslatableMarkup $summary = NULL): void {
-    $this->results[] = ValidationResult::createError(array_values($messages), $summary);
+    $this->addResult(ValidationResult::createError(array_values($messages), $summary));
   }
 
   /**
-   * Adds an error from a throwable.
+   * Convenience method, adds an error validation result from a throwable.
    *
    * @param \Throwable $throwable
    *   The throwable.
@@ -61,7 +61,24 @@ abstract class PreOperationStageEvent extends StageEvent {
    *   (optional) The summary of error messages.
    */
   public function addErrorFromThrowable(\Throwable $throwable, ?TranslatableMarkup $summary = NULL): void {
-    $this->results[] = ValidationResult::createErrorFromThrowable($throwable, $summary);
+    $this->addResult(ValidationResult::createErrorFromThrowable($throwable, $summary));
+  }
+
+  /**
+   * Adds a validation result to the event.
+   *
+   * @param \Drupal\package_manager\ValidationResult $result
+   *   The validation result to add.
+   *
+   * @throws \InvalidArgumentException
+   *   Thrown if the validation result is not an error.
+   */
+  public function addResult(ValidationResult $result): void {
+    // Only errors are allowed for this event.
+    if ($result->severity !== SystemManager::REQUIREMENT_ERROR) {
+      throw new \InvalidArgumentException('Only errors are allowed.');
+    }
+    $this->results[] = $result;
   }
 
   /**

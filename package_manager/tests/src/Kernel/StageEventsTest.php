@@ -15,6 +15,7 @@ use Drupal\package_manager\Event\PreDestroyEvent;
 use Drupal\package_manager\Event\PreOperationStageEvent;
 use Drupal\package_manager\Event\PreRequireEvent;
 use Drupal\package_manager\Event\StageEvent;
+use Drupal\package_manager\Event\StatusCheckEvent;
 use Drupal\package_manager\Exception\StageEventException;
 use Drupal\package_manager\ValidationResult;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
@@ -153,6 +154,35 @@ class StageEventsTest extends PackageManagerKernelTestBase implements EventSubsc
 
     $result = ValidationResult::createError($error_messages);
     $this->assertResults([$result], $event_class);
+  }
+
+  /**
+   * Tests adding validation results to events.
+   */
+  public function testAddResult(): void {
+    $stage = $this->createStage();
+
+    $error = ValidationResult::createError([
+      t('Burn, baby, burn!'),
+    ]);
+    $warning = ValidationResult::createWarning([
+      t('The path ahead is scary...'),
+    ]);
+
+    // Status check events can accept both errors and warnings.
+    $event = new StatusCheckEvent($stage, NULL);
+    $event->addResult($error);
+    $event->addResult($warning);
+    $this->assertSame([$error, $warning], $event->getResults());
+
+    // Other stage events will accept errors, but throw an exception if you try
+    // to add a warning.
+    $event = new PreCreateEvent($stage, []);
+    $event->addResult($error);
+    $this->assertSame([$error], $event->getResults());
+    $this->expectException(\InvalidArgumentException::class);
+    $this->expectExceptionMessage('Only errors are allowed.');
+    $event->addResult($warning);
   }
 
   /**

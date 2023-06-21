@@ -15,7 +15,6 @@ use Drupal\package_manager\Event\PreDestroyEvent;
 use Drupal\package_manager\Event\PreRequireEvent;
 use Drupal\package_manager\Event\StageEvent;
 use Drupal\package_manager\Event\StatusCheckEvent;
-use Drupal\system\SystemManager;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 /**
@@ -144,12 +143,7 @@ class TestSubscriber implements EventSubscriberInterface {
     }
     /** @var \Drupal\package_manager\ValidationResult $result */
     foreach ($results as $result) {
-      if ($result->severity === SystemManager::REQUIREMENT_ERROR) {
-        $event->addError($result->messages, $result->summary);
-      }
-      else {
-        $event->addWarning($result->messages, $result->summary);
-      }
+      $event->addResult($result);
     }
   }
 

@@ -20,7 +20,6 @@ use Drupal\package_manager\PathLocator;
 use Drupal\package_manager\StatusCheckTrait;
 use Drupal\package_manager\Validator\DiskSpaceValidator;
 use Drupal\package_manager\StageBase;
-use Drupal\system\SystemManager;
 use Drupal\Tests\package_manager\Traits\AssertPreconditionsTrait;
 use Drupal\Tests\package_manager\Traits\FixtureManipulatorTrait;
 use Drupal\Tests\package_manager\Traits\FixtureUtilityTrait;
@@ -456,12 +455,7 @@ abstract class PackageManagerKernelTestBase extends KernelTestBase {
    */
   protected function createStageEventExceptionFromResults(array $expected_results, string $event_class = PreCreateEvent::class, StageBase $stage = NULL): StageEventException {
     $event = new $event_class($stage ?? $this->createStage(), []);
-
-    foreach ($expected_results as $result) {
-      if ($result->severity === SystemManager::REQUIREMENT_ERROR) {
-        $event->addError($result->messages, $result->summary);
-      }
-    }
+    array_walk($expected_results, $event->addResult(...));
     return new StageEventException($event);
   }
 

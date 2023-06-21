@@ -201,7 +201,7 @@ final class AdminStatusCheckMessages implements ContainerInjectionInterface {
     // multiple messages. This is because, on regular admin pages, we merely
     // want to alert users that problems exist, but not burden them with the
     // details. They can get those on the status report and updater form.
-    $format_result = function (ValidationResult $result): TranslatableMarkup {
+    $format_result = function (ValidationResult $result): TranslatableMarkup|string {
       $messages = $result->messages;
       return $result->summary ?: reset($messages);
     };
