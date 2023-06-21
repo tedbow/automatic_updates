@@ -463,6 +463,33 @@ END;
   }
 
   /**
+   * Tests that a success email is sent even when post-apply tasks fail.
+   */
+  public function testEmailSentIfPostApplyFails(): void {
+    $this->getStageFixtureManipulator()->setCorePackageVersion('9.8.1');
+
+    $exception = new \Exception('Error during running post-apply tasks!');
+    TestSubscriber1::setException($exception, PostApplyEvent::class);
+
+    $this->container->get('cron')->run();
+    $this->assertRegularCronRun(FALSE);
+    $this->assertTrue($this->logger->hasRecord($exception->getMessage(), (string) RfcLogLevel::ERROR));
+
+    // Ensure we sent a success email to all recipients, even though post-apply
+    // tasks failed.
+    $expected_body = <<<END
+Congratulations!
+
+Drupal core was automatically updated from 9.8.0 to 9.8.1.
+
+This e-mail was sent by the Automatic Updates module. Unattended updates are not yet fully supported.
+
+If you are using this feature in production, it is strongly recommended for you to visit your site and ensure that everything still looks good.
+END;
+    $this->assertMessagesSent("Drupal core was successfully updated", $expected_body);
+  }
+
+  /**
    * Tests that regular cron runs if not update is available.
    */
   public function testNoUpdateAvailable(): void {

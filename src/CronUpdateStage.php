@@ -355,28 +355,28 @@ class CronUpdateStage extends UpdateStage implements CronInterface {
 
     $this->claim($stage_id);
 
+    $this->logger->info(
+      'Drupal core has been updated from %previous_version to %target_version',
+      [
+        '%previous_version' => $installed_version,
+        '%target_version' => $target_version,
+      ]
+    );
+
+    // Send notifications about the successful update.
+    $mail_params = [
+      'previous_version' => $installed_version,
+      'updated_version' => $target_version,
+    ];
+    foreach ($this->statusCheckMailer->getRecipients() as $recipient => $langcode) {
+      $this->mailManager->mail('automatic_updates', 'cron_successful', $recipient, $langcode, $mail_params);
+    }
+
     // Run post-apply tasks in their own try-catch block so that, if anything
     // raises an exception, we'll log it and proceed to destroy the stage as
     // soon as possible (which is also what we do in ::performUpdate()).
     try {
       $this->postApply();
-
-      $this->logger->info(
-        'Drupal core has been updated from %previous_version to %target_version',
-        [
-          '%previous_version' => $installed_version,
-          '%target_version' => $target_version,
-        ]
-      );
-
-      // Send notifications about the successful update.
-      $mail_params = [
-        'previous_version' => $installed_version,
-        'updated_version' => $target_version,
-      ];
-      foreach ($this->statusCheckMailer->getRecipients() as $recipient => $langcode) {
-        $this->mailManager->mail('automatic_updates', 'cron_successful', $recipient, $langcode, $mail_params);
-      }
     }
     catch (\Throwable $e) {
       $this->logger->error($e->getMessage());
