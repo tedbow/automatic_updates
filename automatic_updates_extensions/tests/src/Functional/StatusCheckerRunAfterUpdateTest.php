@@ -93,7 +93,7 @@ class StatusCheckerRunAfterUpdateTest extends UpdaterFormTestBase {
       $this->drupalGet('/admin');
       // Confirm that the status checks were run and the new error is displayed.
       $assert_session->statusMessageContains('Error before continue.', 'error');
-      $assert_session->statusMessageContains(static::$errorsExplanation, 'error');
+      $assert_session->statusMessageContains('Your site does not pass some readiness checks for automatic updates. It cannot be automatically updated until further action is performed.', 'error');
       $assert_session->pageTextNotContains('Your site has not recently run an update readiness check. Rerun readiness checks now.');
     }
   }

@@ -19,6 +19,11 @@ abstract class UpdaterFormTestBase extends UpdaterFormFunctionalTestBase {
   use FormTestTrait;
 
   /**
+   * {@inheritdoc}
+   */
+  protected static $errorsExplanation = 'Your site cannot be automatically updated until further action is performed.';
+
+  /**
    * The path of the test project's active directory.
    *
    * @var string

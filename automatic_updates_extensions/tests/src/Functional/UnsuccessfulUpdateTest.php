@@ -36,7 +36,8 @@ class UnsuccessfulUpdateTest extends UpdaterFormTestBase {
     $assert->pageTextNotContains(static::$errorsExplanation);
     $assert->elementExists('css', '#edit-projects-semver-test')->check();
     $assert->checkboxChecked('edit-projects-semver-test');
-    $assert->pageTextContains(static::$warningsExplanation);
+    // No explanation is given for warnings.
+    $assert->pageTextNotContains(static::$warningsExplanation);
     $assert->buttonExists('Update');
 
     // Add warnings from StatusCheckEvent.

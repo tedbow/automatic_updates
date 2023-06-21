@@ -41,6 +41,7 @@ abstract class UpdaterFormTestBase extends AutomaticUpdatesFunctionalTestBase {
    * {@inheritdoc}
    */
   protected function setUp(): void {
+    static::$errorsExplanation = 'Your site cannot be automatically updated until further action is performed.';
     parent::setUp();
 
     $this->setReleaseMetadata(__DIR__ . '/../../../package_manager/tests/fixtures/release-history/drupal.9.8.1-security.xml');
