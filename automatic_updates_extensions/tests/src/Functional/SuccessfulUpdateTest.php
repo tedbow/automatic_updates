@@ -96,7 +96,7 @@ class SuccessfulUpdateTest extends UpdaterFormTestBase {
     // Ensure that a list of pending database updates is visible, along with a
     // short explanation, in the warning messages.
     $warning_messages = $assert_session->elementExists('xpath', '//div[@data-drupal-messages]//div[@aria-label="Warning message"]');
-    $this->assertStringContainsString('Possible database updates have been detected in the following extensions.<ul><li>System</li><li>Automatic Updates Theme With Updates</li></ul>', $warning_messages->getHtml());
+    $this->assertStringContainsString('Database updates have been detected in the following extensions.<ul><li>System</li><li>Automatic Updates Theme With Updates</li></ul>', $warning_messages->getHtml());
 
     $page->pressButton('Continue');
     $this->checkForMetaRefresh();

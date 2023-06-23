@@ -4,6 +4,7 @@ declare(strict_types = 1);
 
 namespace Drupal\package_manager\Validator;
 
+use Drupal\Component\Assertion\Inspector;
 use Drupal\Core\Extension\Extension;
 use Drupal\Core\Extension\ModuleExtensionList;
 use Drupal\Core\Extension\ThemeExtensionList;
@@ -54,7 +55,7 @@ class StagedDBUpdateValidator implements EventSubscriberInterface {
     $extensions_with_updates = $this->getExtensionsWithDatabaseUpdates($stage_dir);
     if ($extensions_with_updates) {
       $extensions_with_updates = array_map($this->t(...), $extensions_with_updates);
-      $event->addWarning($extensions_with_updates, $this->t('Possible database updates have been detected in the following extensions.'));
+      $event->addWarning($extensions_with_updates, $this->t('Database updates have been detected in the following extensions.'));
     }
   }
 
@@ -90,14 +91,14 @@ class StagedDBUpdateValidator implements EventSubscriberInterface {
       $stage_dir .= DIRECTORY_SEPARATOR . $web_root;
     }
 
-    $active_hashes = $this->getHashes($active_dir, $extension);
-    $staged_hashes = $this->getHashes($stage_dir, $extension);
+    $active_functions = $this->getUpdateFunctions($active_dir, $extension);
+    $staged_functions = $this->getUpdateFunctions($stage_dir, $extension);
 
-    return $active_hashes !== $staged_hashes;
+    return (bool) array_diff($staged_functions, $active_functions);
   }
 
   /**
-   * Returns hashes of the .install and .post-update.php files for a module.
+   * Returns a list of all update functions for a module.
    *
    * @param string $root_dir
    *   The root directory of the Drupal code base.
@@ -105,25 +106,72 @@ class StagedDBUpdateValidator implements EventSubscriberInterface {
    *   The module to check.
    *
    * @return string[]
-   *   The hashes of the module's .install and .post_update.php files, in that
-   *   order, if they exist. The array will be keyed by file extension.
+   *   The names of the update functions in the module's .install and
+   *   .post_update.php files.
    */
-  protected function getHashes(string $root_dir, Extension $extension): array {
+  protected function getUpdateFunctions(string $root_dir, Extension $extension): array {
+    $name = $extension->getName();
+
     $path = implode(DIRECTORY_SEPARATOR, [
       $root_dir,
       $extension->getPath(),
-      $extension->getName(),
+      $name,
     ]);
-    $hashes = [];
+    $function_names = [];
 
-    foreach (['.install', '.post_update.php'] as $suffix) {
+    $patterns = [
+      '.install' => '/^' . $name . '_update_[0-9]+$/i',
+      '.post_update.php' => '/^' . $name . '_post_update_.+$/i',
+    ];
+    foreach ($patterns as $suffix => $pattern) {
       $file = $path . $suffix;
 
-      if (file_exists($file)) {
-        $hashes[$suffix] = hash_file('sha256', $file);
+      if (!file_exists($file)) {
+        continue;
+      }
+      // Parse the file and scan for named functions which match the pattern.
+      $code = file_get_contents($file);
+      $tokens = token_get_all($code);
+
+      for ($i = 0; $i < count($tokens); $i++) {
+        $chunk = array_slice($tokens, $i, 3);
+        if ($this->tokensMatchFunctionNamePattern($chunk, $pattern)) {
+          $function_names[] = $chunk[2][1];
+        }
       }
     }
-    return $hashes;
+    return $function_names;
+  }
+
+  /**
+   * Determines if a set of tokens contain a function name matching a pattern.
+   *
+   * @param array[] $tokens
+   *   A set of three tokens, part of a stream returned by token_get_all().
+   * @param string $pattern
+   *   If the tokens declare a named function, a regular expression to test the
+   *   function name against.
+   *
+   * @return bool
+   *   TRUE if the given tokens declare a function whose name matches the given
+   *   pattern; FALSE otherwise.
+   *
+   * @see token_get_all()
+   */
+  private function tokensMatchFunctionNamePattern(array $tokens, string $pattern): bool {
+    if (count($tokens) !== 3 || !Inspector::assertAllStrictArrays($tokens)) {
+      return FALSE;
+    }
+    // A named function declaration will always be a T_FUNCTION (the word
+    // `function`), followed by T_WHITESPACE (or the code would be syntactically
+    // invalid), followed by a T_STRING (the function name). This will ignore
+    // anonymous functions, but match class methods (although class methods are
+    // highly unlikely to match the naming patterns of update hooks).
+    $names = array_map('token_name', array_column($tokens, 0));
+    if ($names === ['T_FUNCTION', 'T_WHITESPACE', 'T_STRING']) {
+      return (bool) preg_match($pattern, $tokens[2][1]);
+    }
+    return FALSE;
   }
 
   /**
@@ -142,7 +190,7 @@ class StagedDBUpdateValidator implements EventSubscriberInterface {
    *   The path of the stage directory.
    *
    * @return \Drupal\Core\StringTranslation\TranslatableMarkup[]
-   *   The names of the extensions that have possible database updates.
+   *   The names of the extensions that have database updates.
    */
   public function getExtensionsWithDatabaseUpdates(string $stage_dir): array {
     $extensions_with_updates = [];

@@ -83,7 +83,7 @@ class StagedDatabaseUpdateTest extends UpdaterFormTestBase {
 
     // Ensure that a list of pending database updates is visible, along with a
     // short explanation, in the warning messages.
-    $possible_update_message = 'Possible database updates have been detected in the following extensions.<ul><li>System</li><li>Automatic Updates Theme With Updates</li></ul>';
+    $possible_update_message = 'Database updates have been detected in the following extensions.<ul><li>System</li><li>Automatic Updates Theme With Updates</li></ul>';
     $warning_messages = $assert_session->elementExists('css', 'div[data-drupal-messages] div[aria-label="Warning message"]');
     $this->assertStringContainsString($possible_update_message, $warning_messages->getHtml());
     if ($maintenance_mode_on === TRUE) {
