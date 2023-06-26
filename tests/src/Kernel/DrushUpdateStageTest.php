@@ -635,11 +635,4 @@ END;
     $this->assertSame($expected_cron_run, $this->container->get('state')->get('common_test.cron') === 'success');
   }
 
-  /**
-   * Performs an update using the drush update stage directly.
-   */
-  protected function performDrushUpdate(): void {
-    $this->container->get(DrushUpdateStage::class)->performUpdate();
-  }
-
 }

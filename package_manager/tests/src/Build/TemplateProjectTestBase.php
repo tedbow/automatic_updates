@@ -596,7 +596,6 @@ END;
     $page = $this->getMink()->getSession()->getPage();
     $this->visit('/admin/reports/dblog');
     $assert_session->statusCodeEquals(200);
-    file_put_contents("/Users/ted.bowman/sites/dblog.html", $page->getContent());
     $page->selectFieldOption('Type', 'package_manager_test_event_logger');
     $page->pressButton('Filter');
     $assert_session->statusCodeEquals(200);
