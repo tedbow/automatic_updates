@@ -7,7 +7,6 @@ namespace Drupal\Tests\automatic_updates\Build;
 use Behat\Mink\Element\DocumentElement;
 use Drupal\automatic_updates\DrushUpdateStage;
 use Drupal\automatic_updates\UpdateStage;
-use Drupal\package_manager\Debugger;
 use Drupal\package_manager\Event\PostApplyEvent;
 use Drupal\package_manager\Event\PostCreateEvent;
 use Drupal\package_manager\Event\PostDestroyEvent;
@@ -206,7 +205,6 @@ class CoreUpdateTest extends UpdateTestBase {
     // @todo Make a dynamic wait system in this test because the update will
     //   still be happening in the background.
     sleep(120);
-    Debugger::debugOutput('slept 180');
     $this->assertExpectedStageEventsFired(DrushUpdateStage::class);
     $this->assertSame(200, $cron_run_status_code);
 

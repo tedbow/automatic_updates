@@ -8,7 +8,6 @@ use Drupal\automatic_updates\DrushUpdateStage;
 use Drupal\automatic_updates\StatusCheckMailer;
 use Drupal\automatic_updates\Validation\StatusChecker;
 use Drupal\Core\Config\ConfigFactoryInterface;
-use Drupal\package_manager\Debugger;
 use Drush\Commands\DrushCommands;
 
 /**
@@ -61,7 +60,6 @@ final class AutomaticUpdatesCommands extends DrushCommands {
    */
   public function autoUpdate(array $options = ['post-apply' => FALSE, 'stage-id' => NULL, 'from-version' => NULL, 'to-version' => NULL]) {
     $io = $this->io();
-    Debugger::debugOutput('Drush command started2');
 
     // The second half of the update process (post-apply etc.) is done by this
     // exact same command, with some additional flags, in a separate process to
@@ -81,20 +79,16 @@ final class AutomaticUpdatesCommands extends DrushCommands {
     else {
       if ($this->stage->getMode() === DrushUpdateStage::DISABLED) {
         $io->error('Automatic updates are disabled.');
-        Debugger::debugOutput('disabled');
         return;
       }
 
       $release = $this->stage->getTargetRelease();
       if ($release) {
-        Debugger::debugOutput('release -' . $release->getVersion());
         $message = sprintf('Updating Drupal core to %s. This may take a while.', $release->getVersion());
         $io->info($message);
         $this->stage->performUpdate();
-        Debugger::debugOutput('peformed');
       }
       else {
-        Debugger::debugOutput('no update');
         $io->info("There is no Drupal core update available.");
         $this->runStatusChecks();
       }
@@ -128,10 +122,8 @@ final class AutomaticUpdatesCommands extends DrushCommands {
     $c = 0;
     while ($c < 10) {
       $c++;
-      Debugger::debugOutput("output $c");
       sleep(1);
     }
-    Debugger::debugOutput("output done");
   }
 
 }

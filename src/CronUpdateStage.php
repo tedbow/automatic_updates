@@ -10,7 +10,6 @@ use Drupal\Core\CronInterface;
 use Drupal\Core\File\FileSystemInterface;
 use Drupal\Core\TempStore\SharedTempStoreFactory;
 use Drupal\package_manager\ComposerInspector;
-use Drupal\package_manager\Debugger;
 use Drupal\package_manager\FailureMarker;
 use Drupal\package_manager\PathLocator;
 use PhpTuf\ComposerStager\Domain\Core\Beginner\BeginnerInterface;
@@ -104,16 +103,11 @@ class CronUpdateStage extends UnattendedUpdateStageBase implements CronInterface
 
     $cwd .= DIRECTORY_SEPARATOR . 'sites/default';
     $drush_check->setWorkingDirectory($cwd);
-    Debugger::debugOutput('drush check cmd: ' . $drush_check->getCommandLine());
 
     try {
       $drush_check->mustRun();
-      Debugger::debugOutput("drush check: " . $drush_check->getOutput());
     }
     catch (\Throwable $throwable) {
-      Debugger::debugOutput('drush check throw: ' . $throwable->getMessage() . " - " . $throwable->getTraceAsString());
-      Debugger::debugOutput("drush check error: " . $drush_check->getErrorOutput());
-      Debugger::debugOutput("drush check error output: " . $drush_check->getOutput());
     }
 
     $process = Process::fromShellCommandline($phpBinaryFinder->find() . " $drush_path auto-update &");
@@ -124,21 +118,16 @@ class CronUpdateStage extends UnattendedUpdateStageBase implements CronInterface
     $process->setTimeout(0);
 
     try {
-      Debugger::debugOutput('before start:' . $process->getCommandLine());
       $process->start();
-      Debugger::debugOutput('Process out: ' . $process->getOutput());
       sleep(1);
       $wait_till = time() + 5;
       //Wait for the process to start.
       while (is_null($process->getPid()) && $wait_till > time()) {
       }
-      Debugger::debugOutput('after start');
     }
 
     catch (\Throwable $throwable) {
       watchdog_exception('automatic_updates', $throwable, 'affff');
-      Debugger::debugOutput($process->getErrorOutput(), 'process error');
-      Debugger::debugOutput($throwable, 'Could not perform background update.');
     }
   }
 
@@ -165,7 +154,6 @@ class CronUpdateStage extends UnattendedUpdateStageBase implements CronInterface
     // Always run the cron service before we trigger the update terminal
     // command.
     $inner_success = $this->inner->run();
-    Debugger::debugOutput('ran cron');
 
     // If we are configured to run updates via the web, and we're actually being
     // accessed via the web (i.e., anything that isn't the command line), go
@@ -174,12 +162,10 @@ class CronUpdateStage extends UnattendedUpdateStageBase implements CronInterface
     if ($this->getMode() !== self::DISABLED && $method === 'web') {
       $lock = \Drupal::lock();
       if ($lock->acquire('cron', 30)) {
-        Debugger::debugOutput('running terminal');
         $this->runTerminalUpdateCommand();
         $lock->release('cron');
       }
       else {
-        Debugger::debugOutput('cannot acquire cron lock');
       }
     }
     return $inner_success;

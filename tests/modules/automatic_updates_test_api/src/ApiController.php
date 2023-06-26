@@ -4,7 +4,6 @@ declare(strict_types = 1);
 
 namespace Drupal\automatic_updates_test_api;
 
-use Drupal\package_manager\Debugger;
 use Drupal\package_manager_test_api\ApiController as PackageManagerApiController;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\HttpFoundation\Request;
@@ -54,9 +53,6 @@ class ApiController extends PackageManagerApiController {
     catch (\Throwable $throwable) {
       // @todo Does this work 10.0.x?
       watchdog_exception('auto_updates', $throwable, 'Could not perform background update.');
-      Debugger::debugOutput($process->getErrorOutput(), 'process error');
-      Debugger::debugOutput($process->getOutput(), 'process output');
-      Debugger::debugOutput($throwable, 'Could not perform background update.');
     }
     return [
       '#type' => 'markup',
