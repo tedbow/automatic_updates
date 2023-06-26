@@ -193,22 +193,19 @@ class CoreUpdateTest extends UpdateTestBase {
    */
   public function testCron(string $template): void {
     $this->createTestProject($template);
-    $this->runComposer('composer require drush/drush', 'project');
+    $output = $this->runComposer('COMPOSER_MIRROR_PATH_REPOS=1 composer require drush/drush', 'project');
+    $this->assertStringNotContainsString('Symlinking', $output);
 
     $this->visit('/admin/reports/status');
     $mink = $this->getMink();
     $page = $mink->getSession()->getPage();
     $assert_session = $mink->assertSession();
-    touch("/Users/ted.bowman/sites/stop.txt");
-    while(file_exists("/Users/ted.bowman/sites/stop.txt")) {
-      Debugger::debugOutput('wait deleting 88');
-      sleep(1);
-    }
     $page->clickLink('Run cron');
     $cron_run_status_code = $mink->getSession()->getStatusCode();
     // Wait for update to start.
-    Debugger::debugOutput('sleeing 180');
-    sleep(180);
+    // @todo Make a dynamic wait system in this test because the update will
+    //   still be happening in the background.
+    sleep(120);
     Debugger::debugOutput('slept 180');
     $this->assertExpectedStageEventsFired(DrushUpdateStage::class);
     $this->assertSame(200, $cron_run_status_code);
