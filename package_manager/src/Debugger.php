@@ -18,7 +18,7 @@ class Debugger {
     if ($label) {
       $value = "$label: $value";
     }
-    file_put_contents("/Users/ted.bowman/sites/debug2.txt", "\n$value", $flags);
+    //file_put_contents("/Users/ted.bowman/sites/debug2.txt", "\n$value", $flags);
   }
 
 }
