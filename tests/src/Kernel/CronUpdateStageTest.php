@@ -39,11 +39,12 @@ class CronUpdateStageTest extends AutomaticUpdatesKernelTestBase {
     $cron_stage = $this->container->get(CronUpdateStage::class);
     $cron_stage->throwExceptionOnTerminalCommand = TRUE;
     $this->assertRegularCronRun(FALSE);
+
     try {
       $this->container->get('cron')->run();
       $this->fail('Expected cron exception');
-
     }
+
     catch (\Exception $e) {
       $this->assertSame('Simulated process failure.', $e->getMessage());
     }

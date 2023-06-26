@@ -19,6 +19,7 @@ class UpdateWarningTest extends UpdaterFormTestBase {
    * Tests that update can be completed even if a status check throws a warning.
    */
   public function testContinueOnWarning(): void {
+    $this->getStageFixtureManipulator()->setCorePackageVersion('9.8.1');
     $session = $this->getSession();
 
     $this->mockActiveCoreVersion('9.8.0');

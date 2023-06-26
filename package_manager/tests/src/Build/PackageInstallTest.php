@@ -42,6 +42,8 @@ class PackageInstallTest extends TemplateProjectTestBase {
       ]
     );
     $this->assertArrayHasKey('web/modules/contrib/alpha/composer.json', $file_contents);
+    $this->assertRequestedChangesWereLogged(['Install drupal/alpha 1.0.0']);
+    $this->assertAppliedChangesWereLogged(['Installed drupal/alpha 1.0.0']);
   }
 
 }

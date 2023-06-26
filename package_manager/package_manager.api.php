@@ -248,12 +248,15 @@
  * cycle from proceeding any further. If a validator encounters an exception,
  * it can use ::addErrorFromThrowable() instead of ::addError(). During status
  * checks, validators can call ::addWarning() for less severe problems --
- * warnings will NOT stop the stage life cycle.
+ * warnings will NOT stop the stage life cycle. All three are convenience
+ * methods for equivalent \Drupal\package_manager\ValidationResult constructors,
+ * which can then be added to the event using ::addResult().
  *
  * @see \Drupal\package_manager\ValidationResult
  * @see \Drupal\package_manager\Event\PreOperationStageEvent::addError()
  * @see \Drupal\package_manager\Event\PreOperationStageEvent::addErrorFromThrowable()
  * @see \Drupal\package_manager\Event\StatusCheckEvent::addWarning()
+ * @see \Drupal\package_manager\Event\PreOperationStageEvent::addResult()
  *
  * @section sec_excluded_paths Excluding files from stage operations
  * Certain files are never copied into the stage directory because they are

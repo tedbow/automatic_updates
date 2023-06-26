@@ -6,7 +6,6 @@ namespace Drupal\automatic_updates\Form;
 
 use Drupal\Core\Form\FormBase;
 use Drupal\Core\Render\RendererInterface;
-use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\package_manager\StatusCheckTrait;
 use Drupal\package_manager\ValidationResult;
 use Drupal\system\SystemManager;
@@ -23,27 +22,6 @@ abstract class UpdateFormBase extends FormBase {
   use StatusCheckTrait;
 
   /**
-   * Gets a message, based on severity, when status checks fail.
-   *
-   * @param int $severity
-   *   The severity. Should be one of the SystemManager::REQUIREMENT_*
-   *   constants.
-   *
-   * @return \Drupal\Core\StringTranslation\TranslatableMarkup
-   *   The message.
-   *
-   * @see \Drupal\system\SystemManager::REQUIREMENT_ERROR
-   * @see \Drupal\system\SystemManager::REQUIREMENT_WARNING
-   */
-  protected function getFailureMessageForSeverity(int $severity): TranslatableMarkup {
-    return $severity === SystemManager::REQUIREMENT_WARNING ?
-      // @todo Link "automatic updates" to documentation in
-      //   https://www.drupal.org/node/3168405.
-      $this->t('Your site does not pass some readiness checks for automatic updates. Depending on the nature of the failures, it might affect the eligibility for automatic updates.') :
-      $this->t('Your site does not pass some readiness checks for automatic updates. It cannot be automatically updated until further action is performed.');
-  }
-
-  /**
    * Adds a set of validation results to the messages.
    *
    * @param \Drupal\package_manager\ValidationResult[] $results
@@ -58,11 +36,14 @@ abstract class UpdateFormBase extends FormBase {
       return;
     }
 
-    // Format the results as a single item list prefixed by a preamble message.
+    // Format the results as a single item list prefixed by a preamble message
+    // if necessary.
     $build = [
       '#theme' => 'item_list__automatic_updates_validation_results',
-      '#prefix' => $this->getFailureMessageForSeverity($severity),
     ];
+    if ($severity === SystemManager::REQUIREMENT_ERROR) {
+      $build['#prefix'] = $this->t('Your site cannot be automatically updated until further action is performed.');
+    }
     foreach ($results as $result) {
       $messages = $result->messages;
 

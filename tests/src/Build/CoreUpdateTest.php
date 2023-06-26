@@ -141,6 +141,16 @@ class CoreUpdateTest extends UpdateTestBase {
 
     $this->assertStringContainsString("const VERSION = '9.8.1';", $file_contents['web/core/lib/Drupal.php']);
     $this->assertUpdateSuccessful('9.8.1');
+
+    $this->assertRequestedChangesWereLogged([
+      'Update drupal/core-dev from 9.8.0 to 9.8.1',
+      'Update drupal/core-recommended from 9.8.0 to 9.8.1',
+    ]);
+    $this->assertAppliedChangesWereLogged([
+      'Updated drupal/core from 9.8.0 to 9.8.1',
+      'Updated drupal/core-dev from 9.8.0 to 9.8.1',
+      'Updated drupal/core-recommended from 9.8.0 to 9.8.1',
+    ]);
   }
 
   /**
@@ -162,6 +172,15 @@ class CoreUpdateTest extends UpdateTestBase {
     $assert_session->pageTextNotContains('There is a security update available for your version of Drupal.');
     $this->assertExpectedStageEventsFired(UpdateStage::class);
     $this->assertUpdateSuccessful('9.8.1');
+    $this->assertRequestedChangesWereLogged([
+      'Update drupal/core-dev from 9.8.0 to 9.8.1',
+      'Update drupal/core-recommended from 9.8.0 to 9.8.1',
+    ]);
+    $this->assertAppliedChangesWereLogged([
+      'Updated drupal/core from 9.8.0 to 9.8.1',
+      'Updated drupal/core-dev from 9.8.0 to 9.8.1',
+      'Updated drupal/core-recommended from 9.8.0 to 9.8.1',
+    ]);
   }
 
   /**
@@ -395,7 +414,8 @@ class CoreUpdateTest extends UpdateTestBase {
   public function testDrushUpdate(): void {
     $this->createTestProject('RecommendedProject');
 
-    $this->runComposer('composer require drush/drush', 'project');
+    $output = $this->runComposer('COMPOSER_MIRROR_PATH_REPOS=1 composer require drush/drush', 'project');
+    $this->assertStringNotContainsString('Symlinking', $output);
 
     $dir = $this->getWorkspaceDirectory() . '/project';
     $command = [

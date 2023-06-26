@@ -9,6 +9,7 @@ use Drupal\automatic_updates\UpdateStage;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\package_manager\ComposerInspector;
 use Drupal\package_manager\Event\PreApplyEvent;
+use Drupal\package_manager\Event\StatusCheckEvent;
 use Drupal\package_manager\PathLocator;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
@@ -40,12 +41,12 @@ final class RequestedUpdateValidator implements EventSubscriberInterface {
   /**
    * Validates that requested packages have been updated to the right version.
    *
-   * @param \Drupal\package_manager\Event\PreApplyEvent $event
+   * @param \Drupal\package_manager\Event\PreApplyEvent|\Drupal\package_manager\Event\StatusCheckEvent $event
    *   The pre-apply event.
    */
-  public function checkRequestedStagedVersion(PreApplyEvent $event): void {
+  public function checkRequestedStagedVersion(PreApplyEvent|StatusCheckEvent $event): void {
     $stage = $event->stage;
-    if (!($stage instanceof UpdateStage)) {
+    if (!($stage instanceof UpdateStage) || !$stage->stageDirectoryExists()) {
       return;
     }
     $requested_package_versions = $stage->getPackageVersions();
@@ -96,6 +97,7 @@ final class RequestedUpdateValidator implements EventSubscriberInterface {
    * {@inheritdoc}
    */
   public static function getSubscribedEvents(): array {
+    $events[StatusCheckEvent::class][] = ['checkRequestedStagedVersion'];
     $events[PreApplyEvent::class][] = ['checkRequestedStagedVersion'];
     return $events;
   }

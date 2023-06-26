@@ -223,7 +223,7 @@ abstract class StageBase implements LoggerAwareInterface {
    * @return mixed
    *   The metadata value, or NULL if it is not set.
    */
-  protected function getMetadata(string $key) {
+  public function getMetadata(string $key) {
     $this->checkOwnership();
 
     $metadata = $this->tempStore->get(static::TEMPSTORE_METADATA_KEY) ?: [];
@@ -237,11 +237,13 @@ abstract class StageBase implements LoggerAwareInterface {
    * claimed by its owner, or created during the current request.
    *
    * @param string $key
-   *   The key under which to store the metadata.
+   *   The key under which to store the metadata. To prevent conflicts, it is
+   *   strongly recommended that this be prefixed with the name of the module
+   *   storing the data.
    * @param mixed $data
    *   The metadata to store.
    */
-  protected function setMetadata(string $key, $data): void {
+  public function setMetadata(string $key, $data): void {
     $this->checkOwnership();
 
     $metadata = $this->tempStore->get(static::TEMPSTORE_METADATA_KEY);

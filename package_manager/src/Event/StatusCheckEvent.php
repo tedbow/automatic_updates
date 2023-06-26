@@ -60,7 +60,15 @@ final class StatusCheckEvent extends PreOperationStageEvent {
    *   message, optional otherwise.
    */
   public function addWarning(array $messages, ?TranslatableMarkup $summary = NULL): void {
-    $this->results[] = ValidationResult::createWarning($messages, $summary);
+    $this->addResult(ValidationResult::createWarning($messages, $summary));
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function addResult(ValidationResult $result): void {
+    // Override the parent to also allow warnings.
+    $this->results[] = $result;
   }
 
 }

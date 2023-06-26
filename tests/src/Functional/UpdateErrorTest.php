@@ -77,6 +77,21 @@ class UpdateErrorTest extends UpdaterFormTestBase {
   }
 
   /**
+   * Tests that throwables will be displayed properly.
+   */
+  public function testDisplayErrorCreatedFromThrowable(): void {
+    $throwable = new \Exception("I want to be the pirate king because he's the freest man alive.");
+    $result = ValidationResult::createErrorFromThrowable($throwable);
+    TestSubscriber1::setTestResult([$result], StatusCheckEvent::class);
+    $this->drupalGet('/admin/reports/status');
+    $this->clickLink('Rerun readiness checks');
+    $this->drupalGet('/admin');
+    $assert_session = $this->assertSession();
+    $assert_session->statusCodeEquals(200);
+    $assert_session->statusMessageContains($throwable->getMessage(), 'error');
+  }
+
+  /**
    * Tests the display of errors and warnings during status check.
    */
   public function testStatusCheckErrorDisplay(): void {

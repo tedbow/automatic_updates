@@ -41,13 +41,13 @@ class RequestedUpdateValidatorTest extends AutomaticUpdatesKernelTestBase {
     $this->container->get('module_installer')->install(['automatic_updates']);
 
     $stage = $this->container->get(UpdateStage::class);
-    $stage->begin(['drupal' => '9.8.1']);
-    $stage->stage();
-
     $expected_results = [
       ValidationResult::createError([t("The requested update to 'drupal/core-recommended' to version '9.8.1' does not match the actual staged update to '9.8.2'.")]),
       ValidationResult::createError([t("The requested update to 'drupal/core-dev' to version '9.8.1' was not performed.")]),
     ];
+    $stage->begin(['drupal' => '9.8.1']);
+    $this->assertStatusCheckResults($expected_results, $stage);
+    $stage->stage();
     try {
       $stage->apply();
       $this->fail('Expecting an exception.');
@@ -72,12 +72,20 @@ class RequestedUpdateValidatorTest extends AutomaticUpdatesKernelTestBase {
     ]);
     $this->container->get('module_installer')->install(['automatic_updates']);
 
+    $expected_results = [
+      ValidationResult::createError([t('No updates detected in the staging area.')]),
+    ];
     $stage = $this->container->get(UpdateStage::class);
     $stage->begin(['drupal' => '9.8.1']);
+    $this->assertStatusCheckResults($expected_results, $stage);
     $stage->stage();
-    $this->expectException(StageEventException::class);
-    $this->expectExceptionMessage('No updates detected in the staging area.');
-    $stage->apply();
+    try {
+      $stage->apply();
+      $this->fail('Expecting an exception.');
+    }
+    catch (StageEventException $exception) {
+      $this->assertExpectedResultsFromException($expected_results, $exception);
+    }
   }
 
 }
