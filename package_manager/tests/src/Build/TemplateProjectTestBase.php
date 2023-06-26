@@ -279,6 +279,9 @@ END;
       $this->runComposer('composer require --no-update drupal/core-vendor-hardening:*', $template_dir);
     }
 
+    // Do not run development Composer plugin.
+    $this->runComposer("composer config allow-plugins.dealerdirect/phpcodesniffer-composer-installer false", $template_dir);
+
     // Create the test project, defining its repository as part of the
     // `composer create-project` command.
     $repository = [
@@ -437,12 +440,21 @@ END;
           ],
           'autoload' => $package_info['autoload'] ?? [],
         ];
+        if (isset($package_info['require'])) {
+          unset(
+            $package_info['require']['symfony/polyfill-php72'],
+            $package_info['require']['symfony/polyfill-php73'],
+            $package_info['require']['symfony/polyfill-php74'],
+            $package_info['require']['symfony/polyfill-php80'],
+            $package_info['require']['symfony/polyfill-php81'],
+          );
+          $packages[$name][$version]['require'] = $package_info['require'];
+        }
         // Composer plugins are loaded and activated as early as possible, and
         // they must have a `class` key defined in their `extra` section, along
         // with a dependency on `composer-plugin-api` (plus any other real
         // runtime dependencies).
         if ($packages[$name][$version]['type'] === 'composer-plugin') {
-          $packages[$name][$version]['require'] = $package_info['require'] ?? [];
           $packages[$name][$version]['extra'] = $package_info['extra'] ?? [];
         }
       }

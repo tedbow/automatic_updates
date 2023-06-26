@@ -402,7 +402,8 @@ class CoreUpdateTest extends UpdateTestBase {
   public function testDrushUpdate(): void {
     $this->createTestProject('RecommendedProject');
 
-    $this->runComposer('composer require drush/drush', 'project');
+    $output = $this->runComposer('COMPOSER_MIRROR_PATH_REPOS=1 composer require drush/drush', 'project');
+    $this->assertStringNotContainsString('Symlinking', $output);
 
     $dir = $this->getWorkspaceDirectory() . '/project';
     $command = [
