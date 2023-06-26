@@ -78,6 +78,33 @@ class DrushUpdateStageTest extends AutomaticUpdatesKernelTestBase {
   }
 
   /**
+   * Tests that a success email is sent even when post-apply tasks fail.
+   */
+  public function testEmailSentIfPostApplyFails(): void {
+    $this->getStageFixtureManipulator()->setCorePackageVersion('9.8.1');
+
+    $exception = new \Exception('Error during running post-apply tasks!');
+    TestSubscriber1::setException($exception, PostApplyEvent::class);
+
+    $this->performDrushUpdate();
+    $this->assertRegularCronRun(FALSE);
+    $this->assertTrue($this->logger->hasRecord($exception->getMessage(), (string) RfcLogLevel::ERROR));
+
+    // Ensure we sent a success email to all recipients, even though post-apply
+    // tasks failed.
+    $expected_body = <<<END
+Congratulations!
+
+Drupal core was automatically updated from 9.8.0 to 9.8.1.
+
+This e-mail was sent by the Automatic Updates module. Unattended updates are not yet fully supported.
+
+If you are using this feature in production, it is strongly recommended for you to visit your site and ensure that everything still looks good.
+END;
+    $this->assertMessagesSent("Drupal core was successfully updated", $expected_body);
+  }
+
+  /**
    * {@inheritdoc}
    */
   public function register(ContainerBuilder $container) {
@@ -98,7 +125,6 @@ class DrushUpdateStageTest extends AutomaticUpdatesKernelTestBase {
    */
   public function providerUpdateStageCalled(): array {
     $fixture_dir = __DIR__ . '/../../../package_manager/tests/fixtures/release-history';
-
     return [
       'disabled, normal release' => [
         UnattendedUpdateStageBase::DISABLED,
@@ -291,6 +317,7 @@ class DrushUpdateStageTest extends AutomaticUpdatesKernelTestBase {
       $error = ValidationResult::createError([
         t('Destroy the stage!'),
       ]);
+
       $exception = $this->createStageEventExceptionFromResults([$error], $event_class, $stage);
       TestSubscriber1::setTestResult($exception->event->getResults(), $event_class);
     }
@@ -299,6 +326,7 @@ class DrushUpdateStageTest extends AutomaticUpdatesKernelTestBase {
       $exception = new $exception_class('Destroy the stage!');
       TestSubscriber1::setException($exception, $event_class);
     }
+
     $expected_log_message = $exception->getMessage();
 
     // Ensure that nothing has been logged yet.
@@ -321,6 +349,7 @@ class DrushUpdateStageTest extends AutomaticUpdatesKernelTestBase {
       }
       return FALSE;
     };
+
     $logged_by_cron = $cron_logger->hasRecordThatPasses($predicate, (string) RfcLogLevel::ERROR);
 
     // If a pre-destroy event flags a validation error, it's handled like any
@@ -356,6 +385,7 @@ class DrushUpdateStageTest extends AutomaticUpdatesKernelTestBase {
       $this->assertSame($event->stage->getStageDirectory(), $cron_stage_dir);
       $this->assertDirectoryExists($cron_stage_dir);
     };
+
     $this->addEventTestListener($listener, PostRequireEvent::class);
 
     $this->performDrushUpdate();
@@ -363,9 +393,9 @@ class DrushUpdateStageTest extends AutomaticUpdatesKernelTestBase {
     $this->assertNotEquals($original_stage_directory, $cron_stage_dir);
     $this->assertDirectoryDoesNotExist($cron_stage_dir);
     $this->assertTrue($this->logger->hasRecord('The existing stage was not in the process of being applied, so it was destroyed to allow updating the site to a secure version during cron.', (string) RfcLogLevel::NOTICE));
-
     $stage2 = $this->createStage();
     $stage2->create();
+
     $this->expectException(StageOwnershipException::class);
     $this->expectExceptionMessage('The existing stage was not in the process of being applied, so it was destroyed to allow updating the site to a secure version during cron.');
     $stage->claim($stage_id);
