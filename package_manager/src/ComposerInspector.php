@@ -279,7 +279,7 @@ class ComposerInspector implements LoggerAwareInterface {
    * @throws \UnexpectedValueException
    *   Thrown if the Composer version cannot be determined.
    */
-  private function getVersion(): string {
+  public function getVersion(): string {
     $this->runner->run(['--format=json'], $this->processCallback->reset());
     $data = $this->processCallback->parseJsonOutput();
     if (isset($data['application']['name'])

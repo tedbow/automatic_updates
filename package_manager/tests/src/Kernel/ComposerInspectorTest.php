@@ -20,6 +20,7 @@ use PhpTuf\ComposerStager\Domain\Service\Precondition\ComposerIsAvailableInterfa
 use PhpTuf\ComposerStager\Domain\Service\ProcessRunner\ComposerRunnerInterface;
 use PhpTuf\ComposerStager\Infrastructure\Factory\Path\PathFactory;
 use Prophecy\Argument;
+use Prophecy\Prophecy\ObjectProphecy;
 
 /**
  * @coversDefaultClass \Drupal\package_manager\ComposerInspector
@@ -240,29 +241,12 @@ class ComposerInspectorTest extends PackageManagerKernelTestBase {
    *   [null, "Unable to determine Composer version"]
    */
   public function testVersionCheck(?string $reported_version, ?string $expected_message): void {
-    $runner = $this->prophesize(ComposerRunnerInterface::class);
+    $runner = $this->mockComposerRunner($reported_version);
 
-    $pass_version_to_output_callback = function (array $arguments_passed_to_runner) use ($reported_version): void {
-      $command_output = Json::encode([
-        'application' => [
-          'name' => 'Composer',
-          'version' => $reported_version,
-        ],
-      ]);
-
-      /** @var \Drupal\package_manager\ProcessOutputCallback $callback */
-      [, $callback] = $arguments_passed_to_runner;
-      $callback($callback::OUT, $command_output);
-    };
-
-    // We expect the runner to be called with two arguments: an array whose
-    // first item is `--format=json`, and an output callback. The result of the
-    // version check is statically cached, so the runner should only be called
-    // once, even though we call validate() twice in this test.
-    $runner->run(
-      Argument::withEntry(0, '--format=json'),
-      Argument::type(ProcessOutputCallback::class)
-    )->will($pass_version_to_output_callback)->shouldBeCalledOnce();
+    // The result of the version check is statically cached, so the runner
+    // should only be called once, even though we call validate() twice in this
+    // test.
+    $runner->getMethodProphecies('run')[0]->shouldBeCalledOnce();
     // The runner should be called with `validate` as the first argument, but
     // it won't affect the outcome of this test.
     $runner->run(Argument::withEntry(0, 'validate'));
@@ -292,6 +276,22 @@ class ComposerInspectorTest extends PackageManagerKernelTestBase {
       $this->expectExceptionMessage($expected_message);
     }
     $inspector->validate($project_root);
+  }
+
+  /**
+   * @covers ::getVersion
+   *
+   * @testWith ["2.5.6"]
+   *   [null]
+   */
+  public function testGetVersion(?string $reported_version): void {
+    $this->container->set(ComposerRunnerInterface::class, $this->mockComposerRunner($reported_version)->reveal());
+
+    if (empty($reported_version)) {
+      $this->expectException(\UnexpectedValueException::class);
+      $this->expectExceptionMessage('Unable to determine Composer version');
+    }
+    $this->assertSame($reported_version, $this->container->get(ComposerInspector::class)->getVersion());
   }
 
   /**
@@ -472,6 +472,41 @@ class ComposerInspectorTest extends PackageManagerKernelTestBase {
       ksort($actual_value);
     }
     $this->assertSame($expected_value, $actual_value);
+  }
+
+  /**
+   * Mocks the Composer runner service to return a particular version string.
+   *
+   * @param string|null $reported_version
+   *   The version number that `composer --format=json` should return.
+   *
+   * @return \Prophecy\Prophecy\ObjectProphecy
+   *   The configurator for the mocked Composer runner.
+   */
+  private function mockComposerRunner(?string $reported_version): ObjectProphecy {
+    $runner = $this->prophesize(ComposerRunnerInterface::class);
+
+    $pass_version_to_output_callback = function (array $arguments_passed_to_runner) use ($reported_version): void {
+      $command_output = Json::encode([
+        'application' => [
+          'name' => 'Composer',
+          'version' => $reported_version,
+        ],
+      ]);
+
+      /** @var \Drupal\package_manager\ProcessOutputCallback $callback */
+      [, $callback] = $arguments_passed_to_runner;
+      $callback($callback::OUT, $command_output);
+    };
+
+    // We expect the runner to be called with two arguments: an array whose
+    // first item is `--format=json`, and an output callback.
+    $runner->run(
+      Argument::withEntry(0, '--format=json'),
+      Argument::type(ProcessOutputCallback::class)
+    )->will($pass_version_to_output_callback);
+
+    return $runner;
   }
 
 }
