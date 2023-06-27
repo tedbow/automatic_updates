@@ -201,7 +201,6 @@ class CoreUpdateTest extends UpdateTestBase {
     $assert_session = $mink->assertSession();
     $page->clickLink('Run cron');
     $cron_run_status_code = $mink->getSession()->getStatusCode();
-    // Wait for update to start.
     // @todo Make a dynamic wait system in this test because the update will
     //   still be happening in the background.
     sleep(120);
@@ -252,6 +251,8 @@ class CoreUpdateTest extends UpdateTestBase {
    */
   public function testStageDestroyedIfNotAvailable(): void {
     $this->createTestProject('RecommendedProject');
+    $output = $this->runComposer('COMPOSER_MIRROR_PATH_REPOS=1 composer require drush/drush', 'project');
+    $this->assertStringNotContainsString('Symlinking', $output);
     $mink = $this->getMink();
     $session = $mink->getSession();
     $page = $session->getPage();
@@ -260,6 +261,9 @@ class CoreUpdateTest extends UpdateTestBase {
     $this->visit('/admin/reports/status');
     $assert_session->pageTextContains('Your site is ready for automatic updates.');
     $page->clickLink('Run cron');
+    // @todo Make a dynamic wait system in this test because the update will
+    //   still be happening in the background.
+    sleep(120);
     $this->assertUpdateSuccessful('9.8.1');
   }
 
