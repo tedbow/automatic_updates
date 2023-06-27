@@ -84,11 +84,13 @@ abstract class AutomaticUpdatesKernelTestBase extends PackageManagerKernelTestBa
    */
   public function register(ContainerBuilder $container) {
     parent::register($container);
-    $drush_stage_definition = new Definition(TestDrushUpdateStage::class);
-    $drush_stage_definition->setAutowired(TRUE);
-    $drush_stage_definition->addMethodCall('setLogger', [new Reference('logger.channel.automatic_updates')]);
-    $drush_stage_definition->setPublic(TRUE);
-    $container->addDefinitions([DrushUpdateStage::class => $drush_stage_definition]);
+    if ($container->has('logger.channel.automatic_updates')) {
+      $drush_stage_definition = new Definition(TestDrushUpdateStage::class);
+      $drush_stage_definition->setAutowired(TRUE);
+      $drush_stage_definition->addMethodCall('setLogger', [new Reference('logger.channel.automatic_updates')]);
+      $drush_stage_definition->setPublic(TRUE);
+      $container->addDefinitions([DrushUpdateStage::class => $drush_stage_definition]);
+    }
 
     // Use the test-only implementations of the regular and cron update stages.
     $overrides = [
