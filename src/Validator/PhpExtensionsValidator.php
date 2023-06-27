@@ -4,10 +4,10 @@ declare(strict_types = 1);
 
 namespace Drupal\automatic_updates\Validator;
 
+use Drupal\automatic_updates\UnattendedUpdateStageBase;
 use Drupal\package_manager\Event\PreApplyEvent;
 use Drupal\package_manager\Event\StatusCheckEvent;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
-use Drupal\automatic_updates\CronUpdateStage;
 use Drupal\package_manager\Event\PreCreateEvent;
 use Drupal\package_manager\Event\PreOperationStageEvent;
 use Drupal\package_manager\Validator\PhpExtensionsValidator as PackageManagerPhpExtensionsValidator;
@@ -26,7 +26,7 @@ final class PhpExtensionsValidator extends PackageManagerPhpExtensionsValidator 
    * {@inheritdoc}
    */
   public function validateXdebug(PreOperationStageEvent $event): void {
-    if ($this->isExtensionLoaded('xdebug') && $event->stage instanceof CronUpdateStage) {
+    if ($this->isExtensionLoaded('xdebug') && $event->stage instanceof UnattendedUpdateStageBase) {
       $event->addError([$this->t("Unattended updates are not allowed while Xdebug is enabled. You cannot receive updates, including security updates, until it is disabled.")]);
     }
     elseif ($event instanceof StatusCheckEvent) {
