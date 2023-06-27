@@ -107,7 +107,7 @@ class StatusCheckFailureEmailTest extends AutomaticUpdatesKernelTestBase {
 
     $error = $this->createValidationResult(SystemManager::REQUIREMENT_ERROR);
     TestSubscriber1::setTestResult([$error], StatusCheckEvent::class);
-    $this->runCron();
+    $this->performDrushUpdate();
 
     $url = Url::fromRoute('system.status')
       ->setAbsolute()
@@ -123,13 +123,13 @@ END;
     $recipient_count = count($this->emailRecipients);
     $this->assertGreaterThan(0, $recipient_count);
     $sent_messages_count = $recipient_count;
-    $this->runCron();
+    $this->performDrushUpdate();
     $this->assertSentMessagesCount($sent_messages_count);
 
     // If a different error is flagged, they should be e-mailed again.
     $error = $this->createValidationResult(SystemManager::REQUIREMENT_ERROR);
     TestSubscriber1::setTestResult([$error], StatusCheckEvent::class);
-    $this->runCron();
+    $this->performDrushUpdate();
     $sent_messages_count += $recipient_count;
     $this->assertSentMessagesCount($sent_messages_count);
 
@@ -141,28 +141,28 @@ END;
       $this->createValidationResult(SystemManager::REQUIREMENT_WARNING),
     ];
     TestSubscriber1::setTestResult($results, StatusCheckEvent::class);
-    $this->runCron();
+    $this->performDrushUpdate();
     $this->assertSentMessagesCount($sent_messages_count);
 
     // If only a warning is flagged, they should not be e-mailed again because
     // we ignore warnings by default.
     $warning = $this->createValidationResult(SystemManager::REQUIREMENT_WARNING);
     TestSubscriber1::setTestResult([$warning], StatusCheckEvent::class);
-    $this->runCron();
+    $this->performDrushUpdate();
     $this->assertSentMessagesCount($sent_messages_count);
 
     // If we stop ignoring warnings, they should be e-mailed again because we
     // clear the stored results if the relevant configuration is changed.
     $config = $this->config('automatic_updates.settings');
     $config->set('status_check_mail', StatusCheckMailer::ALL)->save();
-    $this->runCron();
+    $this->performDrushUpdate();
     $sent_messages_count += $recipient_count;
     $this->assertSentMessagesCount($sent_messages_count);
 
     // If we flag a different warning, they should be e-mailed again.
     $warning = $this->createValidationResult(SystemManager::REQUIREMENT_WARNING);
     TestSubscriber1::setTestResult([$warning], StatusCheckEvent::class);
-    $this->runCron();
+    $this->performDrushUpdate();
     $sent_messages_count += $recipient_count;
     $this->assertSentMessagesCount($sent_messages_count);
 
@@ -173,7 +173,7 @@ END;
       $this->createValidationResult(SystemManager::REQUIREMENT_WARNING),
     ];
     TestSubscriber1::setTestResult($warnings, StatusCheckEvent::class);
-    $this->runCron();
+    $this->performDrushUpdate();
     $sent_messages_count += $recipient_count;
     $this->assertSentMessagesCount($sent_messages_count);
 
@@ -184,7 +184,7 @@ END;
       $this->createValidationResult(SystemManager::REQUIREMENT_ERROR),
     ];
     TestSubscriber1::setTestResult($results, StatusCheckEvent::class);
-    $this->runCron();
+    $this->performDrushUpdate();
     $sent_messages_count += $recipient_count;
     $this->assertSentMessagesCount($sent_messages_count);
 
@@ -193,7 +193,7 @@ END;
     // different order.
     $results = array_reverse($results);
     TestSubscriber1::setTestResult($results, StatusCheckEvent::class);
-    $this->runCron();
+    $this->performDrushUpdate();
     $this->assertSentMessagesCount($sent_messages_count);
 
     // If we disable notifications entirely, they should not be e-mailed even
@@ -201,7 +201,7 @@ END;
     $config->set('status_check_mail', StatusCheckMailer::DISABLED)->save();
     $error = $this->createValidationResult(SystemManager::REQUIREMENT_ERROR);
     TestSubscriber1::setTestResult([$error], StatusCheckEvent::class);
-    $this->runCron();
+    $this->performDrushUpdate();
     $this->assertSentMessagesCount($sent_messages_count);
 
     // If we re-enable notifications and go back to ignoring warnings, they
@@ -209,7 +209,7 @@ END;
     $config->set('status_check_mail', StatusCheckMailer::ERRORS_ONLY)->save();
     $warning = $this->createValidationResult(SystemManager::REQUIREMENT_WARNING);
     TestSubscriber1::setTestResult([$warning], StatusCheckEvent::class);
-    $this->runCron();
+    $this->performDrushUpdate();
     $this->assertSentMessagesCount($sent_messages_count);
 
     // If we disable unattended updates entirely and flag a new error, they
@@ -217,13 +217,13 @@ END;
     $config->set('unattended.level', UnattendedUpdateStageBase::DISABLED)->save();
     $error = $this->createValidationResult(SystemManager::REQUIREMENT_ERROR);
     TestSubscriber1::setTestResult([$error], StatusCheckEvent::class);
-    $this->runCron();
+    $this->performDrushUpdate();
     $this->assertSentMessagesCount($sent_messages_count);
 
     // If we re-enable unattended updates, they should be emailed again, even if
     // the results haven't changed.
     $config->set('unattended.level', UnattendedUpdateStageBase::ALL)->save();
-    $this->runCron();
+    $this->performDrushUpdate();
     $sent_messages_count += $recipient_count;
     $this->assertSentMessagesCount($sent_messages_count);
   }
