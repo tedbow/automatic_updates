@@ -26,8 +26,6 @@ use Symfony\Component\Process\Process;
  */
 class CoreUpdateTest extends UpdateTestBase {
 
-  protected $destroyBuild = FALSE;
-
   /**
    * WebAssert object.
    *
@@ -152,6 +150,9 @@ class CoreUpdateTest extends UpdateTestBase {
     ]);
   }
 
+  /**
+   * Tests updating during cron using the Automated Cron module.
+   */
   public function testAutomatedCron(): void {
     $this->createTestProject('RecommendedProject');
     $output = $this->runComposer('COMPOSER_MIRROR_PATH_REPOS=1 composer require drush/drush', 'project');
