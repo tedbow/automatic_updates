@@ -7,7 +7,9 @@
 
 declare(strict_types = 1);
 
+use Drupal\package_manager\ComposerInspector;
 use Drupal\package_manager\Exception\StageFailureMarkerException;
+use PhpTuf\ComposerStager\Infrastructure\Service\Finder\ExecutableFinderInterface;
 
 /**
  * Implements hook_requirements().
@@ -38,6 +40,34 @@ function package_manager_requirements(string $phase) {
         'severity' => REQUIREMENT_ERROR,
       ];
     }
+  }
+
+  if ($phase !== 'runtime') {
+    return $requirements;
+  }
+  /** @var \PhpTuf\ComposerStager\Infrastructure\Service\Finder\ExecutableFinderInterface $executable_finder */
+  $executable_finder = \Drupal::service(ExecutableFinderInterface::class);
+
+  // Report the Composer version in use, as well as its path.
+  $title = t('Composer version');
+  try {
+    $requirements['package_manager_composer'] = [
+      'title' => $title,
+      'description' => t('@version (<code>@path</code>)', [
+        '@version' => \Drupal::service(ComposerInspector::class)->getVersion(),
+        '@path' => $executable_finder->find('composer'),
+      ]),
+      'severity' => REQUIREMENT_INFO,
+    ];
+  }
+  catch (\Throwable $e) {
+    $requirements['package_manager_composer'] = [
+      'title' => $title,
+      'description' => t('Composer was not found. The error message was: @message', [
+        '@message' => $e->getMessage(),
+      ]),
+      'severity' => REQUIREMENT_ERROR,
+    ];
   }
   return $requirements;
 }
