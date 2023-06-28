@@ -30,11 +30,12 @@ END;
       'automatic_updates_test_api',
     ]);
 
-    // Uninstall Automated Cron, which is not supported by Automatic Updates.
+    // Uninstall Automated Cron because this will run cron updates on most
+    // requests making it difficult to test other forms of updating.
     // Also uninstall Big Pipe, since it may cause page elements to be rendered
     // in the background and replaced with JavaScript, which isn't supported in
     // build tests.
-    // @see \Drupal\automatic_updates\Validator\AutomatedCronDisabledValidator
+    // @see \Drupal\Tests\automatic_updates\Build\CoreUpdateTest::testAutomatedCron
     $page = $this->getMink()->getSession()->getPage();
     $this->visit('/admin/modules/uninstall');
     $page->checkField("uninstall[automated_cron]");

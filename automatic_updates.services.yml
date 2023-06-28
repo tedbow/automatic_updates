@@ -64,9 +64,6 @@ services:
       $lock: '@lock'
     tags:
       - { name: event_subscriber }
-  Drupal\automatic_updates\Validator\AutomatedCronDisabledValidator:
-    tags:
-      - { name: event_subscriber }
   automatic_updates.validator.staged_database_updates:
     class: Drupal\automatic_updates\Validator\StagedDatabaseUpdateValidator
     tags:

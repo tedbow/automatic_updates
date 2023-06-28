@@ -7,6 +7,7 @@ namespace Drupal\automatic_updates_test_api;
 use Drupal\package_manager_test_api\ApiController as PackageManagerApiController;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Process\PhpExecutableFinder;
 use Symfony\Component\Process\Process;
 
@@ -35,6 +36,11 @@ class ApiController extends PackageManagerApiController {
     $this->stage->stage();
     $this->stage->apply();
     return $id;
+  }
+
+  public function resetCron(): Response {
+    \Drupal::state()->delete('system.cron_last');
+    return new Response('cron reset');
   }
 
   public function testProcess(): array {

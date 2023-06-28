@@ -152,6 +152,19 @@ class CoreUpdateTest extends UpdateTestBase {
     ]);
   }
 
+  public function testAutomatedCron(): void {
+    $this->createTestProject('RecommendedProject');
+    $output = $this->runComposer('COMPOSER_MIRROR_PATH_REPOS=1 composer require drush/drush', 'project');
+    $this->assertStringNotContainsString('Symlinking', $output);
+    $this->installModules(['automated_cron']);
+
+    $this->visit('/automatic-updates-test-api/reset-cron');
+    $mink = $this->getMink();
+    $assert_session = $mink->assertSession();
+    $assert_session->pageTextContains('cron reset');
+    $this->assertCronUpdateSuccessful();
+  }
+
   /**
    * Tests an end-to-end core update via the UI.
    */
@@ -198,52 +211,11 @@ class CoreUpdateTest extends UpdateTestBase {
     $this->visit('/admin/reports/status');
     $mink = $this->getMink();
     $page = $mink->getSession()->getPage();
-    $assert_session = $mink->assertSession();
     $page->clickLink('Run cron');
     $cron_run_status_code = $mink->getSession()->getStatusCode();
-    // @todo Make a dynamic wait system in this test because the update will
-    //   still be happening in the background.
-    sleep(120);
-    $this->assertExpectedStageEventsFired(DrushUpdateStage::class);
+
+    $this->assertCronUpdateSuccessful();
     $this->assertSame(200, $cron_run_status_code);
-
-    // There should be log messages, but no errors or warnings should have been
-    // logged by Automatic Updates.
-    // The use of the database log here implies one can only retrieve log
-    // entries through the dblog UI. This seems non-ideal but it is the choice
-    // that requires least custom configuration or custom code. Using the
-    // `syslog` or `syslog_test` module  or the `@RestResource=dblog` plugin for
-    // the `rest` module require more additional code than the inflexible log
-    // querying below.
-    $this->visit('/admin/reports/dblog');
-    $assert_session->pageTextNotContains('No log messages available.');
-    $page->selectFieldOption('Type', 'automatic_updates');
-    $page->selectFieldOption('Severity', 'Emergency', TRUE);
-    $page->selectFieldOption('Severity', 'Alert', TRUE);
-    $page->selectFieldOption('Severity', 'Critical', TRUE);
-    $page->selectFieldOption('Severity', 'Warning', TRUE);
-    $page->pressButton('Filter');
-    $assert_session->pageTextContains('No log messages available.');
-
-    // Ensure that the update occurred.
-    $page->selectFieldOption('Severity', 'Info');
-    $page->pressButton('Filter');
-    // There should be a log entry about the successful update.
-    $log_entry = $assert_session->elementExists('named', ['link', 'Drupal core has been updated from 9.8.0 to 9.8.1']);
-    $this->assertStringContainsString('/admin/reports/dblog/event/', $log_entry->getAttribute('href'));
-    $this->assertUpdateSuccessful('9.8.1');
-    // \Drupal\automatic_updates\Routing\RouteSubscriber::alterRoutes() sets
-    // `_automatic_updates_status_messages: skip` on the route for the path
-    // `/admin/modules/reports/status`, but not on the `/admin/reports` path. So
-    // to test AdminStatusCheckMessages::displayAdminPageMessages(), another
-    // page must be visited. `/admin/reports` was chosen, but it could be
-    // another too.
-    $assert_session->addressEquals('/admin/reports/status');
-    $this->visit('/admin/reports');
-    $assert_session->statusCodeEquals(200);
-    // @see \Drupal\automatic_updates\Validation\AdminStatusCheckMessages::displayAdminPageMessages()
-    $this->webAssert->statusMessageNotExists('error');
-    $this->webAssert->statusMessageNotExists('warning');
   }
 
   /**
@@ -403,6 +375,59 @@ class CoreUpdateTest extends UpdateTestBase {
     $page->pressButton('Update to 9.8.1');
     $this->waitForBatchJob();
     $assert_session->pageTextContains('Ready to update');
+  }
+
+  /**
+   *
+   */
+  protected function assertCronUpdateSuccessful(): void {
+    $mink = $this->getMink();
+    $assert_session = $mink->assertSession();
+    $page = $mink->getSession()->getPage();
+    // @todo Make a dynamic wait system in this test because the update will
+    //   still be happening in the background.
+    sleep(120);
+    $this->assertExpectedStageEventsFired(DrushUpdateStage::class);
+    // There should be log messages, but no errors or warnings should have been
+    // logged by Automatic Updates.
+    // The use of the database log here implies one can only retrieve log
+    // entries through the dblog UI. This seems non-ideal but it is the choice
+    // that requires least custom configuration or custom code. Using the
+    // `syslog` or `syslog_test` module  or the `@RestResource=dblog` plugin for
+    // the `rest` module require more additional code than the inflexible log
+    // querying below.
+    $this->visit('/admin/reports/dblog');
+    $assert_session->pageTextNotContains('No log messages available.');
+    $page->selectFieldOption('Type', 'automatic_updates');
+    $page->selectFieldOption('Severity', 'Emergency', TRUE);
+    $page->selectFieldOption('Severity', 'Alert', TRUE);
+    $page->selectFieldOption('Severity', 'Critical', TRUE);
+    $page->selectFieldOption('Severity', 'Warning', TRUE);
+    $page->pressButton('Filter');
+    $assert_session->pageTextContains('No log messages available.');
+
+    // Ensure that the update occurred.
+    $page->selectFieldOption('Severity', 'Info');
+    $page->pressButton('Filter');
+    // There should be a log entry about the successful update.
+    $log_entry = $assert_session->elementExists('named', [
+      'link',
+      'Drupal core has been updated from 9.8.0 to 9.8.1'
+    ]);
+    $this->assertStringContainsString('/admin/reports/dblog/event/', $log_entry->getAttribute('href'));
+    $this->assertUpdateSuccessful('9.8.1');
+    // \Drupal\automatic_updates\Routing\RouteSubscriber::alterRoutes() sets
+    // `_automatic_updates_status_messages: skip` on the route for the path
+    // `/admin/modules/reports/status`, but not on the `/admin/reports` path. So
+    // to test AdminStatusCheckMessages::displayAdminPageMessages(), another
+    // page must be visited. `/admin/reports` was chosen, but it could be
+    // another too.
+    $assert_session->addressEquals('/admin/reports/status');
+    $this->visit('/admin/reports');
+    $assert_session->statusCodeEquals(200);
+    // @see \Drupal\automatic_updates\Validation\AdminStatusCheckMessages::displayAdminPageMessages()
+    $this->webAssert->statusMessageNotExists('error');
+    $this->webAssert->statusMessageNotExists('warning');
   }
 
   // BEGIN: DELETE FROM CORE MERGE REQUEST

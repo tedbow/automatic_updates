@@ -21,3 +21,12 @@ automatic_updates_test_api.test:
   options:
     _maintenance_access: TRUE
     no_cache: TRUE
+automatic_updates_test_api.reset_cron:
+  path: '/automatic-updates-test-api/reset-cron'
+  defaults:
+    _controller: 'Drupal\automatic_updates_test_api\ApiController::resetCron'
+  requirements:
+    _access: 'TRUE'
+  options:
+    _maintenance_access: TRUE
+    no_cache: TRUE
