@@ -110,20 +110,4 @@ final class AutomaticUpdatesCommands extends DrushCommands {
     }
   }
 
-  /**
-   * Temp test to confirm the detached process would still run.
-   *
-   * @usage test-process
-   *   Automatically updates Drupal core, if any updates are available.
-   *
-   * @command test-process
-   */
-  public function testProcess() {
-    $c = 0;
-    while ($c < 10) {
-      $c++;
-      sleep(1);
-    }
-  }
-
 }

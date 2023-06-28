@@ -90,29 +90,11 @@ class CronUpdateStage extends UnattendedUpdateStageBase implements CronInterface
     //   background updates.
     // @todo Replace drush call with Symfony console command in
     //   https://www.drupal.org/i/3360485
-    // @todo Why isn't it in vendor bin?
+    // @todo Why isn't it in vendor bin in build tests?
     $drush_path = $this->pathLocator->getVendorDirectory() . '/drush/drush/drush';
     $phpBinaryFinder = new PhpExecutableFinder();
-    // Test generic drush output
-    $drush_check = Process::fromShellCommandline($phpBinaryFinder->find() . " $drush_path");
-    $cwd = $this->pathLocator->getProjectRoot();
-
-    if ($web_root = $this->pathLocator->getWebRoot()) {
-      $cwd .= DIRECTORY_SEPARATOR . $web_root;
-    }
-
-    $cwd .= DIRECTORY_SEPARATOR . 'sites/default';
-    $drush_check->setWorkingDirectory($cwd);
-
-    try {
-      $drush_check->mustRun();
-    }
-    catch (\Throwable $throwable) {
-    }
 
     $process = Process::fromShellCommandline($phpBinaryFinder->find() . " $drush_path auto-update &");
-    // Temporary command to test detached process still runs after response.
-    // $process = Process::fromShellCommandline($phpBinaryFinder->find() . " $drush_path test-process &");
     $process->setWorkingDirectory($this->pathLocator->getProjectRoot() . DIRECTORY_SEPARATOR . $this->pathLocator->getWebRoot());
     // $process->disableOutput();
     $process->setTimeout(0);
@@ -164,8 +146,6 @@ class CronUpdateStage extends UnattendedUpdateStageBase implements CronInterface
       if ($lock->acquire('cron', 30)) {
         $this->runTerminalUpdateCommand();
         $lock->release('cron');
-      }
-      else {
       }
     }
     return $inner_success;
