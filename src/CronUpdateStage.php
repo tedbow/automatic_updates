@@ -112,22 +112,22 @@ class CronUpdateStage extends UnattendedUpdateStageBase implements CronInterface
 
     $process = Process::fromShellCommandline($phpBinaryFinder->find() . " $drush_path auto-update &");
     // Temporary command to test detached process still runs after response.
-    //$process = Process::fromShellCommandline($phpBinaryFinder->find() . " $drush_path test-process &");
-    $process->setworkingdirectory($this->pathLocator->getProjectRoot() . DIRECTORY_SEPARATOR . $this->pathLocator->getWebRoot());
-    //$process->disableOutput();
+    // $process = Process::fromShellCommandline($phpBinaryFinder->find() . " $drush_path test-process &");
+    $process->setWorkingDirectory($this->pathLocator->getProjectRoot() . DIRECTORY_SEPARATOR . $this->pathLocator->getWebRoot());
+    // $process->disableOutput();
     $process->setTimeout(0);
 
     try {
       $process->start();
       sleep(1);
       $wait_till = time() + 5;
-      //Wait for the process to start.
+      // Wait for the process to start.
       while (is_null($process->getPid()) && $wait_till > time()) {
       }
     }
 
     catch (\Throwable $throwable) {
-      watchdog_exception('automatic_updates', $throwable, 'affff');
+      watchdog_exception('automatic_updates', $throwable, 'Unable to start background update.');
     }
   }
 

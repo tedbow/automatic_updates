@@ -378,7 +378,7 @@ class CoreUpdateTest extends UpdateTestBase {
   }
 
   /**
-   *
+   * Assert a cron update ran successfully.
    */
   protected function assertCronUpdateSuccessful(): void {
     $mink = $this->getMink();
@@ -412,7 +412,7 @@ class CoreUpdateTest extends UpdateTestBase {
     // There should be a log entry about the successful update.
     $log_entry = $assert_session->elementExists('named', [
       'link',
-      'Drupal core has been updated from 9.8.0 to 9.8.1'
+      'Drupal core has been updated from 9.8.0 to 9.8.1',
     ]);
     $this->assertStringContainsString('/admin/reports/dblog/event/', $log_entry->getAttribute('href'));
     $this->assertUpdateSuccessful('9.8.1');

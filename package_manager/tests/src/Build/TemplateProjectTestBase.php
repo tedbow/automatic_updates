@@ -571,7 +571,7 @@ END;
    *
    * @see \Drupal\package_manager_test_event_logger\EventSubscriber\EventLogSubscriber::logEventInfo
    */
-  protected function assertExpectedStageEventsFired(string $expected_stage_class, ?array $expected_events = NULL, ?string $message = NULL, bool $allow_additional_events = FALSE): void {
+  protected function assertExpectedStageEventsFired(string $expected_stage_class, ?array $expected_events = NULL, ?string $message = NULL): void {
     if ($expected_events === NULL) {
       $expected_events = [
         PreCreateEvent::class,
@@ -613,13 +613,7 @@ END;
     foreach ($expected_events as $event) {
       $expected_titles[] = "package_manager_test_event_logger-start: Event: $event, Stage instance of: $expected_stage_class:package_manager_test_event_logger-end";
     }
-    if (!$allow_additional_events) {
-      $this->assertSame($expected_titles, $actual_titles, $message ?? '');
-    }
-    else {
-      $this->assertEmpty(array_diff($expected_titles, $actual_titles), $message ?? '');
-    }
-
+    $this->assertSame($expected_titles, $actual_titles, $message ?? '');
   }
 
   /**
