@@ -56,6 +56,8 @@ final class CronFrequencyValidator implements EventSubscriberInterface {
   /**
    * CronFrequencyValidator constructor.
    *
+   * @param \Drupal\automatic_updates\CronUpdateRunner $cronUpdateRunner
+   *   The cron update runner service.
    * @param \Drupal\Core\Config\ConfigFactoryInterface $configFactory
    *   The config factory service.
    * @param \Drupal\Core\State\StateInterface $state

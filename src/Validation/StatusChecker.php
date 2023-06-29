@@ -42,6 +42,8 @@ final class StatusChecker implements EventSubscriberInterface {
    *   The event dispatcher service.
    * @param \Drupal\automatic_updates\UpdateStage $updateStage
    *   The update stage service.
+   * @param \Drupal\automatic_updates\DrushUpdateStage $drushUpdateStage
+   *   The drush update stage service.
    * @param \Drupal\automatic_updates\CronUpdateRunner $cronUpdateRunner
    *   The cron update stage service.
    * @param int $resultsTimeToLive
@@ -52,7 +54,7 @@ final class StatusChecker implements EventSubscriberInterface {
     private readonly TimeInterface $time,
     private readonly EventDispatcherInterface $eventDispatcher,
     private readonly UpdateStage $updateStage,
-    private readonly DrushUpdateStage $unattendedUpdateStage,
+    private readonly DrushUpdateStage $drushUpdateStage,
     private readonly CronUpdateRunner $cronUpdateRunner,
     private readonly int $resultsTimeToLive,
   ) {
@@ -72,7 +74,7 @@ final class StatusChecker implements EventSubscriberInterface {
       $stage = $this->updateStage;
     }
     else {
-      $stage = $this->unattendedUpdateStage;
+      $stage = $this->drushUpdateStage;
     }
     $results = $this->runStatusCheck($stage, $this->eventDispatcher);
 

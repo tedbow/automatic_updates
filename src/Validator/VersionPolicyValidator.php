@@ -42,6 +42,8 @@ final class VersionPolicyValidator implements EventSubscriberInterface {
   /**
    * Constructs a VersionPolicyValidator object.
    *
+   * @param \Drupal\automatic_updates\CronUpdateRunner $cronUpdateRunner
+   *   The cron update runner service.
    * @param \Drupal\Core\DependencyInjection\ClassResolverInterface $classResolver
    *   The class resolver service.
    * @param \Drupal\package_manager\PathLocator $pathLocator

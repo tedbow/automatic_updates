@@ -4,6 +4,7 @@ declare(strict_types = 1);
 
 namespace Drupal\automatic_updates\Commands;
 
+use Drupal\automatic_updates\CronUpdateRunner;
 use Drupal\automatic_updates\DrushUpdateStage;
 use Drupal\automatic_updates\StatusCheckMailer;
 use Drupal\automatic_updates\Validation\StatusChecker;
@@ -26,6 +27,8 @@ final class AutomaticUpdatesCommands extends DrushCommands {
   /**
    * Constructs a AutomaticUpdatesCommands object.
    *
+   * @param \Drupal\automatic_updates\CronUpdateRunner $cronUpdateRunner
+   *   The cron update runner service.
    * @param \Drupal\automatic_updates\DrushUpdateStage $stage
    *   The console cron updater service.
    * @param \Drupal\automatic_updates\Validation\StatusChecker $statusChecker
@@ -36,6 +39,7 @@ final class AutomaticUpdatesCommands extends DrushCommands {
    *   The config factory service.
    */
   public function __construct(
+    private readonly CronUpdateRunner $cronUpdateRunner,
     private readonly DrushUpdateStage $stage,
     private readonly StatusChecker $statusChecker,
     private readonly StatusCheckMailer $statusCheckMailer,
@@ -80,7 +84,7 @@ final class AutomaticUpdatesCommands extends DrushCommands {
       $this->runStatusChecks();
     }
     else {
-      if ($this->stage->getMode() === DrushUpdateStage::DISABLED) {
+      if ($this->cronUpdateRunner->getMode() === CronUpdateRunner::DISABLED) {
         $io->error('Automatic updates are disabled.');
         return;
       }

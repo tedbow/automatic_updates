@@ -4,7 +4,6 @@ declare(strict_types = 1);
 
 namespace Drupal\Tests\automatic_updates\Kernel;
 
-use Drupal\automatic_updates\CronUpdateRunner;
 use Drupal\automatic_updates\DrushUpdateStage;
 use Drupal\automatic_updates\ReleaseChooser;
 use Drupal\automatic_updates\UpdateStage;
