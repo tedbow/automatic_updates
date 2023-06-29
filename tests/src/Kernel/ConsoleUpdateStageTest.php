@@ -5,7 +5,7 @@ declare(strict_types = 1);
 namespace Drupal\Tests\automatic_updates\Kernel;
 
 use Drupal\automatic_updates\CronUpdateRunner;
-use Drupal\automatic_updates\DrushUpdateStage;
+use Drupal\automatic_updates\ConsoleUpdateStage;
 use Drupal\automatic_updates_test\EventSubscriber\TestSubscriber1;
 use Drupal\Core\DependencyInjection\ContainerBuilder;
 use Drupal\Core\Logger\RfcLogLevel;
@@ -31,12 +31,12 @@ use ColinODell\PsrTestLogger\TestLogger;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 
 /**
- * @covers \Drupal\automatic_updates\DrushUpdateStage
+ * @covers \Drupal\automatic_updates\ConsoleUpdateStage
  * @covers \automatic_updates_test_cron_form_update_settings_alter
  * @group automatic_updates
  * @internal
  */
-class DrushUpdateStageTest extends AutomaticUpdatesKernelTestBase {
+class ConsoleUpdateStageTest extends AutomaticUpdatesKernelTestBase {
 
   use EmailNotificationsTestTrait;
   use PackageManagerBypassTestTrait;
@@ -85,7 +85,7 @@ class DrushUpdateStageTest extends AutomaticUpdatesKernelTestBase {
     $exception = new \Exception('Error during running post-apply tasks!');
     TestSubscriber1::setException($exception, PostApplyEvent::class);
 
-    $this->performDrushUpdate();
+    $this->performConsoleUpdate();
     $this->assertRegularCronRun(FALSE);
     $this->assertTrue($this->logger->hasRecord($exception->getMessage(), (string) RfcLogLevel::ERROR));
 
@@ -197,7 +197,7 @@ END;
     $this->assertCount(0, $this->container->get('package_manager.beginner')->getInvocationArguments());
     // Run cron and ensure that Package Manager's services were called or
     // bypassed depending on configuration.
-    $this->performDrushUpdate();
+    $this->performConsoleUpdate();
 
     $will_update = (int) $will_update;
     $this->assertCount($will_update, $this->container->get('package_manager.beginner')->getInvocationArguments());
@@ -306,8 +306,8 @@ END;
       ->get('cron')
       ->addLogger($cron_logger);
 
-    /** @var \Drupal\automatic_updates\DrushUpdateStage $stage */
-    $stage = $this->container->get(DrushUpdateStage::class);
+    /** @var \Drupal\automatic_updates\ConsoleUpdateStage $stage */
+    $stage = $this->container->get(ConsoleUpdateStage::class);
 
     // When the event specified by $event_class is dispatched, either throw an
     // exception directly from the event subscriber, or prepare a
@@ -333,7 +333,7 @@ END;
     $this->assertEmpty($this->logger->records);
 
     $this->assertTrue($stage->isAvailable());
-    $this->performDrushUpdate();
+    $this->performConsoleUpdate();
 
     $logged_by_stage = $this->logger->hasRecord($expected_log_message, (string) RfcLogLevel::ERROR);
     // To check if the exception was logged by the main cron service, we need
@@ -387,7 +387,7 @@ END;
 
     $this->addEventTestListener($listener, PostRequireEvent::class);
 
-    $this->performDrushUpdate();
+    $this->performConsoleUpdate();
     $this->assertIsString($cron_stage_dir);
     $this->assertNotEquals($original_stage_directory, $cron_stage_dir);
     $this->assertDirectoryDoesNotExist($cron_stage_dir);
@@ -422,7 +422,7 @@ END;
       // Ensure the stage that is applying the operation is not the cron
       // update stage.
       $this->assertInstanceOf(TestStage::class, $event->stage);
-      $this->performDrushUpdate();
+      $this->performConsoleUpdate();
       // We do not actually want to apply this operation it was just invoked to
       // allow cron to be  attempted.
       $event->addError([$stop_error]);
@@ -458,7 +458,7 @@ END;
 
     // Trigger CronUpdateStage, the above should cause it to detect a stage that
     // is applying.
-    $this->performDrushUpdate();
+    $this->performConsoleUpdate();
 
     $this->assertTrue($this->logger->hasRecord('Cron will not perform any updates because there is an existing stage and the current version of the site is secure.', (string) RfcLogLevel::NOTICE));
     $this->assertUpdateStagedTimes(1);
@@ -468,8 +468,8 @@ END;
    * Tests that CronUpdateStage::begin() unconditionally throws an exception.
    */
   public function testBeginThrowsException(): void {
-    $this->expectExceptionMessage(DrushUpdateStage::class . '::begin() cannot be called directly.');
-    $this->container->get(DrushUpdateStage::class)
+    $this->expectExceptionMessage(ConsoleUpdateStage::class . '::begin() cannot be called directly.');
+    $this->container->get(ConsoleUpdateStage::class)
       ->begin(['drupal' => '9.8.1']);
   }
 
@@ -478,7 +478,7 @@ END;
    */
   public function testEmailOnSuccess(): void {
     $this->getStageFixtureManipulator()->setCorePackageVersion('9.8.1');
-    $this->performDrushUpdate();
+    $this->performConsoleUpdate();
 
     // Ensure we sent a success message to all recipients.
     $expected_body = <<<END
@@ -537,10 +537,10 @@ END;
     $error = ValidationResult::createError([
       t('Error while updating!'),
     ]);
-    $exception = $this->createStageEventExceptionFromResults([$error], $event_class, $this->container->get(DrushUpdateStage::class));
+    $exception = $this->createStageEventExceptionFromResults([$error], $event_class, $this->container->get(ConsoleUpdateStage::class));
     TestSubscriber1::setTestResult($exception->event->getResults(), $event_class);
 
-    $this->performDrushUpdate();
+    $this->performConsoleUpdate();
 
     $url = Url::fromRoute('update.report_update')
       ->setAbsolute()
@@ -579,9 +579,9 @@ END;
       t('Error while updating!'),
     ]);
     TestSubscriber1::setTestResult([$error], $event_class);
-    $exception = $this->createStageEventExceptionFromResults([$error], $event_class, $this->container->get(DrushUpdateStage::class));
+    $exception = $this->createStageEventExceptionFromResults([$error], $event_class, $this->container->get(ConsoleUpdateStage::class));
 
-    $this->performDrushUpdate();
+    $this->performConsoleUpdate();
 
     $url = Url::fromRoute('update.report_update')
       ->setAbsolute()
@@ -609,7 +609,7 @@ END;
     $error = new \LogicException('I drink your milkshake!');
     LoggingCommitter::setException($error);
 
-    $this->performDrushUpdate();
+    $this->performConsoleUpdate();
     $expected_body = <<<END
 Drupal core failed to update automatically from 9.8.0 to 9.8.1. The following error was logged:
 

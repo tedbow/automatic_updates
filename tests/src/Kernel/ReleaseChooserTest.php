@@ -4,7 +4,7 @@ declare(strict_types = 1);
 
 namespace Drupal\Tests\automatic_updates\Kernel;
 
-use Drupal\automatic_updates\DrushUpdateStage;
+use Drupal\automatic_updates\ConsoleUpdateStage;
 use Drupal\automatic_updates\ReleaseChooser;
 use Drupal\automatic_updates\UpdateStage;
 use Drupal\Core\Extension\ExtensionVersion;
@@ -83,42 +83,42 @@ class ReleaseChooserTest extends AutomaticUpdatesKernelTestBase {
         'next_minor' => '9.8.2',
       ],
       'cron, installed 9.8.0, no minor support' => [
-        'stage' => DrushUpdateStage::class,
+        'stage' => ConsoleUpdateStage::class,
         'minor_support' => FALSE,
         'installed_version' => '9.8.0',
         'current_minor' => '9.8.1',
         'next_minor' => NULL,
       ],
       'cron, installed 9.8.0, minor support' => [
-        'stage' => DrushUpdateStage::class,
+        'stage' => ConsoleUpdateStage::class,
         'minor_support' => TRUE,
         'installed_version' => '9.8.0',
         'current_minor' => '9.8.1',
         'next_minor' => NULL,
       ],
       'cron, installed 9.7.0, no minor support' => [
-        'stage' => DrushUpdateStage::class,
+        'stage' => ConsoleUpdateStage::class,
         'minor_support' => FALSE,
         'installed_version' => '9.7.0',
         'current_minor' => '9.7.1',
         'next_minor' => NULL,
       ],
       'cron, installed 9.7.0, minor support' => [
-        'stage' => DrushUpdateStage::class,
+        'stage' => ConsoleUpdateStage::class,
         'minor_support' => TRUE,
         'installed_version' => '9.7.0',
         'current_minor' => '9.7.1',
         'next_minor' => NULL,
       ],
       'cron, installed 9.7.2, no minor support' => [
-        'stage' => DrushUpdateStage::class,
+        'stage' => ConsoleUpdateStage::class,
         'minor_support' => FALSE,
         'installed_version' => '9.7.2',
         'current_minor' => NULL,
         'next_minor' => NULL,
       ],
       'cron, installed 9.7.2, minor support' => [
-        'stage' => DrushUpdateStage::class,
+        'stage' => ConsoleUpdateStage::class,
         'minor_support' => TRUE,
         'installed_version' => '9.7.2',
         'current_minor' => NULL,

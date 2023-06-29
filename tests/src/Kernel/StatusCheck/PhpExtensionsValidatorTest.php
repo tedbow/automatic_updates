@@ -62,7 +62,7 @@ class PhpExtensionsValidatorTest extends AutomaticUpdatesKernelTestBase {
       ->get('automatic_updates')
       ->addLogger($logger);
 
-    $this->performDrushUpdate();
+    $this->performConsoleUpdate();
     // The update should have been stopped before it started.
     $this->assertUpdateStagedTimes(0);
     $this->assertTrue($logger->hasRecordThatContains((string) $error_result->messages[0], RfcLogLevel::ERROR));
@@ -86,7 +86,7 @@ class PhpExtensionsValidatorTest extends AutomaticUpdatesKernelTestBase {
       ->get('automatic_updates')
       ->addLogger($logger);
 
-    $this->performDrushUpdate();
+    $this->performConsoleUpdate();
     // The update should have been staged, but then stopped with an error.
     $this->assertUpdateStagedTimes(1);
     $this->assertTrue($logger->hasRecordThatContains("Unattended updates are not allowed while Xdebug is enabled. You cannot receive updates, including security updates, until it is disabled.", RfcLogLevel::ERROR));

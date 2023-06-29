@@ -5,12 +5,10 @@ declare(strict_types = 1);
 namespace Drupal\Tests\automatic_updates\Kernel;
 
 use Drupal\automatic_updates\CronUpdateRunner;
-use Drupal\automatic_updates\DrushUpdateStage;
+use Drupal\automatic_updates\ConsoleUpdateStage;
 use Drupal\Core\DependencyInjection\ContainerBuilder;
 use Drupal\Tests\automatic_updates\Traits\ValidationTestTrait;
 use Drupal\Tests\package_manager\Kernel\PackageManagerKernelTestBase;
-use Symfony\Component\DependencyInjection\Definition;
-use Symfony\Component\DependencyInjection\Reference;
 
 /**
  * Base class for kernel tests of the Automatic Updates module.
@@ -76,17 +74,11 @@ abstract class AutomaticUpdatesKernelTestBase extends PackageManagerKernelTestBa
    */
   public function register(ContainerBuilder $container) {
     parent::register($container);
-    if ($container->has('logger.channel.automatic_updates')) {
-      $drush_stage_definition = new Definition(TestDrushUpdateStage::class);
-      $drush_stage_definition->setAutowired(TRUE);
-      $drush_stage_definition->addMethodCall('setLogger', [new Reference('logger.channel.automatic_updates')]);
-      $drush_stage_definition->setPublic(TRUE);
-      $container->addDefinitions([DrushUpdateStage::class => $drush_stage_definition]);
-    }
 
     // Use the test-only implementations of the regular and cron update stages.
     $overrides = [
       'automatic_updates.cron_update_runner' => TestCronUpdateRunner::class,
+      ConsoleUpdateStage::class => TestConsoleUpdateStage::class,
     ];
     foreach ($overrides as $service_id => $class) {
       if ($container->hasDefinition($service_id)) {
@@ -96,10 +88,10 @@ abstract class AutomaticUpdatesKernelTestBase extends PackageManagerKernelTestBa
   }
 
   /**
-   * Performs an update using the drush update stage directly.
+   * Performs an update using the console update stage directly.
    */
-  protected function performDrushUpdate(): void {
-    $this->container->get(DrushUpdateStage::class)->performUpdate();
+  protected function performConsoleUpdate(): void {
+    $this->container->get(ConsoleUpdateStage::class)->performUpdate();
   }
 
 }
@@ -131,7 +123,7 @@ class TestCronUpdateRunner extends CronUpdateRunner {
 /**
  * A test-only version of the drush update stage to override and expose internals.
  */
-class TestDrushUpdateStage extends DrushUpdateStage {
+class TestConsoleUpdateStage extends ConsoleUpdateStage {
 
   /**
    * {@inheritdoc}

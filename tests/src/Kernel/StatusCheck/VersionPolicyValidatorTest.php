@@ -5,7 +5,7 @@ declare(strict_types = 1);
 namespace Drupal\Tests\automatic_updates\Kernel\StatusCheck;
 
 use Drupal\automatic_updates\CronUpdateRunner;
-use Drupal\automatic_updates\DrushUpdateStage;
+use Drupal\automatic_updates\ConsoleUpdateStage;
 use Drupal\automatic_updates\UpdateStage;
 use Drupal\fixture_manipulator\ActiveFixtureManipulator;
 use Drupal\package_manager\Event\PreCreateEvent;
@@ -405,7 +405,7 @@ class VersionPolicyValidatorTest extends AutomaticUpdatesKernelTestBase {
     // that would get executed after pre-create.
     // @see \Drupal\automatic_updates\Validator\VersionPolicyValidator::validateVersion()
     $this->addEventTestListener(function (PreCreateEvent $event) use ($target_version): void {
-      /** @var \Drupal\automatic_updates\DrushUpdateStage $stage */
+      /** @var \Drupal\automatic_updates\ConsoleUpdateStage $stage */
       $stage = $event->stage;
       $stage->setMetadata('packages', [
         'production' => [
@@ -425,7 +425,7 @@ class VersionPolicyValidatorTest extends AutomaticUpdatesKernelTestBase {
         ->set('allow_core_minor_updates', $allow_minor_updates)
         ->save();
 
-      $stage = $this->container->get(DrushUpdateStage::class);
+      $stage = $this->container->get(ConsoleUpdateStage::class);
       try {
         $stage->create();
         // If we did not get an exception, ensure we didn't expect any results.

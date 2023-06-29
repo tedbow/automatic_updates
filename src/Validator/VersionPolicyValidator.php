@@ -5,7 +5,7 @@ declare(strict_types = 1);
 namespace Drupal\automatic_updates\Validator;
 
 use Drupal\automatic_updates\CronUpdateRunner;
-use Drupal\automatic_updates\DrushUpdateStage;
+use Drupal\automatic_updates\ConsoleUpdateStage;
 use Drupal\Component\Utility\NestedArray;
 use Drupal\package_manager\ComposerInspector;
 use Drupal\package_manager\Event\StatusCheckEvent;
@@ -89,7 +89,7 @@ final class VersionPolicyValidator implements EventSubscriberInterface {
     }
 
     // If this is a cron update, we may need to do additional checks.
-    if ($stage instanceof DrushUpdateStage) {
+    if ($stage instanceof ConsoleUpdateStage) {
       $mode = $this->cronUpdateRunner->getMode();
 
       if ($mode !== CronUpdateRunner::DISABLED) {
@@ -239,7 +239,7 @@ final class VersionPolicyValidator implements EventSubscriberInterface {
       }
     }
     elseif ($event instanceof StatusCheckEvent) {
-      if ($stage instanceof DrushUpdateStage) {
+      if ($stage instanceof ConsoleUpdateStage) {
         $target_release = $stage->getTargetRelease();
         if ($target_release) {
           return $target_release->getVersion();
@@ -268,7 +268,7 @@ final class VersionPolicyValidator implements EventSubscriberInterface {
     $project_info = new ProjectInfo('drupal');
     $available_releases = $project_info->getInstallableReleases() ?? [];
 
-    if ($stage instanceof DrushUpdateStage) {
+    if ($stage instanceof ConsoleUpdateStage) {
       $available_releases = array_reverse($available_releases);
     }
     return $available_releases;

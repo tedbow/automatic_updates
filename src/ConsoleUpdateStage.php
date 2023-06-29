@@ -31,7 +31,7 @@ use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
  *
  * @todo Make this class a generic console stage in https://drupal.org/i/3360485
  */
-class DrushUpdateStage extends UpdateStage {
+class ConsoleUpdateStage extends UpdateStage {
 
   /**
    * Constructs a DrushUpdateStage object.

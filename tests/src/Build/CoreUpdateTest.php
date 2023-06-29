@@ -5,7 +5,7 @@ declare(strict_types = 1);
 namespace Drupal\Tests\automatic_updates\Build;
 
 use Behat\Mink\Element\DocumentElement;
-use Drupal\automatic_updates\DrushUpdateStage;
+use Drupal\automatic_updates\ConsoleUpdateStage;
 use Drupal\automatic_updates\UpdateStage;
 use Drupal\package_manager\Event\PostApplyEvent;
 use Drupal\package_manager\Event\PostCreateEvent;
@@ -388,7 +388,7 @@ class CoreUpdateTest extends UpdateTestBase {
     // @todo Make a dynamic wait system in this test because the update will
     //   still be happening in the background.
     sleep(120);
-    $this->assertExpectedStageEventsFired(DrushUpdateStage::class);
+    $this->assertExpectedStageEventsFired(ConsoleUpdateStage::class);
     // There should be log messages, but no errors or warnings should have been
     // logged by Automatic Updates.
     // The use of the database log here implies one can only retrieve log
@@ -457,7 +457,7 @@ class CoreUpdateTest extends UpdateTestBase {
     $this->assertStringContainsString('Drupal core was successfully updated to 9.8.1!', $output);
     $this->assertStringContainsString('Running post-apply tasks and final clean-up...', $output);
     $this->assertUpdateSuccessful('9.8.1');
-    $this->assertExpectedStageEventsFired(DrushUpdateStage::class);
+    $this->assertExpectedStageEventsFired(ConsoleUpdateStage::class);
 
     // Rerunning the command should exit with a message that no newer version
     // is available.
