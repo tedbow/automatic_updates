@@ -17,6 +17,9 @@ use Drush\Commands\DrushCommands;
  *   This is an internal part of Automatic Updates and may be changed or removed
  *   at any time without warning. It should not be called directly, and external
  *   code should not interact with it.
+ *
+ * @todo Either remove this command completely or make it just call the new
+ *   Symfony Console command that will be added in https://drupal.org/i/3360485.
  */
 final class AutomaticUpdatesCommands extends DrushCommands {
 

@@ -28,6 +28,8 @@ use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 
 /**
  * An updater that runs via a Drush command.
+ *
+ * @todo Make this class a generic console stage in https://drupal.org/i/3360485
  */
 class DrushUpdateStage extends UpdateStage {
 
@@ -94,6 +96,20 @@ class DrushUpdateStage extends UpdateStage {
    */
   public function getTargetRelease(): ?ProjectRelease {
     return $this->releaseChooser->getLatestInInstalledMinor($this);
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  final public function begin(array $project_versions, ?int $timeout = 300): never {
+    // Unattended updates should never be started using this method. They should
+    // only be done by ::handleCron(), which has a strong opinion about which
+    // release to update to. Throwing an exception here is just to enforce this
+    // boundary. To update to a specific version of core, use
+    // \Drupal\automatic_updates\UpdateStage::begin() (which is called in
+    // ::performUpdate() to start the update to the target version of core
+    // chosen by ::handleCron()).
+    throw new \BadMethodCallException(__METHOD__ . '() cannot be called directly.');
   }
 
   /**
