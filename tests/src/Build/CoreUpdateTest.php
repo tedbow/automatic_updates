@@ -385,9 +385,20 @@ class CoreUpdateTest extends UpdateTestBase {
     $mink = $this->getMink();
     $assert_session = $mink->assertSession();
     $page = $mink->getSession()->getPage();
-    // @todo Make a dynamic wait system in this test because the update will
-    //   still be happening in the background.
-    sleep(120);
+
+    // Wait for console update process to start.
+    sleep(5);
+    $this->visit('/admin/reports/status');
+    // Ensure the console update process has started.
+    $current_update_requirement_text = 'There is currently a background update running to update to Drupal core to 9.8.1';
+    $assert_session->pageTextContains($current_update_requirement_text);
+    $max_wait = time() + 360;
+    // Wait a maximum of 6 minutes for the console update process to finish.
+    while ($max_wait > time() && str_contains($page->getText(), $current_update_requirement_text)) {
+      sleep(5);
+      $this->visit('/admin/reports/status');
+    }
+
     $this->assertExpectedStageEventsFired(ConsoleUpdateStage::class);
     // There should be log messages, but no errors or warnings should have been
     // logged by Automatic Updates.

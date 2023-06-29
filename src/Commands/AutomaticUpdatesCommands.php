@@ -71,7 +71,7 @@ final class AutomaticUpdatesCommands extends DrushCommands {
     // The second half of the update process (post-apply etc.) is done by this
     // exact same command, with some additional flags, in a separate process to
     // ensure that the system is in a consistent state.
-    // @see \Drupal\automatic_updates\DrushUpdateStage::triggerPostApply()
+    // @see \Drupal\automatic_updates\ConsoleUpdateStage::triggerPostApply()
     if ($options['post-apply']) {
       if (empty($options['stage-id']) || empty($options['from-version']) || empty($options['to-version'])) {
         throw new \LogicException("The post-apply option is for internal use only. It should never be passed directly.");

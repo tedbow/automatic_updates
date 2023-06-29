@@ -7,6 +7,7 @@
 
 declare(strict_types = 1);
 
+use Drupal\automatic_updates\ConsoleUpdateStage;
 use Drupal\automatic_updates\CronUpdateRunner;
 use Drupal\automatic_updates\Validation\StatusCheckRequirements;
 use Drupal\system\SystemManager;
@@ -35,6 +36,18 @@ function automatic_updates_requirements($phase) {
         'title' => t('Cron installs updates automatically'),
         'severity' => SystemManager::REQUIREMENT_WARNING,
         'value' => t('Enabled. This is NOT an officially supported feature of the Automatic Updates module at this time. Use at your own risk.'),
+      ];
+    }
+    /** @var \Drupal\automatic_updates\ConsoleUpdateStage $console_stage */
+    $console_stage = Drupal::service(ConsoleUpdateStage::class);
+    if ($console_update_status = $console_stage->getProcessStatus()) {
+      $requirements['automatic_updates_console_update_status'] = [
+        'title' => t('Automatic background updates'),
+        'severity' => SystemManager::REQUIREMENT_OK,
+        'value' => t(
+          'There is currently a background update running to update to Drupal core to %version',
+          ['%version' => $console_update_status['target_version']]
+        ),
       ];
     }
 

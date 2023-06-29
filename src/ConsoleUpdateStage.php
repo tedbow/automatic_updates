@@ -7,6 +7,7 @@ namespace Drupal\automatic_updates;
 use Drupal\Component\Datetime\TimeInterface;
 use Drupal\Core\File\FileSystemInterface;
 use Drupal\Core\Mail\MailManagerInterface;
+use Drupal\Core\State\StateInterface;
 use Drupal\Core\TempStore\SharedTempStoreFactory;
 use Drupal\Core\Url;
 use Drupal\package_manager\ComposerInspector;
@@ -34,8 +35,10 @@ use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 class ConsoleUpdateStage extends UpdateStage {
 
   /**
-   * Constructs a DrushUpdateStage object.
+   * Constructs a ConsoleUpdateStage object.
    *
+   * @param \Drupal\Core\State\StateInterface $state
+   *   The state service.
    * @param \Drupal\automatic_updates\CronUpdateRunner $cronUpdateRunner
    *   The cron update runner service.
    * @param \Drupal\Core\Mail\MailManagerInterface $mailManager
@@ -68,6 +71,7 @@ class ConsoleUpdateStage extends UpdateStage {
    *   The failure marker service.
    */
   public function __construct(
+    private readonly StateInterface $state,
     private readonly CronUpdateRunner $cronUpdateRunner,
     private readonly MailManagerInterface $mailManager,
     private readonly StatusCheckMailer $statusCheckMailer,
@@ -183,6 +187,7 @@ class ConsoleUpdateStage extends UpdateStage {
     // stage regardless of whether the update succeeds.
     try {
       $update_started = TRUE;
+      $this->setProcessStatus($installed_version, $target_version);
       // @see ::begin()
       $stage_id = parent::begin(['drupal' => $target_version], 300);
       $this->stage();
@@ -295,6 +300,48 @@ class ConsoleUpdateStage extends UpdateStage {
     }
 
     return new Response();
+  }
+
+  /**
+   * Gets the update process status.
+   *
+   * @return array|null
+   *   The update process status, or NULL if no update process is active. If the
+   *   update process is active the array keys will be:
+   *   - (int) pid: The process ID.
+   *   - (string) start_version: The start version of the update.
+   *   - (string) target_version: The target version of the update.
+   */
+  public function getProcessStatus(): ?array {
+    $process_status = $this->state->get('automatic_updates.console_stage_status');
+    if ($process_status) {
+      $process_group = posix_getpgid($process_status['pid']);
+      if (is_int($process_group)) {
+        return $process_status;
+      }
+      $this->state->delete('automatic_updates.console_stage_status');
+    }
+    return NULL;
+  }
+
+  /**
+   * Sets the update process status.
+   *
+   * @param string $start_version
+   *   The start version.
+   * @param string $target_version
+   *   The target version.
+   */
+  private function setProcessStatus(string $start_version, string $target_version): void {
+    $pid = getmypid();
+    $this->state->set(
+      'automatic_updates.console_stage_status',
+      [
+        'pid' => $pid,
+        'start_version' => $start_version,
+        'target_version' => $target_version,
+      ],
+    );
   }
 
 }
