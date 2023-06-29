@@ -5,7 +5,6 @@ declare(strict_types = 1);
 namespace Drupal\automatic_updates;
 
 use Drupal\Component\Datetime\TimeInterface;
-use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\File\FileSystemInterface;
 use Drupal\Core\Mail\MailManagerInterface;
 use Drupal\Core\TempStore\SharedTempStoreFactory;
@@ -18,6 +17,7 @@ use Drupal\package_manager\Exception\StageFailureMarkerException;
 use Drupal\package_manager\FailureMarker;
 use Drupal\package_manager\PathLocator;
 use Drupal\package_manager\ProjectInfo;
+use Drupal\update\ProjectRelease;
 use Drush\Drush;
 use PhpTuf\ComposerStager\Domain\Core\Beginner\BeginnerInterface;
 use PhpTuf\ComposerStager\Domain\Core\Committer\CommitterInterface;
@@ -29,19 +29,19 @@ use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 /**
  * An updater that runs via a Drush command.
  */
-class DrushUpdateStage extends UnattendedUpdateStageBase {
+class DrushUpdateStage extends UpdateStage {
 
   /**
-   * Constructs a UnattendedUpdateStageBase object.
+   * Constructs a DrushUpdateStage object.
    *
+   * @param \Drupal\automatic_updates\CronUpdateRunner $cronUpdateRunner
+   *   The cron update runner service.
    * @param \Drupal\Core\Mail\MailManagerInterface $mailManager
    *   The mail manager service.
    * @param \Drupal\automatic_updates\StatusCheckMailer $statusCheckMailer
    *   The status check mailer service.
    * @param \Drupal\automatic_updates\ReleaseChooser $releaseChooser
    *   The cron release chooser service.
-   * @param \Drupal\Core\Config\ConfigFactoryInterface $configFactory
-   *   The config factory service.
    * @param \Drupal\package_manager\ComposerInspector $composerInspector
    *   The Composer inspector service.
    * @param \Drupal\package_manager\PathLocator $pathLocator
@@ -66,10 +66,10 @@ class DrushUpdateStage extends UnattendedUpdateStageBase {
    *   The failure marker service.
    */
   public function __construct(
+    private readonly CronUpdateRunner $cronUpdateRunner,
     private readonly MailManagerInterface $mailManager,
     private readonly StatusCheckMailer $statusCheckMailer,
-    ReleaseChooser $releaseChooser,
-    ConfigFactoryInterface $configFactory,
+    private readonly ReleaseChooser $releaseChooser,
     ComposerInspector $composerInspector,
     PathLocator $pathLocator,
     BeginnerInterface $beginner,
@@ -82,7 +82,18 @@ class DrushUpdateStage extends UnattendedUpdateStageBase {
     PathFactoryInterface $pathFactory,
     FailureMarker $failureMarker,
   ) {
-    parent::__construct($releaseChooser, $configFactory, $composerInspector, $pathLocator, $beginner, $stager, $committer, $fileSystem, $eventDispatcher, $tempStoreFactory, $time, $pathFactory, $failureMarker);
+    parent::__construct($composerInspector, $pathLocator, $beginner, $stager, $committer, $fileSystem, $eventDispatcher, $tempStoreFactory, $time, $pathFactory, $failureMarker);
+  }
+
+  /**
+   * Returns the release of Drupal core to update to, if any.
+   *
+   * @return \Drupal\update\ProjectRelease|null
+   *   The release of Drupal core to which we will update, or NULL if there is
+   *   nothing to update to.
+   */
+  public function getTargetRelease(): ?ProjectRelease {
+    return $this->releaseChooser->getLatestInInstalledMinor($this);
   }
 
   /**
@@ -111,7 +122,7 @@ class DrushUpdateStage extends UnattendedUpdateStageBase {
    *   Returns TRUE if any update was attempted, otherwise FALSE.
    */
   public function performUpdate(): bool {
-    if ($this->getMode() === static::DISABLED) {
+    if ($this->cronUpdateRunner->getMode() === CronUpdateRunner::DISABLED) {
       return FALSE;
     }
 

@@ -4,7 +4,6 @@ declare(strict_types = 1);
 
 namespace Drupal\Tests\automatic_updates\Kernel\StatusCheck;
 
-use Drupal\automatic_updates\UnattendedUpdateStageBase;
 use Drupal\package_manager\ValidationResult;
 use Drupal\Tests\automatic_updates\Kernel\AutomaticUpdatesKernelTestBase;
 
@@ -39,14 +38,14 @@ class CronFrequencyValidatorTest extends AutomaticUpdatesKernelTestBase {
    */
   public function testNoValidationIfCronDisabled(): void {
     $this->config('automatic_updates.settings')
-      ->set('unattended.level', UnattendedUpdateStageBase::DISABLED)
+      ->set('unattended.level', CronUpdateRunner::DISABLED)
       ->save();
     $state = $this->container->get('state');
     $state->delete('system.cron_last');
     $state->delete('install_time');
     $this->assertCheckerResultsFromManager([], TRUE);
     $this->config('automatic_updates.settings')
-      ->set('unattended.level', UnattendedUpdateStageBase::ALL)
+      ->set('unattended.level', CronUpdateRunner::ALL)
       ->save();
     $error = ValidationResult::createError([
       t('Cron has not run recently. For more information, see the online handbook entry for <a href="https://www.drupal.org/cron">configuring cron jobs</a> to run at least every 3 hours.'),

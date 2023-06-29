@@ -4,9 +4,8 @@ declare(strict_types = 1);
 
 namespace Drupal\Tests\automatic_updates\Kernel;
 
-use Drupal\automatic_updates\CronUpdateStage;
+use Drupal\automatic_updates\CronUpdateRunner;
 use Drupal\automatic_updates\DrushUpdateStage;
-use Drupal\automatic_updates\UnattendedUpdateStageBase;
 use Drupal\Core\DependencyInjection\ContainerBuilder;
 use Drupal\Tests\automatic_updates\Traits\ValidationTestTrait;
 use Drupal\Tests\package_manager\Kernel\PackageManagerKernelTestBase;
@@ -57,7 +56,7 @@ abstract class AutomaticUpdatesKernelTestBase extends PackageManagerKernelTestBa
     $this->config('automatic_updates.settings')
       ->set('unattended', [
         'method' => 'web',
-        'level' => UnattendedUpdateStageBase::SECURITY,
+        'level' => CronUpdateRunner::SECURITY,
       ])
       ->save();
 
@@ -70,13 +69,6 @@ abstract class AutomaticUpdatesKernelTestBase extends PackageManagerKernelTestBa
     // from a sane state.
     // @see \Drupal\automatic_updates\Validator\CronFrequencyValidator
     $this->container->get('state')->set('system.cron_last', time());
-
-    // Cron updates are not done when running at the command line, so override
-    // our cron handler's PHP_SAPI constant to a valid value that isn't `cli`.
-    // The choice of `cgi-fcgi` is arbitrary; see
-    // https://www.php.net/php_sapi_name for some valid values of PHP_SAPI.
-    $property = new \ReflectionProperty(CronUpdateStage::class, 'serverApi');
-    $property->setValue(NULL, 'cgi-fcgi');
   }
 
   /**
@@ -94,7 +86,7 @@ abstract class AutomaticUpdatesKernelTestBase extends PackageManagerKernelTestBa
 
     // Use the test-only implementations of the regular and cron update stages.
     $overrides = [
-      'automatic_updates.cron_update_stage' => TestCronUpdateStage::class,
+      'automatic_updates.cron_update_runner' => TestCronUpdateRunner::class,
     ];
     foreach ($overrides as $service_id => $class) {
       if ($container->hasDefinition($service_id)) {
@@ -115,7 +107,7 @@ abstract class AutomaticUpdatesKernelTestBase extends PackageManagerKernelTestBa
 /**
  * A test-only version of the cron update stage to override and expose internals.
  */
-class TestCronUpdateStage extends CronUpdateStage {
+class TestCronUpdateRunner extends CronUpdateRunner {
 
   /**
    * Determines whether an exception should be thrown.

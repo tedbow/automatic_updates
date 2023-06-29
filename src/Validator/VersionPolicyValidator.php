@@ -4,7 +4,7 @@ declare(strict_types = 1);
 
 namespace Drupal\automatic_updates\Validator;
 
-use Drupal\automatic_updates\UnattendedUpdateStageBase;
+use Drupal\automatic_updates\DrushUpdateStage;
 use Drupal\Component\Utility\NestedArray;
 use Drupal\package_manager\ComposerInspector;
 use Drupal\package_manager\Event\StatusCheckEvent;
@@ -49,6 +49,7 @@ final class VersionPolicyValidator implements EventSubscriberInterface {
    *   The Composer inspector service.
    */
   public function __construct(
+    private readonly DrushUpdateStage $drushUpdateStage,
     private readonly ClassResolverInterface $classResolver,
     private readonly PathLocator $pathLocator,
     private readonly ComposerInspector $composerInspector,
@@ -85,10 +86,10 @@ final class VersionPolicyValidator implements EventSubscriberInterface {
     }
 
     // If this is a cron update, we may need to do additional checks.
-    if ($stage instanceof UnattendedUpdateStageBase) {
+    if ($stage instanceof DrushUpdateStage) {
       $mode = $stage->getMode();
 
-      if ($mode !== UnattendedUpdateStageBase::DISABLED) {
+      if ($mode !== CronUpdateRunner::DISABLED) {
         // If cron updates are enabled, the installed version must be stable;
         // no alphas, betas, or RCs.
         $rules[] = StableReleaseInstalled::class;
@@ -104,7 +105,7 @@ final class VersionPolicyValidator implements EventSubscriberInterface {
 
           // If only security updates are allowed during cron, the target
           // version must be a security release.
-          if ($mode === UnattendedUpdateStageBase::SECURITY) {
+          if ($mode === CronUpdateRunner::SECURITY) {
             $rules[] = TargetSecurityRelease::class;
           }
         }

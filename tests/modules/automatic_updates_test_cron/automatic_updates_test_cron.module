@@ -10,7 +10,7 @@
 
 declare(strict_types=1);
 
-use Drupal\automatic_updates\UnattendedUpdateStageBase;
+use Drupal\automatic_updates\CronUpdateRunner;
 use Drupal\package_manager\ProjectInfo;
 use Drupal\Core\Extension\ExtensionVersion;
 use Drupal\Core\Form\FormStateInterface;
@@ -33,9 +33,9 @@ function automatic_updates_test_cron_form_update_settings_alter(array &$form, Fo
     '#type' => 'radios',
     '#title' => t('Automatically update Drupal core'),
     '#options' => [
-      UnattendedUpdateStageBase::DISABLED => t('Disabled'),
-      UnattendedUpdateStageBase::ALL => t('All supported updates'),
-      UnattendedUpdateStageBase::SECURITY => t('Security updates only'),
+      CronUpdateRunner::DISABLED => t('Disabled'),
+      CronUpdateRunner::ALL => t('All supported updates'),
+      CronUpdateRunner::SECURITY => t('Security updates only'),
     ],
     '#default_value' => \Drupal::config('automatic_updates.settings')->get('unattended.level'),
     '#description' => t(

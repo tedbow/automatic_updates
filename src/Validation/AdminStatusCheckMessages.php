@@ -4,8 +4,7 @@ declare(strict_types = 1);
 
 namespace Drupal\automatic_updates\Validation;
 
-use Drupal\automatic_updates\CronUpdateStage;
-use Drupal\automatic_updates\UnattendedUpdateStageBase;
+use Drupal\automatic_updates\CronUpdateRunner;
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\DependencyInjection\ContainerInjectionInterface;
 use Drupal\Core\Messenger\MessengerInterface;
@@ -47,8 +46,8 @@ final class AdminStatusCheckMessages implements ContainerInjectionInterface {
    *   The current user.
    * @param \Drupal\Core\Routing\CurrentRouteMatch $currentRouteMatch
    *   The current route match.
-   * @param \Drupal\automatic_updates\CronUpdateStage $stage
-   *   The cron update stage service.
+   * @param \Drupal\automatic_updates\CronUpdateRunner $cronUpdateRunner
+   *   The cron update runner service.
    * @param \Drupal\Core\Render\RendererInterface $renderer
    *   The renderer service.
    * @param \Drupal\Core\Config\ConfigFactoryInterface $configFactory
@@ -59,7 +58,7 @@ final class AdminStatusCheckMessages implements ContainerInjectionInterface {
     private readonly AdminContext $adminContext,
     private readonly AccountProxyInterface $currentUser,
     private readonly CurrentRouteMatch $currentRouteMatch,
-    private readonly CronUpdateStage $stage,
+    private readonly CronUpdateRunner $cronUpdateRunner,
     private readonly RendererInterface $renderer,
     private readonly ConfigFactoryInterface $configFactory
   ) {}
@@ -73,7 +72,7 @@ final class AdminStatusCheckMessages implements ContainerInjectionInterface {
       $container->get('router.admin_context'),
       $container->get('current_user'),
       $container->get('current_route_match'),
-      $container->get('automatic_updates.cron_update_stage'),
+      $container->get('automatic_updates.cron_update_runner'),
       $container->get('renderer'),
       $container->get('config.factory')
     );
@@ -121,7 +120,7 @@ final class AdminStatusCheckMessages implements ContainerInjectionInterface {
   protected function displayResultsOnCurrentPage(): bool {
     // If updates will not run during cron then we don't need to show the
     // status checks on admin pages.
-    if ($this->stage->getMode() === UnattendedUpdateStageBase::DISABLED) {
+    if ($this->cronUpdateRunner->getMode() === CronUpdateRunner::DISABLED) {
       return FALSE;
     }
 

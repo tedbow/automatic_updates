@@ -8,7 +8,6 @@
 declare(strict_types = 1);
 
 use Drupal\automatic_updates\BatchProcessor;
-use Drupal\automatic_updates\UnattendedUpdateStageBase;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Routing\RouteMatchInterface;
 use Drupal\automatic_updates\Validation\AdminStatusCheckMessages;
@@ -159,12 +158,12 @@ function automatic_updates_modules_installed($modules) {
   /** @var \Drupal\automatic_updates\Validation\StatusChecker $status_checker */
   $status_checker = \Drupal::service('automatic_updates.status_checker');
   $status_checker->run();
-  /** @var \Drupal\automatic_updates\CronUpdateStage $stage */
-  $stage = \Drupal::service('automatic_updates.cron_update_stage');
+  /** @var \Drupal\automatic_updates\CronUpdateRunner $stage */
+  $stage = \Drupal::service('automatic_updates.cron_update_runner');
   // If cron updates are disabled status check messages will not be displayed on
   // admin pages. Therefore, after installing the module the user will not be
   // alerted to any problems until they access the status report page.
-  if ($stage->getMode() === UnattendedUpdateStageBase::DISABLED) {
+  if ($stage->getMode() === CronUpdateRunner::DISABLED) {
     /** @var \Drupal\automatic_updates\Validation\AdminStatusCheckMessages $status_check_messages */
     $status_check_messages = \Drupal::classResolver(AdminStatusCheckMessages::class);
     $status_check_messages->displayResultSummary();
@@ -205,9 +204,9 @@ function automatic_updates_form_update_settings_alter(array &$form): void {
     '#type' => 'radios',
     '#title' => t('Unattended background updates'),
     '#options' => [
-      UnattendedUpdateStageBase::DISABLED => t('Disabled'),
-      UnattendedUpdateStageBase::SECURITY => t('Security updates only'),
-      UnattendedUpdateStageBase::ALL => t('All patch releases'),
+      CronUpdateRunner::DISABLED => t('Disabled'),
+      CronUpdateRunner::SECURITY => t('Security updates only'),
+      CronUpdateRunner::ALL => t('All patch releases'),
     ],
     '#default_value' => $config->get('unattended.level'),
   ];
@@ -222,7 +221,7 @@ function automatic_updates_form_update_settings_alter(array &$form): void {
     '#states' => [
       'invisible' => [
         'input[name="unattended_level"]' => [
-          'value' => UnattendedUpdateStageBase::DISABLED,
+          'value' => CronUpdateRunner::DISABLED,
         ],
       ],
     ],

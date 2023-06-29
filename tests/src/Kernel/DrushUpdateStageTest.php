@@ -4,8 +4,7 @@ declare(strict_types = 1);
 
 namespace Drupal\Tests\automatic_updates\Kernel;
 
-use Drupal\automatic_updates\CronUpdateStage;
-use Drupal\automatic_updates\UnattendedUpdateStageBase;
+use Drupal\automatic_updates\CronUpdateRunner;
 use Drupal\automatic_updates_test\EventSubscriber\TestSubscriber1;
 use Drupal\Core\DependencyInjection\ContainerBuilder;
 use Drupal\Core\Logger\RfcLogLevel;
@@ -126,32 +125,32 @@ END;
     $fixture_dir = __DIR__ . '/../../../package_manager/tests/fixtures/release-history';
     return [
       'disabled, normal release' => [
-        UnattendedUpdateStageBase::DISABLED,
+        CronUpdateRunner::DISABLED,
         ['drupal' => "$fixture_dir/drupal.9.8.2.xml"],
         FALSE,
       ],
       'disabled, security release' => [
-        UnattendedUpdateStageBase::DISABLED,
+        CronUpdateRunner::DISABLED,
         ['drupal' => "$fixture_dir/drupal.9.8.1-security.xml"],
         FALSE,
       ],
       'security only, security release' => [
-        UnattendedUpdateStageBase::SECURITY,
+        CronUpdateRunner::SECURITY,
         ['drupal' => "$fixture_dir/drupal.9.8.1-security.xml"],
         TRUE,
       ],
       'security only, normal release' => [
-        UnattendedUpdateStageBase::SECURITY,
+        CronUpdateRunner::SECURITY,
         ['drupal' => "$fixture_dir/drupal.9.8.2.xml"],
         FALSE,
       ],
       'enabled, normal release' => [
-        UnattendedUpdateStageBase::ALL,
+        CronUpdateRunner::ALL,
         ['drupal' => "$fixture_dir/drupal.9.8.2.xml"],
         TRUE,
       ],
       'enabled, security release' => [
-        UnattendedUpdateStageBase::ALL,
+        CronUpdateRunner::ALL,
         ['drupal' => "$fixture_dir/drupal.9.8.1-security.xml"],
         TRUE,
       ],
@@ -291,7 +290,7 @@ END;
     $this->installConfig('automatic_updates');
     // @todo Remove in https://www.drupal.org/project/automatic_updates/issues/3284443
     $this->config('automatic_updates.settings')
-      ->set('unattended.level', UnattendedUpdateStageBase::SECURITY)
+      ->set('unattended.level', CronUpdateRunner::SECURITY)
       ->save();
     // Ensure that there is a security release to which we should update.
     $this->setReleaseMetadata([
@@ -306,8 +305,8 @@ END;
       ->get('cron')
       ->addLogger($cron_logger);
 
-    /** @var \Drupal\automatic_updates\CronUpdateStage $stage */
-    $stage = $this->container->get(CronUpdateStage::class);
+    /** @var \Drupal\automatic_updates\CronUpdateRunner $stage */
+    $stage = $this->container->get(CronUpdateRunner::class);
 
     // When the event specified by $event_class is dispatched, either throw an
     // exception directly from the event subscriber, or prepare a
@@ -405,7 +404,7 @@ END;
    */
   public function testStageNotDestroyedIfApplying(): void {
     $this->config('automatic_updates.settings')
-      ->set('unattended.level', UnattendedUpdateStageBase::ALL)
+      ->set('unattended.level', CronUpdateRunner::ALL)
       ->save();
     $this->setReleaseMetadata([
       'drupal' => __DIR__ . "/../../../package_manager/tests/fixtures/release-history/drupal.9.8.1-security.xml",
@@ -445,7 +444,7 @@ END;
    */
   public function testStageNotDestroyedIfSecure(): void {
     $this->config('automatic_updates.settings')
-      ->set('unattended.level', UnattendedUpdateStageBase::ALL)
+      ->set('unattended.level', CronUpdateRunner::ALL)
       ->save();
     $this->setReleaseMetadata([
       'drupal' => __DIR__ . "/../../../package_manager/tests/fixtures/release-history/drupal.9.8.2.xml",
@@ -468,8 +467,8 @@ END;
    * Tests that CronUpdateStage::begin() unconditionally throws an exception.
    */
   public function testBeginThrowsException(): void {
-    $this->expectExceptionMessage(CronUpdateStage::class . '::begin() cannot be called directly.');
-    $this->container->get(CronUpdateStage::class)
+    $this->expectExceptionMessage(CronUpdateRunner::class . '::begin() cannot be called directly.');
+    $this->container->get(CronUpdateRunner::class)
       ->begin(['drupal' => '9.8.1']);
   }
 
@@ -531,13 +530,13 @@ END;
       'drupal' => __DIR__ . '/../../../package_manager/tests/fixtures/release-history/drupal.9.8.2.xml',
     ]);
     $this->config('automatic_updates.settings')
-      ->set('unattended.level', UnattendedUpdateStageBase::ALL)
+      ->set('unattended.level', CronUpdateRunner::ALL)
       ->save();
 
     $error = ValidationResult::createError([
       t('Error while updating!'),
     ]);
-    $exception = $this->createStageEventExceptionFromResults([$error], $event_class, $this->container->get(CronUpdateStage::class));
+    $exception = $this->createStageEventExceptionFromResults([$error], $event_class, $this->container->get(CronUpdateRunner::class));
     TestSubscriber1::setTestResult($exception->event->getResults(), $event_class);
 
     $this->performDrushUpdate();
@@ -579,7 +578,7 @@ END;
       t('Error while updating!'),
     ]);
     TestSubscriber1::setTestResult([$error], $event_class);
-    $exception = $this->createStageEventExceptionFromResults([$error], $event_class, $this->container->get(CronUpdateStage::class));
+    $exception = $this->createStageEventExceptionFromResults([$error], $event_class, $this->container->get(CronUpdateRunner::class));
 
     $this->performDrushUpdate();
 
@@ -626,7 +625,7 @@ END;
    * Tests that setLogger is called on the cron update stage service.
    */
   public function testLoggerIsSetByContainer(): void {
-    $stage_method_calls = $this->container->getDefinition('automatic_updates.cron_update_stage')->getMethodCalls();
+    $stage_method_calls = $this->container->getDefinition('automatic_updates.cron_update_runner')->getMethodCalls();
     $this->assertSame('setLogger', $stage_method_calls[0][0]);
   }
 

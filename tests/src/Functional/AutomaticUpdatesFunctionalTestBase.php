@@ -4,7 +4,6 @@ declare(strict_types = 1);
 
 namespace Drupal\Tests\automatic_updates\Functional;
 
-use Drupal\automatic_updates\UnattendedUpdateStageBase;
 use Drupal\fixture_manipulator\StageFixtureManipulator;
 use Drupal\package_manager\PathLocator;
 use Drupal\Tests\BrowserTestBase;
@@ -40,7 +39,7 @@ abstract class AutomaticUpdatesFunctionalTestBase extends BrowserTestBase {
     $this->useFixtureDirectoryAsActive(__DIR__ . '/../../../package_manager/tests/fixtures/fake_site');
     // @todo Remove in https://www.drupal.org/project/automatic_updates/issues/3284443
     $this->config('automatic_updates.settings')
-      ->set('unattended.level', UnattendedUpdateStageBase::SECURITY)
+      ->set('unattended.level', CronUpdateRunner::SECURITY)
       ->save();
   }
 
