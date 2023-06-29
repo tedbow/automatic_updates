@@ -5,6 +5,7 @@ declare(strict_types = 1);
 namespace Drupal\Tests\automatic_updates\Kernel;
 
 use Drupal\automatic_updates\CronUpdateRunner;
+use Drupal\automatic_updates\DrushUpdateStage;
 use Drupal\automatic_updates_test\EventSubscriber\TestSubscriber1;
 use Drupal\Core\DependencyInjection\ContainerBuilder;
 use Drupal\Core\Logger\RfcLogLevel;
@@ -305,8 +306,8 @@ END;
       ->get('cron')
       ->addLogger($cron_logger);
 
-    /** @var \Drupal\automatic_updates\CronUpdateRunner $stage */
-    $stage = $this->container->get(CronUpdateRunner::class);
+    /** @var \Drupal\automatic_updates\DrushUpdateStage $stage */
+    $stage = $this->container->get(DrushUpdateStage::class);
 
     // When the event specified by $event_class is dispatched, either throw an
     // exception directly from the event subscriber, or prepare a
@@ -467,8 +468,8 @@ END;
    * Tests that CronUpdateStage::begin() unconditionally throws an exception.
    */
   public function testBeginThrowsException(): void {
-    $this->expectExceptionMessage(CronUpdateRunner::class . '::begin() cannot be called directly.');
-    $this->container->get(CronUpdateRunner::class)
+    $this->expectExceptionMessage(DrushUpdateStage::class . '::begin() cannot be called directly.');
+    $this->container->get(DrushUpdateStage::class)
       ->begin(['drupal' => '9.8.1']);
   }
 
@@ -536,7 +537,7 @@ END;
     $error = ValidationResult::createError([
       t('Error while updating!'),
     ]);
-    $exception = $this->createStageEventExceptionFromResults([$error], $event_class, $this->container->get(CronUpdateRunner::class));
+    $exception = $this->createStageEventExceptionFromResults([$error], $event_class, $this->container->get(DrushUpdateStage::class));
     TestSubscriber1::setTestResult($exception->event->getResults(), $event_class);
 
     $this->performDrushUpdate();
@@ -578,7 +579,7 @@ END;
       t('Error while updating!'),
     ]);
     TestSubscriber1::setTestResult([$error], $event_class);
-    $exception = $this->createStageEventExceptionFromResults([$error], $event_class, $this->container->get(CronUpdateRunner::class));
+    $exception = $this->createStageEventExceptionFromResults([$error], $event_class, $this->container->get(DrushUpdateStage::class));
 
     $this->performDrushUpdate();
 

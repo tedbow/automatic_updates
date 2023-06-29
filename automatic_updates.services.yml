@@ -65,3 +65,6 @@ services:
   logger.channel.automatic_updates:
     parent: logger.channel_base
     arguments: ['automatic_updates']
+  Drupal\automatic_updates\DrushUpdateStage:
+    calls:
+      - [ 'setLogger', [ '@logger.channel.automatic_updates' ] ]

@@ -2,6 +2,7 @@
 
 namespace Drupal\Tests\automatic_updates\FunctionalJavascript;
 
+use Drupal\automatic_updates\CronUpdateRunner;
 use Drupal\FunctionalJavascriptTests\WebDriverTestBase;
 
 /**
