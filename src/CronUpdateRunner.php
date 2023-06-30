@@ -25,6 +25,13 @@ class CronUpdateRunner implements CronInterface {
   use LoggerAwareTrait;
 
   /**
+   * The current interface between PHP and the server.
+   *
+   * @var string
+   */
+  private static $serverApi = PHP_SAPI;
+
+  /**
    * All automatic updates are disabled.
    *
    * @var string
@@ -93,6 +100,16 @@ class CronUpdateRunner implements CronInterface {
   }
 
   /**
+   * Indicates if we are currently running at the command line.
+   *
+   * @return bool
+   *   TRUE if we are running at the command line, otherwise FALSE.
+   */
+  final public static function isCommandLine(): bool {
+    return self::$serverApi === 'cli';
+  }
+
+  /**
    * {@inheritdoc}
    */
   public function run() {
@@ -106,7 +123,7 @@ class CronUpdateRunner implements CronInterface {
     // accessed via the web (i.e., anything that isn't the command line), go
     // ahead and try to do the update. In all other circumstances, just run the
     // normal cron handler.
-    if ($this->getMode() !== self::DISABLED && $method === 'web') {
+    if ($this->getMode() !== self::DISABLED && $method === 'web' && !self::isCommandLine()) {
       $lock = \Drupal::lock();
       if ($lock->acquire('cron', 30)) {
         $this->runTerminalUpdateCommand();
