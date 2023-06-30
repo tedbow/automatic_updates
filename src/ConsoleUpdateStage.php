@@ -119,7 +119,7 @@ class ConsoleUpdateStage extends UpdateStage {
   /**
    * Runs the post apply command.
    */
-  protected function triggerPostApply(string $stage_id, string $start_version, string $target_version): void {
+  protected function triggerPostApply(string $stage_id, string $start_version, string $target_version, bool $is_from_web): void {
     $alias = Drush::aliasManager()->getSelf();
 
     $output = Drush::processManager()
@@ -128,6 +128,7 @@ class ConsoleUpdateStage extends UpdateStage {
         'stage-id' => $stage_id,
         'from-version' => $start_version,
         'to-version' => $target_version,
+        'is-from-web' => $is_from_web,
       ])
       ->mustRun()
       ->getOutput();
@@ -141,7 +142,7 @@ class ConsoleUpdateStage extends UpdateStage {
    * @return bool
    *   Returns TRUE if any update was attempted, otherwise FALSE.
    */
-  public function performUpdate(): bool {
+  public function performUpdate(bool $is_from_web = FALSE): bool {
     if ($this->cronUpdateRunner->getMode() === CronUpdateRunner::DISABLED) {
       return FALSE;
     }
@@ -237,7 +238,7 @@ class ConsoleUpdateStage extends UpdateStage {
       }
       return $update_started;
     }
-    $this->triggerPostApply($stage_id, $installed_version, $target_version);
+    $this->triggerPostApply($stage_id, $installed_version, $target_version, $is_from_web);
     return TRUE;
   }
 

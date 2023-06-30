@@ -58,6 +58,7 @@ final class AutomaticUpdatesCommands extends DrushCommands {
    * @option $stage-id Internal use only.
    * @option $from-version Internal use only.
    * @option $to-version Internal use only.
+   * @option $is-from-web Whether the request was triggered from the web.
    *
    * @command auto-update
    *
@@ -65,7 +66,7 @@ final class AutomaticUpdatesCommands extends DrushCommands {
    *   If the --post-apply option is provided without the --stage-id,
    *   --from-version, and --to-version options.
    */
-  public function autoUpdate(array $options = ['post-apply' => FALSE, 'stage-id' => NULL, 'from-version' => NULL, 'to-version' => NULL]) {
+  public function autoUpdate(array $options = ['post-apply' => FALSE, 'stage-id' => NULL, 'from-version' => NULL, 'to-version' => NULL, 'is-from-web' => FALSE]) {
     $io = $this->io();
 
     // The second half of the update process (post-apply etc.) is done by this
@@ -81,7 +82,7 @@ final class AutomaticUpdatesCommands extends DrushCommands {
 
       $io->info('Running post-apply tasks and final clean-up...');
       $this->stage->handlePostApply($options['stage-id'], $options['from-version'], $options['to-version']);
-      $this->runStatusChecks();
+      $this->runStatusChecks($options['is-from-web']);
     }
     else {
       if ($this->cronUpdateRunner->getMode() === CronUpdateRunner::DISABLED) {
@@ -93,11 +94,11 @@ final class AutomaticUpdatesCommands extends DrushCommands {
       if ($release) {
         $message = sprintf('Updating Drupal core to %s. This may take a while.', $release->getVersion());
         $io->info($message);
-        $this->stage->performUpdate();
+        $this->stage->performUpdate($options['is-from-web']);
       }
       else {
         $io->info("There is no Drupal core update available.");
-        $this->runStatusChecks();
+        $this->runStatusChecks($options['is-from-web']);
       }
     }
   }
@@ -105,13 +106,13 @@ final class AutomaticUpdatesCommands extends DrushCommands {
   /**
    * Runs status checks, and sends failure notifications if necessary.
    */
-  private function runStatusChecks(): void {
+  private function runStatusChecks(bool $is_from_web): void {
     $method = $this->configFactory->get('automatic_updates.settings')
       ->get('unattended.method');
 
     // To ensure consistent results, only run the status checks if we're
     // explicitly configured to do unattended updates on the command line.
-    if ($method === 'console') {
+    if (($method === 'web' && $is_from_web) || $method === 'console') {
       $last_results = $this->statusChecker->getResults();
       $this->statusCheckMailer->sendFailureNotifications($last_results, $this->statusChecker->run()->getResults());
     }

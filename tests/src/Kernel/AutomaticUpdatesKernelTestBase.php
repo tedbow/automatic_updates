@@ -4,11 +4,16 @@ declare(strict_types = 1);
 
 namespace Drupal\Tests\automatic_updates\Kernel;
 
+use Drupal\automatic_updates\Commands\AutomaticUpdatesCommands;
 use Drupal\automatic_updates\CronUpdateRunner;
 use Drupal\automatic_updates\ConsoleUpdateStage;
 use Drupal\Core\DependencyInjection\ContainerBuilder;
 use Drupal\Tests\automatic_updates\Traits\ValidationTestTrait;
 use Drupal\Tests\package_manager\Kernel\PackageManagerKernelTestBase;
+use Symfony\Component\Console\Input\InputInterface;
+use Symfony\Component\Console\Output\OutputInterface;
+use Symfony\Component\DependencyInjection\Definition;
+use Symfony\Component\DependencyInjection\Reference;
 
 /**
  * Base class for kernel tests of the Automatic Updates module.
@@ -75,6 +80,14 @@ abstract class AutomaticUpdatesKernelTestBase extends PackageManagerKernelTestBa
   public function register(ContainerBuilder $container) {
     parent::register($container);
 
+    if ($container->has('logger.channel.automatic_updates')) {
+      $commands_definition = new Definition(AutomaticUpdatesCommands::class);
+      $commands_definition->setAutowired(TRUE);
+      $commands_definition->setPublic(TRUE);
+      $container->addDefinitions([AutomaticUpdatesCommands::class => $commands_definition]);
+    }
+
+
     // Use the test-only implementations of the regular and cron update stages.
     $overrides = [
       'automatic_updates.cron_update_runner' => TestCronUpdateRunner::class,
@@ -90,8 +103,11 @@ abstract class AutomaticUpdatesKernelTestBase extends PackageManagerKernelTestBa
   /**
    * Performs an update using the console update stage directly.
    */
-  protected function performConsoleUpdate(): void {
-    $this->container->get(ConsoleUpdateStage::class)->performUpdate();
+  protected function performConsoleUpdate(bool $is_from_web = TRUE): void {
+    $commands = $this->container->get(AutomaticUpdatesCommands::class);
+    $commands->setInput($this->prophesize(InputInterface::class)->reveal());
+    $commands->setOutput($this->prophesize(OutputInterface::class)->reveal());
+    $commands->autoUpdate(['is-from-web' => $is_from_web]);
   }
 
 }
@@ -128,7 +144,7 @@ class TestConsoleUpdateStage extends ConsoleUpdateStage {
   /**
    * {@inheritdoc}
    */
-  protected function triggerPostApply(string $stage_id, string $start_version, string $target_version): void {
+  protected function triggerPostApply(string $stage_id, string $start_version, string $target_version, bool $is_from_web): void {
     $this->handlePostApply($stage_id, $start_version, $target_version);
   }
 
