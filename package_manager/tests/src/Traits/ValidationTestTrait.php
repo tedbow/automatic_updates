@@ -55,7 +55,8 @@ trait ValidationTestTrait {
    * @param array $subject
    *   An array with arbitrary keys, and values potentially containing the
    *   placeholders <PROJECT_ROOT>, <VENDOR_DIR>, <STAGE_ROOT>, or
-   *   <STAGE_ROOT_PARENT>.
+   *   <STAGE_ROOT_PARENT>. <STAGE_DIR> is the placeholder for $stage_dir, if
+   *   passed.
    * @param \Drupal\package_manager\PathLocator|null $path_locator
    *   (optional) The path locator (when this trait is used in unit tests).
    * @param string|null $stage_dir
