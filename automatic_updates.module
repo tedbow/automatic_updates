@@ -215,7 +215,7 @@ function automatic_updates_form_update_settings_alter(array &$form): void {
     '#type' => 'radios',
     '#title' => t('How unattended updates should be run'),
     '#options' => [
-      'web' => t('By a request to /system/cron'),
+      'web' => t('By using the Automated Cron module or a request to /system/cron'),
       'console' => t('By the <code>auto-update</code> Drush command'),
     ],
     '#default_value' => $config->get('unattended.method'),
