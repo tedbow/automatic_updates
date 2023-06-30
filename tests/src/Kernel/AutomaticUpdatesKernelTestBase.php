@@ -4,16 +4,11 @@ declare(strict_types = 1);
 
 namespace Drupal\Tests\automatic_updates\Kernel;
 
-use Drupal\automatic_updates\Commands\AutomaticUpdatesCommands;
 use Drupal\automatic_updates\CronUpdateRunner;
 use Drupal\automatic_updates\ConsoleUpdateStage;
-use Drupal\automatic_updates\CronUpdateStage;
 use Drupal\Core\DependencyInjection\ContainerBuilder;
 use Drupal\Tests\automatic_updates\Traits\ValidationTestTrait;
 use Drupal\Tests\package_manager\Kernel\PackageManagerKernelTestBase;
-use Symfony\Component\Console\Input\InputInterface;
-use Symfony\Component\Console\Output\OutputInterface;
-use Symfony\Component\DependencyInjection\Definition;
 
 /**
  * Base class for kernel tests of the Automatic Updates module.
