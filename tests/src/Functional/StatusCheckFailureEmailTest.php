@@ -108,7 +108,6 @@ class StatusCheckFailureEmailTest extends AutomaticUpdatesFunctionalTestBase {
    * Tests that status check failures will trigger e-mails in some situations.
    */
   public function testFailureNotifications(): void {
-    //$this->getStageFixtureManipulator()->setCorePackageVersion('9.8.2');
     // No messages should have been sent yet.
     $this->assertSentMessagesCount(0);
 

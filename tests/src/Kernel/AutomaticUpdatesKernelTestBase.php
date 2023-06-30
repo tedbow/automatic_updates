@@ -13,7 +13,6 @@ use Drupal\Tests\package_manager\Kernel\PackageManagerKernelTestBase;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\DependencyInjection\Definition;
-use Symfony\Component\DependencyInjection\Reference;
 
 /**
  * Base class for kernel tests of the Automatic Updates module.
@@ -86,7 +85,6 @@ abstract class AutomaticUpdatesKernelTestBase extends PackageManagerKernelTestBa
       $commands_definition->setPublic(TRUE);
       $container->addDefinitions([AutomaticUpdatesCommands::class => $commands_definition]);
     }
-
 
     // Use the test-only implementations of the regular and cron update stages.
     $overrides = [
