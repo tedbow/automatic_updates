@@ -55,7 +55,6 @@ class StatusCheckFailureEmailTest extends AutomaticUpdatesFunctionalTestBase {
    */
   protected function setUp(): void {
     parent::setUp();
-    $this->useTestMailCollector();
     // Simulate that we're already fully up to date.
     $this->mockActiveCoreVersion('9.8.1');
     // @todo Remove in https://www.drupal.org/project/automatic_updates/issues/3284443

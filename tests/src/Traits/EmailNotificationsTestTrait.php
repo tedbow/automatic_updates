@@ -30,18 +30,6 @@ trait EmailNotificationsTestTrait {
   protected $emailRecipients = [];
 
   /**
-   * Helper to set the test mail collector in settings.php.
-   */
-  protected function useTestMailCollector() {
-    // Set up an override.
-    $settings['config']['system.mail']['interface']['default'] = (object) [
-      'value' => 'test_mail_collector',
-      'required' => TRUE,
-    ];
-    $this->writeSettings($settings);
-  }
-
-  /**
    * Prepares the recipient list for e-mails related to Automatic Updates.
    */
   protected function setUpEmailRecipients(): void {
