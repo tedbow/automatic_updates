@@ -55,6 +55,7 @@ class StatusCheckFailureEmailTest extends AutomaticUpdatesFunctionalTestBase {
    */
   protected function setUp(): void {
     parent::setUp();
+    $this->useTestMailCollector();
     // Simulate that we're already fully up to date.
     $this->mockActiveCoreVersion('9.8.1');
     // @todo Remove in https://www.drupal.org/project/automatic_updates/issues/3284443
@@ -96,6 +97,7 @@ class StatusCheckFailureEmailTest extends AutomaticUpdatesFunctionalTestBase {
    *   The expected number of failure notifications that should have been sent.
    */
   private function assertSentMessagesCount(int $expected_count): void {
+    $this->container->get('state')->resetCache();
     $sent_messages = $this->getMails([
       'id' => 'automatic_updates_status_check_failed',
     ]);
@@ -106,6 +108,7 @@ class StatusCheckFailureEmailTest extends AutomaticUpdatesFunctionalTestBase {
    * Tests that status check failures will trigger e-mails in some situations.
    */
   public function testFailureNotifications(): void {
+    //$this->getStageFixtureManipulator()->setCorePackageVersion('9.8.2');
     // No messages should have been sent yet.
     $this->assertSentMessagesCount(0);
 
@@ -117,9 +120,16 @@ class StatusCheckFailureEmailTest extends AutomaticUpdatesFunctionalTestBase {
       ->setAbsolute()
       ->toString();
 
+    $base = Url::fromUserInput('/')->setAbsolute()->toString();
+    $url = str_replace($base, 'http://' . str_replace('test', '', $this->databasePrefix) . '/', $url);
+
     $expected_body = <<<END
-Your site has failed some readiness checks for automatic updates and may not be able to receive automatic updates until further action is taken. Please visit $url for more information.
+Your site has failed some readiness checks for automatic updates and may not
+be able to receive automatic updates until further action is taken. Please
+visit $url for more information.
+
 END;
+    $this->container->get('state')->resetCache();
     $this->assertMessagesSent('Automatic updates readiness checks failed', $expected_body);
 
     // Running cron again should not trigger another e-mail (i.e., each
@@ -226,14 +236,16 @@ END;
 
     // If we re-enable unattended updates, they should be emailed again, even if
     // the results haven't changed.
-    $config->set('unattended.level', CronUpdateRunner::ALL)->save();
+    $config->set('unattended.level', CronUpdateRunner::SECURITY)->save();
     $this->performConsoleUpdate();
     $sent_messages_count += $recipient_count;
     $this->assertSentMessagesCount($sent_messages_count);
   }
 
   private function performConsoleUpdate() {
-    $this->drush('auto-update', [], ['is-from-web']);
+    $cd = $this->siteDirectory;
+    $cd = __DIR__ . '/../../../../../' . $cd;
+    $this->drush('auto-update', [], ['is-from-web' => NULL], NULL, $cd);
   }
 
 }
