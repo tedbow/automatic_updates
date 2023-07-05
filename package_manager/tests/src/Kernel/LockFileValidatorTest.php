@@ -69,8 +69,11 @@ class LockFileValidatorTest extends PackageManagerKernelTestBase {
    */
   public function testCreateWithNoLock(): void {
     unlink($this->activeDir . '/composer.lock');
-
-    $no_lock = ValidationResult::createError([t('The active lock file does not exist.')]);
+    $project_root = $this->container->get(PathLocator::class)->getProjectRoot();
+    $lock_file_path = $project_root . DIRECTORY_SEPARATOR . 'composer.lock';
+    $no_lock = ValidationResult::createError([
+      t('The active lock file (@file) does not exist.', ['@file' => $lock_file_path]),
+    ]);
     $stage = $this->assertResults([$no_lock], PreCreateEvent::class);
     // The stage was not created successfully, so the status check should be
     // clear.
@@ -108,7 +111,8 @@ class LockFileValidatorTest extends PackageManagerKernelTestBase {
       file_put_contents($this->activeDir . '/composer.lock', json_encode($lock, JSON_THROW_ON_ERROR));
     }, $event_class);
     $result = ValidationResult::createError([
-      t('Unexpected changes were detected in composer.lock, which indicates that other Composer operations were performed since this Package Manager operation started. This can put the code base into an unreliable state and therefore is not allowed.'),
+      t('Unexpected changes were detected in the active lock file (@file), which indicates that other Composer operations were performed since this Package Manager operation started. This can put the code base into an unreliable state and therefore is not allowed.',
+       ['@file' => $this->activeDir . '/composer.lock']),
     ], t('Problem detected in lock file during stage operations.'));
     $stage = $this->assertResults([$result], $event_class);
     // A status check should agree that there is an error here.
@@ -129,7 +133,9 @@ class LockFileValidatorTest extends PackageManagerKernelTestBase {
       unlink($this->activeDir . '/composer.lock');
     }, $event_class);
     $result = ValidationResult::createError([
-      t('The active lock file does not exist.'),
+      t('The active lock file (@file) does not exist.', [
+        '@file' => $this->activeDir . '/composer.lock',
+      ]),
     ], t('Problem detected in lock file during stage operations.'));
     $stage = $this->assertResults([$result], $event_class);
     // A status check should agree that there is an error here.
@@ -173,7 +179,7 @@ class LockFileValidatorTest extends PackageManagerKernelTestBase {
     NoOpStager::setLockFileShouldChange(FALSE);
 
     $result = ValidationResult::createError([
-      t('There are no pending Composer operations.'),
+      t('There appear to be no pending Composer operations because the active lock file (<PROJECT_ROOT>/composer.lock) and the staged lock file (<STAGE_DIR>/composer.lock) are identical.'),
     ], t('Problem detected in lock file during stage operations.'));
     $stage = $this->assertResults([$result], PreApplyEvent::class);
     // A status check shouldn't produce raise any errors, because it's only

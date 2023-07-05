@@ -435,7 +435,10 @@ abstract class PackageManagerKernelTestBase extends KernelTestBase {
   protected function assertExpectedResultsFromException(array $expected_results, StageEventException $exception): void {
     $event = $exception->event;
     $this->assertInstanceOf(PreOperationStageEvent::class, $event);
-    $this->assertValidationResultsEqual($expected_results, $event->getResults());
+
+    $stage = $event->stage;
+    $stage_dir = $stage->stageDirectoryExists() ? $stage->getStageDirectory() : NULL;
+    $this->assertValidationResultsEqual($expected_results, $event->getResults(), NULL, $stage_dir);
   }
 
   /**
