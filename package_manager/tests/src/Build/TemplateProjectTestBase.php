@@ -279,7 +279,9 @@ END;
       $this->runComposer('composer require --no-update drupal/core-vendor-hardening:*', $template_dir);
     }
 
-    // Do not run development Composer plugin.
+    // Do not run development Composer plugin, since it tries to run an
+    // executable that might not exist while dependencies are being installed
+    // and it adds no value to this test.
     $this->runComposer("composer config allow-plugins.dealerdirect/phpcodesniffer-composer-installer false", $template_dir);
 
     // Create the test project, defining its repository as part of the
@@ -440,6 +442,13 @@ END;
           ],
           'autoload' => $package_info['autoload'] ?? [],
         ];
+        // These polyfills are dependencies of some packages, but for reasons we
+        // don't understand, they are not installed in code bases built on PHP
+        // versions that are newer than the ones being polyfilled, which means
+        // we won't be able to build our test project because these polyfills
+        // are not available in the local code base. Since we're guaranteed to
+        // be on PHP 8.1 or later, ensure no package requires polyfills of older
+        // versions of PHP.
         if (isset($package_info['require'])) {
           unset(
             $package_info['require']['symfony/polyfill-php72'],
