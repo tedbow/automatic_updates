@@ -241,9 +241,8 @@ END;
   }
 
   private function performConsoleUpdate() {
-    $cd = $this->siteDirectory;
-    $cd = __DIR__ . '/../../../../../' . $cd;
-    $this->drush('auto-update', [], ['is-from-web' => NULL], NULL, $cd);
+    // @todo Should we change working directory?
+    $this->drush('auto-update', [], ['is-from-web' => NULL]);
   }
 
 }
