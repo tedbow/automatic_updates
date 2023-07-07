@@ -13,7 +13,7 @@ use Drupal\package_manager\Event\PreCreateEvent;
 use Drupal\package_manager\Event\PreOperationStageEvent;
 use Drupal\package_manager\Event\StatusCheckEvent;
 use Drupal\package_manager\PathLocator;
-use PhpTuf\ComposerStager\Domain\Exception\RuntimeException;
+use PhpTuf\ComposerStager\API\Exception\RuntimeException;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 /**

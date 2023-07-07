@@ -8,6 +8,7 @@ use Drupal\Core\Controller\ControllerBase;
 use Drupal\Core\Url;
 use Drupal\package_manager\PathLocator;
 use Drupal\package_manager\StageBase;
+use PhpTuf\ComposerStager\API\Path\Factory\PathFactoryInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\RedirectResponse;
@@ -65,7 +66,7 @@ class ApiController extends ControllerBase {
       $container->get('event_dispatcher'),
       $container->get('tempstore.shared'),
       $container->get('datetime.time'),
-      $container->get('PhpTuf\ComposerStager\Infrastructure\Factory\Path\PathFactoryInterface'),
+      $container->get(PathFactoryInterface::class),
       $container->get('package_manager.failure_marker'));
     return new static(
       $stage,

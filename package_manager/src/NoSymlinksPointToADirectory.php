@@ -6,9 +6,10 @@ namespace Drupal\package_manager;
 
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
-use PhpTuf\ComposerStager\Domain\Service\Precondition\NoSymlinksPointToADirectoryInterface;
-use PhpTuf\ComposerStager\Domain\Value\Path\PathInterface;
-use PhpTuf\ComposerStager\Domain\Value\PathList\PathListInterface;
+use PhpTuf\ComposerStager\API\Path\Value\PathInterface;
+use PhpTuf\ComposerStager\API\Path\Value\PathListInterface;
+use PhpTuf\ComposerStager\API\Precondition\Service\NoSymlinksPointToADirectoryInterface;
+use PhpTuf\ComposerStager\API\Translation\Value\TranslatableInterface;
 
 /**
  * Checks if the code base contains any symlinks that point to a directory.
@@ -29,7 +30,7 @@ final class NoSymlinksPointToADirectory implements NoSymlinksPointToADirectoryIn
   /**
    * Constructs a NoSymlinksPointToADirectory object.
    *
-   * @param \PhpTuf\ComposerStager\Domain\Service\Precondition\NoSymlinksPointToADirectoryInterface $decorated
+   * @param \PhpTuf\ComposerStager\API\Precondition\Service\NoSymlinksPointToADirectoryInterface $decorated
    *   The decorated precondition.
    * @param \Drupal\Core\Config\ConfigFactoryInterface $configFactory
    *   The config factory.
@@ -42,21 +43,21 @@ final class NoSymlinksPointToADirectory implements NoSymlinksPointToADirectoryIn
   /**
    * {@inheritdoc}
    */
-  public function getName(): string {
+  public function getName(): TranslatableInterface {
     return $this->decorated->getName();
   }
 
   /**
    * {@inheritdoc}
    */
-  public function getDescription(): string {
+  public function getDescription(): TranslatableInterface {
     return $this->decorated->getDescription();
   }
 
   /**
    * {@inheritdoc}
    */
-  public function getStatusMessage(PathInterface $activeDir, PathInterface $stagingDir, ?PathListInterface $exclusions = NULL,): string {
+  public function getStatusMessage(PathInterface $activeDir, PathInterface $stagingDir, ?PathListInterface $exclusions = NULL,): TranslatableInterface {
     if ($this->isUsingRsync()) {
       return $this->t('Symlinks to directories are supported by the rsync file syncer.');
     }
@@ -92,6 +93,13 @@ final class NoSymlinksPointToADirectory implements NoSymlinksPointToADirectoryIn
       ->get('file_syncer');
 
     return $syncer === 'rsync';
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getLeaves(): array {
+    return [$this];
   }
 
 }

@@ -9,7 +9,8 @@ declare(strict_types = 1);
 
 use Drupal\package_manager\ComposerInspector;
 use Drupal\package_manager\Exception\StageFailureMarkerException;
-use PhpTuf\ComposerStager\Infrastructure\Service\Finder\ExecutableFinderInterface;
+use PhpTuf\ComposerStager\API\Core\BeginnerInterface;
+use PhpTuf\ComposerStager\API\Finder\Service\ExecutableFinderInterface;
 
 /**
  * Implements hook_requirements().
@@ -17,7 +18,7 @@ use PhpTuf\ComposerStager\Infrastructure\Service\Finder\ExecutableFinderInterfac
 function package_manager_requirements(string $phase) {
   $requirements = [];
   // BEGIN: DELETE FROM CORE MERGE REQUEST
-  if (!class_exists('\PhpTuf\ComposerStager\Domain\Core\Beginner\Beginner')) {
+  if (!interface_exists(BeginnerInterface::class)) {
     $requirements['package_manager_composer_dependencies'] = [
       'title' => t('Missing dependency'),
       'description' => t('External dependencies for Package Manager are not available. Composer must be used to download the module with dependencies.'),
@@ -45,7 +46,7 @@ function package_manager_requirements(string $phase) {
   if ($phase !== 'runtime') {
     return $requirements;
   }
-  /** @var \PhpTuf\ComposerStager\Infrastructure\Service\Finder\ExecutableFinderInterface $executable_finder */
+  /** @var \PhpTuf\ComposerStager\API\Finder\Service\ExecutableFinderInterface $executable_finder */
   $executable_finder = \Drupal::service(ExecutableFinderInterface::class);
 
   // Report the Composer version in use, as well as its path.

@@ -10,7 +10,7 @@ use Drupal\package_manager\Event\CollectPathsToExcludeEvent;
 use Drupal\package_manager\PathExcluder\SqliteDatabaseExcluder;
 use Drupal\package_manager\PathLocator;
 use Drupal\Tests\package_manager\Kernel\PackageManagerKernelTestBase;
-use PhpTuf\ComposerStager\Infrastructure\Factory\Path\PathFactoryInterface;
+use PhpTuf\ComposerStager\API\Path\Factory\PathFactoryInterface;
 
 /**
  * @covers \Drupal\package_manager\PathExcluder\SqliteDatabaseExcluder

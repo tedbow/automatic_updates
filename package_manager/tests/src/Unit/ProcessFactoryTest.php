@@ -4,8 +4,11 @@ declare(strict_types = 1);
 
 namespace Drupal\Tests\package_manager\Unit;
 
+use Drupal\Core\File\FileSystemInterface;
 use Drupal\package_manager\ProcessFactory;
 use Drupal\Tests\UnitTestCase;
+use PhpTuf\ComposerStager\API\Translation\Factory\TranslatableFactoryInterface;
+use PhpTuf\ComposerStager\Internal\Process\Factory\ProcessFactory as StagerProcessFactory;
 
 /**
  * @coversDefaultClass \Drupal\package_manager\ProcessFactory
@@ -18,9 +21,14 @@ class ProcessFactoryTest extends UnitTestCase {
    * Tests that the process factory prepends the PHP directory to PATH.
    */
   public function testPhpDirectoryPrependedToPath(): void {
+    $decorated = new StagerProcessFactory(
+      $this->createMock(TranslatableFactoryInterface::class),
+    );
+
     $factory = new ProcessFactory(
-      $this->prophesize('\Drupal\Core\File\FileSystemInterface')->reveal(),
-      $this->getConfigFactoryStub()
+      $this->createMock(FileSystemInterface::class),
+      $this->getConfigFactoryStub(),
+      $decorated,
     );
 
     // Ensure that the directory of the PHP interpreter can be found.

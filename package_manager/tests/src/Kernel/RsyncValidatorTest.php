@@ -8,8 +8,9 @@ use Drupal\Core\DependencyInjection\ContainerBuilder;
 use Drupal\package_manager\Event\PreCreateEvent;
 use Drupal\package_manager\ValidationResult;
 use Drupal\package_manager\Validator\RsyncValidator;
-use PhpTuf\ComposerStager\Domain\Exception\LogicException;
-use PhpTuf\ComposerStager\Infrastructure\Service\Finder\ExecutableFinderInterface;
+use PhpTuf\ComposerStager\API\Exception\LogicException;
+use PhpTuf\ComposerStager\API\Finder\Service\ExecutableFinderInterface;
+use PhpTuf\ComposerStager\Internal\Translation\Value\TranslatableMessage;
 
 /**
  * @covers \Drupal\package_manager\Validator\RsyncValidator
@@ -21,7 +22,7 @@ class RsyncValidatorTest extends PackageManagerKernelTestBase {
   /**
    * The mocked executable finder.
    *
-   * @var \PhpTuf\ComposerStager\Infrastructure\Service\Finder\ExecutableFinderInterface
+   * @var \PhpTuf\ComposerStager\API\Finder\Service\ExecutableFinderInterface
    */
   private $executableFinder;
 
@@ -120,7 +121,8 @@ class RsyncValidatorTest extends PackageManagerKernelTestBase {
    * Tests that the stage cannot be created if rsync is selected, but not found.
    */
   public function testPreCreateFailsIfRsyncNotFound(): void {
-    $this->executableFinder->find('rsync')->willThrow(new LogicException('Nope!'));
+    $message = new TranslatableMessage('Nope!');
+    $this->executableFinder->find('rsync')->willThrow(new LogicException($message));
 
     $result = ValidationResult::createError([
       t('<code>rsync</code> is not available.'),

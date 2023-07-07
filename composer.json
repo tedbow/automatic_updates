@@ -14,7 +14,7 @@
     },
     "require": {
         "ext-json": "*",
-        "php-tuf/composer-stager": "2.0-alpha2",
+        "php-tuf/composer-stager": "2.0-alpha4",
         "composer-runtime-api": "^2.1"
     },
     "require-dev": {

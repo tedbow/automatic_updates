@@ -11,8 +11,8 @@ use Drupal\Core\Url;
 use Drupal\package_manager\Event\PreCreateEvent;
 use Drupal\package_manager\Event\PreOperationStageEvent;
 use Drupal\package_manager\Event\StatusCheckEvent;
-use PhpTuf\ComposerStager\Domain\Exception\LogicException;
-use PhpTuf\ComposerStager\Infrastructure\Service\Finder\ExecutableFinderInterface;
+use PhpTuf\ComposerStager\API\Exception\LogicException;
+use PhpTuf\ComposerStager\API\Finder\Service\ExecutableFinderInterface;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 /**
@@ -32,7 +32,7 @@ final class RsyncValidator implements EventSubscriberInterface {
    *
    * @param \Drupal\Core\Config\ConfigFactoryInterface $configFactory
    *   The config factory.
-   * @param \PhpTuf\ComposerStager\Infrastructure\Service\Finder\ExecutableFinderInterface $executableFinder
+   * @param \PhpTuf\ComposerStager\API\Finder\Service\ExecutableFinderInterface $executableFinder
    *   The executable finder service.
    * @param \Drupal\Core\Extension\ModuleHandlerInterface $moduleHandler
    *   The module handler service.

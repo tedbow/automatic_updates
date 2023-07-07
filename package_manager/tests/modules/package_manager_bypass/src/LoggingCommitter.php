@@ -5,11 +5,11 @@ declare(strict_types = 1);
 namespace Drupal\package_manager_bypass;
 
 use Drupal\Core\State\StateInterface;
-use PhpTuf\ComposerStager\Domain\Core\Committer\CommitterInterface;
-use PhpTuf\ComposerStager\Domain\Service\ProcessOutputCallback\ProcessOutputCallbackInterface;
-use PhpTuf\ComposerStager\Domain\Service\ProcessRunner\ProcessRunnerInterface;
-use PhpTuf\ComposerStager\Domain\Value\Path\PathInterface;
-use PhpTuf\ComposerStager\Domain\Value\PathList\PathListInterface;
+use PhpTuf\ComposerStager\API\Core\CommitterInterface;
+use PhpTuf\ComposerStager\API\Path\Value\PathInterface;
+use PhpTuf\ComposerStager\API\Path\Value\PathListInterface;
+use PhpTuf\ComposerStager\API\Process\Service\ProcessOutputCallbackInterface;
+use PhpTuf\ComposerStager\API\Process\Service\ProcessRunnerInterface;
 
 /**
  * A composer-stager Committer decorator that adds logging.
@@ -24,7 +24,7 @@ final class LoggingCommitter implements CommitterInterface {
   /**
    * The decorated service.
    *
-   * @var \PhpTuf\ComposerStager\Domain\Core\Committer\CommitterInterface
+   * @var \PhpTuf\ComposerStager\API\Core\CommitterInterface
    */
   private $inner;
 
@@ -33,7 +33,7 @@ final class LoggingCommitter implements CommitterInterface {
    *
    * @param \Drupal\Core\State\StateInterface $state
    *   The state service.
-   * @param \PhpTuf\ComposerStager\Domain\Core\Committer\CommitterInterface $inner
+   * @param \PhpTuf\ComposerStager\API\Core\CommitterInterface $inner
    *   The decorated committer service.
    */
   public function __construct(StateInterface $state, CommitterInterface $inner) {

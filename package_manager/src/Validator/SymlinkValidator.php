@@ -7,10 +7,10 @@ namespace Drupal\package_manager\Validator;
 use Drupal\package_manager\Event\PreOperationStageEvent;
 use Drupal\package_manager\Event\PreRequireEvent;
 use Drupal\package_manager\PathLocator;
-use PhpTuf\ComposerStager\Domain\Aggregate\PreconditionsTree\NoUnsupportedLinksExistInterface;
-use PhpTuf\ComposerStager\Domain\Exception\PreconditionException;
-use PhpTuf\ComposerStager\Infrastructure\Factory\Path\PathFactoryInterface;
-use PhpTuf\ComposerStager\Infrastructure\Value\PathList\PathList;
+use PhpTuf\ComposerStager\API\Exception\PreconditionException;
+use PhpTuf\ComposerStager\API\Path\Factory\PathFactoryInterface;
+use PhpTuf\ComposerStager\API\Path\Value\PathList;
+use PhpTuf\ComposerStager\API\Precondition\Service\NoUnsupportedLinksExistInterface;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 /**
@@ -32,9 +32,9 @@ final class SymlinkValidator implements EventSubscriberInterface {
    *
    * @param \Drupal\package_manager\PathLocator $pathLocator
    *   The path locator service.
-   * @param \PhpTuf\ComposerStager\Domain\Aggregate\PreconditionsTree\NoUnsupportedLinksExistInterface $precondition
+   * @param \PhpTuf\ComposerStager\API\Precondition\Service\NoUnsupportedLinksExistInterface $precondition
    *   The Composer Stager precondition that this validator wraps.
-   * @param \PhpTuf\ComposerStager\Infrastructure\Factory\Path\PathFactoryInterface $pathFactory
+   * @param \PhpTuf\ComposerStager\API\Path\Factory\PathFactoryInterface $pathFactory
    *   The path factory service.
    */
   public function __construct(
@@ -75,7 +75,7 @@ final class SymlinkValidator implements EventSubscriberInterface {
     }
 
     try {
-      $this->precondition->assertIsFulfilled($active_dir, $stage_dir, new PathList($excluded_paths));
+      $this->precondition->assertIsFulfilled($active_dir, $stage_dir, new PathList(...$excluded_paths));
     }
     catch (PreconditionException $e) {
       $event->addErrorFromThrowable($e);

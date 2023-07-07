@@ -22,10 +22,10 @@ use Drupal\package_manager\PathLocator;
 use Drupal\package_manager\ProjectInfo;
 use Drupal\update\ProjectRelease;
 use GuzzleHttp\Psr7\Uri as GuzzleUri;
-use PhpTuf\ComposerStager\Domain\Core\Beginner\BeginnerInterface;
-use PhpTuf\ComposerStager\Domain\Core\Committer\CommitterInterface;
-use PhpTuf\ComposerStager\Domain\Core\Stager\StagerInterface;
-use PhpTuf\ComposerStager\Infrastructure\Factory\Path\PathFactoryInterface;
+use PhpTuf\ComposerStager\API\Core\BeginnerInterface;
+use PhpTuf\ComposerStager\API\Core\CommitterInterface;
+use PhpTuf\ComposerStager\API\Core\StagerInterface;
+use PhpTuf\ComposerStager\API\Path\Factory\PathFactoryInterface;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 
@@ -85,11 +85,11 @@ class CronUpdateStage extends UpdateStage implements CronInterface {
    *   The Composer inspector service.
    * @param \Drupal\package_manager\PathLocator $pathLocator
    *   The path locator service.
-   * @param \PhpTuf\ComposerStager\Domain\Core\Beginner\BeginnerInterface $beginner
+   * @param \PhpTuf\ComposerStager\API\Core\BeginnerInterface $beginner
    *   The beginner service.
-   * @param \PhpTuf\ComposerStager\Domain\Core\Stager\StagerInterface $stager
+   * @param \PhpTuf\ComposerStager\API\Core\StagerInterface $stager
    *   The stager service.
-   * @param \PhpTuf\ComposerStager\Domain\Core\Committer\CommitterInterface $committer
+   * @param \PhpTuf\ComposerStager\API\Core\CommitterInterface $committer
    *   The committer service.
    * @param \Drupal\Core\File\FileSystemInterface $fileSystem
    *   The file system service.
@@ -99,7 +99,7 @@ class CronUpdateStage extends UpdateStage implements CronInterface {
    *   The shared tempstore factory.
    * @param \Drupal\Component\Datetime\TimeInterface $time
    *   The time service.
-   * @param \PhpTuf\ComposerStager\Infrastructure\Factory\Path\PathFactoryInterface $pathFactory
+   * @param \PhpTuf\ComposerStager\API\Path\Factory\PathFactoryInterface $pathFactory
    *   The path factory service.
    * @param \Drupal\package_manager\FailureMarker $failureMarker
    *   The failure marker service.

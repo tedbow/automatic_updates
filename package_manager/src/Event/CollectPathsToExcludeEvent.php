@@ -6,9 +6,9 @@ namespace Drupal\package_manager\Event;
 
 use Drupal\package_manager\StageBase;
 use Drupal\package_manager\PathLocator;
-use PhpTuf\ComposerStager\Domain\Value\PathList\PathListInterface;
-use PhpTuf\ComposerStager\Infrastructure\Factory\Path\PathFactoryInterface;
-use PhpTuf\ComposerStager\Infrastructure\Value\PathList\PathList;
+use PhpTuf\ComposerStager\API\Path\Factory\PathFactoryInterface;
+use PhpTuf\ComposerStager\API\Path\Value\PathList;
+use PhpTuf\ComposerStager\API\Path\Value\PathListInterface;
 
 /**
  * Defines an event that collects paths to exclude.
@@ -21,7 +21,7 @@ final class CollectPathsToExcludeEvent extends StageEvent implements PathListInt
   /**
    * The list of paths to exclude.
    *
-   * @var \PhpTuf\ComposerStager\Domain\Value\PathList\PathListInterface
+   * @var \PhpTuf\ComposerStager\API\Path\Value\PathListInterface
    */
   protected PathListInterface $pathList;
 
@@ -32,7 +32,7 @@ final class CollectPathsToExcludeEvent extends StageEvent implements PathListInt
    *   The stage which fired this event.
    * @param \Drupal\package_manager\PathLocator $pathLocator
    *   The path locator service.
-   * @param \PhpTuf\ComposerStager\Infrastructure\Factory\Path\PathFactoryInterface $pathFactory
+   * @param \PhpTuf\ComposerStager\API\Path\Factory\PathFactoryInterface $pathFactory
    *   The path factory service.
    */
   public function __construct(
@@ -41,14 +41,14 @@ final class CollectPathsToExcludeEvent extends StageEvent implements PathListInt
     protected PathFactoryInterface $pathFactory
   ) {
     parent::__construct($stage);
-    $this->pathList = new PathList([]);
+    $this->pathList = new PathList();
   }
 
   /**
    * {@inheritdoc}
    */
-  public function add(array $paths): void {
-    $this->pathList->add($paths);
+  public function add(string ...$paths): void {
+    $this->pathList->add(...$paths);
   }
 
   /**
@@ -76,7 +76,7 @@ final class CollectPathsToExcludeEvent extends StageEvent implements PathListInt
 
     foreach ($paths as $path) {
       // Make the path relative to the project root by prefixing the web root.
-      $this->add([$web_root . $path]);
+      $this->add($web_root . $path);
     }
   }
 
@@ -101,7 +101,7 @@ final class CollectPathsToExcludeEvent extends StageEvent implements PathListInt
       // Make absolute paths relative to the project root.
       $path = str_replace($project_root, '', $path);
       $path = ltrim($path, '/');
-      $this->add([$path]);
+      $this->add($path);
     }
   }
 

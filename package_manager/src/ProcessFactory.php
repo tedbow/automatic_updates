@@ -6,8 +6,8 @@ namespace Drupal\package_manager;
 
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\File\FileSystemInterface;
-use PhpTuf\ComposerStager\Infrastructure\Factory\Process\ProcessFactoryInterface;
-use PhpTuf\ComposerStager\Infrastructure\Factory\Process\ProcessFactory as StagerProcessFactory;
+use PhpTuf\ComposerStager\API\Process\Factory\ProcessFactoryInterface;
+use PhpTuf\ComposerStager\Internal\Process\Factory\ProcessFactory as StagerProcessFactory;
 use Symfony\Component\Process\Process;
 
 // cspell:ignore BINDIR
@@ -23,26 +23,20 @@ use Symfony\Component\Process\Process;
 final class ProcessFactory implements ProcessFactoryInterface {
 
   /**
-   * The decorated process factory.
-   *
-   * @var \PhpTuf\ComposerStager\Infrastructure\Factory\Process\ProcessFactoryInterface
-   */
-  private $decorated;
-
-  /**
    * Constructs a ProcessFactory object.
    *
    * @param \Drupal\Core\File\FileSystemInterface $fileSystem
    *   The file system service.
    * @param \Drupal\Core\Config\ConfigFactoryInterface $configFactory
    *   The config factory service.
+   * @param \PhpTuf\ComposerStager\Internal\Process\Factory\ProcessFactory $decorated
+   *   The decorated process factory service.
    */
   public function __construct(
     private readonly FileSystemInterface $fileSystem,
-    private readonly ConfigFactoryInterface $configFactory
-  ) {
-    $this->decorated = new StagerProcessFactory();
-  }
+    private readonly ConfigFactoryInterface $configFactory,
+    private readonly StagerProcessFactory $decorated,
+  ) {}
 
   /**
    * Returns the value of an environment variable.
@@ -67,7 +61,7 @@ final class ProcessFactory implements ProcessFactoryInterface {
     $process = $this->decorated->create($command);
 
     $env = $process->getEnv();
-    if ($this->isComposerCommand($command)) {
+    if ($command && $this->isComposerCommand($command)) {
       $env['COMPOSER_HOME'] = $this->getComposerHomePath();
     }
     // Ensure that the current PHP installation is the first place that will be

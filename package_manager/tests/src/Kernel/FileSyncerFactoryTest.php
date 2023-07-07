@@ -6,9 +6,9 @@ namespace Drupal\Tests\package_manager\Kernel;
 
 use Drupal\KernelTests\KernelTestBase;
 use Drupal\Tests\package_manager\Traits\AssertPreconditionsTrait;
-use PhpTuf\ComposerStager\Domain\Service\FileSyncer\FileSyncerInterface;
-use PhpTuf\ComposerStager\Infrastructure\Service\FileSyncer\PhpFileSyncer;
-use PhpTuf\ComposerStager\Infrastructure\Service\FileSyncer\RsyncFileSyncer;
+use PhpTuf\ComposerStager\API\FileSyncer\Service\FileSyncerInterface;
+use PhpTuf\ComposerStager\Internal\FileSyncer\Service\PhpFileSyncer;
+use PhpTuf\ComposerStager\Internal\FileSyncer\Service\RsyncFileSyncer;
 
 /**
  * @covers \Drupal\package_manager\FileSyncerFactory

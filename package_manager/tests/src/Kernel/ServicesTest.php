@@ -8,8 +8,8 @@ use Drupal\KernelTests\KernelTestBase;
 use Drupal\package_manager\ExecutableFinder;
 use Drupal\package_manager\ProcessFactory;
 use Drupal\Tests\package_manager\Traits\AssertPreconditionsTrait;
-use PhpTuf\ComposerStager\Infrastructure\Factory\Process\ProcessFactoryInterface;
-use PhpTuf\ComposerStager\Infrastructure\Service\Finder\ExecutableFinderInterface;
+use PhpTuf\ComposerStager\API\Finder\Service\ExecutableFinderInterface;
+use PhpTuf\ComposerStager\API\Process\Factory\ProcessFactoryInterface;
 
 /**
  * Tests that Package Manager services are wired correctly.
