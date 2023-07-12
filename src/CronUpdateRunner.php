@@ -75,13 +75,13 @@ class CronUpdateRunner implements CronInterface {
     $drush_path = $this->getCommandPath();
     $phpBinaryFinder = new PhpExecutableFinder();
 
-    $process = Process::fromShellCommandline($phpBinaryFinder->find() . " $drush_path auto-update --is-from-web");
+    $process = Process::fromShellCommandline($phpBinaryFinder->find() . " $drush_path auto-update --is-from-web &");
     $process->setWorkingDirectory($this->pathLocator->getProjectRoot() . DIRECTORY_SEPARATOR . $this->pathLocator->getWebRoot());
     // $process->disableOutput();
     $process->setTimeout(0);
 
     try {
-      $process->mustRun();
+      $process->start();
       sleep(1);
       $wait_till = time() + 5;
       // Wait for the process to start.
