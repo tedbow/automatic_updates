@@ -8,6 +8,7 @@ use Behat\Mink\Element\NodeElement;
 use Composer\Autoload\ClassLoader;
 use Drupal\automatic_updates\CronUpdateRunner;
 use Drupal\automatic_updates\StatusCheckMailer;
+use Drupal\automatic_updates_test\AutomaticUpdatesTestServiceProvider;
 use Drupal\automatic_updates_test\Datetime\TestTime;
 use Drupal\automatic_updates_test\EventSubscriber\TestSubscriber1;
 use Drupal\automatic_updates_test_status_checker\EventSubscriber\TestSubscriber2;
@@ -62,12 +63,14 @@ class StatusCheckTest extends AutomaticUpdatesFunctionalTestBase {
    */
   protected static $modules = [
     'package_manager_test_validation',
+    'automatic_updates_test',
   ];
 
   /**
    * {@inheritdoc}
    */
   protected function setUp(): void {
+    define(AutomaticUpdatesTestServiceProvider::class . '-test-runner', TRUE);
     parent::setUp();
     $this->setReleaseMetadata(__DIR__ . '/../../../package_manager/tests/fixtures/release-history/drupal.9.8.1-security.xml');
     $this->mockActiveCoreVersion('9.8.1');
@@ -257,12 +260,9 @@ class StatusCheckTest extends AutomaticUpdatesFunctionalTestBase {
    * @dataProvider providerAdminRoutes
    */
   public function testStatusChecksOnAdminPages(string $admin_route): void {
+
     $assert = $this->assertSession();
-    $loaders = ClassLoader::getRegisteredLoaders();
-    $this->assertCount(1, $loaders);
-    $vendor_path = array_keys($loaders)[0];
-    $drush_path = $vendor_path . '/drush/drush/drush';
-    (new Filesystem())->copy($drush_path, $this->container->get('package_manager.path_locator')->getVendorDirectory() . '/drush/drush/drush');
+
 
     $messages_section_selector = '[data-drupal-messages]';
 
