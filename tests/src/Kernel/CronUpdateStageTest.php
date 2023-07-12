@@ -31,7 +31,6 @@ use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 
 /**
  * @covers \Drupal\automatic_updates\CronUpdateStage
- * @covers \automatic_updates_test_cron_form_update_settings_alter
  * @group automatic_updates
  * @internal
  */
