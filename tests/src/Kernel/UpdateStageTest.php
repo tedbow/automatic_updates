@@ -9,7 +9,9 @@ use Drupal\package_manager\Exception\ApplyFailedException;
 use Drupal\package_manager\Exception\StageException;
 use Drupal\package_manager_bypass\LoggingCommitter;
 use Drupal\Tests\user\Traits\UserCreationTrait;
-use PhpTuf\ComposerStager\Domain\Exception\InvalidArgumentException;
+use PhpTuf\ComposerStager\API\Exception\ExceptionInterface;
+use PhpTuf\ComposerStager\API\Exception\InvalidArgumentException;
+use PhpTuf\ComposerStager\Internal\Translation\Value\TranslatableMessage;
 
 /**
  * @coversDefaultClass \Drupal\automatic_updates\UpdateStage
@@ -182,12 +184,17 @@ class UpdateStageTest extends AutomaticUpdatesKernelTestBase {
     ]);
     $stage->stage();
     $thrown_message = 'A very bad thing happened';
+    // Composer Stager's exception messages are usually translatable, so they
+    // need to be wrapped by a TranslatableMessage object.
+    if (is_subclass_of($thrown_class, ExceptionInterface::class)) {
+      $thrown_message = new TranslatableMessage($thrown_message);
+    }
     LoggingCommitter::setException(new $thrown_class($thrown_message, 123));
     $this->expectException($expected_class);
     $expected_message = $expected_class === ApplyFailedException::class ?
       "Automatic updates failed to apply, and the site is in an indeterminate state. Consider restoring the code and database from a backup."
       : $thrown_message;
-    $this->expectExceptionMessage($expected_message);
+    $this->expectExceptionMessage((string) $expected_message);
     $this->expectExceptionCode(123);
     $stage->apply();
   }

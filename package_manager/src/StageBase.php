@@ -28,13 +28,13 @@ use Drupal\package_manager\Exception\ApplyFailedException;
 use Drupal\package_manager\Exception\StageEventException;
 use Drupal\package_manager\Exception\StageException;
 use Drupal\package_manager\Exception\StageOwnershipException;
-use PhpTuf\ComposerStager\Domain\Core\Beginner\BeginnerInterface;
-use PhpTuf\ComposerStager\Domain\Core\Committer\CommitterInterface;
-use PhpTuf\ComposerStager\Domain\Core\Stager\StagerInterface;
-use PhpTuf\ComposerStager\Domain\Exception\InvalidArgumentException;
-use PhpTuf\ComposerStager\Domain\Exception\PreconditionException;
-use PhpTuf\ComposerStager\Infrastructure\Factory\Path\PathFactoryInterface;
-use PhpTuf\ComposerStager\Infrastructure\Value\PathList\PathList;
+use PhpTuf\ComposerStager\API\Core\BeginnerInterface;
+use PhpTuf\ComposerStager\API\Core\CommitterInterface;
+use PhpTuf\ComposerStager\API\Core\StagerInterface;
+use PhpTuf\ComposerStager\API\Exception\InvalidArgumentException;
+use PhpTuf\ComposerStager\API\Exception\PreconditionException;
+use PhpTuf\ComposerStager\API\Path\Factory\PathFactoryInterface;
+use PhpTuf\ComposerStager\API\Path\Value\PathList;
 use Psr\Log\LoggerAwareInterface;
 use Psr\Log\LoggerAwareTrait;
 use Psr\Log\NullLogger;
@@ -166,11 +166,11 @@ abstract class StageBase implements LoggerAwareInterface {
    *
    * @param \Drupal\package_manager\PathLocator $pathLocator
    *   The path locator service.
-   * @param \PhpTuf\ComposerStager\Domain\Core\Beginner\BeginnerInterface $beginner
+   * @param \PhpTuf\ComposerStager\API\Core\BeginnerInterface $beginner
    *   The beginner service.
-   * @param \PhpTuf\ComposerStager\Domain\Core\Stager\StagerInterface $stager
+   * @param \PhpTuf\ComposerStager\API\Core\StagerInterface $stager
    *   The stager service.
-   * @param \PhpTuf\ComposerStager\Domain\Core\Committer\CommitterInterface $committer
+   * @param \PhpTuf\ComposerStager\API\Core\CommitterInterface $committer
    *   The committer service.
    * @param \Drupal\Core\File\FileSystemInterface $fileSystem
    *   The file system service.
@@ -180,7 +180,7 @@ abstract class StageBase implements LoggerAwareInterface {
    *   The shared tempstore factory.
    * @param \Drupal\Component\Datetime\TimeInterface $time
    *   The time service.
-   * @param \PhpTuf\ComposerStager\Infrastructure\Factory\Path\PathFactoryInterface $pathFactory
+   * @param \PhpTuf\ComposerStager\API\Path\Factory\PathFactoryInterface $pathFactory
    *   The path factory service.
    * @param \Drupal\package_manager\FailureMarker $failureMarker
    *   The failure marker service.
@@ -330,7 +330,7 @@ abstract class StageBase implements LoggerAwareInterface {
     $this->dispatch($event, [$this, 'markAsAvailable']);
 
     try {
-      $this->beginner->begin($active_dir, $stage_dir, new PathList($event->getExcludedPaths()), NULL, $timeout);
+      $this->beginner->begin($active_dir, $stage_dir, new PathList(...$event->getExcludedPaths()), NULL, $timeout);
     }
     catch (\Throwable $error) {
       $this->destroy();
@@ -452,10 +452,10 @@ abstract class StageBase implements LoggerAwareInterface {
     // Create a marker file so that we can tell later on if the commit failed.
     $this->failureMarker->write($this, $this->getFailureMarkerMessage());
     // Exclude the failure file from the commit operation.
-    $paths_to_exclude = new PathList($event->getExcludedPaths());
-    $paths_to_exclude->add([
+    $paths_to_exclude = new PathList(...$event->getExcludedPaths());
+    $paths_to_exclude->add(
       str_replace($this->pathLocator->getProjectRoot() . DIRECTORY_SEPARATOR, '', $this->failureMarker->getPath()),
-    ]);
+    );
 
     try {
       $this->committer->commit($stage_dir, $active_dir, $paths_to_exclude, NULL, $timeout);

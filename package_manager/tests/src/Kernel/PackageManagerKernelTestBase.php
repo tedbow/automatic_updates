@@ -29,7 +29,7 @@ use GuzzleHttp\Handler\MockHandler;
 use GuzzleHttp\HandlerStack;
 use GuzzleHttp\Psr7\Response;
 use GuzzleHttp\Psr7\Utils;
-use PhpTuf\ComposerStager\Infrastructure\Factory\Path\PathFactory;
+use PhpTuf\ComposerStager\Internal\Path\Factory\PathFactory;
 use Psr\Http\Message\RequestInterface;
 use Symfony\Component\Filesystem\Filesystem;
 

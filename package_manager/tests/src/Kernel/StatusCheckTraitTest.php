@@ -23,7 +23,7 @@ class StatusCheckTraitTest extends PackageManagerKernelTestBase {
    */
   public function testPathsToExcludeCollected(): void {
     $this->addEventTestListener(function (CollectPathsToExcludeEvent $event): void {
-      $event->add(['/junk/drawer']);
+      $event->add('/junk/drawer');
     }, CollectPathsToExcludeEvent::class);
 
     $status_check_called = FALSE;

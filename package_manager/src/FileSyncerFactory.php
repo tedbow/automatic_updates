@@ -5,10 +5,10 @@ declare(strict_types = 1);
 namespace Drupal\package_manager;
 
 use Drupal\Core\Config\ConfigFactoryInterface;
-use PhpTuf\ComposerStager\Domain\Service\FileSyncer\FileSyncerInterface;
-use PhpTuf\ComposerStager\Infrastructure\Factory\FileSyncer\FileSyncerFactory as StagerFileSyncerFactory;
-use PhpTuf\ComposerStager\Infrastructure\Service\FileSyncer\PhpFileSyncer;
-use PhpTuf\ComposerStager\Infrastructure\Service\FileSyncer\RsyncFileSyncer;
+use PhpTuf\ComposerStager\API\FileSyncer\Service\FileSyncerInterface;
+use PhpTuf\ComposerStager\Internal\FileSyncer\Factory\FileSyncerFactory as StagerFileSyncerFactory;
+use PhpTuf\ComposerStager\Internal\FileSyncer\Service\PhpFileSyncer;
+use PhpTuf\ComposerStager\Internal\FileSyncer\Service\RsyncFileSyncer;
 use Symfony\Component\Process\ExecutableFinder;
 
 /**
@@ -24,7 +24,7 @@ final class FileSyncerFactory {
   /**
    * The decorated file syncer factory.
    *
-   * @var \PhpTuf\ComposerStager\Infrastructure\Factory\FileSyncer\FileSyncerFactory
+   * @var \PhpTuf\ComposerStager\Internal\FileSyncer\Factory\FileSyncerFactory
    */
   private $decorated;
 
@@ -33,9 +33,9 @@ final class FileSyncerFactory {
    *
    * @param \Symfony\Component\Process\ExecutableFinder $executable_finder
    *   The Symfony executable finder.
-   * @param \PhpTuf\ComposerStager\Infrastructure\Service\FileSyncer\PhpFileSyncer $phpFileSyncer
+   * @param \PhpTuf\ComposerStager\Internal\FileSyncer\Service\PhpFileSyncer $phpFileSyncer
    *   The PHP file syncer service.
-   * @param \PhpTuf\ComposerStager\Infrastructure\Service\FileSyncer\RsyncFileSyncer $rsyncFileSyncer
+   * @param \PhpTuf\ComposerStager\Internal\FileSyncer\Service\RsyncFileSyncer $rsyncFileSyncer
    *   The rsync file syncer service.
    * @param \Drupal\Core\Config\ConfigFactoryInterface $configFactory
    *   The config factory service.

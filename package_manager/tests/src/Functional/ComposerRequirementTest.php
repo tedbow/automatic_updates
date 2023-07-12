@@ -6,7 +6,7 @@ namespace Drupal\Tests\package_manager\Functional;
 
 use Drupal\package_manager\ComposerInspector;
 use Drupal\Tests\BrowserTestBase;
-use PhpTuf\ComposerStager\Infrastructure\Service\Finder\ExecutableFinderInterface;
+use PhpTuf\ComposerStager\API\Finder\Service\ExecutableFinderInterface;
 
 /**
  * Tests that Package Manager shows the Composer version on the status report.
@@ -27,14 +27,20 @@ class ComposerRequirementTest extends BrowserTestBase {
   protected $defaultTheme = 'stark';
 
   /**
-   * Tests that Composer and file syncer info is listed on the status report.
+   * Tests that Composer version and path are listed on the status report.
    */
   public function testComposerInfoShown(): void {
-    /** @var \PhpTuf\ComposerStager\Infrastructure\Service\Finder\ExecutableFinderInterface $executable_finder */
+    $config = $this->config('package_manager.settings');
+
+    // Ensure we can locate the Composer executable.
+    /** @var \PhpTuf\ComposerStager\API\Finder\Service\ExecutableFinderInterface $executable_finder */
     $executable_finder = $this->container->get(ExecutableFinderInterface::class);
     $composer_path = $executable_finder->find('composer');
     $composer_version = $this->container->get(ComposerInspector::class)->getVersion();
 
+    // With a valid path to Composer, ensure the status report shows its version
+    // number and path.
+    $config->set('executables.composer', $composer_path)->save();
     $account = $this->drupalCreateUser(['administer site configuration']);
     $this->drupalLogin($account);
     $this->drupalGet('/admin/reports/status');
@@ -44,12 +50,10 @@ class ComposerRequirementTest extends BrowserTestBase {
 
     // If the path to Composer is invalid, we should see the error message
     // that gets raised when we try to get its version.
-    $this->config('package_manager.settings')
-      ->set('executables.composer', '/path/to/composer')
-      ->save();
+    $config->set('executables.composer', '/path/to/composer')->save();
     $this->getSession()->reload();
     $assert_session->statusCodeEquals(200);
-    $assert_session->pageTextContains('Composer was not found. The error message was: The command "\'/path/to/composer\' \'--format=json\'" failed.');
+    $assert_session->pageTextContains('Composer was not found. The error message was: Failed to run process: The command "\'/path/to/composer\' \'--format=json\'" failed.');
   }
 
 }

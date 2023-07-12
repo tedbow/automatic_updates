@@ -33,7 +33,7 @@ class ProcessOutputCallbackTest extends UnitTestCase {
     $callback = new ProcessOutputCallback();
 
     $this->expectException(\InvalidArgumentException::class);
-    $this->expectExceptionMessage("Unsupported output type: 'telegram'");
+    $this->expectExceptionMessage("Unsupported output type: 'TELEGRAM'");
     $callback('telegram', 'Into the void...');
   }
 

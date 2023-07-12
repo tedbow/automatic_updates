@@ -7,11 +7,11 @@ namespace Drupal\package_manager;
 use Composer\Semver\Semver;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\package_manager\Exception\ComposerNotReadyException;
-use PhpTuf\ComposerStager\Domain\Exception\PreconditionException;
-use PhpTuf\ComposerStager\Domain\Exception\RuntimeException;
-use PhpTuf\ComposerStager\Domain\Service\Precondition\ComposerIsAvailableInterface;
-use PhpTuf\ComposerStager\Domain\Service\ProcessRunner\ComposerRunnerInterface;
-use PhpTuf\ComposerStager\Infrastructure\Factory\Path\PathFactoryInterface;
+use PhpTuf\ComposerStager\API\Exception\PreconditionException;
+use PhpTuf\ComposerStager\API\Exception\RuntimeException;
+use PhpTuf\ComposerStager\API\Path\Factory\PathFactoryInterface;
+use PhpTuf\ComposerStager\API\Precondition\Service\ComposerIsAvailableInterface;
+use PhpTuf\ComposerStager\API\Process\Service\ComposerProcessRunnerInterface;
 use Psr\Log\LoggerAwareInterface;
 use Psr\Log\LoggerAwareTrait;
 use Psr\Log\LoggerInterface;
@@ -63,15 +63,15 @@ class ComposerInspector implements LoggerAwareInterface {
   /**
    * Constructs a ComposerInspector object.
    *
-   * @param \PhpTuf\ComposerStager\Domain\Service\ProcessRunner\ComposerRunnerInterface $runner
+   * @param \PhpTuf\ComposerStager\API\Process\Service\ComposerProcessRunnerInterface $runner
    *   The Composer runner service from Composer Stager.
-   * @param \PhpTuf\ComposerStager\Domain\Service\Precondition\ComposerIsAvailableInterface $composerIsAvailable
+   * @param \PhpTuf\ComposerStager\API\Precondition\Service\ComposerIsAvailableInterface $composerIsAvailable
    *   The Composer Stager precondition to ensure that Composer is available.
-   * @param \PhpTuf\ComposerStager\Infrastructure\Factory\Path\PathFactoryInterface $pathFactory
+   * @param \PhpTuf\ComposerStager\API\Path\Factory\PathFactoryInterface $pathFactory
    *   The path factory service from Composer Stager.
    */
   public function __construct(
-    private readonly ComposerRunnerInterface $runner,
+    private readonly ComposerProcessRunnerInterface $runner,
     private readonly ComposerIsAvailableInterface $composerIsAvailable,
     private readonly PathFactoryInterface $pathFactory
   ) {

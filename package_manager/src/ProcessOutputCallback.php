@@ -4,7 +4,7 @@ declare(strict_types = 1);
 
 namespace Drupal\package_manager;
 
-use PhpTuf\ComposerStager\Domain\Service\ProcessOutputCallback\ProcessOutputCallbackInterface;
+use PhpTuf\ComposerStager\API\Process\Service\ProcessOutputCallbackInterface;
 use Psr\Log\LoggerAwareInterface;
 use Psr\Log\LoggerAwareTrait;
 use Psr\Log\NullLogger;
@@ -48,6 +48,10 @@ final class ProcessOutputCallback implements ProcessOutputCallbackInterface, Log
    * {@inheritdoc}
    */
   public function __invoke(string $type, string $buffer): void {
+    // \Symfony\Component\Process\Process defines the output types in lowercase,
+    // but Composer Stager uses uppercase.
+    $type = strtoupper($type);
+
     if ($type === self::OUT) {
       $this->outBuffer .= $buffer;
     }

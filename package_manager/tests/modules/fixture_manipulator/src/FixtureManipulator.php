@@ -4,8 +4,8 @@ namespace Drupal\fixture_manipulator;
 
 use Drupal\Component\FileSystem\FileSystem;
 use Drupal\Component\Utility\NestedArray;
-use PhpTuf\ComposerStager\Domain\Service\ProcessOutputCallback\ProcessOutputCallbackInterface;
-use PhpTuf\ComposerStager\Domain\Service\ProcessRunner\ComposerRunnerInterface;
+use PhpTuf\ComposerStager\API\Process\Service\ProcessOutputCallbackInterface;
+use PhpTuf\ComposerStager\API\Process\Service\ComposerProcessRunnerInterface;
 use Symfony\Component\Filesystem\Filesystem as SymfonyFileSystem;
 use Drupal\Component\Serialization\Yaml;
 
@@ -55,8 +55,8 @@ class FixtureManipulator {
    * Validate the fixtures still passes `composer validate`.
    */
   private function validateComposer(): void {
-    /** @var \PhpTuf\ComposerStager\Domain\Service\ProcessRunner\ComposerRunnerInterface $runner */
-    $runner = \Drupal::service(ComposerRunnerInterface::class);
+    /** @var \PhpTuf\ComposerStager\API\Process\Service\ComposerProcessRunnerInterface $runner */
+    $runner = \Drupal::service(ComposerProcessRunnerInterface::class);
     $runner->run([
       'validate',
       '--check-lock',
@@ -446,6 +446,10 @@ class FixtureManipulator {
        * {@inheritdoc}
        */
       public function __invoke(string $type, string $buffer): void {
+        // \Symfony\Component\Process\Process defines the output types in
+        // lowercase, but Composer Stager uses uppercase.
+        $type = strtoupper($type);
+
         if ($type === self::OUT) {
           $this->stdout .= $buffer;
           return;
@@ -458,8 +462,8 @@ class FixtureManipulator {
       }
 
     };
-    /** @var \PhpTuf\ComposerStager\Domain\Service\ProcessRunner\ComposerRunnerInterface $runner */
-    $runner = \Drupal::service(ComposerRunnerInterface::class);
+    /** @var \PhpTuf\ComposerStager\API\Process\Service\ComposerProcessRunnerInterface $runner */
+    $runner = \Drupal::service(ComposerProcessRunnerInterface::class);
     $command_options[] = "--working-dir={$this->dir}";
     $runner->run($command_options, $plain_output);
     return $plain_output;

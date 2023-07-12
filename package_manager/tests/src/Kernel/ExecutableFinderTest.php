@@ -6,7 +6,9 @@ namespace Drupal\Tests\package_manager\Kernel;
 
 use Drupal\Core\DependencyInjection\ContainerBuilder;
 use Drupal\package_manager\ExecutableFinder;
-use PhpTuf\ComposerStager\Infrastructure\Service\Finder\ExecutableFinderInterface;
+use PhpTuf\ComposerStager\API\Finder\Service\ExecutableFinderInterface;
+use PhpTuf\ComposerStager\Internal\Finder\Service\ExecutableFinder as StagerExecutableFinder;
+use PhpTuf\ComposerStager\API\Translation\Factory\TranslatableFactoryInterface;
 use Symfony\Component\Process\ExecutableFinder as SymfonyExecutableFinder;
 
 /**
@@ -32,7 +34,10 @@ class ExecutableFinderTest extends PackageManagerKernelTestBase {
 
     };
     $container->getDefinition(ExecutableFinder::class)
-      ->setArgument('$symfony_executable_finder', $symfony_executable_finder);
+      ->setArgument('$decorated', new StagerExecutableFinder(
+        $symfony_executable_finder,
+        $this->createMock(TranslatableFactoryInterface::class),
+      ));
   }
 
   /**
@@ -44,6 +49,7 @@ class ExecutableFinderTest extends PackageManagerKernelTestBase {
       ->save();
 
     $executable_finder = $this->container->get(ExecutableFinderInterface::class);
+    $this->assertInstanceOf(ExecutableFinder::class, $executable_finder);
     $this->assertSame('/path/to/composer', $executable_finder->find('composer'));
     $this->assertSame('/dev/null', $executable_finder->find('rsync'));
   }

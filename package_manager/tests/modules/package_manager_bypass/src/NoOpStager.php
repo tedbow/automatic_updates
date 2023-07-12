@@ -6,10 +6,10 @@ namespace Drupal\package_manager_bypass;
 
 use Composer\Json\JsonFile;
 use Drupal\Core\State\StateInterface;
-use PhpTuf\ComposerStager\Domain\Core\Stager\StagerInterface;
-use PhpTuf\ComposerStager\Domain\Service\ProcessOutputCallback\ProcessOutputCallbackInterface;
-use PhpTuf\ComposerStager\Domain\Service\ProcessRunner\ProcessRunnerInterface;
-use PhpTuf\ComposerStager\Domain\Value\Path\PathInterface;
+use PhpTuf\ComposerStager\API\Core\StagerInterface;
+use PhpTuf\ComposerStager\API\Path\Value\PathInterface;
+use PhpTuf\ComposerStager\API\Process\Service\ProcessOutputCallbackInterface;
+use PhpTuf\ComposerStager\API\Process\Service\ProcessRunnerInterface;
 
 /**
  * A composer-stager Stager implementation that does nothing, except logging.
@@ -49,7 +49,7 @@ final class NoOpStager implements StagerInterface {
 
     // If desired, simulate a change to the lock file (e.g., as a result of
     // running `composer update`).
-    $lockFile = new JsonFile($stagingDir->resolve() . '/composer.lock');
+    $lockFile = new JsonFile($stagingDir->resolved() . '/composer.lock');
     $changeLockFile = $this->state->get(static::class . ' lock', TRUE);
 
     if ($changeLockFile && $lockFile->exists()) {

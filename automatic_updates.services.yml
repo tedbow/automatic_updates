@@ -28,9 +28,7 @@ services:
     calls:
       - ['setLogger', ['@logger.channel.automatic_updates']]
     arguments:
-      - '@config.factory'
-      - '@package_manager.path_locator'
-      - '@automatic_updates.cron_update_runner.inner'
+      $inner: '@automatic_updates.cron_update_runner.inner'
     decorates: 'cron'
   Drupal\automatic_updates\CronUpdateRunner: '@automatic_updates.cron_update_runner'
   automatic_updates.requested_update_validator:

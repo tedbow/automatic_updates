@@ -6,8 +6,8 @@ namespace Drupal\package_manager;
 
 use Drupal\Core\DependencyInjection\ContainerBuilder;
 use Drupal\Core\DependencyInjection\ServiceProviderBase;
-use PhpTuf\ComposerStager\Domain\Core\Beginner\BeginnerInterface;
-use PhpTuf\ComposerStager\Domain\Service\Precondition\NoSymlinksPointToADirectoryInterface;
+use PhpTuf\ComposerStager\API\Core\BeginnerInterface;
+use PhpTuf\ComposerStager\API\Precondition\Service\NoSymlinksPointToADirectoryInterface;
 
 /**
  * Defines dynamic container services for Package Manager.
@@ -33,13 +33,14 @@ final class PackageManagerServiceProvider extends ServiceProviderBase {
     // Use an interface that we know exists to determine the absolute path where
     // Composer Stager is installed.
     $mirror = new \ReflectionClass(BeginnerInterface::class);
-    $path = dirname($mirror->getFileName(), 4);
+    $path = dirname($mirror->getFileName(), 3);
 
     // Certain subdirectories of Composer Stager shouldn't be scanned for
     // services.
     $ignore_directories = [
-      $path . '/Domain/Exception',
-      $path . '/Infrastructure/Value',
+      $path . '/API/Exception',
+      $path . '/Internal/Path/Value',
+      $path . '/Internal/Translation/Value',
     ];
     // As we scan for services, compile a list of which classes implement which
     // interfaces so that we can set up aliases for interfaces that are only

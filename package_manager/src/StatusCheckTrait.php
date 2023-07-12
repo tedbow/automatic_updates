@@ -6,7 +6,7 @@ namespace Drupal\package_manager;
 
 use Drupal\package_manager\Event\CollectPathsToExcludeEvent;
 use Drupal\package_manager\Event\StatusCheckEvent;
-use PhpTuf\ComposerStager\Infrastructure\Factory\Path\PathFactoryInterface;
+use PhpTuf\ComposerStager\API\Path\Factory\PathFactoryInterface;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 
 /**
@@ -28,7 +28,7 @@ trait StatusCheckTrait {
    *   (optional) The event dispatcher service.
    * @param \Drupal\package_manager\PathLocator $path_locator
    *   (optional) The path locator service.
-   * @param \PhpTuf\ComposerStager\Infrastructure\Factory\Path\PathFactoryInterface $path_factory
+   * @param \PhpTuf\ComposerStager\API\Path\Factory\PathFactoryInterface $path_factory
    *   (optional) The path factory service.
    *
    * @return \Drupal\package_manager\ValidationResult[]

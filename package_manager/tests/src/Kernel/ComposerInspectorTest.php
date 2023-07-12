@@ -14,11 +14,12 @@ use Drupal\package_manager\ProcessOutputCallback;
 use Drupal\package_manager\InstalledPackagesList;
 use Drupal\Tests\package_manager\Traits\InstalledPackagesListTrait;
 use Drupal\package_manager\PathLocator;
-use PhpTuf\ComposerStager\Domain\Exception\PreconditionException;
-use PhpTuf\ComposerStager\Domain\Exception\RuntimeException;
-use PhpTuf\ComposerStager\Domain\Service\Precondition\ComposerIsAvailableInterface;
-use PhpTuf\ComposerStager\Domain\Service\ProcessRunner\ComposerRunnerInterface;
-use PhpTuf\ComposerStager\Infrastructure\Factory\Path\PathFactory;
+use PhpTuf\ComposerStager\API\Exception\PreconditionException;
+use PhpTuf\ComposerStager\API\Exception\RuntimeException;
+use PhpTuf\ComposerStager\API\Precondition\Service\ComposerIsAvailableInterface;
+use PhpTuf\ComposerStager\API\Process\Service\ComposerProcessRunnerInterface;
+use PhpTuf\ComposerStager\Internal\Path\Factory\PathFactory;
+use PhpTuf\ComposerStager\Internal\Translation\Value\TranslatableMessage;
 use Prophecy\Argument;
 use Prophecy\Prophecy\ObjectProphecy;
 
@@ -154,8 +155,9 @@ class ComposerInspectorTest extends PackageManagerKernelTestBase {
     $mocked_precondition = $precondition->reveal();
     $this->container->set(ComposerIsAvailableInterface::class, $mocked_precondition);
 
+    $message = new TranslatableMessage("Well, that didn't work.");
     $precondition->assertIsFulfilled(Argument::cetera())
-      ->willThrow(new PreconditionException($mocked_precondition, "Well, that didn't work."))
+      ->willThrow(new PreconditionException($mocked_precondition, $message))
       // The result of the precondition is statically cached, so it should only
       // be called once even though we call validate() twice.
       ->shouldBeCalledOnce();
@@ -250,7 +252,7 @@ class ComposerInspectorTest extends PackageManagerKernelTestBase {
     // The runner should be called with `validate` as the first argument, but
     // it won't affect the outcome of this test.
     $runner->run(Argument::withEntry(0, 'validate'));
-    $this->container->set(ComposerRunnerInterface::class, $runner->reveal());
+    $this->container->set(ComposerProcessRunnerInterface::class, $runner->reveal());
 
     if ($expected_message === '<default>') {
       $expected_message = "The detected Composer version, $reported_version, does not satisfy <code>" . ComposerInspector::SUPPORTED_VERSION . '</code>.';
@@ -285,7 +287,7 @@ class ComposerInspectorTest extends PackageManagerKernelTestBase {
    *   [null]
    */
   public function testGetVersion(?string $reported_version): void {
-    $this->container->set(ComposerRunnerInterface::class, $this->mockComposerRunner($reported_version)->reveal());
+    $this->container->set(ComposerProcessRunnerInterface::class, $this->mockComposerRunner($reported_version)->reveal());
 
     if (empty($reported_version)) {
       $this->expectException(\UnexpectedValueException::class);
@@ -355,7 +357,7 @@ class ComposerInspectorTest extends PackageManagerKernelTestBase {
    */
   public function testMetapackagePath(bool $is_metapackage, ?string $install_path, ?string $exception_message): void {
     $inspector = new class (
-      $this->container->get(ComposerRunnerInterface::class),
+      $this->container->get(ComposerProcessRunnerInterface::class),
       $this->container->get(ComposerIsAvailableInterface::class),
       new PathFactory(),
     ) extends ComposerInspector {
@@ -484,7 +486,7 @@ class ComposerInspectorTest extends PackageManagerKernelTestBase {
    *   The configurator for the mocked Composer runner.
    */
   private function mockComposerRunner(?string $reported_version): ObjectProphecy {
-    $runner = $this->prophesize(ComposerRunnerInterface::class);
+    $runner = $this->prophesize(ComposerProcessRunnerInterface::class);
 
     $pass_version_to_output_callback = function (array $arguments_passed_to_runner) use ($reported_version): void {
       $command_output = Json::encode([

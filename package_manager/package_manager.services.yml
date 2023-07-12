@@ -16,11 +16,11 @@ services:
     public: false
   Drupal\package_manager\FileSyncerFactory:
     public: false
-  PhpTuf\ComposerStager\Infrastructure\Service\Finder\ExecutableFinderInterface:
+  PhpTuf\ComposerStager\API\Finder\Service\ExecutableFinderInterface:
     alias: 'Drupal\package_manager\ExecutableFinder'
-  PhpTuf\ComposerStager\Infrastructure\Factory\Process\ProcessFactoryInterface:
+  PhpTuf\ComposerStager\API\Process\Factory\ProcessFactoryInterface:
     alias: 'Drupal\package_manager\ProcessFactory'
-  PhpTuf\ComposerStager\Domain\Service\FileSyncer\FileSyncerInterface:
+  PhpTuf\ComposerStager\API\FileSyncer\Service\FileSyncerInterface:
     factory: ['@Drupal\package_manager\FileSyncerFactory', 'create']
   logger.channel.package_manager:
     parent: logger.channel_base
@@ -33,14 +33,14 @@ services:
 
   # Services provided to Drupal by Package Manager.
   package_manager.beginner:
-    class: PhpTuf\ComposerStager\Domain\Core\Beginner\Beginner
-  PhpTuf\ComposerStager\Domain\Core\Beginner\BeginnerInterface: '@package_manager.beginner'
+    class: PhpTuf\ComposerStager\Internal\Core\Beginner
+  PhpTuf\ComposerStager\API\Core\BeginnerInterface: '@package_manager.beginner'
   package_manager.stager:
-    class: PhpTuf\ComposerStager\Domain\Core\Stager\Stager
-  PhpTuf\ComposerStager\Domain\Core\Stager\StagerInterface: '@package_manager.stager'
+    class: PhpTuf\ComposerStager\Internal\Core\Stager
+  PhpTuf\ComposerStager\API\Core\StagerInterface: '@package_manager.stager'
   package_manager.committer:
-    class: PhpTuf\ComposerStager\Domain\Core\Committer\Committer
-  PhpTuf\ComposerStager\Domain\Core\Committer\CommitterInterface: '@package_manager.committer'
+    class: PhpTuf\ComposerStager\Internal\Core\Committer
+  PhpTuf\ComposerStager\API\Core\CommitterInterface: '@package_manager.committer'
   package_manager.path_locator:
     class: Drupal\package_manager\PathLocator
     arguments:

@@ -22,9 +22,11 @@ use Drupal\package_manager\Validator\WritableFileSystemValidator;
 use Drupal\package_manager_bypass\LoggingBeginner;
 use Drupal\package_manager_bypass\LoggingCommitter;
 use Drupal\package_manager_bypass\NoOpStager;
-use PhpTuf\ComposerStager\Domain\Exception\InvalidArgumentException;
-use PhpTuf\ComposerStager\Domain\Exception\PreconditionException;
-use PhpTuf\ComposerStager\Domain\Service\Precondition\PreconditionInterface;
+use PhpTuf\ComposerStager\API\Exception\ExceptionInterface;
+use PhpTuf\ComposerStager\API\Exception\InvalidArgumentException;
+use PhpTuf\ComposerStager\API\Exception\PreconditionException;
+use PhpTuf\ComposerStager\API\Precondition\Service\PreconditionInterface;
+use PhpTuf\ComposerStager\Internal\Translation\Value\TranslatableMessage;
 use Psr\Log\LogLevel;
 use ColinODell\PsrTestLogger\TestLogger;
 
@@ -227,11 +229,11 @@ class StageBaseTest extends PackageManagerKernelTestBase {
       // simulate an attempt to destroy the stage while it's being applied, for
       // testing purposes.
       $event->stage->destroy($force);
-      // @see \PhpTuf\ComposerStager\Infrastructure\Service\Precondition\StagingDirDoesNotExist
+      // @see \PhpTuf\ComposerStager\Internal\Precondition\Service\StagingDirDoesNotExist
       LoggingCommitter::setException(
         new PreconditionException(
           $this->prophesize(PreconditionInterface::class)->reveal(),
-          'Stage directory does not exist',
+          new TranslatableMessage('Stage directory does not exist'),
         )
       );
     };
@@ -359,14 +361,20 @@ class StageBaseTest extends PackageManagerKernelTestBase {
     $stage->create();
     $stage->require(['drupal/core:9.8.1']);
 
-    $thrown_message = 'A very bad thing happened';
+    $throwable_arguments = [
+      'A very bad thing happened',
+      123,
+    ];
+    // Composer Stager's exception messages are usually translatable, so they
+    // need to be wrapped by a TranslatableMessage object.
+    if (is_subclass_of($thrown_class, ExceptionInterface::class)) {
+      $throwable_arguments[0] = new TranslatableMessage($throwable_arguments[0]);
+    }
     // PreconditionException requires a preconditions object.
     if ($thrown_class === PreconditionException::class) {
-      $throwable = new PreconditionException($this->prophesize(PreconditionInterface::class)->reveal(), $thrown_message, 123);
+      array_unshift($throwable_arguments, $this->createMock(PreconditionInterface::class));
     }
-    else {
-      $throwable = new $thrown_class($thrown_message, 123);
-    }
+    $throwable = new $thrown_class(...$throwable_arguments);
     LoggingCommitter::setException($throwable);
 
     try {
@@ -374,19 +382,19 @@ class StageBaseTest extends PackageManagerKernelTestBase {
       $this->fail('Expected an exception.');
     }
     catch (\Throwable $exception) {
+      $this->assertInstanceOf($expected_class, $exception);
+      $this->assertSame(123, $exception->getCode());
+
       // This needs to be done because we always use the message from
       // \Drupal\package_manager\Stage::getFailureMarkerMessage() when throwing
       // ApplyFailedException.
       if ($expected_class == ApplyFailedException::class) {
         $class_in_message = get_class($throwable);
-        $thrown_message = "/^Staged changes failed to apply, and the site is in an indeterminate state. It is strongly recommended to restore the code and database from a backup. Caused by $class_in_message, with this message: A very bad thing happened\nBacktrace:\n#0 .*/";
+        $this->assertMatchesRegularExpression("/^Staged changes failed to apply, and the site is in an indeterminate state. It is strongly recommended to restore the code and database from a backup. Caused by $class_in_message, with this message: A very bad thing happened\nBacktrace:\n#0 .*/", $exception->getMessage());
       }
       else {
-        $thrown_message = "/^$thrown_message$/";
+        $this->assertSame('A very bad thing happened', $exception->getMessage());
       }
-      $this->assertInstanceOf($expected_class, $exception);
-      $this->assertMatchesRegularExpression($thrown_message, $exception->getMessage());
-      $this->assertSame(123, $exception->getCode());
 
       $failure_marker = $this->container->get(FailureMarker::class);
       if ($exception instanceof ApplyFailedException) {
@@ -644,7 +652,7 @@ class StageBaseTest extends PackageManagerKernelTestBase {
    */
   public function testCollectPathsToExclude(): void {
     $this->addEventTestListener(function (CollectPathsToExcludeEvent $event): void {
-      $event->add(['exclude/me']);
+      $event->add('exclude/me');
     }, CollectPathsToExcludeEvent::class);
 
     // On pre-create and pre-apply, ensure that the excluded path is known to
@@ -676,7 +684,7 @@ class StageBaseTest extends PackageManagerKernelTestBase {
     $committer = $this->container->get('package_manager.committer');
     $committer_args = $committer->getInvocationArguments();
     $this->assertCount(1, $committer_args);
-    /** @var \PhpTuf\ComposerStager\Domain\Value\PathList\PathListInterface $path_list */
+    /** @var \PhpTuf\ComposerStager\API\Path\Value\PathListInterface $path_list */
     $path_list = $committer_args[0][2];
     $this->assertContains('PACKAGE_MANAGER_FAILURE.yml', $path_list->getAll());
   }

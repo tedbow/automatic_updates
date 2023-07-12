@@ -8,7 +8,7 @@ use Drupal\package_manager\Event\PreCreateEvent;
 use Drupal\package_manager\Exception\StageEventException;
 use Drupal\package_manager\PathLocator;
 use Drupal\package_manager\ValidationResult;
-use PhpTuf\ComposerStager\Domain\Service\Host\HostInterface;
+use PhpTuf\ComposerStager\Internal\Host\Service\HostInterface;
 
 /**
  * @covers \Drupal\package_manager\Validator\SymlinkValidator
@@ -47,7 +47,7 @@ class SymlinkValidatorTest extends PackageManagerKernelTestBase {
 
     link($project_root . '/composer.json', $project_root . '/composer.link');
     $result = ValidationResult::createError([
-      t('The active directory at "@dir" contains hard links, which is not supported. The first one is "@dir/composer.json".', [
+      t('The active directory at @dir contains hard links, which is not supported. The first one is @dir/composer.json.', [
         '@dir' => $project_root,
       ]),
     ]);
@@ -63,7 +63,7 @@ class SymlinkValidatorTest extends PackageManagerKernelTestBase {
 
     symlink($project_root . '/composer.json', $project_root . '/composer.link');
     $result = ValidationResult::createError([
-      t('The active directory at "@dir" contains absolute links, which is not supported. The first one is "@dir/composer.link".', [
+      t('The active directory at @dir contains absolute links, which is not supported. The first one is @dir/composer.link.', [
         '@dir' => $project_root,
       ]),
     ]);
@@ -84,7 +84,7 @@ class SymlinkValidatorTest extends PackageManagerKernelTestBase {
     chdir($project_root);
     symlink('../hello.txt', 'fail.txt');
     $result = ValidationResult::createError([
-      t('The active directory at "@dir" contains links that point outside the codebase, which is not supported. The first one is "@dir/fail.txt".', [
+      t('The active directory at @dir contains links that point outside the codebase, which is not supported. The first one is @dir/fail.txt.', [
         '@dir' => $project_root,
       ]),
     ]);
@@ -111,7 +111,7 @@ class SymlinkValidatorTest extends PackageManagerKernelTestBase {
     symlink('../hello.txt', 'fail.txt');
 
     $result = ValidationResult::createError([
-      t('The staging directory at "@dir" contains links that point outside the codebase, which is not supported. The first one is "@dir/fail.txt".', [
+      t('The staging directory at @dir contains links that point outside the codebase, which is not supported. The first one is @dir/fail.txt.', [
         '@dir' => $stage_dir,
       ]),
     ]);
@@ -136,7 +136,7 @@ class SymlinkValidatorTest extends PackageManagerKernelTestBase {
         'php',
         [
           ValidationResult::createError([
-            t('The active directory at "<PROJECT_ROOT>" contains symlinks that point to a directory, which is not supported. The first one is "<PROJECT_ROOT>/modules/custom/example_module".'),
+            t('The active directory at <PROJECT_ROOT> contains symlinks that point to a directory, which is not supported. The first one is <PROJECT_ROOT>/modules/custom/example_module.'),
           ]),
         ],
       ],
@@ -178,9 +178,16 @@ class SymlinkValidatorTest extends PackageManagerKernelTestBase {
    * Tests that symlinks are not supported on Windows, even if they're safe.
    */
   public function testSymlinksNotAllowedOnWindows(): void {
-    $host = $this->prophesize(HostInterface::class);
-    $host->isWindows()->willReturn(TRUE);
-    $this->container->set(HostInterface::class, $host->reveal());
+    $this->container->set(HostInterface::class, new class () implements HostInterface {
+
+      /**
+       * {@inheritdoc}
+       */
+      public static function isWindows(): bool {
+        return TRUE;
+      }
+
+    });
 
     $project_root = $this->container->get(PathLocator::class)
       ->getProjectRoot();
@@ -190,7 +197,7 @@ class SymlinkValidatorTest extends PackageManagerKernelTestBase {
     symlink('composer.json', 'composer.link');
 
     $result = ValidationResult::createError([
-      t('The active directory at "@dir" contains links, which is not supported on Windows. The first one is "@dir/composer.link".', [
+      t('The active directory at @dir contains links, which is not supported on Windows. The first one is @dir/composer.link.', [
         '@dir' => $project_root,
       ]),
     ]);
