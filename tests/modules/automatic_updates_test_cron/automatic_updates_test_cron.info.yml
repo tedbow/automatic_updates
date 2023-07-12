@@ -1,4 +1,0 @@
-name: 'Automatic Updates Test: Cron'
-type: module
-description: 'Enables cron updates for testing purposes.'
-package: Testing

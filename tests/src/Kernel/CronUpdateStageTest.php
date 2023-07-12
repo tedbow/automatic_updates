@@ -11,7 +11,6 @@ use Drupal\Tests\user\Traits\UserCreationTrait;
 
 /**
  * @covers \Drupal\automatic_updates\CronUpdateRunner
- * @covers \automatic_updates_test_cron_form_update_settings_alter
  * @group automatic_updates
  * @internal
  */
