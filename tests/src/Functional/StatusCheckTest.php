@@ -5,6 +5,7 @@ declare(strict_types = 1);
 namespace Drupal\Tests\automatic_updates\Functional;
 
 use Behat\Mink\Element\NodeElement;
+use Composer\Autoload\ClassLoader;
 use Drupal\automatic_updates\CronUpdateRunner;
 use Drupal\automatic_updates\StatusCheckMailer;
 use Drupal\automatic_updates_test\Datetime\TestTime;
@@ -17,6 +18,7 @@ use Drupal\package_manager_test_validation\EventSubscriber\TestSubscriber;
 use Drupal\system\SystemManager;
 use Drupal\Tests\automatic_updates\Traits\ValidationTestTrait;
 use Drupal\Tests\Traits\Core\CronRunTrait;
+use Symfony\Component\Filesystem\Filesystem;
 
 /**
  * Tests status checks.
@@ -256,6 +258,12 @@ class StatusCheckTest extends AutomaticUpdatesFunctionalTestBase {
    */
   public function testStatusChecksOnAdminPages(string $admin_route): void {
     $assert = $this->assertSession();
+    $loaders = ClassLoader::getRegisteredLoaders();
+    $this->assertCount(1, $loaders);
+    $vendor_path = array_keys($loaders)[0];
+    $drush_path = $vendor_path . '/drush/drush/drush';
+    (new Filesystem())->copy($drush_path, $this->container->get('package_manager.path_locator')->getVendorDirectory() . '/drush/drush/drush');
+
     $messages_section_selector = '[data-drupal-messages]';
 
     $this->container->get('module_installer')->install(['automatic_updates', 'automatic_updates_test']);
