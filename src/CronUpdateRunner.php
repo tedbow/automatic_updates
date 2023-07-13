@@ -123,7 +123,7 @@ class CronUpdateRunner implements CronInterface {
     // accessed via the web (i.e., anything that isn't the command line), go
     // ahead and try to do the update. In all other circumstances, just run the
     // normal cron handler.
-    if ($this->getMode() !== self::DISABLED && $method === 'web' && !self::isCommandLine()) {
+    if ($method === 'web' && !self::isCommandLine()) {
       $lock = \Drupal::lock();
       Debugger::debugOutput('about to lock');
       if ($lock->acquire('cron', 30)) {

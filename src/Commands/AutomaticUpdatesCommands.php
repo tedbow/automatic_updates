@@ -6,6 +6,7 @@ namespace Drupal\automatic_updates\Commands;
 
 use Drupal\automatic_updates\CronUpdateRunner;
 use Drupal\automatic_updates\ConsoleUpdateStage;
+use Drupal\automatic_updates\CronUpdateStage;
 use Drupal\automatic_updates\StatusCheckMailer;
 use Drupal\automatic_updates\Validation\StatusChecker;
 use Drupal\Core\Config\ConfigFactoryInterface;
@@ -87,24 +88,21 @@ final class AutomaticUpdatesCommands extends DrushCommands {
       $this->runStatusChecks($options['is-from-web']);
     }
     else {
-      if ($this->cronUpdateRunner->getMode() === CronUpdateRunner::DISABLED) {
-        $io->error('Automatic updates are disabled.');
-        Debugger::debugOutput('disabled');
-        return;
+      if ($this->cronUpdateRunner->getMode() !== CronUpdateRunner::DISABLED) {
+        $release = $this->stage->getTargetRelease();
+        if ($release) {
+          Debugger::debugOutput($release->getVersion(), 'release');
+          $message = sprintf('Updating Drupal core to %s. This may take a while.', $release->getVersion());
+          $io->info($message);
+          $this->stage->performUpdate($options['is-from-web']);
+          return;
+        }
+        else {
+          $io->info("There is no Drupal core update available.");
+        }
       }
 
-      $release = $this->stage->getTargetRelease();
-      if ($release) {
-        Debugger::debugOutput($release->getVersion(), 'release');
-        $message = sprintf('Updating Drupal core to %s. This may take a while.', $release->getVersion());
-        $io->info($message);
-        $this->stage->performUpdate($options['is-from-web']);
-      }
-      else {
-        Debugger::debugOutput('no release');
-        $io->info("There is no Drupal core update available.");
-        $this->runStatusChecks($options['is-from-web']);
-      }
+      $this->runStatusChecks($options['is-from-web']);
     }
   }
 
@@ -116,12 +114,22 @@ final class AutomaticUpdatesCommands extends DrushCommands {
     $method = $this->configFactory->get('automatic_updates.settings')
       ->get('unattended.method');
 
+    $last_results = $this->statusChecker->getResults();
+    $last_run_time = $this->statusChecker->getLastRunTime();
+    // Do not run status checks more than once an hour unless there are no results
+    // available.
+    $needs_run = $last_results === NULL || !$last_run_time || \Drupal::time()->getRequestTime() - $last_run_time > 3600;
+
     // To ensure consistent results, only run the status checks if we're
     // explicitly configured to do unattended updates on the command line.
-    if (($method === 'web' && $is_from_web) || $method === 'console') {
+    if ($needs_run && ($method === 'web' && $is_from_web) || $method === 'console') {
       Debugger::debugOutput('running status checks');
-      $last_results = $this->statusChecker->getResults();
-      $this->statusCheckMailer->sendFailureNotifications($last_results, $this->statusChecker->run()->getResults());
+      $this->statusChecker->run();
+      // Only try to send failure notifications if unattended updates are
+      // enabled.
+      if ($this->cronUpdateRunner->getMode() !== CronUpdateRunner::DISABLED) {
+        $this->statusCheckMailer->sendFailureNotifications($last_results, $this->statusChecker->getResults());
+      }
     }
   }
 

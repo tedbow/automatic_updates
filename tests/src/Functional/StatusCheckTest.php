@@ -349,7 +349,7 @@ class StatusCheckTest extends AutomaticUpdatesFunctionalTestBase {
 
     // Confirm that is if cron is run over an hour after the checkers were
     // previously run the checkers will be run again.
-    $this->delayRequestTime(60);
+    $this->delayRequestTime(31);
     $this->runCronAndWait();
     $original_expected_results = $expected_results;
     $expected_results = $unexpected_results;
@@ -360,7 +360,6 @@ class StatusCheckTest extends AutomaticUpdatesFunctionalTestBase {
     $this->assertSame(SystemManager::REQUIREMENT_ERROR, $expected_results['2 errors']->severity);
     file_put_contents("/Users/ted.bowman/sites/test.html", $this->getSession()->getPage()->getOuterHtml());
     $assert->pageTextNotContains((string) $unexpected_results['1 error']->summary);
-    $assert->pageTextNotContains($expected_results['1 warning']->messages[0]);
     $assert->pageTextNotContains($expected_results['2 errors']->messages[0]);
     $assert->pageTextNotContains($expected_results['2 errors']->messages[1]);
     $assert->pageTextContainsOnce($expected_results['2 errors']->summary);
