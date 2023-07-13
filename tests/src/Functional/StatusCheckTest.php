@@ -307,7 +307,7 @@ class StatusCheckTest extends AutomaticUpdatesFunctionalTestBase {
     TestSubscriber1::setTestResult($expected_results, StatusCheckEvent::class);
     // Confirm a new message is displayed if the cron is run after an hour.
     $this->delayRequestTime();
-    $this->cronRun();
+    $this->runCronAndWait();
     $this->drupalGet(Url::fromRoute($admin_route));
     $assert->pageTextContainsOnce(static::$errorsExplanation);
     // Confirm on admin pages that the summary will be displayed.
@@ -327,7 +327,7 @@ class StatusCheckTest extends AutomaticUpdatesFunctionalTestBase {
     ];
     TestSubscriber1::setTestResult($unexpected_results, StatusCheckEvent::class);
     $this->delayRequestTime(30);
-    $this->cronRun();
+    $this->runCronAndWait();
     $this->drupalGet(Url::fromRoute($admin_route));
     $assert->pageTextNotContains($unexpected_results['2 errors']->summary);
     $assert->pageTextContainsOnce((string) $expected_results['1 error']->summary);
@@ -336,13 +336,18 @@ class StatusCheckTest extends AutomaticUpdatesFunctionalTestBase {
 
     // Confirm that is if cron is run over an hour after the checkers were
     // previously run the checkers will be run again.
-    $this->delayRequestTime(31);
-    $this->cronRun();
+    $this->delayRequestTime(60);
+    $this->runCronAndWait();
+    $original_expected_results = $expected_results;
     $expected_results = $unexpected_results;
+    $unexpected_results = $original_expected_results;
     $this->drupalGet(Url::fromRoute($admin_route));
     // Confirm on admin pages only the error summary will be displayed if there
     // is more than 1 error.
     $this->assertSame(SystemManager::REQUIREMENT_ERROR, $expected_results['2 errors']->severity);
+    file_put_contents("/Users/ted.bowman/sites/test.html", $this->getSession()->getPage()->getOuterHtml());
+    $assert->pageTextNotContains((string) $unexpected_results['1 error']->summary);
+    $assert->pageTextNotContains($expected_results['1 warning']->messages[0]);
     $assert->pageTextNotContains($expected_results['2 errors']->messages[0]);
     $assert->pageTextNotContains($expected_results['2 errors']->messages[1]);
     $assert->pageTextContainsOnce($expected_results['2 errors']->summary);
@@ -356,7 +361,7 @@ class StatusCheckTest extends AutomaticUpdatesFunctionalTestBase {
     $expected_results = [$this->createValidationResult(SystemManager::REQUIREMENT_WARNING, 2)];
     TestSubscriber1::setTestResult($expected_results, StatusCheckEvent::class);
     $this->delayRequestTime();
-    $this->cronRun();
+    $this->runCronAndWait();
     $this->drupalGet(Url::fromRoute($admin_route));
     // Confirm that the warnings summary is displayed on admin pages if there
     // are no errors.
@@ -370,7 +375,7 @@ class StatusCheckTest extends AutomaticUpdatesFunctionalTestBase {
     $expected_results = [$this->createValidationResult(SystemManager::REQUIREMENT_WARNING)];
     TestSubscriber1::setTestResult($expected_results, StatusCheckEvent::class);
     $this->delayRequestTime();
-    $this->cronRun();
+    $this->runCronAndWait();
     $this->drupalGet(Url::fromRoute($admin_route));
     $assert->pageTextNotContains(static::$errorsExplanation);
     // Confirm that a single warning is displayed and not the summary on admin
@@ -778,6 +783,11 @@ class StatusCheckTest extends AutomaticUpdatesFunctionalTestBase {
     static $total_delay = 0;
     $total_delay += $minutes;
     TestTime::setFakeTimeByOffset("+$total_delay minutes");
+  }
+
+  private function runCronAndWait(): void {
+    $this->cronRun();
+    sleep(5);
   }
 
 }
