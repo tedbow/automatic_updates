@@ -14,7 +14,7 @@ class AutomaticUpdatesTestServiceProvider extends ServiceProviderBase {
    */
   public function alter(ContainerBuilder $container) {
     parent::alter($container);
-    if (\Drupal::state()->get(self::class . '-runner') && $container->hasDefinition('automatic_updates.cron_update_runner')) {
+    if (\Drupal::hasContainer() && \Drupal::state()->get(self::class . '-runner') && $container->hasDefinition('automatic_updates.cron_update_runner')) {
       $container->getDefinition('automatic_updates.cron_update_runner')->setClass(TestCronUpdateRunner::class);
     }
   }

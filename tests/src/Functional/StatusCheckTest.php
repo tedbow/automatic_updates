@@ -354,7 +354,6 @@ class StatusCheckTest extends AutomaticUpdatesFunctionalTestBase {
     // Confirm on admin pages only the error summary will be displayed if there
     // is more than 1 error.
     $this->assertSame(SystemManager::REQUIREMENT_ERROR, $expected_results['2 errors']->severity);
-    file_put_contents("/Users/ted.bowman/sites/test.html", $this->getSession()->getPage()->getOuterHtml());
     $assert->pageTextNotContains((string) $unexpected_results['1 error']->summary);
     $assert->pageTextNotContains($expected_results['2 errors']->messages[0]);
     $assert->pageTextNotContains($expected_results['2 errors']->messages[1]);
