@@ -5,7 +5,6 @@ declare(strict_types = 1);
 namespace Drupal\Tests\automatic_updates\Functional;
 
 use Behat\Mink\Element\NodeElement;
-use Composer\Autoload\ClassLoader;
 use Drupal\automatic_updates\CronUpdateRunner;
 use Drupal\automatic_updates\StatusCheckMailer;
 use Drupal\automatic_updates_test\AutomaticUpdatesTestServiceProvider;
@@ -20,7 +19,6 @@ use Drupal\system\SystemManager;
 use Drupal\Tests\automatic_updates\Traits\ValidationTestTrait;
 use Drupal\Tests\Traits\Core\CronRunTrait;
 use Symfony\Component\DependencyInjection\ContainerInterface;
-use Symfony\Component\Filesystem\Filesystem;
 
 /**
  * Tests status checks.
@@ -91,7 +89,7 @@ class StatusCheckTest extends AutomaticUpdatesFunctionalTestBase {
   }
 
   /**
-   * @inheritDoc
+   * {@inheritdoc}
    */
   protected function installModulesFromClassProperty(ContainerInterface $container): void {
     $container->get('module_installer')->install([
@@ -100,7 +98,6 @@ class StatusCheckTest extends AutomaticUpdatesFunctionalTestBase {
     AutomaticUpdatesTestServiceProvider::useTestCronUpdateRunner();
     parent::installModulesFromClassProperty($container);
   }
-
 
   /**
    * Tests status checks are displayed after Automatic Updates is installed.
@@ -275,7 +272,6 @@ class StatusCheckTest extends AutomaticUpdatesFunctionalTestBase {
   public function testStatusChecksOnAdminPages(string $admin_route): void {
     AutomaticUpdatesTestServiceProvider::useTestCronUpdateRunner();
     $assert = $this->assertSession();
-
 
     $messages_section_selector = '[data-drupal-messages]';
 

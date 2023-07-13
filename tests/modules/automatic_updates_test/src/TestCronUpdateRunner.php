@@ -9,7 +9,7 @@ use function PHPUnit\Framework\assertCount;
 class TestCronUpdateRunner extends CronUpdateRunner {
 
   /**
-   * @inheritDoc
+   * {}
    */
   protected function getCommandPath(): string {
     // Return the real path of Drush.

@@ -4,7 +4,6 @@ declare(strict_types = 1);
 
 namespace Drupal\automatic_updates_test;
 
-use Drupal\automatic_updates\CronUpdateRunner;
 use Drupal\Core\DependencyInjection\ContainerBuilder;
 use Drupal\Core\DependencyInjection\ServiceProviderBase;
 
