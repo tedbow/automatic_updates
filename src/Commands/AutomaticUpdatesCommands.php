@@ -9,6 +9,7 @@ use Drupal\automatic_updates\ConsoleUpdateStage;
 use Drupal\automatic_updates\StatusCheckMailer;
 use Drupal\automatic_updates\Validation\StatusChecker;
 use Drupal\Core\Config\ConfigFactoryInterface;
+use Drupal\package_manager\Debugger;
 use Drush\Commands\DrushCommands;
 
 /**
@@ -68,6 +69,7 @@ final class AutomaticUpdatesCommands extends DrushCommands {
    */
   public function autoUpdate(array $options = ['post-apply' => FALSE, 'stage-id' => NULL, 'from-version' => NULL, 'to-version' => NULL, 'is-from-web' => FALSE]) {
     $io = $this->io();
+    Debugger::debugOutput($options, 'autoUpdate');
 
     // The second half of the update process (post-apply etc.) is done by this
     // exact same command, with some additional flags, in a separate process to
@@ -87,16 +89,19 @@ final class AutomaticUpdatesCommands extends DrushCommands {
     else {
       if ($this->cronUpdateRunner->getMode() === CronUpdateRunner::DISABLED) {
         $io->error('Automatic updates are disabled.');
+        Debugger::debugOutput('disabled');
         return;
       }
 
       $release = $this->stage->getTargetRelease();
       if ($release) {
+        Debugger::debugOutput($release->getVersion(), 'release');
         $message = sprintf('Updating Drupal core to %s. This may take a while.', $release->getVersion());
         $io->info($message);
         $this->stage->performUpdate($options['is-from-web']);
       }
       else {
+        Debugger::debugOutput('no release');
         $io->info("There is no Drupal core update available.");
         $this->runStatusChecks($options['is-from-web']);
       }
@@ -107,12 +112,14 @@ final class AutomaticUpdatesCommands extends DrushCommands {
    * Runs status checks, and sends failure notifications if necessary.
    */
   private function runStatusChecks(bool $is_from_web): void {
+    Debugger::debugOutput($is_from_web, 'runStatusChecks');
     $method = $this->configFactory->get('automatic_updates.settings')
       ->get('unattended.method');
 
     // To ensure consistent results, only run the status checks if we're
     // explicitly configured to do unattended updates on the command line.
     if (($method === 'web' && $is_from_web) || $method === 'console') {
+      Debugger::debugOutput('running status checks');
       $last_results = $this->statusChecker->getResults();
       $this->statusCheckMailer->sendFailureNotifications($last_results, $this->statusChecker->run()->getResults());
     }

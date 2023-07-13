@@ -15,14 +15,14 @@ class AutomaticUpdatesTestServiceProvider extends ServiceProviderBase {
    */
   public function alter(ContainerBuilder $container) {
     parent::alter($container);
-    if (defined(self::class . '-test-runner') && $container->hasDefinition('automatic_updates.cron_update_runner')) {
+    if (\Drupal::state()->get(self::class . '-runner') && $container->hasDefinition('automatic_updates.cron_update_runner')) {
       $container->getDefinition('automatic_updates.cron_update_runner')->setClass(TestCronUpdateRunner::class);
     }
   }
 
   public static function useTestCronUpdateRunner(bool $use = TRUE) {
     \Drupal::state()->set(self::class . '-runner', $use);
-    \Drupal::cache()->invalidateAll();
+
   }
 
 }

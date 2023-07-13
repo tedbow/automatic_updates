@@ -19,6 +19,7 @@ use Drupal\package_manager_test_validation\EventSubscriber\TestSubscriber;
 use Drupal\system\SystemManager;
 use Drupal\Tests\automatic_updates\Traits\ValidationTestTrait;
 use Drupal\Tests\Traits\Core\CronRunTrait;
+use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\Filesystem\Filesystem;
 
 /**
@@ -88,6 +89,18 @@ class StatusCheckTest extends AutomaticUpdatesFunctionalTestBase {
     ]);
     $this->drupalLogin($this->reportViewerUser);
   }
+
+  /**
+   * @inheritDoc
+   */
+  protected function installModulesFromClassProperty(ContainerInterface $container): void {
+    $container->get('module_installer')->install([
+      'system',
+    ]);
+    AutomaticUpdatesTestServiceProvider::useTestCronUpdateRunner();
+    parent::installModulesFromClassProperty($container);
+  }
+
 
   /**
    * Tests status checks are displayed after Automatic Updates is installed.
@@ -260,7 +273,7 @@ class StatusCheckTest extends AutomaticUpdatesFunctionalTestBase {
    * @dataProvider providerAdminRoutes
    */
   public function testStatusChecksOnAdminPages(string $admin_route): void {
-
+    AutomaticUpdatesTestServiceProvider::useTestCronUpdateRunner();
     $assert = $this->assertSession();
 
 
