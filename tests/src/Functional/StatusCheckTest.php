@@ -62,7 +62,6 @@ class StatusCheckTest extends AutomaticUpdatesFunctionalTestBase {
    */
   protected static $modules = [
     'package_manager_test_validation',
-    'automatic_updates_test',
   ];
 
   /**
@@ -409,7 +408,7 @@ class StatusCheckTest extends AutomaticUpdatesFunctionalTestBase {
   public function testStatusCheckAfterInstall(): void {
     $assert = $this->assertSession();
     $this->drupalLogin($this->checkerRunnerUser);
-    $this->container->get('module_installer')->uninstall(['automatic_updates']);
+    $this->container->get('module_installer')->uninstall(['automatic_updates', 'automatic_updates_test']);
 
     $this->drupalGet('admin/reports/status');
     $assert->pageTextNotContains('Update readiness checks');
@@ -794,7 +793,7 @@ class StatusCheckTest extends AutomaticUpdatesFunctionalTestBase {
 
   private function runCronAndWait(): void {
     $this->cronRun();
-    sleep(5);
+    sleep(2);
   }
 
 }
