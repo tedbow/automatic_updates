@@ -88,17 +88,6 @@ class StatusCheckTest extends AutomaticUpdatesFunctionalTestBase {
   }
 
   /**
-   * {@inheritdoc}
-   */
-  protected function installModulesFromClassProperty(ContainerInterface $container): void {
-    $container->get('module_installer')->install([
-      'system',
-    ]);
-    AutomaticUpdatesTestServiceProvider::useTestCronUpdateRunner();
-    parent::installModulesFromClassProperty($container);
-  }
-
-  /**
    * Tests status checks are displayed after Automatic Updates is installed.
    *
    * @dataProvider providerTestModuleFormInstallDisplay
