@@ -6,7 +6,6 @@ namespace Drupal\automatic_updates;
 
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\CronInterface;
-use Drupal\package_manager\Debugger;
 use Drupal\package_manager\PathLocator;
 use Psr\Log\LoggerAwareTrait;
 use Symfony\Component\Process\PhpExecutableFinder;
@@ -82,9 +81,7 @@ class CronUpdateRunner implements CronInterface {
     $process->setTimeout(0);
 
     try {
-      Debugger::debugOutput($process->getCommandLine(), 'starting');
       $process->start();
-      Debugger::debugOutput('started');
       sleep(1);
       $wait_till = time() + 5;
       // Wait for the process to start.
@@ -93,7 +90,6 @@ class CronUpdateRunner implements CronInterface {
     }
 
     catch (\Throwable $throwable) {
-      Debugger::debugOutput($throwable, 'Thrown');
       watchdog_exception('automatic_updates', $throwable, 'Unable to start background update.');
     }
   }
@@ -112,7 +108,6 @@ class CronUpdateRunner implements CronInterface {
    * {@inheritdoc}
    */
   public function run() {
-    Debugger::debugOutput('cron');
     $method = $this->configFactory->get('automatic_updates.settings')
       ->get('unattended.method');
     // Always run the cron service before we trigger the update terminal
@@ -125,9 +120,7 @@ class CronUpdateRunner implements CronInterface {
     // normal cron handler.
     if ($method === 'web' && !self::isCommandLine()) {
       $lock = \Drupal::lock();
-      Debugger::debugOutput('about to lock');
       if ($lock->acquire('cron', 30)) {
-        Debugger::debugOutput('locked');
         $this->runTerminalUpdateCommand();
         $lock->release('cron');
       }
