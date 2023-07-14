@@ -5,6 +5,7 @@ declare(strict_types = 1);
 namespace Drupal\Tests\automatic_updates\Functional;
 
 use Behat\Mink\Element\NodeElement;
+use Drupal\automatic_updates\Commands\AutomaticUpdatesCommands;
 use Drupal\automatic_updates\CronUpdateRunner;
 use Drupal\automatic_updates\StatusCheckMailer;
 use Drupal\automatic_updates_test\AutomaticUpdatesTestServiceProvider;
@@ -18,6 +19,7 @@ use Drupal\package_manager_test_validation\EventSubscriber\TestSubscriber;
 use Drupal\system\SystemManager;
 use Drupal\Tests\automatic_updates\Traits\ValidationTestTrait;
 use Drupal\Tests\Traits\Core\CronRunTrait;
+use Drush\TestTraits\DrushTestTrait;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
@@ -29,6 +31,7 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
 class StatusCheckTest extends AutomaticUpdatesFunctionalTestBase {
 
   use CronRunTrait;
+  use DrushTestTrait;
   use ValidationTestTrait;
 
   /**
@@ -304,7 +307,7 @@ class StatusCheckTest extends AutomaticUpdatesFunctionalTestBase {
     TestSubscriber1::setTestResult($expected_results, StatusCheckEvent::class);
     // Confirm a new message is displayed if the cron is run after an hour.
     $this->delayRequestTime();
-    $this->runCronAndWait();
+    $this->performConsoleUpdate();
     $this->drupalGet(Url::fromRoute($admin_route));
     $assert->pageTextContainsOnce(static::$errorsExplanation);
     // Confirm on admin pages that the summary will be displayed.
@@ -324,7 +327,7 @@ class StatusCheckTest extends AutomaticUpdatesFunctionalTestBase {
     ];
     TestSubscriber1::setTestResult($unexpected_results, StatusCheckEvent::class);
     $this->delayRequestTime(30);
-    $this->runCronAndWait();
+    $this->performConsoleUpdate();
     $this->drupalGet(Url::fromRoute($admin_route));
     $assert->pageTextNotContains($unexpected_results['2 errors']->summary);
     $assert->pageTextContainsOnce((string) $expected_results['1 error']->summary);
@@ -334,7 +337,7 @@ class StatusCheckTest extends AutomaticUpdatesFunctionalTestBase {
     // Confirm that is if cron is run over an hour after the checkers were
     // previously run the checkers will be run again.
     $this->delayRequestTime(31);
-    $this->runCronAndWait();
+    $this->performConsoleUpdate();
     $original_expected_results = $expected_results;
     $expected_results = $unexpected_results;
     $unexpected_results = $original_expected_results;
@@ -356,7 +359,7 @@ class StatusCheckTest extends AutomaticUpdatesFunctionalTestBase {
     $expected_results = [$this->createValidationResult(SystemManager::REQUIREMENT_WARNING, 2)];
     TestSubscriber1::setTestResult($expected_results, StatusCheckEvent::class);
     $this->delayRequestTime();
-    $this->runCronAndWait();
+    $this->performConsoleUpdate();
     $this->drupalGet(Url::fromRoute($admin_route));
     // Confirm that the warnings summary is displayed on admin pages if there
     // are no errors.
@@ -370,7 +373,7 @@ class StatusCheckTest extends AutomaticUpdatesFunctionalTestBase {
     $expected_results = [$this->createValidationResult(SystemManager::REQUIREMENT_WARNING)];
     TestSubscriber1::setTestResult($expected_results, StatusCheckEvent::class);
     $this->delayRequestTime();
-    $this->runCronAndWait();
+    $this->performConsoleUpdate();
     $this->drupalGet(Url::fromRoute($admin_route));
     $assert->pageTextNotContains(static::$errorsExplanation);
     // Confirm that a single warning is displayed and not the summary on admin
@@ -389,6 +392,12 @@ class StatusCheckTest extends AutomaticUpdatesFunctionalTestBase {
     $this->checkForMetaRefresh();
     $assert->pageTextNotContains(static::$warningsExplanation);
     $assert->pageTextNotContains($expected_results[0]->messages[0]);
+  }
+
+  private function performConsoleUpdate() {
+    $commands = $this->container->get(AutomaticUpdatesCommands::class);
+    // @todo Should we change working directory?
+    $this->drush('auto-update', [], ['is-from-web' => NULL], NULL, $this->container->get('package_manager.path_locator')->getProjectRoot());
   }
 
   /**
