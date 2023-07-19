@@ -580,7 +580,7 @@ END;
    *
    * @see \Drupal\package_manager_test_event_logger\EventSubscriber\EventLogSubscriber::logEventInfo
    */
-  protected function assertExpectedStageEventsFired(string $expected_stage_class, ?array $expected_events = NULL, ?string $message = NULL): void {
+  protected function assertExpectedStageEventsFired(string $expected_stage_class, ?array $expected_events = NULL, ?string $message = NULL, string $channel = 'package_manager_test_lifecycle_event_logger'): void {
     if ($expected_events === NULL) {
       $expected_events = [
         PreCreateEvent::class,
@@ -605,13 +605,13 @@ END;
     $page = $this->getMink()->getSession()->getPage();
     $this->visit('/admin/reports/dblog');
     $assert_session->statusCodeEquals(200);
-    $page->selectFieldOption('Type', 'package_manager_test_event_logger');
+    $page->selectFieldOption('Type', $channel);
     $page->pressButton('Filter');
     $assert_session->statusCodeEquals(200);
 
     // The log entries will not appear completely in the page text but they will
     // appear in the title attribute of the links.
-    $links = $page->findAll('css', 'a[title^=package_manager_test_event_logger-start]');
+    $links = $page->findAll('css', "a[title^=$channel-start]");
     $actual_titles = [];
     // Loop through the links in reverse order because the most recent entries
     // will be first.
@@ -620,7 +620,7 @@ END;
     }
     $expected_titles = [];
     foreach ($expected_events as $event) {
-      $expected_titles[] = "package_manager_test_event_logger-start: Event: $event, Stage instance of: $expected_stage_class:package_manager_test_event_logger-end";
+      $expected_titles[] = "$channel-start: Event: $event, Stage instance of: $expected_stage_class:$channel-end";
     }
     $this->assertSame($expected_titles, $actual_titles, $message ?? '');
   }

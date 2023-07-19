@@ -13,6 +13,7 @@ use Drupal\package_manager\Event\PreCreateEvent;
 use Drupal\package_manager\Event\PreDestroyEvent;
 use Drupal\package_manager\Event\PreRequireEvent;
 use Drupal\package_manager\Event\StageEvent;
+use Drupal\package_manager\Event\StatusCheckEvent;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 /**
@@ -27,7 +28,8 @@ final class EventLogSubscriber implements EventSubscriberInterface {
    *   The event object.
    */
   public function logEventInfo(StageEvent $event): void {
-    \Drupal::logger('package_manager_test_event_logger')->info('package_manager_test_event_logger-start: Event: ' . get_class($event) . ', Stage instance of: ' . get_class($event->stage) . ':package_manager_test_event_logger-end');
+    $channel = $event instanceof StatusCheckEvent ?  'package_manager_test_status_event_logger' : 'package_manager_test_lifecycle_event_logger';
+    \Drupal::logger($channel)->info("$channel-start: Event: " . get_class($event) . ', Stage instance of: ' . get_class($event->stage) . ":$channel-end");
   }
 
   /**
@@ -48,6 +50,7 @@ final class EventLogSubscriber implements EventSubscriberInterface {
       PostApplyEvent::class => ['logEventInfo', PHP_INT_MAX],
       PreDestroyEvent::class => ['logEventInfo', PHP_INT_MAX],
       PostDestroyEvent::class => ['logEventInfo', PHP_INT_MAX],
+      StatusCheckEvent::class => ['logEventInfo', PHP_INT_MAX],
     ];
   }
 
