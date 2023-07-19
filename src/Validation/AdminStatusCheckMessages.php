@@ -46,8 +46,8 @@ final class AdminStatusCheckMessages implements ContainerInjectionInterface {
    *   The current user.
    * @param \Drupal\Core\Routing\CurrentRouteMatch $currentRouteMatch
    *   The current route match.
-   * @param \Drupal\automatic_updates\CronUpdateStage $cronUpdateRunner
-   *   The cron update runner service.
+   * @param \Drupal\automatic_updates\CronUpdateStage $stage
+   *   The cron update stage service.
    * @param \Drupal\Core\Render\RendererInterface $renderer
    *   The renderer service.
    * @param \Drupal\Core\Config\ConfigFactoryInterface $configFactory
@@ -58,7 +58,7 @@ final class AdminStatusCheckMessages implements ContainerInjectionInterface {
     private readonly AdminContext $adminContext,
     private readonly AccountProxyInterface $currentUser,
     private readonly CurrentRouteMatch $currentRouteMatch,
-    private readonly CronUpdateStage $cronUpdateRunner,
+    private readonly CronUpdateStage $stage,
     private readonly RendererInterface $renderer,
     private readonly ConfigFactoryInterface $configFactory
   ) {}
@@ -120,7 +120,7 @@ final class AdminStatusCheckMessages implements ContainerInjectionInterface {
   protected function displayResultsOnCurrentPage(): bool {
     // If updates will not run during cron then we don't need to show the
     // status checks on admin pages.
-    if ($this->cronUpdateRunner->getMode() === CronUpdateStage::DISABLED) {
+    if ($this->stage->getMode() === CronUpdateStage::DISABLED) {
       return FALSE;
     }
 
