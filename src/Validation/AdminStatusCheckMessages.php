@@ -72,7 +72,7 @@ final class AdminStatusCheckMessages implements ContainerInjectionInterface {
       $container->get('router.admin_context'),
       $container->get('current_user'),
       $container->get('current_route_match'),
-      $container->get('automatic_updates.cron_update_runner'),
+      $container->get('automatic_updates.cron_update_stage'),
       $container->get('renderer'),
       $container->get('config.factory')
     );

@@ -629,7 +629,7 @@ END;
    * Tests that setLogger is called on the cron update stage service.
    */
   public function testLoggerIsSetByContainer(): void {
-    $stage_method_calls = $this->container->getDefinition('automatic_updates.cron_update_runner')->getMethodCalls();
+    $stage_method_calls = $this->container->getDefinition('automatic_updates.cron_update_stage')->getMethodCalls();
     $this->assertSame('setLogger', $stage_method_calls[0][0]);
   }
 

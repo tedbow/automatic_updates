@@ -160,11 +160,11 @@ function automatic_updates_modules_installed($modules) {
   $status_checker = \Drupal::service('automatic_updates.status_checker');
   $status_checker->run();
   /** @var \Drupal\automatic_updates\CronUpdateStage $stage */
-  $cron_update_runner = \Drupal::service('automatic_updates.cron_update_runner');
+  $stage = \Drupal::service('automatic_updates.cron_update_stage');
   // If cron updates are disabled status check messages will not be displayed on
   // admin pages. Therefore, after installing the module the user will not be
   // alerted to any problems until they access the status report page.
-  if ($cron_update_runner->getMode() === CronUpdateStage::DISABLED) {
+  if ($stage->getMode() === CronUpdateStage::DISABLED) {
     /** @var \Drupal\automatic_updates\Validation\AdminStatusCheckMessages $status_check_messages */
     $status_check_messages = \Drupal::classResolver(AdminStatusCheckMessages::class);
     $status_check_messages->displayResultSummary();

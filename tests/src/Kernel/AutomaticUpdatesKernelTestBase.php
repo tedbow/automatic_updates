@@ -84,7 +84,7 @@ abstract class AutomaticUpdatesKernelTestBase extends PackageManagerKernelTestBa
 
     // Use the test-only implementations of the regular and cron update stages.
     $overrides = [
-      'automatic_updates.cron_update_runner' => TestCronUpdateStage::class,
+      'automatic_updates.cron_update_stage' => TestCronUpdateStage::class,
       ConsoleUpdateStage::class => TestConsoleUpdateStage::class,
     ];
     foreach ($overrides as $service_id => $class) {
