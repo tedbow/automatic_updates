@@ -22,7 +22,7 @@ use Drush\Commands\DrushCommands;
  * @todo Either remove this command completely or make it just call the new
  *   Symfony Console command that will be added in https://drupal.org/i/3360485.
  */
-class AutomaticUpdatesCommands extends DrushCommands {
+final class AutomaticUpdatesCommands extends DrushCommands {
 
   /**
    * Constructs a AutomaticUpdatesCommands object.
