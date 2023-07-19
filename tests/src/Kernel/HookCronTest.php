@@ -2,7 +2,7 @@
 
 namespace Drupal\Tests\automatic_updates\Kernel;
 
-use Drupal\automatic_updates\CronUpdateStage;
+use Drupal\automatic_updates\CronUpdateRunner;
 use Drupal\automatic_updates_test\Datetime\TestTime;
 use Drupal\package_manager\Event\StatusCheckEvent;
 
@@ -27,9 +27,9 @@ class HookCronTest extends AutomaticUpdatesKernelTestBase {
     $this->setCoreVersion('9.8.1');
     // Undo override of the 'serverApi' property from the parent test class.
     // @see \Drupal\Tests\automatic_updates\Kernel\AutomaticUpdatesKernelTestBase::setUp
-    $property = new \ReflectionProperty(CronUpdateStage::class, 'serverApi');
+    $property = new \ReflectionProperty(CronUpdateRunner::class, 'serverApi');
     $property->setValue(NULL, 'cli');
-    $this->assertTrue(CronUpdateStage::isCommandLine());
+    $this->assertTrue(CronUpdateRunner::isCommandLine());
     $status_check_count = 0;
     $this->addEventTestListener(function () use (&$status_check_count) {
       $status_check_count++;
@@ -42,7 +42,7 @@ class HookCronTest extends AutomaticUpdatesKernelTestBase {
 
     // If we are on the web the status checks should run.
     $property->setValue(NULL, 'cgi-fcgi');
-    $this->assertFalse(CronUpdateStage::isCommandLine());
+    $this->assertFalse(CronUpdateRunner::isCommandLine());
     $this->container->get('cron')->run();
     $this->assertSame(1, $status_check_count);
 
