@@ -19,14 +19,6 @@ class AutomaticUpdatesTestServiceProvider extends ServiceProviderBase {
     }
   }
 
-  /**
-   * {@inheritdoc}
-   */
-  public function register(ContainerBuilder $container) {
-    parent::register($container);
-
-  }
-
   public static function useTestCronUpdateRunner(bool $use = TRUE) {
     \Drupal::state()->set(self::class . '-runner', $use);
 
