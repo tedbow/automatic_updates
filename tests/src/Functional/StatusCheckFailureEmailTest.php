@@ -144,7 +144,7 @@ END;
     $recipient_count = count($this->emailRecipients);
     $this->assertGreaterThan(0, $recipient_count);
     $sent_messages_count = $recipient_count;
-     $this->performConsoleUpdate();
+    $this->performConsoleUpdate();
     $this->assertSentMessagesCount($sent_messages_count);
 
     // If a different error is flagged, they should be e-mailed again.

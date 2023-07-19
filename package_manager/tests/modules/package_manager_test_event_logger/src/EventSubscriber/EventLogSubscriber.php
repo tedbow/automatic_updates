@@ -28,7 +28,7 @@ final class EventLogSubscriber implements EventSubscriberInterface {
    *   The event object.
    */
   public function logEventInfo(StageEvent $event): void {
-    $channel = $event instanceof StatusCheckEvent ?  'package_manager_test_status_event_logger' : 'package_manager_test_lifecycle_event_logger';
+    $channel = $event instanceof StatusCheckEvent ? 'package_manager_test_status_event_logger' : 'package_manager_test_lifecycle_event_logger';
     \Drupal::logger($channel)->info("$channel-start: Event: " . get_class($event) . ', Stage instance of: ' . get_class($event->stage) . ":$channel-end");
   }
 

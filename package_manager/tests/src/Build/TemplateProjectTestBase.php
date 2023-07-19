@@ -577,6 +577,9 @@ END;
    *   will be asserted.
    * @param string|null $message
    *   (optional) A message to display with the assertion.
+   * @param string $channel
+   *   (optional) The longer change to check. If none provide defaults to
+   *   'package_manager_test_lifecycle_event_logger'.
    *
    * @see \Drupal\package_manager_test_event_logger\EventSubscriber\EventLogSubscriber::logEventInfo
    */
