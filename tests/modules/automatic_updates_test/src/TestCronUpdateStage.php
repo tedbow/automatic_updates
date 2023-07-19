@@ -5,9 +5,9 @@ declare(strict_types = 1);
 namespace Drupal\automatic_updates_test;
 
 use Composer\Autoload\ClassLoader;
-use Drupal\automatic_updates\CronUpdateRunner;
+use Drupal\automatic_updates\CronUpdateStage;
 
-class TestCronUpdateRunner extends CronUpdateRunner {
+class TestCronUpdateStage extends CronUpdateStage {
 
   /**
    * {@inheritdoc}

@@ -4,7 +4,7 @@ declare(strict_types = 1);
 
 namespace Drupal\automatic_updates\Commands;
 
-use Drupal\automatic_updates\CronUpdateRunner;
+use Drupal\automatic_updates\CronUpdateStage;
 use Drupal\automatic_updates\ConsoleUpdateStage;
 use Drupal\automatic_updates\StatusCheckMailer;
 use Drupal\automatic_updates\Validation\StatusChecker;
@@ -27,7 +27,7 @@ class AutomaticUpdatesCommands extends DrushCommands {
   /**
    * Constructs a AutomaticUpdatesCommands object.
    *
-   * @param \Drupal\automatic_updates\CronUpdateRunner $cronUpdateRunner
+   * @param \Drupal\automatic_updates\CronUpdateStage $cronUpdateRunner
    *   The cron update runner service.
    * @param \Drupal\automatic_updates\ConsoleUpdateStage $stage
    *   The console cron updater service.
@@ -39,7 +39,7 @@ class AutomaticUpdatesCommands extends DrushCommands {
    *   The config factory service.
    */
   public function __construct(
-    private readonly CronUpdateRunner $cronUpdateRunner,
+    private readonly CronUpdateStage $cronUpdateRunner,
     private readonly ConsoleUpdateStage $stage,
     private readonly StatusChecker $statusChecker,
     private readonly StatusCheckMailer $statusCheckMailer,
@@ -85,7 +85,7 @@ class AutomaticUpdatesCommands extends DrushCommands {
       $this->runStatusChecks($options['is-from-web']);
     }
     else {
-      if ($this->cronUpdateRunner->getMode() !== CronUpdateRunner::DISABLED) {
+      if ($this->cronUpdateRunner->getMode() !== CronUpdateStage::DISABLED) {
         $release = $this->stage->getTargetRelease();
         if ($release) {
           $message = sprintf('Updating Drupal core to %s. This may take a while.', $release->getVersion());
@@ -121,7 +121,7 @@ class AutomaticUpdatesCommands extends DrushCommands {
       $this->statusChecker->run();
       // Only try to send failure notifications if unattended updates are
       // enabled.
-      if ($this->cronUpdateRunner->getMode() !== CronUpdateRunner::DISABLED) {
+      if ($this->cronUpdateRunner->getMode() !== CronUpdateStage::DISABLED) {
         $this->statusCheckMailer->sendFailureNotifications($last_results, $this->statusChecker->getResults());
       }
     }

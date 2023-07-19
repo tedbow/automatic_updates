@@ -39,7 +39,7 @@ class ConsoleUpdateStage extends UpdateStage {
    *
    * @param \Drupal\Core\State\StateInterface $state
    *   The state service.
-   * @param \Drupal\automatic_updates\CronUpdateRunner $cronUpdateRunner
+   * @param \Drupal\automatic_updates\CronUpdateStage $cronUpdateRunner
    *   The cron update runner service.
    * @param \Drupal\Core\Mail\MailManagerInterface $mailManager
    *   The mail manager service.
@@ -72,7 +72,7 @@ class ConsoleUpdateStage extends UpdateStage {
    */
   public function __construct(
     private readonly StateInterface $state,
-    private readonly CronUpdateRunner $cronUpdateRunner,
+    private readonly CronUpdateStage $cronUpdateRunner,
     private readonly MailManagerInterface $mailManager,
     private readonly StatusCheckMailer $statusCheckMailer,
     private readonly ReleaseChooser $releaseChooser,
@@ -123,7 +123,7 @@ class ConsoleUpdateStage extends UpdateStage {
    *   Returns TRUE if any update was attempted, otherwise FALSE.
    */
   public function performUpdate(bool $is_from_web = FALSE): bool {
-    if ($this->cronUpdateRunner->getMode() === CronUpdateRunner::DISABLED) {
+    if ($this->cronUpdateRunner->getMode() === CronUpdateStage::DISABLED) {
       return FALSE;
     }
 

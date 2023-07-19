@@ -4,13 +4,13 @@ declare(strict_types = 1);
 
 namespace Drupal\Tests\automatic_updates\Kernel;
 
-use Drupal\automatic_updates\CronUpdateRunner;
+use Drupal\automatic_updates\CronUpdateStage;
 use Drupal\Tests\automatic_updates\Traits\EmailNotificationsTestTrait;
 use Drupal\Tests\package_manager\Traits\PackageManagerBypassTestTrait;
 use Drupal\Tests\user\Traits\UserCreationTrait;
 
 /**
- * @covers \Drupal\automatic_updates\CronUpdateRunner
+ * @covers \Drupal\automatic_updates\CronUpdateStage
  * @group automatic_updates
  * @internal
  */
@@ -34,8 +34,8 @@ class CronUpdateStageTest extends AutomaticUpdatesKernelTestBase {
    * Tests that regular cron always runs.
    */
   public function testRegularCronRuns(): void {
-    /** @var \Drupal\Tests\automatic_updates\Kernel\TestCronUpdateRunner $cron_stage */
-    $cron_stage = $this->container->get(CronUpdateRunner::class);
+    /** @var \Drupal\Tests\automatic_updates\Kernel\TestCronUpdateStage $cron_stage */
+    $cron_stage = $this->container->get(CronUpdateStage::class);
     $cron_stage->throwExceptionOnTerminalCommand = TRUE;
     $this->assertRegularCronRun(FALSE);
 

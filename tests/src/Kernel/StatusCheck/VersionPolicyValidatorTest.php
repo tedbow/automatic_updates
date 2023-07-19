@@ -4,7 +4,7 @@ declare(strict_types = 1);
 
 namespace Drupal\Tests\automatic_updates\Kernel\StatusCheck;
 
-use Drupal\automatic_updates\CronUpdateRunner;
+use Drupal\automatic_updates\CronUpdateStage;
 use Drupal\automatic_updates\ConsoleUpdateStage;
 use Drupal\automatic_updates\UpdateStage;
 use Drupal\fixture_manipulator\ActiveFixtureManipulator;
@@ -46,7 +46,7 @@ class VersionPolicyValidatorTest extends AutomaticUpdatesKernelTestBase {
         '9.8.1',
         NULL,
         "$metadata_dir/drupal.9.8.2.xml",
-        [CronUpdateRunner::DISABLED, CronUpdateRunner::SECURITY, CronUpdateRunner::ALL],
+        [CronUpdateStage::DISABLED, CronUpdateStage::SECURITY, CronUpdateStage::ALL],
         [],
       ],
       // These three cases prove that updating from an unsupported minor version
@@ -59,14 +59,14 @@ class VersionPolicyValidatorTest extends AutomaticUpdatesKernelTestBase {
         '9.7.1',
         NULL,
         "$metadata_dir/drupal.9.8.1-security.xml",
-        [CronUpdateRunner::DISABLED],
+        [CronUpdateStage::DISABLED],
         [],
       ],
       'update from unsupported minor, cron enabled, minor updates forbidden' => [
         '9.7.1',
         NULL,
         "$metadata_dir/drupal.9.8.1-security.xml",
-        [CronUpdateRunner::SECURITY, CronUpdateRunner::ALL],
+        [CronUpdateStage::SECURITY, CronUpdateStage::ALL],
         [
           t('The currently installed version of Drupal core, 9.7.1, is not in a supported minor version. Your site will not be automatically updated during cron until it is updated to a supported minor version.'),
           t('See the <a href="/admin/reports/updates">available updates page</a> for available updates.'),
@@ -76,7 +76,7 @@ class VersionPolicyValidatorTest extends AutomaticUpdatesKernelTestBase {
         '9.7.1',
         NULL,
         "$metadata_dir/drupal.9.8.1-security.xml",
-        [CronUpdateRunner::SECURITY, CronUpdateRunner::ALL],
+        [CronUpdateStage::SECURITY, CronUpdateStage::ALL],
         [
           t('The currently installed version of Drupal core, 9.7.1, is not in a supported minor version. Your site will not be automatically updated during cron until it is updated to a supported minor version.'),
           t('Use the <a href="/admin/modules/update">update form</a> to update to a supported version.'),
@@ -103,7 +103,7 @@ class VersionPolicyValidatorTest extends AutomaticUpdatesKernelTestBase {
         '9.8.0',
         '9.8.1',
         "$metadata_dir/drupal.9.8.1-security.xml",
-        [CronUpdateRunner::DISABLED, CronUpdateRunner::SECURITY, CronUpdateRunner::ALL],
+        [CronUpdateStage::DISABLED, CronUpdateStage::SECURITY, CronUpdateStage::ALL],
         [],
       ],
       // This case proves that updating from a dev snapshot is never allowed,
@@ -112,7 +112,7 @@ class VersionPolicyValidatorTest extends AutomaticUpdatesKernelTestBase {
         '9.8.0-dev',
         '9.8.1',
         "$metadata_dir/drupal.9.8.1-security.xml",
-        [CronUpdateRunner::DISABLED, CronUpdateRunner::SECURITY, CronUpdateRunner::ALL],
+        [CronUpdateStage::DISABLED, CronUpdateStage::SECURITY, CronUpdateStage::ALL],
         [
           t('Drupal cannot be automatically updated from the installed version, 9.8.0-dev, because automatic updates from a dev version to any other version are not supported.'),
         ],
@@ -123,14 +123,14 @@ class VersionPolicyValidatorTest extends AutomaticUpdatesKernelTestBase {
         '9.8.0-alpha1',
         '9.8.1',
         "$metadata_dir/drupal.9.8.1-security.xml",
-        [CronUpdateRunner::DISABLED],
+        [CronUpdateStage::DISABLED],
         [],
       ],
       'alpha installed, cron enabled' => [
         '9.8.0-alpha1',
         '9.8.1',
         "$metadata_dir/drupal.9.8.1-security.xml",
-        [CronUpdateRunner::SECURITY, CronUpdateRunner::ALL],
+        [CronUpdateStage::SECURITY, CronUpdateStage::ALL],
         [
           t('Drupal cannot be automatically updated during cron from its current version, 9.8.0-alpha1, because it is not a stable version.'),
         ],
@@ -139,14 +139,14 @@ class VersionPolicyValidatorTest extends AutomaticUpdatesKernelTestBase {
         '9.8.0-beta2',
         '9.8.1',
         "$metadata_dir/drupal.9.8.1-security.xml",
-        [CronUpdateRunner::DISABLED],
+        [CronUpdateStage::DISABLED],
         [],
       ],
       'beta installed, cron enabled' => [
         '9.8.0-beta2',
         '9.8.1',
         "$metadata_dir/drupal.9.8.1-security.xml",
-        [CronUpdateRunner::SECURITY, CronUpdateRunner::ALL],
+        [CronUpdateStage::SECURITY, CronUpdateStage::ALL],
         [
           t('Drupal cannot be automatically updated during cron from its current version, 9.8.0-beta2, because it is not a stable version.'),
         ],
@@ -155,14 +155,14 @@ class VersionPolicyValidatorTest extends AutomaticUpdatesKernelTestBase {
         '9.8.0-rc3',
         '9.8.1',
         "$metadata_dir/drupal.9.8.1-security.xml",
-        [CronUpdateRunner::DISABLED],
+        [CronUpdateStage::DISABLED],
         [],
       ],
       'rc installed, cron enabled' => [
         '9.8.0-rc3',
         '9.8.1',
         "$metadata_dir/drupal.9.8.1-security.xml",
-        [CronUpdateRunner::SECURITY, CronUpdateRunner::ALL],
+        [CronUpdateStage::SECURITY, CronUpdateStage::ALL],
         [
           t('Drupal cannot be automatically updated during cron from its current version, 9.8.0-rc3, because it is not a stable version.'),
         ],
@@ -181,9 +181,9 @@ class VersionPolicyValidatorTest extends AutomaticUpdatesKernelTestBase {
    *   The path of the core release metadata to serve to the update system.
    * @param string[] $cron_modes
    *   The modes for unattended updates. Can contain any of
-   *   \Drupal\automatic_updates\CronUpdateRunner::DISABLED,
-   *   \Drupal\automatic_updates\CronUpdateRunner::SECURITY, and
-   *   \Drupal\automatic_updates\CronUpdateRunner::ALL.
+   *   \Drupal\automatic_updates\CronUpdateStage::DISABLED,
+   *   \Drupal\automatic_updates\CronUpdateStage::SECURITY, and
+   *   \Drupal\automatic_updates\CronUpdateStage::ALL.
    * @param \Drupal\Core\StringTranslation\TranslatableMarkup[] $expected_validation_messages
    *   The expected validation messages.
    * @param bool $allow_minor_updates
@@ -230,21 +230,21 @@ class VersionPolicyValidatorTest extends AutomaticUpdatesKernelTestBase {
         '9.8.0',
         '9.8.1-alpha1',
         "$metadata_dir/drupal.9.8.1-extra.xml",
-        [CronUpdateRunner::DISABLED],
+        [CronUpdateStage::DISABLED],
         [],
       ],
       'update to beta, cron disabled' => [
         '9.8.0',
         '9.8.1-beta2',
         "$metadata_dir/drupal.9.8.1-extra.xml",
-        [CronUpdateRunner::DISABLED],
+        [CronUpdateStage::DISABLED],
         [],
       ],
       'update to rc, cron disabled' => [
         '9.8.0',
         '9.8.1-rc3',
         "$metadata_dir/drupal.9.8.1-extra.xml",
-        [CronUpdateRunner::DISABLED],
+        [CronUpdateStage::DISABLED],
         [],
       ],
       // This case proves that, if a stable release is installed, there is an
@@ -255,7 +255,7 @@ class VersionPolicyValidatorTest extends AutomaticUpdatesKernelTestBase {
         '9.8.1',
         '9.8.2',
         "$metadata_dir/drupal.9.8.2.xml",
-        [CronUpdateRunner::SECURITY],
+        [CronUpdateStage::SECURITY],
         [
           t('Drupal cannot be automatically updated during cron from 9.8.1 to 9.8.2 because 9.8.2 is not a security release.'),
         ],
@@ -267,7 +267,7 @@ class VersionPolicyValidatorTest extends AutomaticUpdatesKernelTestBase {
         '9.8.0',
         '9.8.1-alpha1',
         "$metadata_dir/drupal.9.8.1-extra.xml",
-        [CronUpdateRunner::SECURITY],
+        [CronUpdateStage::SECURITY],
         [
           t('Drupal cannot be automatically updated during cron to the recommended version, 9.8.1-alpha1, because it is not a stable version.'),
           t('Drupal cannot be automatically updated during cron from 9.8.0 to 9.8.1-alpha1 because 9.8.1-alpha1 is not a security release.'),
@@ -277,7 +277,7 @@ class VersionPolicyValidatorTest extends AutomaticUpdatesKernelTestBase {
         '9.8.0',
         '9.8.1-beta2',
         "$metadata_dir/drupal.9.8.1-extra.xml",
-        [CronUpdateRunner::SECURITY],
+        [CronUpdateStage::SECURITY],
         [
           t('Drupal cannot be automatically updated during cron to the recommended version, 9.8.1-beta2, because it is not a stable version.'),
           t('Drupal cannot be automatically updated during cron from 9.8.0 to 9.8.1-beta2 because 9.8.1-beta2 is not a security release.'),
@@ -287,7 +287,7 @@ class VersionPolicyValidatorTest extends AutomaticUpdatesKernelTestBase {
         '9.8.0',
         '9.8.1-rc3',
         "$metadata_dir/drupal.9.8.1-extra.xml",
-        [CronUpdateRunner::SECURITY],
+        [CronUpdateStage::SECURITY],
         [
           t('Drupal cannot be automatically updated during cron to the recommended version, 9.8.1-rc3, because it is not a stable version.'),
           t('Drupal cannot be automatically updated during cron from 9.8.0 to 9.8.1-rc3 because 9.8.1-rc3 is not a security release.'),
@@ -300,7 +300,7 @@ class VersionPolicyValidatorTest extends AutomaticUpdatesKernelTestBase {
         '9.7.0',
         '9.8.1-alpha1',
         "$metadata_dir/drupal.9.8.1-extra.xml",
-        [CronUpdateRunner::SECURITY],
+        [CronUpdateStage::SECURITY],
         [
           t('Drupal cannot be automatically updated during cron to the recommended version, 9.8.1-alpha1, because it is not a stable version.'),
           t('Drupal cannot be automatically updated from 9.7.0 to 9.8.1-alpha1 because automatic updates from one minor version to another are not supported during cron.'),
@@ -311,7 +311,7 @@ class VersionPolicyValidatorTest extends AutomaticUpdatesKernelTestBase {
         '9.7.0',
         '9.8.1-beta2',
         "$metadata_dir/drupal.9.8.1-extra.xml",
-        [CronUpdateRunner::SECURITY],
+        [CronUpdateStage::SECURITY],
         [
           t('Drupal cannot be automatically updated during cron to the recommended version, 9.8.1-beta2, because it is not a stable version.'),
           t('Drupal cannot be automatically updated from 9.7.0 to 9.8.1-beta2 because automatic updates from one minor version to another are not supported during cron.'),
@@ -322,7 +322,7 @@ class VersionPolicyValidatorTest extends AutomaticUpdatesKernelTestBase {
         '9.7.0',
         '9.8.1-rc3',
         "$metadata_dir/drupal.9.8.1-extra.xml",
-        [CronUpdateRunner::SECURITY],
+        [CronUpdateStage::SECURITY],
         [
           t('Drupal cannot be automatically updated during cron to the recommended version, 9.8.1-rc3, because it is not a stable version.'),
           t('Drupal cannot be automatically updated from 9.7.0 to 9.8.1-rc3 because automatic updates from one minor version to another are not supported during cron.'),
@@ -340,7 +340,7 @@ class VersionPolicyValidatorTest extends AutomaticUpdatesKernelTestBase {
         '9.7.1',
         '9.8.1',
         "$metadata_dir/drupal.9.8.1-security.xml",
-        [CronUpdateRunner::DISABLED],
+        [CronUpdateStage::DISABLED],
         [
           t('Drupal cannot be automatically updated from 9.7.1 to 9.8.1 because automatic updates from one minor version to another are not supported.'),
         ],
@@ -349,7 +349,7 @@ class VersionPolicyValidatorTest extends AutomaticUpdatesKernelTestBase {
         '9.7.1',
         '9.8.1',
         "$metadata_dir/drupal.9.8.1-security.xml",
-        [CronUpdateRunner::SECURITY, CronUpdateRunner::ALL],
+        [CronUpdateStage::SECURITY, CronUpdateStage::ALL],
         [
           t('The currently installed version of Drupal core, 9.7.1, is not in a supported minor version. Your site will not be automatically updated during cron until it is updated to a supported minor version.'),
           t('See the <a href="/admin/reports/updates">available updates page</a> for available updates.'),
@@ -360,7 +360,7 @@ class VersionPolicyValidatorTest extends AutomaticUpdatesKernelTestBase {
         '9.7.1',
         '9.8.1',
         "$metadata_dir/drupal.9.8.1-security.xml",
-        [CronUpdateRunner::SECURITY, CronUpdateRunner::ALL],
+        [CronUpdateStage::SECURITY, CronUpdateStage::ALL],
         [
           t('The currently installed version of Drupal core, 9.7.1, is not in a supported minor version. Your site will not be automatically updated during cron until it is updated to a supported minor version.'),
           t('Use the <a href="/admin/modules/update">update form</a> to update to a supported version.'),
@@ -382,9 +382,9 @@ class VersionPolicyValidatorTest extends AutomaticUpdatesKernelTestBase {
    *   The path of the core release metadata to serve to the update system.
    * @param string[] $cron_modes
    *   The modes for unattended updates. Can contain any of
-   *   \Drupal\automatic_updates\CronUpdateRunner::DISABLED,
-   *   \Drupal\automatic_updates\CronUpdateRunner::SECURITY, and
-   *   \Drupal\automatic_updates\CronUpdateRunner::ALL.
+   *   \Drupal\automatic_updates\CronUpdateStage::DISABLED,
+   *   \Drupal\automatic_updates\CronUpdateStage::SECURITY, and
+   *   \Drupal\automatic_updates\CronUpdateStage::ALL.
    * @param \Drupal\Core\StringTranslation\TranslatableMarkup[] $expected_validation_messages
    *   The expected validation messages.
    * @param bool $allow_minor_updates

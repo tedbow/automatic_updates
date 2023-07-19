@@ -4,7 +4,7 @@ declare(strict_types = 1);
 
 namespace Drupal\Tests\automatic_updates\Kernel;
 
-use Drupal\automatic_updates\CronUpdateRunner;
+use Drupal\automatic_updates\CronUpdateStage;
 use Drupal\automatic_updates\ConsoleUpdateStage;
 use Drupal\Core\DependencyInjection\ContainerBuilder;
 use Drupal\Tests\automatic_updates\Traits\ValidationTestTrait;
@@ -54,7 +54,7 @@ abstract class AutomaticUpdatesKernelTestBase extends PackageManagerKernelTestBa
     $this->config('automatic_updates.settings')
       ->set('unattended', [
         'method' => 'web',
-        'level' => CronUpdateRunner::SECURITY,
+        'level' => CronUpdateStage::SECURITY,
       ])
       ->save();
 
@@ -72,7 +72,7 @@ abstract class AutomaticUpdatesKernelTestBase extends PackageManagerKernelTestBa
     // our cron handler's PHP_SAPI constant to a valid value that isn't `cli`.
     // The choice of `cgi-fcgi` is arbitrary; see
     // https://www.php.net/php_sapi_name for some valid values of PHP_SAPI.
-    $property = new \ReflectionProperty(CronUpdateRunner::class, 'serverApi');
+    $property = new \ReflectionProperty(CronUpdateStage::class, 'serverApi');
     $property->setValue(NULL, 'cgi-fcgi');
   }
 
@@ -84,7 +84,7 @@ abstract class AutomaticUpdatesKernelTestBase extends PackageManagerKernelTestBa
 
     // Use the test-only implementations of the regular and cron update stages.
     $overrides = [
-      'automatic_updates.cron_update_runner' => TestCronUpdateRunner::class,
+      'automatic_updates.cron_update_runner' => TestCronUpdateStage::class,
       ConsoleUpdateStage::class => TestConsoleUpdateStage::class,
     ];
     foreach ($overrides as $service_id => $class) {
@@ -106,7 +106,7 @@ abstract class AutomaticUpdatesKernelTestBase extends PackageManagerKernelTestBa
 /**
  * A test-only version of the cron update stage to override and expose internals.
  */
-class TestCronUpdateRunner extends CronUpdateRunner {
+class TestCronUpdateStage extends CronUpdateStage {
 
   /**
    * Determines whether an exception should be thrown.

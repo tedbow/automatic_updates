@@ -4,7 +4,7 @@ declare(strict_types = 1);
 
 namespace Drupal\Tests\automatic_updates\Kernel;
 
-use Drupal\automatic_updates\CronUpdateRunner;
+use Drupal\automatic_updates\CronUpdateStage;
 use Drupal\automatic_updates\ConsoleUpdateStage;
 use Drupal\automatic_updates_test\EventSubscriber\TestSubscriber1;
 use Drupal\Core\DependencyInjection\ContainerBuilder;
@@ -129,32 +129,32 @@ END;
     $fixture_dir = __DIR__ . '/../../../package_manager/tests/fixtures/release-history';
     return [
       'disabled, normal release' => [
-        CronUpdateRunner::DISABLED,
+        CronUpdateStage::DISABLED,
         ['drupal' => "$fixture_dir/drupal.9.8.2.xml"],
         FALSE,
       ],
       'disabled, security release' => [
-        CronUpdateRunner::DISABLED,
+        CronUpdateStage::DISABLED,
         ['drupal' => "$fixture_dir/drupal.9.8.1-security.xml"],
         FALSE,
       ],
       'security only, security release' => [
-        CronUpdateRunner::SECURITY,
+        CronUpdateStage::SECURITY,
         ['drupal' => "$fixture_dir/drupal.9.8.1-security.xml"],
         TRUE,
       ],
       'security only, normal release' => [
-        CronUpdateRunner::SECURITY,
+        CronUpdateStage::SECURITY,
         ['drupal' => "$fixture_dir/drupal.9.8.2.xml"],
         FALSE,
       ],
       'enabled, normal release' => [
-        CronUpdateRunner::ALL,
+        CronUpdateStage::ALL,
         ['drupal' => "$fixture_dir/drupal.9.8.2.xml"],
         TRUE,
       ],
       'enabled, security release' => [
-        CronUpdateRunner::ALL,
+        CronUpdateStage::ALL,
         ['drupal' => "$fixture_dir/drupal.9.8.1-security.xml"],
         TRUE,
       ],
@@ -294,7 +294,7 @@ END;
     $this->installConfig('automatic_updates');
     // @todo Remove in https://www.drupal.org/project/automatic_updates/issues/3284443
     $this->config('automatic_updates.settings')
-      ->set('unattended.level', CronUpdateRunner::SECURITY)
+      ->set('unattended.level', CronUpdateStage::SECURITY)
       ->save();
     // Ensure that there is a security release to which we should update.
     $this->setReleaseMetadata([
@@ -408,7 +408,7 @@ END;
    */
   public function testStageNotDestroyedIfApplying(): void {
     $this->config('automatic_updates.settings')
-      ->set('unattended.level', CronUpdateRunner::ALL)
+      ->set('unattended.level', CronUpdateStage::ALL)
       ->save();
     $this->setReleaseMetadata([
       'drupal' => __DIR__ . "/../../../package_manager/tests/fixtures/release-history/drupal.9.8.1-security.xml",
@@ -448,7 +448,7 @@ END;
    */
   public function testStageNotDestroyedIfSecure(): void {
     $this->config('automatic_updates.settings')
-      ->set('unattended.level', CronUpdateRunner::ALL)
+      ->set('unattended.level', CronUpdateStage::ALL)
       ->save();
     $this->setReleaseMetadata([
       'drupal' => __DIR__ . "/../../../package_manager/tests/fixtures/release-history/drupal.9.8.2.xml",
@@ -534,7 +534,7 @@ END;
       'drupal' => __DIR__ . '/../../../package_manager/tests/fixtures/release-history/drupal.9.8.2.xml',
     ]);
     $this->config('automatic_updates.settings')
-      ->set('unattended.level', CronUpdateRunner::ALL)
+      ->set('unattended.level', CronUpdateStage::ALL)
       ->save();
 
     $error = ValidationResult::createError([

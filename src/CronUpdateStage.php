@@ -14,13 +14,15 @@ use Symfony\Component\Process\Process;
 /**
  * Defines a service that updates via cron.
  *
+ * @todo Rename this class to CronUpdateRunner because it is not longer a stage.
+ *
  * @internal
  *   This class implements logic specific to Automatic Updates' cron hook
  *   implementation and may be changed or removed at any time without warning.
  *   It should not be called directly, and external code should not interact
  *   with it.
  */
-class CronUpdateRunner implements CronInterface {
+class CronUpdateStage implements CronInterface {
 
   use LoggerAwareTrait;
 
@@ -53,7 +55,7 @@ class CronUpdateRunner implements CronInterface {
   public const ALL = 'patch';
 
   /**
-   * Constructs a CronUpdateRunner object.
+   * Constructs a CronUpdateStage object.
    *
    * @param \Drupal\Core\Config\ConfigFactoryInterface $configFactory
    *   The config factory service.

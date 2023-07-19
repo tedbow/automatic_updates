@@ -4,7 +4,7 @@ declare(strict_types = 1);
 
 namespace Drupal\Tests\automatic_updates\Kernel\StatusCheck;
 
-use Drupal\automatic_updates\CronUpdateRunner;
+use Drupal\automatic_updates\CronUpdateStage;
 use Drupal\automatic_updates\ConsoleUpdateStage;
 use Drupal\automatic_updates\UpdateStage;
 use Drupal\automatic_updates\Validation\StatusChecker;
@@ -212,7 +212,7 @@ class StatusCheckerTest extends AutomaticUpdatesKernelTestBase {
     // By default, updates will be enabled on cron.
     $this->assertInstanceOf(ConsoleUpdateStage::class, $stage);
     $this->config('automatic_updates.settings')
-      ->set('unattended.level', CronUpdateRunner::DISABLED)
+      ->set('unattended.level', CronUpdateStage::DISABLED)
       ->save();
     $this->container->get(StatusChecker::class)->run();
     $this->assertInstanceOf(UpdateStage::class, $stage);

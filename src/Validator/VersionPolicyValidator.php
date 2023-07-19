@@ -4,7 +4,7 @@ declare(strict_types = 1);
 
 namespace Drupal\automatic_updates\Validator;
 
-use Drupal\automatic_updates\CronUpdateRunner;
+use Drupal\automatic_updates\CronUpdateStage;
 use Drupal\automatic_updates\ConsoleUpdateStage;
 use Drupal\Component\Utility\NestedArray;
 use Drupal\package_manager\ComposerInspector;
@@ -42,7 +42,7 @@ final class VersionPolicyValidator implements EventSubscriberInterface {
   /**
    * Constructs a VersionPolicyValidator object.
    *
-   * @param \Drupal\automatic_updates\CronUpdateRunner $cronUpdateRunner
+   * @param \Drupal\automatic_updates\CronUpdateStage $cronUpdateRunner
    *   The cron update runner service.
    * @param \Drupal\Core\DependencyInjection\ClassResolverInterface $classResolver
    *   The class resolver service.
@@ -52,7 +52,7 @@ final class VersionPolicyValidator implements EventSubscriberInterface {
    *   The Composer inspector service.
    */
   public function __construct(
-    private readonly CronUpdateRunner $cronUpdateRunner,
+    private readonly CronUpdateStage $cronUpdateRunner,
     private readonly ClassResolverInterface $classResolver,
     private readonly PathLocator $pathLocator,
     private readonly ComposerInspector $composerInspector,
@@ -92,7 +92,7 @@ final class VersionPolicyValidator implements EventSubscriberInterface {
     if ($stage instanceof ConsoleUpdateStage) {
       $mode = $this->cronUpdateRunner->getMode();
 
-      if ($mode !== CronUpdateRunner::DISABLED) {
+      if ($mode !== CronUpdateStage::DISABLED) {
         // If cron updates are enabled, the installed version must be stable;
         // no alphas, betas, or RCs.
         $rules[] = StableReleaseInstalled::class;
@@ -108,7 +108,7 @@ final class VersionPolicyValidator implements EventSubscriberInterface {
 
           // If only security updates are allowed during cron, the target
           // version must be a security release.
-          if ($mode === CronUpdateRunner::SECURITY) {
+          if ($mode === CronUpdateStage::SECURITY) {
             $rules[] = TargetSecurityRelease::class;
           }
         }

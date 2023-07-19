@@ -24,13 +24,13 @@ services:
       - ['setLogger', ['@logger.channel.automatic_updates']]
   Drupal\automatic_updates\UpdateStage: '@automatic_updates.update_stage'
   automatic_updates.cron_update_runner:
-    class: Drupal\automatic_updates\CronUpdateRunner
+    class: Drupal\automatic_updates\CronUpdateStage
     calls:
       - ['setLogger', ['@logger.channel.automatic_updates']]
     arguments:
       $inner: '@automatic_updates.cron_update_runner.inner'
     decorates: 'cron'
-  Drupal\automatic_updates\CronUpdateRunner: '@automatic_updates.cron_update_runner'
+  Drupal\automatic_updates\CronUpdateStage: '@automatic_updates.cron_update_runner'
   automatic_updates.requested_update_validator:
     class: Drupal\automatic_updates\Validator\RequestedUpdateValidator
     tags:
