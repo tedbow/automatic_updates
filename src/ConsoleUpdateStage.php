@@ -117,26 +117,6 @@ class ConsoleUpdateStage extends UpdateStage {
   }
 
   /**
-   * Runs the post apply command.
-   */
-  protected function triggerPostApply(string $stage_id, string $start_version, string $target_version, bool $is_from_web): void {
-    $alias = Drush::aliasManager()->getSelf();
-
-    $output = Drush::processManager()
-      ->drush($alias, 'auto-update', [], [
-        'post-apply' => TRUE,
-        'stage-id' => $stage_id,
-        'from-version' => $start_version,
-        'to-version' => $target_version,
-        'is-from-web' => $is_from_web,
-      ])
-      ->mustRun()
-      ->getOutput();
-    // Ensure the output of the sub-process is visible.
-    Drush::output()->write($output);
-  }
-
-  /**
    * Performs the update.
    *
    * @return bool
@@ -211,7 +191,6 @@ class ConsoleUpdateStage extends UpdateStage {
       if ($e instanceof StageFailureMarkerException || $e instanceof ApplyFailedException) {
         $mail_params['error_message'] = $this->failureMarker->getMessage(FALSE);
       }
-
       if ($e instanceof ApplyFailedException) {
         $mail_params['urgent'] = TRUE;
         $key = 'cron_failed_apply';
@@ -243,6 +222,35 @@ class ConsoleUpdateStage extends UpdateStage {
   }
 
   /**
+   * Runs the post apply command.
+   *
+   * @param string $stage_id
+   *   The ID of the current stage.
+   * @param string $start_version
+   *   The version of Drupal core that started the update.
+   * @param string $target_version
+   *   The version of Drupal core to which we are updating.
+   * @param bool $is_from_web
+   *   Whether or not the update command was run from the web.
+   */
+  protected function triggerPostApply(string $stage_id, string $start_version, string $target_version, bool $is_from_web): void {
+    $alias = Drush::aliasManager()->getSelf();
+
+    $output = Drush::processManager()
+      ->drush($alias, 'auto-update', [], [
+        'post-apply' => TRUE,
+        'stage-id' => $stage_id,
+        'from-version' => $start_version,
+        'to-version' => $target_version,
+        'is-from-web' => $is_from_web,
+      ])
+      ->mustRun()
+      ->getOutput();
+    // Ensure the output of the sub-process is visible.
+    Drush::output()->write($output);
+  }
+
+  /**
    * Runs post-apply tasks.
    *
    * @param string $stage_id
@@ -262,6 +270,7 @@ class ConsoleUpdateStage extends UpdateStage {
     $this->tempStore = $this->tempStoreFactory->get('package_manager_stage', $owner);
 
     $this->claim($stage_id);
+
     $this->logger->info(
       'Drupal core has been updated from %previous_version to %target_version',
       [
