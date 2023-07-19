@@ -27,7 +27,6 @@ class AutomaticUpdatesTestServiceProvider extends ServiceProviderBase {
 
   }
 
-
   public static function useTestCronUpdateRunner(bool $use = TRUE) {
     \Drupal::state()->set(self::class . '-runner', $use);
 

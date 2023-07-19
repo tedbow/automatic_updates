@@ -447,7 +447,7 @@ abstract class StageBase implements LoggerAwareInterface {
     // active directory.
     $event = new PreApplyEvent($this, $this->getPathsToExclude());
     $this->tempStore->set(self::TEMPSTORE_APPLY_TIME_KEY, $this->time->getRequestTime());
-    $this->dispatch($event, $this->setNotApplying());
+    $this->dispatch($event, $this->setNotApplying(...));
 
     // Create a marker file so that we can tell later on if the commit failed.
     $this->failureMarker->write($this, $this->getFailureMarkerMessage());
@@ -462,7 +462,8 @@ abstract class StageBase implements LoggerAwareInterface {
     }
     catch (InvalidArgumentException | PreconditionException $e) {
       // The commit operation has not started yet, so we can clear the failure
-      // marker.
+      // marker and release the flag that says we're applying.
+      $this->setNotApplying();
       $this->failureMarker->clear();
       $this->rethrowAsStageException($e);
     }
@@ -471,7 +472,7 @@ abstract class StageBase implements LoggerAwareInterface {
       // is in an indeterminate state. Release the flag which says we're still
       // applying, because in this situation, the site owner should probably
       // restore everything from a backup.
-      $this->setNotApplying()();
+      $this->setNotApplying();
       // Update the marker file with the information from the throwable.
       $this->failureMarker->write($this, $this->getFailureMarkerMessage(), $throwable);
       throw new ApplyFailedException($this, $this->failureMarker->getMessage(), $throwable->getCode(), $throwable);
@@ -482,15 +483,9 @@ abstract class StageBase implements LoggerAwareInterface {
 
   /**
    * Returns a closure that marks this stage as no longer being applied.
-   *
-   * @return \Closure
-   *   A closure that, when called, marks this stage as no longer in the process
-   *   of being applied to the active directory.
    */
-  private function setNotApplying(): \Closure {
-    return function (): void {
-      $this->tempStore->delete(self::TEMPSTORE_APPLY_TIME_KEY);
-    };
+  private function setNotApplying(): void {
+    $this->tempStore->delete(self::TEMPSTORE_APPLY_TIME_KEY);
   }
 
   /**
@@ -515,7 +510,7 @@ abstract class StageBase implements LoggerAwareInterface {
     // unlikely to call newly added code during the current request.
     $this->eventDispatcher = \Drupal::service('event_dispatcher');
 
-    $release_apply = $this->setNotApplying();
+    $release_apply = $this->setNotApplying(...);
     $this->dispatch(new PostApplyEvent($this), $release_apply);
     $release_apply();
   }

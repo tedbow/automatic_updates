@@ -318,7 +318,10 @@ class ComposerInspectorTest extends PackageManagerKernelTestBase {
     }
     catch (ComposerNotReadyException $e) {
       $this->assertSame($project_root, $e->workingDir);
-      $this->assertStringContainsString('composer.json" does not match the expected JSON schema', $e->getMessage());
+      // The exception message is translated by Composer Stager and HTML-escaped
+      // by Drupal's markup system, which is why there's a &quot; in the
+      // final exception message.
+      $this->assertStringContainsString('composer.json&quot; does not match the expected JSON schema', $e->getMessage());
       $this->assertStringContainsString('prefer-stable : String value found, but a boolean is required', $e->getPrevious()?->getMessage());
     }
   }

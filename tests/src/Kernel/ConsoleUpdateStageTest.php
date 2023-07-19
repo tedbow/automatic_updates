@@ -26,6 +26,10 @@ use Drupal\Tests\automatic_updates\Traits\EmailNotificationsTestTrait;
 use Drupal\Tests\package_manager\Kernel\TestStage;
 use Drupal\Tests\package_manager\Traits\PackageManagerBypassTestTrait;
 use Drupal\Tests\user\Traits\UserCreationTrait;
+use PhpTuf\ComposerStager\API\Exception\InvalidArgumentException;
+use PhpTuf\ComposerStager\API\Exception\PreconditionException;
+use PhpTuf\ComposerStager\API\Precondition\Service\PreconditionInterface;
+use PhpTuf\ComposerStager\Internal\Translation\Value\TranslatableMessage;
 use Prophecy\Argument;
 use ColinODell\PsrTestLogger\TestLogger;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
@@ -627,6 +631,73 @@ END;
   public function testLoggerIsSetByContainer(): void {
     $stage_method_calls = $this->container->getDefinition('automatic_updates.cron_update_runner')->getMethodCalls();
     $this->assertSame('setLogger', $stage_method_calls[0][0]);
+  }
+
+  /**
+   * Tests that maintenance mode is on when staged changes are applied.
+   */
+  public function testMaintenanceModeIsOnDuringApply(): void {
+    $this->getStageFixtureManipulator()->setCorePackageVersion('9.8.1');
+
+    /** @var \Drupal\Core\State\StateInterface $state */
+    $state = $this->container->get('state');
+    // Before the update begins, we should have no indication that we have ever
+    // been in maintenance mode (i.e., the value in state is NULL).
+    $this->assertNull($state->get('system.maintenance_mode'));
+    $this->performConsoleUpdate();
+    $state->resetCache();
+    // @see \Drupal\Tests\automatic_updates\Kernel\TestCronUpdateStage::apply()
+    $this->assertTrue($this->logger->hasRecord('Unattended update was applied in maintenance mode.', RfcLogLevel::INFO));
+    // @see \Drupal\Tests\automatic_updates\Kernel\TestCronUpdateStage::postApply()
+    $this->assertTrue($this->logger->hasRecord('postApply() was called in maintenance mode.', RfcLogLevel::INFO));
+    // During post-apply, maintenance mode should have been explicitly turned
+    // off (i.e., set to FALSE).
+    $this->assertFalse($state->get('system.maintenance_mode'));
+  }
+
+  /**
+   * Data provider for ::testMaintenanceModeAffectedByException().
+   *
+   * @return array[]
+   *   The test cases.
+   */
+  public function providerMaintenanceModeAffectedByException(): array {
+    return [
+      [InvalidArgumentException::class, FALSE],
+      [PreconditionException::class, FALSE],
+      [\Exception::class, TRUE],
+    ];
+  }
+
+  /**
+   * Tests that an exception during apply may keep the site in maintenance mode.
+   *
+   * @param string $exception_class
+   *   The class of the exception that should be thrown by the committer.
+   * @param bool $will_be_in_maintenance_mode
+   *   Whether or not the site will be in maintenance mode afterward.
+   *
+   * @dataProvider providerMaintenanceModeAffectedByException
+   */
+  public function testMaintenanceModeAffectedByException(string $exception_class, bool $will_be_in_maintenance_mode): void {
+    $this->getStageFixtureManipulator()->setCorePackageVersion('9.8.1');
+
+    $message = new TranslatableMessage('A fail whale upon your head!');
+    LoggingCommitter::setException(match ($exception_class) {
+      InvalidArgumentException::class =>
+      new InvalidArgumentException($message),
+      PreconditionException::class =>
+      new PreconditionException($this->createMock(PreconditionInterface::class), $message),
+      default =>
+      new $exception_class((string) $message),
+    });
+
+    /** @var \Drupal\Core\State\StateInterface $state */
+    $state = $this->container->get('state');
+    $this->assertNull($state->get('system.maintenance_mode'));
+    $this->performConsoleUpdate();
+    $this->assertFalse($this->logger->hasRecord('Unattended update was applied in maintenance mode.', RfcLogLevel::INFO));
+    $this->assertSame($will_be_in_maintenance_mode, $state->get('system.maintenance_mode'));
   }
 
   private function assertRegularCronRun(bool $expected_cron_run) {

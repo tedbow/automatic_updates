@@ -64,5 +64,10 @@ services:
     parent: logger.channel_base
     arguments: ['automatic_updates']
   Drupal\automatic_updates\ConsoleUpdateStage:
+    arguments:
+      $committer: '@Drupal\automatic_updates\MaintenanceModeAwareCommitter'
     calls:
       - [ 'setLogger', [ '@logger.channel.automatic_updates' ] ]
+  Drupal\automatic_updates\MaintenanceModeAwareCommitter:
+    tags:
+      - { name: event_subscriber }

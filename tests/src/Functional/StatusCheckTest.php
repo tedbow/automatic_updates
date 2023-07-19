@@ -20,7 +20,6 @@ use Drupal\system\SystemManager;
 use Drupal\Tests\automatic_updates\Traits\ValidationTestTrait;
 use Drupal\Tests\Traits\Core\CronRunTrait;
 use Drush\TestTraits\DrushTestTrait;
-use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
  * Tests status checks.

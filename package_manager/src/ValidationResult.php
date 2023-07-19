@@ -7,6 +7,7 @@ namespace Drupal\package_manager;
 use Drupal\Component\Assertion\Inspector;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\system\SystemManager;
+use PhpTuf\ComposerStager\API\Exception\ExceptionInterface;
 
 /**
  * A value object to contain the results of a validation.
@@ -72,7 +73,10 @@ final class ValidationResult {
    * @return static
    */
   public static function createErrorFromThrowable(\Throwable $throwable, ?TranslatableMarkup $summary = NULL): static {
-    return new static(SystemManager::REQUIREMENT_ERROR, [$throwable->getMessage()], $summary, FALSE);
+    // All Composer Stager exceptions are translatable.
+    $is_translatable = $throwable instanceof ExceptionInterface;
+    $message = $is_translatable ? $throwable->getTranslatableMessage() : $throwable->getMessage();
+    return new static(SystemManager::REQUIREMENT_ERROR, [$message], $summary, $is_translatable);
   }
 
   /**
