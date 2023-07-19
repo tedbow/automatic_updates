@@ -47,8 +47,10 @@ class SymlinkValidatorTest extends PackageManagerKernelTestBase {
 
     link($project_root . '/composer.json', $project_root . '/composer.link');
     $result = ValidationResult::createError([
-      t('The active directory at @dir contains hard links, which is not supported. The first one is @dir/composer.json.', [
-        '@dir' => $project_root,
+      t('The %which directory at %dir contains hard links, which is not supported. The first one is %file.', [
+        '%which' => 'active',
+        '%dir' => $project_root,
+        '%file' => $project_root . '/composer.json',
       ]),
     ]);
     $this->assertStatusCheckResults([$result]);
@@ -63,8 +65,10 @@ class SymlinkValidatorTest extends PackageManagerKernelTestBase {
 
     symlink($project_root . '/composer.json', $project_root . '/composer.link');
     $result = ValidationResult::createError([
-      t('The active directory at @dir contains absolute links, which is not supported. The first one is @dir/composer.link.', [
-        '@dir' => $project_root,
+      t('The %which directory at %dir contains absolute links, which is not supported. The first one is %file.', [
+        '%which' => 'active',
+        '%dir' => $project_root,
+        '%file' => $project_root . '/composer.link',
       ]),
     ]);
     $this->assertStatusCheckResults([$result]);
@@ -84,8 +88,10 @@ class SymlinkValidatorTest extends PackageManagerKernelTestBase {
     chdir($project_root);
     symlink('../hello.txt', 'fail.txt');
     $result = ValidationResult::createError([
-      t('The active directory at @dir contains links that point outside the codebase, which is not supported. The first one is @dir/fail.txt.', [
-        '@dir' => $project_root,
+      t('The %which directory at %dir contains links that point outside the codebase, which is not supported. The first one is %file.', [
+        '%which' => 'active',
+        '%dir' => $project_root,
+        '%file' => $project_root . '/fail.txt',
       ]),
     ]);
     $this->assertStatusCheckResults([$result]);
@@ -111,8 +117,10 @@ class SymlinkValidatorTest extends PackageManagerKernelTestBase {
     symlink('../hello.txt', 'fail.txt');
 
     $result = ValidationResult::createError([
-      t('The staging directory at @dir contains links that point outside the codebase, which is not supported. The first one is @dir/fail.txt.', [
-        '@dir' => $stage_dir,
+      t('The %which directory at %dir contains links that point outside the codebase, which is not supported. The first one is %file.', [
+        '%which' => 'staging',
+        '%dir' => $stage_dir,
+        '%file' => $stage_dir . '/fail.txt',
       ]),
     ]);
     try {
@@ -136,7 +144,9 @@ class SymlinkValidatorTest extends PackageManagerKernelTestBase {
         'php',
         [
           ValidationResult::createError([
-            t('The active directory at <PROJECT_ROOT> contains symlinks that point to a directory, which is not supported. The first one is <PROJECT_ROOT>/modules/custom/example_module.'),
+            t('The %which directory at <em class="placeholder"><PROJECT_ROOT></em> contains symlinks that point to a directory, which is not supported. The first one is <em class="placeholder"><PROJECT_ROOT>/modules/custom/example_module</em>.', [
+              '%which' => 'active',
+            ]),
           ]),
         ],
       ],
@@ -197,8 +207,10 @@ class SymlinkValidatorTest extends PackageManagerKernelTestBase {
     symlink('composer.json', 'composer.link');
 
     $result = ValidationResult::createError([
-      t('The active directory at @dir contains links, which is not supported on Windows. The first one is @dir/composer.link.', [
-        '@dir' => $project_root,
+      t('The %which directory at %dir contains links, which is not supported on Windows. The first one is %file.', [
+        '%which' => 'active',
+        '%dir' => $project_root,
+        '%file' => $project_root . '/composer.link',
       ]),
     ]);
     $this->assertStatusCheckResults([$result]);

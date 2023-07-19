@@ -111,6 +111,7 @@ final class PackageManagerServiceProvider extends ServiceProviderBase {
       'theme_handler' => 'Drupal\Core\Extension\ThemeHandlerInterface',
       'cron' => 'Drupal\Core\CronInterface',
       'logger.factory' => 'Drupal\Core\Logger\LoggerChannelFactoryInterface',
+      'string_translation' => 'Drupal\Core\StringTranslation\TranslationInterface',
     ];
     foreach ($aliases as $service_id => $alias) {
       if (!$container->hasAlias($alias)) {

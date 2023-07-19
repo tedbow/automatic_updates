@@ -16,12 +16,16 @@ services:
     public: false
   Drupal\package_manager\FileSyncerFactory:
     public: false
+  Drupal\package_manager\TranslatableStringFactory:
+    public: false
   PhpTuf\ComposerStager\API\Finder\Service\ExecutableFinderInterface:
     alias: 'Drupal\package_manager\ExecutableFinder'
   PhpTuf\ComposerStager\API\Process\Factory\ProcessFactoryInterface:
     alias: 'Drupal\package_manager\ProcessFactory'
   PhpTuf\ComposerStager\API\FileSyncer\Service\FileSyncerInterface:
     factory: ['@Drupal\package_manager\FileSyncerFactory', 'create']
+  PhpTuf\ComposerStager\API\Translation\Factory\TranslatableFactoryInterface:
+    alias: 'Drupal\package_manager\TranslatableStringFactory'
   logger.channel.package_manager:
     parent: logger.channel_base
     arguments:
