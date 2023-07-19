@@ -5,11 +5,8 @@ declare(strict_types = 1);
 namespace Drupal\Tests\automatic_updates\Functional;
 
 use Behat\Mink\Element\NodeElement;
-use Drupal\automatic_updates\Commands\AutomaticUpdatesCommands;
 use Drupal\automatic_updates\CronUpdateRunner;
 use Drupal\automatic_updates\StatusCheckMailer;
-use Drupal\automatic_updates_test\AutomaticUpdatesTestServiceProvider;
-use Drupal\automatic_updates_test\Datetime\TestTime;
 use Drupal\automatic_updates_test\EventSubscriber\TestSubscriber1;
 use Drupal\automatic_updates_test_status_checker\EventSubscriber\TestSubscriber2;
 use Drupal\Core\Url;
@@ -19,7 +16,6 @@ use Drupal\package_manager_test_validation\EventSubscriber\TestSubscriber;
 use Drupal\system\SystemManager;
 use Drupal\Tests\automatic_updates\Traits\ValidationTestTrait;
 use Drupal\Tests\Traits\Core\CronRunTrait;
-use Drush\TestTraits\DrushTestTrait;
 
 /**
  * Tests status checks.
@@ -30,7 +26,6 @@ use Drush\TestTraits\DrushTestTrait;
 class StatusCheckTest extends AutomaticUpdatesFunctionalTestBase {
 
   use CronRunTrait;
-  use DrushTestTrait;
   use ValidationTestTrait;
 
   /**
@@ -70,7 +65,6 @@ class StatusCheckTest extends AutomaticUpdatesFunctionalTestBase {
    * {@inheritdoc}
    */
   protected function setUp(): void {
-    define(AutomaticUpdatesTestServiceProvider::class . '-test-runner', TRUE);
     parent::setUp();
     $this->setReleaseMetadata(__DIR__ . '/../../../package_manager/tests/fixtures/release-history/drupal.9.8.1-security.xml');
     $this->mockActiveCoreVersion('9.8.1');
@@ -147,8 +141,6 @@ class StatusCheckTest extends AutomaticUpdatesFunctionalTestBase {
 
     // Confirm a user without the permission to run status checks does not
     // have a link to run the checks when the checks need to be run again.
-    // @todo Change this to fake the request time in
-    //   https://www.drupal.org/node/3113971.
     /** @var \Drupal\Core\KeyValueStore\KeyValueStoreInterface $key_value */
     $key_value = $this->container->get('keyvalue.expirable')->get('automatic_updates');
     $key_value->delete('status_check_last_run');
@@ -252,7 +244,7 @@ class StatusCheckTest extends AutomaticUpdatesFunctionalTestBase {
   }
 
   /**
-   * Tests status check results on admin pages..
+   * Tests status check results on admin pages.
    *
    * @param string $admin_route
    *   The admin route to check.
@@ -260,9 +252,7 @@ class StatusCheckTest extends AutomaticUpdatesFunctionalTestBase {
    * @dataProvider providerAdminRoutes
    */
   public function testStatusChecksOnAdminPages(string $admin_route): void {
-    AutomaticUpdatesTestServiceProvider::useTestCronUpdateRunner();
     $assert = $this->assertSession();
-
     $messages_section_selector = '[data-drupal-messages]';
 
     $this->container->get('module_installer')->install(['automatic_updates', 'automatic_updates_test']);
@@ -278,9 +268,6 @@ class StatusCheckTest extends AutomaticUpdatesFunctionalTestBase {
     // a link to run the checks when the checks need to be run again.
     $expected_results = [$this->createValidationResult(SystemManager::REQUIREMENT_ERROR)];
     TestSubscriber1::setTestResult($expected_results, StatusCheckEvent::class);
-    // @todo Change this to use ::delayRequestTime() to simulate running cron
-    //   after a 24 wait instead of directly deleting 'status_check_last_run'
-    //   https://www.drupal.org/node/3113971.
     /** @var \Drupal\Core\KeyValueStore\KeyValueStoreInterface $key_value */
     $key_value = $this->container->get('keyvalue.expirable')->get('automatic_updates');
     $key_value->delete('status_check_last_run');
@@ -304,9 +291,7 @@ class StatusCheckTest extends AutomaticUpdatesFunctionalTestBase {
       '1 warning' => $this->createValidationResult(SystemManager::REQUIREMENT_WARNING),
     ];
     TestSubscriber1::setTestResult($expected_results, StatusCheckEvent::class);
-    // Confirm a new message is displayed if the cron is run after an hour.
-    $this->delayRequestTime();
-    $this->performConsoleUpdate();
+    $this->runStatusChecks();
     $this->drupalGet(Url::fromRoute($admin_route));
     $assert->pageTextContainsOnce(static::$errorsExplanation);
     // Confirm on admin pages that the summary will be displayed.
@@ -318,33 +303,27 @@ class StatusCheckTest extends AutomaticUpdatesFunctionalTestBase {
     $assert->pageTextNotContains($expected_results['1 warning']->messages[0]);
     $assert->pageTextNotContains($expected_results['1 warning']->summary);
 
-    // Confirm that if cron runs less than hour after it previously ran it will
-    // not run the checkers again.
+    // Confirm the status check event is not dispatched on every admin page
+    // load.
     $unexpected_results = [
       '2 errors' => $this->createValidationResult(SystemManager::REQUIREMENT_ERROR, 2),
       '2 warnings' => $this->createValidationResult(SystemManager::REQUIREMENT_WARNING, 2),
     ];
     TestSubscriber1::setTestResult($unexpected_results, StatusCheckEvent::class);
-    $this->delayRequestTime(30);
-    $this->performConsoleUpdate();
     $this->drupalGet(Url::fromRoute($admin_route));
     $assert->pageTextNotContains($unexpected_results['2 errors']->summary);
     $assert->pageTextContainsOnce((string) $expected_results['1 error']->summary);
     $assert->pageTextNotContains($unexpected_results['2 warnings']->summary);
     $assert->pageTextNotContains($expected_results['1 warning']->messages[0]);
 
-    // Confirm that is if cron is run over an hour after the checkers were
-    // previously run the checkers will be run again.
-    $this->delayRequestTime(31);
-    $this->performConsoleUpdate();
-    $original_expected_results = $expected_results;
+    // Confirm the updated results will be shown when status checks are run
+    // again.
+    $this->runStatusChecks();
     $expected_results = $unexpected_results;
-    $unexpected_results = $original_expected_results;
     $this->drupalGet(Url::fromRoute($admin_route));
     // Confirm on admin pages only the error summary will be displayed if there
     // is more than 1 error.
     $this->assertSame(SystemManager::REQUIREMENT_ERROR, $expected_results['2 errors']->severity);
-    $assert->pageTextNotContains((string) $unexpected_results['1 error']->summary);
     $assert->pageTextNotContains($expected_results['2 errors']->messages[0]);
     $assert->pageTextNotContains($expected_results['2 errors']->messages[1]);
     $assert->pageTextContainsOnce($expected_results['2 errors']->summary);
@@ -357,8 +336,7 @@ class StatusCheckTest extends AutomaticUpdatesFunctionalTestBase {
 
     $expected_results = [$this->createValidationResult(SystemManager::REQUIREMENT_WARNING, 2)];
     TestSubscriber1::setTestResult($expected_results, StatusCheckEvent::class);
-    $this->delayRequestTime();
-    $this->performConsoleUpdate();
+    $this->runStatusChecks();
     $this->drupalGet(Url::fromRoute($admin_route));
     // Confirm that the warnings summary is displayed on admin pages if there
     // are no errors.
@@ -371,8 +349,7 @@ class StatusCheckTest extends AutomaticUpdatesFunctionalTestBase {
 
     $expected_results = [$this->createValidationResult(SystemManager::REQUIREMENT_WARNING)];
     TestSubscriber1::setTestResult($expected_results, StatusCheckEvent::class);
-    $this->delayRequestTime();
-    $this->performConsoleUpdate();
+    $this->runStatusChecks();
     $this->drupalGet(Url::fromRoute($admin_route));
     $assert->pageTextNotContains(static::$errorsExplanation);
     // Confirm that a single warning is displayed and not the summary on admin
@@ -393,19 +370,13 @@ class StatusCheckTest extends AutomaticUpdatesFunctionalTestBase {
     $assert->pageTextNotContains($expected_results[0]->messages[0]);
   }
 
-  private function performConsoleUpdate() {
-    $commands = $this->container->get(AutomaticUpdatesCommands::class);
-    // @todo Should we change working directory?
-    $this->drush('auto-update', [], ['is-from-web' => NULL], NULL, $this->container->get('package_manager.path_locator')->getProjectRoot());
-  }
-
   /**
    * Tests installing a module with a checker before installing Automatic Updates.
    */
   public function testStatusCheckAfterInstall(): void {
     $assert = $this->assertSession();
     $this->drupalLogin($this->checkerRunnerUser);
-    $this->container->get('module_installer')->uninstall(['automatic_updates', 'automatic_updates_test']);
+    $this->container->get('module_installer')->uninstall(['automatic_updates']);
 
     $this->drupalGet('admin/reports/status');
     $assert->pageTextNotContains('Update readiness checks');
@@ -777,20 +748,11 @@ class StatusCheckTest extends AutomaticUpdatesFunctionalTestBase {
   }
 
   /**
-   * Delays the request for the test.
-   *
-   * @param int $minutes
-   *   The number of minutes to delay request time. Defaults to 61 minutes.
+   * Runs status checks.
    */
-  private function delayRequestTime(int $minutes = 61): void {
-    static $total_delay = 0;
-    $total_delay += $minutes;
-    TestTime::setFakeTimeByOffset("+$total_delay minutes");
-  }
-
-  private function runCronAndWait(): void {
-    $this->cronRun();
-    sleep(2);
+  private function runStatusChecks(): void {
+    $this->drupalGet('/admin/reports/status');
+    $this->clickLink('Rerun readiness checks');
   }
 
 }
