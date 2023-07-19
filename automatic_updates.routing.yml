@@ -32,4 +32,6 @@ automatic_updates.cron.post_apply:
   defaults:
     _controller: 'automatic_updates.cron_update_stage:handlePostApply'
   requirements:
-    _access_system_cron: 'TRUE'
+    _custom_access: 'automatic_updates.cron_update_stage:postApplyAccess'
+  options:
+    _maintenance_access: TRUE

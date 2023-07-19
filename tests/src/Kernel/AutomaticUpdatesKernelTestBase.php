@@ -102,6 +102,27 @@ class TestCronUpdateStage extends CronUpdateStage {
   /**
    * {@inheritdoc}
    */
+  public function apply(?int $timeout = 600): void {
+    parent::apply($timeout);
+
+    if (\Drupal::state()->get('system.maintenance_mode')) {
+      $this->logger->info('Unattended update was applied in maintenance mode.');
+    }
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function postApply(): void {
+    if (\Drupal::state()->get('system.maintenance_mode')) {
+      $this->logger->info('postApply() was called in maintenance mode.');
+    }
+    parent::postApply();
+  }
+
+  /**
+   * {@inheritdoc}
+   */
   protected function triggerPostApply(string $stage_id, string $start_version, string $target_version): void {
     // Subrequests don't work in kernel tests, so just call the post-apply
     // handler directly.

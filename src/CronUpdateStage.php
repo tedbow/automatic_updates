@@ -5,6 +5,7 @@ declare(strict_types = 1);
 namespace Drupal\automatic_updates;
 
 use Drupal\Component\Datetime\TimeInterface;
+use Drupal\Core\Access\AccessResult;
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\CronInterface;
 use Drupal\Core\File\FileSystemInterface;
@@ -394,6 +395,27 @@ class CronUpdateStage extends UpdateStage implements CronInterface {
     }
 
     return new Response();
+  }
+
+  /**
+   * Checks access to the post-apply route.
+   *
+   * @param string $key
+   *   The cron key.
+   *
+   * @return \Drupal\Core\Access\AccessResult
+   *   The access result.
+   */
+  public function postApplyAccess(string $key): AccessResult {
+    // The normal _system_cron_access check always disallows access if
+    // maintenance mode is turned on, but we stay in maintenance mode until
+    // post-apply tasks are finished. Therefore, we only want to check that the
+    // cron key is valid, and allow access if it is, regardless of whether or
+    // not we're in maintenance mode.
+    if ($key === $this->state->get('system.cron_key')) {
+      return AccessResult::allowed()->setCacheMaxAge(0);
+    }
+    return AccessResult::forbidden()->setCacheMaxAge(0);
   }
 
   /**

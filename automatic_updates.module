@@ -265,6 +265,7 @@ function automatic_updates_form_update_settings_alter(array &$form): void {
       CronUpdateStage::ALL => t('All patch releases'),
     ],
     '#default_value' => $config->get('unattended.level'),
+    '#description' => t('When background updates are applied, your site will be briefly put into maintenance mode.'),
   ];
   $form['unattended_method'] = [
     '#type' => 'radios',
