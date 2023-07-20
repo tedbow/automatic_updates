@@ -74,7 +74,13 @@ class CronUpdateStage implements CronInterface {
    * Runs the terminal update command.
    */
   public function runTerminalUpdateCommand(): void {
-    $drush_path = $this->getCommandPath();
+    // @todo Make a validator to ensure this path exists if settings select
+    //   background updates.
+    // @todo Replace drush call with Symfony console command in
+    //   https://www.drupal.org/i/3360485
+    // @todo Why isn't it in vendor bin in build tests?
+    $drush_path = $this->pathLocator->getVendorDirectory() . '/drush/drush/drush';
+
     $phpBinaryFinder = new PhpExecutableFinder();
 
     $process = Process::fromShellCommandline($phpBinaryFinder->find() . " $drush_path auto-update --is-from-web &");
@@ -145,21 +151,6 @@ class CronUpdateStage implements CronInterface {
   final public function getMode(): string {
     $mode = $this->configFactory->get('automatic_updates.settings')->get('unattended.level');
     return $mode ?: static::SECURITY;
-  }
-
-  /**
-   * Gets the update command path.
-   *
-   * @return string
-   *   The absolute path of the update command.
-   */
-  protected function getCommandPath(): string {
-    // @todo Make a validator to ensure this path exists if settings select
-    //   background updates.
-    // @todo Replace drush call with Symfony console command in
-    //   https://www.drupal.org/i/3360485
-    // @todo Why isn't it in vendor bin in build tests?
-    return $this->pathLocator->getVendorDirectory() . '/drush/drush/drush';
   }
 
 }
