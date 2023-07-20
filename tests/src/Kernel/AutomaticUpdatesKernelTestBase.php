@@ -109,20 +109,18 @@ abstract class AutomaticUpdatesKernelTestBase extends PackageManagerKernelTestBa
 class TestCronUpdateStage extends CronUpdateStage {
 
   /**
-   * Determines whether an exception should be thrown.
-   *
-   * @var bool
+   * Expected exception message if terminal command is invoked.
    */
-  public bool $throwExceptionOnTerminalCommand = FALSE;
+  public const EXPECTED_TERMINAL_EXCEPTION = 'Expected exception: Terminal command will not work in kernel tests';
 
   /**
    * {@inheritdoc}
    */
   public function runTerminalUpdateCommand(): void {
-    if ($this->throwExceptionOnTerminalCommand) {
-      throw new \Exception('Simulated process failure.');
-    }
-    throw new \LogicException('Terminal command will not work in kernel tests');
+    // Invoking the terminal command will not work and is not necessary in
+    // kernel tests. Throw an exception for tests that need to assert that
+    // the terminal command would have been invoked.
+    throw new \Exception(static::EXPECTED_TERMINAL_EXCEPTION);
   }
 
 }
