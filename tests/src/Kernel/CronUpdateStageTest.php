@@ -37,7 +37,7 @@ class CronUpdateStageTest extends AutomaticUpdatesKernelTestBase {
     /** @var \Drupal\Tests\automatic_updates\Kernel\TestCronUpdateStage $cron_stage */
     $cron_stage = $this->container->get(CronUpdateStage::class);
     $cron_stage->throwExceptionOnTerminalCommand = TRUE;
-    $this->assertRegularCronRun(FALSE);
+    $this->assertCronRan(FALSE);
 
     try {
       $this->container->get('cron')->run();
@@ -47,10 +47,18 @@ class CronUpdateStageTest extends AutomaticUpdatesKernelTestBase {
     catch (\Exception $e) {
       $this->assertSame('Simulated process failure.', $e->getMessage());
     }
-    $this->assertRegularCronRun(TRUE);
+    $this->assertCronRan(TRUE);
   }
 
-  private function assertRegularCronRun(bool $expected_cron_run) {
+  /**
+   * Asserts whether cron has run.
+   *
+   * @param bool $expected_cron_run
+   *   Whether cron is expected to have run.
+   *
+   * @see \common_test_cron_helper_cron()
+   */
+  private function assertCronRan(bool $expected_cron_run): void {
     $this->assertSame($expected_cron_run, $this->container->get('state')->get('common_test.cron') === 'success');
   }
 
