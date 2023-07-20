@@ -35,18 +35,33 @@ class CronFrequencyValidatorTest extends AutomaticUpdatesKernelTestBase {
   }
 
   /**
-   * Tests that nothing is validated if updates are disabled during cron.
+   * Tests that nothing is validated if not needed.
    */
-  public function testNoValidationIfCronDisabled(): void {
-    $this->config('automatic_updates.settings')
-      ->set('unattended.level', CronUpdateStage::DISABLED)
-      ->save();
+  public function testNoValidation(): void {
     $state = $this->container->get('state');
     $state->delete('system.cron_last');
     $state->delete('install_time');
+
+    // If the method is 'web' but cron updates are disabled no validation is
+    // needed.
+    $this->config('automatic_updates.settings')
+      ->set('unattended.level', CronUpdateStage::DISABLED)
+      ->set('unattended.method', 'web')
+      ->save();
     $this->assertCheckerResultsFromManager([], TRUE);
+
+    // If cron updates are enabled but the method is 'console' no validation is
+    // needed.
     $this->config('automatic_updates.settings')
       ->set('unattended.level', CronUpdateStage::ALL)
+      ->set('unattended.method', 'console')
+      ->save();
+    $this->assertCheckerResultsFromManager([], TRUE);
+
+    // If cron updates are enabled and the method is 'web' validation is needed.
+    $this->config('automatic_updates.settings')
+      ->set('unattended.level', CronUpdateStage::ALL)
+      ->set('unattended.method', 'web')
       ->save();
     $error = ValidationResult::createError([
       t('Cron has not run recently. For more information, see the online handbook entry for <a href="https://www.drupal.org/cron">configuring cron jobs</a> to run at least every 3 hours.'),

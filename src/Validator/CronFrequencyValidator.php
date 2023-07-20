@@ -86,9 +86,11 @@ final class CronFrequencyValidator implements EventSubscriberInterface {
     if (!$event->stage instanceof ConsoleUpdateStage) {
       return;
     }
-    // If automatic updates are disabled during cron, there's nothing we need
-    // to validate.
-    if ($this->cronUpdateRunner->getMode() === CronUpdateStage::DISABLED) {
+    // If automatic updates are disabled during cron or updates will be run via
+    // the console command, there's nothing we need to validate.
+    $method = $this->configFactory->get('automatic_updates.settings')
+      ->get('unattended.method');
+    if ($this->cronUpdateRunner->getMode() === CronUpdateStage::DISABLED || $method !== 'web') {
       return;
     }
     // If cron is running right now, cron is clearly being run recently enough!
