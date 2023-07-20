@@ -5,7 +5,6 @@ declare(strict_types = 1);
 namespace Drupal\Tests\automatic_updates\Kernel\StatusCheck;
 
 use Drupal\automatic_updates\CronUpdateStage;
-
 use Drupal\Core\Logger\RfcLogLevel;
 use Drupal\package_manager\ValidationResult;
 use Drupal\Tests\automatic_updates\Kernel\AutomaticUpdatesKernelTestBase;
