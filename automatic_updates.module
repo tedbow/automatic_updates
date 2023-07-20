@@ -229,6 +229,17 @@ function automatic_updates_form_update_settings_alter(array &$form): void {
     ],
     '#description' => t('To use the <code>/system/cron</code> method <a href="http://drupal.org/docs/user_guide/en/security-cron.html">ensure cron is set up correctly</a>.'),
   ];
+  // @todo Remove check in https://drupal.org/i/3360485.
+  try {
+    /** @var \Drupal\automatic_updates\CronUpdateStage $cron_update_stage */
+    $cron_update_stage = \Drupal::service('automatic_updates.cron_update_stage');
+    $cron_update_stage->getDrushPath();
+  }
+  catch (Exception) {
+    \Drupal::messenger()->addWarning('Drush is required for unattended updates.');
+    $form['unattended_level']['#disabled'] = TRUE;
+    $form['unattended_method']['#disabled'] = TRUE;
+  }
   $form['#submit'][] = '_automatic_updates_submit_update_settings';
 }
 

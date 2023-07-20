@@ -74,25 +74,18 @@ class CronUpdateStage implements CronInterface {
    * Runs the terminal update command.
    */
   public function runTerminalUpdateCommand(): void {
-    // @todo Make a validator to ensure this path exists if settings select
-    //   background updates.
-    // @todo Replace drush call with Symfony console command in
-    //   https://www.drupal.org/i/3360485
-    // @todo Why isn't it in vendor bin in build tests?
-    $drush_path = $this->pathLocator->getVendorDirectory() . '/drush/drush/drush';
-
+    $drush_path = $this->getDrushPath();
     $phpBinaryFinder = new PhpExecutableFinder();
-
     $process = Process::fromShellCommandline($phpBinaryFinder->find() . " $drush_path auto-update --is-from-web &");
     $process->setWorkingDirectory($this->pathLocator->getProjectRoot() . DIRECTORY_SEPARATOR . $this->pathLocator->getWebRoot());
-    // $process->disableOutput();
+    $process->disableOutput();
     $process->setTimeout(0);
 
     try {
       $process->start();
+      // Wait for the process to start.
       sleep(1);
       $wait_till = time() + 5;
-      // Wait for the process to start.
       while (is_null($process->getPid()) && $wait_till > time()) {
       }
     }
@@ -151,6 +144,27 @@ class CronUpdateStage implements CronInterface {
   final public function getMode(): string {
     $mode = $this->configFactory->get('automatic_updates.settings')->get('unattended.level');
     return $mode ?: static::SECURITY;
+  }
+
+  /**
+   * Gets the drush path.
+   *
+   * @return string
+   *   The drush path.
+   *
+   * @throws \Exception
+   *   Thrown if drush is not available.
+   *
+   * @todo Remove in https://drupal.org/i/3360485.
+   */
+  public function getDrushPath(): string {
+    // For some reason 'vendor/bin/drush' does not exist in build tests but this
+    // method will be removed entirely before beta.
+    $drush_path = $this->pathLocator->getVendorDirectory() . '/drush/drush/drush';
+    if (!file_exists($drush_path)) {
+      throw new \Exception("Drush is not available at $drush_path.");
+    }
+    return $drush_path;
   }
 
 }
