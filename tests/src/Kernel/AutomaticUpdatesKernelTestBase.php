@@ -122,7 +122,7 @@ class TestCronUpdateStage extends CronUpdateStage {
     if ($this->throwExceptionOnTerminalCommand) {
       throw new \Exception('Simulated process failure.');
     }
-    parent::runTerminalUpdateCommand();
+    throw new \LogicException('Terminal command will not work in kernel tests');
   }
 
 }

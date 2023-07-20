@@ -110,8 +110,19 @@ class CronFrequencyValidatorTest extends AutomaticUpdatesKernelTestBase {
     $this->container->get('state')->set('system.cron_last', $last_run);
     $this->assertCheckerResultsFromManager($expected_results, TRUE);
 
-    // After running cron, any errors or warnings should be gone.
-    $this->container->get('cron')->run();
+    /** @var \Drupal\Tests\automatic_updates\Kernel\TestCronUpdateStage $cron_stage */
+    $cron_stage = $this->container->get(CronUpdateStage::class);
+    $cron_stage->throwExceptionOnTerminalCommand = TRUE;
+    try {
+      $this->container->get('cron')->run();
+      $this->fail('Expected failure');
+    }
+    catch (\Exception $exception) {
+      $this->assertSame('Simulated process failure.', $exception->getMessage());
+    }
+    // After running cron, any errors or warnings should be gone. Even though
+    // the terminal command did not succeed the system cron service should have
+    // been called.
     $this->assertCheckerResultsFromManager([], TRUE);
   }
 
