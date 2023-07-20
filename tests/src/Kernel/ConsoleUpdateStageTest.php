@@ -76,7 +76,7 @@ class ConsoleUpdateStageTest extends AutomaticUpdatesKernelTestBase {
     $this->installSchema('user', ['users_data']);
 
     $this->setUpEmailRecipients();
-    $this->assertRegularCronRun(FALSE);
+    $this->assertNoCronRun();
   }
 
   /**
@@ -89,7 +89,7 @@ class ConsoleUpdateStageTest extends AutomaticUpdatesKernelTestBase {
     TestSubscriber1::setException($exception, PostApplyEvent::class);
 
     $this->performConsoleUpdate();
-    $this->assertRegularCronRun(FALSE);
+    $this->assertNoCronRun();
     $this->assertTrue($this->logger->hasRecord($exception->getMessage(), (string) RfcLogLevel::ERROR));
 
     // Ensure we sent a success email to all recipients, even though post-apply
@@ -700,8 +700,13 @@ END;
     $this->assertSame($will_be_in_maintenance_mode, $state->get('system.maintenance_mode'));
   }
 
-  private function assertRegularCronRun(bool $expected_cron_run) {
-    $this->assertSame($expected_cron_run, $this->container->get('state')->get('common_test.cron') === 'success');
+  /**
+   * Asserts cron has not run.
+   *
+   * @see \common_test_cron_helper_cron()
+   */
+  private function assertNoCronRun(): void {
+    $this->assertNull($this->container->get('state')->get('common_test.cron'));
   }
 
 }
