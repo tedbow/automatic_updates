@@ -5,7 +5,7 @@ declare(strict_types = 1);
 namespace Drupal\Tests\automatic_updates\Kernel;
 
 use Drupal\automatic_updates\CronUpdateStage;
-use Drupal\automatic_updates\ConsoleUpdateStage;
+use Drupal\automatic_updates\DrushUpdateStage;
 use Drupal\Core\DependencyInjection\ContainerBuilder;
 use Drupal\Tests\automatic_updates\Traits\ValidationTestTrait;
 use Drupal\Tests\package_manager\Kernel\PackageManagerKernelTestBase;
@@ -85,7 +85,7 @@ abstract class AutomaticUpdatesKernelTestBase extends PackageManagerKernelTestBa
     // Use the test-only implementations of the regular and cron update stages.
     $overrides = [
       'automatic_updates.cron_update_stage' => TestCronUpdateStage::class,
-      ConsoleUpdateStage::class => TestConsoleUpdateStage::class,
+      DrushUpdateStage::class => TestDrushUpdateStage::class,
     ];
     foreach ($overrides as $service_id => $class) {
       if ($container->hasDefinition($service_id)) {
@@ -98,7 +98,7 @@ abstract class AutomaticUpdatesKernelTestBase extends PackageManagerKernelTestBa
    * Performs an update using the console update stage directly.
    */
   protected function performConsoleUpdate(): void {
-    $this->container->get(ConsoleUpdateStage::class)->performUpdate();
+    $this->container->get(DrushUpdateStage::class)->performUpdate();
   }
 
 }
@@ -128,7 +128,7 @@ class TestCronUpdateStage extends CronUpdateStage {
 /**
  * A test-only version of the drush update stage to override and expose internals.
  */
-class TestConsoleUpdateStage extends ConsoleUpdateStage {
+class TestDrushUpdateStage extends DrushUpdateStage {
 
   /**
    * {@inheritdoc}

@@ -5,7 +5,7 @@ declare(strict_types = 1);
 namespace Drupal\automatic_updates\Validator;
 
 use Drupal\automatic_updates\CronUpdateStage;
-use Drupal\automatic_updates\ConsoleUpdateStage;
+use Drupal\automatic_updates\DrushUpdateStage;
 use Drupal\Component\Datetime\TimeInterface;
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Lock\LockBackendInterface;
@@ -83,7 +83,7 @@ final class CronFrequencyValidator implements EventSubscriberInterface {
    */
   public function validateLastCronRun(StatusCheckEvent $event): void {
     // We only want to do this check if the stage belongs to Automatic Updates.
-    if (!$event->stage instanceof ConsoleUpdateStage) {
+    if (!$event->stage instanceof DrushUpdateStage) {
       return;
     }
     // If automatic updates are disabled during cron or updates will be run via

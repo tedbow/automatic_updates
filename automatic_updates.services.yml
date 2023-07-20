@@ -63,7 +63,7 @@ services:
   logger.channel.automatic_updates:
     parent: logger.channel_base
     arguments: ['automatic_updates']
-  Drupal\automatic_updates\ConsoleUpdateStage:
+  Drupal\automatic_updates\DrushUpdateStage:
     arguments:
       $committer: '@Drupal\automatic_updates\MaintenanceModeAwareCommitter'
     calls:

@@ -61,7 +61,7 @@ final class MaintenanceModeAwareCommitter implements CommitterInterface, EventSu
    *   The event being handled.
    */
   public function restore(PostApplyEvent $event): void {
-    if ($event->stage instanceof ConsoleUpdateStage) {
+    if ($event->stage instanceof DrushUpdateStage) {
       $this->doRestore();
     }
   }

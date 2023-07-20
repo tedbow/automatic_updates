@@ -4,7 +4,7 @@ declare(strict_types = 1);
 
 namespace Drupal\automatic_updates\Validator;
 
-use Drupal\automatic_updates\ConsoleUpdateStage;
+use Drupal\automatic_updates\DrushUpdateStage;
 use Drupal\package_manager\Event\PreApplyEvent;
 use Drupal\package_manager\Event\StatusCheckEvent;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
@@ -26,7 +26,7 @@ final class PhpExtensionsValidator extends PackageManagerPhpExtensionsValidator 
    * {@inheritdoc}
    */
   public function validateXdebug(PreOperationStageEvent $event): void {
-    if ($this->isExtensionLoaded('xdebug') && $event->stage instanceof ConsoleUpdateStage) {
+    if ($this->isExtensionLoaded('xdebug') && $event->stage instanceof DrushUpdateStage) {
       $event->addError([$this->t("Unattended updates are not allowed while Xdebug is enabled. You cannot receive updates, including security updates, until it is disabled.")]);
     }
     elseif ($event instanceof StatusCheckEvent) {

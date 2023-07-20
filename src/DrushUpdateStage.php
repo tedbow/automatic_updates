@@ -32,10 +32,10 @@ use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
  *
  * @todo Make this class a generic console stage in https://drupal.org/i/3360485
  */
-class ConsoleUpdateStage extends UpdateStage {
+class DrushUpdateStage extends UpdateStage {
 
   /**
-   * Constructs a ConsoleUpdateStage object.
+   * Constructs a DrushUpdateStage object.
    *
    * @param \Drupal\Core\State\StateInterface $state
    *   The state service.

@@ -5,7 +5,7 @@ declare(strict_types = 1);
 namespace Drupal\automatic_updates\Commands;
 
 use Drupal\automatic_updates\CronUpdateStage;
-use Drupal\automatic_updates\ConsoleUpdateStage;
+use Drupal\automatic_updates\DrushUpdateStage;
 use Drupal\automatic_updates\StatusCheckMailer;
 use Drupal\automatic_updates\Validation\StatusChecker;
 use Drupal\Core\Config\ConfigFactoryInterface;
@@ -29,7 +29,7 @@ final class AutomaticUpdatesCommands extends DrushCommands {
    *
    * @param \Drupal\automatic_updates\CronUpdateStage $cronUpdateRunner
    *   The cron update runner service.
-   * @param \Drupal\automatic_updates\ConsoleUpdateStage $stage
+   * @param \Drupal\automatic_updates\DrushUpdateStage $stage
    *   The console cron updater service.
    * @param \Drupal\automatic_updates\Validation\StatusChecker $statusChecker
    *   The status checker service.
@@ -40,7 +40,7 @@ final class AutomaticUpdatesCommands extends DrushCommands {
    */
   public function __construct(
     private readonly CronUpdateStage $cronUpdateRunner,
-    private readonly ConsoleUpdateStage $stage,
+    private readonly DrushUpdateStage $stage,
     private readonly StatusChecker $statusChecker,
     private readonly StatusCheckMailer $statusCheckMailer,
     private readonly ConfigFactoryInterface $configFactory,
@@ -72,7 +72,7 @@ final class AutomaticUpdatesCommands extends DrushCommands {
     // The second half of the update process (post-apply etc.) is done by this
     // exact same command, with some additional flags, in a separate process to
     // ensure that the system is in a consistent state.
-    // @see \Drupal\automatic_updates\ConsoleUpdateStage::triggerPostApply()
+    // @see \Drupal\automatic_updates\DrushUpdateStage::triggerPostApply()
     if ($options['post-apply']) {
       if (empty($options['stage-id']) || empty($options['from-version']) || empty($options['to-version'])) {
         throw new \LogicException("The post-apply option is for internal use only. It should never be passed directly.");

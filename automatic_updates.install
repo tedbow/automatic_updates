@@ -7,7 +7,7 @@
 
 declare(strict_types = 1);
 
-use Drupal\automatic_updates\ConsoleUpdateStage;
+use Drupal\automatic_updates\DrushUpdateStage;
 use Drupal\automatic_updates\CronUpdateStage;
 use Drupal\automatic_updates\Validation\StatusCheckRequirements;
 use Drupal\system\SystemManager;
@@ -38,8 +38,8 @@ function automatic_updates_requirements($phase) {
         'value' => t('Enabled. This is NOT an officially supported feature of the Automatic Updates module at this time. Use at your own risk.'),
       ];
     }
-    /** @var \Drupal\automatic_updates\ConsoleUpdateStage $console_stage */
-    $console_stage = Drupal::service(ConsoleUpdateStage::class);
+    /** @var \Drupal\automatic_updates\DrushUpdateStage $console_stage */
+    $console_stage = Drupal::service(DrushUpdateStage::class);
     if ($console_update_status = $console_stage->getProcessStatus()) {
       $requirements['automatic_updates_console_update_status'] = [
         'title' => t('Automatic background updates'),
