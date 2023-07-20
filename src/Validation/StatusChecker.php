@@ -44,7 +44,7 @@ final class StatusChecker implements EventSubscriberInterface {
    *   The update stage service.
    * @param \Drupal\automatic_updates\ConsoleUpdateStage $consoleUpdateStage
    *   The console update stage service.
-   * @param \Drupal\automatic_updates\CronUpdateStage $cronUpdateRunner
+   * @param \Drupal\automatic_updates\CronUpdateStage $cronUpdateStage
    *   The cron update stage service.
    * @param int $resultsTimeToLive
    *   The number of hours to store results.
@@ -55,7 +55,7 @@ final class StatusChecker implements EventSubscriberInterface {
     private readonly EventDispatcherInterface $eventDispatcher,
     private readonly UpdateStage $updateStage,
     private readonly ConsoleUpdateStage $consoleUpdateStage,
-    private readonly CronUpdateStage $cronUpdateRunner,
+    private readonly CronUpdateStage $cronUpdateStage,
     private readonly int $resultsTimeToLive,
   ) {
     $this->keyValueExpirable = $key_value_expirable_factory->get('automatic_updates');
@@ -67,10 +67,10 @@ final class StatusChecker implements EventSubscriberInterface {
    * @return $this
    */
   public function run(): self {
-    // If updates will run during cron, use the unattended update stage service
+    // If updates will run during cron, use the console update stage service
     // provided by this module. This will allow validators to run specific
     // validation for conditions that only affect cron updates.
-    if ($this->cronUpdateRunner->getMode() === CronUpdateStage::DISABLED) {
+    if ($this->cronUpdateStage->getMode() === CronUpdateStage::DISABLED) {
       $stage = $this->updateStage;
     }
     else {
