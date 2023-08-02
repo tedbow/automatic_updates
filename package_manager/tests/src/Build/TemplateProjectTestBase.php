@@ -7,14 +7,8 @@ namespace Drupal\Tests\package_manager\Build;
 use Drupal\BuildTests\QuickStart\QuickStartTestBase;
 use Drupal\Component\Serialization\Yaml;
 use Drupal\Composer\Composer;
-use Drupal\package_manager\Event\PostApplyEvent;
-use Drupal\package_manager\Event\PostCreateEvent;
-use Drupal\package_manager\Event\PostDestroyEvent;
-use Drupal\package_manager\Event\PostRequireEvent;
-use Drupal\package_manager\Event\PreApplyEvent;
-use Drupal\package_manager\Event\PreCreateEvent;
-use Drupal\package_manager\Event\PreDestroyEvent;
-use Drupal\package_manager\Event\PreRequireEvent;
+use Drupal\package_manager\Event\CollectPathsToExcludeEvent;
+use Drupal\package_manager_test_event_logger\EventSubscriber\EventLogSubscriber;
 use Drupal\Tests\package_manager\Traits\AssertPreconditionsTrait;
 use Drupal\Tests\package_manager\Traits\FixtureUtilityTrait;
 use Drupal\Tests\RandomGeneratorTrait;
@@ -575,54 +569,31 @@ END;
    *   that once if they will be fired multiple times. If there are no events
    *   specified all life cycle events from PreCreateEvent to PostDestroyEvent
    *   will be asserted.
-   * @param string|null $message
+   * @param string $message
    *   (optional) A message to display with the assertion.
    *
    * @see \Drupal\package_manager_test_event_logger\EventSubscriber\EventLogSubscriber::logEventInfo
    */
-  protected function assertExpectedStageEventsFired(string $expected_stage_class, ?array $expected_events = NULL, ?string $message = NULL): void {
+  protected function assertExpectedStageEventsFired(string $expected_stage_class, ?array $expected_events = NULL, string $message = ''): void {
     if ($expected_events === NULL) {
-      $expected_events = [
-        PreCreateEvent::class,
-        PostCreateEvent::class,
-        PreRequireEvent::class,
-        PostRequireEvent::class,
-        PreApplyEvent::class,
-        PostApplyEvent::class,
-        PreDestroyEvent::class,
-        PostDestroyEvent::class,
-      ];
+      $expected_events = EventLogSubscriber::getSubscribedEvents();
+      // The event subscriber uses this event to ensure the log file is excluded
+      // from Package Manager operations, but it's not relevant for our purposes
+      // because it's not part of the stage life cycle.
+      unset($expected_events[CollectPathsToExcludeEvent::class]);
+      $expected_events = array_keys($expected_events);
     }
-    else {
-      // The view at 'admin/reports/dblog' currently only shows 50 entries but
-      // this view could be changed to show fewer and our test would not fail.
-      // We need to be sure we are seeing all entries, not just first page.
-      // Since we don't need to log anywhere near 50 entries use 25 to be overly
-      // cautious of the view changing.
-      $this->assertLessThan(25, count($expected_events), 'More than 25 events may not appear on one page of the log view');
-    }
-    $assert_session = $this->getMink()->assertSession();
-    $page = $this->getMink()->getSession()->getPage();
-    $this->visit('/admin/reports/dblog');
-    $assert_session->statusCodeEquals(200);
-    $page->selectFieldOption('Type', 'package_manager_test_event_logger');
-    $page->pressButton('Filter');
-    $assert_session->statusCodeEquals(200);
 
-    // The log entries will not appear completely in the page text but they will
-    // appear in the title attribute of the links.
-    $links = $page->findAll('css', 'a[title^=package_manager_test_event_logger-start]');
-    $actual_titles = [];
-    // Loop through the links in reverse order because the most recent entries
-    // will be first.
-    foreach (array_reverse($links) as $link) {
-      $actual_titles[] = $link->getAttribute('title');
-    }
-    $expected_titles = [];
-    foreach ($expected_events as $event) {
-      $expected_titles[] = "package_manager_test_event_logger-start: Event: $event, Stage instance of: $expected_stage_class:package_manager_test_event_logger-end";
-    }
-    $this->assertSame($expected_titles, $actual_titles, $message ?? '');
+    $log_file = $this->getWorkspaceDirectory() . '/project/' . EventLogSubscriber::LOG_FILE_NAME;
+    $this->assertFileIsReadable($log_file);
+    $log_data = file_get_contents($log_file);
+    $log_data = json_decode($log_data, TRUE, flags: JSON_THROW_ON_ERROR);
+
+    $this->assertSame($expected_events, array_column($log_data, 'event'), $message);
+
+    // Ensure all the events were fired by the stage we expected.
+    $actual_stages_used = array_unique(array_column($log_data, 'stage'));
+    $this->assertSame([$expected_stage_class], $actual_stages_used);
   }
 
   /**
