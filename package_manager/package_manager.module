@@ -95,7 +95,7 @@ function package_manager_help($route_name, RouteMatchInterface $route_match) {
       $output .= '</code></pre>';
 
       $output .= '<h4 id="package-manager-faq-unsupported-composer-plugin">' . t('What if it says I have unsupported Composer plugins in my codebase?') . '</h4>';
-      $output .= '<p>' . t('A fresh Drupal installation only uses supported Composer plugins, but some modules or themes may depend on additional Composer plugins. Please <a href=":new-issue">create a new issue</a> when you encounter this.', [
+      $output .= '<p>' . t('A fresh Drupal installation only uses supported Composer plugins, but some modules or themes may depend on additional Composer plugins. <a href=":new-issue">Create a new issue</a> when you encounter this.', [
         ':new-issue' => 'https://www.drupal.org/node/add/project-issue/automatic_updates',
       ]) . '</p>';
       $output .= '<p>' . t('It is possible to <em>trust</em> additional Composer plugins, but this requires significant expertise: understanding the code of that Composer plugin, what the effects on the file system are and how it affects the Package Manager module. Some Composer plugins could result in a broken site!') . '</p>';

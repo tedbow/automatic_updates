@@ -102,7 +102,7 @@ class StagedDatabaseUpdateTest extends UpdaterFormTestBase {
     // update.php.
     $this->assertTrue($state->get('system.maintenance_mode'));
     $assert_session->pageTextContainsOnce('An error has occurred.');
-    $assert_session->pageTextContainsOnce('Please continue to the error page');
+    $assert_session->pageTextContainsOnce('Continue to the error page');
     $page->clickLink('the error page');
     $assert_session->pageTextContains('Some modules have database schema updates to install. You should run the database update script immediately.');
     $assert_session->linkExists('database update script');

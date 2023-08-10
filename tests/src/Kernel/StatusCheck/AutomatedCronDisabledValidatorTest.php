@@ -25,7 +25,7 @@ class AutomatedCronDisabledValidatorTest extends AutomaticUpdatesKernelTestBase 
   public function testCronUpdateNotAllowed(): void {
     $expected_results = [
       ValidationResult::createWarning([
-        t('This site has the Automated Cron module installed. To use unattended automatic updates, please configure cron manually on your hosting environment. The Automatic Updates module will not do anything if it is triggered by Automated Cron. See the <a href=":url">Automated Cron documentation</a> for information.', [
+        t('This site has the Automated Cron module installed. To use unattended automatic updates, configure cron manually on your hosting environment. The Automatic Updates module will not do anything if it is triggered by Automated Cron. See the <a href=":url">Automated Cron documentation</a> for information.', [
           ':url' => 'https://www.drupal.org/docs/administering-a-drupal-site/cron-automated-tasks/cron-automated-tasks-overview#s-more-reliable-enable-cron-using-external-trigger',
         ]),
       ]),

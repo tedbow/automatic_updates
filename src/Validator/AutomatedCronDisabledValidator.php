@@ -49,7 +49,7 @@ final class AutomatedCronDisabledValidator implements EventSubscriberInterface {
   public function validateStatusCheck(StatusCheckEvent $event): void {
     if ($event->stage instanceof CronUpdateStage && $this->moduleHandler->moduleExists('automated_cron')) {
       $event->addWarning([
-        $this->t('This site has the Automated Cron module installed. To use unattended automatic updates, please configure cron manually on your hosting environment. The Automatic Updates module will not do anything if it is triggered by Automated Cron. See the <a href=":url">Automated Cron documentation</a> for information.', [
+        $this->t('This site has the Automated Cron module installed. To use unattended automatic updates, configure cron manually on your hosting environment. The Automatic Updates module will not do anything if it is triggered by Automated Cron. See the <a href=":url">Automated Cron documentation</a> for information.', [
           ':url' => 'https://www.drupal.org/docs/administering-a-drupal-site/cron-automated-tasks/cron-automated-tasks-overview#s-more-reliable-enable-cron-using-external-trigger',
         ]),
       ]);

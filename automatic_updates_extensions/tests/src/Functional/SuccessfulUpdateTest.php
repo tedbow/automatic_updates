@@ -82,7 +82,7 @@ class SuccessfulUpdateTest extends UpdaterFormTestBase {
 
     // Submit without selecting a project.
     $page->pressButton('Update');
-    $assert_session->pageTextContains('Please select one or more projects.');
+    $assert_session->pageTextContains('Select one or more projects.');
 
     // Submit with a project selected.
     $page->checkField('projects[' . $project_name . ']');

@@ -66,7 +66,7 @@ final class UpdateController extends ControllerBase {
   public function onFinish(Request $request): RedirectResponse {
     $this->statusChecker->run();
     if ($this->pendingUpdatesValidator->updatesExist()) {
-      $message = $this->t('Please apply database updates to complete the update process.');
+      $message = $this->t('Apply database updates to complete the update process.');
       $url = Url::fromRoute('system.db_update');
     }
     else {

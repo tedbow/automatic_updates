@@ -114,7 +114,7 @@ class StatusCheckFailureEmailTest extends AutomaticUpdatesKernelTestBase {
       ->toString();
 
     $expected_body = <<<END
-Your site has failed some readiness checks for automatic updates and may not be able to receive automatic updates until further action is taken. Please visit $url for more information.
+Your site has failed some readiness checks for automatic updates and may not be able to receive automatic updates until further action is taken. Visit $url for more information.
 END;
     $this->assertMessagesSent('Automatic updates readiness checks failed', $expected_body);
 

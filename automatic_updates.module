@@ -106,7 +106,7 @@ function automatic_updates_mail(string $key, array &$message, array $params): vo
     $url = Url::fromRoute('system.status')
       ->setAbsolute()
       ->toString();
-    $message['body'][] = t('Your site has failed some readiness checks for automatic updates and may not be able to receive automatic updates until further action is taken. Please visit @url for more information.', [
+    $message['body'][] = t('Your site has failed some readiness checks for automatic updates and may not be able to receive automatic updates until further action is taken. Visit @url for more information.', [
       '@url' => $url,
     ], $options);
   }
