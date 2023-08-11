@@ -5,6 +5,7 @@ declare(strict_types = 1);
 namespace Drupal\Tests\automatic_updates\Kernel;
 
 use Drupal\automatic_updates\CronUpdateStage;
+use Drupal\automatic_updates\DrushUpdateStage;
 use Drupal\Core\DependencyInjection\ContainerBuilder;
 use Drupal\Tests\automatic_updates\Traits\ValidationTestTrait;
 use Drupal\Tests\package_manager\Kernel\PackageManagerKernelTestBase;
@@ -84,6 +85,7 @@ abstract class AutomaticUpdatesKernelTestBase extends PackageManagerKernelTestBa
     // Use the test-only implementations of the regular and cron update stages.
     $overrides = [
       'automatic_updates.cron_update_stage' => TestCronUpdateStage::class,
+      DrushUpdateStage::class => TestDrushUpdateStage::class,
     ];
     foreach ($overrides as $service_id => $class) {
       if ($container->hasDefinition($service_id)) {
@@ -92,12 +94,39 @@ abstract class AutomaticUpdatesKernelTestBase extends PackageManagerKernelTestBa
     }
   }
 
+  /**
+   * Performs an update using the console update stage directly.
+   */
+  protected function runConsoleUpdateStage(): void {
+    $this->container->get(DrushUpdateStage::class)->performUpdate();
+  }
+
 }
 
 /**
  * A test-only version of the cron update stage to override and expose internals.
  */
 class TestCronUpdateStage extends CronUpdateStage {
+
+  /**
+   * {@inheritdoc}
+   */
+  protected function runTerminalUpdateCommand(): never {
+    // Invoking the terminal command will not work and is not necessary in
+    // kernel tests. Throw an exception for tests that need to assert that
+    // the terminal command would have been invoked.
+    // @todo Determine if the terminal command can be run in kernel tests when
+    //   the Drush dependency is removed in https://drupal.org/i/3360485.
+    //   Drush\TestTraits\DrushTestTrait only works with functional tests.
+    throw new \BadMethodCallException(static::class);
+  }
+
+}
+
+/**
+ * A test-only version of the drush update stage to override and expose internals.
+ */
+class TestDrushUpdateStage extends DrushUpdateStage {
 
   /**
    * {@inheritdoc}
@@ -123,9 +152,7 @@ class TestCronUpdateStage extends CronUpdateStage {
   /**
    * {@inheritdoc}
    */
-  protected function triggerPostApply(string $stage_id, string $start_version, string $target_version): void {
-    // Subrequests don't work in kernel tests, so just call the post-apply
-    // handler directly.
+  protected function triggerPostApply(string $stage_id, string $start_version, string $target_version, bool $is_from_web): void {
     $this->handlePostApply($stage_id, $start_version, $target_version);
   }
 

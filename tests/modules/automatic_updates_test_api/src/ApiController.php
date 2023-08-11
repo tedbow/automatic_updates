@@ -7,6 +7,7 @@ namespace Drupal\automatic_updates_test_api;
 use Drupal\package_manager_test_api\ApiController as PackageManagerApiController;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
 
 class ApiController extends PackageManagerApiController {
 
@@ -33,6 +34,17 @@ class ApiController extends PackageManagerApiController {
     $this->stage->stage();
     $this->stage->apply();
     return $id;
+  }
+
+  /**
+   * Deletes last cron run time, so Automated Cron will run during this request.
+   *
+   * @return \Symfony\Component\HttpFoundation\Response
+   *   The response.
+   */
+  public function resetCron(): Response {
+    \Drupal::state()->delete('system.cron_last');
+    return new Response('cron reset');
   }
 
 }

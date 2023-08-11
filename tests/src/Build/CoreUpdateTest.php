@@ -6,7 +6,6 @@ namespace Drupal\Tests\automatic_updates\Build;
 
 use Behat\Mink\Element\DocumentElement;
 use Drupal\automatic_updates\DrushUpdateStage;
-use Drupal\automatic_updates\CronUpdateStage;
 use Drupal\automatic_updates\UpdateStage;
 use Drupal\package_manager\Event\PostApplyEvent;
 use Drupal\package_manager\Event\PostCreateEvent;
@@ -66,7 +65,7 @@ class CoreUpdateTest extends UpdateTestBase {
   /**
    * {@inheritdoc}
    */
-  protected function createTestProject(string $template): void {
+  protected function createTestProject(string $template, bool $require_drush = FALSE): void {
     parent::createTestProject($template);
 
     // Prepare an "upstream" version of core, 9.8.1, to which we will update.
@@ -89,6 +88,13 @@ class CoreUpdateTest extends UpdateTestBase {
 
     // Ensure that Drupal has write-protected the site directory.
     $this->assertDirectoryIsNotWritable($this->getWebRoot() . '/sites/default');
+
+    // @todo Remove along with $require_drush parameter in
+    //   https://drupal.org/i/3360485.
+    if ($require_drush) {
+      $output = $this->runComposer('COMPOSER_MIRROR_PATH_REPOS=1 composer require drush/drush', 'project');
+      $this->assertStringNotContainsString('Symlinking', $output);
+    }
   }
 
   /**
@@ -130,7 +136,7 @@ class CoreUpdateTest extends UpdateTestBase {
         PreDestroyEvent::class,
         PostDestroyEvent::class,
       ],
-      'Error response: ' . $file_contents
+      message: 'Error response: ' . $file_contents
     );
     // Even though the response is what we expect, assert the status code as
     // well, to be extra-certain that there was no kind of server-side error.
@@ -149,6 +155,21 @@ class CoreUpdateTest extends UpdateTestBase {
       'Updated drupal/core-dev from 9.8.0 to 9.8.1',
       'Updated drupal/core-recommended from 9.8.0 to 9.8.1',
     ]);
+  }
+
+  /**
+   * Tests updating during cron using the Automated Cron module.
+   */
+  public function testAutomatedCron(): void {
+    $this->createTestProject('RecommendedProject', TRUE);
+    $this->installModules(['automated_cron']);
+
+    // Reset the record of the last cron run, so that Automated Cron will be
+    // triggered at the end of this request.
+    $this->visit('/automatic-updates-test-api/reset-cron');
+    $this->getMink()->assertSession()->pageTextContains('cron reset');
+    $this->assertExpectedStageEventsFired(DrushUpdateStage::class, wait: 360);
+    $this->assertCronUpdateSuccessful();
   }
 
   /**
@@ -190,35 +211,22 @@ class CoreUpdateTest extends UpdateTestBase {
    * @dataProvider providerTemplate
    */
   public function testCron(string $template): void {
-    $this->createTestProject($template);
+    $this->createTestProject($template, TRUE);
 
     $this->visit('/admin/reports/status');
-    $mink = $this->getMink();
-    $page = $mink->getSession()->getPage();
-    $assert_session = $mink->assertSession();
-    $page->clickLink('Run cron');
-    $cron_run_status_code = $mink->getSession()->getStatusCode();
-    $this->assertExpectedStageEventsFired(CronUpdateStage::class);
-    $this->assertSame(200, $cron_run_status_code);
+    $session = $this->getMink()->getSession();
 
-    $mink = $this->getMink();
-    $page = $mink->getSession()->getPage();
-    $assert_session = $mink->assertSession();
-    $this->visit('/admin/reports/dblog');
-    // Ensure that the update was logged.
-    $page->selectFieldOption('Severity', 'Info');
-    $page->pressButton('Filter');
-    // There should be a log entry about the successful update.
-    $log_entry = $assert_session->elementExists('named', ['link', 'Drupal core has been updated from 9.8.0 to 9.8.1']);
-    $this->assertStringContainsString('/admin/reports/dblog/event/', $log_entry->getAttribute('href'));
-    $this->assertUpdateSuccessful('9.8.1');
+    $session->getPage()->clickLink('Run cron');
+    $this->assertSame(200, $session->getStatusCode());
+    $this->assertExpectedStageEventsFired(DrushUpdateStage::class, wait: 360);
+    $this->assertCronUpdateSuccessful();
   }
 
   /**
    * Tests stage is destroyed if not available and site is on insecure version.
    */
   public function testStageDestroyedIfNotAvailable(): void {
-    $this->createTestProject('RecommendedProject');
+    $this->createTestProject('RecommendedProject', TRUE);
     $mink = $this->getMink();
     $session = $mink->getSession();
     $page = $session->getPage();
@@ -227,7 +235,22 @@ class CoreUpdateTest extends UpdateTestBase {
     $this->visit('/admin/reports/status');
     $assert_session->pageTextContains('Your site is ready for automatic updates.');
     $page->clickLink('Run cron');
-    $this->assertUpdateSuccessful('9.8.1');
+    // The stage will first destroy the stage made above before going through
+    // stage lifecycle events for the cron update.
+    $expected_events = [
+      PreDestroyEvent::class,
+      PostDestroyEvent::class,
+      PreCreateEvent::class,
+      PostCreateEvent::class,
+      PreRequireEvent::class,
+      PostRequireEvent::class,
+      PreApplyEvent::class,
+      PostApplyEvent::class,
+      PreDestroyEvent::class,
+      PostDestroyEvent::class,
+    ];
+    $this->assertExpectedStageEventsFired(DrushUpdateStage::class, $expected_events, 360);
+    $this->assertCronUpdateSuccessful();
   }
 
   /**
@@ -366,7 +389,9 @@ class CoreUpdateTest extends UpdateTestBase {
     $this->assertSame($expected_version, $info['devRequires']['drupal/core-dev']);
     // The update form should not have any available updates.
     $this->visit('/admin/modules/update');
-    $this->getMink()->assertSession()->pageTextContains('No update available');
+    $assert_session = $this->getMink()->assertSession();
+    $assert_session->pageTextContains('No update available');
+    $assert_session->pageTextNotContains('Automatic updates failed to apply, and the site is in an indeterminate state. Consider restoring the code and database from a backup.');
 
     // The status page should report that we're running the expected version and
     // the README and default site configuration files should contain the
@@ -408,16 +433,30 @@ class CoreUpdateTest extends UpdateTestBase {
     $assert_session->pageTextContains('Ready to update');
   }
 
+  /**
+   * Assert a cron update ran successfully.
+   */
+  private function assertCronUpdateSuccessful(): void {
+    $mink = $this->getMink();
+    $page = $mink->getSession()->getPage();
+    $this->visit('/admin/reports/dblog');
+
+    // Ensure that the update occurred.
+    $page->selectFieldOption('Severity', 'Info');
+    $page->pressButton('Filter');
+    // There should be a log entry about the successful update.
+    $mink->assertSession()
+      ->elementAttributeContains('named', ['link', 'Drupal core has been updated from 9.8.0 to 9.8.1'], 'href', '/admin/reports/dblog/event/');
+    $this->assertUpdateSuccessful('9.8.1');
+  }
+
   // BEGIN: DELETE FROM CORE MERGE REQUEST
 
   /**
    * Tests updating via Drush.
    */
   public function testDrushUpdate(): void {
-    $this->createTestProject('RecommendedProject');
-
-    $output = $this->runComposer('COMPOSER_MIRROR_PATH_REPOS=1 composer require drush/drush', 'project');
-    $this->assertStringNotContainsString('Symlinking', $output);
+    $this->createTestProject('RecommendedProject', TRUE);
 
     $dir = $this->getWorkspaceDirectory() . '/project';
     $command = [

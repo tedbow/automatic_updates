@@ -4,6 +4,3 @@ services:
   Drupal\automatic_updates\Commands\AutomaticUpdatesCommands:
     tags:
       - { name: drush.command }
-  Drupal\automatic_updates\DrushUpdateStage:
-    calls:
-      - ['setLogger', ['@logger.channel.automatic_updates']]

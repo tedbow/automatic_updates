@@ -38,7 +38,7 @@ class StagedDatabaseUpdateValidatorTest extends AutomaticUpdatesKernelTestBase {
     };
     $this->addEventTestListener($listener);
 
-    $this->container->get('cron')->run();
+    $this->runConsoleUpdateStage();
     $expected_message = "The update cannot proceed because database updates have been detected in the following extensions.\nSystem\n";
     $this->assertTrue($logger->hasRecord($expected_message, (string) RfcLogLevel::ERROR));
   }

@@ -7,6 +7,7 @@ namespace Drupal\Tests\automatic_updates\Kernel\StatusCheck;
 use Drupal\automatic_updates\CronUpdateStage;
 use Drupal\package_manager\ValidationResult;
 use Drupal\Tests\automatic_updates\Kernel\AutomaticUpdatesKernelTestBase;
+use Drupal\Tests\automatic_updates\Kernel\TestCronUpdateStage;
 
 /**
  * @covers \Drupal\automatic_updates\Validator\CronFrequencyValidator
@@ -110,9 +111,21 @@ class CronFrequencyValidatorTest extends AutomaticUpdatesKernelTestBase {
     $this->container->get('state')->set('system.cron_last', $last_run);
     $this->assertCheckerResultsFromManager($expected_results, TRUE);
 
-    // After running cron, any errors or warnings should be gone.
-    $this->container->get('cron')->run();
-    $this->assertCheckerResultsFromManager([], TRUE);
+    try {
+      $this->container->get('cron')->run();
+      $this->fail('Expected an exception but one was not thrown.');
+    }
+    catch (\BadMethodCallException $e) {
+      // The terminal command cannot be run in a kernel test.
+      // @see \Drupal\Tests\automatic_updates\Kernel\AutomaticUpdatesKernelTestBase::runUpdateViaConsole
+      $this->assertSame(TestCronUpdateStage::class, $e->getMessage());
+      // After cron runs, the validator should detect that cron ran recently.
+      // Even though the terminal command did not succeed, the decorated cron
+      // service from the System module should have been called before the
+      // attempt to run the terminal command.
+      // @see \Drupal\automatic_updates\CronUpdateStage::run
+      $this->assertCheckerResultsFromManager([], TRUE);
+    }
   }
 
 }

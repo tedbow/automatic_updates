@@ -9,7 +9,6 @@ declare(strict_types = 1);
 
 use Drupal\automatic_updates\BatchProcessor;
 use Drupal\automatic_updates\CronUpdateStage;
-use Drupal\automatic_updates\Validator\AutomatedCronDisabledValidator;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Routing\RouteMatchInterface;
 use Drupal\automatic_updates\Validation\AdminStatusCheckMessages;
@@ -34,11 +33,6 @@ function automatic_updates_help($route_name, RouteMatchInterface $route_match) {
       $output .= '<p>' . t('Additionally, Automatic Updates periodically runs checks to ensure that updates can be installed, and will warn site administrators if problems are detected.') . '</p>';
       $output .= '<h3>' . t('Requirements') . '</h3>';
       $output .= '<p>' . t('Automatic Updates requires a Composer executable whose version satisfies <code>@version</code>, and PHP must have permission to run it. The path to the executable may be set in the <code>package_manager.settings:executables.composer</code> config setting, or it will be automatically detected.', ['@version' => ComposerInspector::SUPPORTED_VERSION]) . '</p>';
-      $output .= '<p id="cron-alternate-port">' . t('If your site is running on the built-in PHP web server, unattended (i.e., cron) updates may not work without one of the following workarounds:') . '</p>';
-      $output .= '<ul>';
-      $output .= '<li>' . t('Use a multithreaded web server, such as Apache, NGINX, or on Windows, IIS.') . '</li>';
-      $output .= '<li>' . t('Run another instance of the built-in PHP web server on a different port and configure automatic updates accordingly: <code>$config["automatic_updates.settings"]["cron_port"] = $alternate_port_number;</code>') . '</li>';
-      $output .= '</ul>';
       $output .= '<p>' . t('For more information, see the <a href=":automatic-updates-documentation">online documentation for the Automatic Updates module</a>.', [':automatic-updates-documentation' => 'https://www.drupal.org/docs/8/update/automatic-updates']) . '</p>';
       $output .= '<h3 id="minor-update">' . t('Updating to another minor version of Drupal') . '</h3>';
       $output .= '<p>';
@@ -154,55 +148,6 @@ function automatic_updates_module_implements_alter(&$implementations, $hook) {
     // own routes to avoid these messages while an update is in progress.
     unset($implementations['update']);
   }
-  if ($hook === 'cron') {
-    $hook = $implementations['automatic_updates'];
-    unset($implementations['automatic_updates']);
-    $implementations['automatic_updates'] = $hook;
-  }
-}
-
-/**
- * Implements hook_cron().
- */
-function automatic_updates_cron() {
-  // @todo Refactor this after https://www.drupal.org/project/drupal/issues/2538292
-  // @todo Remove this after https://www.drupal.org/project/drupal/issues/3318964
-  // We don't want to run status checks if we're on the command line, because
-  // if unattended updates are configured to run via the web, running status
-  // checks on the command line could cause invalid results to get cached.
-  if (defined('MAINTENANCE_MODE') || stripos($_SERVER['PHP_SELF'], 'update.php') !== FALSE || CronUpdateStage::isCommandLine()) {
-    return;
-  }
-
-  /** @var \Drupal\automatic_updates\Validator\AutomatedCronDisabledValidator $automated_cron_validator */
-  $automated_cron_validator = \Drupal::service(AutomatedCronDisabledValidator::class);
-  if ($automated_cron_validator->hasTerminateBeenCalled()) {
-    // Running updates and status checks will not work during kernel
-    // termination.
-    \Drupal::logger('automatic_updates')
-      ->info('Unattended automatic updates were triggered by Automated Cron, which is not supported. No update was performed. See the <a href=":url">status report</a> for more information.', [
-        ':url' => Url::fromRoute('system.status')->toString(),
-      ]);
-    return;
-  }
-
-  /** @var \Drupal\automatic_updates\Validation\StatusChecker $status_checker */
-  $status_checker = \Drupal::service('automatic_updates.status_checker');
-  $last_results = $status_checker->getResults();
-  $last_run_time = $status_checker->getLastRunTime();
-  // Do not run status checks more than once an hour unless there are no results
-  // available.
-  if ($last_results === NULL || !$last_run_time || \Drupal::time()->getRequestTime() - $last_run_time > 3600) {
-    $status_checker->run();
-  }
-
-  // Only try to send failure notifications if unattended updates are enabled.
-  /** @var \Drupal\automatic_updates\CronUpdateStage $stage */
-  $stage = \Drupal::service('automatic_updates.cron_update_stage');
-  if ($stage->getMode() !== CronUpdateStage::DISABLED) {
-    \Drupal::service('automatic_updates.status_check_mailer')
-      ->sendFailureNotifications($last_results, $status_checker->getResults());
-  }
 }
 
 /**
@@ -271,7 +216,7 @@ function automatic_updates_form_update_settings_alter(array &$form): void {
     '#type' => 'radios',
     '#title' => t('How unattended updates should be run'),
     '#options' => [
-      'web' => t('By a request to /system/cron'),
+      'web' => t('By using the Automated Cron module or a request to /system/cron'),
       'console' => t('By the <code>auto-update</code> Drush command'),
     ],
     '#default_value' => $config->get('unattended.method'),
@@ -284,6 +229,18 @@ function automatic_updates_form_update_settings_alter(array &$form): void {
     ],
     '#description' => t('To use the <code>/system/cron</code> method <a href="http://drupal.org/docs/user_guide/en/security-cron.html">ensure cron is set up correctly</a>.'),
   ];
+  // @todo Remove check in https://drupal.org/i/3360485.
+  try {
+    /** @var \Drupal\automatic_updates\CronUpdateStage $cron_update_stage */
+    $cron_update_stage = \Drupal::service('automatic_updates.cron_update_stage');
+    $cron_update_stage->getCommandPath();
+  }
+  catch (\Throwable) {
+    \Drupal::messenger()->addWarning('Drush is required for unattended updates.');
+    $form['unattended_level']['#disabled'] = TRUE;
+    $form['unattended_level']['#default_value'] = CronUpdateStage::DISABLED;
+    $form['unattended_method']['#disabled'] = TRUE;
+  }
   $form['#submit'][] = '_automatic_updates_submit_update_settings';
 }
 

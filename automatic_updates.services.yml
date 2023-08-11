@@ -25,11 +25,10 @@ services:
   Drupal\automatic_updates\UpdateStage: '@automatic_updates.update_stage'
   automatic_updates.cron_update_stage:
     class: Drupal\automatic_updates\CronUpdateStage
-    arguments:
-      $committer: '@Drupal\automatic_updates\MaintenanceModeAwareCommitter'
-      $inner: '@automatic_updates.cron_update_stage.inner'
     calls:
       - ['setLogger', ['@logger.channel.automatic_updates']]
+    arguments:
+      $inner: '@automatic_updates.cron_update_stage.inner'
     decorates: 'cron'
   Drupal\automatic_updates\CronUpdateStage: '@automatic_updates.cron_update_stage'
   automatic_updates.requested_update_validator:
@@ -52,9 +51,6 @@ services:
       $lock: '@lock'
     tags:
       - { name: event_subscriber }
-  Drupal\automatic_updates\Validator\AutomatedCronDisabledValidator:
-    tags:
-      - { name: event_subscriber }
   automatic_updates.validator.staged_database_updates:
     class: Drupal\automatic_updates\Validator\StagedDatabaseUpdateValidator
     tags:
@@ -64,13 +60,15 @@ services:
     tags:
       - { name: event_subscriber }
   Drupal\automatic_updates\Validator\VersionPolicyValidator: '@automatic_updates.validator.version_policy'
-  automatic_updates.validator.cron_server:
-    class: Drupal\automatic_updates\Validator\CronServerValidator
-    tags:
-      - { name: event_subscriber }
   logger.channel.automatic_updates:
     parent: logger.channel_base
     arguments: ['automatic_updates']
+  Drupal\automatic_updates\DrushUpdateStage:
+    arguments:
+      $lock: '@lock'
+      $committer: '@Drupal\automatic_updates\MaintenanceModeAwareCommitter'
+    calls:
+      - ['setLogger', ['@logger.channel.automatic_updates']]
   Drupal\automatic_updates\MaintenanceModeAwareCommitter:
     tags:
       - { name: event_subscriber }

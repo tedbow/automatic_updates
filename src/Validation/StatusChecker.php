@@ -5,6 +5,7 @@ declare(strict_types = 1);
 namespace Drupal\automatic_updates\Validation;
 
 use Drupal\automatic_updates\CronUpdateStage;
+use Drupal\automatic_updates\DrushUpdateStage;
 use Drupal\automatic_updates\StatusCheckMailer;
 use Drupal\Core\Config\ConfigCrudEvent;
 use Drupal\Core\Config\ConfigEvents;
@@ -42,6 +43,8 @@ final class StatusChecker implements EventSubscriberInterface {
    *   The event dispatcher service.
    * @param \Drupal\automatic_updates\UpdateStage $updateStage
    *   The update stage service.
+   * @param \Drupal\automatic_updates\DrushUpdateStage $consoleUpdateStage
+   *   The console update stage service.
    * @param \Drupal\automatic_updates\CronUpdateStage $cronUpdateStage
    *   The cron update stage service.
    * @param int $resultsTimeToLive
@@ -52,6 +55,7 @@ final class StatusChecker implements EventSubscriberInterface {
     private readonly TimeInterface $time,
     private readonly EventDispatcherInterface $eventDispatcher,
     private readonly UpdateStage $updateStage,
+    private readonly DrushUpdateStage $consoleUpdateStage,
     private readonly CronUpdateStage $cronUpdateStage,
     private readonly int $resultsTimeToLive,
   ) {
@@ -64,14 +68,14 @@ final class StatusChecker implements EventSubscriberInterface {
    * @return $this
    */
   public function run(): self {
-    // If updates will run during cron, use the cron update stage service
+    // If updates will run during cron, use the console update stage service
     // provided by this module. This will allow validators to run specific
     // validation for conditions that only affect cron updates.
     if ($this->cronUpdateStage->getMode() === CronUpdateStage::DISABLED) {
       $stage = $this->updateStage;
     }
     else {
-      $stage = $this->cronUpdateStage;
+      $stage = $this->consoleUpdateStage;
     }
     $results = $this->runStatusCheck($stage, $this->eventDispatcher);
 

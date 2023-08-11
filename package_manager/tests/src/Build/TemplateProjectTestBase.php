@@ -355,7 +355,6 @@ END;
     $port = $this->findAvailablePort();
     $this->metadataServer = $this->instantiateServer($port);
     $code = <<<END
-\$config['automatic_updates.settings']['cron_port'] = $port;
 \$config['update.settings']['fetch']['url'] = 'http://localhost:$port/test-release-history';
 END;
     $this->writeSettings($code);
@@ -569,12 +568,15 @@ END;
    *   that once if they will be fired multiple times. If there are no events
    *   specified all life cycle events from PreCreateEvent to PostDestroyEvent
    *   will be asserted.
+   * @param int $wait
+   *   (optional) How many seconds to wait for the events to be fired. Defaults
+   *   to 0.
    * @param string $message
    *   (optional) A message to display with the assertion.
    *
    * @see \Drupal\package_manager_test_event_logger\EventSubscriber\EventLogSubscriber::logEventInfo
    */
-  protected function assertExpectedStageEventsFired(string $expected_stage_class, ?array $expected_events = NULL, string $message = ''): void {
+  protected function assertExpectedStageEventsFired(string $expected_stage_class, ?array $expected_events = NULL, int $wait = 0, string $message = ''): void {
     if ($expected_events === NULL) {
       $expected_events = EventLogSubscriber::getSubscribedEvents();
       // The event subscriber uses this event to ensure the log file is excluded
@@ -583,17 +585,28 @@ END;
       unset($expected_events[CollectPathsToExcludeEvent::class]);
       $expected_events = array_keys($expected_events);
     }
+    $this->assertNotEmpty($expected_events);
 
     $log_file = $this->getWorkspaceDirectory() . '/project/' . EventLogSubscriber::LOG_FILE_NAME;
-    $this->assertFileIsReadable($log_file);
-    $log_data = file_get_contents($log_file);
-    $log_data = json_decode($log_data, TRUE, flags: JSON_THROW_ON_ERROR);
+    $max_wait = time() + $wait;
+    do {
+      $this->assertFileIsReadable($log_file);
+      $log_data = file_get_contents($log_file);
+      $log_data = json_decode($log_data, TRUE, flags: JSON_THROW_ON_ERROR);
+
+      // Filter out events logged by any other stage.
+      $log_data = array_filter($log_data, fn (array $event): bool => $event['stage'] === $expected_stage_class);
+
+      // If we've logged at least the expected number of events, stop waiting.
+      // Break out of the loop and assert the expected events were logged.
+      if (count($log_data) >= count($expected_events)) {
+        break;
+      }
+      // Wait a bit before checking again.
+      sleep(5);
+    } while ($max_wait > time());
 
     $this->assertSame($expected_events, array_column($log_data, 'event'), $message);
-
-    // Ensure all the events were fired by the stage we expected.
-    $actual_stages_used = array_unique(array_column($log_data, 'stage'));
-    $this->assertSame([$expected_stage_class], $actual_stages_used);
   }
 
   /**

@@ -5,6 +5,7 @@ declare(strict_types = 1);
 namespace Drupal\automatic_updates\Validator;
 
 use Drupal\automatic_updates\CronUpdateStage;
+use Drupal\automatic_updates\DrushUpdateStage;
 use Drupal\Component\Utility\NestedArray;
 use Drupal\package_manager\ComposerInspector;
 use Drupal\package_manager\Event\StatusCheckEvent;
@@ -41,6 +42,8 @@ final class VersionPolicyValidator implements EventSubscriberInterface {
   /**
    * Constructs a VersionPolicyValidator object.
    *
+   * @param \Drupal\automatic_updates\CronUpdateStage $cronUpdateRunner
+   *   The cron update runner service.
    * @param \Drupal\Core\DependencyInjection\ClassResolverInterface $classResolver
    *   The class resolver service.
    * @param \Drupal\package_manager\PathLocator $pathLocator
@@ -49,6 +52,7 @@ final class VersionPolicyValidator implements EventSubscriberInterface {
    *   The Composer inspector service.
    */
   public function __construct(
+    private readonly CronUpdateStage $cronUpdateRunner,
     private readonly ClassResolverInterface $classResolver,
     private readonly PathLocator $pathLocator,
     private readonly ComposerInspector $composerInspector,
@@ -85,8 +89,8 @@ final class VersionPolicyValidator implements EventSubscriberInterface {
     }
 
     // If this is a cron update, we may need to do additional checks.
-    if ($stage instanceof CronUpdateStage) {
-      $mode = $stage->getMode();
+    if ($stage instanceof DrushUpdateStage) {
+      $mode = $this->cronUpdateRunner->getMode();
 
       if ($mode !== CronUpdateStage::DISABLED) {
         // If cron updates are enabled, the installed version must be stable;
@@ -235,7 +239,7 @@ final class VersionPolicyValidator implements EventSubscriberInterface {
       }
     }
     elseif ($event instanceof StatusCheckEvent) {
-      if ($stage instanceof CronUpdateStage) {
+      if ($stage instanceof DrushUpdateStage) {
         $target_release = $stage->getTargetRelease();
         if ($target_release) {
           return $target_release->getVersion();
@@ -264,7 +268,7 @@ final class VersionPolicyValidator implements EventSubscriberInterface {
     $project_info = new ProjectInfo('drupal');
     $available_releases = $project_info->getInstallableReleases() ?? [];
 
-    if ($stage instanceof CronUpdateStage) {
+    if ($stage instanceof DrushUpdateStage) {
       $available_releases = array_reverse($available_releases);
     }
     return $available_releases;
