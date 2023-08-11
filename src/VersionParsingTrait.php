@@ -26,7 +26,7 @@ trait VersionParsingTrait {
    * @return string|null
    *   The patch number if available, otherwise NULL.
    */
-  protected static function getPatchVersion(string $version_string): ?string {
+  private static function getPatchVersion(string $version_string): ?string {
     $version_extra = ExtensionVersion::createFromVersionString($version_string)
       ->getVersionExtra();
     if ($version_extra) {
@@ -46,7 +46,7 @@ trait VersionParsingTrait {
    *   The major.minor numbers of the version string. For example, if $version
    *   is 8.9.1, '8.9' will be returned.
    */
-  protected static function getMajorAndMinorVersion(string $version): string {
+  private static function getMajorAndMinorVersion(string $version): string {
     $version = ExtensionVersion::createFromVersionString($version);
     return $version->getMajorVersion() . '.' . $version->getMinorVersion();
   }

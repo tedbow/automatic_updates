@@ -30,7 +30,7 @@ trait ValidationResultDisplayTrait {
    * @see \Drupal\system\SystemManager::REQUIREMENT_ERROR
    * @see \Drupal\system\SystemManager::REQUIREMENT_WARNING
    */
-  protected function getFailureMessageForSeverity(int $severity): TranslatableMarkup {
+  private function getFailureMessageForSeverity(int $severity): TranslatableMarkup {
     return $severity === SystemManager::REQUIREMENT_WARNING ?
       // @todo Link "automatic updates" to documentation in
       //   https://www.drupal.org/node/3168405.

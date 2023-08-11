@@ -32,7 +32,7 @@ final class LockFileValidator implements EventSubscriberInterface {
    *
    * @var string
    */
-  protected const STATE_KEY = 'package_manager.lock_hash';
+  private const STATE_KEY = 'package_manager.lock_hash';
 
   /**
    * Constructs a LockFileValidator object.

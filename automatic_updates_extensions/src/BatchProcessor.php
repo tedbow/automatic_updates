@@ -29,7 +29,7 @@ final class BatchProcessor {
    * @return \Drupal\automatic_updates_extensions\ExtensionUpdateStage
    *   The update stage service.
    */
-  protected static function getStage(): ExtensionUpdateStage {
+  private static function getStage(): ExtensionUpdateStage {
     return \Drupal::service('automatic_updates_extensions.update_stage');
   }
 
@@ -45,7 +45,7 @@ final class BatchProcessor {
    *   The caught exception, which will always be re-thrown once its messages
    *   have been recorded.
    */
-  protected static function handleException(\Throwable $error, array &$context): void {
+  private static function handleException(\Throwable $error, array &$context): void {
     $context['results']['errors'][] = $error->getMessage();
     throw $error;
   }
@@ -206,7 +206,7 @@ final class BatchProcessor {
    * @param array $results
    *   The batch results.
    */
-  protected static function handleBatchError(array $results): void {
+  private static function handleBatchError(array $results): void {
     if (isset($results['errors'])) {
       foreach ($results['errors'] as $error) {
         \Drupal::messenger()->addError($error);

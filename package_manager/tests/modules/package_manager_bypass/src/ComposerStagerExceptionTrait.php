@@ -24,7 +24,7 @@ trait ComposerStagerExceptionTrait {
   /**
    * Throws the exception if set.
    */
-  protected function throwExceptionIfSet(): void {
+  private function throwExceptionIfSet(): void {
     if ($exception = $this->state->get(static::class . '-exception')) {
       throw $exception;
     }

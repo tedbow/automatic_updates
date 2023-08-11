@@ -48,7 +48,7 @@ final class MultisiteValidator implements EventSubscriberInterface {
    * @return bool
    *   TRUE if the current site is part of a multisite, otherwise FALSE.
    */
-  protected function isMultisite(): bool {
+  private function isMultisite(): bool {
     $web_root = $this->pathLocator->getWebRoot();
     if ($web_root) {
       $web_root .= '/';

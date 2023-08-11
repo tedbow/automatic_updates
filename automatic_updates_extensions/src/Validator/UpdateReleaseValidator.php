@@ -57,7 +57,7 @@ final class UpdateReleaseValidator implements EventSubscriberInterface {
    *   TRUE if the given version of the project is supported, otherwise FALSE.
    *   given version is not supported will return FALSE.
    */
-  protected function isSupportedRelease(string $name, string $semantic_version): bool {
+  private function isSupportedRelease(string $name, string $semantic_version): bool {
     $supported_releases = (new ProjectInfo($name))->getInstallableReleases();
     if (!$supported_releases) {
       return FALSE;

@@ -164,7 +164,7 @@ final class UpdaterForm extends UpdateFormBase {
    * @return mixed[][]
    *   The form's actions elements.
    */
-  protected function actions(FormStateInterface $form_state): array {
+  private function actions(FormStateInterface $form_state): array {
     $actions = ['#type' => 'actions'];
     if (!$this->stage->isAvailable()) {
       // If the form has been submitted do not display this error message

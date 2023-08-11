@@ -45,7 +45,7 @@ final class BatchProcessor {
    * @return \Drupal\automatic_updates\UpdateStage
    *   The update stage service.
    */
-  protected static function getStage(): UpdateStage {
+  private static function getStage(): UpdateStage {
     return \Drupal::service('automatic_updates.update_stage');
   }
 
@@ -55,7 +55,7 @@ final class BatchProcessor {
    * @param string $error_message
    *   The error message.
    */
-  protected static function storeErrorMessage(string $error_message): void {
+  private static function storeErrorMessage(string $error_message): void {
     // TRICKY: We need to store error messages in the session because the batch
     // context becomes a dangling reference when static variables are globally
     // reset by drupal_flush_all_caches(), which is called during the post-apply
@@ -222,7 +222,7 @@ final class BatchProcessor {
    *
    * @see ::storeErrorMessage()
    */
-  protected static function displayStoredErrorMessages(): void {
+  private static function displayStoredErrorMessages(): void {
     /** @var \Symfony\Component\HttpFoundation\Session\SessionInterface $session */
     $session = \Drupal::service('session');
     $errors = $session->get(self::ERROR_MESSAGES_SESSION_KEY);

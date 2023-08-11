@@ -10,7 +10,6 @@ use Drupal\package_manager\ComposerInspector;
 use Drupal\package_manager\Exception\StageFailureMarkerException;
 use Drupal\package_manager\ValidationResult;
 use Drupal\Core\Batch\BatchBuilder;
-use Drupal\Core\Extension\ModuleExtensionList;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Messenger\MessengerInterface;
 use Drupal\Core\Render\RendererInterface;
@@ -36,8 +35,6 @@ final class UpdateReady extends UpdateFormBase {
    *   The update stage service.
    * @param \Drupal\Core\State\StateInterface $state
    *   The state service.
-   * @param \Drupal\Core\Extension\ModuleExtensionList $moduleList
-   *   The module list service.
    * @param \Drupal\Core\Render\RendererInterface $renderer
    *   The renderer service.
    * @param \Symfony\Component\EventDispatcher\EventDispatcherInterface $eventDispatcher
@@ -46,12 +43,11 @@ final class UpdateReady extends UpdateFormBase {
    *   The Composer inspector service.
    */
   public function __construct(
-    protected UpdateStage $stage,
-    protected StateInterface $state,
-    protected ModuleExtensionList $moduleList,
-    protected RendererInterface $renderer,
-    protected EventDispatcherInterface $eventDispatcher,
-    private ComposerInspector $composerInspector
+    private readonly UpdateStage $stage,
+    private readonly StateInterface $state,
+    private readonly RendererInterface $renderer,
+    private readonly EventDispatcherInterface $eventDispatcher,
+    private readonly ComposerInspector $composerInspector
   ) {}
 
   /**
@@ -68,7 +64,6 @@ final class UpdateReady extends UpdateFormBase {
     return new static(
       $container->get('automatic_updates.update_stage'),
       $container->get('state'),
-      $container->get('extension.list.module'),
       $container->get('renderer'),
       $container->get('event_dispatcher'),
       $container->get('package_manager.composer_inspector')

@@ -37,8 +37,8 @@ final class CollectPathsToExcludeEvent extends StageEvent implements PathListInt
    */
   public function __construct(
     StageBase $stage,
-    protected PathLocator $pathLocator,
-    protected PathFactoryInterface $pathFactory
+    private readonly PathLocator $pathLocator,
+    private readonly PathFactoryInterface $pathFactory
   ) {
     parent::__construct($stage);
     $this->pathList = new PathList();

@@ -114,7 +114,7 @@ final class StatusCheckMailer {
    * @return bool
    *   TRUE if the given result sets are different; FALSE otherwise.
    */
-  protected function resultsAreDifferent(?array $previous_results, array $current_results): bool {
+  private function resultsAreDifferent(?array $previous_results, array $current_results): bool {
     if ($previous_results === NULL || count($previous_results) !== count($current_results)) {
       return TRUE;
     }
@@ -165,7 +165,7 @@ final class StatusCheckMailer {
    * @return string
    *   The preferred language of the recipient.
    */
-  protected function getEmailLangcode(string $recipient): string {
+  private function getEmailLangcode(string $recipient): string {
     $user = user_load_by_mail($recipient);
     if ($user) {
       return $user->getPreferredLangcode();

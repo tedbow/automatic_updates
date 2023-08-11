@@ -20,7 +20,7 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 final class EnvironmentSupportValidator implements EventSubscriberInterface {
 
   use BaseRequirementValidatorTrait {
-    getSubscribedEvents as protected getSubscribedEventsFromTrait;
+    getSubscribedEvents as private getSubscribedEventsFromTrait;
   }
   use StringTranslationTrait;
 

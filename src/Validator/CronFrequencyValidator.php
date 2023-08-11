@@ -33,7 +33,7 @@ final class CronFrequencyValidator implements EventSubscriberInterface {
    *
    * @var int
    */
-  protected const ERROR_INTERVAL = 86400;
+  private const ERROR_INTERVAL = 86400;
 
   /**
    * The warning-level interval between cron runs, in seconds.
@@ -43,14 +43,14 @@ final class CronFrequencyValidator implements EventSubscriberInterface {
    *
    * @var int
    */
-  protected const WARNING_INTERVAL = 10800;
+  private const WARNING_INTERVAL = 10800;
 
   /**
    * The cron frequency, in hours, to suggest in errors or warnings.
    *
    * @var int
    */
-  protected const SUGGESTED_INTERVAL = self::WARNING_INTERVAL / 3600;
+  private const SUGGESTED_INTERVAL = self::WARNING_INTERVAL / 3600;
 
   /**
    * CronFrequencyValidator constructor.

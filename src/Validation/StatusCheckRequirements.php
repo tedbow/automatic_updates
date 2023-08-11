@@ -127,7 +127,7 @@ final class StatusCheckRequirements implements ContainerInjectionInterface {
    *   Requirements array as specified by hook_requirements(), or NULL
    *   if no requirements can be determined.
    */
-  protected function createRequirementForSeverity(int $severity): ?array {
+  private function createRequirementForSeverity(int $severity): ?array {
     $severity_messages = [];
     $results = $this->statusChecker->getResults($severity);
     if (!$results) {
@@ -178,7 +178,7 @@ final class StatusCheckRequirements implements ContainerInjectionInterface {
    *   A link, if the user has access to run the status checks, otherwise
    *   NULL.
    */
-  protected function createRunLink(): ?TranslatableMarkup {
+  private function createRunLink(): ?TranslatableMarkup {
     // Only show this link if unattended updates are being run over the web.
     if ($this->getMethod() !== 'web') {
       return NULL;

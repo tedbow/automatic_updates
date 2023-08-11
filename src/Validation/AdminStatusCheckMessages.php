@@ -117,7 +117,7 @@ final class AdminStatusCheckMessages implements ContainerInjectionInterface {
    * @return bool
    *   Whether the messages should be displayed on the current page.
    */
-  protected function displayResultsOnCurrentPage(): bool {
+  private function displayResultsOnCurrentPage(): bool {
     // If updates will not run during cron then we don't need to show the
     // status checks on admin pages.
     if ($this->stage->getMode() === CronUpdateStage::DISABLED) {
@@ -141,7 +141,7 @@ final class AdminStatusCheckMessages implements ContainerInjectionInterface {
    * @return bool
    *   Whether any results were displayed.
    */
-  protected function displayResultsForSeverity(int $severity): bool {
+  private function displayResultsForSeverity(int $severity): bool {
     $results = $this->statusChecker->getResults($severity);
     if (empty($results)) {
       return FALSE;
@@ -190,7 +190,7 @@ final class AdminStatusCheckMessages implements ContainerInjectionInterface {
    * @param \Drupal\Core\Render\RendererInterface $renderer
    *   The renderer service.
    */
-  protected function displayResults(array $results, MessengerInterface $messenger, RendererInterface $renderer): void {
+  private function displayResults(array $results, MessengerInterface $messenger, RendererInterface $renderer): void {
     $severity = ValidationResult::getOverallSeverity($results);
 
     if ($severity === SystemManager::REQUIREMENT_OK) {

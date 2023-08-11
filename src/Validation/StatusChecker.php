@@ -8,6 +8,7 @@ use Drupal\automatic_updates\CronUpdateStage;
 use Drupal\automatic_updates\StatusCheckMailer;
 use Drupal\Core\Config\ConfigCrudEvent;
 use Drupal\Core\Config\ConfigEvents;
+use Drupal\Core\KeyValueStore\KeyValueStoreExpirableInterface;
 use Drupal\package_manager\StatusCheckTrait;
 use Drupal\automatic_updates\UpdateStage;
 use Drupal\Component\Datetime\TimeInterface;
@@ -28,7 +29,7 @@ final class StatusChecker implements EventSubscriberInterface {
    *
    * @var \Drupal\Core\KeyValueStore\KeyValueStoreExpirableInterface
    */
-  protected $keyValueExpirable;
+  private readonly KeyValueStoreExpirableInterface $keyValueExpirable;
 
   /**
    * Constructs a StatusChecker.

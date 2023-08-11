@@ -27,7 +27,7 @@ final class ReleaseChooser {
    *
    * @var \Drupal\package_manager\ProjectInfo
    */
-  protected $projectInfo;
+  private readonly ProjectInfo $projectInfo;
 
   /**
    * Constructs an ReleaseChooser object.
@@ -49,7 +49,7 @@ final class ReleaseChooser {
    *   The releases that are installable by the given update stage, according to
    *   the version validator service.
    */
-  protected function getInstallableReleases(UpdateStage $stage): array {
+  private function getInstallableReleases(UpdateStage $stage): array {
     $filter = function (string $version) use ($stage): bool {
       return empty($this->versionPolicyValidator->validateVersion($stage, $version));
     };
@@ -97,7 +97,7 @@ final class ReleaseChooser {
    * @return string
    *   The installed version of Drupal core.
    */
-  protected function getInstalledVersion(): string {
+  private function getInstalledVersion(): string {
     return $this->projectInfo->getInstalledVersion();
   }
 

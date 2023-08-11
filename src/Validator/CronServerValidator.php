@@ -14,6 +14,7 @@ use Drupal\package_manager\Event\PreCreateEvent;
 use Drupal\package_manager\Event\PreOperationStageEvent;
 use Drupal\package_manager\Event\StatusCheckEvent;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
+use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\RequestStack;
 
 /**
@@ -33,7 +34,7 @@ final class CronServerValidator implements EventSubscriberInterface {
    *
    * @var \Symfony\Component\HttpFoundation\Request
    */
-  protected $request;
+  private readonly Request $request;
 
   /**
    * The type of interface between the web server and the PHP runtime.
@@ -43,7 +44,7 @@ final class CronServerValidator implements EventSubscriberInterface {
    * @see php_sapi_name()
    * @see https://www.php.net/manual/en/reserved.constants.php
    */
-  protected static $serverApi = PHP_SAPI;
+  private static $serverApi = PHP_SAPI;
 
   /**
    * Constructs a CronServerValidator object.

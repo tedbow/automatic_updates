@@ -55,13 +55,13 @@ final class UpdaterForm extends UpdateFormBase {
    *   The module handler service.
    */
   public function __construct(
-    protected StateInterface $state,
-    protected UpdateStage $stage,
-    protected EventDispatcherInterface $eventDispatcher,
-    protected ReleaseChooser $releaseChooser,
-    protected RendererInterface $renderer,
-    protected FailureMarker $failureMarker,
-    protected ModuleHandlerInterface $moduleHandler,
+    private readonly StateInterface $state,
+    private readonly UpdateStage $stage,
+    private readonly EventDispatcherInterface $eventDispatcher,
+    private readonly ReleaseChooser $releaseChooser,
+    private readonly RendererInterface $renderer,
+    private readonly FailureMarker $failureMarker,
+    private readonly ModuleHandlerInterface $moduleHandler,
   ) {}
 
   /**

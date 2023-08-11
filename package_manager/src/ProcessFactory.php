@@ -81,7 +81,7 @@ final class ProcessFactory implements ProcessFactoryInterface {
    * @see php_sapi_name()
    * @see https://www.php.net/manual/en/reserved.constants.php
    */
-  protected static function getPhpDirectory(): string {
+  private static function getPhpDirectory(): string {
     if (PHP_SAPI === 'cli' || PHP_SAPI === 'cli-server') {
       return dirname(PHP_BINARY);
     }

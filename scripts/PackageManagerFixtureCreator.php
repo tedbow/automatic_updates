@@ -67,7 +67,7 @@ final class PackageManagerFixtureCreator {
    * @return string
    *   The Composer command output.
    */
-  protected static function runComposerCommand(array $command): string {
+  private static function runComposerCommand(array $command): string {
     array_unshift($command, 'composer');
     $command[] = "--working-dir=" . static::FIXTURE_PATH;
     $process = new Process($command);
@@ -86,7 +86,7 @@ final class PackageManagerFixtureCreator {
    * @param string[] $files_to_keep
    *   The files to not delete.
    */
-  protected static function removeAllExcept(string $directory, array $files_to_keep): void {
+  private static function removeAllExcept(string $directory, array $files_to_keep): void {
     if (!is_dir($directory)) {
       throw new \LogicException("Expected directory $directory");
     }
@@ -103,8 +103,8 @@ final class PackageManagerFixtureCreator {
   /**
    * Runs `composer install`.
    */
-  protected static function doComposerInstall(): void {
-    static::runComposerCommand(['install']);
+  private static function doComposerInstall(): void {
+    self::runComposerCommand(['install']);
   }
 
 }

@@ -85,7 +85,7 @@ final class DuplicateInfoFileValidator implements EventSubscriberInterface {
    * @return int[]
    *   Array of count of info.yml files in the directory keyed by file name.
    */
-  protected function findInfoFiles(string $dir): array {
+  private function findInfoFiles(string $dir): array {
     // Use the official extension discovery mechanism, but tweak it, because by
     // default it resolves duplicates.
     // @see \Drupal\Core\Extension\ExtensionDiscovery::process()

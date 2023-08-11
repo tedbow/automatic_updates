@@ -21,7 +21,7 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 final class StageNotInActiveValidator implements EventSubscriberInterface {
 
   use BaseRequirementValidatorTrait {
-    getSubscribedEvents as protected getSubscribedEventsFromTrait;
+    getSubscribedEvents as private getSubscribedEventsFromTrait;
   }
   use StringTranslationTrait;
 

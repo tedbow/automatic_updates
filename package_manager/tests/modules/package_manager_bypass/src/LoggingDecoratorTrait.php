@@ -20,7 +20,7 @@ trait LoggingDecoratorTrait {
    *
    * @var \Drupal\Core\State\StateInterface
    */
-  protected $state;
+  private $state;
 
   /**
    * Returns the arguments from every invocation of the main class method.
@@ -38,7 +38,7 @@ trait LoggingDecoratorTrait {
    * @param mixed ...$arguments
    *   The arguments that the main class method was called with.
    */
-  protected function saveInvocationArguments(...$arguments): void {
+  private function saveInvocationArguments(...$arguments): void {
     $invocations = $this->getInvocationArguments();
     $invocations[] = $arguments;
     $this->state->set(static::class . ' arguments', $invocations);

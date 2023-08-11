@@ -16,7 +16,7 @@ final class PreCreateEvent extends PreOperationStageEvent {
    *
    * @var string[]
    */
-  protected array $excludedPaths = [];
+  private array $excludedPaths = [];
 
   /**
    * Returns the paths to exclude from the current operation.
