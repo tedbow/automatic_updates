@@ -60,6 +60,9 @@ services:
     tags:
       - { name: event_subscriber }
   Drupal\automatic_updates\Validator\VersionPolicyValidator: '@automatic_updates.validator.version_policy'
+  Drupal\automatic_updates\Validator\WindowsValidator:
+    tags:
+      - { name: event_subscriber }
   logger.channel.automatic_updates:
     parent: logger.channel_base
     arguments: ['automatic_updates']

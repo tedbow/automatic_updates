@@ -92,8 +92,7 @@ class CronUpdateStage implements CronInterface, LoggerAwareInterface {
   protected function runTerminalUpdateCommand(): void {
     $command_path = $this->getCommandPath();
     $php_binary_finder = new PhpExecutableFinder();
-    // @todo Check if on Windows to not allow cron updates in
-    //   https://drupal.org/i/3377237.
+
     // Use the `&` on the command line to detach this process after it is
     // started. This will allow the command to outlive the web request.
     $process = Process::fromShellCommandline($php_binary_finder->find() . " $command_path auto-update --is-from-web &")
