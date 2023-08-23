@@ -4,8 +4,8 @@ declare(strict_types = 1);
 
 namespace Drupal\automatic_updates\Validator;
 
+use Drupal\automatic_updates\ConsoleUpdateStage;
 use Drupal\automatic_updates\CronUpdateStage;
-use Drupal\automatic_updates\DrushUpdateStage;
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\Core\Url;
@@ -67,7 +67,7 @@ final class WindowsValidator implements EventSubscriberInterface {
       ->get('unattended.method');
 
     $stage = $event->stage;
-    if ($stage instanceof DrushUpdateStage && $this->cronRunner->getMode() !== CronUpdateStage::DISABLED && $method === 'web') {
+    if ($stage instanceof ConsoleUpdateStage && $this->cronRunner->getMode() !== CronUpdateStage::DISABLED && $method === 'web') {
       $message = $this->t('Unattended updates are not supported on Windows.');
 
       $form_url = Url::fromRoute('update.report_update');

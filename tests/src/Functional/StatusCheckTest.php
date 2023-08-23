@@ -263,20 +263,7 @@ class StatusCheckTest extends AutomaticUpdatesFunctionalTestBase {
     $this->assertNoErrors();
     $this->drupalGet(Url::fromRoute($admin_route));
 
-    // @todo When removing the Drush dependency we should only need assert that
-    //   no status messages appear at all in https://drupal.org/i/3360485.
-    $assert_no_status_check_messages = function () use ($admin_route, $messages_section_selector, $assert) {
-      // @todo Remove in https://drupal.org/i/3360485.
-      if ($admin_route === 'update.settings') {
-        // Ensure there is warning about missing Drush and no other errors or
-        // warnings.
-        $assert->elementTextEquals('css', $messages_section_selector, 'Warning message Drush is required for unattended updates.');
-      }
-      else {
-        $assert->statusMessageNotExists();
-      }
-    };
-    $assert_no_status_check_messages();
+    $assert->statusMessageNotExists();
 
     // Confirm a user without the permission to run status checks does not have
     // a link to run the checks when the checks need to be run again.
@@ -288,7 +275,7 @@ class StatusCheckTest extends AutomaticUpdatesFunctionalTestBase {
     // A user without the permission to run the checkers will not see a message
     // on other pages if the checkers need to be run again.
     $this->drupalGet(Url::fromRoute($admin_route));
-    $assert_no_status_check_messages();
+    $assert->statusMessageNotExists();
 
     // Confirm that a user with the correct permission can also run the checkers
     // on another admin page.

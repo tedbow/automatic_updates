@@ -5,7 +5,7 @@ declare(strict_types = 1);
 namespace Drupal\automatic_updates\Validation;
 
 use Drupal\automatic_updates\CronUpdateStage;
-use Drupal\automatic_updates\DrushUpdateStage;
+use Drupal\automatic_updates\ConsoleUpdateStage;
 use Drupal\automatic_updates\StatusCheckMailer;
 use Drupal\Core\Config\ConfigCrudEvent;
 use Drupal\Core\Config\ConfigEvents;
@@ -43,7 +43,7 @@ final class StatusChecker implements EventSubscriberInterface {
    *   The event dispatcher service.
    * @param \Drupal\automatic_updates\UpdateStage $updateStage
    *   The update stage service.
-   * @param \Drupal\automatic_updates\DrushUpdateStage $consoleUpdateStage
+   * @param \Drupal\automatic_updates\ConsoleUpdateStage $consoleUpdateStage
    *   The console update stage service.
    * @param \Drupal\automatic_updates\CronUpdateStage $cronUpdateStage
    *   The cron update stage service.
@@ -55,7 +55,7 @@ final class StatusChecker implements EventSubscriberInterface {
     private readonly TimeInterface $time,
     private readonly EventDispatcherInterface $eventDispatcher,
     private readonly UpdateStage $updateStage,
-    private readonly DrushUpdateStage $consoleUpdateStage,
+    private readonly ConsoleUpdateStage $consoleUpdateStage,
     private readonly CronUpdateStage $cronUpdateStage,
     private readonly int $resultsTimeToLive,
   ) {

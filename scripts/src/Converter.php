@@ -97,10 +97,6 @@ class Converter {
       //   https://drupal.org/i/3347937.
       'scripts',
       'dictionary.txt',
-      // Drupal core does not ship with any Drush commands.
-      'drush.services.yml',
-      'src/Commands/AutomaticUpdatesCommands.php',
-      'src/DrushUpdateStage.php',
     ];
     $removals = array_map(function ($path) use ($core_module_path) {
       return "$core_module_path/$path";

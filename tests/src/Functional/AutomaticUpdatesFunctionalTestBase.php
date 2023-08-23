@@ -4,6 +4,7 @@ declare(strict_types = 1);
 
 namespace Drupal\Tests\automatic_updates\Functional;
 
+use Drupal\automatic_updates\CommandExecutor;
 use Drupal\automatic_updates\CronUpdateStage;
 use Drupal\fixture_manipulator\StageFixtureManipulator;
 use Drupal\package_manager\PathLocator;
@@ -170,6 +171,24 @@ abstract class AutomaticUpdatesFunctionalTestBase extends BrowserTestBase {
     $active_dir = $this->copyFixtureToTempDirectory($fixture_directory);
     $this->container->get(PathLocator::class)
       ->setPaths($active_dir, $active_dir . '/vendor', '', NULL);
+  }
+
+  /**
+   * Runs the console update command, which will trigger status checks.
+   */
+  protected function runConsoleUpdateCommand(): void {
+    // Ensure that a valid test user agent cookie has been generated.
+    $this->prepareRequest();
+
+    $this->container->get(CommandExecutor::class)
+      ->create('--is-from-web')
+      ->setEnv([
+        // Ensure that the command will boot up and run in the test site.
+        // @see drupal_valid_test_ua()
+        'HTTP_USER_AGENT' => $this->getSession()->getCookie('SIMPLETEST_USER_AGENT'),
+      ])
+      ->setWorkingDirectory($this->getDrupalRoot())
+      ->mustRun();
   }
 
 }

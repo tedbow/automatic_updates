@@ -5,7 +5,7 @@ declare(strict_types = 1);
 namespace Drupal\Tests\automatic_updates\Build;
 
 use Behat\Mink\Element\DocumentElement;
-use Drupal\automatic_updates\DrushUpdateStage;
+use Drupal\automatic_updates\ConsoleUpdateStage;
 use Drupal\automatic_updates\UpdateStage;
 use Drupal\package_manager\Event\PostApplyEvent;
 use Drupal\package_manager\Event\PostCreateEvent;
@@ -65,7 +65,7 @@ class CoreUpdateTest extends UpdateTestBase {
   /**
    * {@inheritdoc}
    */
-  protected function createTestProject(string $template, bool $require_drush = FALSE): void {
+  protected function createTestProject(string $template): void {
     parent::createTestProject($template);
 
     // Prepare an "upstream" version of core, 9.8.1, to which we will update.
@@ -88,13 +88,6 @@ class CoreUpdateTest extends UpdateTestBase {
 
     // Ensure that Drupal has write-protected the site directory.
     $this->assertDirectoryIsNotWritable($this->getWebRoot() . '/sites/default');
-
-    // @todo Remove along with $require_drush parameter in
-    //   https://drupal.org/i/3360485.
-    if ($require_drush) {
-      $output = $this->runComposer('COMPOSER_MIRROR_PATH_REPOS=1 composer require drush/drush', 'project');
-      $this->assertStringNotContainsString('Symlinking', $output);
-    }
   }
 
   /**
@@ -161,14 +154,14 @@ class CoreUpdateTest extends UpdateTestBase {
    * Tests updating during cron using the Automated Cron module.
    */
   public function testAutomatedCron(): void {
-    $this->createTestProject('RecommendedProject', TRUE);
+    $this->createTestProject('RecommendedProject');
     $this->installModules(['automated_cron']);
 
     // Reset the record of the last cron run, so that Automated Cron will be
     // triggered at the end of this request.
     $this->visit('/automatic-updates-test-api/reset-cron');
     $this->getMink()->assertSession()->pageTextContains('cron reset');
-    $this->assertExpectedStageEventsFired(DrushUpdateStage::class, wait: 360);
+    $this->assertExpectedStageEventsFired(ConsoleUpdateStage::class, wait: 360);
     $this->assertCronUpdateSuccessful();
   }
 
@@ -211,14 +204,14 @@ class CoreUpdateTest extends UpdateTestBase {
    * @dataProvider providerTemplate
    */
   public function testCron(string $template): void {
-    $this->createTestProject($template, TRUE);
+    $this->createTestProject($template);
 
     $this->visit('/admin/reports/status');
     $session = $this->getMink()->getSession();
 
     $session->getPage()->clickLink('Run cron');
     $this->assertSame(200, $session->getStatusCode());
-    $this->assertExpectedStageEventsFired(DrushUpdateStage::class, wait: 360);
+    $this->assertExpectedStageEventsFired(ConsoleUpdateStage::class, wait: 360);
     $this->assertCronUpdateSuccessful();
   }
 
@@ -226,7 +219,7 @@ class CoreUpdateTest extends UpdateTestBase {
    * Tests stage is destroyed if not available and site is on insecure version.
    */
   public function testStageDestroyedIfNotAvailable(): void {
-    $this->createTestProject('RecommendedProject', TRUE);
+    $this->createTestProject('RecommendedProject');
     $mink = $this->getMink();
     $session = $mink->getSession();
     $page = $session->getPage();
@@ -249,7 +242,7 @@ class CoreUpdateTest extends UpdateTestBase {
       PreDestroyEvent::class,
       PostDestroyEvent::class,
     ];
-    $this->assertExpectedStageEventsFired(DrushUpdateStage::class, $expected_events, 360);
+    $this->assertExpectedStageEventsFired(ConsoleUpdateStage::class, $expected_events, 360);
     $this->assertCronUpdateSuccessful();
   }
 
@@ -450,30 +443,26 @@ class CoreUpdateTest extends UpdateTestBase {
     $this->assertUpdateSuccessful('9.8.1');
   }
 
-  // BEGIN: DELETE FROM CORE MERGE REQUEST
-
   /**
-   * Tests updating via Drush.
+   * Tests updating via the console directly.
    */
-  public function testDrushUpdate(): void {
-    $this->createTestProject('RecommendedProject', TRUE);
+  public function testConsoleUpdate(): void {
+    $this->createTestProject('RecommendedProject');
 
     $dir = $this->getWorkspaceDirectory() . '/project';
-    $command = [
-      $dir . '/vendor/drush/drush/drush',
-      'auto-update',
-      '--verbose',
-    ];
-    $process = new Process($command, $dir . '/web/sites/default');
-
+    // Use the `auto-update` command proxy that Composer puts into `vendor/bin`,
+    // just to prove that it works.
+    $command = [$dir . '/vendor/bin/auto-update'];
+    $process = new Process($command, $dir);
     // Give the update process as much time as it needs to run.
     $process->setTimeout(NULL)->mustRun();
+
     $output = $process->getOutput();
     $this->assertStringContainsString('Updating Drupal core to 9.8.1. This may take a while.', $output);
-    $this->assertStringContainsString('Drupal core was successfully updated to 9.8.1!', $output);
     $this->assertStringContainsString('Running post-apply tasks and final clean-up...', $output);
+    $this->assertStringContainsString('Drupal core was successfully updated to 9.8.1!', $output);
     $this->assertUpdateSuccessful('9.8.1');
-    $this->assertExpectedStageEventsFired(DrushUpdateStage::class);
+    $this->assertExpectedStageEventsFired(ConsoleUpdateStage::class);
 
     // Rerunning the command should exit with a message that no newer version
     // is available.
@@ -481,7 +470,5 @@ class CoreUpdateTest extends UpdateTestBase {
     $process->mustRun();
     $this->assertStringContainsString("There is no Drupal core update available.", $process->getOutput());
   }
-
-  // END: DELETE FROM CORE MERGE REQUEST
 
 }

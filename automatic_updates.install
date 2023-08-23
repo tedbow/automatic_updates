@@ -37,22 +37,6 @@ function automatic_updates_requirements($phase) {
         'value' => t('Enabled. This is NOT an officially supported feature of the Automatic Updates module at this time. Use at your own risk.'),
       ];
     }
-
-    /** @var \Drupal\automatic_updates\CronUpdateStage $cron_update_stage */
-    $cron_update_stage = \Drupal::service('automatic_updates.cron_update_stage');
-    if ($cron_update_stage->getMode() !== CronUpdateStage::DISABLED) {
-      try {
-        $cron_update_stage->getCommandPath();
-      }
-      catch (\Throwable) {
-        $requirements['automatic_updates_drush_missing'] = [
-          'title' => t('Automatic Updates Drush Requirement'),
-          'severity' => SystemManager::REQUIREMENT_ERROR,
-          'value' => t('Drush is required for unattended updates.'),
-        ];
-      }
-    }
-
     return $requirements;
   }
 }

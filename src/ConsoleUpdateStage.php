@@ -19,22 +19,48 @@ use Drupal\package_manager\FailureMarker;
 use Drupal\package_manager\PathLocator;
 use Drupal\package_manager\ProjectInfo;
 use Drupal\update\ProjectRelease;
-use Drush\Drush;
 use PhpTuf\ComposerStager\API\Core\BeginnerInterface;
 use PhpTuf\ComposerStager\API\Core\CommitterInterface;
 use PhpTuf\ComposerStager\API\Core\StagerInterface;
 use PhpTuf\ComposerStager\API\Path\Factory\PathFactoryInterface;
+use Symfony\Component\Console\Output\NullOutput;
+use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 
 /**
- * An updater that runs via a Drush command.
- *
- * @todo Make this class a generic console stage in https://drupal.org/i/3360485
+ * An updater that runs via a console command.
  */
-class DrushUpdateStage extends UpdateStage {
+class ConsoleUpdateStage extends UpdateStage {
 
   /**
-   * Constructs a DrushUpdateStage object.
+   * The metadata key that stores the previous and target versions of core.
+   *
+   * @see ::handlePostApply()
+   *
+   * @var string
+   */
+  protected const VERSIONS_METADATA_KEY = 'automatic_updates_versions';
+
+  /**
+   * The console output handler.
+   *
+   * @see ::triggerPostApply()
+   *
+   * @var \Symfony\Component\Console\Output\OutputInterface
+   */
+  public OutputInterface $output;
+
+  /**
+   * Whether the update is being triggered by a web request.
+   *
+   * @see ::triggerPostApply()
+   *
+   * @var bool
+   */
+  public bool $isFromWeb = FALSE;
+
+  /**
+   * Constructs a ConsoleUpdateStage object.
    *
    * @param \Drupal\Core\Lock\LockBackendInterface $lock
    *   The lock service.
@@ -46,6 +72,8 @@ class DrushUpdateStage extends UpdateStage {
    *   The status check mailer service.
    * @param \Drupal\automatic_updates\ReleaseChooser $releaseChooser
    *   The cron release chooser service.
+   * @param \Drupal\automatic_updates\CommandExecutor $commandExecutor
+   *   The update command executor service.
    * @param \Drupal\package_manager\ComposerInspector $composerInspector
    *   The Composer inspector service.
    * @param \Drupal\package_manager\PathLocator $pathLocator
@@ -75,6 +103,7 @@ class DrushUpdateStage extends UpdateStage {
     private readonly MailManagerInterface $mailManager,
     private readonly StatusCheckMailer $statusCheckMailer,
     private readonly ReleaseChooser $releaseChooser,
+    private readonly CommandExecutor $commandExecutor,
     ComposerInspector $composerInspector,
     PathLocator $pathLocator,
     BeginnerInterface $beginner,
@@ -88,6 +117,7 @@ class DrushUpdateStage extends UpdateStage {
     FailureMarker $failureMarker,
   ) {
     parent::__construct($composerInspector, $pathLocator, $beginner, $stager, $committer, $fileSystem, $eventDispatcher, $tempStoreFactory, $time, $pathFactory, $failureMarker);
+    $this->output = new NullOutput();
   }
 
   /**
@@ -118,16 +148,10 @@ class DrushUpdateStage extends UpdateStage {
   /**
    * Performs the update.
    *
-   * @param bool $is_from_web
-   *   Whether the current process was started from a web request. This is not
-   *   used by this method specifically, but it's passed through to post-apply
-   *   to ensure that status checks are only run as the web server user if the
-   *   update is being trigger via the web.
-   *
    * @return bool
    *   Returns TRUE if any update was attempted, otherwise FALSE.
    */
-  public function performUpdate(bool $is_from_web = FALSE): bool {
+  public function performUpdate(): bool {
     if ($this->cronUpdateRunner->getMode() === CronUpdateStage::DISABLED) {
       return FALSE;
     }
@@ -178,7 +202,8 @@ class DrushUpdateStage extends UpdateStage {
     try {
       $update_started = TRUE;
       // @see ::begin()
-      $stage_id = parent::begin(['drupal' => $target_version], 300);
+      $stage_id = parent::begin(['drupal' => $target_version]);
+      $this->setMetadata(static::VERSIONS_METADATA_KEY, [$installed_version, $target_version]);
       $this->stage();
       $this->apply();
     }
@@ -226,7 +251,7 @@ class DrushUpdateStage extends UpdateStage {
       }
       return $update_started;
     }
-    $this->triggerPostApply($stage_id, $installed_version, $target_version, $is_from_web);
+    $this->triggerPostApply($stage_id);
     return TRUE;
   }
 
@@ -235,28 +260,18 @@ class DrushUpdateStage extends UpdateStage {
    *
    * @param string $stage_id
    *   The ID of the current stage.
-   * @param string $start_version
-   *   The version of Drupal core that started the update.
-   * @param string $target_version
-   *   The version of Drupal core to which we are updating.
-   * @param bool $is_from_web
-   *   Whether or not the update command was run from the web.
    */
-  protected function triggerPostApply(string $stage_id, string $start_version, string $target_version, bool $is_from_web): void {
-    $alias = Drush::aliasManager()->getSelf();
-
-    $output = Drush::processManager()
-      ->drush($alias, 'auto-update', [], [
-        'post-apply' => TRUE,
-        'stage-id' => $stage_id,
-        'from-version' => $start_version,
-        'to-version' => $target_version,
-        'is-from-web' => $is_from_web,
-      ])
+  protected function triggerPostApply(string $stage_id): void {
+    $arguments = "post-apply $stage_id";
+    if ($this->isFromWeb) {
+      $arguments .= ' --is-from-web';
+    }
+    // Run the post-apply command and pass its output to our output handler
+    // unmodified (hopefully including any ANSI color codes).
+    $output = $this->commandExecutor->create($arguments)
       ->mustRun()
       ->getOutput();
-    // Ensure the output of the sub-process is visible.
-    Drush::output()->write($output);
+    $this->output->write($output);
   }
 
   /**
@@ -264,26 +279,21 @@ class DrushUpdateStage extends UpdateStage {
    *
    * @param string $stage_id
    *   The stage ID.
-   * @param string $installed_version
-   *   The version of Drupal core that started the update.
-   * @param string $target_version
-   *   The version of Drupal core to which we updated.
    */
-  public function handlePostApply(string $stage_id, string $installed_version, string $target_version): void {
+  public function handlePostApply(string $stage_id): void {
     $owner = $this->tempStore->getMetadata(static::TEMPSTORE_LOCK_KEY)
       ->getOwnerId();
     // Reload the tempstore with the correct owner ID so we can claim the stage.
     $this->tempStore = $this->tempStoreFactory->get('package_manager_stage', $owner);
 
-    $this->claim($stage_id);
+    // This metadata was stored by ::performUpdate() after the update began.
+    [$installed_version, $target_version] = $this->claim($stage_id)
+      ->getMetadata(static::VERSIONS_METADATA_KEY);
 
-    $this->logger->info(
-      'Drupal core has been updated from %previous_version to %target_version',
-      [
-        '%previous_version' => $installed_version,
-        '%target_version' => $target_version,
-      ]
-    );
+    $this->logger->info('Drupal core has been updated from %previous_version to %target_version', [
+      '%previous_version' => $installed_version,
+      '%target_version' => $target_version,
+    ]);
 
     // Send notifications about the successful update.
     $mail_params = [

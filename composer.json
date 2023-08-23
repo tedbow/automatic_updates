@@ -15,11 +15,11 @@
     "require": {
         "ext-json": "*",
         "php-tuf/composer-stager": "2.0-alpha4",
-        "composer-runtime-api": "^2.1"
+        "composer-runtime-api": "^2.1",
+        "symfony/console": "^6.2"
     },
     "require-dev": {
         "colinodell/psr-testlogger": "^1.2",
-        "drush/drush": "^11",
         "symfony/config": "^6.2"
     },
     "scripts": {
@@ -44,11 +44,5 @@
             "Drupal\\automatic_updates\\Development\\": "scripts/src"
         }
     },
-    "extra": {
-        "drush": {
-            "services": {
-                "drush.services.yml": "^11"
-            }
-        }
-    }
+    "bin": ["auto-update"]
 }

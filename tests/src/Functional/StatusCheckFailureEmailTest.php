@@ -14,7 +14,6 @@ use Drupal\system\SystemManager;
 use Drupal\Tests\automatic_updates\Traits\EmailNotificationsTestTrait;
 use Drupal\Tests\automatic_updates\Traits\ValidationTestTrait;
 use Drupal\Tests\Traits\Core\CronRunTrait;
-use Drush\TestTraits\DrushTestTrait;
 
 /**
  * Tests status check failure notification emails during cron runs.
@@ -27,7 +26,6 @@ class StatusCheckFailureEmailTest extends AutomaticUpdatesFunctionalTestBase {
 
   use CronRunTrait;
   use EmailNotificationsTestTrait;
-  use DrushTestTrait;
   use ValidationTestTrait;
 
   /**
@@ -46,13 +44,6 @@ class StatusCheckFailureEmailTest extends AutomaticUpdatesFunctionalTestBase {
   ];
 
   /**
-   * The number of times cron has been run.
-   *
-   * @var int
-   */
-  private $cronRunCount = 0;
-
-  /**
    * {@inheritdoc}
    */
   protected function setUp(): void {
@@ -61,7 +52,10 @@ class StatusCheckFailureEmailTest extends AutomaticUpdatesFunctionalTestBase {
     $this->mockActiveCoreVersion('9.8.1');
     // @todo Remove in https://www.drupal.org/project/automatic_updates/issues/3284443
     $this->config('automatic_updates.settings')
-      ->set('unattended.level', CronUpdateStage::SECURITY)
+      ->set('unattended', [
+        'level' => CronUpdateStage::SECURITY,
+        'method' => 'console',
+      ])
       ->save();
     $this->setUpEmailRecipients();
 
@@ -73,10 +67,6 @@ class StatusCheckFailureEmailTest extends AutomaticUpdatesFunctionalTestBase {
     // from breaking this test due to available update data being irretrievable.
     $this->config('update.settings')
       ->set('check.interval_days', 30)
-      ->save();
-
-    $this->config('automatic_updates.settings')
-      ->set('unattended.method', 'console')
       ->save();
   }
 
@@ -107,12 +97,6 @@ class StatusCheckFailureEmailTest extends AutomaticUpdatesFunctionalTestBase {
     $url = Url::fromRoute('system.status')
       ->setAbsolute()
       ->toString();
-
-    // @todo For some reason Drush does not use the correct base path when
-    //   creating the emails. Remove this workaround when the Drush dependency
-    //   is removed in https://drupal.org/i/3360485.
-    $base = $this->buildUrl('');
-    $url = str_replace($base, 'http://default/', $url);
 
     $expected_body = <<<END
 Your site has failed some readiness checks for automatic updates and may not be able to receive automatic updates until further action is taken. Visit $url for more information.
@@ -230,18 +214,20 @@ END;
   }
 
   /**
-   * Runs the console update command which will trigger the status checks.
+   * {@inheritdoc}
    */
-  private function runConsoleUpdateCommand(): void {
+  protected function runConsoleUpdateCommand(): void {
     static $total_delay = 0;
     // Status checks don't run more than once an hour, so pretend that 61
     // minutes have elapsed since the last run.
     $total_delay += 61;
     TestTime::setFakeTimeByOffset("+$total_delay minutes");
-    $this->drush('auto-update');
+
+    parent::runConsoleUpdateCommand();
+
     // Since the terminal command that sent the emails doesn't use the same
-    // container as this test we need to reset the state cache where to get the
-    // test data about the sent emails.
+    // container as this test, we need to reset the state cache to get
+    // information about the sent emails.
     $this->container->get('state')->resetCache();
   }
 

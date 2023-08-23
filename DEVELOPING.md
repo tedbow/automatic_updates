@@ -30,11 +30,6 @@ That's it. The success message will display next steps.
 * Composer 2 or later. (Automatic Updates is not compatible with Composer 1.)
 * Git must be installed.
 
-### Caveats
-* Symbolic links are not currently supported by Package Manager. If the Drupal core checkout created during setup below contains any, tests will not work. By default, there shouldn't be any, but some may exist in certain situations (for example, if Drush or Drupal core's JavaScript dependencies have been installed).<br>
-  <br>
-  To scan for symbolic links, run `find . -type l` from the Drupal core repository root. If you find any, try to identify their source and eliminate it (for example, by removing a Composer library that places them).
-
 ### Customizing your setup
 Several details of your setup can be customized via environment variables. Set these before running [the installation command above](#local-development-environment-setup).
 

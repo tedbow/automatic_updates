@@ -4,7 +4,6 @@ declare(strict_types = 1);
 
 namespace Drupal\automatic_updates;
 
-use Drupal\Component\Datetime\TimeInterface;
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\CronInterface;
 use Drupal\Core\Utility\Error;
@@ -12,8 +11,6 @@ use Drupal\package_manager\PathLocator;
 use Psr\Log\LoggerAwareInterface;
 use Psr\Log\LoggerAwareTrait;
 use Psr\Log\NullLogger;
-use Symfony\Component\Process\PhpExecutableFinder;
-use Symfony\Component\Process\Process;
 
 /**
  * Runs updates as a detached background process after regular cron tasks.
@@ -74,14 +71,14 @@ class CronUpdateStage implements CronInterface, LoggerAwareInterface {
    *   The path locator service.
    * @param \Drupal\Core\CronInterface $inner
    *   The decorated cron service.
-   * @param \Drupal\Component\Datetime\TimeInterface $time
-   *   The time service.
+   * @param \Drupal\automatic_updates\CommandExecutor $commandExecutor
+   *   The update command executor service.
    */
   public function __construct(
     private readonly ConfigFactoryInterface $configFactory,
     private readonly PathLocator $pathLocator,
     private readonly CronInterface $inner,
-    private readonly TimeInterface $time,
+    private readonly CommandExecutor $commandExecutor,
   ) {
     $this->setLogger(new NullLogger());
   }
@@ -90,27 +87,12 @@ class CronUpdateStage implements CronInterface, LoggerAwareInterface {
    * Runs the terminal update command.
    */
   protected function runTerminalUpdateCommand(): void {
-    $command_path = $this->getCommandPath();
-    $php_binary_finder = new PhpExecutableFinder();
-
     // Use the `&` on the command line to detach this process after it is
     // started. This will allow the command to outlive the web request.
-    $process = Process::fromShellCommandline($php_binary_finder->find() . " $command_path auto-update --is-from-web &")
-      ->setWorkingDirectory($this->pathLocator->getProjectRoot())
-      ->setTimeout(0);
+    $process = $this->commandExecutor->create('--is-from-web &');
 
     try {
-      $process->start();
-      // Wait for the process to have an ID, otherwise the web request may end
-      // before the detached process has a chance to start.
-      $wait_until = $this->time->getCurrentTime() + 5;
-      do {
-        sleep(1);
-        $pid = $process->getPid();
-        if ($pid) {
-          break;
-        }
-      } while ($wait_until > $this->time->getCurrentTime());
+      $pid = $this->commandExecutor->start($process);
     }
     catch (\Throwable $throwable) {
       // @todo Just call Error::logException() in https://drupal.org/i/3377458.
@@ -178,27 +160,6 @@ class CronUpdateStage implements CronInterface, LoggerAwareInterface {
   final public function getMode(): string {
     $mode = $this->configFactory->get('automatic_updates.settings')->get('unattended.level');
     return $mode ?: static::SECURITY;
-  }
-
-  /**
-   * Gets the command path.
-   *
-   * @return string
-   *   The command path.
-   *
-   * @throws \Exception
-   *   Thrown if command path does not exist.
-   *
-   * @todo Remove in https://drupal.org/i/3360485.
-   */
-  public function getCommandPath(): string {
-    // For some reason 'vendor/bin/drush' does not exist in build tests but this
-    // method will be removed entirely before beta.
-    $command_path = $this->pathLocator->getVendorDirectory() . '/drush/drush/drush';
-    if (!is_executable($command_path)) {
-      throw new \Exception("The Automatic Updates terminal command is not available at $command_path.");
-    }
-    return $command_path;
   }
 
 }

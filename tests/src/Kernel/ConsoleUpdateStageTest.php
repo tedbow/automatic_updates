@@ -5,7 +5,7 @@ declare(strict_types = 1);
 namespace Drupal\Tests\automatic_updates\Kernel;
 
 use Drupal\automatic_updates\CronUpdateStage;
-use Drupal\automatic_updates\DrushUpdateStage;
+use Drupal\automatic_updates\ConsoleUpdateStage;
 use Drupal\automatic_updates_test\EventSubscriber\TestSubscriber1;
 use Drupal\Core\DependencyInjection\ContainerBuilder;
 use Drupal\Core\Logger\RfcLogLevel;
@@ -35,11 +35,11 @@ use ColinODell\PsrTestLogger\TestLogger;
 use Symfony\Component\DependencyInjection\Reference;
 
 /**
- * @covers \Drupal\automatic_updates\DrushUpdateStage
+ * @covers \Drupal\automatic_updates\ConsoleUpdateStage
  * @group automatic_updates
  * @internal
  */
-class DrushUpdateStageTest extends AutomaticUpdatesKernelTestBase {
+class ConsoleUpdateStageTest extends AutomaticUpdatesKernelTestBase {
 
   use EmailNotificationsTestTrait;
   use PackageManagerBypassTestTrait;
@@ -312,8 +312,8 @@ END;
       ->get('cron')
       ->addLogger($cron_logger);
 
-    /** @var \Drupal\automatic_updates\DrushUpdateStage $stage */
-    $stage = $this->container->get(DrushUpdateStage::class);
+    /** @var \Drupal\automatic_updates\ConsoleUpdateStage $stage */
+    $stage = $this->container->get(ConsoleUpdateStage::class);
 
     // When the event specified by $event_class is dispatched, either throw an
     // exception directly from the event subscriber, or prepare a
@@ -474,8 +474,8 @@ END;
    * Tests that CronUpdateStage::begin() unconditionally throws an exception.
    */
   public function testBeginThrowsException(): void {
-    $this->expectExceptionMessage(DrushUpdateStage::class . '::begin() cannot be called directly.');
-    $this->container->get(DrushUpdateStage::class)
+    $this->expectExceptionMessage(ConsoleUpdateStage::class . '::begin() cannot be called directly.');
+    $this->container->get(ConsoleUpdateStage::class)
       ->begin(['drupal' => '9.8.1']);
   }
 
@@ -543,7 +543,7 @@ END;
     $error = ValidationResult::createError([
       t('Error while updating!'),
     ]);
-    $exception = $this->createStageEventExceptionFromResults([$error], $event_class, $this->container->get(DrushUpdateStage::class));
+    $exception = $this->createStageEventExceptionFromResults([$error], $event_class, $this->container->get(ConsoleUpdateStage::class));
     TestSubscriber1::setTestResult($exception->event->getResults(), $event_class);
 
     $this->runConsoleUpdateStage();
@@ -585,7 +585,7 @@ END;
       t('Error while updating!'),
     ]);
     TestSubscriber1::setTestResult([$error], $event_class);
-    $exception = $this->createStageEventExceptionFromResults([$error], $event_class, $this->container->get(DrushUpdateStage::class));
+    $exception = $this->createStageEventExceptionFromResults([$error], $event_class, $this->container->get(ConsoleUpdateStage::class));
 
     $this->runConsoleUpdateStage();
 
