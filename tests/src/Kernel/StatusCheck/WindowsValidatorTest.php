@@ -5,7 +5,7 @@ declare(strict_types = 1);
 namespace Drupal\Tests\automatic_updates\Kernel\StatusCheck;
 
 use ColinODell\PsrTestLogger\TestLogger;
-use Drupal\automatic_updates\CronUpdateStage;
+use Drupal\automatic_updates\CronUpdateRunner;
 use Drupal\automatic_updates\Validator\WindowsValidator;
 use Drupal\Core\Logger\RfcLogLevel;
 use Drupal\package_manager\ValidationResult;
@@ -46,7 +46,7 @@ class WindowsValidatorTest extends AutomaticUpdatesKernelTestBase {
         ['administer software updates'],
         [
           'method' => 'web',
-          'level' => CronUpdateStage::ALL,
+          'level' => CronUpdateRunner::ALL,
         ],
         [
           ValidationResult::createError([
@@ -58,7 +58,7 @@ class WindowsValidatorTest extends AutomaticUpdatesKernelTestBase {
         [],
         [
           'method' => 'web',
-          'level' => CronUpdateStage::ALL,
+          'level' => CronUpdateRunner::ALL,
         ],
         [
           ValidationResult::createError([
@@ -70,7 +70,7 @@ class WindowsValidatorTest extends AutomaticUpdatesKernelTestBase {
         ['administer software updates'],
         [
           'method' => 'console',
-          'level' => CronUpdateStage::ALL,
+          'level' => CronUpdateRunner::ALL,
         ],
         [],
       ],
@@ -78,7 +78,7 @@ class WindowsValidatorTest extends AutomaticUpdatesKernelTestBase {
         [],
         [
           'method' => 'console',
-          'level' => CronUpdateStage::ALL,
+          'level' => CronUpdateRunner::ALL,
         ],
         [],
       ],
@@ -86,7 +86,7 @@ class WindowsValidatorTest extends AutomaticUpdatesKernelTestBase {
         ['administer software updates'],
         [
           'method' => 'web',
-          'level' => CronUpdateStage::DISABLED,
+          'level' => CronUpdateRunner::DISABLED,
         ],
         [],
       ],
@@ -94,7 +94,7 @@ class WindowsValidatorTest extends AutomaticUpdatesKernelTestBase {
         [],
         [
           'method' => 'web',
-          'level' => CronUpdateStage::DISABLED,
+          'level' => CronUpdateRunner::DISABLED,
         ],
         [],
       ],
@@ -144,7 +144,7 @@ class WindowsValidatorTest extends AutomaticUpdatesKernelTestBase {
     $this->assertCheckerResultsFromManager([], TRUE);
 
     // If unattended updates are enabled, ensure that they will succeed.
-    if ($unattended_update_settings['level'] !== CronUpdateStage::DISABLED) {
+    if ($unattended_update_settings['level'] !== CronUpdateRunner::DISABLED) {
       $logger->reset();
       $this->getStageFixtureManipulator()->setCorePackageVersion('9.8.1');
       $this->runConsoleUpdateStage();

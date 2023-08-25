@@ -7,7 +7,7 @@
 
 declare(strict_types = 1);
 
-use Drupal\automatic_updates\CronUpdateStage;
+use Drupal\automatic_updates\CronUpdateRunner;
 use Drupal\automatic_updates\Validation\StatusCheckRequirements;
 use Drupal\system\SystemManager;
 
@@ -30,7 +30,7 @@ function automatic_updates_requirements($phase) {
 
     // Check that site has cron updates enabled or not.
     // @todo Remove in https://www.drupal.org/project/automatic_updates/issues/3284443
-    if (\Drupal::configFactory()->get('automatic_updates.settings')->get('unattended.level') !== CronUpdateStage::DISABLED) {
+    if (\Drupal::configFactory()->get('automatic_updates.settings')->get('unattended.level') !== CronUpdateRunner::DISABLED) {
       $requirements['automatic_updates_cron'] = [
         'title' => t('Cron installs updates automatically'),
         'severity' => SystemManager::REQUIREMENT_WARNING,

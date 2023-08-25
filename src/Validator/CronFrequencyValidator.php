@@ -4,7 +4,7 @@ declare(strict_types = 1);
 
 namespace Drupal\automatic_updates\Validator;
 
-use Drupal\automatic_updates\CronUpdateStage;
+use Drupal\automatic_updates\CronUpdateRunner;
 use Drupal\automatic_updates\ConsoleUpdateStage;
 use Drupal\Component\Datetime\TimeInterface;
 use Drupal\Core\Config\ConfigFactoryInterface;
@@ -56,7 +56,7 @@ final class CronFrequencyValidator implements EventSubscriberInterface {
   /**
    * CronFrequencyValidator constructor.
    *
-   * @param \Drupal\automatic_updates\CronUpdateStage $cronUpdateRunner
+   * @param \Drupal\automatic_updates\CronUpdateRunner $cronUpdateRunner
    *   The cron update runner service.
    * @param \Drupal\Core\Config\ConfigFactoryInterface $configFactory
    *   The config factory service.
@@ -68,7 +68,7 @@ final class CronFrequencyValidator implements EventSubscriberInterface {
    *   The lock service.
    */
   public function __construct(
-    private readonly CronUpdateStage $cronUpdateRunner,
+    private readonly CronUpdateRunner $cronUpdateRunner,
     private readonly ConfigFactoryInterface $configFactory,
     private readonly StateInterface $state,
     private readonly TimeInterface $time,
@@ -90,7 +90,7 @@ final class CronFrequencyValidator implements EventSubscriberInterface {
     // the console command, there's nothing we need to validate.
     $method = $this->configFactory->get('automatic_updates.settings')
       ->get('unattended.method');
-    if ($this->cronUpdateRunner->getMode() === CronUpdateStage::DISABLED || $method !== 'web') {
+    if ($this->cronUpdateRunner->getMode() === CronUpdateRunner::DISABLED || $method !== 'web') {
       return;
     }
     // If cron is running right now, cron is clearly being run recently enough!

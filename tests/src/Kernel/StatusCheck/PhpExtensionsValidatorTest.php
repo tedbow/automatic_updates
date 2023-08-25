@@ -4,7 +4,7 @@ declare(strict_types = 1);
 
 namespace Drupal\Tests\automatic_updates\Kernel\StatusCheck;
 
-use Drupal\automatic_updates\CronUpdateStage;
+use Drupal\automatic_updates\CronUpdateRunner;
 use Drupal\Core\Logger\RfcLogLevel;
 use Drupal\package_manager\ValidationResult;
 use Drupal\Tests\automatic_updates\Kernel\AutomaticUpdatesKernelTestBase;
@@ -44,12 +44,12 @@ class PhpExtensionsValidatorTest extends AutomaticUpdatesKernelTestBase {
 
     // If unattended updates are disabled, we should only see a warning from
     // Package Manager.
-    $config->set('unattended.level', CronUpdateStage::DISABLED)->save();
+    $config->set('unattended.level', CronUpdateRunner::DISABLED)->save();
     $this->assertCheckerResultsFromManager([$warning_result], TRUE);
 
     // The parent class' setUp() method simulates an available security update,
-    // so ensure that the cron update stage will try to update to it.
-    $config->set('unattended.level', CronUpdateStage::SECURITY)->save();
+    // so ensure that the cron update runner will try to update to it.
+    $config->set('unattended.level', CronUpdateRunner::SECURITY)->save();
 
     // If unattended updates are enabled, we should see an error from Automatic
     // Updates.
@@ -75,9 +75,9 @@ class PhpExtensionsValidatorTest extends AutomaticUpdatesKernelTestBase {
     $this->addEventTestListener($this->simulateXdebugEnabled(...));
 
     // The parent class' setUp() method simulates an available security
-    // update, so ensure that the cron update stage will try to update to it.
+    // update, so ensure that the cron update runner will try to update to it.
     $this->config('automatic_updates.settings')
-      ->set('unattended.level', CronUpdateStage::SECURITY)
+      ->set('unattended.level', CronUpdateRunner::SECURITY)
       ->save();
 
     $logger = new TestLogger();

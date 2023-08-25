@@ -5,7 +5,7 @@ declare(strict_types = 1);
 namespace Drupal\Tests\automatic_updates\Functional;
 
 use Behat\Mink\Element\NodeElement;
-use Drupal\automatic_updates\CronUpdateStage;
+use Drupal\automatic_updates\CronUpdateRunner;
 use Drupal\automatic_updates\StatusCheckMailer;
 use Drupal\automatic_updates_test\EventSubscriber\TestSubscriber1;
 use Drupal\automatic_updates_test_status_checker\EventSubscriber\TestSubscriber2;
@@ -363,7 +363,7 @@ class StatusCheckTest extends AutomaticUpdatesFunctionalTestBase {
     // Confirm status check messages are not displayed when cron updates are
     // disabled.
     $this->config('automatic_updates.settings')
-      ->set('unattended.level', CronUpdateStage::DISABLED)
+      ->set('unattended.level', CronUpdateRunner::DISABLED)
       ->save();
     $this->drupalGet('admin/structure');
     $this->checkForMetaRefresh();
@@ -387,7 +387,7 @@ class StatusCheckTest extends AutomaticUpdatesFunctionalTestBase {
     $this->container->get('module_installer')->install(['automatic_updates', 'automatic_updates_test']);
     // @todo Remove in https://www.drupal.org/project/automatic_updates/issues/3284443
     $this->config('automatic_updates.settings')
-      ->set('unattended.level', CronUpdateStage::SECURITY)
+      ->set('unattended.level', CronUpdateRunner::SECURITY)
       ->save();
     $this->drupalGet('admin/reports/status');
     $this->assertNoErrors(TRUE);

@@ -57,7 +57,7 @@ class ErrorMessageOnStageDestroyTest extends AutomaticUpdatesFunctionalTestBase 
     $stage = $this->container->get(UpdateStage::class);
     $random_message = $this->randomString();
     // @see \Drupal\Tests\package_manager\Kernel\StageTest::testStoreDestroyInfo()
-    // @see \Drupal\automatic_updates\CronUpdateStage::performUpdate()
+    // @see \Drupal\automatic_updates\CronUpdateRunner::performUpdate()
     $stage->destroy(TRUE, t($random_message));
     $this->checkForMetaRefresh();
     $page->pressButton('Continue');

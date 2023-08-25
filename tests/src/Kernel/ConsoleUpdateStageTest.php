@@ -4,7 +4,7 @@ declare(strict_types = 1);
 
 namespace Drupal\Tests\automatic_updates\Kernel;
 
-use Drupal\automatic_updates\CronUpdateStage;
+use Drupal\automatic_updates\CronUpdateRunner;
 use Drupal\automatic_updates\ConsoleUpdateStage;
 use Drupal\automatic_updates_test\EventSubscriber\TestSubscriber1;
 use Drupal\Core\DependencyInjection\ContainerBuilder;
@@ -139,32 +139,32 @@ END;
     $fixture_dir = __DIR__ . '/../../../package_manager/tests/fixtures/release-history';
     return [
       'disabled, normal release' => [
-        CronUpdateStage::DISABLED,
+        CronUpdateRunner::DISABLED,
         ['drupal' => "$fixture_dir/drupal.9.8.2.xml"],
         FALSE,
       ],
       'disabled, security release' => [
-        CronUpdateStage::DISABLED,
+        CronUpdateRunner::DISABLED,
         ['drupal' => "$fixture_dir/drupal.9.8.1-security.xml"],
         FALSE,
       ],
       'security only, security release' => [
-        CronUpdateStage::SECURITY,
+        CronUpdateRunner::SECURITY,
         ['drupal' => "$fixture_dir/drupal.9.8.1-security.xml"],
         TRUE,
       ],
       'security only, normal release' => [
-        CronUpdateStage::SECURITY,
+        CronUpdateRunner::SECURITY,
         ['drupal' => "$fixture_dir/drupal.9.8.2.xml"],
         FALSE,
       ],
       'enabled, normal release' => [
-        CronUpdateStage::ALL,
+        CronUpdateRunner::ALL,
         ['drupal' => "$fixture_dir/drupal.9.8.2.xml"],
         TRUE,
       ],
       'enabled, security release' => [
-        CronUpdateStage::ALL,
+        CronUpdateRunner::ALL,
         ['drupal' => "$fixture_dir/drupal.9.8.1-security.xml"],
         TRUE,
       ],
@@ -297,7 +297,7 @@ END;
     $this->installConfig('automatic_updates');
     // @todo Remove in https://www.drupal.org/project/automatic_updates/issues/3284443
     $this->config('automatic_updates.settings')
-      ->set('unattended.level', CronUpdateStage::SECURITY)
+      ->set('unattended.level', CronUpdateRunner::SECURITY)
       ->save();
     // Ensure that there is a security release to which we should update.
     $this->setReleaseMetadata([
@@ -305,7 +305,7 @@ END;
     ]);
 
     // If the pre- or post-destroy events throw an exception, it will not be
-    // caught by the cron update stage, but it *will* be caught by the main cron
+    // caught by the cron update runner, but it *will* be caught by the main cron
     // service, which will log it as a cron error that we'll want to check for.
     $cron_logger = new TestLogger();
     $this->container->get('logger.factory')
@@ -358,9 +358,9 @@ END;
     $logged_by_cron = $cron_logger->hasRecordThatPasses($predicate, (string) RfcLogLevel::ERROR);
 
     // If a pre-destroy event flags a validation error, it's handled like any
-    // other event (logged by the cron update stage, but not the main cron
+    // other event (logged by the cron update runner, but not the main cron
     // service). But if a pre- or post-destroy event throws an exception, the
-    // cron update stage won't try to catch it. Instead, it will be caught and
+    // cron update runner won't try to catch it. Instead, it will be caught and
     // logged by the main cron service.
     if ($event_class === PreDestroyEvent::class || $event_class === PostDestroyEvent::class) {
       // If the pre-destroy event throws an exception or flags a validation
@@ -411,7 +411,7 @@ END;
    */
   public function testStageNotDestroyedIfApplying(): void {
     $this->config('automatic_updates.settings')
-      ->set('unattended.level', CronUpdateStage::ALL)
+      ->set('unattended.level', CronUpdateRunner::ALL)
       ->save();
     $this->setReleaseMetadata([
       'drupal' => __DIR__ . "/../../../package_manager/tests/fixtures/release-history/drupal.9.8.1-security.xml",
@@ -451,7 +451,7 @@ END;
    */
   public function testStageNotDestroyedIfSecure(): void {
     $this->config('automatic_updates.settings')
-      ->set('unattended.level', CronUpdateStage::ALL)
+      ->set('unattended.level', CronUpdateRunner::ALL)
       ->save();
     $this->setReleaseMetadata([
       'drupal' => __DIR__ . "/../../../package_manager/tests/fixtures/release-history/drupal.9.8.2.xml",
@@ -462,7 +462,7 @@ END;
     $stage->require(['drupal/random']);
     $this->assertUpdateStagedTimes(1);
 
-    // Trigger CronUpdateStage, the above should cause it to detect a stage that
+    // Trigger CronUpdateRunner, the above should cause it to detect a stage that
     // is applying.
     $this->runConsoleUpdateStage();
 
@@ -471,7 +471,7 @@ END;
   }
 
   /**
-   * Tests that CronUpdateStage::begin() unconditionally throws an exception.
+   * Tests that CronUpdateRunner::begin() unconditionally throws an exception.
    */
   public function testBeginThrowsException(): void {
     $this->expectExceptionMessage(ConsoleUpdateStage::class . '::begin() cannot be called directly.');
@@ -537,7 +537,7 @@ END;
       'drupal' => __DIR__ . '/../../../package_manager/tests/fixtures/release-history/drupal.9.8.2.xml',
     ]);
     $this->config('automatic_updates.settings')
-      ->set('unattended.level', CronUpdateStage::ALL)
+      ->set('unattended.level', CronUpdateRunner::ALL)
       ->save();
 
     $error = ValidationResult::createError([
@@ -629,7 +629,7 @@ END;
   }
 
   /**
-   * Tests that setLogger is called on the cron update stage service.
+   * Tests that setLogger is called on the cron update runner service.
    */
   public function testLoggerIsSetByContainer(): void {
     $stage_method_calls = $this->container->getDefinition('automatic_updates.cron_update_stage')->getMethodCalls();
@@ -649,9 +649,9 @@ END;
     $this->assertNull($state->get('system.maintenance_mode'));
     $this->runConsoleUpdateStage();
     $state->resetCache();
-    // @see \Drupal\Tests\automatic_updates\Kernel\TestCronUpdateStage::apply()
+    // @see \Drupal\Tests\automatic_updates\Kernel\TestCronUpdateRunner::apply()
     $this->assertTrue($this->logger->hasRecord('Unattended update was applied in maintenance mode.', RfcLogLevel::INFO));
-    // @see \Drupal\Tests\automatic_updates\Kernel\TestCronUpdateStage::postApply()
+    // @see \Drupal\Tests\automatic_updates\Kernel\TestCronUpdateRunner::postApply()
     $this->assertTrue($this->logger->hasRecord('postApply() was called in maintenance mode.', RfcLogLevel::INFO));
     // During post-apply, maintenance mode should have been explicitly turned
     // off (i.e., set to FALSE).

@@ -3,7 +3,7 @@
 namespace Drupal\automatic_updates\Commands;
 
 use Drupal\automatic_updates\ConsoleUpdateStage;
-use Drupal\automatic_updates\CronUpdateStage;
+use Drupal\automatic_updates\CronUpdateRunner;
 use Drupal\automatic_updates\StatusCheckMailer;
 use Drupal\automatic_updates\Validation\StatusChecker;
 use Drupal\Component\Datetime\TimeInterface;
@@ -130,7 +130,7 @@ abstract class AutomaticUpdatesCommandBase extends Command {
     // explicitly configured to do unattended updates on the command line.
     if ($needs_run && (($settings['method'] === 'web' && $this->stage->isFromWeb) || $settings['method'] === 'console')) {
       // Only send failure notifications if unattended updates are enabled.
-      if ($settings['level'] !== CronUpdateStage::DISABLED) {
+      if ($settings['level'] !== CronUpdateRunner::DISABLED) {
         $this->container->get(StatusCheckMailer::class)
           ->sendFailureNotifications($last_results, $status_checker->run()->getResults());
       }

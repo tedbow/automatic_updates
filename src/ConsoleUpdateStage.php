@@ -64,7 +64,7 @@ class ConsoleUpdateStage extends UpdateStage {
    *
    * @param \Drupal\Core\Lock\LockBackendInterface $lock
    *   The lock service.
-   * @param \Drupal\automatic_updates\CronUpdateStage $cronUpdateRunner
+   * @param \Drupal\automatic_updates\CronUpdateRunner $cronUpdateRunner
    *   The cron update runner service.
    * @param \Drupal\Core\Mail\MailManagerInterface $mailManager
    *   The mail manager service.
@@ -99,7 +99,7 @@ class ConsoleUpdateStage extends UpdateStage {
    */
   public function __construct(
     private readonly LockBackendInterface $lock,
-    private readonly CronUpdateStage $cronUpdateRunner,
+    private readonly CronUpdateRunner $cronUpdateRunner,
     private readonly MailManagerInterface $mailManager,
     private readonly StatusCheckMailer $statusCheckMailer,
     private readonly ReleaseChooser $releaseChooser,
@@ -152,7 +152,7 @@ class ConsoleUpdateStage extends UpdateStage {
    *   Returns TRUE if any update was attempted, otherwise FALSE.
    */
   public function performUpdate(): bool {
-    if ($this->cronUpdateRunner->getMode() === CronUpdateStage::DISABLED) {
+    if ($this->cronUpdateRunner->getMode() === CronUpdateRunner::DISABLED) {
       return FALSE;
     }
 

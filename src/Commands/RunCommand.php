@@ -2,7 +2,7 @@
 
 namespace Drupal\automatic_updates\Commands;
 
-use Drupal\automatic_updates\CronUpdateStage;
+use Drupal\automatic_updates\CronUpdateRunner;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\Core\Url;
 use Symfony\Component\Console\Input\InputInterface;
@@ -39,7 +39,7 @@ final class RunCommand extends AutomaticUpdatesCommandBase {
   protected function execute(InputInterface $input, OutputInterface $output): int {
     parent::execute($input, $output);
 
-    $runner = $this->container->get(CronUpdateStage::class);
+    $runner = $this->container->get(CronUpdateRunner::class);
     if ($runner->getMode() === $runner::DISABLED) {
       $message = $this->t('Automatic updates are disabled. Visit the update settings form at @url to enable them.', [
         '@url' => Url::fromRoute('update.settings')->toString(),

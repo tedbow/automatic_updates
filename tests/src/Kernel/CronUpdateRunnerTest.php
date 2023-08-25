@@ -4,14 +4,14 @@ declare(strict_types = 1);
 
 namespace Drupal\Tests\automatic_updates\Kernel;
 
-use Drupal\automatic_updates\CronUpdateStage;
+use Drupal\automatic_updates\CronUpdateRunner;
 
 /**
- * @coversDefaultClass  \Drupal\automatic_updates\CronUpdateStage
+ * @coversDefaultClass  \Drupal\automatic_updates\CronUpdateRunner
  * @group automatic_updates
  * @internal
  */
-class CronUpdateStageTest extends AutomaticUpdatesKernelTestBase {
+class CronUpdateRunnerTest extends AutomaticUpdatesKernelTestBase {
 
   /**
    * {@inheritdoc}
@@ -36,14 +36,14 @@ class CronUpdateStageTest extends AutomaticUpdatesKernelTestBase {
 
     // Undo override of the 'serverApi' property from the parent test class.
     // @see \Drupal\Tests\automatic_updates\Kernel\AutomaticUpdatesKernelTestBase::setUp
-    $property = new \ReflectionProperty(CronUpdateStage::class, 'serverApi');
+    $property = new \ReflectionProperty(CronUpdateRunner::class, 'serverApi');
     $property->setValue(NULL, 'cli');
-    $this->assertTrue(CronUpdateStage::isCommandLine());
+    $this->assertTrue(CronUpdateRunner::isCommandLine());
 
     // Since we're at the command line, the terminal command should not be
     // invoked. Since we are in a kernel test, there would be an exception
     // if that happened.
-    // @see \Drupal\Tests\automatic_updates\Kernel\TestCronUpdateStage::runTerminalUpdateCommand
+    // @see \Drupal\Tests\automatic_updates\Kernel\TestCronUpdateRunner::runTerminalUpdateCommand
     $this->container->get('cron')->run();
     // Even though the terminal command was not invoked, hook_cron
     // implementations should have been run.
@@ -52,7 +52,7 @@ class CronUpdateStageTest extends AutomaticUpdatesKernelTestBase {
     // If we are on the web but the method is set to 'console' the terminal
     // command should not be invoked.
     $property->setValue(NULL, 'cgi-fcgi');
-    $this->assertFalse(CronUpdateStage::isCommandLine());
+    $this->assertFalse(CronUpdateRunner::isCommandLine());
     $this->config('automatic_updates.settings')
       ->set('unattended.method', 'console')
       ->save();
@@ -69,7 +69,7 @@ class CronUpdateStageTest extends AutomaticUpdatesKernelTestBase {
       $this->fail('Expected an exception when running updates via cron.');
     }
     catch (\BadMethodCallException $e) {
-      $this->assertSame(TestCronUpdateStage::class, $e->getMessage());
+      $this->assertSame(TestCronUpdateRunner::class, $e->getMessage());
     }
     // Even though the terminal command threw exception hook_cron
     // implementations should have been invoked before this.

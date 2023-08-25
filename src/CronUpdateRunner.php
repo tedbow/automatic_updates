@@ -21,16 +21,13 @@ use Psr\Log\NullLogger;
  * run regardless of whether there is an update available and whether an update
  * is successful.
  *
- * @todo Rename this class to CronUpdateRunner because it is no longer a stage
- *   in https://drupal.org/i/3375940.
- *
  * @internal
  *   This class implements logic specific to Automatic Updates' cron hook
  *   implementation and may be changed or removed at any time without warning.
  *   It should not be called directly, and external code should not interact
  *   with it.
  */
-class CronUpdateStage implements CronInterface, LoggerAwareInterface {
+class CronUpdateRunner implements CronInterface, LoggerAwareInterface {
 
   use LoggerAwareTrait;
 
@@ -63,7 +60,7 @@ class CronUpdateStage implements CronInterface, LoggerAwareInterface {
   public const ALL = 'patch';
 
   /**
-   * Constructs a CronUpdateStage object.
+   * Constructs a CronUpdateRunner object.
    *
    * @param \Drupal\Core\Config\ConfigFactoryInterface $configFactory
    *   The config factory service.
