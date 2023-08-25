@@ -11,7 +11,6 @@ use Drupal\package_manager_bypass\LoggingCommitter;
 use Drupal\Tests\user\Traits\UserCreationTrait;
 use PhpTuf\ComposerStager\API\Exception\ExceptionInterface;
 use PhpTuf\ComposerStager\API\Exception\InvalidArgumentException;
-use PhpTuf\ComposerStager\Internal\Translation\Value\TranslatableMessage;
 
 /**
  * @coversDefaultClass \Drupal\automatic_updates\UpdateStage
@@ -187,7 +186,7 @@ class UpdateStageTest extends AutomaticUpdatesKernelTestBase {
     // Composer Stager's exception messages are usually translatable, so they
     // need to be wrapped by a TranslatableMessage object.
     if (is_subclass_of($thrown_class, ExceptionInterface::class)) {
-      $thrown_message = new TranslatableMessage($thrown_message);
+      $thrown_message = $this->createComposeStagerMessage($thrown_message);
     }
     LoggingCommitter::setException(new $thrown_class($thrown_message, 123));
     $this->expectException($expected_class);

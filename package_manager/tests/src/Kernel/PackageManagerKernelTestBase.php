@@ -20,6 +20,7 @@ use Drupal\package_manager\PathLocator;
 use Drupal\package_manager\StatusCheckTrait;
 use Drupal\package_manager\Validator\DiskSpaceValidator;
 use Drupal\package_manager\StageBase;
+use Drupal\Tests\automatic_updates\Traits\ComposerStagerTestTrait;
 use Drupal\Tests\package_manager\Traits\AssertPreconditionsTrait;
 use Drupal\Tests\package_manager\Traits\FixtureManipulatorTrait;
 use Drupal\Tests\package_manager\Traits\FixtureUtilityTrait;
@@ -41,6 +42,7 @@ use Symfony\Component\Filesystem\Filesystem;
 abstract class PackageManagerKernelTestBase extends KernelTestBase {
 
   use AssertPreconditionsTrait;
+  use ComposerStagerTestTrait;
   use FixtureManipulatorTrait;
   use FixtureUtilityTrait;
   use StatusCheckTrait;

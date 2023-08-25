@@ -14,8 +14,6 @@ services:
     public: false
   Drupal\package_manager\ExecutableFinder:
     public: false
-  Drupal\package_manager\FileSyncerFactory:
-    public: false
   Drupal\package_manager\TranslatableStringFactory:
     public: false
   PhpTuf\ComposerStager\API\Finder\Service\ExecutableFinderInterface:

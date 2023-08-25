@@ -7,8 +7,8 @@ namespace Drupal\Tests\package_manager\Kernel;
 use Drupal\KernelTests\KernelTestBase;
 use Drupal\Tests\package_manager\Traits\AssertPreconditionsTrait;
 use PhpTuf\ComposerStager\API\FileSyncer\Service\FileSyncerInterface;
-use PhpTuf\ComposerStager\Internal\FileSyncer\Service\PhpFileSyncer;
-use PhpTuf\ComposerStager\Internal\FileSyncer\Service\RsyncFileSyncer;
+use PhpTuf\ComposerStager\API\FileSyncer\Service\PhpFileSyncerInterface;
+use PhpTuf\ComposerStager\API\FileSyncer\Service\RsyncFileSyncerInterface;
 
 /**
  * @covers \Drupal\package_manager\FileSyncerFactory
@@ -50,11 +50,11 @@ class FileSyncerFactoryTest extends KernelTestBase {
   public function testFactory(?string $configured_syncer): void {
     switch ($configured_syncer) {
       case 'rsync':
-        $expected_syncer = RsyncFileSyncer::class;
+        $expected_syncer = RsyncFileSyncerInterface::class;
         break;
 
       case 'php':
-        $expected_syncer = PhpFileSyncer::class;
+        $expected_syncer = PhpFileSyncerInterface::class;
         break;
 
       default:

@@ -10,7 +10,7 @@ use Drupal\package_manager\ValidationResult;
 use Drupal\package_manager\Validator\RsyncValidator;
 use PhpTuf\ComposerStager\API\Exception\LogicException;
 use PhpTuf\ComposerStager\API\Finder\Service\ExecutableFinderInterface;
-use PhpTuf\ComposerStager\Internal\Translation\Value\TranslatableMessage;
+use PhpTuf\ComposerStager\API\Translation\Factory\TranslatableFactoryInterface;
 
 /**
  * @covers \Drupal\package_manager\Validator\RsyncValidator
@@ -121,7 +121,9 @@ class RsyncValidatorTest extends PackageManagerKernelTestBase {
    * Tests that the stage cannot be created if rsync is selected, but not found.
    */
   public function testPreCreateFailsIfRsyncNotFound(): void {
-    $message = new TranslatableMessage('Nope!');
+    /** @var \PhpTuf\ComposerStager\API\Translation\Factory\TranslatableFactoryInterface $translatable_factory */
+    $translatable_factory = $this->container->get(TranslatableFactoryInterface::class);
+    $message = $translatable_factory->createTranslatableMessage('Nope!');
     $this->executableFinder->find('rsync')->willThrow(new LogicException($message));
 
     $result = ValidationResult::createError([

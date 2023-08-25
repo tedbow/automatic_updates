@@ -30,7 +30,6 @@ use Drupal\Tests\user\Traits\UserCreationTrait;
 use PhpTuf\ComposerStager\API\Exception\InvalidArgumentException;
 use PhpTuf\ComposerStager\API\Exception\PreconditionException;
 use PhpTuf\ComposerStager\API\Precondition\Service\PreconditionInterface;
-use PhpTuf\ComposerStager\Internal\Translation\Value\TranslatableMessage;
 use ColinODell\PsrTestLogger\TestLogger;
 use Symfony\Component\DependencyInjection\Reference;
 
@@ -685,7 +684,7 @@ END;
   public function testMaintenanceModeAffectedByException(string $exception_class, bool $will_be_in_maintenance_mode): void {
     $this->getStageFixtureManipulator()->setCorePackageVersion('9.8.1');
 
-    $message = new TranslatableMessage('A fail whale upon your head!');
+    $message = $this->createComposeStagerMessage('A fail whale upon your head!');
     LoggingCommitter::setException(match ($exception_class) {
       InvalidArgumentException::class =>
       new InvalidArgumentException($message),

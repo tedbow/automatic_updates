@@ -26,7 +26,6 @@ use PhpTuf\ComposerStager\API\Exception\ExceptionInterface;
 use PhpTuf\ComposerStager\API\Exception\InvalidArgumentException;
 use PhpTuf\ComposerStager\API\Exception\PreconditionException;
 use PhpTuf\ComposerStager\API\Precondition\Service\PreconditionInterface;
-use PhpTuf\ComposerStager\Internal\Translation\Value\TranslatableMessage;
 use Psr\Log\LogLevel;
 use ColinODell\PsrTestLogger\TestLogger;
 
@@ -233,7 +232,7 @@ class StageBaseTest extends PackageManagerKernelTestBase {
       LoggingCommitter::setException(
         new PreconditionException(
           $this->prophesize(PreconditionInterface::class)->reveal(),
-          new TranslatableMessage('Stage directory does not exist'),
+          $this->createComposeStagerMessage('Stage directory does not exist'),
         )
       );
     };
@@ -368,7 +367,7 @@ class StageBaseTest extends PackageManagerKernelTestBase {
     // Composer Stager's exception messages are usually translatable, so they
     // need to be wrapped by a TranslatableMessage object.
     if (is_subclass_of($thrown_class, ExceptionInterface::class)) {
-      $throwable_arguments[0] = new TranslatableMessage($throwable_arguments[0]);
+      $throwable_arguments[0] = $this->createComposeStagerMessage($throwable_arguments[0]);
     }
     // PreconditionException requires a preconditions object.
     if ($thrown_class === PreconditionException::class) {

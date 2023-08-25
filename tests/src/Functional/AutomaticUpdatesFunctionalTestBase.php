@@ -8,6 +8,7 @@ use Drupal\automatic_updates\CronUpdateRunner;
 use Drupal\automatic_updates\CommandExecutor;
 use Drupal\fixture_manipulator\StageFixtureManipulator;
 use Drupal\package_manager\PathLocator;
+use Drupal\Tests\automatic_updates\Traits\ComposerStagerTestTrait;
 use Drupal\Tests\BrowserTestBase;
 use Drupal\Tests\package_manager\Traits\AssertPreconditionsTrait;
 use Drupal\Tests\package_manager\Traits\FixtureManipulatorTrait;
@@ -22,6 +23,7 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
 abstract class AutomaticUpdatesFunctionalTestBase extends BrowserTestBase {
 
   use AssertPreconditionsTrait;
+  use ComposerStagerTestTrait;
   use FixtureManipulatorTrait;
   use FixtureUtilityTrait;
 

@@ -16,10 +16,9 @@ use Drupal\Tests\package_manager\Traits\InstalledPackagesListTrait;
 use Drupal\package_manager\PathLocator;
 use PhpTuf\ComposerStager\API\Exception\PreconditionException;
 use PhpTuf\ComposerStager\API\Exception\RuntimeException;
+use PhpTuf\ComposerStager\API\Path\Factory\PathFactoryInterface;
 use PhpTuf\ComposerStager\API\Precondition\Service\ComposerIsAvailableInterface;
 use PhpTuf\ComposerStager\API\Process\Service\ComposerProcessRunnerInterface;
-use PhpTuf\ComposerStager\Internal\Path\Factory\PathFactory;
-use PhpTuf\ComposerStager\Internal\Translation\Value\TranslatableMessage;
 use Prophecy\Argument;
 use Prophecy\Prophecy\ObjectProphecy;
 
@@ -155,7 +154,7 @@ class ComposerInspectorTest extends PackageManagerKernelTestBase {
     $mocked_precondition = $precondition->reveal();
     $this->container->set(ComposerIsAvailableInterface::class, $mocked_precondition);
 
-    $message = new TranslatableMessage("Well, that didn't work.");
+    $message = $this->createComposeStagerMessage("Well, that didn't work.");
     $precondition->assertIsFulfilled(Argument::cetera())
       ->willThrow(new PreconditionException($mocked_precondition, $message))
       // The result of the precondition is statically cached, so it should only
@@ -362,7 +361,7 @@ class ComposerInspectorTest extends PackageManagerKernelTestBase {
     $inspector = new class (
       $this->container->get(ComposerProcessRunnerInterface::class),
       $this->container->get(ComposerIsAvailableInterface::class),
-      new PathFactory(),
+      $this->container->get(PathFactoryInterface::class),
     ) extends ComposerInspector {
 
       /**

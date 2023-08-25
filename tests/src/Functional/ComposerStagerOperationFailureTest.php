@@ -9,7 +9,6 @@ use Drupal\package_manager_bypass\LoggingCommitter;
 use Drupal\package_manager_bypass\NoOpStager;
 use PhpTuf\ComposerStager\API\Exception\InvalidArgumentException;
 use PhpTuf\ComposerStager\API\Exception\LogicException;
-use PhpTuf\ComposerStager\Internal\Translation\Value\TranslatableMessage;
 
 /**
  * @covers \Drupal\automatic_updates\Form\UpdaterForm
@@ -39,7 +38,7 @@ class ComposerStagerOperationFailureTest extends UpdaterFormTestBase {
     $page->hasButton('Update to 9.8.1');
 
     // Make the specified Composer Stager operation class throw an exception.
-    $message = new TranslatableMessage("Failure from inside $service_class");
+    $message = $this->createComposeStagerMessage("Failure from inside $service_class");
     $exception = new $exception_class($message);
     call_user_func([$service_class, 'setException'], $exception);
 

@@ -7,6 +7,7 @@ namespace Drupal\package_manager;
 use Drupal\Core\DependencyInjection\ContainerBuilder;
 use Drupal\Core\DependencyInjection\ServiceProviderBase;
 use PhpTuf\ComposerStager\API\Core\BeginnerInterface;
+use PhpTuf\ComposerStager\API\FileSyncer\Factory\FileSyncerFactoryInterface;
 use PhpTuf\ComposerStager\API\Precondition\Service\NoSymlinksPointToADirectoryInterface;
 
 /**
@@ -124,6 +125,11 @@ final class PackageManagerServiceProvider extends ServiceProviderBase {
       ->setPublic(FALSE)
       ->setAutowired(TRUE)
       ->setDecoratedService(NoSymlinksPointToADirectoryInterface::class);
+
+    $container->register(FileSyncerFactory::class)
+      ->setPublic(FALSE)
+      ->setAutowired(TRUE)
+      ->setDecoratedService(FileSyncerFactoryInterface::class);
   }
 
 }
