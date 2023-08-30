@@ -8,7 +8,8 @@ use Drupal\package_manager\Event\PreCreateEvent;
 use Drupal\package_manager\Exception\StageEventException;
 use Drupal\package_manager\PathLocator;
 use Drupal\package_manager\ValidationResult;
-use PhpTuf\ComposerStager\Internal\Host\Service\HostInterface;
+use PhpTuf\ComposerStager\API\Environment\Service\EnvironmentInterface;
+use Prophecy\Argument;
 
 /**
  * @covers \Drupal\package_manager\Validator\SymlinkValidator
@@ -188,16 +189,10 @@ class SymlinkValidatorTest extends PackageManagerKernelTestBase {
    * Tests that symlinks are not supported on Windows, even if they're safe.
    */
   public function testSymlinksNotAllowedOnWindows(): void {
-    $this->container->set(HostInterface::class, new class () implements HostInterface {
-
-      /**
-       * {@inheritdoc}
-       */
-      public static function isWindows(): bool {
-        return TRUE;
-      }
-
-    });
+    $environment = $this->prophesize(EnvironmentInterface::class);
+    $environment->isWindows()->willReturn(TRUE);
+    $environment->setTimeLimit(Argument::type('int'))->willReturn(TRUE);
+    $this->container->set(EnvironmentInterface::class, $environment->reveal());
 
     $project_root = $this->container->get(PathLocator::class)
       ->getProjectRoot();

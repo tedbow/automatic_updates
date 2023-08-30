@@ -7,6 +7,7 @@ namespace Drupal\Tests\package_manager\Unit;
 use ColinODell\PsrTestLogger\TestLogger;
 use Drupal\package_manager\ProcessOutputCallback;
 use Drupal\Tests\UnitTestCase;
+use PhpTuf\ComposerStager\API\Process\Value\OutputTypeEnum;
 
 /**
  * @covers \Drupal\package_manager\ProcessOutputCallback
@@ -19,22 +20,11 @@ class ProcessOutputCallbackTest extends UnitTestCase {
    */
   public function testInvalidJson(): void {
     $callback = new ProcessOutputCallback();
-    $callback($callback::OUT, '{A string of invalid JSON! 😈');
+    $callback(OutputTypeEnum::OUT, '{A string of invalid JSON! 😈');
 
     $this->expectException(\JsonException::class);
     $this->expectExceptionMessage('Syntax error');
     $callback->parseJsonOutput();
-  }
-
-  /**
-   * Tests that an invalid buffer type throws an exception.
-   */
-  public function testInvalidBufferType(): void {
-    $callback = new ProcessOutputCallback();
-
-    $this->expectException(\InvalidArgumentException::class);
-    $this->expectExceptionMessage("Unsupported output type: 'TELEGRAM'");
-    $callback('telegram', 'Into the void...');
   }
 
   /**
@@ -46,7 +36,7 @@ class ProcessOutputCallbackTest extends UnitTestCase {
     $callback->setLogger($logger);
 
     $error_text = 'What happened?';
-    $callback($callback::ERR, $error_text);
+    $callback(OutputTypeEnum::ERR, $error_text);
 
     $this->assertSame($error_text, $callback->getErrorOutput());
     // The error should not yet be logged.
@@ -88,7 +78,7 @@ class ProcessOutputCallbackTest extends UnitTestCase {
     // Ensure the JSON is a multi-line string.
     $this->assertGreaterThan(1, substr_count($json, "\n"));
     foreach (explode("\n", $json) as $line) {
-      $callback($callback::OUT, "$line\n");
+      $callback(OutputTypeEnum::OUT, "$line\n");
     }
     $this->assertSame("$json\n", $callback->getOutput());
     // Ensure that parseJsonOutput() can parse the data without errors.
@@ -98,17 +88,17 @@ class ProcessOutputCallbackTest extends UnitTestCase {
 
     // If we send error output, it should be logged, but we should still be able
     // to get the data we already sent.
-    $callback($callback::ERR, 'Oh no, what happened?');
-    $callback($callback::ERR, 'Really what happened?!');
+    $callback(OutputTypeEnum::ERR, 'Oh no, what happened?');
+    $callback(OutputTypeEnum::ERR, 'Really what happened?!');
     $this->assertSame($data, $callback->parseJsonOutput());
     $this->assertSame('Oh no, what happened?Really what happened?!', $callback->getErrorOutput());
     $this->assertTrue($logger->hasWarning('Oh no, what happened?Really what happened?!'));
 
     // Send more output and error data to the callback; they should be appended
     // to the data we previously sent.
-    $callback($callback::OUT, '{}');
-    $callback($callback::ERR, 'new Error 1!');
-    $callback($callback::ERR, 'new Error 2!');
+    $callback(OutputTypeEnum::OUT, '{}');
+    $callback(OutputTypeEnum::ERR, 'new Error 1!');
+    $callback(OutputTypeEnum::ERR, 'new Error 2!');
     // The output buffer will no longer be valid JSON, so don't try to parse it.
     $this->assertSame("$json\n{}", $callback->getOutput());
     $expected_error = 'Oh no, what happened?Really what happened?!new Error 1!new Error 2!';
@@ -124,8 +114,8 @@ class ProcessOutputCallbackTest extends UnitTestCase {
     $this->assertNull($callback->parseJsonOutput());
 
     // Send more output and error data.
-    $callback($callback::OUT, 'Bonjour!');
-    $callback($callback::ERR, 'You continue to annoy me.');
+    $callback(OutputTypeEnum::OUT, 'Bonjour!');
+    $callback(OutputTypeEnum::ERR, 'You continue to annoy me.');
     // We should now only see the stuff we just sent...
     $this->assertSame('Bonjour!', $callback->getOutput());
     $this->assertSame('You continue to annoy me.', $callback->getErrorOutput());

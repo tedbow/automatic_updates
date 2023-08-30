@@ -61,7 +61,6 @@ composer require \
 # automatic_updates' development dependencies to the root.
 # @see https://getcomposer.org/doc/04-schema.md#require-dev
 composer require --dev colinodell/psr-testlogger:^1
-composer require --dev drush/drush:^11
 
 # Revert needless changes to Core Composer metapackages.
 git checkout -- "$SITE_DIRECTORY/composer/Metapackage"

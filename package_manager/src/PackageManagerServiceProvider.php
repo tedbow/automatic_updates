@@ -40,6 +40,7 @@ final class PackageManagerServiceProvider extends ServiceProviderBase {
     // services.
     $ignore_directories = [
       $path . '/API/Exception',
+      $path . '/Internal/Helper',
       $path . '/Internal/Path/Value',
       $path . '/Internal/Translation/Value',
     ];

@@ -2,34 +2,24 @@
 
 declare(strict_types = 1);
 
-namespace Drupal\Tests\package_manager\Unit;
+namespace Drupal\Tests\package_manager\Kernel;
 
-use Drupal\Core\File\FileSystemInterface;
 use Drupal\package_manager\ProcessFactory;
-use Drupal\Tests\UnitTestCase;
-use PhpTuf\ComposerStager\API\Translation\Factory\TranslatableFactoryInterface;
-use PhpTuf\ComposerStager\Internal\Process\Factory\ProcessFactory as StagerProcessFactory;
+use PhpTuf\ComposerStager\API\Process\Factory\ProcessFactoryInterface;
 
 /**
  * @coversDefaultClass \Drupal\package_manager\ProcessFactory
  * @group automatic_updates
  * @internal
  */
-class ProcessFactoryTest extends UnitTestCase {
+class ProcessFactoryTest extends PackageManagerKernelTestBase {
 
   /**
    * Tests that the process factory prepends the PHP directory to PATH.
    */
   public function testPhpDirectoryPrependedToPath(): void {
-    $decorated = new StagerProcessFactory(
-      $this->createMock(TranslatableFactoryInterface::class),
-    );
-
-    $factory = new ProcessFactory(
-      $this->createMock(FileSystemInterface::class),
-      $this->getConfigFactoryStub(),
-      $decorated,
-    );
+    $factory = $this->container->get(ProcessFactoryInterface::class);
+    $this->assertInstanceOf(ProcessFactory::class, $factory);
 
     // Ensure that the directory of the PHP interpreter can be found.
     $reflector = new \ReflectionObject($factory);

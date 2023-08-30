@@ -9,6 +9,7 @@ use Drupal\Core\StringTranslation\StringTranslationTrait;
 use PhpTuf\ComposerStager\API\Path\Value\PathInterface;
 use PhpTuf\ComposerStager\API\Path\Value\PathListInterface;
 use PhpTuf\ComposerStager\API\Precondition\Service\NoSymlinksPointToADirectoryInterface;
+use PhpTuf\ComposerStager\API\Process\Service\ProcessInterface;
 use PhpTuf\ComposerStager\API\Translation\Value\TranslatableInterface;
 
 /**
@@ -57,7 +58,7 @@ final class NoSymlinksPointToADirectory implements NoSymlinksPointToADirectoryIn
   /**
    * {@inheritdoc}
    */
-  public function getStatusMessage(PathInterface $activeDir, PathInterface $stagingDir, ?PathListInterface $exclusions = NULL,): TranslatableInterface {
+  public function getStatusMessage(PathInterface $activeDir, PathInterface $stagingDir, ?PathListInterface $exclusions = NULL, int $timeout = ProcessInterface::DEFAULT_TIMEOUT,): TranslatableInterface {
     if ($this->isUsingRsync()) {
       return $this->t('Symlinks to directories are supported by the rsync file syncer.');
     }
@@ -67,14 +68,14 @@ final class NoSymlinksPointToADirectory implements NoSymlinksPointToADirectoryIn
   /**
    * {@inheritdoc}
    */
-  public function isFulfilled(PathInterface $activeDir, PathInterface $stagingDir, ?PathListInterface $exclusions = NULL,): bool {
+  public function isFulfilled(PathInterface $activeDir, PathInterface $stagingDir, ?PathListInterface $exclusions = NULL, int $timeout = ProcessInterface::DEFAULT_TIMEOUT,): bool {
     return $this->isUsingRsync() || $this->decorated->isFulfilled($activeDir, $stagingDir, $exclusions);
   }
 
   /**
    * {@inheritdoc}
    */
-  public function assertIsFulfilled(PathInterface $activeDir, PathInterface $stagingDir, ?PathListInterface $exclusions = NULL,): void {
+  public function assertIsFulfilled(PathInterface $activeDir, PathInterface $stagingDir, ?PathListInterface $exclusions = NULL, int $timeout = ProcessInterface::DEFAULT_TIMEOUT,): void {
     if ($this->isUsingRsync()) {
       return;
     }

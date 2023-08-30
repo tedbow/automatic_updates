@@ -14,7 +14,7 @@
     },
     "require": {
         "ext-json": "*",
-        "php-tuf/composer-stager": "2.0-alpha4",
+        "php-tuf/composer-stager": "^2",
         "composer-runtime-api": "^2.1",
         "symfony/console": "^6.2"
     },

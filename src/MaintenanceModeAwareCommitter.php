@@ -11,8 +11,8 @@ use PhpTuf\ComposerStager\API\Exception\InvalidArgumentException;
 use PhpTuf\ComposerStager\API\Exception\PreconditionException;
 use PhpTuf\ComposerStager\API\Path\Value\PathInterface;
 use PhpTuf\ComposerStager\API\Path\Value\PathListInterface;
-use PhpTuf\ComposerStager\API\Process\Service\ProcessOutputCallbackInterface;
-use PhpTuf\ComposerStager\API\Process\Service\ProcessRunnerInterface;
+use PhpTuf\ComposerStager\API\Process\Service\OutputCallbackInterface;
+use PhpTuf\ComposerStager\API\Process\Service\ProcessInterface;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 /**
@@ -76,7 +76,7 @@ final class MaintenanceModeAwareCommitter implements CommitterInterface, EventSu
   /**
    * {@inheritdoc}
    */
-  public function commit(PathInterface $stagingDir, PathInterface $activeDir, ?PathListInterface $exclusions = NULL, ?ProcessOutputCallbackInterface $callback = NULL, ?int $timeout = ProcessRunnerInterface::DEFAULT_TIMEOUT,): void {
+  public function commit(PathInterface $stagingDir, PathInterface $activeDir, ?PathListInterface $exclusions = NULL, ?OutputCallbackInterface $callback = NULL, ?int $timeout = ProcessInterface::DEFAULT_TIMEOUT,): void {
     $this->state->set(static::STATE_KEY, $this->state->get('system.maintenance_mode', FALSE));
     $this->state->set('system.maintenance_mode', TRUE);
 

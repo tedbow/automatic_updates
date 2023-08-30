@@ -8,8 +8,8 @@ use Drupal\Core\State\StateInterface;
 use PhpTuf\ComposerStager\API\Core\BeginnerInterface;
 use PhpTuf\ComposerStager\API\Path\Value\PathInterface;
 use PhpTuf\ComposerStager\API\Path\Value\PathListInterface;
-use PhpTuf\ComposerStager\API\Process\Service\ProcessOutputCallbackInterface;
-use PhpTuf\ComposerStager\API\Process\Service\ProcessRunnerInterface;
+use PhpTuf\ComposerStager\API\Process\Service\OutputCallbackInterface;
+use PhpTuf\ComposerStager\API\Process\Service\ProcessInterface;
 
 /**
  * A fixture manipulator service that commits changes after begin.
@@ -51,10 +51,10 @@ final class StageFixtureManipulator extends FixtureManipulator implements Beginn
   /**
    * {@inheritdoc}
    */
-  public function begin(PathInterface $activeDir, PathInterface $stagingDir, ?PathListInterface $exclusions = NULL, ?ProcessOutputCallbackInterface $callback = NULL, ?int $timeout = ProcessRunnerInterface::DEFAULT_TIMEOUT): void {
+  public function begin(PathInterface $activeDir, PathInterface $stagingDir, ?PathListInterface $exclusions = NULL, ?OutputCallbackInterface $callback = NULL, ?int $timeout = ProcessInterface::DEFAULT_TIMEOUT): void {
     $this->inner->begin($activeDir, $stagingDir, $exclusions, $callback, $timeout);
     if ($this->getQueuedManipulationItems()) {
-      $this->doCommitChanges($stagingDir->resolved());
+      $this->doCommitChanges($stagingDir->absolute());
     }
   }
 

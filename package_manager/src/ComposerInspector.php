@@ -171,7 +171,7 @@ class ComposerInspector implements LoggerAwareInterface {
         // The "Composer is available" precondition requires active and stage
         // directories, but they don't actually matter to it, nor do path
         // exclusions, so dummies can be passed for simplicity.
-        $active_dir = $this->pathFactory::create(__DIR__);
+        $active_dir = $this->pathFactory->create(__DIR__);
         $stage_dir = $active_dir;
 
         $this->composerIsAvailable->assertIsFulfilled($active_dir, $stage_dir);

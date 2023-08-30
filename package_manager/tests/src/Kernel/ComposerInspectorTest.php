@@ -19,6 +19,7 @@ use PhpTuf\ComposerStager\API\Exception\RuntimeException;
 use PhpTuf\ComposerStager\API\Path\Factory\PathFactoryInterface;
 use PhpTuf\ComposerStager\API\Precondition\Service\ComposerIsAvailableInterface;
 use PhpTuf\ComposerStager\API\Process\Service\ComposerProcessRunnerInterface;
+use PhpTuf\ComposerStager\API\Process\Value\OutputTypeEnum;
 use Prophecy\Argument;
 use Prophecy\Prophecy\ObjectProphecy;
 
@@ -500,7 +501,7 @@ class ComposerInspectorTest extends PackageManagerKernelTestBase {
 
       /** @var \Drupal\package_manager\ProcessOutputCallback $callback */
       [, $callback] = $arguments_passed_to_runner;
-      $callback($callback::OUT, $command_output);
+      $callback(OutputTypeEnum::OUT, $command_output);
     };
 
     // We expect the runner to be called with two arguments: an array whose

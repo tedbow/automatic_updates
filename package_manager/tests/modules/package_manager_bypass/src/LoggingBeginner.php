@@ -8,8 +8,8 @@ use Drupal\Core\State\StateInterface;
 use PhpTuf\ComposerStager\API\Core\BeginnerInterface;
 use PhpTuf\ComposerStager\API\Path\Value\PathInterface;
 use PhpTuf\ComposerStager\API\Path\Value\PathListInterface;
-use PhpTuf\ComposerStager\API\Process\Service\ProcessOutputCallbackInterface;
-use PhpTuf\ComposerStager\API\Process\Service\ProcessRunnerInterface;
+use PhpTuf\ComposerStager\API\Process\Service\OutputCallbackInterface;
+use PhpTuf\ComposerStager\API\Process\Service\ProcessInterface;
 
 /**
  * A composer-stager Beginner decorator that adds logging.
@@ -44,7 +44,7 @@ final class LoggingBeginner implements BeginnerInterface {
   /**
    * {@inheritdoc}
    */
-  public function begin(PathInterface $activeDir, PathInterface $stagingDir, ?PathListInterface $exclusions = NULL, ?ProcessOutputCallbackInterface $callback = NULL, ?int $timeout = ProcessRunnerInterface::DEFAULT_TIMEOUT): void {
+  public function begin(PathInterface $activeDir, PathInterface $stagingDir, ?PathListInterface $exclusions = NULL, ?OutputCallbackInterface $callback = NULL, ?int $timeout = ProcessInterface::DEFAULT_TIMEOUT): void {
     $this->saveInvocationArguments($activeDir, $stagingDir, $exclusions, $timeout);
     $this->throwExceptionIfSet();
     $this->inner->begin($activeDir, $stagingDir, $exclusions, $callback, $timeout);

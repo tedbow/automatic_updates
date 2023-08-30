@@ -8,8 +8,8 @@ use Drupal\Core\State\StateInterface;
 use PhpTuf\ComposerStager\API\Core\CommitterInterface;
 use PhpTuf\ComposerStager\API\Path\Value\PathInterface;
 use PhpTuf\ComposerStager\API\Path\Value\PathListInterface;
-use PhpTuf\ComposerStager\API\Process\Service\ProcessOutputCallbackInterface;
-use PhpTuf\ComposerStager\API\Process\Service\ProcessRunnerInterface;
+use PhpTuf\ComposerStager\API\Process\Service\OutputCallbackInterface;
+use PhpTuf\ComposerStager\API\Process\Service\ProcessInterface;
 
 /**
  * A composer-stager Committer decorator that adds logging.
@@ -44,7 +44,7 @@ final class LoggingCommitter implements CommitterInterface {
   /**
    * {@inheritdoc}
    */
-  public function commit(PathInterface $stagingDir, PathInterface $activeDir, ?PathListInterface $exclusions = NULL, ?ProcessOutputCallbackInterface $callback = NULL, ?int $timeout = ProcessRunnerInterface::DEFAULT_TIMEOUT): void {
+  public function commit(PathInterface $stagingDir, PathInterface $activeDir, ?PathListInterface $exclusions = NULL, ?OutputCallbackInterface $callback = NULL, ?int $timeout = ProcessInterface::DEFAULT_TIMEOUT): void {
     $this->saveInvocationArguments($stagingDir, $activeDir, $exclusions, $timeout);
     $this->throwExceptionIfSet();
     $this->inner->commit($stagingDir, $activeDir, $exclusions, $callback, $timeout);

@@ -385,7 +385,7 @@ END;
 
     $listener = function (PostRequireEvent $event) use (&$cron_stage_dir, $original_stage_directory): void {
       $this->assertDirectoryDoesNotExist($original_stage_directory);
-      $cron_stage_dir = $this->container->get('package_manager.stager')->getInvocationArguments()[0][1]->resolved();
+      $cron_stage_dir = $this->container->get('package_manager.stager')->getInvocationArguments()[0][1]->absolute();
       $this->assertSame($event->stage->getStageDirectory(), $cron_stage_dir);
       $this->assertDirectoryExists($cron_stage_dir);
     };

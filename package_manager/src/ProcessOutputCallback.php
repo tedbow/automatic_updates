@@ -4,7 +4,8 @@ declare(strict_types = 1);
 
 namespace Drupal\package_manager;
 
-use PhpTuf\ComposerStager\API\Process\Service\ProcessOutputCallbackInterface;
+use PhpTuf\ComposerStager\API\Process\Service\OutputCallbackInterface;
+use PhpTuf\ComposerStager\API\Process\Value\OutputTypeEnum;
 use Psr\Log\LoggerAwareInterface;
 use Psr\Log\LoggerAwareTrait;
 use Psr\Log\NullLogger;
@@ -19,7 +20,7 @@ use Psr\Log\NullLogger;
  *   at any time without warning. External code should not interact with this
  *   class.
  */
-final class ProcessOutputCallback implements ProcessOutputCallbackInterface, LoggerAwareInterface {
+final class ProcessOutputCallback implements OutputCallbackInterface, LoggerAwareInterface {
 
   use LoggerAwareTrait;
 
@@ -47,19 +48,13 @@ final class ProcessOutputCallback implements ProcessOutputCallbackInterface, Log
   /**
    * {@inheritdoc}
    */
-  public function __invoke(string $type, string $buffer): void {
-    // \Symfony\Component\Process\Process defines the output types in lowercase,
-    // but Composer Stager uses uppercase.
-    $type = strtoupper($type);
+  public function __invoke(OutputTypeEnum $type, string $buffer): void {
 
-    if ($type === self::OUT) {
+    if ($type === OutputTypeEnum::OUT) {
       $this->outBuffer .= $buffer;
     }
-    elseif ($type === self::ERR) {
+    elseif ($type === OutputTypeEnum::ERR) {
       $this->errorBuffer .= $buffer;
-    }
-    else {
-      throw new \InvalidArgumentException("Unsupported output type: '$type'");
     }
   }
 

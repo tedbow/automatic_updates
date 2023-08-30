@@ -7,8 +7,8 @@ namespace Drupal\package_manager\Event;
 use Drupal\package_manager\StageBase;
 use Drupal\package_manager\PathLocator;
 use PhpTuf\ComposerStager\API\Path\Factory\PathFactoryInterface;
-use PhpTuf\ComposerStager\API\Path\Value\PathList;
 use PhpTuf\ComposerStager\API\Path\Value\PathListInterface;
+use PhpTuf\ComposerStager\Internal\Path\Value\PathList;
 
 /**
  * Defines an event that collects paths to exclude.

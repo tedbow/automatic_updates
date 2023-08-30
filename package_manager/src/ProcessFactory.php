@@ -7,8 +7,8 @@ namespace Drupal\package_manager;
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\File\FileSystemInterface;
 use PhpTuf\ComposerStager\API\Process\Factory\ProcessFactoryInterface;
+use PhpTuf\ComposerStager\API\Process\Service\ProcessInterface;
 use PhpTuf\ComposerStager\Internal\Process\Factory\ProcessFactory as StagerProcessFactory;
-use Symfony\Component\Process\Process;
 
 // cspell:ignore BINDIR
 
@@ -57,7 +57,7 @@ final class ProcessFactory implements ProcessFactoryInterface {
   /**
    * {@inheritdoc}
    */
-  public function create(array $command): Process {
+  public function create(array $command): ProcessInterface {
     $process = $this->decorated->create($command);
 
     $env = $process->getEnv();

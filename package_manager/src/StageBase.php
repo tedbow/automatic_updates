@@ -34,7 +34,7 @@ use PhpTuf\ComposerStager\API\Core\StagerInterface;
 use PhpTuf\ComposerStager\API\Exception\InvalidArgumentException;
 use PhpTuf\ComposerStager\API\Exception\PreconditionException;
 use PhpTuf\ComposerStager\API\Path\Factory\PathFactoryInterface;
-use PhpTuf\ComposerStager\API\Path\Value\PathList;
+use PhpTuf\ComposerStager\Internal\Path\Value\PathList;
 use Psr\Log\LoggerAwareInterface;
 use Psr\Log\LoggerAwareTrait;
 use Psr\Log\NullLogger;

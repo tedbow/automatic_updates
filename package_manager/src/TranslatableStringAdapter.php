@@ -36,7 +36,7 @@ final class TranslatableStringAdapter extends TranslatableMarkup implements Tran
   /**
    * {@inheritdoc}
    */
-  public function trans(TranslatorInterface $translator, ?string $locale = NULL): string {
+  public function trans(?TranslatorInterface $translator = NULL, ?string $locale = NULL): string {
     // This method is NEVER used by Drupal to translate the underlying string;
     // it exists solely for Composer Stager's translation system to
     // transparently translate Drupal strings using its own architecture.

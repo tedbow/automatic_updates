@@ -4,8 +4,9 @@ namespace Drupal\fixture_manipulator;
 
 use Drupal\Component\FileSystem\FileSystem;
 use Drupal\Component\Utility\NestedArray;
-use PhpTuf\ComposerStager\API\Process\Service\ProcessOutputCallbackInterface;
+use PhpTuf\ComposerStager\API\Process\Service\OutputCallbackInterface;
 use PhpTuf\ComposerStager\API\Process\Service\ComposerProcessRunnerInterface;
+use PhpTuf\ComposerStager\API\Process\Value\OutputTypeEnum;
 use Symfony\Component\Filesystem\Filesystem as SymfonyFileSystem;
 use Drupal\Component\Serialization\Yaml;
 
@@ -437,28 +438,23 @@ class FixtureManipulator {
     return $this->manipulatorArguments;
   }
 
-  protected function runComposerCommand(array $command_options): ProcessOutputCallbackInterface {
-    $plain_output = new class() implements ProcessOutputCallbackInterface {
+  protected function runComposerCommand(array $command_options): OutputCallbackInterface {
+    $plain_output = new class() implements OutputCallbackInterface {
       public string $stdout = '';
       public string $stderr = '';
 
       /**
        * {@inheritdoc}
        */
-      public function __invoke(string $type, string $buffer): void {
-        // \Symfony\Component\Process\Process defines the output types in
-        // lowercase, but Composer Stager uses uppercase.
-        $type = strtoupper($type);
-
-        if ($type === self::OUT) {
+      public function __invoke(OutputTypeEnum $type, string $buffer): void {
+        if ($type === OutputTypeEnum::OUT) {
           $this->stdout .= $buffer;
           return;
         }
-        elseif ($type === self::ERR) {
+        elseif ($type === OutputTypeEnum::ERR) {
           $this->stderr .= $buffer;
           return;
         }
-        throw new \InvalidArgumentException("Unsupported output type: '$type'");
       }
 
     };
