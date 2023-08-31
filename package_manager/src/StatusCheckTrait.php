@@ -42,22 +42,12 @@ trait StatusCheckTrait {
     try {
       $paths_to_exclude_event = new CollectPathsToExcludeEvent($stage, $path_locator, $path_factory);
       $event_dispatcher->dispatch($paths_to_exclude_event);
-      $event = new StatusCheckEvent($stage, $paths_to_exclude_event->getAll());
     }
     catch (\Throwable $throwable) {
-      // We can dispatch the status check event without the paths to exclude,
-      // but it must be set explicitly to NULL, to allow those status checks to
-      // run that do not need the paths to exclude.
-      $event = new StatusCheckEvent($stage, NULL);
-      // Add the error that was encountered so that regardless of any other
-      // validation errors BaseRequirementsFulfilledValidator will stop the
-      // event propagation after the base requirement validators have run.
-      // @see \Drupal\package_manager\Validator\BaseRequirementsFulfilledValidator
-      $event->addErrorFromThrowable($throwable, t('Unable to collect the paths to exclude.'));
+      $paths_to_exclude_event = $throwable;
     }
-
-    $event_dispatcher->dispatch($event);
-    return $event->getResults();
+    $event = new StatusCheckEvent($stage, $paths_to_exclude_event);
+    return $event_dispatcher->dispatch($event)->getResults();
   }
 
 }

@@ -28,7 +28,7 @@ class StatusCheckTraitTest extends PackageManagerKernelTestBase {
 
     $status_check_called = FALSE;
     $this->addEventTestListener(function (StatusCheckEvent $event) use (&$status_check_called): void {
-      $this->assertContains('/junk/drawer', $event->getExcludedPaths());
+      $this->assertContains('/junk/drawer', $event->excludedPaths->getAll());
       $status_check_called = TRUE;
     }, StatusCheckEvent::class);
     $this->runStatusCheck($this->createStage(), $this->container->get('event_dispatcher'));
@@ -39,14 +39,23 @@ class StatusCheckTraitTest extends PackageManagerKernelTestBase {
    * Tests that any error will be added to the status check event.
    */
   public function testNoErrorIfPathsToExcludeCannotBeCollected(): void {
-    $this->addEventTestListener(function (): void {
-      throw new \Exception('Not a chance, friend.');
-    }, CollectPathsToExcludeEvent::class);
-    $result = ValidationResult::createError(
-      [t('Not a chance, friend.')],
-      t('Unable to collect the paths to exclude.'),
-    );
-    $this->assertStatusCheckResults([$result]);
+    $e = new \Exception('Not a chance, friend.');
+
+    $listener = function () use ($e): never {
+      throw $e;
+    };
+    $this->addEventTestListener($listener, CollectPathsToExcludeEvent::class);
+
+    $excluded_paths_are_null = FALSE;
+    $listener = function (StatusCheckEvent $event) use (&$excluded_paths_are_null): void {
+      $excluded_paths_are_null = is_null($event->excludedPaths);
+    };
+    $this->addEventTestListener($listener, StatusCheckEvent::class);
+
+    $this->assertStatusCheckResults([
+      ValidationResult::createErrorFromThrowable($e),
+    ]);
+    $this->assertTrue($excluded_paths_are_null);
   }
 
 }

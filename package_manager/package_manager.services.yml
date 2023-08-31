@@ -10,20 +10,23 @@ services:
 
   # Basic infrastructure services for Composer Stager, overridden by us to
   # provide additional functionality.
-  Drupal\package_manager\ProcessFactory:
-    public: false
   Drupal\package_manager\ExecutableFinder:
     public: false
+    decorates: 'PhpTuf\ComposerStager\API\Finder\Service\ExecutableFinderInterface'
+  Drupal\package_manager\FileSyncerFactory:
+    public: false
+    decorates: 'PhpTuf\ComposerStager\API\FileSyncer\Factory\FileSyncerFactoryInterface'
+  Drupal\package_manager\ProcessFactory:
+    public: false
+    decorates: 'PhpTuf\ComposerStager\API\Process\Factory\ProcessFactoryInterface'
   Drupal\package_manager\TranslatableStringFactory:
     public: false
-  PhpTuf\ComposerStager\API\Finder\Service\ExecutableFinderInterface:
-    alias: 'Drupal\package_manager\ExecutableFinder'
-  PhpTuf\ComposerStager\API\Process\Factory\ProcessFactoryInterface:
-    alias: 'Drupal\package_manager\ProcessFactory'
+    decorates: 'PhpTuf\ComposerStager\API\Translation\Factory\TranslatableFactoryInterface'
+  Drupal\package_manager\NoSymlinksPointToADirectory:
+    public: false
+    decorates: 'PhpTuf\ComposerStager\API\Precondition\Service\NoSymlinksPointToADirectoryInterface'
   PhpTuf\ComposerStager\API\FileSyncer\Service\FileSyncerInterface:
-    factory: ['@Drupal\package_manager\FileSyncerFactory', 'create']
-  PhpTuf\ComposerStager\API\Translation\Factory\TranslatableFactoryInterface:
-    alias: 'Drupal\package_manager\TranslatableStringFactory'
+    factory: ['@PhpTuf\ComposerStager\API\FileSyncer\Factory\FileSyncerFactoryInterface', 'create']
   logger.channel.package_manager:
     parent: logger.channel_base
     arguments:
@@ -34,15 +37,9 @@ services:
       - 'package_manager_change_log'
 
   # Services provided to Drupal by Package Manager.
-  package_manager.beginner:
-    class: PhpTuf\ComposerStager\Internal\Core\Beginner
-  PhpTuf\ComposerStager\API\Core\BeginnerInterface: '@package_manager.beginner'
-  package_manager.stager:
-    class: PhpTuf\ComposerStager\Internal\Core\Stager
-  PhpTuf\ComposerStager\API\Core\StagerInterface: '@package_manager.stager'
-  package_manager.committer:
-    class: PhpTuf\ComposerStager\Internal\Core\Committer
-  PhpTuf\ComposerStager\API\Core\CommitterInterface: '@package_manager.committer'
+  package_manager.beginner: '@PhpTuf\ComposerStager\API\Core\BeginnerInterface'
+  package_manager.stager: '@PhpTuf\ComposerStager\API\Core\StagerInterface'
+  package_manager.committer: '@PhpTuf\ComposerStager\API\Core\CommitterInterface'
   package_manager.path_locator:
     class: Drupal\package_manager\PathLocator
     arguments:

@@ -5,9 +5,10 @@ declare(strict_types = 1);
 namespace Drupal\package_manager\Event;
 
 use Drupal\Core\StringTranslation\TranslatableMarkup;
+use Drupal\package_manager\ImmutablePathList;
 use Drupal\package_manager\StageBase;
 use Drupal\package_manager\ValidationResult;
-use Drupal\system\SystemManager;
+use PhpTuf\ComposerStager\API\Path\Value\PathListInterface;
 
 /**
  * Event fired to check the status of the system to use Package Manager.
@@ -18,36 +19,38 @@ use Drupal\system\SystemManager;
 final class StatusCheckEvent extends PreOperationStageEvent {
 
   /**
-   * Returns paths to exclude or NULL if a base requirement is not fulfilled.
+   * The paths to exclude, or NULL if there was an error collecting them.
    *
-   * @return string[]|null
-   *   The paths to exclude, or NULL if a base requirement is not fulfilled.
+   * @var \Drupal\package_manager\ImmutablePathList|null
    *
-   * @throws \LogicException
-   *   Thrown if the excluded paths are NULL and no errors have been added to
-   *   this event.
+   * @see ::__construct()
    */
-  public function getExcludedPaths(): ?array {
-    if (isset($this->pathsToExclude)) {
-      return array_unique($this->pathsToExclude);
-    }
-
-    if (empty($this->getResults(SystemManager::REQUIREMENT_ERROR))) {
-      throw new \LogicException('$paths_to_exclude should only be NULL if the error that caused the paths to not be collected was added to the status check event.');
-    }
-    return NULL;
-  }
+  public readonly ?ImmutablePathList $excludedPaths;
 
   /**
    * Constructs a StatusCheckEvent object.
    *
    * @param \Drupal\package_manager\StageBase $stage
    *   The stage which fired this event.
-   * @param string[]|null $pathsToExclude
-   *   The list of paths to exclude, or NULL if they could not be collected.
+   * @param \PhpTuf\ComposerStager\API\Path\Value\PathListInterface|\Throwable $excluded_paths
+   *   The list of paths to exclude or, if an error occurred while they were
+   *   being collected, the throwable from that error. If this is a throwable,
+   *   it will be converted to a validation error.
    */
-  public function __construct(StageBase $stage, private ?array $pathsToExclude) {
+  public function __construct(StageBase $stage, PathListInterface|\Throwable $excluded_paths) {
     parent::__construct($stage);
+
+    // If there was an error collecting the excluded paths, convert it to a
+    // validation error so we can still run status checks that don't need to
+    // examine the list of excluded paths.
+    if ($excluded_paths instanceof \Throwable) {
+      $this->addErrorFromThrowable($excluded_paths);
+      $excluded_paths = NULL;
+    }
+    else {
+      $excluded_paths = new ImmutablePathList($excluded_paths);
+    }
+    $this->excludedPaths = $excluded_paths;
   }
 
   /**

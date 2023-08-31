@@ -34,7 +34,7 @@ use PhpTuf\ComposerStager\API\Core\StagerInterface;
 use PhpTuf\ComposerStager\API\Exception\InvalidArgumentException;
 use PhpTuf\ComposerStager\API\Exception\PreconditionException;
 use PhpTuf\ComposerStager\API\Path\Factory\PathFactoryInterface;
-use PhpTuf\ComposerStager\Internal\Path\Value\PathList;
+use PhpTuf\ComposerStager\API\Path\Value\PathListInterface;
 use Psr\Log\LoggerAwareInterface;
 use Psr\Log\LoggerAwareTrait;
 use Psr\Log\NullLogger;
@@ -254,7 +254,7 @@ abstract class StageBase implements LoggerAwareInterface {
   /**
    * Collects paths that Composer Stager should exclude.
    *
-   * @return string[]
+   * @return \PhpTuf\ComposerStager\API\Path\Value\PathListInterface
    *   A list of paths that Composer Stager should exclude when creating the
    *   stage directory and applying staged changes to the active directory.
    *
@@ -264,15 +264,14 @@ abstract class StageBase implements LoggerAwareInterface {
    * @see ::create()
    * @see ::apply()
    */
-  protected function getPathsToExclude(): array {
+  protected function getPathsToExclude(): PathListInterface {
     $event = new CollectPathsToExcludeEvent($this, $this->pathLocator, $this->pathFactory);
     try {
-      $this->eventDispatcher->dispatch($event);
+      return $this->eventDispatcher->dispatch($event);
     }
     catch (\Throwable $e) {
       $this->rethrowAsStageException($e);
     }
-    return $event->getAll();
   }
 
   /**
@@ -324,13 +323,14 @@ abstract class StageBase implements LoggerAwareInterface {
     $active_dir = $this->pathFactory->create($this->pathLocator->getProjectRoot());
     $stage_dir = $this->pathFactory->create($this->getStageDirectory());
 
-    $event = new PreCreateEvent($this, $this->getPathsToExclude());
+    $excluded_paths = $this->getPathsToExclude();
+    $event = new PreCreateEvent($this, $excluded_paths);
     // If an error occurs and we won't be able to create the stage, mark it as
     // available.
     $this->dispatch($event, [$this, 'markAsAvailable']);
 
     try {
-      $this->beginner->begin($active_dir, $stage_dir, new PathList(...$event->getExcludedPaths()), NULL, $timeout);
+      $this->beginner->begin($active_dir, $stage_dir, $excluded_paths, NULL, $timeout);
     }
     catch (\Throwable $error) {
       $this->destroy();
@@ -442,23 +442,24 @@ abstract class StageBase implements LoggerAwareInterface {
     $active_dir = $this->pathFactory->create($this->pathLocator->getProjectRoot());
     $stage_dir = $this->pathFactory->create($this->getStageDirectory());
 
+    $excluded_paths = $this->getPathsToExclude();
+    // Exclude the failure file from the commit operation.
+    $excluded_paths->add(
+      str_replace($active_dir->absolute() . DIRECTORY_SEPARATOR, '', $this->failureMarker->getPath()),
+    );
+
     // If an error occurs while dispatching the events, ensure that ::destroy()
     // doesn't think we're in the middle of applying the staged changes to the
     // active directory.
-    $event = new PreApplyEvent($this, $this->getPathsToExclude());
+    $event = new PreApplyEvent($this, $excluded_paths);
     $this->tempStore->set(self::TEMPSTORE_APPLY_TIME_KEY, $this->time->getRequestTime());
     $this->dispatch($event, $this->setNotApplying(...));
 
     // Create a marker file so that we can tell later on if the commit failed.
     $this->failureMarker->write($this, $this->getFailureMarkerMessage());
-    // Exclude the failure file from the commit operation.
-    $paths_to_exclude = new PathList(...$event->getExcludedPaths());
-    $paths_to_exclude->add(
-      str_replace($this->pathLocator->getProjectRoot() . DIRECTORY_SEPARATOR, '', $this->failureMarker->getPath()),
-    );
 
     try {
-      $this->committer->commit($stage_dir, $active_dir, $paths_to_exclude, NULL, $timeout);
+      $this->committer->commit($stage_dir, $active_dir, $excluded_paths, NULL, $timeout);
     }
     catch (InvalidArgumentException | PreconditionException $e) {
       // The commit operation has not started yet, so we can clear the failure

@@ -8,7 +8,6 @@ use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\File\FileSystemInterface;
 use PhpTuf\ComposerStager\API\Process\Factory\ProcessFactoryInterface;
 use PhpTuf\ComposerStager\API\Process\Service\ProcessInterface;
-use PhpTuf\ComposerStager\Internal\Process\Factory\ProcessFactory as StagerProcessFactory;
 
 // cspell:ignore BINDIR
 
@@ -29,13 +28,13 @@ final class ProcessFactory implements ProcessFactoryInterface {
    *   The file system service.
    * @param \Drupal\Core\Config\ConfigFactoryInterface $configFactory
    *   The config factory service.
-   * @param \PhpTuf\ComposerStager\Internal\Process\Factory\ProcessFactory $decorated
+   * @param \PhpTuf\ComposerStager\API\Process\Factory\ProcessFactoryInterface $decorated
    *   The decorated process factory service.
    */
   public function __construct(
     private readonly FileSystemInterface $fileSystem,
     private readonly ConfigFactoryInterface $configFactory,
-    private readonly StagerProcessFactory $decorated,
+    private readonly ProcessFactoryInterface $decorated,
   ) {}
 
   /**

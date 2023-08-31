@@ -18,7 +18,7 @@ use PhpTuf\ComposerStager\API\FileSyncer\Service\RsyncFileSyncerInterface;
  *   at any time without warning. External code should not interact with this
  *   class.
  */
-final class FileSyncerFactory {
+final class FileSyncerFactory implements FileSyncerFactoryInterface {
 
   /**
    * Constructs a FileSyncerFactory object.

@@ -16,6 +16,7 @@ use Drupal\package_manager\Event\PostDestroyEvent;
 use Drupal\package_manager\Event\PostRequireEvent;
 use Drupal\package_manager\Event\PreApplyEvent;
 use Drupal\package_manager\Event\PreDestroyEvent;
+use Drupal\package_manager\Event\PreOperationStageEvent;
 use Drupal\package_manager\Event\PreRequireEvent;
 use Drupal\package_manager\Event\PreCreateEvent;
 use Drupal\package_manager\Event\StageEvent;
@@ -322,16 +323,13 @@ END;
         t('Destroy the stage!'),
       ]);
 
-      $exception = $this->createStageEventExceptionFromResults([$error], $event_class, $stage);
-      TestSubscriber1::setTestResult($exception->event->getResults(), $event_class);
+      TestSubscriber1::setTestResult([$error], $event_class);
+      $exception = $this->createStageEventExceptionFromResults([$error]);
     }
     else {
-      /** @var \Throwable $exception */
       $exception = new $exception_class('Destroy the stage!');
       TestSubscriber1::setException($exception, $event_class);
     }
-
-    $expected_log_message = $exception->getMessage();
 
     // Ensure that nothing has been logged yet.
     $this->assertEmpty($cron_logger->records);
@@ -340,7 +338,7 @@ END;
     $this->assertTrue($stage->isAvailable());
     $this->runConsoleUpdateStage();
 
-    $logged_by_stage = $this->logger->hasRecord($expected_log_message, (string) RfcLogLevel::ERROR);
+    $logged_by_stage = $this->logger->hasRecord($exception->getMessage(), (string) RfcLogLevel::ERROR);
     // To check if the exception was logged by the main cron service, we need
     // to set up a special predicate, because exceptions logged by cron are
     // always formatted in a particular way that we don't control. But the
@@ -353,7 +351,6 @@ END;
       }
       return FALSE;
     };
-
     $logged_by_cron = $cron_logger->hasRecordThatPasses($predicate, (string) RfcLogLevel::ERROR);
 
     // If a pre-destroy event flags a validation error, it's handled like any
@@ -542,8 +539,9 @@ END;
     $error = ValidationResult::createError([
       t('Error while updating!'),
     ]);
-    $exception = $this->createStageEventExceptionFromResults([$error], $event_class, $this->container->get(ConsoleUpdateStage::class));
-    TestSubscriber1::setTestResult($exception->event->getResults(), $event_class);
+    TestSubscriber1::setTestResult([$error], $event_class);
+    $exception_message = $this->createStageEventExceptionFromResults([$error])
+      ->getMessage();
 
     $this->runConsoleUpdateStage();
 
@@ -554,7 +552,7 @@ END;
     $expected_body = <<<END
 Drupal core failed to update automatically from 9.8.0 to 9.8.2. The following error was logged:
 
-{$exception->getMessage()}
+{$exception_message}
 
 No immediate action is needed, but it is recommended that you visit $url to perform the update, or at least check that everything still looks good.
 
@@ -584,7 +582,8 @@ END;
       t('Error while updating!'),
     ]);
     TestSubscriber1::setTestResult([$error], $event_class);
-    $exception = $this->createStageEventExceptionFromResults([$error], $event_class, $this->container->get(ConsoleUpdateStage::class));
+    $exception_message = $this->createStageEventExceptionFromResults([$error])
+      ->getMessage();
 
     $this->runConsoleUpdateStage();
 
@@ -595,7 +594,7 @@ END;
     $expected_body = <<<END
 Drupal core failed to update automatically from 9.8.0 to 9.8.1. The following error was logged:
 
-{$exception->getMessage()}
+{$exception_message}
 
 Your site is running an insecure version of Drupal and should be updated as soon as possible. Visit $url to perform the update.
 
@@ -748,6 +747,27 @@ END;
    */
   private function assertNoCronRun(): void {
     $this->assertNull($this->container->get('state')->get('common_test.cron'));
+  }
+
+  /**
+   * Creates a StageEventException from a particular set of validation results.
+   *
+   * @param \Drupal\package_manager\ValidationResult[] $results
+   *   The validation results associated with the exception.
+   *
+   * @return \Drupal\package_manager\Exception\StageEventException
+   *   A stage exception carrying the given validation results.
+   */
+  private function createStageEventExceptionFromResults(array $results): StageEventException {
+    // Different stage events are constructed with different arguments. Rather
+    // than encode all that here, just create a generic stage event which
+    // can carry validation results, and use it to generate the exception.
+    $event = new class (
+      $this->container->get(ConsoleUpdateStage::class),
+    ) extends PreOperationStageEvent {};
+
+    array_walk($results, $event->addResult(...));
+    return new StageEventException($event);
   }
 
 }

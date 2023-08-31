@@ -12,7 +12,6 @@ use Drupal\Core\Site\Settings;
 use Drupal\fixture_manipulator\StageFixtureManipulator;
 use Drupal\KernelTests\KernelTestBase;
 use Drupal\package_manager\Event\PreApplyEvent;
-use Drupal\package_manager\Event\PreCreateEvent;
 use Drupal\package_manager\Event\PreOperationStageEvent;
 use Drupal\package_manager\Exception\StageEventException;
 use Drupal\package_manager\FailureMarker;
@@ -30,7 +29,7 @@ use GuzzleHttp\Handler\MockHandler;
 use GuzzleHttp\HandlerStack;
 use GuzzleHttp\Psr7\Response;
 use GuzzleHttp\Psr7\Utils;
-use PhpTuf\ComposerStager\Internal\Path\Factory\PathFactory;
+use PhpTuf\ComposerStager\API\Path\Factory\PathFactoryInterface;
 use Psr\Http\Message\RequestInterface;
 use Symfony\Component\Filesystem\Filesystem;
 
@@ -182,7 +181,7 @@ abstract class PackageManagerKernelTestBase extends KernelTestBase {
       $this->container->get('event_dispatcher'),
       $this->container->get('tempstore.shared'),
       $this->container->get('datetime.time'),
-      new PathFactory(),
+      $this->container->get(PathFactoryInterface::class),
       $this->container->get(FailureMarker::class)
     );
   }
@@ -441,27 +440,6 @@ abstract class PackageManagerKernelTestBase extends KernelTestBase {
     $stage = $event->stage;
     $stage_dir = $stage->stageDirectoryExists() ? $stage->getStageDirectory() : NULL;
     $this->assertValidationResultsEqual($expected_results, $event->getResults(), NULL, $stage_dir);
-  }
-
-  /**
-   * Creates a StageEventException from an array of validation results.
-   *
-   * @param \Drupal\package_manager\ValidationResult[] $expected_results
-   *   The validation results. Note that only errors will be added to the event;
-   *   warnings will be ignored.
-   * @param string $event_class
-   *   (optional) The event which raised the exception. Defaults to
-   *   PreCreateEvent.
-   * @param \Drupal\package_manager\StageBase $stage
-   *   (optional) The stage which caused the exception.
-   *
-   * @return \Drupal\package_manager\Exception\StageEventException
-   *   An exception with the given validation results.
-   */
-  protected function createStageEventExceptionFromResults(array $expected_results, string $event_class = PreCreateEvent::class, StageBase $stage = NULL): StageEventException {
-    $event = new $event_class($stage ?? $this->createStage(), []);
-    array_walk($expected_results, $event->addResult(...));
-    return new StageEventException($event);
   }
 
 }

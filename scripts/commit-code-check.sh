@@ -91,21 +91,28 @@ print_results() {
   fi
 }
 
-print_title "[1/4] PHPCS"
+print_title "[1/5] PHPCS"
 $CORE_DIRECTORY/vendor/bin/phpcs $MODULE_DIRECTORY -ps --standard="$CORE_DIRECTORY/core/phpcs.xml.dist"
 print_results $? "PHPCS"
 
-print_title "[2/4] PHPStan"
+print_title "[2/5] PHPStan"
 php -d apc.enabled=0 -d apc.enable_cli=0 $CORE_DIRECTORY/vendor/bin/phpstan analyze --no-progress --configuration="$MODULE_DIRECTORY/phpstan.neon.dist" $MODULE_DIRECTORY
 print_results $? "PHPStan"
 
-print_title "[3/4] CSpell"
+print_title "[3/5] CSpell"
 cd $CORE_DIRECTORY/core && yarn run -s spellcheck --no-progress --root $MODULE_DIRECTORY -c .cspell.json "**" && cd -
 print_results $? "CSpell"
 
-print_title "[4/4] eslint:yaml"
+print_title "[4/5] eslint:yaml"
 cd $CORE_DIRECTORY/core && yarn eslint --resolve-plugins-relative-to . --ext .yml $MODULE_DIRECTORY && cd -
 print_results $? "eslint:yaml"
+print_separator
+
+print_title "[5/5] Composer Stager internals are not used"
+grep -r -n 'ComposerStager\\Internal' $MODULE_DIRECTORY
+if [ $? == 0 ]; then
+  print_results 1 "\\PhpTuf\\ComposerStager\\Internal namespace is not used"
+fi
 print_separator
 
 if [[ "$FINAL_STATUS" == "1" ]]; then

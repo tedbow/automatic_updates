@@ -2,6 +2,8 @@
 
 namespace Drupal\Tests\package_manager\Traits;
 
+use Drupal\fixture_manipulator\StageFixtureManipulator;
+
 /**
  * A trait for common fixture manipulator functions.
  */
@@ -14,7 +16,7 @@ trait FixtureManipulatorTrait {
    *   The stage fixture manipulator service.
    */
   protected function getStageFixtureManipulator() {
-    return $this->container->get('fixture_manipulator.stage_manipulator');
+    return $this->container->get(StageFixtureManipulator::class);
   }
 
 }

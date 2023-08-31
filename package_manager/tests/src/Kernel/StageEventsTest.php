@@ -18,6 +18,7 @@ use Drupal\package_manager\Event\StageEvent;
 use Drupal\package_manager\Event\StatusCheckEvent;
 use Drupal\package_manager\Exception\StageEventException;
 use Drupal\package_manager\ValidationResult;
+use PhpTuf\ComposerStager\API\Path\Value\PathListInterface;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 /**
@@ -168,16 +169,17 @@ class StageEventsTest extends PackageManagerKernelTestBase implements EventSubsc
     $warning = ValidationResult::createWarning([
       t('The path ahead is scary...'),
     ]);
+    $excluded_paths = $this->createMock(PathListInterface::class);
 
     // Status check events can accept both errors and warnings.
-    $event = new StatusCheckEvent($stage, NULL);
+    $event = new StatusCheckEvent($stage, $excluded_paths);
     $event->addResult($error);
     $event->addResult($warning);
     $this->assertSame([$error, $warning], $event->getResults());
 
     // Other stage events will accept errors, but throw an exception if you try
     // to add a warning.
-    $event = new PreCreateEvent($stage, []);
+    $event = new PreCreateEvent($stage, $excluded_paths);
     $event->addResult($error);
     $this->assertSame([$error], $event->getResults());
     $this->expectException(\InvalidArgumentException::class);

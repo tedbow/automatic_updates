@@ -228,7 +228,6 @@ class StageBaseTest extends PackageManagerKernelTestBase {
       // simulate an attempt to destroy the stage while it's being applied, for
       // testing purposes.
       $event->stage->destroy($force);
-      // @see \PhpTuf\ComposerStager\Internal\Precondition\Service\StagingDirDoesNotExist
       LoggingCommitter::setException(
         new PreconditionException(
           $this->prophesize(PreconditionInterface::class)->reveal(),
@@ -658,7 +657,7 @@ class StageBaseTest extends PackageManagerKernelTestBase {
     // the event.
     $asserted = FALSE;
     $assert_excluded = function (object $event) use (&$asserted): void {
-      $this->assertContains('exclude/me', $event->getExcludedPaths());
+      $this->assertContains('exclude/me', $event->excludedPaths->getAll());
       // Use this to confirm that this listener was actually called.
       $asserted = TRUE;
     };
@@ -683,9 +682,7 @@ class StageBaseTest extends PackageManagerKernelTestBase {
     $committer = $this->container->get('package_manager.committer');
     $committer_args = $committer->getInvocationArguments();
     $this->assertCount(1, $committer_args);
-    /** @var \PhpTuf\ComposerStager\API\Path\Value\PathListInterface $path_list */
-    $path_list = $committer_args[0][2];
-    $this->assertContains('PACKAGE_MANAGER_FAILURE.yml', $path_list->getAll());
+    $this->assertContains('PACKAGE_MANAGER_FAILURE.yml', $committer_args[0][2]);
   }
 
   /**

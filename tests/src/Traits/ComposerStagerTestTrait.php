@@ -32,6 +32,7 @@ trait ComposerStagerTestTrait {
    *   {@see \PhpTuf\ComposerStager\API\Translation\Service\DomainOptionsInterface}.
    *
    * @return \PhpTuf\ComposerStager\API\Translation\Value\TranslatableInterface
+   *   A message that can be translated by Composer Stager.
    */
   protected function createComposeStagerMessage(
     string $message,

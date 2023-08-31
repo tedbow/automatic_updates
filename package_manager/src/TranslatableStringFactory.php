@@ -9,7 +9,6 @@ use PhpTuf\ComposerStager\API\Translation\Factory\TranslatableFactoryInterface;
 use PhpTuf\ComposerStager\API\Translation\Service\DomainOptionsInterface;
 use PhpTuf\ComposerStager\API\Translation\Value\TranslatableInterface;
 use PhpTuf\ComposerStager\API\Translation\Value\TranslationParametersInterface;
-use PhpTuf\ComposerStager\Internal\Translation\Factory\TranslatableFactory as StagerTranslatableFactory;
 
 /**
  * Creates translatable strings that can interoperate with Composer Stager.
@@ -24,13 +23,13 @@ final class TranslatableStringFactory implements TranslatableFactoryInterface {
   /**
    * Constructs a TranslatableStringFactory object.
    *
-   * @param \PhpTuf\ComposerStager\Internal\Translation\Factory\TranslatableFactory $decorated
+   * @param \PhpTuf\ComposerStager\API\Translation\Factory\TranslatableFactoryInterface $decorated
    *   The decorated translatable factory service.
    * @param \Drupal\Core\StringTranslation\TranslationInterface $translation
    *   The string translation service.
    */
   public function __construct(
-    private readonly StagerTranslatableFactory $decorated,
+    private readonly TranslatableFactoryInterface $decorated,
     private readonly TranslationInterface $translation,
   ) {}
 

@@ -74,7 +74,7 @@ class GitExcluderTest extends PackageManagerKernelTestBase {
       'modules/example/.git',
     ];
     foreach ($excluded_paths as $excluded_path) {
-      $this->assertContains($excluded_path, $beginner_args[0][2]->getAll());
+      $this->assertContains($excluded_path, $beginner_args[0][2]);
     }
     $not_excluded_paths = [
       'modules/contrib/package_known_to_composer_removed_later/.git',
@@ -82,7 +82,7 @@ class GitExcluderTest extends PackageManagerKernelTestBase {
       'different_installer_path/package_known_to_composer/.git',
     ];
     foreach ($not_excluded_paths as $not_excluded_path) {
-      $this->assertNotContains($not_excluded_path, $beginner_args[0][2]->getAll());
+      $this->assertNotContains($not_excluded_path, $beginner_args[0][2]);
     }
   }
 
@@ -130,9 +130,9 @@ class GitExcluderTest extends PackageManagerKernelTestBase {
     // new .git folder in stage directory that either composer is aware of it or
     // the developer knows what they are doing.
     foreach ($excluded_paths as $excluded_path) {
-      $this->assertContains($excluded_path, $committer_args[0][2]->getAll());
+      $this->assertContains($excluded_path, $committer_args[0][2]);
     }
-    $this->assertNotContains('modules/unknown_to_composer_in_stage/.git', $committer_args[0][2]->getAll());
+    $this->assertNotContains('modules/unknown_to_composer_in_stage/.git', $committer_args[0][2]);
   }
 
 }

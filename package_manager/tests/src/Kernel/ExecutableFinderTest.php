@@ -7,8 +7,6 @@ namespace Drupal\Tests\package_manager\Kernel;
 use Drupal\Core\DependencyInjection\ContainerBuilder;
 use Drupal\package_manager\ExecutableFinder;
 use PhpTuf\ComposerStager\API\Finder\Service\ExecutableFinderInterface;
-use PhpTuf\ComposerStager\Internal\Finder\Service\ExecutableFinder as StagerExecutableFinder;
-use PhpTuf\ComposerStager\API\Translation\Factory\TranslatableFactoryInterface;
 use Symfony\Component\Process\ExecutableFinder as SymfonyExecutableFinder;
 
 /**
@@ -23,7 +21,7 @@ class ExecutableFinderTest extends PackageManagerKernelTestBase {
    */
   public function register(ContainerBuilder $container) {
     // Mock a Symfony executable finder that always returns /dev/null.
-    $symfony_executable_finder = new class extends SymfonyExecutableFinder {
+    $container->set(SymfonyExecutableFinder::class, new class extends SymfonyExecutableFinder {
 
       /**
        * {@inheritdoc}
@@ -32,12 +30,7 @@ class ExecutableFinderTest extends PackageManagerKernelTestBase {
         return '/dev/null';
       }
 
-    };
-    $container->getDefinition(ExecutableFinder::class)
-      ->setArgument('$decorated', new StagerExecutableFinder(
-        $symfony_executable_finder,
-        $this->createMock(TranslatableFactoryInterface::class),
-      ));
+    });
   }
 
   /**

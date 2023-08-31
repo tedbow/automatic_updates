@@ -9,7 +9,7 @@ use Drupal\package_manager\Event\PreRequireEvent;
 use Drupal\package_manager\PathLocator;
 use PhpTuf\ComposerStager\API\Exception\PreconditionException;
 use PhpTuf\ComposerStager\API\Path\Factory\PathFactoryInterface;
-use PhpTuf\ComposerStager\Internal\Path\Value\PathList;
+use PhpTuf\ComposerStager\API\Path\Factory\PathListFactoryInterface;
 use PhpTuf\ComposerStager\API\Precondition\Service\NoUnsupportedLinksExistInterface;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
@@ -36,11 +36,14 @@ final class SymlinkValidator implements EventSubscriberInterface {
    *   The Composer Stager precondition that this validator wraps.
    * @param \PhpTuf\ComposerStager\API\Path\Factory\PathFactoryInterface $pathFactory
    *   The path factory service.
+   * @param \PhpTuf\ComposerStager\API\Path\Factory\PathListFactoryInterface $pathListFactory
+   *   The path list factory service.
    */
   public function __construct(
     private readonly PathLocator $pathLocator,
     private readonly NoUnsupportedLinksExistInterface $precondition,
     private readonly PathFactoryInterface $pathFactory,
+    private readonly PathListFactoryInterface $pathListFactory,
   ) {}
 
   /**
@@ -65,17 +68,20 @@ final class SymlinkValidator implements EventSubscriberInterface {
     }
     $stage_dir = $this->pathFactory->create($stage_dir);
 
-    $excluded_paths = $event->getExcludedPaths();
     // Return early if no excluded paths were collected because this validator
     // is dependent on knowing which paths to exclude when searching for
     // symlinks.
     // @see \Drupal\package_manager\StatusCheckTrait::runStatusCheck()
-    if ($excluded_paths === NULL) {
+    if ($event->excludedPaths === NULL) {
       return;
     }
 
+    // The list of excluded paths is immutable, but the precondition may need to
+    // mutate it, so convert it back to a normal, mutable path list.
+    $exclusions = $this->pathListFactory->create(...$event->excludedPaths->getAll());
+
     try {
-      $this->precondition->assertIsFulfilled($active_dir, $stage_dir, new PathList(...$excluded_paths));
+      $this->precondition->assertIsFulfilled($active_dir, $stage_dir, $exclusions);
     }
     catch (PreconditionException $e) {
       $event->addErrorFromThrowable($e);

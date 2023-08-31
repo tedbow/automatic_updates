@@ -4,7 +4,9 @@ declare(strict_types = 1);
 
 namespace Drupal\package_manager\Event;
 
+use Drupal\package_manager\ImmutablePathList;
 use Drupal\package_manager\StageBase;
+use PhpTuf\ComposerStager\API\Path\Value\PathListInterface;
 
 /**
  * Event fired before a stage directory is created.
@@ -12,34 +14,24 @@ use Drupal\package_manager\StageBase;
 final class PreCreateEvent extends PreOperationStageEvent {
 
   /**
-   * Paths to exclude from the update.
+   * The list of paths to exclude from the stage directory.
    *
-   * @var string[]
+   * @var \Drupal\package_manager\ImmutablePathList
    */
-  private array $excludedPaths = [];
-
-  /**
-   * Returns the paths to exclude from the current operation.
-   *
-   * @return string[]
-   *   The paths to exclude.
-   */
-  public function getExcludedPaths(): array {
-    return array_unique($this->excludedPaths);
-  }
+  public readonly ImmutablePathList $excludedPaths;
 
   /**
    * Constructs a PreCreateEvent object.
    *
    * @param \Drupal\package_manager\StageBase $stage
    *   The stage which fired this event.
-   * @param string[] $paths_to_exclude
+   * @param \PhpTuf\ComposerStager\API\Path\Value\PathListInterface $excluded_paths
    *   The list of paths to exclude. These will not be copied into the stage
    *   directory when it is created.
    */
-  public function __construct(StageBase $stage, array $paths_to_exclude) {
+  public function __construct(StageBase $stage, PathListInterface $excluded_paths) {
     parent::__construct($stage);
-    $this->excludedPaths = $paths_to_exclude;
+    $this->excludedPaths = new ImmutablePathList($excluded_paths);
   }
 
 }

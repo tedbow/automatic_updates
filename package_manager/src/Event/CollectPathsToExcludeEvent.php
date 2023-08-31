@@ -7,8 +7,8 @@ namespace Drupal\package_manager\Event;
 use Drupal\package_manager\StageBase;
 use Drupal\package_manager\PathLocator;
 use PhpTuf\ComposerStager\API\Path\Factory\PathFactoryInterface;
+use PhpTuf\ComposerStager\API\Path\Factory\PathListFactoryInterface;
 use PhpTuf\ComposerStager\API\Path\Value\PathListInterface;
-use PhpTuf\ComposerStager\Internal\Path\Value\PathList;
 
 /**
  * Defines an event that collects paths to exclude.
@@ -19,13 +19,6 @@ use PhpTuf\ComposerStager\Internal\Path\Value\PathList;
 final class CollectPathsToExcludeEvent extends StageEvent implements PathListInterface {
 
   /**
-   * The list of paths to exclude.
-   *
-   * @var \PhpTuf\ComposerStager\API\Path\Value\PathListInterface
-   */
-  protected PathListInterface $pathList;
-
-  /**
    * Constructs a CollectPathsToExcludeEvent object.
    *
    * @param \Drupal\package_manager\StageBase $stage
@@ -34,14 +27,19 @@ final class CollectPathsToExcludeEvent extends StageEvent implements PathListInt
    *   The path locator service.
    * @param \PhpTuf\ComposerStager\API\Path\Factory\PathFactoryInterface $pathFactory
    *   The path factory service.
+   * @param \PhpTuf\ComposerStager\API\Path\Value\PathListInterface|null $pathList
+   *   (optional) The list of paths to exclude.
    */
   public function __construct(
     StageBase $stage,
     private readonly PathLocator $pathLocator,
-    private readonly PathFactoryInterface $pathFactory
+    private readonly PathFactoryInterface $pathFactory,
+    private ?PathListInterface $pathList = NULL,
   ) {
     parent::__construct($stage);
-    $this->pathList = new PathList();
+
+    $this->pathList ??= \Drupal::service(PathListFactoryInterface::class)
+      ->create();
   }
 
   /**
@@ -55,7 +53,7 @@ final class CollectPathsToExcludeEvent extends StageEvent implements PathListInt
    * {@inheritdoc}
    */
   public function getAll(): array {
-    return $this->pathList->getAll();
+    return array_unique($this->pathList->getAll());
   }
 
   /**

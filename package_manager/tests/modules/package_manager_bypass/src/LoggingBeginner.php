@@ -45,7 +45,7 @@ final class LoggingBeginner implements BeginnerInterface {
    * {@inheritdoc}
    */
   public function begin(PathInterface $activeDir, PathInterface $stagingDir, ?PathListInterface $exclusions = NULL, ?OutputCallbackInterface $callback = NULL, ?int $timeout = ProcessInterface::DEFAULT_TIMEOUT): void {
-    $this->saveInvocationArguments($activeDir, $stagingDir, $exclusions, $timeout);
+    $this->saveInvocationArguments($activeDir, $stagingDir, $exclusions?->getAll(), $timeout);
     $this->throwExceptionIfSet();
     $this->inner->begin($activeDir, $stagingDir, $exclusions, $callback, $timeout);
   }

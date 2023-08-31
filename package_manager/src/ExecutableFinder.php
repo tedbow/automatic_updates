@@ -6,7 +6,6 @@ namespace Drupal\package_manager;
 
 use Drupal\Core\Config\ConfigFactoryInterface;
 use PhpTuf\ComposerStager\API\Finder\Service\ExecutableFinderInterface;
-use PhpTuf\ComposerStager\Internal\Finder\Service\ExecutableFinder as StagerExecutableFinder;
 
 /**
  * An executable finder which looks for executable paths in configuration.
@@ -21,13 +20,13 @@ final class ExecutableFinder implements ExecutableFinderInterface {
   /**
    * Constructs an ExecutableFinder object.
    *
-   * @param \PhpTuf\ComposerStager\Internal\Finder\Service\ExecutableFinder $decorated
+   * @param \PhpTuf\ComposerStager\API\Finder\Service\ExecutableFinderInterface $decorated
    *   The decorated executable finder.
    * @param \Drupal\Core\Config\ConfigFactoryInterface $configFactory
    *   The config factory service.
    */
   public function __construct(
-    private readonly StagerExecutableFinder $decorated,
+    private readonly ExecutableFinderInterface $decorated,
     private readonly ConfigFactoryInterface $configFactory
   ) {}
 

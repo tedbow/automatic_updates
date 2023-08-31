@@ -1,9 +1,7 @@
 services:
-  package_manager_bypass.beginner:
-    class: Drupal\package_manager_bypass\LoggingBeginner
-    arguments: ['@state', '@package_manager_bypass.beginner.inner' ]
-    decorates: 'package_manager.beginner'
-  package_manager_bypass.committer:
-    class: Drupal\package_manager_bypass\LoggingCommitter
-    arguments: [ '@state', '@package_manager_bypass.committer.inner' ]
-    decorates: 'package_manager.committer'
+  _defaults:
+    autowire: true
+  Drupal\package_manager_bypass\LoggingBeginner:
+    decorates: 'PhpTuf\ComposerStager\API\Core\BeginnerInterface'
+  Drupal\package_manager_bypass\LoggingCommitter:
+    decorates: 'PhpTuf\ComposerStager\API\Core\CommitterInterface'

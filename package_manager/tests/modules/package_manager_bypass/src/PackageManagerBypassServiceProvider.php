@@ -7,6 +7,7 @@ namespace Drupal\package_manager_bypass;
 use Drupal\Core\DependencyInjection\ContainerBuilder;
 use Drupal\Core\DependencyInjection\ServiceProviderBase;
 use Drupal\Core\Site\Settings;
+use PhpTuf\ComposerStager\API\Core\StagerInterface;
 use Symfony\Component\DependencyInjection\Parameter;
 use Symfony\Component\DependencyInjection\Reference;
 
@@ -23,19 +24,22 @@ final class PackageManagerBypassServiceProvider extends ServiceProviderBase {
   public function alter(ContainerBuilder $container) {
     parent::alter($container);
 
-    $state = new Reference('state');
     // By default, \Drupal\package_manager_bypass\NoOpStager is applied, except
     // when a test opts out by setting this setting to FALSE.
     // @see \Drupal\package_manager_bypass\NoOpStager::setLockFileShouldChange()
     if (Settings::get('package_manager_bypass_composer_stager', TRUE)) {
-      $container->getDefinition('package_manager.stager')->setClass(NoOpStager::class)->setArguments([$state]);
+      $container->register(NoOpStager::class)
+        ->setClass(NoOpStager::class)
+        ->setPublic(FALSE)
+        ->setAutowired(TRUE)
+        ->setDecoratedService(StagerInterface::class);
     }
 
     $container->getDefinition('package_manager.path_locator')
       ->setClass(MockPathLocator::class)
       ->setAutowired(FALSE)
       ->setArguments([
-        $state,
+        new Reference('state'),
         new Parameter('app.root'),
         new Reference('config.factory'),
         new Reference('file_system'),

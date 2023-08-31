@@ -45,7 +45,7 @@ final class LoggingCommitter implements CommitterInterface {
    * {@inheritdoc}
    */
   public function commit(PathInterface $stagingDir, PathInterface $activeDir, ?PathListInterface $exclusions = NULL, ?OutputCallbackInterface $callback = NULL, ?int $timeout = ProcessInterface::DEFAULT_TIMEOUT): void {
-    $this->saveInvocationArguments($stagingDir, $activeDir, $exclusions, $timeout);
+    $this->saveInvocationArguments($stagingDir, $activeDir, $exclusions?->getAll(), $timeout);
     $this->throwExceptionIfSet();
     $this->inner->commit($stagingDir, $activeDir, $exclusions, $callback, $timeout);
   }

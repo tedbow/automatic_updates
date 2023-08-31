@@ -11,6 +11,7 @@ use Drupal\package_manager\ValidationResult;
 use Drupal\package_manager\Validator\StageNotInActiveValidator;
 use Drupal\Tests\package_manager\Traits\ValidationTestTrait;
 use Drupal\Tests\UnitTestCase;
+use PhpTuf\ComposerStager\API\Path\Value\PathListInterface;
 use Symfony\Component\Filesystem\Path;
 
 /**
@@ -43,7 +44,7 @@ class StageNotInActiveValidatorTest extends UnitTestCase {
 
     $stage_not_in_active_validator = new StageNotInActiveValidator($path_locator);
     $stage_not_in_active_validator->setStringTranslation($this->getStringTranslationStub());
-    $event = new PreCreateEvent($stage, ['some/path']);
+    $event = new PreCreateEvent($stage, $this->createMock(PathListInterface::class));
     $stage_not_in_active_validator->validate($event);
     $this->assertValidationResultsEqual($expected, $event->getResults(), $path_locator);
   }

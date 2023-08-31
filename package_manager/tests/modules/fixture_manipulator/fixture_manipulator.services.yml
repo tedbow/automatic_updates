@@ -1,5 +1,5 @@
 services:
-  fixture_manipulator.stage_manipulator:
-    class: Drupal\fixture_manipulator\StageFixtureManipulator
-    arguments: ['@state', '@fixture_manipulator.stage_manipulator.inner']
-    decorates: 'package_manager.beginner'
+  _defaults:
+    autowire: true
+  Drupal\fixture_manipulator\StageFixtureManipulator:
+    decorates: 'PhpTuf\ComposerStager\API\Core\BeginnerInterface'
