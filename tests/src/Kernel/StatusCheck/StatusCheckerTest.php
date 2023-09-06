@@ -283,4 +283,21 @@ class StatusCheckerTest extends AutomaticUpdatesKernelTestBase {
     $this->assertNull($this->getResultsFromManager(FALSE));
   }
 
+  /**
+   * @covers ::getLastRunTime
+   */
+  public function testLastRunTime(): void {
+    $this->enableModules(['automatic_updates']);
+
+    /** @var \Drupal\automatic_updates\Validation\StatusChecker $status_checker */
+    $status_checker = $this->container->get(StatusChecker::class);
+    $this->assertNull($status_checker->getLastRunTime());
+    $status_checker->run();
+    $last_run_time = $status_checker->getLastRunTime();
+    $this->assertIsInt($last_run_time);
+    $status_checker->clearStoredResults();
+    // The last run time should be unaffected by clearing stored results.
+    $this->assertSame($last_run_time, $status_checker->getLastRunTime());
+  }
+
 }
