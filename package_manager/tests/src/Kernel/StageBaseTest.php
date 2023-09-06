@@ -22,6 +22,9 @@ use Drupal\package_manager\Validator\WritableFileSystemValidator;
 use Drupal\package_manager_bypass\LoggingBeginner;
 use Drupal\package_manager_bypass\LoggingCommitter;
 use Drupal\package_manager_bypass\NoOpStager;
+use PhpTuf\ComposerStager\API\Core\BeginnerInterface;
+use PhpTuf\ComposerStager\API\Core\CommitterInterface;
+use PhpTuf\ComposerStager\API\Core\StagerInterface;
 use PhpTuf\ComposerStager\API\Exception\ExceptionInterface;
 use PhpTuf\ComposerStager\API\Exception\InvalidArgumentException;
 use PhpTuf\ComposerStager\API\Exception\PreconditionException;
@@ -293,20 +296,20 @@ class StageBaseTest extends PackageManagerKernelTestBase {
 
     $timeouts = [
       // The beginner was given an explicit timeout.
-      'package_manager.beginner' => 420,
+      BeginnerInterface::class => 420,
       // The stager should be called with a timeout of 300 seconds, which is
       // longer than Composer Stager's default timeout of 120 seconds.
-      'package_manager.stager' => 300,
+      StagerInterface::class => 300,
       // The committer should have been called with an even longer timeout,
       // since it's the most failure-sensitive operation.
-      'package_manager.committer' => 600,
+      CommitterInterface::class => 600,
     ];
     foreach ($timeouts as $service_id => $expected_timeout) {
       $invocations = $this->container->get($service_id)->getInvocationArguments();
 
       // The services should have been called with the expected timeouts.
       $expected_count = 1;
-      if ($service_id === 'package_manager.stager') {
+      if ($service_id === StagerInterface::class) {
         // Stage::require() calls Stager::stage() twice, once to change the
         // version constraints in composer.json, and again to actually update
         // the installed dependencies.
@@ -679,7 +682,7 @@ class StageBaseTest extends PackageManagerKernelTestBase {
   public function testFailureMarkerFileExcluded(): void {
     $this->assertResults([]);
     /** @var \Drupal\package_manager_bypass\LoggingCommitter $committer */
-    $committer = $this->container->get('package_manager.committer');
+    $committer = $this->container->get(CommitterInterface::class);
     $committer_args = $committer->getInvocationArguments();
     $this->assertCount(1, $committer_args);
     $this->assertContains('PACKAGE_MANAGER_FAILURE.yml', $committer_args[0][2]);

@@ -48,7 +48,7 @@ final class StatusCheckRequirements implements ContainerInjectionInterface {
    */
   public static function create(ContainerInterface $container): self {
     return new static(
-      $container->get('automatic_updates.status_checker'),
+      $container->get(StatusChecker::class),
       $container->get('date.formatter'),
       $container->get('config.factory'),
     );

@@ -9,6 +9,9 @@ declare(strict_types = 1);
 
 use Drupal\automatic_updates\BatchProcessor;
 use Drupal\automatic_updates\CronUpdateRunner;
+use Drupal\automatic_updates\ReleaseChooser;
+use Drupal\automatic_updates\UpdateStage;
+use Drupal\automatic_updates\Validation\StatusChecker;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Routing\RouteMatchInterface;
 use Drupal\automatic_updates\Validation\AdminStatusCheckMessages;
@@ -157,14 +160,14 @@ function automatic_updates_modules_installed($modules) {
   // Run the status checkers if needed when any modules are installed in
   // case they provide status checkers.
   /** @var \Drupal\automatic_updates\Validation\StatusChecker $status_checker */
-  $status_checker = \Drupal::service('automatic_updates.status_checker');
+  $status_checker = \Drupal::service(StatusChecker::class);
   $status_checker->run();
-  /** @var \Drupal\automatic_updates\CronUpdateRunner $stage */
-  $stage = \Drupal::service('automatic_updates.cron_update_stage');
+  /** @var \Drupal\automatic_updates\CronUpdateRunner $runner */
+  $runner = \Drupal::service(CronUpdateRunner::class);
   // If cron updates are disabled status check messages will not be displayed on
   // admin pages. Therefore, after installing the module the user will not be
   // alerted to any problems until they access the status report page.
-  if ($stage->getMode() === CronUpdateRunner::DISABLED) {
+  if ($runner->getMode() === CronUpdateRunner::DISABLED) {
     /** @var \Drupal\automatic_updates\Validation\AdminStatusCheckMessages $status_check_messages */
     $status_check_messages = \Drupal::classResolver(AdminStatusCheckMessages::class);
     $status_check_messages->displayResultSummary();
@@ -178,7 +181,7 @@ function automatic_updates_modules_uninstalled() {
   // Run the status checkers if needed when any modules are uninstalled in
   // case they provided status checkers.
   /** @var \Drupal\automatic_updates\Validation\StatusChecker $status_checker */
-  $status_checker = \Drupal::service('automatic_updates.status_checker');
+  $status_checker = \Drupal::service(StatusChecker::class);
   $status_checker->run();
 }
 
@@ -258,10 +261,10 @@ function automatic_updates_preprocess_update_project_status(array &$variables) {
   if ($project['name'] !== 'drupal') {
     return;
   }
-  $stage = \Drupal::service('automatic_updates.update_stage');
+  $stage = \Drupal::service(UpdateStage::class);
   $supported_target_versions = [];
   /** @var \Drupal\automatic_updates\ReleaseChooser $recommender */
-  $recommender = \Drupal::service('automatic_updates.release_chooser');
+  $recommender = \Drupal::service(ReleaseChooser::class);
   try {
     if ($installed_minor_release = $recommender->getLatestInInstalledMinor($stage)) {
       $supported_target_versions[] = $installed_minor_release->getVersion();

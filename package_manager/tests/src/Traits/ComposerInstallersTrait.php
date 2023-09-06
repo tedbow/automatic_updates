@@ -22,7 +22,9 @@ trait ComposerInstallersTrait {
    *   The fixture directory to install into.
    */
   private function installComposerInstallers(string $dir): void {
-    $package_list = $this->container->get('package_manager.composer_inspector')->getInstalledPackagesList($this->getDrupalRoot());
+    $package_list = $this->container->get(ComposerInspector::class)
+      ->getInstalledPackagesList($this->getDrupalRoot());
+
     $this->assertArrayHasKey('composer/installers', $package_list);
     $package_path = $package_list['composer/installers']->path;
     $repository = json_encode([

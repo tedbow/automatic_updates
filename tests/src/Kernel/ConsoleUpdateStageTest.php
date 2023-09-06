@@ -28,6 +28,9 @@ use Drupal\Tests\automatic_updates\Traits\EmailNotificationsTestTrait;
 use Drupal\Tests\package_manager\Kernel\TestStage;
 use Drupal\Tests\package_manager\Traits\PackageManagerBypassTestTrait;
 use Drupal\Tests\user\Traits\UserCreationTrait;
+use PhpTuf\ComposerStager\API\Core\BeginnerInterface;
+use PhpTuf\ComposerStager\API\Core\CommitterInterface;
+use PhpTuf\ComposerStager\API\Core\StagerInterface;
 use PhpTuf\ComposerStager\API\Exception\InvalidArgumentException;
 use PhpTuf\ComposerStager\API\Exception\PreconditionException;
 use PhpTuf\ComposerStager\API\Precondition\Service\PreconditionInterface;
@@ -200,20 +203,20 @@ END;
       ->set('unattended.level', $setting)
       ->save();
 
-    $this->assertCount(0, $this->container->get('package_manager.beginner')->getInvocationArguments());
+    $this->assertCount(0, $this->container->get(BeginnerInterface::class)->getInvocationArguments());
     // Run cron and ensure that Package Manager's services were called or
     // bypassed depending on configuration.
     $this->runConsoleUpdateStage();
 
     $will_update = (int) $will_update;
-    $this->assertCount($will_update, $this->container->get('package_manager.beginner')->getInvocationArguments());
+    $this->assertCount($will_update, $this->container->get(BeginnerInterface::class)->getInvocationArguments());
     // If updates happen, there will be at least two calls to the stager: one
     // to change the runtime constraints in composer.json, and another to
     // actually update the installed dependencies. If there are any core
     // dev requirements (such as `drupal/core-dev`), the stager will also be
     // called to update the dev constraints in composer.json.
-    $this->assertGreaterThanOrEqual($will_update * 2, $this->container->get('package_manager.stager')->getInvocationArguments());
-    $this->assertCount($will_update, $this->container->get('package_manager.committer')->getInvocationArguments());
+    $this->assertGreaterThanOrEqual($will_update * 2, $this->container->get(StagerInterface::class)->getInvocationArguments());
+    $this->assertCount($will_update, $this->container->get(CommitterInterface::class)->getInvocationArguments());
   }
 
   /**
@@ -382,7 +385,7 @@ END;
 
     $listener = function (PostRequireEvent $event) use (&$cron_stage_dir, $original_stage_directory): void {
       $this->assertDirectoryDoesNotExist($original_stage_directory);
-      $cron_stage_dir = $this->container->get('package_manager.stager')->getInvocationArguments()[0][1]->absolute();
+      $cron_stage_dir = $this->container->get(StagerInterface::class)->getInvocationArguments()[0][1]->absolute();
       $this->assertSame($event->stage->getStageDirectory(), $cron_stage_dir);
       $this->assertDirectoryExists($cron_stage_dir);
     };
@@ -630,7 +633,7 @@ END;
    * Tests that setLogger is called on the cron update runner service.
    */
   public function testLoggerIsSetByContainer(): void {
-    $stage_method_calls = $this->container->getDefinition('automatic_updates.cron_update_stage')->getMethodCalls();
+    $stage_method_calls = $this->container->getDefinition(CronUpdateRunner::class)->getMethodCalls();
     $this->assertSame('setLogger', $stage_method_calls[0][0]);
   }
 

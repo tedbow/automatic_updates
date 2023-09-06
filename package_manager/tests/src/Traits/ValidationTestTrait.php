@@ -69,7 +69,7 @@ trait ValidationTestTrait {
     if (!$path_locator) {
       // Only kernel and browser tests have $this->container.
       assert($this instanceof KernelTestBase || $this instanceof BrowserTestBase);
-      $path_locator = $this->container->get('package_manager.path_locator');
+      $path_locator = $this->container->get(PathLocator::class);
     }
     $subject = str_replace(
       ['<PROJECT_ROOT>', '<VENDOR_DIR>', '<STAGE_ROOT>', '<STAGE_ROOT_PARENT>'],

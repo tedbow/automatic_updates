@@ -9,6 +9,7 @@ use Drupal\package_manager\Exception\ApplyFailedException;
 use Drupal\package_manager\Exception\StageException;
 use Drupal\package_manager_bypass\LoggingCommitter;
 use Drupal\Tests\user\Traits\UserCreationTrait;
+use PhpTuf\ComposerStager\API\Core\StagerInterface;
 use PhpTuf\ComposerStager\API\Exception\ExceptionInterface;
 use PhpTuf\ComposerStager\API\Exception\InvalidArgumentException;
 
@@ -107,7 +108,7 @@ class UpdateStageTest extends AutomaticUpdatesKernelTestBase {
     ];
     $stage->stage();
 
-    $actual_arguments = $this->container->get('package_manager.stager')
+    $actual_arguments = $this->container->get(StagerInterface::class)
       ->getInvocationArguments();
 
     $this->assertCount(count($expected_arguments), $actual_arguments);
@@ -202,7 +203,7 @@ class UpdateStageTest extends AutomaticUpdatesKernelTestBase {
    * Tests that setLogger is called on the update stage service.
    */
   public function testLoggerIsSetByContainer(): void {
-    $stage_method_calls = $this->container->getDefinition('automatic_updates.update_stage')->getMethodCalls();
+    $stage_method_calls = $this->container->getDefinition(UpdateStage::class)->getMethodCalls();
     $this->assertSame('setLogger', $stage_method_calls[0][0]);
   }
 

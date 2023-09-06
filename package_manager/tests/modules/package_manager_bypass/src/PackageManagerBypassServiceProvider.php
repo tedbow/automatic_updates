@@ -7,6 +7,7 @@ namespace Drupal\package_manager_bypass;
 use Drupal\Core\DependencyInjection\ContainerBuilder;
 use Drupal\Core\DependencyInjection\ServiceProviderBase;
 use Drupal\Core\Site\Settings;
+use Drupal\package_manager\PathLocator;
 use PhpTuf\ComposerStager\API\Core\StagerInterface;
 use Symfony\Component\DependencyInjection\Parameter;
 use Symfony\Component\DependencyInjection\Reference;
@@ -35,7 +36,7 @@ final class PackageManagerBypassServiceProvider extends ServiceProviderBase {
         ->setDecoratedService(StagerInterface::class);
     }
 
-    $container->getDefinition('package_manager.path_locator')
+    $container->getDefinition(PathLocator::class)
       ->setClass(MockPathLocator::class)
       ->setAutowired(FALSE)
       ->setArguments([

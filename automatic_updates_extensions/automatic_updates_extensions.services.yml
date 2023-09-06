@@ -2,10 +2,7 @@ services:
   _defaults:
     autowire: true
 
-  automatic_updates_extensions.update_stage:
-    class: Drupal\automatic_updates_extensions\ExtensionUpdateStage
-  Drupal\automatic_updates_extensions\ExtensionUpdateStage: '@automatic_updates_extensions.update_stage'
-  automatic_updates_extensions.validator.target_release:
-    class: Drupal\automatic_updates_extensions\Validator\UpdateReleaseValidator
+  Drupal\automatic_updates_extensions\ExtensionUpdateStage: ~
+  Drupal\automatic_updates_extensions\Validator\UpdateReleaseValidator:
     tags:
       - { name: event_subscriber }

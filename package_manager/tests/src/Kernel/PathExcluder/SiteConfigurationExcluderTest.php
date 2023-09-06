@@ -22,7 +22,7 @@ class SiteConfigurationExcluderTest extends PackageManagerKernelTestBase {
   public function register(ContainerBuilder $container) {
     parent::register($container);
 
-    $container->getDefinition('package_manager.site_configuration_excluder')
+    $container->getDefinition(SiteConfigurationExcluder::class)
       ->setClass(TestSiteConfigurationExcluder::class);
   }
 

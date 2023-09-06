@@ -4,6 +4,8 @@ declare(strict_types = 1);
 
 namespace Drupal\automatic_updates_test_api;
 
+use Drupal\automatic_updates\UpdateStage;
+use Drupal\package_manager\PathLocator;
 use Drupal\package_manager_test_api\ApiController as PackageManagerApiController;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\HttpFoundation\Request;
@@ -21,8 +23,8 @@ class ApiController extends PackageManagerApiController {
    */
   public static function create(ContainerInterface $container) {
     return new static(
-      $container->get('automatic_updates.update_stage'),
-      $container->get('package_manager.path_locator')
+      $container->get(UpdateStage::class),
+      $container->get(PathLocator::class),
     );
   }
 

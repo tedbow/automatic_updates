@@ -9,6 +9,8 @@ use Drupal\fixture_manipulator\ActiveFixtureManipulator;
 use Drupal\package_manager\PathLocator;
 use Drupal\Tests\package_manager\Kernel\PackageManagerKernelTestBase;
 use Drupal\Tests\package_manager\Traits\ComposerInstallersTrait;
+use PhpTuf\ComposerStager\API\Core\BeginnerInterface;
+use PhpTuf\ComposerStager\API\Core\CommitterInterface;
 use Symfony\Component\Filesystem\Filesystem;
 
 /**
@@ -66,7 +68,7 @@ class GitExcluderTest extends PackageManagerKernelTestBase {
     $stage = $this->createStage();
     $stage->create();
     /** @var \Drupal\package_manager_bypass\LoggingBeginner $beginner */
-    $beginner = $this->container->get('package_manager.beginner');
+    $beginner = $this->container->get(BeginnerInterface::class);
     $beginner_args = $beginner->getInvocationArguments();
     $excluded_paths = [
       '.git',
@@ -118,7 +120,7 @@ class GitExcluderTest extends PackageManagerKernelTestBase {
 
     $stage->apply();
     /** @var \Drupal\package_manager_bypass\LoggingCommitter $committer */
-    $committer = $this->container->get('package_manager.committer');
+    $committer = $this->container->get(CommitterInterface::class);
     $committer_args = $committer->getInvocationArguments();
     $excluded_paths = [
       '.git',

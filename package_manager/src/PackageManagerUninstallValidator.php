@@ -6,6 +6,9 @@ namespace Drupal\package_manager;
 
 use Drupal\Core\Extension\ModuleUninstallValidatorInterface;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
+use PhpTuf\ComposerStager\API\Core\BeginnerInterface;
+use PhpTuf\ComposerStager\API\Core\CommitterInterface;
+use PhpTuf\ComposerStager\API\Core\StagerInterface;
 use PhpTuf\ComposerStager\API\Path\Factory\PathFactoryInterface;
 use Symfony\Component\DependencyInjection\ContainerAwareInterface;
 use Symfony\Component\DependencyInjection\ContainerAwareTrait;
@@ -28,16 +31,16 @@ final class PackageManagerUninstallValidator implements ModuleUninstallValidator
    */
   public function validate($module) {
     $stage = new class(
-      $this->container->get('package_manager.path_locator'),
-      $this->container->get('package_manager.beginner'),
-      $this->container->get('package_manager.stager'),
-      $this->container->get('package_manager.committer'),
+      $this->container->get(PathLocator::class),
+      $this->container->get(BeginnerInterface::class),
+      $this->container->get(StagerInterface::class),
+      $this->container->get(CommitterInterface::class),
       $this->container->get('file_system'),
       $this->container->get('event_dispatcher'),
       $this->container->get('tempstore.shared'),
       $this->container->get('datetime.time'),
       $this->container->get(PathFactoryInterface::class),
-      $this->container->get('package_manager.failure_marker')) extends StageBase {};
+      $this->container->get(FailureMarker::class)) extends StageBase {};
     if ($stage->isAvailable() || !$stage->isApplying()) {
       return [];
     }

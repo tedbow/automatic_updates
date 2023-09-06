@@ -6,6 +6,7 @@ namespace Drupal\Tests\automatic_updates\Functional;
 
 use Drupal\automatic_updates\CronUpdateRunner;
 use Drupal\automatic_updates\CommandExecutor;
+use Drupal\automatic_updates\UpdateStage;
 use Drupal\fixture_manipulator\StageFixtureManipulator;
 use Drupal\package_manager\PathLocator;
 use Drupal\Tests\automatic_updates\Traits\ComposerStagerTestTrait;
@@ -71,7 +72,7 @@ abstract class AutomaticUpdatesFunctionalTestBase extends BrowserTestBase {
     $service_ids = [
       // If automatic_updates is installed, ensure any stage directory created
       // during the test is cleaned up.
-      'automatic_updates.update_stage',
+      UpdateStage::class,
     ];
     foreach ($service_ids as $service_id) {
       if ($this->container->has($service_id)) {

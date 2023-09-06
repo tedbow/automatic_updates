@@ -25,7 +25,7 @@ class SqliteDatabaseExcluderTest extends PackageManagerKernelTestBase {
   public function register(ContainerBuilder $container) {
     parent::register($container);
 
-    $container->getDefinition('package_manager.sqlite_excluder')
+    $container->getDefinition(SqliteDatabaseExcluder::class)
       ->setClass(TestSqliteDatabaseExcluder::class);
   }
 

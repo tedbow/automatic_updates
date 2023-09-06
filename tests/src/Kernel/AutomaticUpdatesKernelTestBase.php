@@ -7,6 +7,8 @@ namespace Drupal\Tests\automatic_updates\Kernel;
 use Drupal\automatic_updates\CronUpdateRunner;
 use Drupal\automatic_updates\ConsoleUpdateStage;
 use Drupal\Core\DependencyInjection\ContainerBuilder;
+use Drupal\package_manager\Validator\SymlinkValidator;
+use Drupal\package_manager\Validator\WritableFileSystemValidator;
 use Drupal\Tests\automatic_updates\Traits\ValidationTestTrait;
 use Drupal\Tests\package_manager\Kernel\PackageManagerKernelTestBase;
 
@@ -40,12 +42,12 @@ abstract class AutomaticUpdatesKernelTestBase extends PackageManagerKernelTestBa
   protected function setUp(): void {
     // If Package Manager's file system permissions validator is disabled, also
     // disable the Automatic Updates validator which wraps it.
-    if (in_array('package_manager.validator.file_system', $this->disableValidators, TRUE)) {
+    if (in_array(WritableFileSystemValidator::class, $this->disableValidators, TRUE)) {
       $this->disableValidators[] = 'automatic_updates.validator.file_system_permissions';
     }
     // If Package Manager's symlink validator is disabled, also disable the
     // Automatic Updates validator which wraps it.
-    if (in_array('package_manager.validator.symlink', $this->disableValidators, TRUE)) {
+    if (in_array(SymlinkValidator::class, $this->disableValidators, TRUE)) {
       $this->disableValidators[] = 'automatic_updates.validator.symlink';
     }
     parent::setUp();
@@ -84,7 +86,7 @@ abstract class AutomaticUpdatesKernelTestBase extends PackageManagerKernelTestBa
 
     // Use the test-only implementations of the regular and cron update runner.
     $overrides = [
-      'automatic_updates.cron_update_stage' => TestCronUpdateRunner::class,
+      CronUpdateRunner::class => TestCronUpdateRunner::class,
       ConsoleUpdateStage::class => TestConsoleUpdateStage::class,
     ];
     foreach ($overrides as $service_id => $class) {

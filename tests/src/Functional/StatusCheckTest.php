@@ -7,6 +7,7 @@ namespace Drupal\Tests\automatic_updates\Functional;
 use Behat\Mink\Element\NodeElement;
 use Drupal\automatic_updates\CronUpdateRunner;
 use Drupal\automatic_updates\StatusCheckMailer;
+use Drupal\automatic_updates\Validation\StatusChecker;
 use Drupal\automatic_updates_test\EventSubscriber\TestSubscriber1;
 use Drupal\automatic_updates_test_status_checker\EventSubscriber\TestSubscriber2;
 use Drupal\Core\Url;
@@ -577,8 +578,7 @@ class StatusCheckTest extends AutomaticUpdatesFunctionalTestBase {
     $this->container = $this->container->get('kernel')->getContainer();
 
     // Clear stored results that were collected when the module was installed.
-    $this->container->get('automatic_updates.status_checker')
-      ->clearStoredResults();
+    $this->container->get(StatusChecker::class)->clearStoredResults();
 
     // Flag a validation error, whose summary will be displayed in the messages
     // area.
@@ -616,8 +616,7 @@ class StatusCheckTest extends AutomaticUpdatesFunctionalTestBase {
     $this->container = $this->container->get('kernel')->getContainer();
 
     // Clear stored results that were collected when the module was installed.
-    $this->container->get('automatic_updates.status_checker')
-      ->clearStoredResults();
+    $this->container->get(StatusChecker::class)->clearStoredResults();
 
     $this->config('automatic_updates.settings')
       ->set('unattended.method', 'console')

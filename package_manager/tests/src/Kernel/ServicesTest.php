@@ -34,15 +34,6 @@ class ServicesTest extends KernelTestBase {
    * Tests that Package Manager's public services can be instantiated.
    */
   public function testPackageManagerServices(): void {
-    $services = [
-      'package_manager.beginner',
-      'package_manager.stager',
-      'package_manager.committer',
-    ];
-    foreach ($services as $service) {
-      $this->assertIsObject($this->container->get($service));
-    }
-
     // Ensure that any overridden Composer Stager services were overridden
     // correctly.
     $overrides = [

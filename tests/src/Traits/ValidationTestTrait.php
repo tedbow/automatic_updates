@@ -4,6 +4,7 @@ declare(strict_types = 1);
 
 namespace Drupal\Tests\automatic_updates\Traits;
 
+use Drupal\automatic_updates\Validation\StatusChecker;
 use Drupal\package_manager\ValidationResult;
 use Drupal\system\SystemManager;
 use Drupal\Tests\package_manager\Traits\ValidationTestTrait as PackageManagerValidationTestTrait;
@@ -76,7 +77,7 @@ trait ValidationTestTrait {
    *   The messages of the type.
    */
   protected function getResultsFromManager(bool $call_run = FALSE, ?int $severity = NULL): ?array {
-    $manager = $this->container->get('automatic_updates.status_checker');
+    $manager = $this->container->get(StatusChecker::class);
     if ($call_run) {
       $manager->run();
     }

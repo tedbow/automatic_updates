@@ -12,6 +12,7 @@ use Drupal\package_manager\Event\PreCreateEvent;
 use Drupal\package_manager\Event\PreRequireEvent;
 use Drupal\package_manager\Exception\StageEventException;
 use Drupal\package_manager\ValidationResult;
+use Drupal\package_manager\Validator\LockFileValidator;
 use Drupal\package_manager\Validator\PhpTufValidator;
 
 /**
@@ -238,7 +239,7 @@ class PhpTufValidatorTest extends PackageManagerKernelTestBase {
     // updated any packages in the stage. In this very specific situation, it's
     // okay to disable that validator to remove the interference.
     if ($event_class === PreApplyEvent::class) {
-      $lock_file_validator = $this->container->get('package_manager.validator.lock_file');
+      $lock_file_validator = $this->container->get(LockFileValidator::class);
       $this->container->get('event_dispatcher')
         ->removeSubscriber($lock_file_validator);
     }

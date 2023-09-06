@@ -5,7 +5,9 @@ declare(strict_types = 1);
 namespace Drupal\Tests\automatic_updates_extensions\Kernel;
 
 use Drupal\automatic_updates_extensions\ExtensionUpdateStage;
+use Drupal\automatic_updates_extensions\Validator\UpdateReleaseValidator;
 use Drupal\Tests\user\Traits\UserCreationTrait;
+use PhpTuf\ComposerStager\API\Core\StagerInterface;
 
 /**
  * @coversDefaultClass \Drupal\automatic_updates_extensions\ExtensionUpdateStage
@@ -33,7 +35,7 @@ class ExtensionUpdateStageTest extends AutomaticUpdatesExtensionsKernelTestBase 
     // This test doesn't need to validate that the test projects used are in the
     // codebase. Therefore, we need to disable the following validators that
     // require real Drupal projects.
-    $this->disableValidators[] = 'automatic_updates_extensions.validator.target_release';
+    $this->disableValidators[] = UpdateReleaseValidator::class;
     parent::setUp();
     $this->installEntitySchema('user');
 
@@ -104,7 +106,7 @@ class ExtensionUpdateStageTest extends AutomaticUpdatesExtensionsKernelTestBase 
     ];
     $stage->stage();
 
-    $actual_arguments = $this->container->get('package_manager.stager')
+    $actual_arguments = $this->container->get(StagerInterface::class)
       ->getInvocationArguments();
 
     $this->assertCount(count($expected_arguments), $actual_arguments);

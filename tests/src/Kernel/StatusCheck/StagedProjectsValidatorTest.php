@@ -8,6 +8,7 @@ use Drupal\automatic_updates\UpdateStage;
 use Drupal\fixture_manipulator\ActiveFixtureManipulator;
 use Drupal\package_manager\Exception\StageEventException;
 use Drupal\package_manager\ValidationResult;
+use Drupal\package_manager\Validator\SupportedReleaseValidator;
 use Drupal\Tests\automatic_updates\Kernel\AutomaticUpdatesKernelTestBase;
 
 /**
@@ -28,7 +29,7 @@ class StagedProjectsValidatorTest extends AutomaticUpdatesKernelTestBase {
   protected function setUp(): void {
     // In this test, we don't care whether the updated projects are secure and
     // supported.
-    $this->disableValidators[] = 'package_manager.validator.supported_releases';
+    $this->disableValidators[] = SupportedReleaseValidator::class;
     parent::setUp();
   }
 

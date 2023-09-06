@@ -4,9 +4,11 @@ declare(strict_types = 1);
 
 namespace Drupal\Tests\automatic_updates_extensions\Kernel;
 
+use Drupal\automatic_updates_extensions\ExtensionUpdateStage;
 use Drupal\fixture_manipulator\ActiveFixtureManipulator;
 use Drupal\package_manager\Event\PreOperationStageEvent;
 use Drupal\package_manager\Exception\StageEventException;
+use Drupal\package_manager\Validator\ComposerValidator;
 use Drupal\Tests\automatic_updates\Kernel\AutomaticUpdatesKernelTestBase;
 
 /**
@@ -33,7 +35,7 @@ abstract class AutomaticUpdatesExtensionsKernelTestBase extends AutomaticUpdates
     // server. This should be okay in most situations because, apart from the
     // validator, only Composer Stager needs run Composer, and
     // package_manager_bypass is disabling those operations.
-    $this->disableValidators[] = 'package_manager.validator.composer';
+    $this->disableValidators[] = ComposerValidator::class;
     parent::setUp();
     // Install additional packages that will be needed in tests.
     (new ActiveFixtureManipulator())
@@ -81,7 +83,7 @@ abstract class AutomaticUpdatesExtensionsKernelTestBase extends AutomaticUpdates
    *   be passed if $expected_results is not empty.
    */
   protected function assertUpdateResults(array $project_versions, array $expected_results, string $event_class = NULL): void {
-    $stage = $this->container->get('automatic_updates_extensions.update_stage');
+    $stage = $this->container->get(ExtensionUpdateStage::class);
 
     try {
       $stage->begin($project_versions);

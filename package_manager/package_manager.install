@@ -9,6 +9,7 @@ declare(strict_types = 1);
 
 use Drupal\package_manager\ComposerInspector;
 use Drupal\package_manager\Exception\StageFailureMarkerException;
+use Drupal\package_manager\FailureMarker;
 use PhpTuf\ComposerStager\API\Core\BeginnerInterface;
 use PhpTuf\ComposerStager\API\Exception\ExceptionInterface;
 use PhpTuf\ComposerStager\API\Finder\Service\ExecutableFinderInterface;
@@ -30,7 +31,7 @@ function package_manager_requirements(string $phase) {
   // If we're able to check for the presence of the failure marker at all, do it
   // irrespective of the current run phase. If the failure marker is there, the
   // site is in an indeterminate state and should be restored from backup ASAP.
-  $service_id = 'package_manager.failure_marker';
+  $service_id = FailureMarker::class;
   if (\Drupal::hasService($service_id)) {
     try {
       \Drupal::service($service_id)->assertNotExists(NULL);

@@ -77,11 +77,11 @@ final class UpdaterForm extends UpdateFormBase {
   public static function create(ContainerInterface $container) {
     return new static(
       $container->get('state'),
-      $container->get('automatic_updates.update_stage'),
+      $container->get(UpdateStage::class),
       $container->get('event_dispatcher'),
-      $container->get('automatic_updates.release_chooser'),
+      $container->get(ReleaseChooser::class),
       $container->get('renderer'),
-      $container->get('package_manager.failure_marker'),
+      $container->get(FailureMarker::class),
       $container->get('module_handler')
     );
   }

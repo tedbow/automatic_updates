@@ -46,7 +46,7 @@ final class BatchProcessor {
    *   The update stage service.
    */
   private static function getStage(): UpdateStage {
-    return \Drupal::service('automatic_updates.update_stage');
+    return \Drupal::service(UpdateStage::class);
   }
 
   /**

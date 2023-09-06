@@ -7,6 +7,7 @@ namespace Drupal\automatic_updates;
 use Drupal\automatic_updates\Validator\PhpExtensionsValidator;
 use Drupal\Core\DependencyInjection\ContainerBuilder;
 use Drupal\Core\DependencyInjection\ServiceProviderBase;
+use Drupal\package_manager\Validator\PhpExtensionsValidator as PackageManagerPhpExtensionsValidator;
 
 /**
  * Modifies container services for Automatic Updates.
@@ -22,7 +23,8 @@ final class AutomaticUpdatesServiceProvider extends ServiceProviderBase {
    * {@inheritdoc}
    */
   public function alter(ContainerBuilder $container) {
-    $service_id = 'package_manager.validator.php_extensions';
+    $service_id = PackageManagerPhpExtensionsValidator::class;
+
     if ($container->hasDefinition($service_id)) {
       $container->getDefinition($service_id)
         ->setClass(PhpExtensionsValidator::class);

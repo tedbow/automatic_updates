@@ -44,9 +44,9 @@ final class UpdateController extends ControllerBase {
    */
   public static function create(ContainerInterface $container) {
     return new static(
-      $container->get('package_manager.validator.pending_updates'),
+      $container->get(PendingUpdatesValidator::class),
       $container->get('current_route_match'),
-      $container->get('automatic_updates.status_checker')
+      $container->get(StatusChecker::class),
     );
   }
 

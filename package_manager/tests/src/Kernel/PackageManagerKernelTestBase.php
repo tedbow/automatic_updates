@@ -29,6 +29,9 @@ use GuzzleHttp\Handler\MockHandler;
 use GuzzleHttp\HandlerStack;
 use GuzzleHttp\Psr7\Response;
 use GuzzleHttp\Psr7\Utils;
+use PhpTuf\ComposerStager\API\Core\BeginnerInterface;
+use PhpTuf\ComposerStager\API\Core\CommitterInterface;
+use PhpTuf\ComposerStager\API\Core\StagerInterface;
 use PhpTuf\ComposerStager\API\Path\Factory\PathFactoryInterface;
 use Psr\Http\Message\RequestInterface;
 use Symfony\Component\Filesystem\Filesystem;
@@ -151,8 +154,7 @@ abstract class PackageManagerKernelTestBase extends KernelTestBase {
     // 'persist' tag prevents the mock from being destroyed during a container
     // rebuild.
     // @see ::createTestProject()
-    $container->getDefinition('package_manager.validator.disk_space')
-      ->addTag('persist');
+    $container->getDefinition(DiskSpaceValidator::class)->addTag('persist');
 
     // Ensure that our failure logger will survive container rebuilds.
     $container->getDefinition('logger.channel.package_manager')
@@ -174,9 +176,9 @@ abstract class PackageManagerKernelTestBase extends KernelTestBase {
   protected function createStage(): TestStage {
     return new TestStage(
       $this->container->get(PathLocator::class),
-      $this->container->get('package_manager.beginner'),
-      $this->container->get('package_manager.stager'),
-      $this->container->get('package_manager.committer'),
+      $this->container->get(BeginnerInterface::class),
+      $this->container->get(StagerInterface::class),
+      $this->container->get(CommitterInterface::class),
       $this->container->get('file_system'),
       $this->container->get('event_dispatcher'),
       $this->container->get('tempstore.shared'),
@@ -318,7 +320,7 @@ abstract class PackageManagerKernelTestBase extends KernelTestBase {
       $path_locator->getVendorDirectory() => PHP_INT_MAX,
       $validator->temporaryDirectory() => PHP_INT_MAX,
     ];
-    $this->container->set('package_manager.validator.disk_space', $validator);
+    $this->container->set(DiskSpaceValidator::class, $validator);
   }
 
   /**

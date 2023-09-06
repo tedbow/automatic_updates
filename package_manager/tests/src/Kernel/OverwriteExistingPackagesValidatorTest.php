@@ -10,6 +10,7 @@ use Drupal\package_manager\Event\PostCreateEvent;
 use Drupal\package_manager\Event\PreApplyEvent;
 use Drupal\package_manager\PathLocator;
 use Drupal\package_manager\ValidationResult;
+use Drupal\package_manager\Validator\SupportedReleaseValidator;
 use Drupal\Tests\package_manager\Traits\ComposerInstallersTrait;
 
 /**
@@ -27,7 +28,7 @@ class OverwriteExistingPackagesValidatorTest extends PackageManagerKernelTestBas
   protected function setUp(): void {
     // In this test, we don't care whether the updated projects are secure and
     // supported.
-    $this->disableValidators[] = 'package_manager.validator.supported_releases';
+    $this->disableValidators[] = SupportedReleaseValidator::class;
     parent::setUp();
 
     $this->installComposerInstallers($this->container->get(PathLocator::class)->getProjectRoot());

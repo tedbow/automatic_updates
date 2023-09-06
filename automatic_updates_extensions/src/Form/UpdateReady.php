@@ -79,14 +79,14 @@ final class UpdateReady extends UpdateFormBase {
    */
   public static function create(ContainerInterface $container) {
     return new static(
-      $container->get('automatic_updates_extensions.update_stage'),
+      $container->get(ExtensionUpdateStage::class),
       $container->get('messenger'),
       $container->get('state'),
       $container->get('extension.list.module'),
       $container->get('renderer'),
       $container->get('event_dispatcher'),
-      $container->get('package_manager.composer_inspector'),
-      $container->get('package_manager.path_locator')
+      $container->get(ComposerInspector::class),
+      $container->get(PathLocator::class),
     );
   }
 

@@ -59,7 +59,7 @@ class LockFileValidatorTest extends PackageManagerKernelTestBase {
     $inspector->getAllowPluginsConfig($arguments)->willReturn([]);
     $inspector->validate($arguments);
     $inspector->getRootPackageInfo($arguments)->willReturn([]);
-    $container->set('package_manager.composer_inspector', $inspector->reveal());
+    $container->set(ComposerInspector::class, $inspector->reveal());
   }
 
   /**

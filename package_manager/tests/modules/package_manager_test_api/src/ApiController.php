@@ -6,8 +6,12 @@ namespace Drupal\package_manager_test_api;
 
 use Drupal\Core\Controller\ControllerBase;
 use Drupal\Core\Url;
+use Drupal\package_manager\FailureMarker;
 use Drupal\package_manager\PathLocator;
 use Drupal\package_manager\StageBase;
+use PhpTuf\ComposerStager\API\Core\BeginnerInterface;
+use PhpTuf\ComposerStager\API\Core\CommitterInterface;
+use PhpTuf\ComposerStager\API\Core\StagerInterface;
 use PhpTuf\ComposerStager\API\Path\Factory\PathFactoryInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -58,19 +62,20 @@ class ApiController extends ControllerBase {
    */
   public static function create(ContainerInterface $container) {
     $stage = new ControllerStage(
-      $container->get('package_manager.path_locator'),
-      $container->get('package_manager.beginner'),
-      $container->get('package_manager.stager'),
-      $container->get('package_manager.committer'),
+      $container->get(PathLocator::class),
+      $container->get(BeginnerInterface::class),
+      $container->get(StagerInterface::class),
+      $container->get(CommitterInterface::class),
       $container->get('file_system'),
       $container->get('event_dispatcher'),
       $container->get('tempstore.shared'),
       $container->get('datetime.time'),
       $container->get(PathFactoryInterface::class),
-      $container->get('package_manager.failure_marker'));
+      $container->get(FailureMarker::class),
+    );
     return new static(
       $stage,
-      $container->get('package_manager.path_locator')
+      $container->get(PathLocator::class),
     );
   }
 

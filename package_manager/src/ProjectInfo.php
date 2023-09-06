@@ -192,7 +192,7 @@ final class ProjectInfo {
     // update processor service.
     if (!isset($available_projects[$this->name])) {
       /** @var \Drupal\package_manager\PackageManagerUpdateProcessor $update_processor */
-      $update_processor = \Drupal::service('package_manager.update_processor');
+      $update_processor = \Drupal::service(PackageManagerUpdateProcessor::class);
       if ($project_data = $update_processor->getProjectData($this->name)) {
         $available_projects[$this->name] = $project_data;
       }
