@@ -4,8 +4,11 @@ declare(strict_types = 1);
 
 namespace Drupal\Tests\package_manager\Kernel;
 
+use Drupal\package_manager\Event\CollectPathsToExcludeEvent;
 use Drupal\package_manager\Exception\StageFailureMarkerException;
 use Drupal\package_manager\FailureMarker;
+use Drupal\package_manager\PathLocator;
+use PhpTuf\ComposerStager\API\Path\Factory\PathFactoryInterface;
 
 /**
  * @coversDefaultClass \Drupal\package_manager\FailureMarker
@@ -78,6 +81,20 @@ REGEXP
     $this->expectException(StageFailureMarkerException::class);
     $this->expectExceptionMessageMatches('/^Something wicked occurred here. Caused by Exception, with this message: Witchcraft!\nBacktrace:\n#0 .*/');
     $failure_marker->assertNotExists();
+  }
+
+  /**
+   * @covers ::getSubscribedEvents
+   * @covers ::excludeMarkerFile
+   */
+  public function testMarkerFileIsExcluded(): void {
+    $event = new CollectPathsToExcludeEvent(
+      $this->createStage(),
+      $this->container->get(PathLocator::class),
+      $this->container->get(PathFactoryInterface::class),
+    );
+    $this->container->get('event_dispatcher')->dispatch($event);
+    $this->assertContains('PACKAGE_MANAGER_FAILURE.yml', $event->getAll());
   }
 
 }

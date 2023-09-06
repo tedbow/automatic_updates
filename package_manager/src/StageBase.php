@@ -443,15 +443,10 @@ abstract class StageBase implements LoggerAwareInterface {
     $stage_dir = $this->pathFactory->create($this->getStageDirectory());
 
     $excluded_paths = $this->getPathsToExclude();
-    // Exclude the failure file from the commit operation.
-    $excluded_paths->add(
-      str_replace($active_dir->absolute() . DIRECTORY_SEPARATOR, '', $this->failureMarker->getPath()),
-    );
-
+    $event = new PreApplyEvent($this, $excluded_paths);
     // If an error occurs while dispatching the events, ensure that ::destroy()
     // doesn't think we're in the middle of applying the staged changes to the
     // active directory.
-    $event = new PreApplyEvent($this, $excluded_paths);
     $this->tempStore->set(self::TEMPSTORE_APPLY_TIME_KEY, $this->time->getRequestTime());
     $this->dispatch($event, $this->setNotApplying(...));
 

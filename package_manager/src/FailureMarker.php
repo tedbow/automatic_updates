@@ -4,6 +4,8 @@ declare(strict_types = 1);
 
 namespace Drupal\package_manager;
 
+use Drupal\package_manager\Event\CollectPathsToExcludeEvent;
+use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\Component\Yaml\Exception\ParseException;
 use Symfony\Component\Yaml\Yaml;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
@@ -23,7 +25,7 @@ use Drupal\package_manager\Exception\StageFailureMarkerException;
  *   at any time without warning. External code should not interact with this
  *   class.
  */
-final class FailureMarker {
+final class FailureMarker implements EventSubscriberInterface {
 
   /**
    * Constructs a FailureMarker object.
@@ -140,6 +142,27 @@ final class FailureMarker {
     if ($message = $this->getMessage()) {
       throw new StageFailureMarkerException($message);
     }
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public static function getSubscribedEvents(): array {
+    return [
+      CollectPathsToExcludeEvent::class => 'excludeMarkerFile',
+    ];
+  }
+
+  /**
+   * Excludes the failure marker file from stage operations.
+   *
+   * @param \Drupal\package_manager\Event\CollectPathsToExcludeEvent $event
+   *   The event being handled.
+   */
+  public function excludeMarkerFile(CollectPathsToExcludeEvent $event): void {
+    $event->addPathsRelativeToProjectRoot([
+      $this->getPath(),
+    ]);
   }
 
 }

@@ -40,7 +40,9 @@ services:
   Drupal\package_manager\PathLocator:
     arguments:
       $appRoot: '%app.root%'
-  Drupal\package_manager\FailureMarker: ~
+  Drupal\package_manager\FailureMarker:
+    tags:
+      - { name: event_subscriber }
   Drupal\package_manager\EventSubscriber\UpdateDataSubscriber:
     # @todo Autowire this service when https://drupal.org/i/3325557 lands.
     arguments:
