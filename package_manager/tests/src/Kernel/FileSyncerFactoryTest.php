@@ -32,9 +32,18 @@ class FileSyncerFactoryTest extends KernelTestBase {
    */
   public function providerFactory(): array {
     return [
-      'rsync file syncer' => ['rsync'],
-      'php file syncer' => ['php'],
-      'no preference' => [NULL],
+      'rsync file syncer' => [
+        'configured syncer' => 'rsync',
+        'expected syncer' => RsyncFileSyncerInterface::class,
+      ],
+      'php file syncer' => [
+        'configured syncer' => 'php',
+        'expected syncer' => PhpFileSyncerInterface::class,
+      ],
+      'no preference' => [
+        'configured syncer' => NULL,
+        'expected syncer' => FileSyncerInterface::class,
+      ],
     ];
   }
 
@@ -44,24 +53,12 @@ class FileSyncerFactoryTest extends KernelTestBase {
    * @param string|null $configured_syncer
    *   The syncer to use, as configured in automatic_updates.settings. Can be
    *   'rsync', 'php', or NULL.
+   * @param string $expected_syncer
+   *   The expected syncer class.
    *
    * @dataProvider providerFactory
    */
-  public function testFactory(?string $configured_syncer): void {
-    switch ($configured_syncer) {
-      case 'rsync':
-        $expected_syncer = RsyncFileSyncerInterface::class;
-        break;
-
-      case 'php':
-        $expected_syncer = PhpFileSyncerInterface::class;
-        break;
-
-      default:
-        $expected_syncer = FileSyncerInterface::class;
-        break;
-    }
-
+  public function testFactory(?string $configured_syncer, string $expected_syncer): void {
     $this->config('package_manager.settings')
       ->set('file_syncer', $configured_syncer)
       ->save();
