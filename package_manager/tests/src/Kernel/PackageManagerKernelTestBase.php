@@ -139,6 +139,14 @@ abstract class PackageManagerKernelTestBase extends KernelTestBase {
   /**
    * {@inheritdoc}
    */
+  protected function enableModules(array $modules) {
+    parent::enableModules($modules);
+    $this->registerPostUpdateFunctions();
+  }
+
+  /**
+   * {@inheritdoc}
+   */
   public function register(ContainerBuilder $container) {
     parent::register($container);
 
@@ -243,8 +251,9 @@ abstract class PackageManagerKernelTestBase extends KernelTestBase {
    * up-to-date state.
    */
   protected function registerPostUpdateFunctions(): void {
-    $updates = $this->container->get('update.post_update_registry')
-      ->getPendingUpdateFunctions();
+    static $updates = [];
+    $updates = array_merge($updates, $this->container->get('update.post_update_registry')
+      ->getPendingUpdateFunctions());
 
     $this->container->get('keyvalue')
       ->get('post_update')
