@@ -76,7 +76,6 @@ class ConsoleUpdateStageTest extends AutomaticUpdatesKernelTestBase {
       ->get('automatic_updates')
       ->addLogger($this->logger);
     $this->installEntitySchema('user');
-    $this->installSchema('user', ['users_data']);
 
     $this->setUpEmailRecipients();
     $this->assertNoCronRun();

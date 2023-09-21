@@ -110,7 +110,7 @@ class Converter {
         new \SplFileInfo("$core_module_path/automatic_updates.info.yml"),
         new \SplFileInfo("$core_module_path/package_manager/package_manager.info.yml"),
       ],
-      "core_version_requirement: ^9.7 || ^10.1",
+      "core_version_requirement: ^10",
       "package: Core\nversion: VERSION\nlifecycle: experimental",
     );
     $replacements = [
@@ -125,7 +125,7 @@ class Converter {
 
     static::removeLines($core_dir);
     self::info('Remove unneeded lines');
-    $fs->rename("$core_module_path/package_manager", $core_dir . "/core/modules/package_manager");
+    $fs->rename("$core_module_path/package_manager", $package_manager_core_path);
     self::info('Move package manager');
 
     // ⚠️ For now, we're only trying to get package_manager committed, not automatic_updates!
@@ -134,6 +134,10 @@ class Converter {
     static::addWordsToDictionary($core_dir, self::getContribDir() . "/dictionary.txt");
     self::info("Added to dictionary");
     $fs->chmod($new_script_path, 0644);
+    chdir($core_dir);
+    // Run phpcbf because removing code from merge request may result in unused
+    // use statements or multiple empty lines.
+    system("composer phpcbf $package_manager_core_path");
     if (self::RUN_CHECKS) {
       static::runCoreChecks($core_dir);
       self::info('Ran core checks');
@@ -391,7 +395,7 @@ class Converter {
   private static function runCoreChecks(string $core_dir): void {
     chdir($core_dir);
     $result = NULL;
-    system(' sh ./core/scripts/dev/commit-code-check.sh --branch 10.1.x', $result);
+    system(' sh ./core/scripts/dev/commit-code-check.sh --branch 11.x', $result);
     if ($result !== 0) {
       print "😭commit-code-check.sh failed";
       print "Reset using this command in the core checkout:";

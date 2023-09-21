@@ -67,6 +67,7 @@ final class ComposerPluginsValidator implements EventSubscriberInterface {
     'cweagans/composer-patches' => '^1.7.3',
     // @see \Drupal\package_manager\PathExcluder\VendorHardeningExcluder
     'drupal/core-vendor-hardening' => '*',
+    'php-http/discovery' => '*',
     // cSpell:enable
   ];
 

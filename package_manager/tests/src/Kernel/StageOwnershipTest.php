@@ -38,8 +38,6 @@ class StageOwnershipTest extends PackageManagerKernelTestBase {
    */
   protected function setUp(): void {
     parent::setUp();
-    $this->installSchema('system', ['sequences']);
-    $this->installSchema('user', ['users_data']);
     $this->installEntitySchema('user');
   }
 

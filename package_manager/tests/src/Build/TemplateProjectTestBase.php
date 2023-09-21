@@ -312,13 +312,14 @@ END;
     // Now that we know the project was created successfully, we can set the
     // web root with confidence.
     $this->webRoot = 'project/' . $this->runComposer('composer config extra.drupal-scaffold.locations.web-root', 'project');
+    // BEGIN: DELETE FROM CORE MERGE REQUEST
     // List the info files that need to be made compatible with our fake version
     // of Drupal core.
     $info_files = [
-      'core/modules/package_manager/package_manager.info.yml',
-      'core/modules/automatic_updates/automatic_updates.info.yml',
+      'modules/contrib/automatic_updates/package_manager/package_manager.info.yml',
+      'modules/contrib/automatic_updates/automatic_updates.info.yml',
+      'modules/contrib/automatic_updates/automatic_updates_extensions/automatic_updates_extensions.info.yml',
     ];
-    // BEGIN: DELETE FROM CORE MERGE REQUEST
     // Install Automatic Updates into the test project and ensure it wasn't
     // symlinked.
     $automatic_updates_dir = realpath(__DIR__ . '/../../../..');
@@ -328,13 +329,6 @@ END;
       $output = $this->runComposer('COMPOSER_MIRROR_PATH_REPOS=1 composer require --update-with-all-dependencies psr/http-message "drupal/automatic_updates:@dev"', $dir);
       $this->assertStringNotContainsString('Symlinking', $output);
     }
-    // In contrib, the info files have different paths.
-    $info_files = [
-      'modules/contrib/automatic_updates/package_manager/package_manager.info.yml',
-      'modules/contrib/automatic_updates/automatic_updates.info.yml',
-      'modules/contrib/automatic_updates/automatic_updates_extensions/automatic_updates_extensions.info.yml',
-    ];
-    // END: DELETE FROM CORE MERGE REQUEST
     foreach ($info_files as $path) {
       $path = $this->getWebRoot() . $path;
       $this->assertFileIsWritable($path);
@@ -343,6 +337,7 @@ END;
       $info['core_version_requirement'] .= ' || ^9.7';
       file_put_contents($path, Yaml::encode($info));
     }
+    // END: DELETE FROM CORE MERGE REQUEST
 
     // Install Drupal.
     $this->installQuickStart('standard');
@@ -434,6 +429,7 @@ END;
             'reference' => $reference,
           ],
           'autoload' => $package_info['autoload'] ?? [],
+          'provide' => $package_info['provide'] ?? [],
         ];
         // These polyfills are dependencies of some packages, but for reasons we
         // don't understand, they are not installed in code bases built on PHP

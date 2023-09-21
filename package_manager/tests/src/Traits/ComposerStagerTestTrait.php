@@ -2,7 +2,7 @@
 
 declare(strict_types = 1);
 
-namespace Drupal\Tests\automatic_updates\Traits;
+namespace Drupal\Tests\package_manager\Traits;
 
 use PhpTuf\ComposerStager\API\Translation\Factory\TranslatableFactoryInterface;
 use PhpTuf\ComposerStager\API\Translation\Value\TranslatableInterface;

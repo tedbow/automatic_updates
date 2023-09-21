@@ -108,7 +108,7 @@ class PathLocatorTest extends UnitTestCase {
   public function testWebRoot(string $app_root, string $project_root, string $expected_web_root): void {
     $path_locator = $this->getMockBuilder(PathLocator::class)
       // Mock all methods except getWebRoot().
-      ->setMethodsExcept(['getWebRoot'])
+      ->onlyMethods(['getProjectRoot', 'getStagingRoot', 'getVendorDirectory'])
       ->setConstructorArgs([
         $app_root,
         $this->getConfigFactoryStub(),

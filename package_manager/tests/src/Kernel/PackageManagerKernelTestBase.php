@@ -19,8 +19,8 @@ use Drupal\package_manager\PathLocator;
 use Drupal\package_manager\StatusCheckTrait;
 use Drupal\package_manager\Validator\DiskSpaceValidator;
 use Drupal\package_manager\StageBase;
-use Drupal\Tests\automatic_updates\Traits\ComposerStagerTestTrait;
 use Drupal\Tests\package_manager\Traits\AssertPreconditionsTrait;
+use Drupal\Tests\package_manager\Traits\ComposerStagerTestTrait;
 use Drupal\Tests\package_manager\Traits\FixtureManipulatorTrait;
 use Drupal\Tests\package_manager\Traits\FixtureUtilityTrait;
 use Drupal\Tests\package_manager\Traits\ValidationTestTrait;
@@ -95,9 +95,8 @@ abstract class PackageManagerKernelTestBase extends KernelTestBase {
    * The Symfony filesystem class.
    *
    * @var \Symfony\Component\Filesystem\Filesystem
-   * @phpstan-ignore-next-line
    */
-  private readonly Filesystem $fileSystem;
+  private Filesystem $fileSystem;
 
   /**
    * A logger that will fail the test if Package Manager logs any errors.
@@ -105,9 +104,8 @@ abstract class PackageManagerKernelTestBase extends KernelTestBase {
    * @var \ColinODell\PsrTestLogger\TestLogger
    *
    * @see ::tearDown()
-   * @phpstan-ignore-next-line
    */
-  protected readonly TestLogger $failureLogger;
+  protected TestLogger $failureLogger;
 
   /**
    * {@inheritdoc}
