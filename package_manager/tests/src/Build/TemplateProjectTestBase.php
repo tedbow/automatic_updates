@@ -12,6 +12,8 @@ use Drupal\package_manager_test_event_logger\EventSubscriber\EventLogSubscriber;
 use Drupal\Tests\package_manager\Traits\AssertPreconditionsTrait;
 use Drupal\Tests\package_manager\Traits\FixtureUtilityTrait;
 use Drupal\Tests\RandomGeneratorTrait;
+use Symfony\Component\Process\PhpExecutableFinder;
+use Symfony\Component\Process\Process;
 
 /**
  * Base class for tests which create a test site from a core project template.
@@ -130,7 +132,35 @@ abstract class TemplateProjectTestBase extends QuickStartTestBase {
    * {@inheritdoc}
    */
   protected function instantiateServer($port, $working_dir = NULL) {
-    return parent::instantiateServer($port, $working_dir ?: $this->webRoot);
+    $working_dir = $working_dir ?: $this->webRoot;
+    $finder = new PhpExecutableFinder();
+    $working_path = $this->getWorkingPath($working_dir);
+    $server = [
+      $finder->find(),
+      '-S',
+      '127.0.0.1:' . $port,
+      '-d max_execution_time=10',
+      '-d disable_functions=set_time_limit',
+      '-t',
+      $working_path,
+    ];
+    if (file_exists($working_path . DIRECTORY_SEPARATOR . '.ht.router.php')) {
+      $server[] = $working_path . DIRECTORY_SEPARATOR . '.ht.router.php';
+    }
+    $ps = new Process($server, $working_path);
+    $ps->setIdleTimeout(30)
+      ->setTimeout(30)
+      ->start();
+    // Wait until the web server has started. It is started if the port is no
+    // longer available.
+    for ($i = 0; $i < 50; $i++) {
+      usleep(100000);
+      if (!$this->checkPortIsAvailable($port)) {
+        return $ps;
+      }
+    }
+
+    throw new \RuntimeException(sprintf("Unable to start the web server.\nCMD: %s \nCODE: %d\nSTATUS: %s\nOUTPUT:\n%s\n\nERROR OUTPUT:\n%s", $ps->getCommandLine(), $ps->getExitCode(), $ps->getStatus(), $ps->getOutput(), $ps->getErrorOutput()));
   }
 
   /**
@@ -360,6 +390,13 @@ END;
       'package_manager_test_event_logger',
       'package_manager_test_release_history',
     ]);
+
+    // Confirm the server time out settings.
+    // @see \Drupal\Tests\package_manager\Build\TemplateProjectTestBase::instantiateServer()
+    $this->visit('/package-manager-test-api/check-setup');
+    $this->getMink()
+      ->assertSession()
+      ->pageTextContains("max_execution_time=10:set_time_limit-exists=no");
   }
 
   /**

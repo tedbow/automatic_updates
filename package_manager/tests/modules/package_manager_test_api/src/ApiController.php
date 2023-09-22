@@ -17,6 +17,7 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
 
 /**
  * Provides API endpoints to interact with a stage directory in functional test.
@@ -160,6 +161,19 @@ class ApiController extends ControllerBase {
     );
     $this->stage->apply();
     return $id;
+  }
+
+  /**
+   * Returns the information about current PHP server used for build tests.
+   *
+   * @return \Symfony\Component\HttpFoundation\Response
+   *   The response.
+   */
+  public function checkSetup(): Response {
+    return new Response(
+      'max_execution_time=' . ini_get('max_execution_time') .
+      ':set_time_limit-exists=' . (function_exists('set_time_limit') ? 'yes' : 'no')
+    );
   }
 
 }
