@@ -314,6 +314,14 @@ END;
       'type' => 'path',
       'url' => $template_dir,
     ];
+    // The COMPOSER_MIRROR_PATH_REPOS environment variable is necessary because
+    // the vendor packages are installed from a Composer-type repository, which
+    // will normally try to symlink packages which are installed from local
+    // directories. This breaks Package Manager, because it does not support
+    // symlinks pointing outside the main code base. The
+    // COMPOSER_MIRROR_PATH_REPOS environment variable forces Composer to
+    // mirror, rather than symlink, local directories during during package
+    // installation.
     $command = sprintf(
       "COMPOSER_MIRROR_PATH_REPOS=1 composer create-project %s project --stability dev --repository '%s'",
       $this->runComposer('composer config name', $template_dir),
