@@ -378,18 +378,6 @@ class FixtureManipulator {
   }
 
   /**
-   * Ensures a path is writable.
-   *
-   * @param string $path
-   *   The path.
-   */
-  private static function ensureFilePathIsWritable(string $path): void {
-    if (!is_writable($path)) {
-      throw new \LogicException("'$path' is not writable.");
-    }
-  }
-
-  /**
    * Creates an empty .git folder after being provided a path.
    */
   public function addDotGitFolder(string $path): self {
@@ -587,31 +575,18 @@ class FixtureManipulator {
       $this->createPathRepo($package, $repo_path, NULL);
     }
 
-    // Register the repository, keyed by package name and version. This ensures
-    // each package is registered only once and its version can be updated (but
-    // must have unique versions).
-    $repo_key = "repo.$name";
-    if ($is_new_or_fork === 'fork') {
-      $repositories = json_decode(file_get_contents($this->dir . '/composer.json'), TRUE, flags: JSON_THROW_ON_ERROR)['repositories'];
-      // @todo consistently use 'version' or 'options.versions.PACKAGE_NAME', by fixing ComposerFixtureCreator in https://drupal.org/i/3347055
-      $original_version = isset($repositories[$name]['version']) ? $repositories[$name]['version'] : $repositories[$name]['options']['versions'][$name];
-      if ($package['version'] !== $original_version) {
-        $repo_key .= "--" . $package['version'];
-      }
-    }
-    $repository = json_encode([
+    // Add the package to the Composer repository defined for the site.
+    $packages_json = $this->dir . '/packages.json';
+    $packages_data = file_get_contents($packages_json);
+    $packages_data = json_decode($packages_data, TRUE, flags: JSON_THROW_ON_ERROR);
+
+    $version = $package['version'];
+    $package['dist'] = [
       'type' => 'path',
       'url' => $repo_path,
-      'options' => [
-        'symlink' => FALSE,
-        'versions' => [
-          $name => $package['version'],
-        ],
-        // @see https://getcomposer.org/repoprio
-        'canonical' => FALSE,
-      ],
-    ], JSON_UNESCAPED_SLASHES);
-    $this->runComposerCommand(['config', $repo_key, $repository]);
+    ];
+    $packages_data['packages'][$name][$version] = $package;
+    file_put_contents($packages_json, json_encode($packages_data, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
 
     return $repo_path;
   }
@@ -631,8 +606,8 @@ class FixtureManipulator {
     }
     // Update all the repos in the composer.json file to point to the new
     // repos at the absolute path.
-    $composer_json = file_get_contents($this->dir . '/composer.json');
-    file_put_contents($this->dir . '/composer.json', str_replace('../path_repos/', "$path_repo_base/", $composer_json));
+    $composer_json = file_get_contents($this->dir . '/packages.json');
+    file_put_contents($this->dir . '/packages.json', str_replace('../path_repos/', "$path_repo_base/", $composer_json));
     $this->runComposerCommand(['update', '--lock']);
     $this->runComposerCommand(['install']);
   }

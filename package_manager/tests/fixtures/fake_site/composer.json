@@ -23,39 +23,11 @@
     "baz": null
   },
   "repositories": {
-    "packagist.org": false,
-    "drupal/core-recommended": {
-      "type": "path",
-      "version": "9.8.0",
-      "url": "../path_repos/drupal--core-recommended",
-      "options": {
-        "symlink": false
-      }
+    "fake-packages": {
+      "type": "composer",
+      "url": "./"
     },
-    "drupal/core-dev": {
-      "type": "path",
-      "version": "9.8.0",
-      "url": "../path_repos/drupal--core-dev",
-      "options": {
-        "symlink": false
-      }
-    },
-    "drupal/core": {
-      "type": "path",
-      "version": "9.8.0",
-      "url": "../path_repos/drupal--core",
-      "options": {
-        "symlink": false
-      }
-    },
-    "cweagans/composer-patches": {
-      "type": "path",
-      "version": "1.7.333",
-      "url": "../path_repos/cweagans--composer-patches",
-      "options": {
-        "symlink": false
-      }
-    }
+    "packagist.org": false
   },
   "minimum-stability": "stable",
   "config": {

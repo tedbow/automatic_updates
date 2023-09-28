@@ -145,10 +145,10 @@ class FixtureManipulatorTest extends PackageManagerKernelTestBase {
   public function testModifyPackageConfig(): void {
     // Assert ::modifyPackage() works with a package in an existing fixture not
     // created by ::addPackage().
-    $decode_composer_json = function ($package_name): array {
-      return json_decode(file_get_contents($this->dir . "/vendor/$package_name/composer.json"), TRUE, flags: JSON_THROW_ON_ERROR);
+    $decode_packages_json = function (): array {
+      return json_decode(file_get_contents($this->dir . "/packages.json"), TRUE, flags: JSON_THROW_ON_ERROR);
     };
-    $original_composer_json = $decode_composer_json('my/dev-package');
+    $original_packages_json = $decode_packages_json();
     (new ActiveFixtureManipulator())
       // @see ::setUp()
       ->modifyPackageConfig('my/dev-package', '2.1.0', ['description' => 'something else'], TRUE)
@@ -156,10 +156,10 @@ class FixtureManipulatorTest extends PackageManagerKernelTestBase {
     // Verify that the package is indeed properly installed.
     $this->assertSame('2.1.0', $this->inspector->getInstalledPackagesList($this->dir)['my/dev-package']?->version);
     // Verify that the original exists, but has no description.
-    $this->assertSame('my/dev-package', $original_composer_json['name']);
-    $this->assertArrayNotHasKey('description', $original_composer_json);
+    $this->assertSame('my/dev-package', $original_packages_json['packages']['my/dev-package']['2.1.0']['name']);
+    $this->assertArrayNotHasKey('description', $original_packages_json);
     // Verify that the description was updated.
-    $this->assertSame('something else', $decode_composer_json('my/dev-package')['description']);
+    $this->assertSame('something else', $decode_packages_json()['packages']['my/dev-package']['2.1.0']['description']);
 
     (new ActiveFixtureManipulator())
       // Add a key to an existing package.
@@ -167,9 +167,8 @@ class FixtureManipulatorTest extends PackageManagerKernelTestBase {
       // Change a key in an existing package.
       ->setVersion('my/dev-package', '3.2.1', TRUE)
       ->commitChanges();
-    $this->assertSame(['foo' => 'bar'], $decode_composer_json('my/package')['extra']);
+    $this->assertSame(['foo' => 'bar'], $decode_packages_json()['packages']['my/package']['1.2.3']['extra']);
     $this->assertSame('3.2.1', $this->inspector->getInstalledPackagesList($this->dir)['my/dev-package']?->version);
-
   }
 
   /**

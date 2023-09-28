@@ -41,13 +41,21 @@ final class PackageManagerFixtureCreator {
     $fixture_core_composer_data = $fixture_core_composer_file->read();
     $fixture_core_composer_data['extra']['drupal-scaffold']['file-mapping'] = $core_composer_data['extra']['drupal-scaffold']['file-mapping'];
     $fixture_core_composer_file->write($fixture_core_composer_data);
+
+    $fixture_packages_json = new JsonFile(static::FIXTURE_PATH . '/packages.json');
+    $fixture_packages_data = $fixture_packages_json->read();
+    foreach ($fixture_packages_data['packages']['drupal/core'] as &$release) {
+      $release['extra']['drupal-scaffold']['file-mapping'] = $core_composer_data['extra']['drupal-scaffold']['file-mapping'];
+    }
+    $fixture_packages_json->write($fixture_packages_data);
+
     $fs = new Filesystem();
     $fs->remove(static::FIXTURE_PATH . "/composer.lock");
     // Remove all the vendor folders but leave our 2 test files.
     // @see \Drupal\Tests\package_manager\Kernel\PathExcluder\VendorHardeningExcluderTest
-    self::removeAllExcept(self::FIXTURE_PATH . "/vendor", ['.htaccess', 'web.config']);
+    self::removeAllExcept(static::FIXTURE_PATH . "/vendor", ['.htaccess', 'web.config']);
 
-    static::doComposerInstall();
+    self::runComposerCommand(['install']);
     static::removeAllExcept(static::FIXTURE_PATH . '/vendor/composer', ['installed.json', 'installed.php']);
     $fs->remove(static::FIXTURE_PATH . '/vendor/autoload.php');
     print "\nFixture updated.\nRunning phpcbf";
@@ -70,7 +78,9 @@ final class PackageManagerFixtureCreator {
   private static function runComposerCommand(array $command): string {
     array_unshift($command, 'composer');
     $command[] = "--working-dir=" . static::FIXTURE_PATH;
-    $process = new Process($command);
+    $process = new Process($command, env: [
+      'COMPOSER_MIRROR_PATH_REPOS' => '1',
+    ]);
     $process->run();
     if (!$process->isSuccessful()) {
       throw new ProcessFailedException($process);
@@ -98,13 +108,6 @@ final class PackageManagerFixtureCreator {
         $fs->remove($path_to_remove);
       }
     }
-  }
-
-  /**
-   * Runs `composer install`.
-   */
-  private static function doComposerInstall(): void {
-    self::runComposerCommand(['install']);
   }
 
 }

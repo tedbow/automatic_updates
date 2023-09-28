@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "672a2db4be3ba5e4f025ddea6b7dacd7",
+    "content-hash": "0235f8f2d3ef91d87864b76e12838e89",
     "packages": [
         {
             "name": "drupal/core",
@@ -50,11 +50,7 @@
                     }
                 }
             },
-            "description": "A fake version of drupal/core",
-            "transport-options": {
-                "symlink": false,
-                "relative": true
-            }
+            "description": "A fake version of drupal/core"
         },
         {
             "name": "drupal/core-recommended",
@@ -65,11 +61,7 @@
                 "reference": "112e4f7cfe8312457cd0eb58dcbffebc148850d8"
             },
             "type": "project",
-            "description": "A fake version of drupal/core-recommended",
-            "transport-options": {
-                "symlink": false,
-                "relative": true
-            }
+            "description": "A fake version of drupal/core-recommended"
         }
     ],
     "packages-dev": [
@@ -82,11 +74,7 @@
                 "reference": "b99a99a11ff2779b5e4c5787dc43575382a3548c"
             },
             "type": "package",
-            "description": "A fake version of drupal/core-dev",
-            "transport-options": {
-                "symlink": false,
-                "relative": true
-            }
+            "description": "A fake version of drupal/core-dev"
         }
     ],
     "aliases": [],
@@ -96,5 +84,5 @@
     "prefer-lowest": false,
     "platform": [],
     "platform-dev": [],
-    "plugin-api-version": "2.3.0"
+    "plugin-api-version": "2.6.0"
 }

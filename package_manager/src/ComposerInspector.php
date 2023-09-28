@@ -50,15 +50,11 @@ class ComposerInspector implements LoggerAwareInterface {
   /**
    * A semantic version constraint for the supported version(s) of Composer.
    *
-   * Only versions supported by Composer are supported: the LTS and the latest
-   * minor version. Those are currently (May 2023) 2.2 and 2.5, but will be 2.5
-   * and 2.6 later this year (December 2023): the 2.2 LTS ends in December 2023.
-   *
    * @see https://endoflife.date/composer
    *
    * @var string
    */
-  final public const SUPPORTED_VERSION = '~2.5.5 || ^2.6';
+  final public const SUPPORTED_VERSION = '^2.6';
 
   /**
    * Constructs a ComposerInspector object.

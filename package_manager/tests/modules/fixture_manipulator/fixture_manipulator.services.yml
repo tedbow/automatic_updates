@@ -3,3 +3,5 @@ services:
     autowire: true
   Drupal\fixture_manipulator\StageFixtureManipulator:
     decorates: 'PhpTuf\ComposerStager\API\Core\BeginnerInterface'
+  Drupal\fixture_manipulator\ProcessFactory:
+    decorates: 'PhpTuf\ComposerStager\API\Process\Factory\ProcessFactoryInterface'
