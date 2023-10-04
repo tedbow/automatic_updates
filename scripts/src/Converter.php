@@ -41,15 +41,20 @@ class Converter {
   public static function doConvert(Event $event): void {
     $args = $event->getArguments();
     $count_arg = count($args);
-    if (!($count_arg === 2 || $count_arg === 3)) {
-      throw new \Exception("This scripts 2 required arguments: a directory that is a core clone and the branch.\nIt has 1 optional arguments: the branch of this module to use which defaults to 3.0.x");
+    if (!($count_arg === 3 || $count_arg === 4)) {
+      throw new \Exception("This scripts 3 required arguments: a directory that is a core clone and the branch and to convert either package_manager or automatic_updates.\nIt has 1 optional arguments: the branch of this module to use which defaults to 3.0.x");
     }
     $core_dir = $args[0];
     $core_branch = $args[1];
     if (!is_dir($core_dir)) {
       throw new \Exception("$core_dir is not a directory.");
     }
-    $contrib_branch = $count_arg === 2 ? '3.0.x' : $args[2];
+    $package_manager_only = match($args[2]) {
+      'package_manager' => TRUE,
+      'automatic_updates' => FALSE,
+      default => throw new \UnexpectedValueException("The 3nd argument must be package_manager or automatic_updates"),
+    };
+    $contrib_branch = $count_arg === 3 ? '3.0.x' : $args[3];
     $old_machine_name = 'automatic_updates';
     $new_machine_name = 'auto_updates';
 
@@ -128,8 +133,9 @@ class Converter {
     $fs->rename("$core_module_path/package_manager", $package_manager_core_path);
     self::info('Move package manager');
 
-    // ⚠️ For now, we're only trying to get package_manager committed, not automatic_updates!
-    $fs->remove($core_module_path);
+    if ($package_manager_only) {
+      $fs->remove($core_module_path);
+    }
 
     static::addWordsToDictionary($core_dir, self::getContribDir() . "/dictionary.txt");
     self::info("Added to dictionary");
