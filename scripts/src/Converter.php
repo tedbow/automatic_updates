@@ -73,9 +73,26 @@ class Converter {
     $fs->mirror(self::getContribDir(), $core_module_path);
     self::info('Mirrored into core module');
 
+    $replacements = [
+      $old_machine_name => $new_machine_name,
+      'AutomaticUpdates' => 'AutoUpdates',
+      'use Drupal\package_manager\Error;' => 'use Drupal\Core\Utility\Error;',
+    ];
+    foreach ($replacements as $search => $replace) {
+      static::renameFiles(static::getDirContents($core_module_path), $search, $replace);
+      static::replaceContents(static::getDirContents($core_module_path, TRUE), $search, $replace);
+    }
+    self::info('Replacements done.');
+
+    static::removeLines($core_dir);
+    self::info('Remove unneeded lines');
+
+    self::moveScripts($core_dir, $core_module_path);
+    self::info('Moved scripts');
+
     // Remove unneeded.
     $removals = [
-      'automatic_updates_extensions',
+      'auto_updates_extensions',
       'drupalci.yml',
       'README.md',
       '.cspell.json',
@@ -99,27 +116,13 @@ class Converter {
     // Replace in file names and contents.
     static::replaceContents(
       [
-        new \SplFileInfo("$core_module_path/automatic_updates.info.yml"),
+        new \SplFileInfo("$core_module_path/auto_updates.info.yml"),
         new \SplFileInfo("$core_module_path/package_manager/package_manager.info.yml"),
       ],
       "core_version_requirement: ^10",
       "package: Core\nversion: VERSION\nlifecycle: experimental",
     );
-    $replacements = [
-      $old_machine_name => $new_machine_name,
-      'AutomaticUpdates' => 'AutoUpdates',
-      'use Drupal\package_manager\Error;' => 'use Drupal\Core\Utility\Error;',
-    ];
-    foreach ($replacements as $search => $replace) {
-      static::renameFiles(static::getDirContents($core_module_path), $search, $replace);
-      static::replaceContents(static::getDirContents($core_module_path, TRUE), $search, $replace);
-    }
-    self::info('Replacements done.');
 
-    static::removeLines($core_dir);
-    self::info('Remove unneeded lines');
-    self::moveScripts($core_dir, $core_module_path);
-    self::info('Moved scripts');
     $fs->rename("$core_module_path/package_manager", $package_manager_core_path);
     self::info('Move package manager');
 
