@@ -73,9 +73,15 @@ class Converter {
     $fs->mirror(self::getContribDir(), $core_module_path);
     self::info('Mirrored into core module');
 
-    $new_script_path = "$core_dir/core/scripts/PackageManagerFixtureCreator.php";
-    $fs->remove($new_script_path);
-    $fs->rename($core_module_path . '/scripts/PackageManagerFixtureCreator.php', $new_script_path);
+    $new_fixture_creator_path = "$core_dir/core/scripts/PackageManagerFixtureCreator.php";
+    $move_files = [
+      $core_module_path . '/scripts/PackageManagerFixtureCreator.php' => $new_fixture_creator_path,
+      $core_module_path . '/auto-update' => "$core_dir/core/scripts/auto-update",
+    ];
+    foreach ($move_files as $old_file => $new_file) {
+      $fs->remove($new_file);
+      $fs->rename($old_file, $new_file);
+    }
     $script_replacements = [
       "__DIR__ . '/../../../autoload.php'" => "__DIR__ . '/../../autoload.php'",
       "__DIR__ . '/../package_manager/tests/fixtures/fake_site'" => "__DIR__ . '/../modules/package_manager/tests/fixtures/fake_site'",
@@ -83,8 +89,9 @@ class Converter {
       "new Process(['composer', 'phpcbf'], self::FIXTURE_PATH);" => "new Process(['composer', 'phpcbf', self::FIXTURE_PATH], self::CORE_ROOT_PATH);",
     ];
     foreach ($script_replacements as $search => $replace) {
-      static::replaceContents([new \SplFileInfo($new_script_path)], $search, $replace);
+      static::replaceContents([new \SplFileInfo($new_fixture_creator_path)], $search, $replace);
     }
+    $fs->chmod($new_fixture_creator_path, 0644);
 
     // Remove unneeded.
     $removals = [
@@ -146,7 +153,7 @@ class Converter {
 
     static::addWordsToDictionary($core_dir, self::getContribDir() . "/dictionary.txt");
     self::info("Added to dictionary");
-    $fs->chmod($new_script_path, 0644);
+
     chdir($core_dir);
 
     if (self::RUN_CHECKS) {
