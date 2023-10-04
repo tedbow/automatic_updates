@@ -73,26 +73,6 @@ class Converter {
     $fs->mirror(self::getContribDir(), $core_module_path);
     self::info('Mirrored into core module');
 
-    $new_fixture_creator_path = "$core_dir/core/scripts/PackageManagerFixtureCreator.php";
-    $move_files = [
-      $core_module_path . '/scripts/PackageManagerFixtureCreator.php' => $new_fixture_creator_path,
-      $core_module_path . '/auto-update' => "$core_dir/core/scripts/auto-update",
-    ];
-    foreach ($move_files as $old_file => $new_file) {
-      $fs->remove($new_file);
-      $fs->rename($old_file, $new_file);
-    }
-    $script_replacements = [
-      "__DIR__ . '/../../../autoload.php'" => "__DIR__ . '/../../autoload.php'",
-      "__DIR__ . '/../package_manager/tests/fixtures/fake_site'" => "__DIR__ . '/../modules/package_manager/tests/fixtures/fake_site'",
-      "CORE_ROOT_PATH = __DIR__ . '/../../../'" => "CORE_ROOT_PATH = __DIR__ . '/../..'",
-      "new Process(['composer', 'phpcbf'], self::FIXTURE_PATH);" => "new Process(['composer', 'phpcbf', self::FIXTURE_PATH], self::CORE_ROOT_PATH);",
-    ];
-    foreach ($script_replacements as $search => $replace) {
-      static::replaceContents([new \SplFileInfo($new_fixture_creator_path)], $search, $replace);
-    }
-    $fs->chmod($new_fixture_creator_path, 0644);
-
     // Remove unneeded.
     $removals = [
       'automatic_updates_extensions',
@@ -138,6 +118,8 @@ class Converter {
 
     static::removeLines($core_dir);
     self::info('Remove unneeded lines');
+    self::moveScripts($core_dir, $core_module_path);
+    self::info('Moved scripts');
     $fs->rename("$core_module_path/package_manager", $package_manager_core_path);
     self::info('Move package manager');
 
@@ -465,6 +447,35 @@ class Converter {
       }
       file_put_contents($filePath, implode("\n", $newLines));
     }
+  }
+
+  /**
+   * @param string $core_dir
+   * @param string $core_module_path
+   *
+   * @return void
+   */
+  protected static function moveScripts(string $core_dir, string $core_module_path): void {
+    $fs = new Filesystem();
+    $new_fixture_creator_path = "$core_dir/core/scripts/PackageManagerFixtureCreator.php";
+    $move_files = [
+      $core_module_path . '/scripts/PackageManagerFixtureCreator.php' => $new_fixture_creator_path,
+      $core_module_path . '/auto-update' => "$core_dir/core/scripts/auto-update",
+    ];
+    foreach ($move_files as $old_file => $new_file) {
+      $fs->remove($new_file);
+      $fs->rename($old_file, $new_file);
+    }
+    $script_replacements = [
+      "__DIR__ . '/../../../autoload.php'" => "__DIR__ . '/../../autoload.php'",
+      "__DIR__ . '/../package_manager/tests/fixtures/fake_site'" => "__DIR__ . '/../modules/package_manager/tests/fixtures/fake_site'",
+      "CORE_ROOT_PATH = __DIR__ . '/../../../'" => "CORE_ROOT_PATH = __DIR__ . '/../..'",
+      "new Process(['composer', 'phpcbf'], self::FIXTURE_PATH);" => "new Process(['composer', 'phpcbf', self::FIXTURE_PATH], self::CORE_ROOT_PATH);",
+    ];
+    foreach ($script_replacements as $search => $replace) {
+      static::replaceContents([new \SplFileInfo($new_fixture_creator_path)], $search, $replace);
+    }
+    $fs->chmod($new_fixture_creator_path, 0644);
   }
 
 }
