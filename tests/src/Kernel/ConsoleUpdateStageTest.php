@@ -303,7 +303,7 @@ END;
       ->save();
     // Ensure that there is a security release to which we should update.
     $this->setReleaseMetadata([
-      'drupal' => __DIR__ . "/../../../package_manager/tests/fixtures/release-history/drupal.9.8.1-security.xml",
+      'drupal' => __DIR__ . '/../../../package_manager/tests/fixtures/release-history/drupal.9.8.1-security.xml',
     ]);
 
     // If the pre- or post-destroy events throw an exception, it will not be
@@ -412,7 +412,7 @@ END;
       ->set('unattended.level', CronUpdateRunner::ALL)
       ->save();
     $this->setReleaseMetadata([
-      'drupal' => __DIR__ . "/../../../package_manager/tests/fixtures/release-history/drupal.9.8.1-security.xml",
+      'drupal' => __DIR__ . '/../../../package_manager/tests/fixtures/release-history/drupal.9.8.1-security.xml',
     ]);
     $this->setCoreVersion('9.8.0');
     $stage = $this->createStage();
@@ -452,7 +452,7 @@ END;
       ->set('unattended.level', CronUpdateRunner::ALL)
       ->save();
     $this->setReleaseMetadata([
-      'drupal' => __DIR__ . "/../../../package_manager/tests/fixtures/release-history/drupal.9.8.2.xml",
+      'drupal' => __DIR__ . '/../../../package_manager/tests/fixtures/release-history/drupal.9.8.2.xml',
     ]);
     $this->setCoreVersion('9.8.1');
     $stage = $this->createStage();

@@ -77,7 +77,10 @@ class Converter {
       $old_machine_name => $new_machine_name,
       'AutomaticUpdates' => 'AutoUpdates',
       'use Drupal\package_manager\Error;' => 'use Drupal\Core\Utility\Error;',
-      "__DIR__ . '/../../../package_manager/tests" => "__DIR__ . '/../../../../package_manager/tests",
+      "__DIR__ . '/../../../package_manager/tests" => "__DIR__ . '/../../../../Xpackage_manager/tests",
+      "__DIR__ . '/../../../../package_manager/tests" => "__DIR__ . '/../../../../../Xpackage_manager/tests",
+      "__DIR__ . '/../../../../../package_manager/tests" => "__DIR__ . '/../../../../../../Xpackage_manager/tests",
+      '/Xpackage_manager' => '/package_manager',
     ];
     foreach ($replacements as $search => $replace) {
       static::renameFiles(static::getDirContents($core_module_path), $search, $replace);
