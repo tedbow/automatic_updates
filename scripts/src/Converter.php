@@ -468,6 +468,7 @@ class Converter {
     foreach ($move_files as $old_file => $new_file) {
       $fs->remove($new_file);
       $fs->rename($old_file, $new_file);
+      $fs->chmod($new_file, 0644);
     }
     $script_replacements = [
       "__DIR__ . '/../../../autoload.php'" => "__DIR__ . '/../../autoload.php'",
@@ -478,7 +479,7 @@ class Converter {
     foreach ($script_replacements as $search => $replace) {
       static::replaceContents([new \SplFileInfo($new_fixture_creator_path)], $search, $replace);
     }
-    $fs->chmod($new_fixture_creator_path, 0644);
+
   }
 
 }
