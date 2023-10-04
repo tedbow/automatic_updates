@@ -6,7 +6,7 @@ namespace Drupal\automatic_updates;
 
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\CronInterface;
-use Drupal\Core\Utility\Error;
+use Drupal\package_manager\Error;
 use Drupal\package_manager\PathLocator;
 use Psr\Log\LoggerAwareInterface;
 use Psr\Log\LoggerAwareTrait;
@@ -92,13 +92,7 @@ class CronUpdateRunner implements CronInterface, LoggerAwareInterface {
       $pid = $this->commandExecutor->start($process);
     }
     catch (\Throwable $throwable) {
-      // @todo Just call Error::logException() in https://drupal.org/i/3377458.
-      if (method_exists(Error::class, 'logException')) {
-        Error::logException($this->logger, $throwable, 'Unable to start background update.');
-      }
-      else {
-        watchdog_exception('automatic_updates', $throwable, 'Unable to start background update.');
-      }
+      Error::logException($this->logger, $throwable, 'Unable to start background update.');
     }
 
     if ($process->isTerminated()) {

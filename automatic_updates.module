@@ -17,6 +17,7 @@ use Drupal\Core\Routing\RouteMatchInterface;
 use Drupal\automatic_updates\Validation\AdminStatusCheckMessages;
 use Drupal\Core\Url;
 use Drupal\package_manager\ComposerInspector;
+use Drupal\package_manager\Error;
 use Drupal\system\Controller\DbUpdateController;
 
 /**
@@ -276,7 +277,7 @@ function automatic_updates_preprocess_update_project_status(array &$variables) {
   catch (RuntimeException $exception) {
     // If for some reason we are not able to get the update recommendations
     // do not alter the report.
-    watchdog_exception('automatic_updates', $exception);
+    Error::logException(\Drupal::logger('automatic_updates'), $exception);
     return;
   }
   $variables['#attached']['library'][] = 'automatic_updates/update_status';

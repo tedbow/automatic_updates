@@ -121,6 +121,7 @@ class Converter {
     $replacements = [
       $old_machine_name => $new_machine_name,
       'AutomaticUpdates' => 'AutoUpdates',
+      'use Drupal\package_manager\Error;' => 'use Drupal\Core\Utility\Error;',
     ];
     foreach ($replacements as $search => $replace) {
       static::renameFiles(static::getDirContents($core_module_path), $search, $replace);
