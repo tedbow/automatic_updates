@@ -84,7 +84,7 @@ class StatusCheckFailureEmailTest extends AutomaticUpdatesFunctionalTestBase {
   }
 
   /**
-   * Tests that status check failures will trigger e-mails in some situations.
+   * Tests that status check failures will trigger emails in some situations.
    */
   public function testFailureNotifications(): void {
     // No messages should have been sent yet.
@@ -103,24 +103,24 @@ Your site has failed some readiness checks for automatic updates and may not be 
 END;
     $this->assertMessagesSent('Automatic updates readiness checks failed', $expected_body);
 
-    // Running cron again should not trigger another e-mail (i.e., each
-    // recipient has only been e-mailed once) since the results are unchanged.
+    // Running cron again should not trigger another email (i.e., each
+    // recipient has only been emailed once) since the results are unchanged.
     $recipient_count = count($this->emailRecipients);
     $this->assertGreaterThan(0, $recipient_count);
     $sent_messages_count = $recipient_count;
     $this->runConsoleUpdateCommand();
     $this->assertSentMessagesCount($sent_messages_count);
 
-    // If a different error is flagged, they should be e-mailed again.
+    // If a different error is flagged, they should be emailed again.
     $error = $this->createValidationResult(SystemManager::REQUIREMENT_ERROR);
     TestSubscriber1::setTestResult([$error], StatusCheckEvent::class);
     $this->runConsoleUpdateCommand();
     $sent_messages_count += $recipient_count;
     $this->assertSentMessagesCount($sent_messages_count);
 
-    // If we flag the same error, but a new warning, they should not be e-mailed
+    // If we flag the same error, but a new warning, they should not be emailed
     // again because we ignore warnings by default, and they've already been
-    // e-mailed about this error.
+    // emailed about this error.
     $results = [
       $error,
       $this->createValidationResult(SystemManager::REQUIREMENT_WARNING),
@@ -129,14 +129,14 @@ END;
     $this->runConsoleUpdateCommand();
     $this->assertSentMessagesCount($sent_messages_count);
 
-    // If only a warning is flagged, they should not be e-mailed again because
+    // If only a warning is flagged, they should not be emailed again because
     // we ignore warnings by default.
     $warning = $this->createValidationResult(SystemManager::REQUIREMENT_WARNING);
     TestSubscriber1::setTestResult([$warning], StatusCheckEvent::class);
     $this->runConsoleUpdateCommand();
     $this->assertSentMessagesCount($sent_messages_count);
 
-    // If we stop ignoring warnings, they should be e-mailed again because we
+    // If we stop ignoring warnings, they should be emailed again because we
     // clear the stored results if the relevant configuration is changed.
     $config = $this->config('automatic_updates.settings');
     $config->set('status_check_mail', StatusCheckMailer::ALL)->save();
@@ -144,14 +144,14 @@ END;
     $sent_messages_count += $recipient_count;
     $this->assertSentMessagesCount($sent_messages_count);
 
-    // If we flag a different warning, they should be e-mailed again.
+    // If we flag a different warning, they should be emailed again.
     $warning = $this->createValidationResult(SystemManager::REQUIREMENT_WARNING);
     TestSubscriber1::setTestResult([$warning], StatusCheckEvent::class);
     $this->runConsoleUpdateCommand();
     $sent_messages_count += $recipient_count;
     $this->assertSentMessagesCount($sent_messages_count);
 
-    // If we flag multiple warnings, they should be e-mailed again because the
+    // If we flag multiple warnings, they should be emailed again because the
     // number of results has changed, even if the severity hasn't.
     $warnings = [
       $this->createValidationResult(SystemManager::REQUIREMENT_WARNING),
@@ -162,7 +162,7 @@ END;
     $sent_messages_count += $recipient_count;
     $this->assertSentMessagesCount($sent_messages_count);
 
-    // If we flag an error and a warning, they should be e-mailed again because
+    // If we flag an error and a warning, they should be emailed again because
     // the severity has changed, even if the number of results hasn't.
     $results = [
       $this->createValidationResult(SystemManager::REQUIREMENT_WARNING),
@@ -173,7 +173,7 @@ END;
     $sent_messages_count += $recipient_count;
     $this->assertSentMessagesCount($sent_messages_count);
 
-    // If we change the order of the results, they should not be e-mailed again
+    // If we change the order of the results, they should not be emailed again
     // because we are handling the possibility of the results being in a
     // different order.
     $results = array_reverse($results);
@@ -181,7 +181,7 @@ END;
     $this->runConsoleUpdateCommand();
     $this->assertSentMessagesCount($sent_messages_count);
 
-    // If we disable notifications entirely, they should not be e-mailed even
+    // If we disable notifications entirely, they should not be emailed even
     // if a different error is flagged.
     $config->set('status_check_mail', StatusCheckMailer::DISABLED)->save();
     $error = $this->createValidationResult(SystemManager::REQUIREMENT_ERROR);
@@ -190,7 +190,7 @@ END;
     $this->assertSentMessagesCount($sent_messages_count);
 
     // If we re-enable notifications and go back to ignoring warnings, they
-    // should not be e-mailed if a new warning is flagged.
+    // should not be emailed if a new warning is flagged.
     $config->set('status_check_mail', StatusCheckMailer::ERRORS_ONLY)->save();
     $warning = $this->createValidationResult(SystemManager::REQUIREMENT_WARNING);
     TestSubscriber1::setTestResult([$warning], StatusCheckEvent::class);
@@ -198,7 +198,7 @@ END;
     $this->assertSentMessagesCount($sent_messages_count);
 
     // If we disable unattended updates entirely and flag a new error, they
-    // should not be e-mailed.
+    // should not be emailed.
     $config->set('unattended.level', CronUpdateRunner::DISABLED)->save();
     $error = $this->createValidationResult(SystemManager::REQUIREMENT_ERROR);
     TestSubscriber1::setTestResult([$error], StatusCheckEvent::class);

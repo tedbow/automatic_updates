@@ -111,7 +111,7 @@ function automatic_updates_mail(string $key, array &$message, array $params): vo
   // If this email was related to an unattended update, explicitly state that
   // this isn't supported yet.
   if (str_starts_with($key, 'cron_')) {
-    $message['body'][] = t('This e-mail was sent by the Automatic Updates module. Unattended updates are not yet fully supported.', [], $options);
+    $message['body'][] = t('This email was sent by the Automatic Updates module. Unattended updates are not yet fully supported.', [], $options);
     $message['body'][] = t('If you are using this feature in production, it is strongly recommended for you to visit your site and ensure that everything still looks good.', [], $options);
   }
 }

@@ -8,7 +8,7 @@ use Drupal\Core\Test\AssertMailTrait;
 use Drupal\Tests\user\Traits\UserCreationTrait;
 
 /**
- * Contains helper methods for testing e-mail sent by Automatic Updates.
+ * Contains helper methods for testing email sent by Automatic Updates.
  *
  * @internal
  */
@@ -30,7 +30,7 @@ trait EmailNotificationsTestTrait {
   protected $emailRecipients = [];
 
   /**
-   * Prepares the recipient list for e-mails related to Automatic Updates.
+   * Prepares the recipient list for emails related to Automatic Updates.
    */
   protected function setUpEmailRecipients(): void {
     // First, create a user whose preferred language is different from the

@@ -11,7 +11,7 @@ use Drupal\package_manager\ValidationResult;
 use Drupal\system\SystemManager;
 
 /**
- * Defines a service to send status check failure e-mails during cron.
+ * Defines a service to send status check failure emails during cron.
  *
  * @internal
  *   This is an internal part of Automatic Updates and may be changed or removed

@@ -101,7 +101,7 @@ Congratulations!
 
 Drupal core was automatically updated from 9.8.0 to 9.8.1.
 
-This e-mail was sent by the Automatic Updates module. Unattended updates are not yet fully supported.
+This email was sent by the Automatic Updates module. Unattended updates are not yet fully supported.
 
 If you are using this feature in production, it is strongly recommended for you to visit your site and ensure that everything still looks good.
 END;
@@ -490,7 +490,7 @@ Congratulations!
 
 Drupal core was automatically updated from 9.8.0 to 9.8.1.
 
-This e-mail was sent by the Automatic Updates module. Unattended updates are not yet fully supported.
+This email was sent by the Automatic Updates module. Unattended updates are not yet fully supported.
 
 If you are using this feature in production, it is strongly recommended for you to visit your site and ensure that everything still looks good.
 END;
@@ -518,7 +518,7 @@ END;
   }
 
   /**
-   * Tests the failure e-mail when an unattended non-security update fails.
+   * Tests the failure email when an unattended non-security update fails.
    *
    * @param string $event_class
    *   The event class that should trigger the failure.
@@ -558,7 +558,7 @@ Drupal core failed to update automatically from 9.8.0 to 9.8.2. The following er
 
 No immediate action is needed, but it is recommended that you visit $url to perform the update, or at least check that everything still looks good.
 
-This e-mail was sent by the Automatic Updates module. Unattended updates are not yet fully supported.
+This email was sent by the Automatic Updates module. Unattended updates are not yet fully supported.
 
 If you are using this feature in production, it is strongly recommended for you to visit your site and ensure that everything still looks good.
 END;
@@ -566,7 +566,7 @@ END;
   }
 
   /**
-   * Tests the failure e-mail when an unattended security update fails.
+   * Tests the failure email when an unattended security update fails.
    *
    * @param string $event_class
    *   The event class that should trigger the failure.
@@ -600,7 +600,7 @@ Drupal core failed to update automatically from 9.8.0 to 9.8.1. The following er
 
 Your site is running an insecure version of Drupal and should be updated as soon as possible. Visit $url to perform the update.
 
-This e-mail was sent by the Automatic Updates module. Unattended updates are not yet fully supported.
+This email was sent by the Automatic Updates module. Unattended updates are not yet fully supported.
 
 If you are using this feature in production, it is strongly recommended for you to visit your site and ensure that everything still looks good.
 END;
@@ -608,7 +608,7 @@ END;
   }
 
   /**
-   * Tests the failure e-mail when an unattended update fails to apply.
+   * Tests the failure email when an unattended update fails to apply.
    */
   public function testApplyFailureEmail(): void {
     $this->getStageFixtureManipulator()->setCorePackageVersion('9.8.1');
@@ -621,7 +621,7 @@ Drupal core failed to update automatically from 9.8.0 to 9.8.1. The following er
 
 Automatic updates failed to apply, and the site is in an indeterminate state. Consider restoring the code and database from a backup. Caused by LogicException, with this message: {$error->getMessage()}
 
-This e-mail was sent by the Automatic Updates module. Unattended updates are not yet fully supported.
+This email was sent by the Automatic Updates module. Unattended updates are not yet fully supported.
 
 If you are using this feature in production, it is strongly recommended for you to visit your site and ensure that everything still looks good.
 END;

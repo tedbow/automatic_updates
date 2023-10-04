@@ -105,7 +105,7 @@ final class FailureMarker implements EventSubscriberInterface {
    * @param bool $include_backtrace
    *   Whether to include the backtrace in the message. Defaults to TRUE. May be
    *   set to FALSE in a context where it does not make sense to include, such
-   *   as e-mails.
+   *   as emails.
    *
    * @return string|null
    *   The message from the file if it exists, otherwise NULL.

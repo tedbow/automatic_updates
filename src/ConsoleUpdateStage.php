@@ -220,7 +220,7 @@ class ConsoleUpdateStage extends UpdateStage {
         'target_version' => $target_version,
         'error_message' => $e->getMessage(),
       ];
-      // Omit the backtrace in e-mails. That will be visible on the site, and is
+      // Omit the backtrace in emails. That will be visible on the site, and is
       // also stored in the failure marker.
       if ($e instanceof StageFailureMarkerException || $e instanceof ApplyFailedException) {
         $mail_params['error_message'] = $this->failureMarker->getMessage(FALSE);
