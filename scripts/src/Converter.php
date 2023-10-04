@@ -133,17 +133,21 @@ class Converter {
     $fs->rename("$core_module_path/package_manager", $package_manager_core_path);
     self::info('Move package manager');
 
+    // Run phpcbf because removing code from merge request may result in unused
+    // use statements or multiple empty lines.
+    system("composer phpcbf $package_manager_core_path");
     if ($package_manager_only) {
       $fs->remove($core_module_path);
+    }
+    else {
+      system("composer phpcbf $core_module_path");
     }
 
     static::addWordsToDictionary($core_dir, self::getContribDir() . "/dictionary.txt");
     self::info("Added to dictionary");
     $fs->chmod($new_script_path, 0644);
     chdir($core_dir);
-    // Run phpcbf because removing code from merge request may result in unused
-    // use statements or multiple empty lines.
-    system("composer phpcbf $package_manager_core_path");
+
     if (self::RUN_CHECKS) {
       static::runCoreChecks($core_dir);
       self::info('Ran core checks');
