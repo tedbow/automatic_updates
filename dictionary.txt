@@ -12,3 +12,4 @@ unshallow
 hhvm
 proc_open
 bootable
+Syncer
