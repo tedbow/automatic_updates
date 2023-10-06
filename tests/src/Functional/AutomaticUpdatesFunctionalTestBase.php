@@ -46,6 +46,7 @@ abstract class AutomaticUpdatesFunctionalTestBase extends BrowserTestBase {
     $this->config('automatic_updates.settings')
       ->set('unattended.level', CronUpdateRunner::SECURITY)
       ->save();
+    $this->mockActiveCoreVersion('9.8.0');
   }
 
   /**

@@ -60,7 +60,6 @@ abstract class UpdaterFormTestBase extends AutomaticUpdatesFunctionalTestBase {
     }
     $user = $this->createUser($permissions);
     $this->drupalLogin($user);
-    $this->mockActiveCoreVersion('9.8.0');
     $this->checkForUpdates();
   }
 
