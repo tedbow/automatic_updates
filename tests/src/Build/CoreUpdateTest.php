@@ -453,7 +453,7 @@ class CoreUpdateTest extends UpdateTestBase {
 
     $dir = $this->getWorkspaceDirectory() . '/project';
 
-    $command = [$dir . '/web/core/scripts/auto-update.sh'];
+    $command = [$this->getWebRoot() . '/core/scripts/auto-update.sh'];
     // BEGIN: DELETE FROM CORE MERGE REQUEST
     // Use the `auto-update` command proxy that Composer puts into `vendor/bin`,
     // just to prove that it works.
