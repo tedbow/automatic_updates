@@ -262,7 +262,7 @@ class ConsoleUpdateStage extends UpdateStage {
    *   The ID of the current stage.
    */
   protected function triggerPostApply(string $stage_id): void {
-    $arguments = "post-apply $stage_id";
+    $arguments = "post-apply \"$stage_id\"";
     if ($this->isFromWeb) {
       $arguments .= ' --is-from-web';
     }
