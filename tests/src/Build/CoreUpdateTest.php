@@ -457,7 +457,7 @@ class CoreUpdateTest extends UpdateTestBase {
     // BEGIN: DELETE FROM CORE MERGE REQUEST
     // Use the `auto-update` command proxy that Composer puts into `vendor/bin`,
     // just to prove that it works.
-    $command = [$dir . '/vendor/bin/auto-update'];
+    $command = [$dir . '/vendor/bin/auto-update.sh'];
     // END: DELETE FROM CORE MERGE REQUEST
     $process = new Process($command, $dir);
     // Give the update process as much time as it needs to run.

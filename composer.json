@@ -44,5 +44,5 @@
             "Drupal\\automatic_updates\\Development\\": "scripts/src"
         }
     },
-    "bin": ["auto-update"]
+    "bin": ["auto-update.sh"]
 }
