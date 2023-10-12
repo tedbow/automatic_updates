@@ -452,8 +452,13 @@ class CoreUpdateTest extends UpdateTestBase {
     $this->createTestProject('RecommendedProject');
 
     $dir = $this->getWorkspaceDirectory() . '/project';
-    $command = [$dir . '/web/core/scripts/auto-update.sh'];
 
+    $command = [$dir . '/web/core/scripts/auto-update.sh'];
+    // BEGIN: DELETE FROM CORE MERGE REQUEST
+    // Use the `auto-update` command proxy that Composer puts into `vendor/bin`,
+    // just to prove that it works.
+    $command = [$dir . '/vendor/bin/auto-update'];
+    // END: DELETE FROM CORE MERGE REQUEST
     $process = new Process($command, $dir);
     // Give the update process as much time as it needs to run.
     $process->setTimeout(NULL)->mustRun();
