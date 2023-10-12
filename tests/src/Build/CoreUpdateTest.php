@@ -157,10 +157,12 @@ class CoreUpdateTest extends UpdateTestBase {
     $this->createTestProject('RecommendedProject');
     $this->installModules(['automated_cron']);
 
-    // Reset the record of the last cron run, so that Automated Cron will be
-    // triggered at the end of this request.
+    // Reset the record of the last cron run.
     $this->visit('/automatic-updates-test-api/reset-cron');
     $this->getMink()->assertSession()->pageTextContains('cron reset');
+    // Make another request so that Automated Cron will be triggered at the end
+    // of the request.
+    $this->visit('/');
     $this->assertExpectedStageEventsFired(ConsoleUpdateStage::class, wait: 360);
     $this->assertCronUpdateSuccessful();
   }
