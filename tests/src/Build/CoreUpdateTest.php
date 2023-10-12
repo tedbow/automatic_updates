@@ -450,9 +450,8 @@ class CoreUpdateTest extends UpdateTestBase {
     $this->createTestProject('RecommendedProject');
 
     $dir = $this->getWorkspaceDirectory() . '/project';
-    // Use the `auto-update` command proxy that Composer puts into `vendor/bin`,
-    // just to prove that it works.
-    $command = [$dir . '/vendor/bin/auto-update'];
+    $command = [$dir . '/web/core/scripts/auto-update.sh'];
+
     $process = new Process($command, $dir);
     // Give the update process as much time as it needs to run.
     $process->setTimeout(NULL)->mustRun();
