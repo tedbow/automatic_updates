@@ -28,11 +28,14 @@ final class CommandExecutor {
    *   The file system service.
    * @param \Drupal\Component\Datetime\TimeInterface $time
    *   The time service.
+   * @param string $appRoot
+   *   The application root.
    */
   public function __construct(
     private readonly PathLocator $pathLocator,
     private readonly FileSystemInterface $fileSystem,
     private readonly TimeInterface $time,
+    private readonly string $appRoot
   ) {}
 
   /**
@@ -47,8 +50,10 @@ final class CommandExecutor {
    *   way, with the `--host` and `--site-path` options always set.
    */
   public function create(string $arguments = NULL): Process {
-    $script = __DIR__ . '/../auto-update';
-
+    $script = $this->appRoot . '/core/scripts/auto-update.sh';
+    // BEGIN: DELETE FROM CORE MERGE REQUEST
+    $script = __DIR__ . '/../auto-update.sh';
+    // END: DELETE FROM CORE MERGE REQUEST
     $command_line = implode(' ', [
       // Always run the command script directly through the PHP interpreter.
       (new PhpExecutableFinder())->find(),

@@ -10,6 +10,8 @@ use Symfony\Component\Filesystem\Filesystem;
 /**
  * Converts the contrib module to core merge request.
  *
+ * Cspell:disable.
+ *
  * File usage:
  *
  * @code
@@ -457,23 +459,26 @@ class Converter {
   }
 
   /**
-   * @param string $core_dir
-   * @param string $core_module_path
+   * Move scripts.
    *
-   * @return void
+   * @param string $core_dir
+   *   The core directory.
+   * @param string $core_module_path
+   *   The core module path.
    */
   protected static function moveScripts(string $core_dir, string $core_module_path): void {
     $fs = new Filesystem();
     $new_fixture_creator_path = "$core_dir/core/scripts/PackageManagerFixtureCreator.php";
+    $new_auto_update_path = "$core_dir/core/scripts/auto-update.sh";
     $move_files = [
       $core_module_path . '/scripts/PackageManagerFixtureCreator.php' => $new_fixture_creator_path,
-      $core_module_path . '/auto-update' => "$core_dir/core/scripts/auto-update",
+      $core_module_path . '/auto-update.sh' => $new_auto_update_path,
     ];
     foreach ($move_files as $old_file => $new_file) {
       $fs->remove($new_file);
       $fs->rename($old_file, $new_file);
-      $fs->chmod($new_file, 0644);
     }
+    $fs->chmod($new_fixture_creator_path, 0644);
     $script_replacements = [
       "__DIR__ . '/../../../autoload.php'" => "__DIR__ . '/../../autoload.php'",
       "__DIR__ . '/../package_manager/tests/fixtures/fake_site'" => "__DIR__ . '/../modules/package_manager/tests/fixtures/fake_site'",
@@ -483,6 +488,11 @@ class Converter {
     foreach ($script_replacements as $search => $replace) {
       static::replaceContents([new \SplFileInfo($new_fixture_creator_path)], $search, $replace);
     }
+    static::replaceContents(
+      [new \SplFileInfo($new_auto_update_path)],
+      "__DIR__ . '/src/Commands'",
+      "__DIR__ . '/../modules/auto_updates/src/Commands'"
+    );
 
   }
 
