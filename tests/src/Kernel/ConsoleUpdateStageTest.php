@@ -12,10 +12,8 @@ use Drupal\Core\Logger\RfcLogLevel;
 use Drupal\Core\Url;
 use Drupal\package_manager\Event\PostApplyEvent;
 use Drupal\package_manager\Event\PostCreateEvent;
-use Drupal\package_manager\Event\PostDestroyEvent;
 use Drupal\package_manager\Event\PostRequireEvent;
 use Drupal\package_manager\Event\PreApplyEvent;
-use Drupal\package_manager\Event\PreDestroyEvent;
 use Drupal\package_manager\Event\PreOperationStageEvent;
 use Drupal\package_manager\Event\PreRequireEvent;
 use Drupal\package_manager\Event\PreCreateEvent;
@@ -250,14 +248,6 @@ END;
         PostApplyEvent::class,
         'Exception',
       ],
-      'pre-destroy exception' => [
-        PreDestroyEvent::class,
-        'Exception',
-      ],
-      'post-destroy exception' => [
-        PostDestroyEvent::class,
-        'Exception',
-      ],
       // Only pre-operation events can add validation results.
       // @see \Drupal\package_manager\Event\PreOperationStageEvent
       // @see \Drupal\package_manager\Stage::dispatch()
@@ -271,10 +261,6 @@ END;
       ],
       'pre-apply validation error' => [
         PreApplyEvent::class,
-        StageEventException::class,
-      ],
-      'pre-destroy validation error' => [
-        PreDestroyEvent::class,
         StageEventException::class,
       ],
     ];
@@ -306,9 +292,9 @@ END;
       'drupal' => __DIR__ . "/../../../package_manager/tests/fixtures/release-history/drupal.9.8.1-security.xml",
     ]);
 
-    // If the pre- or post-destroy events throw an exception, it will not be
-    // caught by the cron update runner, but it *will* be caught by the main cron
-    // service, which will log it as a cron error that we'll want to check for.
+    // If an exception is thrown during destroy, it will not be caught by the
+    // cron update runner, but it *will* be caught by the main cron service,
+    // which will log it as a cron error that we'll want to check for.
     $cron_logger = new TestLogger();
     $this->container->get('logger.factory')
       ->get('cron')
@@ -341,36 +327,10 @@ END;
     $this->runConsoleUpdateStage();
 
     $logged_by_stage = $this->logger->hasRecord($exception->getMessage(), (string) RfcLogLevel::ERROR);
-    // To check if the exception was logged by the main cron service, we need
-    // to set up a special predicate, because exceptions logged by cron are
-    // always formatted in a particular way that we don't control. But the
-    // original exception object is stored with the log entry, so we look for
-    // that and confirm that its message is the same.
-    // @see watchdog_exception()
-    $predicate = function (array $record) use ($exception): bool {
-      if (isset($record['context']['exception'])) {
-        return $record['context']['exception']->getMessage() === $exception->getMessage();
-      }
-      return FALSE;
-    };
-    $logged_by_cron = $cron_logger->hasRecordThatPasses($predicate, (string) RfcLogLevel::ERROR);
 
-    // If a pre-destroy event flags a validation error, it's handled like any
-    // other event (logged by the cron update runner, but not the main cron
-    // service). But if a pre- or post-destroy event throws an exception, the
-    // cron update runner won't try to catch it. Instead, it will be caught and
-    // logged by the main cron service.
-    if ($event_class === PreDestroyEvent::class || $event_class === PostDestroyEvent::class) {
-      // If the pre-destroy event throws an exception or flags a validation
-      // error, the stage won't be destroyed. But, once the post-destroy event
-      // is fired, the stage should be fully destroyed and marked as available.
-      $this->assertSame($event_class === PostDestroyEvent::class, $stage->isAvailable());
-    }
-    else {
-      $this->assertTrue($stage->isAvailable());
-    }
+    $this->assertTrue($stage->isAvailable());
     $this->assertTrue($logged_by_stage);
-    $this->assertFalse($logged_by_cron);
+    $this->assertEmpty($cron_logger->records);
   }
 
   /**

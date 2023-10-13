@@ -7,11 +7,9 @@ namespace Drupal\Tests\package_manager\Kernel;
 use Drupal\Core\DependencyInjection\ContainerBuilder;
 use Drupal\package_manager\Event\PostApplyEvent;
 use Drupal\package_manager\Event\PostCreateEvent;
-use Drupal\package_manager\Event\PostDestroyEvent;
 use Drupal\package_manager\Event\PostRequireEvent;
 use Drupal\package_manager\Event\PreApplyEvent;
 use Drupal\package_manager\Event\PreCreateEvent;
-use Drupal\package_manager\Event\PreDestroyEvent;
 use Drupal\package_manager\Event\PreOperationStageEvent;
 use Drupal\package_manager\Event\PreRequireEvent;
 use Drupal\package_manager\Event\StageEvent;
@@ -75,8 +73,6 @@ class StageEventsTest extends PackageManagerKernelTestBase implements EventSubsc
       PostRequireEvent::class => 'handleEvent',
       PreApplyEvent::class => 'handleEvent',
       PostApplyEvent::class => 'handleEvent',
-      PreDestroyEvent::class => 'handleEvent',
-      PostDestroyEvent::class => 'handleEvent',
     ];
   }
 
@@ -112,8 +108,6 @@ class StageEventsTest extends PackageManagerKernelTestBase implements EventSubsc
       PostRequireEvent::class,
       PreApplyEvent::class,
       PostApplyEvent::class,
-      PreDestroyEvent::class,
-      PostDestroyEvent::class,
     ]);
   }
 
@@ -128,7 +122,6 @@ class StageEventsTest extends PackageManagerKernelTestBase implements EventSubsc
       'PreCreateEvent' => [PreCreateEvent::class],
       'PreRequireEvent' => [PreRequireEvent::class],
       'PreApplyEvent' => [PreApplyEvent::class],
-      'PreDestroyEvent' => [PreDestroyEvent::class],
     ];
   }
 

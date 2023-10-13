@@ -7,11 +7,9 @@ namespace Drupal\package_manager_test_event_logger\EventSubscriber;
 use Drupal\package_manager\Event\CollectPathsToExcludeEvent;
 use Drupal\package_manager\Event\PostApplyEvent;
 use Drupal\package_manager\Event\PostCreateEvent;
-use Drupal\package_manager\Event\PostDestroyEvent;
 use Drupal\package_manager\Event\PostRequireEvent;
 use Drupal\package_manager\Event\PreApplyEvent;
 use Drupal\package_manager\Event\PreCreateEvent;
-use Drupal\package_manager\Event\PreDestroyEvent;
 use Drupal\package_manager\Event\PreRequireEvent;
 use Drupal\package_manager\Event\StageEvent;
 use Drupal\package_manager\PathLocator;
@@ -80,8 +78,6 @@ final class EventLogSubscriber implements EventSubscriberInterface {
       PostRequireEvent::class => ['logEventInfo', PHP_INT_MAX],
       PreApplyEvent::class => ['logEventInfo', PHP_INT_MAX],
       PostApplyEvent::class => ['logEventInfo', PHP_INT_MAX],
-      PreDestroyEvent::class => ['logEventInfo', PHP_INT_MAX],
-      PostDestroyEvent::class => ['logEventInfo', PHP_INT_MAX],
     ];
   }
 

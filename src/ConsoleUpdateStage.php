@@ -318,17 +318,7 @@ class ConsoleUpdateStage extends UpdateStage {
       $this->logger->error($e->getMessage());
     }
     $this->lock->release('cron');
-
-    // If any pre-destroy event subscribers raise validation errors, ensure they
-    // are formatted and logged. But if any pre- or post-destroy event
-    // subscribers throw another exception, don't bother catching it, since it
-    // will be caught and handled by the main cron service.
-    try {
-      $this->destroy();
-    }
-    catch (StageEventException $e) {
-      $this->logger->error($e->getMessage());
-    }
+    $this->destroy();
   }
 
 }

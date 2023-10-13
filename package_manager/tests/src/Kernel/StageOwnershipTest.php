@@ -6,7 +6,6 @@ namespace Drupal\Tests\package_manager\Kernel;
 
 use Drupal\Core\File\FileSystem;
 use Drupal\Core\Logger\RfcLogLevel;
-use Drupal\package_manager\Event\PostDestroyEvent;
 use Drupal\package_manager\Event\PreCreateEvent;
 use Drupal\package_manager\Exception\StageException;
 use Drupal\package_manager\Exception\StageOwnershipException;
@@ -318,14 +317,9 @@ class StageOwnershipTest extends PackageManagerKernelTestBase {
     $logger = new TestLogger();
     $logger_channel->addLogger($logger);
 
-    // Listen to the post-destroy event so we can confirm that it was fired, and
-    // the stage was made available, despite the file system error.
-    $stage_available = NULL;
-    $this->addEventTestListener(function (PostDestroyEvent $event) use (&$stage_available): void {
-      $stage_available = $event->stage->isAvailable();
-    }, PostDestroyEvent::class);
+    // Confirm that the stage was made available, despite the file system error.
     $stage->destroy();
-    $this->assertTrue($stage_available);
+    $this->assertTrue($stage->isAvailable());
 
     // A file system error should have been logged while trying to delete the
     // stage directory.

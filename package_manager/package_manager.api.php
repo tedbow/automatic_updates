@@ -100,15 +100,6 @@
  *   active directory. This event may be dispatched multiple times during the
  *   stage life cycle.
  *
- * - \Drupal\package_manager\Event\PreDestroyEvent
- *   Dispatched before the stage directory is deleted and the stage releases its
- *   ownership. This event is dispatched only once during the stage life cycle.
- *
- * - \Drupal\package_manager\Event\PostDestroyEvent
- *   Dispatched after the stage directory is deleted and the stage has released
- *   its ownership. This event is dispatched only once during the stage life
- *   cycle.
- *
  * @section sec_stage_api Stage API: Public methods
  * The public API of any stage consists of the following methods:
  *
@@ -140,9 +131,9 @@
  *   be claimed by its owner to call this method.
  *
  * - \Drupal\package_manager\StageBase::destroy()
- *   Destroys the stage directory, releases ownership, and dispatches pre- and
- *   post-destroy events. It is possible to destroy the stage without having
- *   claimed it first, but this shouldn't be done unless absolutely necessary.
+ *   Destroys the stage directory, and releases ownership. It is possible to
+ *   destroy the stage without having claimed it first, but this shouldn't be
+ *   done unless absolutely necessary.
  *
  * - \Drupal\package_manager\StageBase::stageDirectoryExists()
  *   Determines if the stage directory exists and returns a boolean accordingly.
