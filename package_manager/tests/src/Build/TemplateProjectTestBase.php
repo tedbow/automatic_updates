@@ -607,7 +607,7 @@ END;
    *   (optional) The expected stage events that should have been fired in the
    *   order in which they should have been fired. Events can be specified more
    *   that once if they will be fired multiple times. If there are no events
-   *   specified all life cycle events from PreCreateEvent to PostDestroyEvent
+   *   specified all life cycle events from PreCreateEvent to PostApplyEvent
    *   will be asserted.
    * @param int $wait
    *   (optional) How many seconds to wait for the events to be fired. Defaults

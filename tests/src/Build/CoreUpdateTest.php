@@ -9,11 +9,9 @@ use Drupal\automatic_updates\ConsoleUpdateStage;
 use Drupal\automatic_updates\UpdateStage;
 use Drupal\package_manager\Event\PostApplyEvent;
 use Drupal\package_manager\Event\PostCreateEvent;
-use Drupal\package_manager\Event\PostDestroyEvent;
 use Drupal\package_manager\Event\PostRequireEvent;
 use Drupal\package_manager\Event\PreApplyEvent;
 use Drupal\package_manager\Event\PreCreateEvent;
-use Drupal\package_manager\Event\PreDestroyEvent;
 use Drupal\package_manager\Event\PreRequireEvent;
 use Drupal\Tests\WebAssert;
 use Symfony\Component\Process\Process;
@@ -126,8 +124,6 @@ class CoreUpdateTest extends UpdateTestBase {
         PostRequireEvent::class,
         PreApplyEvent::class,
         PostApplyEvent::class,
-        PreDestroyEvent::class,
-        PostDestroyEvent::class,
       ],
       message: 'Error response: ' . $file_contents
     );
@@ -233,16 +229,12 @@ class CoreUpdateTest extends UpdateTestBase {
     // The stage will first destroy the stage made above before going through
     // stage lifecycle events for the cron update.
     $expected_events = [
-      PreDestroyEvent::class,
-      PostDestroyEvent::class,
       PreCreateEvent::class,
       PostCreateEvent::class,
       PreRequireEvent::class,
       PostRequireEvent::class,
       PreApplyEvent::class,
       PostApplyEvent::class,
-      PreDestroyEvent::class,
-      PostDestroyEvent::class,
     ];
     $this->assertExpectedStageEventsFired(ConsoleUpdateStage::class, $expected_events, 360);
     $this->assertCronUpdateSuccessful();

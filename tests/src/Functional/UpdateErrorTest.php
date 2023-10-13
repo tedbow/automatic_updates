@@ -6,11 +6,9 @@ namespace Drupal\Tests\automatic_updates\Functional;
 
 use Drupal\package_manager\Event\PostApplyEvent;
 use Drupal\package_manager\Event\PostCreateEvent;
-use Drupal\package_manager\Event\PostDestroyEvent;
 use Drupal\package_manager\Event\PostRequireEvent;
 use Drupal\package_manager\Event\PreApplyEvent;
 use Drupal\package_manager\Event\PreCreateEvent;
-use Drupal\package_manager\Event\PreDestroyEvent;
 use Drupal\package_manager\Event\PreOperationStageEvent;
 use Drupal\package_manager\Event\PreRequireEvent;
 use Drupal\package_manager\Event\StatusCheckEvent;
@@ -236,8 +234,6 @@ class UpdateErrorTest extends UpdaterFormTestBase {
     $this->assertContains($event, [
       PreApplyEvent::class,
       PostApplyEvent::class,
-      PreDestroyEvent::class,
-      PostDestroyEvent::class,
     ]);
     // Try to finish the update.
     $page->pressButton('Continue');
@@ -252,41 +248,7 @@ class UpdateErrorTest extends UpdaterFormTestBase {
       // message should be visible.
       $this->assertStringContainsString('/admin/automatic-update-ready/', $session->getCurrentUrl());
       $assert_session->statusMessageContains($expected_message, 'error');
-      return;
     }
-
-    // If we got any further, ensure we were expecting an exception during the
-    // destroy phase.
-    $this->assertStringEndsWith('DestroyEvent', $event);
-    // We should have been forwarded to the main update page, and the exception
-    // message should be visible.
-    $assert_session->addressEquals('/admin/reports/updates');
-    $assert_session->statusMessageContains($expected_message, 'error');
-
-    // If the exception was thrown during PreDestroyEvent, the stage was not
-    // destroyed, so pretend there's another available update, and ensure that
-    // the user cannot update to it before they delete the existing update.
-    if ($event === PreDestroyEvent::class) {
-      $this->mockActiveCoreVersion('9.8.0');
-      $this->checkForUpdates();
-      $this->drupalGet('/admin/reports/updates/update');
-
-      $assert_session->statusMessageContains('Cannot begin an update because another Composer operation is currently in progress.', 'error');
-      $assert_session->buttonNotExists('Update to 9.8.1');
-      $assert_session->buttonExists('Delete existing update');
-    }
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  protected function tearDown(): void {
-    // Ensure that any pre- or post-destroy exception we set up during testing
-    // does not interfere with the parent class' ability to destroy the stage.
-    TestSubscriber::setException(NULL, PreDestroyEvent::class);
-    TestSubscriber::setException(NULL, PostDestroyEvent::class);
-
-    parent::tearDown();
   }
 
   /**
@@ -304,8 +266,6 @@ class UpdateErrorTest extends UpdaterFormTestBase {
       PostRequireEvent::class,
       PreApplyEvent::class,
       PostApplyEvent::class,
-      PreDestroyEvent::class,
-      PostDestroyEvent::class,
     ];
     $data = [];
     foreach ($events as $event) {

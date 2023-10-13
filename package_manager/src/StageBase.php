@@ -16,11 +16,9 @@ use Drupal\Core\TempStore\SharedTempStoreFactory;
 use Drupal\package_manager\Event\CollectPathsToExcludeEvent;
 use Drupal\package_manager\Event\PostApplyEvent;
 use Drupal\package_manager\Event\PostCreateEvent;
-use Drupal\package_manager\Event\PostDestroyEvent;
 use Drupal\package_manager\Event\PostRequireEvent;
 use Drupal\package_manager\Event\PreApplyEvent;
 use Drupal\package_manager\Event\PreCreateEvent;
-use Drupal\package_manager\Event\PreDestroyEvent;
 use Drupal\package_manager\Event\PreOperationStageEvent;
 use Drupal\package_manager\Event\PreRequireEvent;
 use Drupal\package_manager\Event\StageEvent;
@@ -532,7 +530,6 @@ abstract class StageBase implements LoggerAwareInterface {
       throw new StageException($this, 'Cannot destroy the stage directory while it is being applied to the active directory.');
     }
 
-    $this->dispatch(new PreDestroyEvent($this));
     $staging_root = $this->getStagingRoot();
     // If the stage root directory exists, delete it and everything in it.
     if (file_exists($staging_root)) {
@@ -543,15 +540,14 @@ abstract class StageBase implements LoggerAwareInterface {
       }
       catch (FileException) {
         // Deliberately swallow the exception so that the stage will be marked
-        // as available and the post-destroy event will be fired, even if the
-        // stage directory can't actually be deleted. The file system service
-        // logs the exception, so we don't need to do anything else here.
+        // as available, even if the stage directory can't actually be deleted.
+        // The file system service logs the exception, so we don't need to do
+        // anything else here.
       }
     }
 
     $this->storeDestroyInfo($force, $message);
     $this->markAsAvailable();
-    $this->dispatch(new PostDestroyEvent($this));
   }
 
   /**
