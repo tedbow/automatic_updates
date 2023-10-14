@@ -272,6 +272,13 @@ class Converter {
     $files = [];
     /** @var \SplFileInfo $file */
     foreach ($rii as $file) {
+      // Exclude the .git directories always.
+      if ($file->getFilename() === '.git') {
+        continue;
+      }
+      if (str_contains($file->getRealPath(), '/.git/') || str_ends_with($file->getRealPath(), '/.git')) {
+        continue;
+      }
       if ($excludeDirs && $file->isDir()) {
         continue;
       }
