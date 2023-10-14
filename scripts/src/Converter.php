@@ -451,8 +451,14 @@ class Converter {
         throw new \Exception("Didn't find ending token");
       }
       // Remove extra blank.
-      if ($newLines[count($newLines) - 1] === '' && $newLines[count($newLines) - 2] === '') {
-        array_pop($newLines);
+      $newLineCnt = count($newLines);
+      if ($newLineCnt > 1) {
+        if ($newLines[count($newLines) - 1] === '' && $newLines[count($newLines) - 2] === '') {
+          array_pop($newLines);
+        }
+      }
+      else {
+        print "\n**Small new line cnt: in $file**\n";
       }
       file_put_contents($filePath, implode("\n", $newLines));
     }
