@@ -93,7 +93,7 @@ class Converter {
     static::removeLines($core_dir);
     self::info('Remove unneeded lines');
 
-    self::moveScripts($core_dir, $core_module_path);
+    self::moveScripts($core_dir, $core_module_path, $package_manager_only);
     self::info('Moved scripts');
 
     // Remove unneeded.
@@ -465,15 +465,20 @@ class Converter {
    *   The core directory.
    * @param string $core_module_path
    *   The core module path.
+   * @param bool $package_manager_only
+   *   Whether we are only converting package manager.
    */
-  protected static function moveScripts(string $core_dir, string $core_module_path): void {
+  protected static function moveScripts(string $core_dir, string $core_module_path, bool $package_manager_only): void {
     $fs = new Filesystem();
     $new_fixture_creator_path = "$core_dir/core/scripts/PackageManagerFixtureCreator.php";
-    $new_auto_update_path = "$core_dir/core/scripts/auto-update.sh";
+
     $move_files = [
       $core_module_path . '/scripts/PackageManagerFixtureCreator.php' => $new_fixture_creator_path,
-      $core_module_path . '/auto-update.sh' => $new_auto_update_path,
     ];
+    if (!$package_manager_only) {
+      $new_auto_update_path = "$core_dir/core/scripts/auto-update.sh";
+      $move_files[$core_module_path . '/auto-update.sh'] = $new_auto_update_path;
+    }
     foreach ($move_files as $old_file => $new_file) {
       $fs->remove($new_file);
       $fs->rename($old_file, $new_file);
@@ -488,11 +493,13 @@ class Converter {
     foreach ($script_replacements as $search => $replace) {
       static::replaceContents([new \SplFileInfo($new_fixture_creator_path)], $search, $replace);
     }
-    static::replaceContents(
-      [new \SplFileInfo($new_auto_update_path)],
-      "__DIR__ . '/src/Commands'",
-      "__DIR__ . '/../modules/auto_updates/src/Commands'"
-    );
+    if (!$package_manager_only) {
+      static::replaceContents(
+        [new \SplFileInfo($new_auto_update_path)],
+        "__DIR__ . '/src/Commands'",
+        "__DIR__ . '/../modules/auto_updates/src/Commands'"
+      );
+    }
 
   }
 
